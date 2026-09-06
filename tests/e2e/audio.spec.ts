@@ -63,6 +63,8 @@ async function levels(page: Page) {
     const values = new Float32Array(m.analyser.fftSize);
     m.analyser.getFloatTimeDomainData(values);
     return {
+      focused: document.hasFocus(),
+      visible: document.visibilityState,
       state: m.context.state,
       rms: Math.sqrt(values.reduce((s, n) => s + n * n, 0) / values.length),
       time: m.context.currentTime,
@@ -108,7 +110,9 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   await login(page);
   expect((await levels(page)).state).toBe("absent");
   await play(page);
-  await expect.poll(async () => (await levels(page)).state).toBe("running");
+  await expect
+    .poll(async () => await levels(page))
+    .toMatchObject({ state: "running" });
   await expect
     .poll(async () => (await levels(page)).rms)
     .toBeGreaterThan(0.0001);
@@ -175,7 +179,9 @@ test("nur der aktive Tab spielt und Abmeldung beendet die Ausgabe", async ({
   await meter(other);
   await other.goto(origin);
   await play(other);
-  await expect.poll(async () => (await levels(other)).state).toBe("running");
+  await expect
+    .poll(async () => await levels(other))
+    .toMatchObject({ state: "running" });
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await page.bringToFront();
   await page.getByRole("button", { name: "Leitstelle", exact: true }).click();

@@ -40,6 +40,7 @@ class AudioController {
   private context: AudioContext | null = null;
   private graph: SoundGraph | null = null;
   private active = false;
+  private focused = false;
   private ownsAudio = true;
   private channel: BroadcastChannel | null = null;
   private unlocked = false;
@@ -102,7 +103,7 @@ class AudioController {
       this.unlocked &&
       !this.snapshot.preferences.muted &&
       document.visibilityState === "visible" &&
-      document.hasFocus()
+      this.focused
     );
   }
   async unlock() {
@@ -126,6 +127,7 @@ class AudioController {
         };
       }
       this.unlocked = true;
+      this.focused = true;
       this.claim();
       if (this.wanted()) await this.context.resume();
       this.sync();
@@ -248,7 +250,12 @@ class AudioController {
       if (e.isTrusted) void this.unlock();
     };
     const visibility = () => this.sync();
+    const blur = () => {
+      this.focused = false;
+      this.sync();
+    };
     const focus = () => {
+      this.focused = true;
       this.claim();
       this.sync();
     };
@@ -271,22 +278,22 @@ class AudioController {
         this.sync();
       }
     };
-    window.addEventListener("pointerdown", gesture);
+    window.addEventListener("click", gesture);
     window.addEventListener("keydown", gesture);
     document.addEventListener("visibilitychange", visibility);
     window.addEventListener("focus", focus);
     window.addEventListener("click", click);
-    window.addEventListener("blur", visibility);
+    window.addEventListener("blur", blur);
     window.addEventListener("storage", storage);
     return () => {
-      window.removeEventListener("pointerdown", gesture);
+      window.removeEventListener("click", gesture);
       window.removeEventListener("keydown", gesture);
       document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("focus", focus);
       window.removeEventListener("click", click);
       this.channel?.close();
       this.channel = null;
-      window.removeEventListener("blur", visibility);
+      window.removeEventListener("blur", blur);
       window.removeEventListener("storage", storage);
       this.session(false);
     };

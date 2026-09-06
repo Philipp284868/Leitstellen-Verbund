@@ -23,6 +23,13 @@ jobs:
       - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs lint
       - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test
       - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps chromium firefox
+      - name: Virtuelles Audiogerät für echte Browser-Audioausgabe
+        run: |
+          sudo apt-get install --no-install-recommends -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio
+          pactl set-default-sink ci_audio
+          pactl info
       - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

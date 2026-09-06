@@ -19,8 +19,7 @@ export function AudioSession() {
       mode,
       !readonly &&
         status === "playing" &&
-        document.visibilityState === "visible" &&
-        document.hasFocus(),
+        document.visibilityState === "visible",
     );
     if (cue) audio.cue(cue);
   }, [save, mode, readonly, status]);
