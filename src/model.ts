@@ -106,6 +106,7 @@ export const saveSchema = z
     time: num,
     seed: integer,
     nextMission: num,
+    missionWait: num.default(0),
     speed: z.number().min(1).max(32),
     settings: z
       .object({ light: z.boolean(), reduced: z.boolean() })
@@ -176,7 +177,7 @@ export function fresh(player: string, station: string, now: number): Save {
     money: BALANCE.start,
     xp: 0,
     time: now,
-    seed: 123456,
+    seed: Number.parseInt(uid().slice(0, 8), 16),
     nextMission: now,
     speed: BALANCE.speed,
     buildings: [],

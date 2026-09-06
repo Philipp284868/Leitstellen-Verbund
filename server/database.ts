@@ -1,9 +1,10 @@
 import { DatabaseSync, backup } from "node:sqlite";
 import { mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { validate, type Save } from "../src/model";
+import { validate, fresh, type Save } from "../src/model";
 
-export const DATABASE_VERSION = 2;
+import type { GameMode } from "../src/mode";
+export const DATABASE_VERSION = 3;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -13,13 +14,28 @@ export class Database {
     const existed = existsSync(this.path);
     this.sql = new DatabaseSync(this.path);
     try {
-      this.sql.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
-      const version = Number(this.sql.prepare("PRAGMA user_version").get()!.user_version);
-      if (version > DATABASE_VERSION) throw Error("Datenbank ist neuer als dieser Server. Kein Downgrade möglich.");
-      if (this.sql.prepare("PRAGMA quick_check").get()!.quick_check !== "ok") throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
+      this.sql.exec(
+        "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;",
+      );
+      const version = Number(
+        this.sql.prepare("PRAGMA user_version").get()!.user_version,
+      );
+      if (version > DATABASE_VERSION)
+        throw Error(
+          "Datenbank ist neuer als dieser Server. Kein Downgrade möglich.",
+        );
+      if (this.sql.prepare("PRAGMA quick_check").get()!.quick_check !== "ok")
+        throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
       // Back up the existing database before ANY migration. Password hashes and saves stay byte-for-byte unchanged.
       if (existed && version < DATABASE_VERSION) {
-        this.sql.prepare("VACUUM INTO ?").run(resolve(dir, `pre-migration-v2-${Date.now()}-${crypto.randomUUID()}.sqlite`));
+        this.sql
+          .prepare("VACUUM INTO ?")
+          .run(
+            resolve(
+              dir,
+              `pre-migration-v2-${Date.now()}-${crypto.randomUUID()}.sqlite`,
+            ),
+          );
       }
       if (version < 1) {
         this.transaction(() => {
@@ -52,11 +68,25 @@ export class Database {
             PRAGMA user_version=2;
           `);
           this.audit("server-migration", "player-only-registration-v2");
-          if (this.sql.prepare("PRAGMA foreign_key_check").all().length) throw Error("Ungültige SQLite-Kontoreferenzen.");
+          if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
+            throw Error("Ungültige SQLite-Kontoreferenzen.");
         });
       }
-      if (this.sql.prepare("PRAGMA foreign_key_check").all().length) throw Error("Ungültige SQLite-Kontoreferenzen.");
-      if (this.sql.prepare("SELECT id FROM users WHERE role <> 'player' LIMIT 1").get()) throw Error("Unzulässige Kontorolle. Datenbank nicht löschen.");
+      if (version < 3)
+        this.transaction(() => {
+          this.sql.exec(
+            "CREATE TABLE solo_saves(user_id TEXT PRIMARY KEY REFERENCES users(id), data TEXT NOT NULL); PRAGMA user_version=3;",
+          );
+          this.audit("server-migration", "separate-solo-worlds-v3");
+        });
+      if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
+        throw Error("Ungültige SQLite-Kontoreferenzen.");
+      if (
+        this.sql
+          .prepare("SELECT id FROM users WHERE role <> 'player' LIMIT 1")
+          .get()
+      )
+        throw Error("Unzulässige Kontorolle. Datenbank nicht löschen.");
     } catch (e) {
       this.sql.close();
       throw e;
@@ -73,27 +103,61 @@ export class Database {
       throw e;
     }
   }
-  all(): Map<string, Save> {
-    return new Map(this.sql.prepare("SELECT user_id,data FROM saves").all()
-      .map((r) => [String(r.user_id), validate(JSON.parse(String(r.data)))]));
+  all(mode: GameMode = "multi"): Map<string, Save> {
+    return new Map(
+      this.sql
+        .prepare(
+          `SELECT user_id,data FROM ${mode === "single" ? "solo_saves" : "saves"}`,
+        )
+        .all()
+        .map((r) => [String(r.user_id), validate(JSON.parse(String(r.data)))]),
+    );
   }
-  save(id: string, s: Save) {
+  save(id: string, s: Save, mode: GameMode = "multi") {
     if (id !== s.player.id) throw Error("Kontobesitz stimmt nicht überein.");
-    this.sql.prepare("INSERT INTO saves VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data")
+    this.sql
+      .prepare(
+        `INSERT INTO ${mode === "single" ? "solo_saves" : "saves"} VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data`,
+      )
       .run(id, JSON.stringify(validate(s)));
   }
+  ensureSolo(id: string) {
+    if (
+      this.sql.prepare("SELECT user_id FROM solo_saves WHERE user_id=?").get(id)
+    )
+      return;
+    const original = this.all().get(id);
+    if (!original) throw Error("Konto fehlt.");
+    const save = fresh(
+      original.player.name,
+      original.player.station,
+      Date.now() / 1000,
+    );
+    save.player.id = id;
+    this.save(id, save, "single");
+  }
   audit(actor: string, event: string) {
-    this.sql.prepare("INSERT INTO audit(at,actor,event) VALUES (?,?,?)").run(Date.now(), actor, event);
+    this.sql
+      .prepare("INSERT INTO audit(at,actor,event) VALUES (?,?,?)")
+      .run(Date.now(), actor, event);
   }
   async backup() {
     const dir = resolve(this.dir, "backups");
     mkdirSync(dir, { recursive: true, mode: 0o700 });
-    const path = resolve(dir, `game-${Date.now()}-${crypto.randomUUID()}.sqlite`);
+    const path = resolve(
+      dir,
+      `game-${Date.now()}-${crypto.randomUUID()}.sqlite`,
+    );
     await backup(this.sql, path);
     const check = new DatabaseSync(path, { readOnly: true });
     try {
-      if (check.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok") throw Error("Sicherung ist nicht konsistent.");
-    } finally { check.close(); }
+      if (
+        check.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok"
+      )
+        throw Error("Sicherung ist nicht konsistent.");
+    } finally {
+      check.close();
+    }
     return path;
   }
   close() {

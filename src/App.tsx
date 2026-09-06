@@ -1,3 +1,4 @@
+import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
 import { useState } from "react";
@@ -32,14 +33,18 @@ import { Modal, credits } from "./ui";
 import { download } from "./storage";
 import { updateApplication } from "./pwa";
 export function App() {
-  const { save: s, loading, readonly, error, notice } = useGame();
+  const { mode } = useGame();
+  return <GameApp key={mode} />;
+}
+function GameApp() {
+  const { save: s, mode, loading, readonly, error, notice, user } = useGame();
   const net = useNetwork();
   const [screen, setScreen] = useState("start"),
     [modal, setModal] = useState(""),
     [selected, setSelected] = useState(""),
     [placing, setPlacing] = useState(""),
-    [light, setLight] = useState(false),
-    [reduced, setReduced] = useState(false),
+    [light, setLight] = useState<boolean | null>(null),
+    [reduced, setReduced] = useState<boolean | null>(null),
     [mobile, setMobile] = useState("map");
   const tutorial = [
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
@@ -57,6 +62,20 @@ export function App() {
         <h1>Leitstelle wird geöffnet …</h1>
       </div>
     );
+  if (!s && user && error)
+    return (
+      <main className="loading">
+        <h1>Spielwelt konnte nicht geladen werden</h1>
+        <p role="alert">{error}</p>
+        <button
+          onClick={() =>
+            void retryStorage().catch((e) => emit({ error: String(e) }))
+          }
+        >
+          Erneut verbinden
+        </button>
+      </main>
+    );
   if (!s) return <AuthScreen />;
   const open = (id: string) => {
     if (id === "friends") {
@@ -69,7 +88,7 @@ export function App() {
   };
   return (
     <div
-      className={`app ${(s?.settings.light ?? light) ? "light" : ""} ${(s?.settings.reduced ?? reduced) ? "reduced" : ""}`}
+      className={`app ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
     >
       {error && (
         <div className="global-error" role="alert">
@@ -123,12 +142,17 @@ export function App() {
         s && (
           <>
             <header className="topbar">
-              <button className="brand" onClick={() => setScreen("start")}>
+              <button
+                aria-label="Hauptmenü"
+                className="brand"
+                onClick={() => setScreen("start")}
+              >
                 <Radio />
                 <span>
                   LEITSTELLEN<b>VERBUND</b>
                 </span>
               </button>
+              <span className="hud-mode">{modeName(mode)}</span>
               <div className="station-title">
                 <span className="live-dot" />
                 <div>
@@ -154,26 +178,39 @@ export function App() {
             </header>
             <nav className="navrail">
               <button
-                className="active"
+                className={!modal ? "active" : ""}
                 aria-label="Leitstelle"
                 onClick={() => setModal("")}
               >
                 <TowerControl />
                 <span>Leitstelle</span>
               </button>
-              <button aria-label="Wachen" onClick={() => setModal("stations")}>
+              <button
+                className={modal === "stations" ? "active" : ""}
+                aria-label="Wachen"
+                onClick={() => setModal("stations")}
+              >
                 <MapPin />
                 <span>Wachen</span>
               </button>
-              <button aria-label="Fuhrpark" onClick={() => setModal("fleet")}>
+              <button
+                className={modal === "fleet" ? "active" : ""}
+                aria-label="Fuhrpark"
+                onClick={() => setModal("fleet")}
+              >
                 <Truck />
                 <span>Fuhrpark</span>
               </button>
-              <button aria-label="Freunde" onClick={() => setModal("friends")}>
+              <button
+                className={modal === "friends" ? "active" : ""}
+                aria-label="Freunde"
+                onClick={() => setModal("friends")}
+              >
                 <Users />
                 <span>Freunde</span>
               </button>
               <button
+                className={modal === "progress" ? "active" : ""}
                 aria-label="Fortschritt"
                 onClick={() => setModal("progress")}
               >
@@ -181,23 +218,36 @@ export function App() {
                 <span>Fortschritt</span>
               </button>
               <button
+                className={modal === "backups" ? "active" : ""}
                 aria-label="Sicherungen"
                 onClick={() => setModal("backups")}
               >
                 <Download />
                 <span>Sicherung</span>
               </button>
-              <button aria-label="Hilfe" onClick={() => setModal("help")}>
+              <button
+                className={modal === "help" ? "active" : ""}
+                aria-label="Hilfe"
+                onClick={() => setModal("help")}
+              >
                 <HelpCircle />
                 <span>Hilfe</span>
               </button>
             </nav>
             <div className="workspace">
               <div className="mobile-tabs">
-                <button onClick={() => setMobile("missions")}>
+                <button
+                  aria-pressed={mobile === "missions"}
+                  onClick={() => setMobile("missions")}
+                >
                   Einsätze ({s.missions.length})
                 </button>
-                <button onClick={() => setMobile("map")}>Karte</button>
+                <button
+                  aria-pressed={mobile === "map"}
+                  onClick={() => setMobile("map")}
+                >
+                  Karte
+                </button>
               </div>
               <aside
                 className={`mission-sidebar ${mobile === "missions" ? "mobile-visible" : ""}`}
@@ -221,6 +271,14 @@ export function App() {
                     {s.vehicles.filter((v) => v.status !== "ready").length}{" "}
                     unterwegs
                   </span>
+                </div>
+                <div className="dispatch-pace">
+                  <span>RUHIGE EINSATZLAGE</span>
+                  <small>
+                    {s.missions.length >= 2
+                      ? "Erst laufende Einsätze abschließen. Neue Meldungen warten."
+                      : "Neue Meldungen kommen einzeln und zeitlich versetzt."}
+                  </small>
                 </div>
                 <div className="mission-list">
                   {s.missions.map((m, i) => {
@@ -279,6 +337,18 @@ export function App() {
                     </div>
                   )}
                 </div>
+                {mode === "multi" && (
+                  <button
+                    className="shared-inbox"
+                    onClick={() => setModal("friends")}
+                  >
+                    <Users size={18} />
+                    <span>Verbund-Einsätze</span>
+                    <b>
+                      {net.friends.reduce((n, f) => n + f.missions.length, 0)}
+                    </b>
+                  </button>
+                )}
                 <button
                   className="archive-link"
                   onClick={() => setModal("archive")}
@@ -351,7 +421,7 @@ export function App() {
               </span>
               <p aria-live="polite">
                 {notice ||
-                  "Leitstelle betriebsbereit. Alle Meldungen werden lokal verarbeitet."}
+                  "Leitstelle betriebsbereit. Dein Spielstand wird auf dem Server gespeichert."}
               </p>
               <span className="save-indicator">
                 {readonly ? "● Verbindung fehlt" : "● Server bestätigt"}
@@ -371,7 +441,8 @@ export function App() {
               </select>
             </footer>
             {s.tutorial < 6 && (
-              <aside className="tutorial">
+              <details className="tutorial">
+                <summary>Deine erste Schicht · Anleitung öffnen</summary>
                 <span className="eyebrow">
                   DEINE ERSTE SCHICHT · {s.tutorial + 1}/6
                 </span>
@@ -389,7 +460,7 @@ export function App() {
                 >
                   Nächster Schritt →
                 </button>
-              </aside>
+              </details>
             )}
           </>
         )
@@ -424,14 +495,17 @@ export function App() {
               <label>
                 <input
                   type="checkbox"
-                  checked={s?.settings.light ?? light}
+                  checked={light ?? s.settings.light}
+                  disabled={readonly || light !== null || reduced !== null}
                   onChange={(e) => {
                     const value = e.target.checked;
                     setLight(value);
                     if (s)
                       void change((s) => {
                         s.settings.light = value;
-                      }).catch(() => {});
+                      })
+                        .catch(() => {})
+                        .finally(() => setLight(null));
                   }}
                 />{" "}
                 Heller Modus
@@ -439,14 +513,17 @@ export function App() {
               <label>
                 <input
                   type="checkbox"
-                  checked={s?.settings.reduced ?? reduced}
+                  checked={reduced ?? s.settings.reduced}
+                  disabled={readonly || light !== null || reduced !== null}
                   onChange={(e) => {
                     const value = e.target.checked;
                     setReduced(value);
                     if (s)
                       void change((s) => {
                         s.settings.reduced = value;
-                      }).catch(() => {});
+                      })
+                        .catch(() => {})
+                        .finally(() => setReduced(null));
                   }}
                 />{" "}
                 Reduzierte Bewegung

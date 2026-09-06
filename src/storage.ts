@@ -1,3 +1,4 @@
+import { createId } from "./ids";
 import Dexie, { type EntityTable } from "dexie";
 import { validate, type Save } from "./model";
 export const NS =
@@ -39,7 +40,7 @@ export async function persist(s: Save, backup = false) {
     await db.saves.put({ id: "current", data: s, at: now });
     if (backup) {
       await db.saves.put({
-        id: `backup:${now}:${crypto.randomUUID()}`,
+        id: `backup:${now}:${createId()}`,
         data: s,
         at: now,
       });
