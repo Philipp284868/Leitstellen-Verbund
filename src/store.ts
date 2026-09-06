@@ -4,6 +4,7 @@ import type { Save } from "./model";
 import type { ServerAction } from "../server/actions";
 import type { Action } from "./engine";
 import { setNetwork, resetNetwork, receiveChat } from "./network";
+import { createId } from "./ids";
 export interface Snapshot {
   save: Save | null;
   loading: boolean;
@@ -85,11 +86,15 @@ export async function refresh() {
   if (!socket) {
     socket = io({
       autoConnect: false,
+      // A browser WebSocket handshake supplies Origin on both HTTP and HTTPS.
+      // Keep the server's strict Origin, session and CSRF checks unchanged.
+      transports: ["websocket", "polling"],
+      tryAllTransports: true,
       auth: (cb) => cb({ csrf }),
       withCredentials: true,
     });
     socket.on("connect", () =>
-      emit({ readonly: false, notice: "Mit Spielserver verbunden." }),
+      emit({ readonly: false, error: "", notice: "Mit Spielserver verbunden." }),
     );
     socket.on("disconnect", (reason) => {
       emit({
@@ -110,8 +115,9 @@ export async function refresh() {
     socket.on("snapshot", accept);
     socket.on("chat", receiveChat);
     socket.on("notice", notice);
-    socket.connect();
   }
+  // The retry button must reconnect an existing disconnected socket too.
+  if (!socket.connected) socket.connect();
 }
 export async function login(
   data: {
@@ -119,7 +125,6 @@ export async function login(
     password: string;
     name?: string;
     station?: string;
-    invite?: string;
   },
   register = false,
 ) {
@@ -134,7 +139,7 @@ export async function logout(all = false) {
 export async function command(action: ServerAction | Action) {
   if (snapshot.readonly || !socket?.connected)
     throw Error("Keine Serververbindung. Aktion wurde nicht ausgeführt.");
-  const id = crypto.randomUUID();
+  const id = createId();
   let result;
   try {
     result = await api("action", { id, action });
