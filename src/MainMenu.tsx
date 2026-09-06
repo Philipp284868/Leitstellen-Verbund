@@ -14,6 +14,8 @@ import {
 import type { Save } from "./model";
 import { level } from "./model";
 import { credits } from "./ui";
+import { useGame, switchMode } from "./store";
+import { modeName } from "./mode";
 import { version } from "../package.json";
 import "./MainMenu.css";
 
@@ -28,6 +30,7 @@ export function MainMenu({
   onPlay: () => void;
   onOpen: (panel: string) => void;
 }) {
+  const { mode } = useGame();
   const shortcuts = [
     {
       id: "stations",
@@ -80,6 +83,25 @@ export function MainMenu({
         </button>
       </header>
       <div className="menu-content">
+        <section className="mode-choice" aria-label="Spielmodus">
+          <div>
+            <span className="menu-kicker">DEINE SPIELWELTEN</span>
+            <p>
+              Eigene Wachen, eigenes Guthaben und eigener Fortschritt je Modus.
+            </p>
+          </div>
+          <div className="mode-buttons">
+            {(["single", "multi"] as const).map((value) => (
+              <button
+                key={value}
+                aria-pressed={mode === value}
+                onClick={() => void switchMode(value)}
+              >
+                {modeName(value)}
+              </button>
+            ))}
+          </div>
+        </section>
         <section className="menu-hero" aria-labelledby="menu-title">
           <div className="menu-hero-copy">
             <span className="menu-kicker">

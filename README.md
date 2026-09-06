@@ -1,6 +1,10 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
-## Version 2.2.0: freie Registrierung, ausschließlich normale Spieler
+## Version 2.3.0: neue Karte, Ingame-Oberfläche und getrennte Spielwelten
+
+Einzelspieler und Multiplayer haben jeweils eigene Spielstände. Vorhandener Besitz bleibt im Multiplayer. Neue Multiplayer-Einsätze werden automatisch geteilt, Wachen bleiben sichtbar. Maximal zwei eigene offene Einsätze und unregelmäßige Abstände von 90–210 echten Sekunden sorgen für einen ruhigeren Ablauf. [Änderungen und Updatehinweise](docs/VERSION-2.3.md).
+
+## Freie Registrierung, ausschließlich normale Spieler
 
 Jeder Besucher kann über **Neues Konto erstellen** einen Benutzernamen, ein Passwort, einen Anzeigenamen und einen Leitstellennamen festlegen. Kein Einladungscode, keine Freigabe und kein externes Konto. Auch das erste registrierte Konto erhält ausschließlich normale Spielerrechte. Bestehende Administratoren werden beim ersten Start nach dem Update automatisch in normale Spieler umgewandelt: Kontokennung, Passwort-Hash, Wachen, Fahrzeuge, Geld und Fortschritt bleiben erhalten. Frühere Admin-Sitzungen werden einmalig widerrufen; anschließend mit den bisherigen Zugangsdaten neu anmelden.
 
@@ -27,7 +31,7 @@ Stoppen → Aktualisieren → erfolgreichen Build abwarten → Start. Vorhandene
 
 ## Daten und Betrieb
 
-Datenbankschema 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Kein älteres Programm gegen Schema 2 starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
+Die Migration von Schema 1 auf 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Schema 3 ergänzt getrennte Einzelspielerstände mit eigener Sicherung vor der Migration. Kein älteres Programm gegen die aktuelle Datenbank starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
 
 Automatische Datenbanksicherungen stündlich und beim sauberen Stoppen bleiben erhalten. Serverwartung erfolgt ausschließlich mit Serverzugriff in AMP beziehungsweise über die optionale Offline-CLI, niemals über privilegierte Spielkonten. Keine Verwaltungsrechte werden an normale Spieler weitergereicht.
 

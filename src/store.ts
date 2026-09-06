@@ -4,8 +4,10 @@ import type { Save } from "./model";
 import type { ServerAction } from "../server/actions";
 import type { Action } from "./engine";
 import { setNetwork, resetNetwork, receiveChat } from "./network";
+import type { GameMode } from "./mode";
 import { createId } from "./ids";
 export interface Snapshot {
+  mode: GameMode;
   save: Save | null;
   loading: boolean;
   readonly: boolean;
@@ -14,6 +16,15 @@ export interface Snapshot {
   user: { id: string; username: string; role: string } | null;
 }
 let snapshot: Snapshot = {
+  mode: (() => {
+    try {
+      return sessionStorage.getItem("lv-mode") === "single"
+        ? "single"
+        : "multi";
+    } catch {
+      return "multi";
+    }
+  })(),
   save: null,
   loading: true,
   readonly: true,
@@ -50,12 +61,13 @@ function clear() {
   resetNetwork();
   emit({ save: null, user: null, readonly: true, loading: false });
 }
-export async function api(path: string, data?: unknown) {
+export async function api(path: string, data?: unknown, mode = snapshot.mode) {
   const r = await fetch(`/api/${path}`, {
     method: data === undefined ? "GET" : "POST",
     credentials: "same-origin",
     cache: "no-store",
     headers: {
+      "X-Game-Mode": mode,
       ...(data === undefined
         ? {}
         : { "Content-Type": "application/json", "X-CSRF-Token": csrf }),
@@ -70,16 +82,21 @@ export async function api(path: string, data?: unknown) {
   return result;
 }
 function accept(data: {
+  mode: GameMode;
   save: Save;
   network: Parameters<typeof setNetwork>[0];
 }) {
+  if (data.mode !== snapshot.mode) return;
   if (!snapshot.user || data.save.player.id !== snapshot.user.id) return;
-  if (!snapshot.save || data.save.revision >= snapshot.save.revision)
+  if (!snapshot.save || data.save.revision >= snapshot.save.revision) {
     emit({ save: data.save });
-  setNetwork(data.network);
+    setNetwork(data.network);
+  }
 }
 export async function refresh() {
-  const data = await api("me");
+  const mode = snapshot.mode;
+  const data = await api("me", undefined, mode);
+  if (mode !== snapshot.mode) return;
   csrf = data.csrf;
   emit({ user: data.user, save: data.save, loading: false, error: "" });
   setNetwork(data.network);
@@ -90,11 +107,15 @@ export async function refresh() {
       // Keep the server's strict Origin, session and CSRF checks unchanged.
       transports: ["websocket", "polling"],
       tryAllTransports: true,
-      auth: (cb) => cb({ csrf }),
+      auth: (cb) => cb({ csrf, mode }),
       withCredentials: true,
     });
     socket.on("connect", () =>
-      emit({ readonly: false, error: "", notice: "Mit Spielserver verbunden." }),
+      emit({
+        readonly: false,
+        error: "",
+        notice: "Mit Spielserver verbunden.",
+      }),
     );
     socket.on("disconnect", (reason) => {
       emit({
@@ -139,16 +160,17 @@ export async function logout(all = false) {
 export async function command(action: ServerAction | Action) {
   if (snapshot.readonly || !socket?.connected)
     throw Error("Keine Serververbindung. Aktion wurde nicht ausgeführt.");
-  const id = createId();
+  const id = createId(),
+    mode = snapshot.mode;
   let result;
   try {
-    result = await api("action", { id, action });
+    result = await api("action", { id, action }, mode);
   } catch (e) {
     if (!(e instanceof TypeError)) throw e;
-    result = await api("action", { id, action });
+    result = await api("action", { id, action }, mode);
   }
   accept(result);
-  emit({ error: "" });
+  if (mode === snapshot.mode) emit({ error: "" });
 }
 export const act = (action: ServerAction | Action) =>
   command(action).catch((e) => emit({ error: e.message }));
@@ -191,4 +213,35 @@ if (typeof window !== "undefined") {
     socket?.disconnect();
   });
   window.addEventListener("online", () => socket?.connect());
+}
+
+export async function switchMode(mode: GameMode) {
+  if (mode === snapshot.mode) return;
+  const previous = socket;
+  socket = null;
+  previous?.removeAllListeners();
+  previous?.disconnect();
+  resetNetwork();
+  emit({
+    mode,
+    save: null,
+    readonly: true,
+    loading: true,
+    error: "",
+    notice: "",
+  });
+  try {
+    sessionStorage.setItem("lv-mode", mode);
+  } catch {
+    /* Mode still works without browser storage. */
+  }
+  try {
+    await refresh();
+  } catch (e) {
+    emit({
+      loading: false,
+      error:
+        e instanceof Error ? e.message : "Modus konnte nicht geladen werden.",
+    });
+  }
 }

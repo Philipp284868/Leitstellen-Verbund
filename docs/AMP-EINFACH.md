@@ -2,6 +2,8 @@
 
 **Jeder erstellt sein eigenes normales Spielerkonto direkt auf der Spielwebsite. Es gibt keine Admin-Konten und keine Einladungen mehr.** Diese Anleitung ersetzt das frühere Admin-Dateiverfahren aus Version 2.1.
 
+Version 2.3 bietet im Hauptmenü **Einzelspieler** und **Multiplayer** mit getrennten Wachen und Guthaben. Bestehender Besitz bleibt im Multiplayer. [Alle Änderungen](VERSION-2.3.md).
+
 ## Update
 
 In der vorhandenen Instanz bleiben Branch `main`, Node.js 24, `npm Install Type: None`, Setup `node scripts/amp-setup.mjs` und App Name `dist/server/index.js` eingestellt. Spiel stoppen, Aktualisieren, erfolgreichen Build abwarten und starten. `.env` und den dauerhaften Datenordner behalten. Keine zusätzlichen Dateien hochladen, kein SSH und kein Wechsel der Startdatei.

@@ -469,6 +469,7 @@ export function tick(
   wall: number,
   remote: Record<string, Skills> = {},
   offline = false,
+  allowGeneration = true,
 ) {
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
@@ -585,5 +586,5 @@ export function tick(
     s.missions = s.missions.filter((m) => m.phase !== "done");
   }
   s.time = end;
-  if (!offline && s.time >= s.nextMission) generate(s);
+  if (allowGeneration && !offline && s.time >= s.nextMission) generate(s);
 }

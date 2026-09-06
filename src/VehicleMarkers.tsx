@@ -5,10 +5,12 @@ export const VehicleMarkers = memo(function VehicleMarkers({
   vehicles,
   time,
   speed,
+  routes = true,
 }: {
   vehicles: Vehicle[];
   time: number;
   speed: number;
+  routes?: boolean;
 }) {
   const elements = useRef(new Map<string, SVGGElement>());
   useEffect(() => {
@@ -41,14 +43,16 @@ export const VehicleMarkers = memo(function VehicleMarkers({
           const p = along(v.path, (time - v.depart) / (v.arrive - v.depart));
           return (
             <g key={v.id}>
-              <polyline
-                points={v.path.map((p) => `${p.x},${p.y}`).join(" ")}
-                fill="none"
-                stroke="#80dacf"
-                strokeWidth="3"
-                opacity=".6"
-                strokeDasharray="5 5"
-              />
+              {routes && (
+                <polyline
+                  points={v.path.map((p) => `${p.x},${p.y}`).join(" ")}
+                  fill="none"
+                  stroke="#80dacf"
+                  strokeWidth="3"
+                  opacity=".6"
+                  strokeDasharray="5 5"
+                />
+              )}
               <g
                 ref={(node) => {
                   if (node) elements.current.set(v.id, node);

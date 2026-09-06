@@ -2,13 +2,17 @@
 
 Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder mit einem vorhandenen Konto anmelden. Jeder kann sich ohne Einladung registrieren. Alle Konten sind normale Spieler. Eigener Besitz wird auf dem Server gespeichert; alle Konten verbinden sich automatisch. Frühere Admin-Konten bleiben mit denselben Zugangsdaten und Spielständen als normale Spieler erhalten.
 
+## Einzelspieler und Multiplayer
+
+Im Hauptmenü den Modus wählen. Beide Welten verwenden dasselbe Konto, aber getrennten Besitz und Fortschritt. Dein bisheriger Stand bleibt im Multiplayer; Einzelspieler startet separat. Beide Modi benötigen die Serververbindung.
+
 ## Einstieg und Disposition
 
 Die erste Feuerwache kostet 55.000 Credits. Ein TSF-W kostet 18.000 Credits und benötigt sechs Mitarbeiter. Personal kostet einmalig 600 Credits je Person. Zwei TSF-W samt Besatzung und Wache lassen 151.800 Credits Reserve. Die Wache baut 25 Spielsekunden; die frei wählbare Geschwindigkeit beträgt 1×, 4×, 8×, 16× oder 32×.
 
 Wache auf einer Kreuzung platzieren, öffnen und Fahrzeuge kaufen. Personal einstellen und im Fuhrpark **Besetzen** wählen. Ein Fahrzeug ohne ausreichende, freie und passend ausgebildete Besatzung ist nicht alarmierbar. Fahrzeugzuweisung, Rückruf und Verkauf prüfen den tatsächlichen Zustand erneut.
 
-Die Einsatzliste enthält höchstens acht regulär erzeugte offene Einsätze. Angeboten werden Lagen, deren Fähigkeiten der eigene Fuhrpark grundsätzlich besitzt. Belegte Fahrzeuge verhindern nicht, dass der entsprechende Einsatztyp weiter existiert. Zusätzliche Organisationen und Ausbildung eröffnen anspruchsvollere Lagen.
+Die Einsatzliste enthält höchstens zwei regulär erzeugte offene Einsätze je Welt. Angeboten werden Lagen, deren Fähigkeiten der eigene Fuhrpark grundsätzlich besitzt. Belegte Fahrzeuge verhindern nicht, dass der entsprechende Einsatztyp weiter existiert. Zusätzliche Organisationen und Ausbildung eröffnen anspruchsvollere Lagen. Neue Meldungen kommen einzeln mit 90–210 echten Sekunden Abstand, unabhängig vom Spieltempo. Bereits bestehende größere Einsatzlisten bleiben erhalten und werden zuerst abgearbeitet. Neue Multiplayer-Einsätze sind automatisch im Verbund sichtbar.
 
 Am Einsatz werden Fähigkeiten summiert, nicht bloß Fahrzeugzahlen. Ein Polizeifahrzeug kann keinen Brand löschen. Die Disposition zeigt Anforderung und aktuelle Menge sowie Stillstand. Alarmierungsvorlagen speichern Typzusammenstellungen; verfügbare passende Fahrzeuge werden beim Abruf ausgewählt. Favoriten und Namensfilter helfen im Fuhrpark.
 
