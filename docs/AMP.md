@@ -1,123 +1,85 @@
-# Leitstellen-Verbund auf CubeCoders AMP
+# Leitstellen-Verbund auf CubeCoders AMP – Version 2.2
 
-## Einfachstart ab Version 2.1
+## Normale Spielerkonten für alle
 
-**Die erste Admin-Einrichtung benötigt kein SSH und keine zusätzliche Startdatei mehr.** Nach Installation normal `dist/server/index.js` starten. Bei leerer Datenbank entstehen das Konto `philipp` und eine private, bearbeitbare `admin-konto.json` automatisch. Vorhandene Administratoren werden unverändert übernommen.
+Ab Version 2.2 ist die Registrierung offen. Auf der Spielwebsite **Neues Konto erstellen** wählen. Kein Einladungscode, keine Admin-Ersteinrichtung und keine zusätzliche Startdatei. Auch das erste Konto ist nur Spieler. Bestehende Administratoren werden in normale Spieler umgewandelt, ohne Kontokennung, Passwort-Hash oder Spielstand zu verändern. Ihre bisherigen Sitzungen werden einmalig widerrufen. `admin-konto.json` wird nicht mehr verarbeitet oder neu erzeugt. Normale Spieler erhalten keinen Zugriff auf Serverwartung oder fremde Daten.
 
-Die kurze Anleitung für Betreiber steht in **[AMP-EINFACH.md](AMP-EINFACH.md)**. Sie beschreibt Anmelden sowie spätere Änderungen an Benutzername, Passwort, Anzeigename und Leitstellenname. Die frühere Datei `amp-admin-einrichten.mjs` wird nicht mehr benötigt. Sie nicht als App Name stehen lassen.
+## AMP-Einträge
 
-## Exakte App-Runner-Einträge
-
-| AMP-Feld | Eintrag |
+| Feld | Wert |
 | --- | --- |
-| Node.js Release Stream | **24** |
+| App Download Type | Git repo |
+| App Download Source | `https://github.com/Philipp284868/Leitstellen-Verbund.git` |
+| Git Repo Branch | `main` |
+| Node.js Release Stream | 24 |
 | Node.js Version | leer |
-| npm Install Type | **None** |
-| Run App Setup Commands | **aktiviert** |
-| App Setup Commands | **`node scripts/amp-setup.mjs`** |
-| App Name | **`dist/server/index.js`** |
-| App Installation Location | **leer** |
-| Run App Pre-start Commands | **deaktiviert** |
+| npm Install Type | None |
+| Run App Setup Commands | aktiviert |
+| App Setup Commands | `node scripts/amp-setup.mjs` |
+| App Name | `dist/server/index.js` |
+| App Installation Location | leer |
+| Run App Pre-start Commands | deaktiviert |
 
-Arbeitsverzeichnis ist die Repository-Wurzel mit `package.json`, `.env` und `scripts/`. Repository: `Philipp284868/Leitstellen-Verbund`. Den freigegebenen Serverbranch verwenden; bis zum Merge des Server-Umbaus ist das nicht `main`. Kein Vite-Dev- oder Previewserver gehört zum Produktionsbetrieb.
+`main` enthält den freigegebenen Stand; `dev` dient der Entwicklung. Ein neuer Commit wird nicht automatisch auf einer laufenden AMP-Instanz installiert. Stoppen → Aktualisieren → erfolgreichen Setup-/Buildabschluss abwarten → Start. Arbeitsverzeichnis ist die Repository-Wurzel mit `package.json`, `.env` und `scripts/`.
 
-Das Setup startet allein mit Node 24, lädt pnpm 11.19.0 versionsgebunden aus der npm-Registry, prüft dessen SHA-512-Paketintegrität und entpackt es unter `.tools/`. Danach folgen `pnpm install --frozen-lockfile --prod=false` und der Build einschließlich Frontend-Werkzeugen, auch bei `NODE_ENV=production`. Fehler führen zu einem Fehlercode. `.env` und vorhandene Spieldaten werden nicht gelöscht. Für Setup/Updates ist Zugriff auf die Paketregistry erforderlich.
-
-Ergebnis: `dist/server/index.js`, `dist/server/cli.js` und `dist/client/`. Runtime-Abhängigkeiten bleiben in `node_modules/`; nicht nur einzelne Serverdateien kopieren.
+Das Setup benötigt Node 24, lädt die festgelegte pnpm-Version unter `.tools/`, installiert mit der Lockdatei einschließlich Build-Werkzeugen und baut `dist/server/index.js`, `dist/server/cli.js` sowie `dist/client/`. Es überschreibt keine vorhandene `.env` und löscht keine Spieldaten. Runtime-Abhängigkeiten bleiben in `node_modules`; nicht nur einzelne Serverdateien hochladen. Kein Vite-Dev- oder Previewserver wird für den Produktivbetrieb eingesetzt.
 
 ## Konfiguration und dauerhafte Daten
 
-Bei neuer Installation `.env.example` nach `.env` kopieren. Eine vorhandene `.env` behalten. Die Anwendung lädt die Datei aus der Programmwurzel ausdrücklich; bereits gesetzte Umgebungsvariablen haben Vorrang. Beispiel für einen lokalen Reverse Proxy, keine ermittelten Serverwerte:
+Bei neuer Installation `.env.example` nach `.env` kopieren. Vorhandene `.env` behalten. Die Anwendung lädt sie aus der Programmwurzel; bereits gesetzte Umgebungsvariablen haben Vorrang. Beispiel hinter einem lokalen Reverse Proxy, keine ermittelten Serverwerte:
 
 ```dotenv
 HOST=127.0.0.1
-PORT=8080
+PORT=7777
 PUBLIC_URL=https://leitstelle.example.org
 DATA_DIR=/srv/leitstellen-data
 TRUSTED_PROXIES=127.0.0.1,::ffff:127.0.0.1
 ALLOW_HTTP=false
 ```
 
-`PORT` muss dem tatsächlich zugewiesenen internen AMP-Anwendungsport entsprechen, nicht dem AMP-Verwaltungsport. `PUBLIC_URL` ist die Browseradresse ohne Unterpfad, Benutzerinformationen oder Query. Frontend, `/api/` und `/socket.io/` liegen unter dieser Adresse. Nur für einen bewusst privaten HTTP-Test `ALLOW_HTTP=true` setzen; dies ist keine Firewall und schränkt die Erreichbarkeit nicht selbst ein.
+`PORT` muss zum tatsächlich zugewiesenen internen AMP-Anwendungsport passen, nicht zum AMP-Verwaltungsport. `PUBLIC_URL` ist die genaue Browseradresse ohne Unterpfad, Benutzerinformationen oder Query. Website, `/api/` und `/socket.io/` liegen unter dieser Adresse. Die vorhandene ausdrückliche HTTP-Testausnahme ändert weder Erreichbarkeit noch Verschlüsselung. Für öffentliche Anmeldung HTTPS verwenden; dieses Update fügt keinen HTTPS-Webserver hinzu und behebt keine davon unabhängigen HTTP-Browserprobleme.
 
-Bei leerem `DATA_DIR` verwendet der Server `leitstellen-data` neben dem Programmordner. Alternativ einen absoluten dauerhaften Datenpfad eintragen. Innerhalb des Programmverzeichnisses liegende Datenpfade werden auch nach Symlink-Auflösung abgelehnt. Der tatsächliche App-Benutzer benötigt Schreibrechte; nicht pauschal allen Benutzern Rechte geben.
+Bei leerem `DATA_DIR` verwendet der Server `leitstellen-data` neben dem Programmordner. Alternativ einen absoluten dauerhaften Datenpfad eintragen. Daten innerhalb des Programmordners werden auch nach Symlink-Auflösung abgelehnt. Nur dem tatsächlichen App-Benutzer Schreibrechte geben. Bei Containern muss der Datenordner dauerhaft vom Host eingebunden sein, beispielsweise Host `/srv/leitstellen-data` nach Container `/data/leitstellen`. Auch der Standardordner muss dauerhaft gemountet sein. Ein Wechsel des Datenpfads ist kein Update und würde eine andere Datenbank verwenden.
 
-Bei AMP-Containern muss der Datenordner in dauerhaftem Hostspeicher liegen. Beispiel: Host `/srv/leitstellen-data` nach Container `/data/leitstellen` einbinden und dort `DATA_DIR=/data/leitstellen` verwenden. Auch beim Standardordner muss dessen übergeordnetes Verzeichnis dauerhaft gemountet sein. Unter Windows ist beispielsweise `D:/Spielserverdaten/Leitstellen` möglich.
+## Migration auf Schema 2
 
-Die Daten umfassen `game.sqlite`, im Betrieb gegebenenfalls WAL/SHM-Dateien, `backups/`, Vor-Migrationssicherungen und `server.lock`. Daten, `.env`, `.tools/`, private Admin-Konfiguration und Sicherungen gehören nicht in Git. Backups werden nicht automatisch gelöscht; eine Aufbewahrungsfrist und eine externe Sicherungskopie einplanen. Bei einem Wechsel des Programmverzeichnisses `.env` und die aktuelle private Admin-Konfiguration kontrolliert mitnehmen.
+Vor der Änderung einer vorhandenen Datenbank entsteht eine konsistente Datei `pre-migration-v2-*.sqlite` im Datenordner. Rollenänderung, Widerruf früherer Admin-Sitzungen, Entfernung alter Einladungen und Admin-Auftragsmetadaten sowie Schemawechsel erfolgen transaktional. Wachen, Fahrzeuge, Geld, Personal, Fortschritt, Kontokennung, Benutzername und Passwort-Hash werden dabei nicht umgeschrieben. Datenbankregeln verhindern nachträgliches Einfügen oder Hochstufen von Adminrollen. Ein fehlgeschlagener Migrationsschritt wird zurückgerollt; die Anwendung öffnet dann keinen Spielport.
+
+Keine alte Programmversion gegen Schema 2 starten. Ein Rollback benötigt die passende alte Software und deren konsistente Sicherung zusammen. Frühere Adminrechte können in historischen Sicherungen vorhanden sein, werden aber beim Restore mit Version 2.2 vor dem Spielbetrieb wieder entfernt.
+
+Die Datei `admin-konto.json` sowie `ADMIN-ZUGANG.txt` und die frühere Hilfsdatei werden nicht mehr benötigt oder ausgewertet. Sie werden nicht automatisch gelöscht, damit keine privaten Nutzerdaten ungefragt verschwinden. Eventuell enthaltene alte Klartextpasswörter privat sichern beziehungsweise entfernen; niemals veröffentlichen. `.gitignore` und die HTTP-Auslieferungsbeschränkungen bleiben auch für diese Dateinamen bestehen.
 
 ## Netzwerk und HTTPS
 
-Im Container normalerweise `HOST=0.0.0.0`, damit die Portweiterleitung die Anwendung erreicht. Beispiel mit Bridge-Netz: Container `8080/tcp` nach Host `127.0.0.1:18080`; die App behält `PORT=8080`, der Reverse Proxy spricht `127.0.0.1:18080` an. Im Linux-Host-Netzwerkmodus gibt es diese Portübersetzung nicht. Bei Betrieb auf demselben Host wie der Proxy kann Node an `127.0.0.1` gebunden bleiben. Nur den Proxy öffentlich zugänglich machen.
+Im Container mit Bridge-Netz normalerweise `HOST=0.0.0.0`, damit die Portweiterleitung ankommt. Im Linux-Host-Netzwerkmodus ist keine Portübersetzung nötig. Ein Reverse Proxy leitet Website, API, WebSocket-Upgrades und Socket.IO-Long-Polling an den tatsächlichen Spielport weiter. Bei Betrieb auf demselben Host kann Node an Loopback gebunden werden; öffentlich nur den Proxy erreichbar machen. AMP-Verwaltungszugang bleibt getrennt.
 
-Beispiel für einen vorhandenen Nginx-HTTPS-VHost; TLS-Zertifikat und DNS separat einrichten:
+`TRUSTED_PROXIES` enthält ausschließlich unmittelbare Proxy-IP-Adressen, wie Node sie sieht. Eine leere Liste vertraut niemandem. Nur von diesen Adressen wird `X-Real-IP` berücksichtigt; der Proxy muss den Header überschreiben. `X-Forwarded-For` und `X-Forwarded-Proto` werden nicht pauschal vertraut. Cookie-Sicherheit richtet sich nach HTTPS in `PUBLIC_URL`. Private API- und Socketantworten nicht cachen.
 
-```nginx
-location / {
-    proxy_pass http://127.0.0.1:18080;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_read_timeout 75s;
-    proxy_buffering off;
-}
-```
+## Sicherungen und Offline-Werkzeuge
 
-WebSocket-Upgrades und Socket.IO-Long-Polling weiterleiten, private API-/Socket-Antworten nicht cachen. `TRUSTED_PROXIES` enthält nur die unmittelbaren Proxy-IP-Adressen, wie Node sie sieht; eine leere Liste vertraut niemandem. Der Proxy muss `X-Real-IP` überschreiben. `X-Forwarded-For` und `X-Forwarded-Proto` werden nicht pauschal vertraut. Sichere Cookies richten sich nach der HTTPS-`PUBLIC_URL`.
+Die stündlichen konsistenten SQLite-Sicherungen und die Sicherung beim sauberen Stopp bleiben erhalten. Die ehemalige Admin-Schaltfläche ist entfernt und wird nicht für normale Spieler freigeschaltet. Backups werden nicht automatisch gelöscht; Speicherbedarf und Aufbewahrungsfrist überwachen und Kopien auf getrenntem Speicher anlegen. Eine laufende `game.sqlite` nicht allein kopieren, solange WAL aktiv sein kann.
 
-## Einladungen und optionale CLI
-
-Nach Anmeldung unter **Einstellungen → Serververwaltung → Einladung erstellen** einen einmaligen Code erzeugen. Er gilt drei Tage. Freunde registrieren sich über **Mit Einladung registrieren** mit eigenen Zugangsdaten. Einladungen erzeugen normale Spieler, keine Administratoren. Passwortwechsel und Abmelden aller Sitzungen sind im Spiel möglich.
-
-Die CLI bleibt für besondere Offline-Verwaltung verfügbar. Sie darf nicht gleichzeitig mit dem Server auf dasselbe Datenverzeichnis zugreifen. Für die normale Admin-Ersteinrichtung stattdessen den oben beschriebenen Einfachstart verwenden. Ein Administrator kann auf einer noch leeren Datenbank weiterhin explizit angelegt werden, etwa in Bash im Programmverzeichnis unter demselben Benutzer/Container und mit Node 24:
-
-```bash
-(
-  read -r -s -p 'Administratorpasswort (12–128 Zeichen): ' LV_ADMIN_PASSWORD || exit 1
-  printf '\n'
-  printf '%s' "$LV_ADMIN_PASSWORD" | node dist/server/cli.js admin-create --username meinadmin --name 'Administration' --station 'Leitstelle Zentrale' --password-stdin
-)
-```
-
-Für Windows oder komplexere Betriebsaufgaben die CLI mit Passwort über Standardeingabe statt über Befehlsargumente aufrufen. Keine Passwörter in Logs oder GitHub schreiben. Ein vorhandener CLI-Administrator wird beim nächsten normalen Start in der privaten Datei zugeordnet und nicht überschrieben.
-
-## Sicherung und Wiederherstellung
-
-SQLite verwendet WAL und synchrone Transaktionen. Vor Schemaänderungen entstehen konsistente Sicherungen; fehlgeschlagene Migrationen werden zurückgerollt. Neuere Datenbankschemata nicht mit älterem Code öffnen. Erfolgreiche Spielaktionen und Belohnungen sind transaktional gespeichert.
-
-Im laufenden Spiel erstellt **Datenbanksicherung erstellen** eine konsistente Sicherung; zusätzlich sichert der Server stündlich und beim sauberen Stoppen. Eine laufende `game.sqlite` nicht allein kopieren, solange WAL aktiv sein kann. Für Offline-Verwaltung bei gestopptem Server:
+Nur mit Serverzugriff, bei gestoppter Anwendung, unter demselben Benutzer beziehungsweise Container und im selben Programmordner:
 
 ```bash
 node dist/server/cli.js backup
 node dist/server/cli.js restore --file /srv/leitstellen-data/backups/game-ZEIT-ID.sqlite --confirm
 ```
 
-Restore prüft Integrität, Schema und Kontobesitz, sichert den bisherigen Stand und ersetzt die Datenbank. Sitzungen werden widerrufen. Die gesamte Welt wird auf den Sicherungszeitpunkt zurückgesetzt, nicht zusammengeführt. Danach auch die private Admin-Datei kontrollieren; eine alte ausstehende Dateiänderung darf nicht versehentlich als neuer Passwortauftrag verwendet werden.
+Restore prüft Integrität, Schema und Kontobesitz, sichert den bisherigen Stand, widerruft Sitzungen und ersetzt die Datenbank. Sicherungen der Schemata 1 und 2 werden unterstützt; ältere Adminrollen aus Schema 1 werden wieder zu Spielern migriert. Eine Wiederherstellung setzt die gesamte Welt zurück, sie führt keine Spielstände zusammen. Die optionale `player-create`-CLI legt ausschließlich einen normalen Spieler an und benötigt das Passwort über `--password-stdin`; für reguläre Nutzer ist sie nicht nötig. `admin-create` und `invite` werden ausdrücklich abgelehnt.
 
-AMP soll SIGTERM oder SIGINT zustellen und mindestens 30 Sekunden für den Stopp gewähren. Nach einem harten Abbruch kann ein Lock zurückbleiben. Nur nachdem der vorherige Prozess wirklich beendet ist:
-
-```bash
-node dist/server/cli.js unlock --confirm
-```
-
-Das Werkzeug entfernt das Lock nur, wenn die gespeicherte PID nachweislich nicht mehr existiert. Bei unklaren Rechten oder PID-Wiederverwendung verweigert es die Freigabe. Nach Containerwechsel den alten Prozesszustand separat prüfen. Datenbank oder WAL dafür nicht löschen.
-
-## Alte Browserstände übernehmen
-
-Dateivorschau im Browser bucht kein Geld und ersetzt keinen Serverstand. Für eine bewusst genehmigte Übernahme zunächst Zielkonto anlegen, alle aktiven Aufträge und fremde Unterstützung dazu beenden und den Server stoppen:
+Für genehmigte alte Browserstände: Zielkonto zuerst im Spiel erstellen, sämtliche aktiven Aufträge des Kontos und fremde Unterstützung beenden, dann Server stoppen:
 
 ```bash
 node dist/server/cli.js legacy-import --username zielkonto --file /privater/pfad/altstand.json --confirm-replace-and-reset-active
 ```
 
-Die CLI validiert Version, Größenlimit von 8 MB, Referenzen, Fähigkeiten, Besitz und Kapazitäten und sichert vor der Änderung die Datenbank. Kontokennung und Name bleiben erhalten, Objekt-IDs werden neu vergeben. Besitz, Guthaben, Personal und Fortschritt werden ersetzt. Aktive Einsätze, Archiv, Patientenbelegungen und P2P-Belege werden verworfen, Fahrzeuge zurückgesetzt. Der Schalter bestätigt diesen Neustart aktiver Vorgänge. Die Quelle bleibt unverändert; Zielkontositzungen werden widerrufen. Ein solcher Import ist eine ausdrückliche Vertrauensentscheidung, keine Echtheitsprüfung alter Spieldaten.
+Vorher erfolgt eine Datenbanksicherung. Format, Version, maximal 8 MB, Referenzen und Besitz werden geprüft. Kontokennung und Kontoname bleiben erhalten. Besitz und Fortschritt werden ersetzt; aktive Einsätze, Archiv, Patientenbelegungen und alte P2P-Belege werden verworfen, Fahrzeuge zurückgesetzt. Das ist eine ausdrückliche Betreiberentscheidung, kein öffentlicher Importendpunkt.
 
-## Updates und Betriebsgrenzen
+AMP soll SIGTERM oder SIGINT zustellen und mindestens 30 Sekunden für den Stopp lassen. Nach einem harten Abbruch kann ein Lock zurückbleiben. Erst nach Prüfung, dass der alte Prozess wirklich beendet ist, `node dist/server/cli.js unlock --confirm` ausführen. Das Werkzeug verweigert Freigabe bei unklarem Prozessstatus. Datenbank oder WAL nicht zur Fehlerbehebung löschen.
 
-Vor Änderungen sichern. In AMP stoppen, den freigegebenen Serverbranch aktualisieren, erfolgreichen Setup-/Buildabschluss abwarten und starten. `.env`, Admin-Datei und dauerhaften Datenordner behalten. Danach `/api/health`, Anmeldung, Besitz und einen gemeinsamen Einsatz prüfen. Keine automatische Aktualisierung mitten im laufenden Spiel erzwingen.
+## Betrieb und Grenzen
 
-Die bisherige Pages-Seite erst nach erfolgreicher eigener Inbetriebnahme und Export alter Browserstände deaktivieren. Das Entfernen eines Workflows löscht keine Browserdaten. Ein GitHub-Zugriff ist kein Zugriff auf das private AMP-Netzwerk.
+Eine Node-Instanz pro Datenverzeichnis, kein Cluster. Bei Stillstand werden höchstens vier Stunden nachberechnet. Ohne Serververbindung werden keine Online-Aktionen bestätigt. Offene Registrierung ist durch Eingabevalidierung, persistente Anmelde- und Registrierungsratenlimits sowie begrenzte gleichzeitige Passwortberechnung abgesichert, nicht gegen jeden verteilten Missbrauch. Passwort-Hashes, Sitzungen, CSRF-/Origin-Prüfungen und Eigentumsprüfungen bleiben bestehen.
 
-Eine Node-Instanz pro Datenverzeichnis, kein Clusterbetrieb. Bei Stillstand werden maximal vier Stunden nachberechnet. Ohne Verbindung zum Server gibt es keine bestätigten Online-Aktionen. Private Guthaben, Personal und Sicherungen werden anderen Spielern nicht übertragen. Für tatsächlich durchgeführte Prüfungen die zum Commit gehörenden CI-Ergebnisse und `TESTBERICHT.md` heranziehen.
+Ein GitHub-Update installiert nichts selbstständig auf dem privaten AMP-Server und konfiguriert keinen Router, DNS oder TLS. Maßgeblich für ausgeführte Tests sind die CI-Ergebnisse des jeweiligen Commits. Frühere Testberichte beschreiben frühere Versionen.
