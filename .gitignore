@@ -18,3 +18,7 @@ server.lock
 /admin-konto.json.*.tmp
 /ADMIN-ZUGANG.txt
 /amp-admin-einrichten.mjs
+
+# Local one-use maintenance receipts; never activation through GitHub.
+hard-reset-*.json
+hard-reset-*.json.tmp
