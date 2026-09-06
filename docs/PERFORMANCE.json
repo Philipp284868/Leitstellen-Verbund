@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-06T10:04:37.830Z",
+  "platform": "win32",
+  "node": "v24.19.0",
+  "buildings": 100,
+  "vehicles": 300,
+  "people": 1800,
+  "missions": 50,
+  "jsonBytes": 439465,
+  "validationMs": 20,
+  "simulationMs": 2
+}
