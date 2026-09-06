@@ -12,6 +12,7 @@ import { Database } from "./database";
 import { Auth, verifyPassword, usernameSchema, passwordSchema } from "./auth";
 import { Game } from "./game";
 import { acquireLock } from "./lock";
+import { prepareAdminFile, clearInitialAdminPassword } from "./admin-file";
 
 const loginSchema = z
   .object({ username: usernameSchema, password: passwordSchema })
@@ -139,6 +140,7 @@ export function startServer(
             if (!(await verifyPassword(data.password, encoded)) || !row)
               return reply(res, 401, { error: "Anmeldung fehlgeschlagen." });
             id = String(row.id);
+            await clearInitialAdminPassword(db, root, id);
           }
           const issued = auth.issue(id);
           res.setHeader("Set-Cookie", cookie(issued.value));
@@ -400,6 +402,7 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   const c = config(),
     app = startServer(c);
   try {
+    await prepareAdminFile(app.db, root);
     await app.listen();
   } catch (e) {
     await app.close();
