@@ -1,6 +1,10 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
-## Version 2.4.0: natürlich gewachsene Region statt Straßenraster
+## Version 2.5.0: Musik und Spielsound
+
+Die eigene Hintergrundmusik „Nachtschicht“ und dezente Ereignisklänge begleiten die Leitstelle. Musik und Effekte sind einzeln regelbar; der Lautsprecher schaltet alles stumm. Der Ton startet nach Interaktion und pausiert in inaktiven Tabs. Keine externen Audiodienste oder Downloads notwendig. [Klang, Bedienung und Update](docs/AUDIO.md).
+
+## Natürlich gewachsene Region statt Straßenraster
 
 Die Spielkarte besitzt ein vollständig neues, geschwungenes Straßennetz: Altstadt, Wohnviertel, Dörfer, Felder, Wald und Seeufer. Fahrzeuge nutzen die dargestellten Straßen. Vorhandene Standorte und laufende Fahrten werden mit einer vorherigen Sicherung auf die neue Karte übertragen. [Karte und Update auf Schema 4](docs/VERSION-2.4.md).
 

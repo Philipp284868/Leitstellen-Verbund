@@ -1,0 +1,100 @@
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 42px;
+  min-height: 42px;
+}
+.sound-settings {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid var(--hud-border, #354a55);
+  border-radius: 12px;
+  background: var(--hud-panel, #14262f);
+}
+.sound-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.sound-heading h3 {
+  margin: 5px 0;
+}
+.sound-status {
+  font-size: 13px;
+  color: var(--hud-muted, #abc0cb);
+}
+.sound-channel {
+  padding: 14px 0;
+  border-top: 1px solid var(--hud-border, #354a55);
+}
+.app .sound-channel > label:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+}
+.sound-channel > span {
+  display: block;
+  margin: 5px 0 12px;
+  color: var(--hud-muted, #abc0cb);
+  font-size: 12px;
+}
+.app .sound-volume {
+  display: grid;
+  grid-template-columns: 125px minmax(50px, 1fr) 44px;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.app .sound-volume input {
+  width: 100%;
+  min-height: 26px;
+  padding: 0;
+  accent-color: #ed966c;
+}
+.sound-volume output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sound-preview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sound-hint {
+  font-size: 12px;
+  color: var(--hud-muted, #abc0cb);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.light .sound-settings {
+  background: #f4f8f9;
+  border-color: #c5d7de;
+}
+.light .sound-status,
+.light .sound-hint,
+.light .sound-channel > span {
+  color: #526d7b;
+}
+@media (max-width: 760px) {
+  .app .sound-volume {
+    grid-template-columns: 1fr 44px;
+  }
+  .sound-volume input {
+    grid-column: 1;
+  }
+  .sound-volume output {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .sound-settings {
+    padding: 13px;
+  }
+  .in-game .topbar .sound-toggle {
+    min-width: 36px;
+    padding: 7px;
+  }
+}

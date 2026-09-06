@@ -1,3 +1,4 @@
+import { audio } from "./audio/controller";
 import { useSyncExternalStore } from "react";
 import type { Building, Vehicle, Mission } from "./model";
 import type { Point } from "./world";
@@ -40,6 +41,7 @@ export function resetNetwork() {
   update();
 }
 export function receiveChat(data: { name: string; text: string }) {
+  audio.cue("radio");
   net = { ...net, chat: [...net.chat, data].slice(-100) };
   update();
 }
