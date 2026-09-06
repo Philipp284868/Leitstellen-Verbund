@@ -14,7 +14,7 @@ Umgebung: Windows, Node.js 24.19.0, pnpm 11.19.0, Playwright 1.63.0 mit installi
 | Reproduzierbare pnpm-Installation, keine npm-Lockdatei        | Erfolgreich                                                           |
 | TypeScript strict und ESLint                                  | Erfolgreich                                                           |
 | Produktionsbuild                                              | dist/client, dist/server/index.js und dist/server/cli.js erzeugt      |
-| Vitest                                                        | **38 Tests in sechs Dateien erfolgreich**, ungefähr 4,9 Sekunden      |
+| Vitest                                                        | **39 Tests in sechs Dateien erfolgreich**, ungefähr 4,9 Sekunden      |
 | Reale Browserabnahme am gebauten Server                       | **Sechs Tests erfolgreich**, etwa 1,8 Minuten                         |
 | Direkter Node-Start der gebauten index.js                     | Erfolgreich, HTTP und API am konfigurierten .env-Port                 |
 

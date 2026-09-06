@@ -8,5 +8,5 @@
 - [x] Sichere Datenpfade, Migration, Backup, Restore und Stoppen
 - [x] Alte lokale Sicherungen erhalten, verbindlichen Import auf Administrator begrenzen
 - [x] Pages-Abschaltung im Branch vorbereiten und AMP-Einträge dokumentieren
-- [ ] Abschließende Browserprüfung und Pull Request
+- [x] Lokale Browserprüfung und Pull Request #2; aktueller CI-Status im PR
 - [ ] Tatsächliche private AMP-Inbetriebnahme durch Betreiber (kein Agentenzugriff)

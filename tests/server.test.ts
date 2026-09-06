@@ -71,6 +71,41 @@ async function server() {
   return { app, dir, origin, a, b, request, login };
 }
 describe("Autoritativer Server", () => {
+  it("überträgt fremde Fahrzeuge nur bei ausdrücklich freigegebenen Einsätzen", async () => {
+    const { app, a, b } = await server();
+    const s = established("Anna");
+    s.player.id = a;
+    for (const object of [...s.vehicles, ...s.buildings]) object.owner = a;
+    app.db.save(a, s);
+    app.game.step(5);
+    const mission = app.db.all().get(a)!.missions[0];
+    app.game.command(a, {
+      id: crypto.randomUUID(),
+      action: {
+        type: "dispatch",
+        mission: mission.id,
+        vehicles: [s.vehicles[0].id],
+      },
+    });
+    const hidden = app.game
+      .view(b, new Set())
+      .network.friends.find((f) => f.id === a)!;
+    expect(hidden.vehicles).toHaveLength(0);
+    expect(hidden.buildings).toHaveLength(0);
+    expect(hidden.missions).toHaveLength(0);
+    expect(hidden).not.toHaveProperty("money");
+    expect(hidden).not.toHaveProperty("people");
+    app.game.command(a, {
+      id: crypto.randomUUID(),
+      action: { type: "share", id: mission.id },
+    });
+    const shared = app.game
+      .view(b, new Set())
+      .network.friends.find((f) => f.id === a)!;
+    expect(shared.vehicles).toHaveLength(1);
+    expect(shared.buildings).toHaveLength(1);
+    expect(shared.missions).toHaveLength(1);
+  });
   it("liefert Client und API auf einem Port, ohne private Caches oder externe Ressourcen", async () => {
     const { origin, request } = await server();
     const r = await fetch(origin);

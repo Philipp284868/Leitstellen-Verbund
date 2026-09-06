@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-06T11:53:35.014Z",
+  "date": "2026-09-06T11:56:53.086Z",
   "platform": "win32",
   "node": "v24.19.0",
   "buildings": 100,
@@ -7,6 +7,6 @@
   "people": 1800,
   "missions": 50,
   "jsonBytes": 439465,
-  "validationMs": 25,
-  "simulationMs": 2
+  "validationMs": 22,
+  "simulationMs": 1
 }

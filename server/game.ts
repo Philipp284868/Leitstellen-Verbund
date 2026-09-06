@@ -258,6 +258,18 @@ export class Game {
     const saves = this.db.all(),
       save = saves.get(user);
     if (!save) throw Error("Spielstand fehlt.");
+    const sharedAssignment = (mission: string | null, owner: string) => {
+      if (!mission) return false;
+      if (mission.startsWith("remote:")) {
+        const [, coordinator, id] = mission.split(":");
+        return !!saves
+          .get(coordinator)
+          ?.missions.some((m) => m.id === id && m.shared);
+      }
+      return !!saves
+        .get(owner)
+        ?.missions.some((m) => m.id === mission && m.shared);
+    };
     const friends = Array.from(saves.values())
       .filter((s) => s.player.id !== user)
       .map((s) => ({
@@ -268,10 +280,12 @@ export class Game {
           : "Verbunden · Server simuliert (Browser offline)",
         revision: s.revision,
         buildings: s.buildings.filter((b) =>
-          s.vehicles.some((v) => v.home === b.id && v.mission),
+          s.vehicles.some(
+            (v) => v.home === b.id && sharedAssignment(v.mission, s.player.id),
+          ),
         ),
         vehicles: s.vehicles
-          .filter((v) => v.mission)
+          .filter((v) => sharedAssignment(v.mission, s.player.id))
           .map((v) => ({
             ...v,
             position: along(
