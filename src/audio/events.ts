@@ -1,4 +1,4 @@
-import type { Save } from "../model";
+import { level, type Save } from "../model";
 import type { GameMode } from "../mode";
 import type { Cue } from "./synth";
 /** Only changes between live, authoritative snapshots make a sound. */
@@ -26,7 +26,7 @@ export class AudioEvents {
     }
     if (save.revision <= before.revision) return null;
     this.previous = save;
-    if (Math.floor(save.xp / 150) > Math.floor(before.xp / 150)) return "level";
+    if (level(save) > level(before)) return "level";
     const receipts = new Set(before.receipts),
       archive = new Set(before.archive.map((m) => m.id));
     if (

@@ -89,6 +89,12 @@ it("unterscheidet Alarmierung, Ankunft, Rückkehr, Bau und Erfolg, ohne Sammelme
   next = update(s);
   next.xp += 150;
   expect(events.observe(next, "multi", true)).toBe("level");
+  const capped = update(next);
+  capped.xp = 1500;
+  events.observe(capped, "multi", true);
+  const more = update(capped);
+  more.xp += 150;
+  expect(events.observe(more, "multi", true)).toBeNull();
   expect(
     events.observe(fresh("Neu", "Neue Leitstelle", 100), "multi", true),
   ).toBeNull();
