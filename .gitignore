@@ -4,3 +4,11 @@ test-results/
 playwright-report/
 *.local
 *.log
+
+.tools/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+server.lock

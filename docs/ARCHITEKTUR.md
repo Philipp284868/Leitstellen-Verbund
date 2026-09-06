@@ -1,42 +1,37 @@
-# Architektur
+# Serverarchitektur
 
-## Module und Zuständigkeiten
+Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. HTTP-Frontend, Spiel-API und Socket.IO teilen denselben Anwendungsport. Der Server liefert ausschließlich dist/client aus; .env, Quelltexte und SQLite sind nicht über die statische Auslieferung erreichbar.
 
-| Modul                                    | Verantwortung                                                                                      |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `catalog.ts`                             | Balancing, acht Gebäude, 20 Fahrzeugtypen, 40 Einsatzvorlagen, Fähigkeiten und Wachenerweiterungen |
-| `world.ts`                               | Versionierte lokale Region, Straßengraph, A\*, Wasser- und Luftwege, Positionsinterpolation        |
-| `model.ts`                               | Zod-Schemas, Referenzprüfung, lokale IDs, Stufen und Erfolge                                       |
-| `engine.ts`                              | Testbare Zustandsübergänge, Käufe, Personal, Routen, Patienten und Abschlussbuchung                |
-| `storage.ts`                             | IndexedDB/Dexie, Migrationen, Transaktionen, Sicherungen und Dateiimport                           |
-| `store.ts`                               | Serialisierte Änderungen, ein Simulationstakt pro Tab, Web Lock, React-Abonnement                  |
-| `network.ts`                             | WebRTC, Signaling, validiertes Protokoll, freigegebene Ansichten und Kooperation                   |
-| `Map.tsx`                                | Lokale Kartendarstellung, Auswahl, Pan, Zoom, Marker und Routen                                    |
-| `Resources.tsx`, `Panels.tsx`, `App.tsx` | Deutsche Spieloberfläche                                                                           |
-| `pwa.ts`, `scripts/build-sw.mjs`         | Kontrollierte Updates und Cache des tatsächlichen statischen Builds                                |
+| Modul                             | Verantwortung                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
+| src/catalog, world, model, engine | Bestehende Kataloge, Welt, Validierung und testbare Simulation                        |
+| server/config                     | Explizites Laden der .env, Port, Origin, Datenverzeichnis und Proxy-Vertrauen         |
+| server/database                   | SQLite-Schema, Migration, Transaktionen, persistierte Zustände, konsistente Sicherung |
+| server/auth                       | Gesalzene scrypt-Hashes, einmalige Einladungen, widerrufbare Sitzungen, Loginlimits   |
+| server/actions                    | Strikte Schema-Whitelist zulässiger Spielaktionen                                     |
+| server/game                       | Autoritative Aktionen und Ticks, kontoübergreifende Kooperation und Belohnungen       |
+| server/index                      | HTTP, Cookies/CSRF/Origin, Socket.IO, statische Website, Stoppsignale                 |
+| server/cli, lock                  | Erstadministrator, Backup/Restore/Altimport, exklusiver Zugriff                       |
+| src/store, network                | Bestätigte Serveransicht, Anmeldung, Aktionen und Socket-Verbindung                   |
 
-## Simulation und Transaktionen
+## Transaktionen und Zeit
 
-`apply(save, action)` und `tick(save, targetTime, confirmedRemoteSkills, offline)` arbeiten unabhängig von React. Der Aufrufer übergibt die Zeit; Zufall beruht auf einem im Spielstand gespeicherten LCG-Seed. Das macht Abläufe im Test reproduzierbar. IDs verwenden `crypto.randomUUID()` und beeinflussen keine Zufallsentscheidungen.
+Jede Aktion hat eine UUID. Der Server bindet sie an das angemeldete Konto und den Hash der geprüften Aktion. Gleiche ID und gleicher Inhalt ergeben keine erneute Mutation; eine andere Bedeutung wird abgelehnt. Der Browser übergibt weder Guthaben noch Eigentümer oder Zeitstempel als autoritativen Zustand. SQLite BEGIN IMMEDIATE, WAL und synchronous=FULL sichern die gemeinsame Speicherung von Zustand und Belegen.
 
-Die Anwendung bearbeitet eine Kopie des letzten bestätigten Spielstands in einer Promise-Warteschlange. Erst wenn die validierte Kopie vollständig in einer IndexedDB-Transaktion gespeichert wurde, wird sie als React-Snapshot veröffentlicht. Ungültige Aktionen verändern deshalb keinen teilweise übernommenen Besitz. Speicherfehler pausieren weitere Simulation, bis der Speicher erneut erfolgreich geprüft wurde. Normale abgelehnte Spielaktionen erzeugen keine wirtschaftliche Teilbuchung.
+Ein Server-Takt liest die Konten, berechnet deren Bewegung, Ausbildung und Missionen und übernimmt den vollständigen Tick in einer Transaktion. Die Serverzeit bestimmt den Fortschritt; die bisherige Spielgeschwindigkeitswahl ist eine vom Server validierte Aktion. Browser-Anwesenheit beeinflusst die Simulation nicht. Nach Serverstillstand werden höchstens vier Stunden nachberechnet. Ein Rücksprung der Uhr erzeugt keine negative Spielzeit. Bei Speicher-/Validierungsfehlern pausiert die Simulation, statt nicht gespeicherte Zustände auszuliefern.
 
-Der Takt wird außerhalb von React-Komponenten einmalig gestartet. Re-Mounts und Strict-Mode können keinen zweiten Simulationslauf erzeugen. Zeitfortschritt beruht auf Zeitdifferenzen und gespeicherten Ankunftszeitpunkten, nicht auf einer gezählten Anzahl Intervalle. Offline-Nachberechnung ist auf vier Stunden Simulationszeit und 1.200 Teilschritte begrenzt. Neue Einsatzangebote entstehen offline nicht. Rückwärts laufende Systemzeit erzeugt keinen negativen Fortschritt.
+## Kooperation
 
-Geld besteht aus ganzzahligen Spielcredits. Alle Buchungen landen im begrenzten Journal. Abschlussbelege bleiben getrennt vom Journal erhalten, damit dessen Rotation keine erneute Auszahlung ermöglicht. Geld, Besitz, Phase und Beleg werden gemeinsam gespeichert.
+Ein Besitzer gibt einen Einsatz ausdrücklich frei. Andere eingeladene Konten bieten jeweils ein eigenes einsatzbereites Fahrzeug an; die Freigabe erlaubt diese Unterstützung. Der Server prüft Runde, eigenen Besitz, Besatzung, Zustand und Gewässereignung. Fahrzeuge erhalten eine eindeutige Zuweisung. Erst tatsächlich am Einsatzort befindliche Fahrzeuge liefern Fähigkeiten und bestätigen ihre Eigentümer als Helfer. Höchstens vier unterstützende Konten je Einsatz werden zugelassen.
 
-## Patienten
+Die bestehenden Krankenhaus- und Transportregeln gelten auch für Helfer. Ein gespeicherter Transportauftrag wird erst bei tatsächlicher Übergabe als geliefert behandelt. Der Einsatzgeber erhält bei Unterstützung die Hälfte; die andere Hälfte teilen bestätigte Helfer, jeweils abgerundet. Kontoübergreifende Gutschriften und eindeutige SQL-Auszahlungsbelege werden zusammen mit dem Abschluss committed. Das funktioniert ohne offenen Besitzer- oder Helferbrowser und über Serverneustarts hinweg.
 
-Ein Einsatz wechselt erst nach erfüllten Fähigkeiten und ausreichender Arbeitszeit in die Transportphase. Persistierte Transportaufträge ordnen Patientenzahlen eindeutigen Fahrzeugzuweisungen zu. Fahrzeugkapazitäten und Krankenhausplätze werden geprüft. Ein öffentliches Klinikum verhindert die Abhängigkeit von einem frühen eigenen Krankenhaus.
+Es gibt keine Browser-Koordinatorwahl und keine P2P-Übernahme. Ein Verbindungsabbruch beendet nur die Ansicht. Bei ausdrücklichem Abbruch einer Kooperation werden fremde Kräfte zurückgerufen; laufende Patiententransporte müssen zuerst enden. Verwaiste Zuweisungen werden serverseitig zurückgeführt.
 
-Bei Kooperation verschickt der Koordinator zuvor gespeicherte Transportaufträge an bestätigte Helfer. Der Eigentümer prüft Zuweisung, Kapazität und Runde, fährt zum eigenen geeigneten Krankenhaus und speichert eine Lieferbestätigung. Erst die bestätigte Übergabe zählt beim Koordinator. Wiederholte Aufträge erzeugen keinen zweiten Transport.
+## Darstellung, Daten und Grenzen
 
-## Besitz und lokale Nebenläufigkeit
+Socket.IO übermittelt private Kontosnapshots und ausdrücklich gemeinsame Ansichten. Öffentliche Fremdansichten enthalten Namen, freigegebene Einsätze und eingesetzte Fahrzeuge samt benötigten Wachen, keine fremden Guthaben oder Personaldateien. Der Gruppenchat bleibt flüchtig und wird als Text gerendert. Bei Abmeldung werden Browseransicht und Chat geleert; freiwillig angelegte lokale Kopien bleiben ausdrücklich erhalten.
 
-Ein Browser bleibt allein maßgeblich für seinen Besitz. Fremde Ansichten und empfangene Kräfte liegen im Netzwerkmodul, nicht in der eigenen Gebäudeliste. Jeder Peer wird an die explizit akzeptierte Verbindung samt Spieler-ID und Spielstandgeneration gebunden. Fremde Nachrichten können weder lokale Käufe ausführen noch das eigene Guthaben frei setzen.
+Die SVG-Karte und getrennte Fahrzeuganimation bleiben bestehen. Der Client bestätigt keine Offline-Aktionen und persistiert Serveransichten nicht automatisch als geteilten Offline-Cache. Statische gehashte Assets dürfen gecacht werden, API, Socket.IO, HTML und Kontoexporte erhalten no-store. Der alte Offline-Worker wird stillgelegt, ohne IndexedDB-Bestände zu löschen.
 
-Web Locks erlauben nur einen schreibenden Tab je Installation. Beim Zurückkehren aus dem Browser-Back/Forward-Cache wird neu geladen und das Lock neu erworben. Ein Profilwechsel trennt laufende Verbindungen. Ein Import erzeugt eine neue Spielstandgeneration; es werden keine Gerätestände zusammengeführt.
-
-## Darstellung und Grenzen
-
-Die Hauptoberfläche erhält einmal pro Sekunde einen bestätigten Snapshot. Straßen, Grundkarte und Marker sind SVG; aktive Fahrzeuge verwenden aus Routen und Zeitpunkten abgeleitete Positionen. Die Fahrzeugsymbole interpolieren ihre Bewegung in einem eigenen requestAnimationFrame-Lauf, der ausschließlich die SVG-Transformationen aktualisiert und keine React-Komplettrenderings auslöst. Reduzierte Bewegung verwendet nur bestätigte Positionsschritte. Große Spielstände werden getrennt als Logik- und Browserlast getestet; konkrete Messwerte stehen im Testbericht. Eine weitergehende Entkopplung sämtlicher statischer Oberflächenteile vom Spiel-Snapshot ist als Optimierungsgrenze dokumentiert, nicht als bereits implementierte Eigenschaft behauptet.
+Dies ist eine Einzelserverarchitektur für einen eingeladenen Spielerkreis. SQLite und das Prozess-Lock ersetzen keinen Mehrserver-Cluster. Pro Tick werden alle Konten verarbeitet; umfassende Lastmessungen mit vielen gleichzeitig angemeldeten Konten sind separat erforderlich. Der vorhandene Test für 100 Wachen/300 Fahrzeuge/50 Einsätze bleibt erhalten, beweist aber keine unbegrenzte Serverkapazität.

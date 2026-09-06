@@ -9,10 +9,13 @@ Primärquellen für die technische Auswahl:
 - [React-Versionen](https://react.dev/versions)
 - [Vite: Voraussetzungen](https://vite.dev/guide/)
 - [Vitest: Einstieg](https://vitest.dev/guide/)
-- [GitHub Pages mit eigenen Workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+- [Node.js 24: SQLite und Backup](https://nodejs.org/download/release/v24.14.0/docs/api/sqlite.html)
+- [Node.js 24: scrypt](https://nodejs.org/docs/latest-v24.x/api/crypto.html)
+- [Socket.IO: Authentifizierungs-Middleware](https://socket.io/docs/v4/middlewares/)
+- [pnpm 11: Build-Skriptfreigaben](https://github.com/pnpm/pnpm.io/blob/main/blog/releases/11.0.md)
 - [Offizielle setup-node-Action](https://github.com/actions/setup-node)
-- [Offizielle deploy-pages-Action](https://github.com/actions/deploy-pages)
-- [Cloudflare: freier STUN-Dienst](https://developers.cloudflare.com/realtime/turn/faq/)
 - [Lucide-Lizenz](https://github.com/lucide-icons/lucide/blob/main/LICENSE)
 
 Alle Preise sind fiktive Spielcredits. Es gibt keine Echtgeldkäufe.
+
+Serverergänzungen: Socket.IO und socket.io-client stehen unter MIT, esbuild ebenfalls unter MIT. SQLite wird über die Node.js-Standardbibliothek verwendet und ist Public Domain. Maßgebliche Lizenztexte sind in den installierten Paketen enthalten.
