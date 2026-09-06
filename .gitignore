@@ -4,3 +4,17 @@ test-results/
 playwright-report/
 *.local
 *.log
+
+.tools/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+server.lock
+
+# Private, server-generated administrator configuration and legacy setup helpers.
+/admin-konto.json
+/admin-konto.json.*.tmp
+/ADMIN-ZUGANG.txt
+/amp-admin-einrichten.mjs

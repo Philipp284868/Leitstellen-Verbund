@@ -1,74 +1,55 @@
-# Tatsächlicher Testbericht
+# Tatsächlicher Testbericht – AMP-Architektur
 
-## Lokale Umgebung
+Stand: 6. September 2026. Die folgenden Nachweise betreffen den Node-/SQLite-/Socket.IO-Umbau. Frühere Pages-/P2P-Tests gehören zum vorherigen Stand in der Git-Historie und werden hier nicht als Servernachweis verwendet.
 
-- Datum: 6. September 2026
-- Betriebssystem: Windows, lokaler Codex-Arbeitsbereich
-- Node.js: 24.19.0
-- pnpm: 11.19.0; Installation und Lockdateiprüfung tatsächlich ausgeführt
-- Browser: installierter Microsoft Edge mit Chromium-Engine, Playwright 1.63.0
-- Testadresse: `http://127.0.0.1:4173/Leitstellen-Verbund/`
-- Getestet wird der Produktionsbuild, nicht ein Entwicklungs-Mockup.
+## Tatsächlich lokal ausgeführt
 
-## Bereits ausgeführte Prüfungen
+Umgebung: Windows, Node.js 24.19.0, pnpm 11.19.0, Playwright 1.63.0 mit installiertem Microsoft Edge 152.0.4191.66. Alle Datenbanken und Testkonten wurden in isolierten temporären Verzeichnissen angelegt. Kein Test greift auf den privaten AMP-Server zu.
 
-| Prüfung                                                  | Ergebnis                               |
-| -------------------------------------------------------- | -------------------------------------- |
-| Installation / reproduzierbare Lockdatei                 | Erfolgreich                            |
-| TypeScript strict / `pnpm typecheck`                     | Erfolgreich                            |
-| ESLint / `pnpm lint`                                     | Erfolgreich                            |
-| Vitest / `pnpm test`                                     | 25 Tests erfolgreich                   |
-| Vite-Produktionsbuild einschließlich Service Worker      | Erfolgreich                            |
-| Vollständiger Chromium-Browserlauf                       | 11 Tests erfolgreich, etwa 3,9 Minuten |
-| Zusätzlicher Vier-Spieler-Lauf                           | Erfolgreich                            |
-| Wiederverbindung nach Reload mit erneutem Abschlussbeleg | Erfolgreich, keine zweite Auszahlung   |
+| Prüfung                                                       | Ergebnis                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| AMP-Setup ohne vorhandenes node_modules                       | Erfolgreich                                                           |
+| Setup bei NODE_ENV=production einschließlich Build-Werkzeugen | Erfolgreich; Anwendung wird ausdrücklich als Produktionsbuild erzeugt |
+| Vorhandene .env und SQLite-Sentineldatei beim Setup           | Nachher bytegleich, keine Löschung                                    |
+| Reproduzierbare pnpm-Installation, keine npm-Lockdatei        | Erfolgreich                                                           |
+| TypeScript strict und ESLint                                  | Erfolgreich                                                           |
+| Produktionsbuild                                              | dist/client, dist/server/index.js und dist/server/cli.js erzeugt      |
+| Vitest                                                        | **39 Tests in sechs Dateien erfolgreich**, ungefähr 4,9 Sekunden      |
+| Reale Browserabnahme am gebauten Server                       | **Sechs Tests erfolgreich**, etwa 1,8 Minuten                         |
+| Direkter Node-Start der gebauten index.js                     | Erfolgreich, HTTP und API am konfigurierten .env-Port                 |
 
-Die Testquellen decken den ersten Solo-Einsatz, Ausbildung und weitere Organisation, Reload, Dateiimport, beschädigte und veraltete Dateien, verweigerte Speicherung, echte WebRTC-Verbindungen, gemeinsame Patientenbeförderung, feste geteilte Belohnungen, duplizierte Nachrichten, falsche Absender, Abbruch mit Rückruf, Weiterbetrieb ohne Einladenden, Web Lock, Offline-Cache und GitHub-Pages-Unterpfad ab. Erweiterte Spielstände werden über die echte Importoberfläche in den Browser eingebracht; Testhilfen sind ausschließlich unter `tests/` vorhanden und nicht im Produktionsbundle.
+Das saubere AMP-Setup wurde mit einer frischen Programmdateikopie ohne Projektabhängigkeiten gestartet. pnpm wurde durch das Skript lokal bereitgestellt; vorhandene Pakete konnten aus dem normalen pnpm-Store wiederverwendet werden. Es wurde kein unabhängiger Offline-Download aller Pakete behauptet. Der resultierende Produktionsclient umfasste rund 461 kB JavaScript, komprimiert etwa 144 kB, und 17 kB CSS.
 
-Im gemeinsamen Patiententest erhalten beide Spieler je 4.250 Credits. Wiederholte Nachrichten, Reload und erneute Zustellung eines zuvor nicht quittierten Belegs ändern diesen Betrag nicht erneut.
+## Logik, API und Betrieb
 
-Gefundene Fehler wurden behoben, darunter ein zu früh bedienbarer Ausbildungsstart, Kartenüberlauf, Rückruf nach Verbindungsverlust und ein ungeeigneter Textvergleich im Reload-Test. Fehlschlagende Prüfungen wurden nicht übersprungen oder auf „skip“ gesetzt.
+Die vorhandenen Prüfungen für Kataloge, Wirtschaft, Personal, Routen, Patienten, Fortschritt, Importvalidierung und lokale Sicherungen bleiben erhalten. Der überholte P2P-Pakettest wurde durch die Ablehnung freier Kontostände und alter P2P-Pakete an der Servergrenze ersetzt.
 
-## Lastmessung
+Zusätzliche Serverprüfungen bestätigen getrennte Konten, gesalzene Passwort-Hashes, ausschließlich gehashte Sitzungstoken, Einladungsbindung, Loginlimits, Origin-/CSRF-Prüfungen, Eigentumsprüfung, idempotente Aktionen und Ablehnung einer Aktions-ID mit anderem Inhalt. Echte Socket.IO-Clients prüfen Anmeldung, Klartextchat, falsche Origins und Sitzungswiderruf offener Kanäle. Ein gemeinsamer Patienteneinsatz endet ohne offene Browser und zahlt beiden Konten genau die vorgesehene Hälfte aus; Wiederholung und Weiterlaufen erzeugen keine zusätzliche Gutschrift.
 
-Testfall: 100 eigene Gebäude, 300 Fahrzeuge, 1.800 Mitarbeiter und 50 aktive Einsätze. Die JSON-Daten umfassen etwa 439 kB in kompakter Form. Zuletzt gemessen: rund 20 ms für Schema-/Referenzvalidierung und 2 ms für 32 Sekunden Simulation. Der Browserablauf mit Import, Darstellung und Öffnen des Fuhrparks dauerte im vollständigen Lauf rund 1,5 Sekunden. Einzelmessungen schwanken; dies ist kein plattformübergreifendes Leistungsversprechen. Exakte letzte Logikmessung: [PERFORMANCE.json](PERFORMANCE.json).
+Geprüft sind außerdem SQLite-Neuöffnung, konsistente Sicherung, Erhalt von Aktionsbelegen, kontrollierter Kooperationsabbruch, Speicherfehler ohne Teilbuchung, abgebrochene Migration mit unverändertem Altbestand, Ablehnung neuerer Schemata und Erhalt von Ratenlimits nach Neuöffnung. HTTPS-Konfiguration erzeugt Secure-/HttpOnly-/SameSite-Cookies und HSTS; gefälschte Proxy-Header ändern dies nicht. Das ist ein Konfigurationstest hinter einer simulierten TLS-Terminierung, kein Test eines realen öffentlichen TLS-Proxys.
 
-## Nicht lokal ausgeführte Browser
+Ein weiterer Prozess-Test kopiert den gebauten Server in eine isolierte Installation, legt eine .env an und startet tatsächlich `node dist/server/index.js`. Er führt Erstadministrator-Einrichtung über stdin, doppelte API-Aktion, CLI-Sperre bei laufendem Server, Backup, explizit freizugebenden Altimport, Wiederherstellung und erneute Anmeldung aus. Alte Sitzungen sind nach Restore ungültig. Windows beendet den Prozess bei SIGTERM hart; der dortige Test prüft deshalb zusätzlich das kontrollierte Freigeben eines nachweislich verwaisten Locks. Der Linux-CI-Test verlangt einen sauberen SIGTERM-Exitcode 0.
 
-`playwright install chromium firefox` sowie der separate Firefox-Installationsversuch wurden tatsächlich gestartet. Die offiziellen CDN-Downloads brachen wiederholt mit 30-Sekunden-Zeitüberschreitungen ab. Deshalb sind die lokalen Chromium-Prüfungen mit dem bereits installierten Edge ausgeführt worden. Ein lokaler Firefox-Erfolg oder ein Test auf zwei verschiedenen Internetanschlüssen wird nicht behauptet.
+## Sechs reale Browserabläufe
 
-## Tatsächlich erfolgreicher GitHub-Browserlauf
+1. Einladungsregistrierung, zwei getrennte Konten, eigene Wache und Besatzung, vollständiger Solo-Einsatz, Belohnung, Rückkehr und Reload.
+2. Gemeinsamer Einsatz; Helferbrowser schließen, Server trotzdem abschließen lassen, erneut anmelden; Server neu starten und tatsächliche CLI-Datenbankwiederherstellung mit unverändertem Besitz prüfen.
+3. Zwei Tabs desselben Kontos sehen denselben Fortschritt. Offline werden Aktionen abgewiesen; Wiederverbindung hebt die Sperre auf.
+4. Eigener Export und validierte Dateivorschau. Es existiert kein Button zur eigenmächtigen Besitzübernahme; beschädigte Dateien werden abgelehnt.
+5. Chat bleibt Klartext. Abmelden widerruft die Sitzung und entfernt private Kontodaten und Chatansicht.
+6. Mobilansicht bei 390 × 844 Pixeln ohne horizontalen Überlauf, keine Browser-Anwendungsfehler und keine notwendigen Requests außerhalb des eigenen Serverursprungs.
 
-[GitHub Actions, Lauf 34027009569](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34027009569) hat für Commit `31c52b5e6994311851fd6621869cb713a8986fed` sämtliche Prüfungen erfolgreich abgeschlossen: TypeScript, ESLint, 25 Vitest-Tests, Produktionsbuild und **24 Playwright-Tests, jeweils zwölf in echtem Chromium und Firefox**. Die Linux-Browser wurden im Workflow installiert. Die Browserprüfung dauerte etwa 8,8 Minuten. Damit sind auch Vier-Spieler-Verbund, Offline-Neustart, duplizierte Abschlussbelege und Verbindungsabbruch in beiden Browsern geprüft.
+## Gefundene und behobene Fehler
 
-Die lokale Sichtprüfung mit Edge 152.0.4191.66 lieferte keine Browserfehler und keinen horizontalen Überlauf bei 390 Pixeln Breite. Screenshots: [Desktop](leitstelle-desktop.png), [hell](leitstelle-hell.png), [mobil](leitstelle-mobil.png).
+- Gleichadressiges Socket.IO-Long-Polling enthielt nicht immer einen Origin-Header. Gleichadressige Browseranfragen werden jetzt zusätzlich anhand von Fetch-Metadaten zugelassen; Cookie und CSRF bleiben zwingend.
+- SVG-DOMPoint-Koordinaten waren nicht als normale JSON-Felder serialisierbar. Bauaktionen übertragen jetzt begrenzte numerische x/y-Werte.
+- Der Setup-Installationsmodus konnte zu einem React-Entwicklungsbundle führen. Der separate Build-Prozess erzwingt jetzt NODE_ENV=production.
+- Das lokal heruntergeladene pnpm wurde zunächst vom Linter durchsucht. Ausschließlich dieses Fremdwerkzeugverzeichnis wird nun wie node_modules vom Projektlint ausgeschlossen.
 
-## GitHub und Pages
+Fehlgeschlagene Prüfungen wurden behoben und erneut ausgeführt. Die früheren P2P-Browserabläufe wurden aufgrund der ausdrücklich ersetzten Architektur durch Serverabläufe ersetzt, nicht als bestandene neue Tests ausgegeben.
 
-- Zugewiesenes Repository: `Philipp284868/Leitstellen-Verbund`
-- Vorhandener Startstand: `1ee100a3bb8343420243344012bc67229f153dcf`, ausschließlich README
-- Standardbranch: `main`; bei Prüfung nicht geschützt
-- Arbeitsbranch: `feature/leitstellen-verbund`
-- Connector: Lesen, Schreiben und Administration bestätigt
-- Terminal: Read und Push-Dry-Run erfolgreich; authentifizierter API-Zugriff vorhanden
-- Workflow-Scope: `workflow` vorhanden, Standard-Workflow-Rechte auf `read`
-- Pages: tatsächlich mit `build_type: workflow` eingerichtet, HTTPS erzwungen
-- `github-pages`-Umgebung: vorhanden, von GitHub mit Branch-Policy eingerichtet
+## GitHub und Grenzen
 
-[Pull Request #1](https://github.com/Philipp284868/Leitstellen-Verbund/pull/1) wurde nach erfolgreicher Prüfung des letzten Feature-Commits `b7848b96f20d9ed16b94cb79c4fd13166237f194` tatsächlich in `main` gemergt. Merge-Commit: `284026949e3a44a068fcf795114a75401eca0aa0`.
+Arbeitsbranch: `feature/amp-authoritative-server` im Repository `Philipp284868/Leitstellen-Verbund`. Der PR-CI-Workflow führt das AMP-Setup auf einer frischen Linux-Installation aus und prüft Chromium und Firefox. Der tatsächliche CI-Lauf wird im Pull Request verlinkt; bis zu dessen Abschluss wird kein zusätzlicher Firefox-Erfolg behauptet.
 
-- [Letzter PR-Prüflauf](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34027699533): erfolgreich, 25 Logiktests und 24 Browserprüfungen, Browserdauer 4,5 Minuten.
-- [Prüfung des zusammengeführten main-Commits](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34028016727): erfolgreich, erneut 25 Logiktests und 24 Browserprüfungen in Chromium und Firefox.
-- [Tatsächliches Pages-Deployment](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34028258675): Build und Deployment erfolgreich.
-
-## Öffentliche HTTPS-Abnahme
-
-Geprüfte Adresse: **[Leitstellen-Verbund](https://philipp284868.github.io/Leitstellen-Verbund/)**. Am 6. September 2026 um 12:45 Uhr deutscher Ortszeit lieferte der tatsächliche Browseraufruf HTTP 200. JavaScript, CSS und Manifest wurden erfolgreich geladen; keine Browser-Anwendungsfehler. Manifest-Start, Manifest-Scope und Service-Worker-Scope zeigen exakt auf `/Leitstellen-Verbund/`; der Browser bestätigt einen sicheren HTTPS-Kontext.
-
-Anschließend wurden drei vorhandene Playwright-Abnahmeabläufe gegen diese öffentliche Adresse statt den lokalen Server ausgeführt. **Alle drei bestanden in 1,7 Minuten** mit Microsoft Edge 152.0.4191.66:
-
-1. Neues Profil, Wache, Fahrzeug, Besatzung, vollständiger Solo-Einsatz, Belohnung, Rückkehr und Reload.
-2. Zwei getrennte Profile mit eigenen Ressourcen, echter WebRTC-Angebot/Antwort-Austausch über die Oberfläche, Textchat und gemeinsamer Einsatz mit verbuchter Helferbelohnung.
-3. Schreibgeschützter zweiter Tab und erneutes Öffnen des gecachten Produktionsspiels ohne Netzwerk.
-
-Die HTTPS-Tests verwendeten frische isolierte Browserkontexte. Die Beschränkung bezüglich beliebiger Internetanschlüsse und ungetesteter eigener TURN-Server bleibt bestehen. Dieser Abschlussnachtrag ändert nur Dokumentation; der bereits öffentlich getestete Anwendungscode bleibt identisch.
+Keine Installation auf dem privaten AMP-Server und keine Prüfung seiner tatsächlichen Ports, Containerzuordnung, DNS-Adresse oder TLS-Konfiguration. Diese Betreiberabnahme bleibt erforderlich. Der bisherige Pages-Workflow ist im Branch entfernt, die bestehende Pages-Konfiguration und alte Browserstände wurden nicht gelöscht. Der vorhandene Lastfall 100 Wachen/300 Fahrzeuge/1.800 Mitarbeiter/50 Einsätze wird weiter gemessen (PERFORMANCE.json); dies ist keine Lastzusage für beliebig viele gleichzeitige Serverkonten.

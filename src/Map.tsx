@@ -90,7 +90,10 @@ export const MapView = memo(function MapView({
             const pos = p.matrixTransform(
               e.currentTarget.getScreenCTM()!.inverse(),
             );
-            onPlace(pos);
+            onPlace({
+              x: Math.max(0, Math.min(1300, pos.x)),
+              y: Math.max(0, Math.min(850, pos.y)),
+            });
           }
         }}
       >

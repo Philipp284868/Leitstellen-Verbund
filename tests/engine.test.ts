@@ -12,7 +12,7 @@ import {
 import { buildings, vehicles, missions, mt, BALANCE } from "../src/catalog";
 import { nodes, route, length, along, docks } from "../src/world";
 import { exportText, parseImport } from "../src/storage";
-import { packetSchema } from "../src/network";
+import { commandSchema } from "../server/actions";
 function setup() {
   const s = fresh("Anna", "Leitstelle Nord", 1000);
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
@@ -221,23 +221,23 @@ describe("Import und Protokoll", () => {
     s.money = NaN;
     expect(() => validate(s)).toThrow();
   });
-  it("weist inkompatible Protokolle und überlange Chats zurück", () => {
-    const p = {
-      protocol: 1,
-      world: "falkenried-1",
-      session: "session",
-      sender: "player",
-      generation: "gen",
-      id: "id",
-      seq: 1,
-      payload: { type: "chat", text: "Hallo" },
-    };
-    expect(packetSchema.safeParse(p).success).toBe(true);
-    expect(packetSchema.safeParse({ ...p, protocol: 2 }).success).toBe(false);
+  it("weist fremde Kontostände und alte P2P-Pakete zurück", () => {
     expect(
-      packetSchema.safeParse({
-        ...p,
-        payload: { type: "chat", text: "a".repeat(501) },
+      commandSchema.safeParse({
+        id: crypto.randomUUID(),
+        action: { type: "relief" },
+      }).success,
+    ).toBe(true);
+    expect(
+      commandSchema.safeParse({
+        id: crypto.randomUUID(),
+        action: { type: "relief", money: 999999 },
+      }).success,
+    ).toBe(false);
+    expect(
+      commandSchema.safeParse({
+        protocol: 1,
+        payload: { type: "chat", text: "Hallo" },
       }).success,
     ).toBe(false);
   });

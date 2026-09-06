@@ -15,17 +15,18 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
-      - run: npm install --global pnpm@11.19.0
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm test
-      - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium firefox
-      - run: pnpm test:e2e
+      - name: AMP-Setup ohne vorhandene Projektabhängigkeiten
+        run: node scripts/amp-setup.mjs
+        env:
+          NODE_ENV: production
+      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs typecheck
+      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs lint
+      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test
+      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps chromium firefox
+      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: browser-testbericht
+          name: amp-browser-testbericht
           path: playwright-report/
           retention-days: 14

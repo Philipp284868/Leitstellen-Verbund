@@ -1,3 +1,4 @@
+import { AuthScreen, Account } from "./Account";
 import { useState } from "react";
 import {
   Radio,
@@ -13,7 +14,7 @@ import {
   Activity,
   ChevronRight,
 } from "lucide-react";
-import { useGame, newGame, act, emit, retryStorage, change } from "./store";
+import { useGame, act, emit, retryStorage, change } from "./store";
 import { useNetwork } from "./network";
 import { mt, bt } from "./catalog";
 import { level } from "./model";
@@ -36,8 +37,6 @@ export function App() {
     [modal, setModal] = useState(""),
     [selected, setSelected] = useState(""),
     [placing, setPlacing] = useState(""),
-    [name, setName] = useState(""),
-    [station, setStation] = useState(""),
     [light, setLight] = useState(false),
     [reduced, setReduced] = useState(false),
     [mobile, setMobile] = useState("map");
@@ -57,6 +56,7 @@ export function App() {
         <h1>Leitstelle wird geöffnet …</h1>
       </div>
     );
+  if (!s) return <AuthScreen />;
   const open = (id: string) => {
     if (id === "friends") {
       setModal("friends");
@@ -78,7 +78,7 @@ export function App() {
               void retryStorage().catch((e) => emit({ error: String(e) }))
             }
           >
-            Speicher erneut prüfen
+            Server erneut verbinden
           </button>
           <button onClick={() => setModal("backups")}>Wiederherstellung</button>
           <button
@@ -107,8 +107,8 @@ export function App() {
       )}
       {readonly && (
         <div className="banner">
-          Schreibgeschützter Tab. Ein anderer Tab führt diese Leitstelle.
-          Schließe ihn und lade diese Seite neu.
+          Serververbindung unterbrochen. Aktionen sind gesperrt; deine
+          Leitstelle wird auf dem Server weiter simuliert.
         </div>
       )}
       {screen === "start" ? (
@@ -126,8 +126,8 @@ export function App() {
             Gemeinsam in Bereitschaft.
           </p>
           <div className="start-actions">
-            <button className="primary" onClick={() => setModal("new")}>
-              Neues Spiel <ChevronRight />
+            <button className="primary" onClick={() => setScreen("game")}>
+              Leitstelle öffnen <ChevronRight />
             </button>
             <button disabled={!s} onClick={() => setScreen("game")}>
               Fortsetzen{" "}
@@ -145,7 +145,7 @@ export function App() {
                 if (s) {
                   setScreen("game");
                   setModal("friends");
-                } else setModal("new");
+                }
               }}
             >
               Mit Freunden spielen
@@ -157,12 +157,8 @@ export function App() {
               <button onClick={() => setModal("help")}>Hilfe</button>
             </div>
           </div>
-          <small>
-            Lokaler Spielstand · Kein Konto erforderlich · Offline spielbar
-          </small>
-          <span className="version-label">
-            VERSION 1.0 · LOKAL & IM VERBUND
-          </span>
+          <small>Serverkonto · Getrennter Besitz · Gemeinsam disponieren</small>
+          <span className="version-label">VERSION 2.0 · EIGENER SERVER</span>
         </main>
       ) : (
         s && (
@@ -398,7 +394,9 @@ export function App() {
                 {notice ||
                   "Leitstelle betriebsbereit. Alle Meldungen werden lokal verarbeitet."}
               </p>
-              <span className="save-indicator">● Lokal gespeichert</span>
+              <span className="save-indicator">
+                {readonly ? "● Verbindung fehlt" : "● Server bestätigt"}
+              </span>
               <select
                 aria-label="Spielgeschwindigkeit"
                 value={s.speed}
@@ -459,54 +457,11 @@ export function App() {
           }
           onClose={() => setModal("")}
         >
-          {modal === "new" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (
-                  s &&
-                  !confirm(
-                    "Neues Profil beginnen? Der bisherige Stand bleibt als lokale Sicherung erhalten.",
-                  )
-                )
-                  return;
-                void newGame(name, station)
-                  .then(() => {
-                    setScreen("game");
-                    setModal("");
-                  })
-                  .catch((e) => emit({ error: String(e) }));
-              }}
-            >
-              <p>
-                Du startest mit 250.000 Credits. Dein Profil bleibt lokal und
-                ist kein verifiziertes Onlinekonto.
-              </p>
-              <label>
-                Dein Anzeigename
-                <input
-                  required
-                  maxLength={48}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
-              <label>
-                Name deiner Leitstelle
-                <input
-                  required
-                  maxLength={48}
-                  value={station}
-                  onChange={(e) => setStation(e.target.value)}
-                />
-              </label>
-              <button className="primary">Leitstelle gründen</button>
-            </form>
-          )}
           {modal === "help" && <Help />}
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
             <>
+              <Account />
               <label>
                 <input
                   type="checkbox"
@@ -539,7 +494,8 @@ export function App() {
               </label>
               <p>
                 Kein Ton erforderlich. Alle Funkmeldungen werden als Text
-                angezeigt. Netzwerkeinstellungen findest du unter „Freunde“.
+                angezeigt. Alle Konten verbinden sich automatisch mit diesem
+                Server.
               </p>
               <button
                 onClick={() => {

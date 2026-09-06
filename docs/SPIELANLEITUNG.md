@@ -1,5 +1,7 @@
 # Die Region übernehmen
 
+Zuerst mit einem eingeladenen Serverkonto anmelden. Eigener Besitz wird auf dem Server gespeichert; alle Konten verbinden sich automatisch.
+
 ## Einstieg und Disposition
 
 Die erste Feuerwache kostet 55.000 Credits. Ein TSF-W kostet 18.000 Credits und benötigt sechs Mitarbeiter. Personal kostet einmalig 600 Credits je Person. Zwei TSF-W samt Besatzung und Wache lassen 151.800 Credits Reserve. Die Wache baut 25 Spielsekunden; die frei wählbare Geschwindigkeit beträgt 1×, 4×, 8×, 16× oder 32×.
@@ -30,6 +32,6 @@ Es gibt keine laufenden Pflichtkosten, Offline-Strafen oder negativen Guthaben. 
 
 ## Speichern und Bedienung
 
-Wichtige Änderungen werden sofort gespeichert. Fünf rotierende lokale Sicherungen ergänzen den aktuellen Spielstand. Exportdateien sind für Gerätewechsel und externe Sicherung gedacht. Ohne Browserfenster entstehen keine neuen Einsatzserien; bereits begonnene Solo-Abläufe werden beim Wiederöffnen um höchstens vier Stunden Simulationszeit nachberechnet.
+Wichtige Änderungen werden sofort auf dem Server gespeichert. Der Server simuliert bei geschlossenem Browser weiter; nach Serverstillstand werden höchstens vier Stunden nachberechnet. Exportdateien und freiwillige lokale Kopien stehen unter Sicherungen bereit. Eine Übernahme alter Dateien erfordert die ausdrückliche Freigabe des Administrators.
 
 Karte ziehen, Mausrad oder +/− zum Zoomen verwenden. Marker lassen sich mit Tab und Enter bedienen. Auf kleinen Displays zwischen Karte und Einsatzliste wechseln. Dialoge schließen mit Escape; der Tastaturfokus bleibt im Dialog. Reduzierte Bewegung und heller Modus sind in den Einstellungen verfügbar.

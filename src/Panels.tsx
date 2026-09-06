@@ -7,25 +7,15 @@ import {
   achievementProgress,
   level,
 } from "./model";
-import { act, change, emit, replaceSave } from "./store";
+import { act, change, emit, api } from "./store";
 import { readiness, capacity, missing } from "./engine";
-import {
-  useNetwork,
-  makeOffer,
-  useSignal,
-  cancel,
-  disconnect,
-  resync,
-  chat,
-  share,
-  stopSharing,
-  configureIce,
-} from "./network";
+import { useNetwork, chat, share, stopSharing } from "./network";
 import {
   exportText,
   download,
   inspectImport,
   backups,
+  persist,
   type RecordSave,
 } from "./storage";
 import { credits, statuses, playerColor } from "./ui";
@@ -37,10 +27,7 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
     skills = capacity(s, m.id);
   for (const f of net.support.filter(
     (f) =>
-      f.mission === m.id &&
-      f.round === m.round &&
-      f.vehicle.status === "scene" &&
-      Date.now() - f.at < 6000,
+      f.mission === m.id && f.round === m.round && f.vehicle.status === "scene",
   ))
     for (const [k, n] of Object.entries(vt(f.vehicle.type).skills))
       skills[k] = (skills[k] || 0) + n;
@@ -94,9 +81,7 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
               {f.vehicle.name}
               <small>
                 {net.friends.find((p) => p.id === f.peer)?.name} ·{" "}
-                {Date.now() - f.at < 6000
-                  ? statuses[f.vehicle.status]
-                  : "Bestätigung veraltet"}
+                {statuses[f.vehicle.status]}
               </small>
             </span>
           </div>
@@ -207,193 +192,30 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
 }
 export function Friends({ s }: { s: Save }) {
   const net = useNetwork(),
-    [input, setInput] = useState(""),
-    [message, setMessage] = useState(""),
-    [url, setUrl] = useState(""),
-    [user, setUser] = useState(""),
-    [password, setPassword] = useState("");
+    [text, setText] = useState("");
   return (
-    <div className="friends-panel">
-      <p className="banner">
-        Lokale Profile · Vertrauensspiel für 2–4 Freunde. Keine Kamera, kein
-        Mikrofon. Verbindungsinformationen können Netzwerkadressen offenlegen.
+    <section>
+      <p>
+        Alle Konten auf diesem Server sind automatisch verbunden. Ein
+        geschlossener Browser beendet keinen Einsatz. Teile einen eigenen
+        Einsatz, damit andere Konten Fahrzeuge anbieten können.
       </p>
-      <h3>Direkte Verbindungen</h3>
       {net.friends.map((f) => (
         <article className="friend" key={f.id}>
-          <span
-            className="avatar"
-            style={{ background: playerColor(f.id), color: "#12212a" }}
-          >
-            {f.name.slice(0, 1)}
-          </span>
-          <div>
-            <b>{f.name}</b>
-            <small>
-              {f.status} · {f.vehicles.length} Fahrzeuge · {f.buildings.length}{" "}
-              Wachen
-            </small>
-          </div>
-          <button onClick={() => resync(f.id)}>Abgleichen</button>
-          <button onClick={() => disconnect(f.id)}>Trennen</button>
+          <strong style={{ color: playerColor(f.id) }}>{f.name}</strong>
+          <small>{f.status}</small>
         </article>
       ))}
       {!net.friends.length && (
-        <p className="empty">
-          Noch keine Freunde verbunden. Öffne auf beiden Geräten ein eigenes
-          Spiel.
+        <p>
+          Noch keine weiteren Konten. Ein Administrator kann in den
+          Einstellungen eine Einladung erstellen.
         </p>
       )}
-      <details open>
-        <summary>Verbindung hinzufügen</summary>
-        <ol>
-          <li>
-            A erstellt ein Angebot und schickt den vollständigen Text an B.
-          </li>
-          <li>
-            B fügt das Angebot ein, übernimmt es und schickt die erzeugte
-            Antwort zurück.
-          </li>
-          <li>
-            A fügt die Antwort ein und übernimmt sie. Erst „verbunden“ bestätigt
-            den Datenkanal.
-          </li>
-        </ol>
-        <p>
-          Für drei oder vier Spieler wird jedes Paar einmal direkt verbunden.
-          Bestehende Verbindungen bleiben unabhängig vom Einladenden.
-        </p>
-        <div className="inline">
-          <button className="primary" onClick={() => void makeOffer()}>
-            Angebot erstellen
-          </button>
-          <button onClick={cancel}>Abbrechen</button>
-        </div>
-        <p role="status">{net.status}</p>
-        {net.error && (
-          <p role="alert" className="error">
-            {net.error}
-          </p>
-        )}
-        <label>
-          Verbindungstext zum Weitergeben
-          <textarea
-            aria-label="Verbindungstext zum Weitergeben"
-            value={net.output}
-            readOnly
-            rows={4}
-          />
-        </label>
-        <button
-          disabled={!net.output}
-          onClick={() =>
-            navigator.clipboard.writeText(net.output).catch(() =>
-              emit({
-                error:
-                  "Kopieren nicht erlaubt. Textfeld markieren und manuell kopieren.",
-              }),
-            )
-          }
-        >
-          Text kopieren
-        </button>
-        <label>
-          Angebot oder Antwort einfügen
-          <textarea
-            aria-label="Angebot oder Antwort einfügen"
-            rows={4}
-            maxLength={110000}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-        </label>
-        <button
-          onClick={() => {
-            void useSignal(input);
-            setInput("");
-          }}
-        >
-          Verbindungstext übernehmen
-        </button>
-      </details>
-      <details>
-        <summary>Netzwerkeinstellungen · STUN / TURN</summary>
-        <p>
-          Standardmäßig kein externer Dienst. Für Internetverbindungen kannst du
-          einen selbst bereitgestellten oder ausdrücklich zur Nutzung
-          freigegebenen STUN-/TURN-Dienst eintragen. Ohne TURN scheitern manche
-          NAT-Verbindungen. TURN leitet Daten weiter. Zugangsdaten bleiben nur
-          im Arbeitsspeicher dieses Tabs.
-        </p>
-        <button
-          onClick={() => {
-            setUrl("stun:stun.cloudflare.com:3478");
-            configureIce("stun:stun.cloudflare.com:3478", "", "");
-            emit({
-              notice:
-                "Kostenloser Cloudflare-STUN-Dienst für neue Verbindungen aktiviert.",
-            });
-          }}
-        >
-          Kostenlosen Cloudflare-STUN-Dienst nutzen
-        </button>
-        <p>
-          Externer Kontakt nur beim Verbindungsaufbau: stun.cloudflare.com, UDP
-          3478. Cloudflare erhält dabei deine Netzwerkadresse.{" "}
-          <a
-            href="https://developers.cloudflare.com/realtime/turn/faq/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Dienstinformationen
-          </a>
-        </p>
-        <label>
-          Server-URL
-          <input
-            placeholder="stun:dein-server:3478"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-        </label>
-        <label>
-          TURN-Benutzername
-          <input
-            autoComplete="off"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-          />
-        </label>
-        <label>
-          TURN-Passwort
-          <input
-            autoComplete="off"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        <button
-          onClick={() => {
-            try {
-              configureIce(url, user, password);
-              emit({
-                notice:
-                  "Netzwerkeinstellungen für neue Verbindungen übernommen.",
-              });
-            } catch (e) {
-              emit({ error: String(e) });
-            }
-          }}
-        >
-          Übernehmen
-        </button>
-      </details>
-      <h3>Freigegebene Einsätze</h3>
       {net.friends.flatMap((f) =>
         f.missions.map((m) => (
           <SharedMission
-            key={f.id + m.id}
+            key={m.id}
             s={s}
             friend={f}
             m={m}
@@ -401,28 +223,8 @@ export function Friends({ s }: { s: Save }) {
           />
         )),
       )}
-      <h3>Unterstützungsvorgänge</h3>
-      {s.contributions
-        .slice(-12)
-        .reverse()
-        .map((c) => (
-          <div className="person" key={c.assignment}>
-            <span>
-              {s.vehicles.find((v) => v.id === c.vehicle)?.name || "Fahrzeug"}
-              <small>
-                {c.status === "cancelled"
-                  ? "Abgebrochen"
-                  : s.receipts.includes("coop:" + c.round + ":" + s.player.id)
-                    ? "Belohnung bestätigt"
-                    : c.status === "returned"
-                      ? "Zurückgerufen · Abschlussbeleg gegebenenfalls ausstehend"
-                      : "Unterstützung aktiv oder reserviert"}
-              </small>
-            </span>
-          </div>
-        ))}
-      <h3>Gruppenfunk</h3>
-      <div className="chat-log" aria-live="polite">
+      <h3>Verbundfunk</h3>
+      <div className="chat-log">
         {net.chat.map((c, i) => (
           <p key={i}>
             <b>{c.name}</b> {c.text}
@@ -430,23 +232,31 @@ export function Friends({ s }: { s: Save }) {
         ))}
       </div>
       <form
-        className="inline"
         onSubmit={(e) => {
           e.preventDefault();
-          chat(message);
-          setMessage("");
+          try {
+            chat(text);
+            setText("");
+          } catch (e) {
+            emit({ error: String(e) });
+          }
         }}
       >
-        <input
-          aria-label="Chatnachricht"
-          maxLength={500}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Nachricht an verbundene Freunde …"
-        />
-        <button>Senden</button>
+        <label>
+          Chatnachricht
+          <input
+            maxLength={500}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </label>
+        <button disabled={!text.trim()}>Senden</button>
       </form>
-    </div>
+      <small>
+        Textchat, höchstens zwei Nachrichten pro Sekunde. Keine dauerhafte
+        Chatspeicherung.
+      </small>
+    </section>
   );
 }
 export function BackupPanel({ s }: { s: Save | null }) {
@@ -457,14 +267,22 @@ export function BackupPanel({ s }: { s: Save | null }) {
   return (
     <div>
       <p>
-        Spielstände liegen ausschließlich in diesem Browser. Private Fenster und
-        gelöschte Browserdaten können alles verlieren. Lokale Sicherungen
-        ersetzen keine exportierte Datei.
+        Der verbindliche Spielstand liegt auf dem Server. Exportdateien und
+        freiwillige lokale Kopien bleiben möglich. Eine Übernahme alter Dateien
+        in Serverbesitz benötigt die ausdrückliche Freigabe des Administrators.
       </p>
       <button
         disabled={!s}
         onClick={() =>
-          s && download("leitstellen-verbund-spielstand.json", exportText(s))
+          s &&
+          void api("export")
+            .then((data) =>
+              download(
+                "leitstellen-verbund-spielstand.json",
+                JSON.stringify(data, null, 2),
+              ),
+            )
+            .catch((e) => setError(String(e)))
         }
       >
         Spielstand exportieren
@@ -507,29 +325,41 @@ export function BackupPanel({ s }: { s: Save | null }) {
             {preview.vehicles.length} Fahrzeuge
           </p>
           <p>
-            Der bisherige Spielstand wird zuerst lokal gesichert. Die Übernahme
-            erzeugt eine neue Spielstandgeneration; es erfolgt keine
-            Zusammenführung.
+            Validierte Vorschau. Diese Datei verändert keinen Serverbesitz.
+            Übergebe sie deinem Administrator; er kann sie nach Sicherung und
+            Serverstopp ausdrücklich übernehmen.
           </p>
           <button
             onClick={() =>
-              void replaceSave(preview)
-                .then(() => {
-                  setPreview(null);
-                  emit({ notice: "Spielstand übernommen." });
-                })
-                .catch((e) => setError(String(e)))
+              download("gepruefte-sicherung.json", exportText(preview))
             }
           >
-            Geprüften Spielstand übernehmen
+            Geprüfte Datei exportieren
           </button>
         </article>
       )}
-      <h3>Rotierende lokale Sicherungen</h3>
+      <h3>Freiwillige lokale Sicherungen dieses Kontos</h3>
+      <p>
+        Auf gemeinsam genutzten Geräten besser nur eine Datei exportieren.
+        Lokale Kopien bleiben nach Abmeldung auf diesem Gerät erhalten.
+      </p>
+      <button
+        disabled={!s}
+        onClick={() =>
+          s &&
+          void persist(s, true)
+            .then(() => setError("Lokale Kopie gespeichert."))
+            .catch((e) => setError(String(e)))
+        }
+      >
+        Lokale Kopie anlegen
+      </button>
       <button
         onClick={() =>
           void backups()
-            .then(setRows)
+            .then((rows) =>
+              setRows(rows.filter((r) => r.data.player.id === s?.player.id)),
+            )
             .catch((e) => setError(String(e)))
         }
       >
@@ -671,31 +501,28 @@ export function Help() {
         auf dem Wasserweg. Straßenfahrzeuge und Luftrettung folgen ihren eigenen
         Bewegungsregeln.
       </p>
-      <h3>Zeit und Offline-Spiel</h3>
+      <h3>Serverzeit und Verbindung</h3>
       <p>
-        Die Geschwindigkeit ist zwischen 1× und 32× wählbar. Beim Wiederöffnen
-        werden maximal vier Stunden Simulationszeit nachberechnet. Es entstehen
-        offline keine neuen Einsätze und keine Strafkosten. Gemeinsame Einsätze
-        schließen offline nicht automatisch ab.
+        Die Geschwindigkeit ist zwischen 1× und 32× wählbar. Der Server
+        simuliert deine Leitstelle auch bei geschlossenem Browser. Ohne
+        Serververbindung können keine Aktionen bestätigt werden. Nach
+        Serverstillstand werden höchstens vier Stunden nachberechnet.
       </p>
       <h3>Freunde und Belohnungen</h3>
       <p>
-        Im Bereich Freunde erklärt der Assistent Angebot und Antwort. Verbinde
-        jedes Spielerpaar direkt. Jeder verwaltet sein eigenes Geld und seine
-        Fahrzeuge. Der Einsatzgeber erhält bei bestätigter Unterstützung die
-        Hälfte der Belohnung; die andere Hälfte wird gleichmäßig unter den
-        bestätigten Helfern geteilt und abgerundet. Lokale Eigentümer und
-        Koordinatoren sind vertrauenswürdig zu behandeln, nicht technisch gegen
-        Manipulation abgesichert.
+        Alle eingeladenen Konten erreichen denselben Server. Teile einen
+        Einsatz; andere Spieler bieten ihre eigenen einsatzbereiten Fahrzeuge
+        an. Der Einsatzgeber erhält bei bestätigter Unterstützung die Hälfte der
+        Belohnung, die andere Hälfte teilen sich die tatsächlich angekommenen
+        Helfer. Der Server speichert alle Gutschriften atomar.
       </p>
       <h3>Speichern und Wiederherstellen</h3>
       <p>
-        Wichtige Änderungen werden sofort in IndexedDB gespeichert. Alle 60
-        Sekunden entsteht eine lokale Sicherung, die letzten fünf bleiben
-        erhalten. Exportiere zusätzlich eine Datei über „Sicherungen“. Ein
-        zweiter Tab bleibt schreibgeschützt. Für Gerätewechsel Datei exportieren
-        und auf dem anderen Gerät importieren; keine automatische
-        Synchronisation.
+        Besitz und Spielaktionen werden in SQLite auf dem Server gespeichert.
+        Mehrere Tabs sehen denselben Stand. Exportdateien und freiwillige lokale
+        Kopien stehen unter Sicherungen bereit. Administratoren sichern und
+        restaurieren die gesamte Datenbank. Alte Browserdateien dürfen nur nach
+        ausdrücklicher Administratorfreigabe übernommen werden.
       </p>
       <h3>Bedienung</h3>
       <p>

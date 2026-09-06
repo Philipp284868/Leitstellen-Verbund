@@ -1,0 +1,110 @@
+import { DatabaseSync, backup } from "node:sqlite";
+import { mkdirSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { validate, type Save } from "../src/model";
+
+export class Database {
+  sql: DatabaseSync;
+  path: string;
+  constructor(public dir: string) {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    this.path = resolve(dir, "game.sqlite");
+    const existed = existsSync(this.path);
+    this.sql = new DatabaseSync(this.path);
+    try {
+      this.sql.exec(
+        "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;",
+      );
+      const version = Number(
+        this.sql.prepare("PRAGMA user_version").get()!.user_version,
+      );
+      if (version > 1) {
+        throw Error(
+          "Datenbank ist neuer als dieser Server. Kein Downgrade möglich.",
+        );
+      }
+      if (version < 1) {
+        if (existed)
+          this.sql
+            .prepare("VACUUM INTO ?")
+            .run(resolve(dir, `pre-migration-${Date.now()}.sqlite`));
+        this.transaction(() => {
+          this.sql.exec(`
+          CREATE TABLE users(id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), created INTEGER NOT NULL);
+          CREATE TABLE saves(user_id TEXT PRIMARY KEY REFERENCES users(id), data TEXT NOT NULL);
+          CREATE TABLE sessions(hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires INTEGER NOT NULL);
+          CREATE TABLE invites(hash TEXT PRIMARY KEY, expires INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0);
+          CREATE TABLE actions(user_id TEXT NOT NULL REFERENCES users(id), id TEXT NOT NULL, fingerprint TEXT NOT NULL, PRIMARY KEY(user_id,id));
+          CREATE TABLE rewards(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), amount INTEGER NOT NULL);
+          CREATE TABLE limits(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_at INTEGER NOT NULL);
+          CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+          CREATE TABLE audit(id INTEGER PRIMARY KEY, at INTEGER NOT NULL, actor TEXT NOT NULL, event TEXT NOT NULL);
+          PRAGMA user_version=1;
+        `);
+        });
+      }
+      if (this.sql.prepare("PRAGMA quick_check").get()!.quick_check !== "ok")
+        throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
+      if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
+        throw Error("Ungültige SQLite-Kontoreferenzen.");
+    } catch (e) {
+      this.sql.close();
+      throw e;
+    }
+  }
+  transaction<T>(fn: () => T): T {
+    this.sql.exec("BEGIN IMMEDIATE");
+    try {
+      const result = fn();
+      this.sql.exec("COMMIT");
+      return result;
+    } catch (e) {
+      this.sql.exec("ROLLBACK");
+      throw e;
+    }
+  }
+  all(): Map<string, Save> {
+    return new Map(
+      this.sql
+        .prepare("SELECT user_id,data FROM saves")
+        .all()
+        .map((r) => [String(r.user_id), validate(JSON.parse(String(r.data)))]),
+    );
+  }
+  save(id: string, s: Save) {
+    if (id !== s.player.id) throw Error("Kontobesitz stimmt nicht überein.");
+    this.sql
+      .prepare(
+        "INSERT INTO saves VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data",
+      )
+      .run(id, JSON.stringify(validate(s)));
+  }
+  audit(actor: string, event: string) {
+    this.sql
+      .prepare("INSERT INTO audit(at,actor,event) VALUES (?,?,?)")
+      .run(Date.now(), actor, event);
+  }
+  async backup() {
+    const dir = resolve(this.dir, "backups");
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const path = resolve(
+      dir,
+      `game-${Date.now()}-${crypto.randomUUID()}.sqlite`,
+    );
+    await backup(this.sql, path);
+    const check = new DatabaseSync(path, { readOnly: true });
+    try {
+      if (
+        check.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok"
+      )
+        throw Error("Sicherung ist nicht konsistent.");
+    } finally {
+      check.close();
+    }
+    return path;
+  }
+  close() {
+    this.sql.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    this.sql.close();
+  }
+}

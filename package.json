@@ -1,22 +1,25 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
-    "preview": "vite preview --host 127.0.0.1",
+    "dev": "node --watch dist/server/index.js",
+    "build": "node scripts/build.mjs",
+    "preview": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "start": "node dist/server/index.js"
   },
   "dependencies": {
     "dexie": "4.3.0",
     "lucide-react": "0.577.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "socket.io": "4.8.3",
+    "socket.io-client": "4.8.3",
     "zod": "4.3.6"
   },
   "devDependencies": {
@@ -25,6 +28,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@vitejs/plugin-react": "6.1.1",
+    "esbuild": "0.28.2",
     "eslint": "10.10.0",
     "fake-indexeddb": "6.2.5",
     "prettier": "3.6.2",
@@ -33,5 +37,8 @@
     "vite": "8.2.2",
     "vitest": "5.0.0"
   },
-  "packageManager": "pnpm@11.19.0"
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": "24.x"
+  }
 }
