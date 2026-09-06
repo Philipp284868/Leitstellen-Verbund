@@ -1,6 +1,6 @@
 # Die Region übernehmen
 
-Zuerst mit einem eingeladenen Serverkonto anmelden. Eigener Besitz wird auf dem Server gespeichert; alle Konten verbinden sich automatisch.
+Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder mit einem vorhandenen Konto anmelden. Jeder kann sich ohne Einladung registrieren. Alle Konten sind normale Spieler. Eigener Besitz wird auf dem Server gespeichert; alle Konten verbinden sich automatisch. Frühere Admin-Konten bleiben mit denselben Zugangsdaten und Spielständen als normale Spieler erhalten.
 
 ## Einstieg und Disposition
 
@@ -14,7 +14,7 @@ Am Einsatz werden Fähigkeiten summiert, nicht bloß Fahrzeugzahlen. Ein Polizei
 
 ## Wege, Patienten und Boote
 
-Straßenfahrzeuge fahren entlang des mitgelieferten zusammenhängenden Straßengraphen. Die Route wird mit A\* berechnet, die Fahrzeit aus Weglänge und Fahrzeuggeschwindigkeit. Der Hubschrauber fliegt direkt. Boote sind dauerhaft an Wasserrettungsstationen mit Wasserzugang stationiert: Kaufen bedeutet dortiges Einsetzen ins Wasser, Alarmierung und Rückfahrt erfolgen über den definierten Wasserweg zwischen Uferzugängen. Es gibt in diesem Stand keinen Straßentransport eines Boots; es fährt niemals als Auto über Straßen.
+Straßenfahrzeuge fahren entlang des mitgelieferten zusammenhängenden Straßengraphen. Die Route wird mit A* berechnet, die Fahrzeit aus Weglänge und Fahrzeuggeschwindigkeit. Der Hubschrauber fliegt direkt. Boote sind dauerhaft an Wasserrettungsstationen mit Wasserzugang stationiert: Kaufen bedeutet dortiges Einsetzen ins Wasser, Alarmierung und Rückfahrt erfolgen über den definierten Wasserweg zwischen Uferzugängen. Es gibt in diesem Stand keinen Straßentransport eines Boots; es fährt niemals als Auto über Straßen.
 
 Nach der Patientenversorgung folgen echte Transporte. Öffentliches Klinikum: 100 Plätze, jedes eigene Krankenhaus zusätzlich 20 pro Ausbaustufe. Zielwahl berücksichtigt freie Plätze und Entfernung. Behandlungszeit: 90 Spielsekunden. Versorgte Patienten warten, wenn kein geeigneter Transport oder kein Platz verfügbar ist. Ein belegtes Transportfahrzeug kann nicht einfach zurückgerufen werden.
 
@@ -32,6 +32,6 @@ Es gibt keine laufenden Pflichtkosten, Offline-Strafen oder negativen Guthaben. 
 
 ## Speichern und Bedienung
 
-Wichtige Änderungen werden sofort auf dem Server gespeichert. Der Server simuliert bei geschlossenem Browser weiter; nach Serverstillstand werden höchstens vier Stunden nachberechnet. Exportdateien und freiwillige lokale Kopien stehen unter Sicherungen bereit. Eine Übernahme alter Dateien erfordert die ausdrückliche Freigabe des Administrators.
+Wichtige Änderungen werden sofort auf dem Server gespeichert. Der Server simuliert bei geschlossenem Browser weiter; nach Serverstillstand werden höchstens vier Stunden nachberechnet. Exportdateien und freiwillige lokale Kopien stehen unter Sicherungen bereit. Eine verbindliche Übernahme alter Dateien bleibt eine ausdrücklich genehmigte Wartungsaufgabe des Serverbetreibers bei gestopptem Spielserver; es gibt dafür keine Admin-Spielkonten.
 
 Karte ziehen, Mausrad oder +/− zum Zoomen verwenden. Marker lassen sich mit Tab und Enter bedienen. Auf kleinen Displays zwischen Karte und Einsatzliste wechseln. Dialoge schließen mit Escape; der Tastaturfokus bleibt im Dialog. Reduzierte Bewegung und heller Modus sind in den Einstellungen verfügbar.

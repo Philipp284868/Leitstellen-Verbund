@@ -1,16 +1,11 @@
-# Gemeinsam auf dem eigenen Server spielen
+# Gemeinsam spielen – Version 2.2
 
-1. Der Administrator richtet den Server und sein erstes Konto gemäß [AMP.md](AMP.md) ein.
-2. Unter Einstellungen → Serververwaltung erstellt er je Freund einen einmaligen Einladungscode (drei Tage gültig).
-3. Jeder Freund öffnet dieselbe Serveradresse und wählt Mit Einladung registrieren. Benutzername und Passwort gehören nur diesem Konto; jeder startet mit eigenen 250.000 Credits.
-4. Nach Anmeldung verbindet sich die Anwendung automatisch per Socket.IO. Es gibt keine Angebote, Antworttexte oder Router-/STUN-Konfiguration im Spiel.
-5. Jeder baut eine Feuerwache, beschafft Fahrzeuge und weist geeignete Besatzung zu.
-6. Ein Spieler öffnet einen Einsatz und wählt Mit Freunden teilen. Im Freunde-Bereich der anderen Konten erscheint der freigegebene Einsatz. Unter Eigenes Fahrzeug anbieten kann jeder ein eigenes einsatzbereites Fahrzeug schicken.
+Alle Spieler öffnen dieselbe konfigurierte Spieladresse. Jeder kann dort **Neues Konto erstellen** wählen; ein Einladungscode ist nicht mehr nötig. Benutzername, Passwort, Anzeigename und Leitstellenname festlegen und das Konto erstellen. Es gibt ausschließlich normale Spieler, auch für den Besitzer des Linux-Servers.
 
-Die Einsatzfreigabe erlaubt die Unterstützung durch die eingeladenen Konten des Servers. Besitz und Guthaben werden nicht zusammengelegt. Der Server prüft und reserviert jedes Fahrzeug; doppelte Alarmierungen sind ausgeschlossen. Erst tatsächliche Ankunft zählt für Fähigkeiten und Helferbelohnung. Patienten werden auch durch Helfer tatsächlich zum Krankenhaus gebracht.
+Jedes Konto besitzt eigene Wachen, Fahrzeuge, Personal, Guthaben und Fortschritt. In der Einsatzansicht mit **Mit Freunden teilen** einen Einsatz freigeben. Andere verbundene Spieler öffnen **Freunde**, wählen eine passende eigene verfügbare Einheit und bieten sie zur Unterstützung an. Freigegebene Einsätze und bestätigte Beiträge werden vom Server verwaltet. Es gelten weiterhin die vorhandenen Fahrzeug-, Besatzungs- und Einsatzanforderungen sowie die Begrenzung der Unterstützer je Einsatz.
 
-Bei bestätigter Unterstützung bekommt der Einsatzgeber die Hälfte der Grundbelohnung, die andere Hälfte teilen bestätigte Helfer, jeweils abgerundet. Ohne Helfer erhält er die volle Belohnung. Wiederholte Anfragen und Neuverbinden zahlen keinen Abschluss doppelt aus. Bis zu vier unterstützende Konten sind je Einsatz möglich.
+Ein geschlossener Browser beendet weder den Server noch bereits bestätigte Aufträge. Nach erneutem Anmelden erscheint der aktuelle gespeicherte Stand. Bei einer getrennten Verbindung werden neue Spielaktionen nicht als erfolgreich bestätigt. Chat, Einsätze und Besitz laufen über die bestehende authentifizierte Serververbindung, nicht über WebRTC oder Kopieren von Verbindungstexten.
 
-Ein geschlossener Browser beendet keine Simulation und keine Kooperation. Bei erneuter Anmeldung erscheint der aktuelle Serverstand. Bei ausdrücklichem Kooperationsabbruch kehren fremde Fahrzeuge zurück; ein laufender Patiententransport muss zuerst enden. Es gibt keinen Browserhost und keinen automatischen Koordinatorwechsel.
+Frühere Administratoren behalten ihre Konten und Spielstände als normale Spieler. Die Serververwaltung ist aus dem Spiel entfernt; fremde Spielstände und gesamte Serverbackups werden nicht öffentlich zugänglich.
 
-Der Gruppenchat ist Klartext und flüchtig (500 Zeichen, höchstens zwei Nachrichten pro Sekunde). Weitere Browser oder Geräte können dasselbe eigene Konto nutzen. Offline werden keine Aktionen bestätigt. Bei Serverproblemen den Betreiber kontaktieren; alte Dateien nur nach dessen ausdrücklicher Freigabe übernehmen lassen.
+Offene Registrierung ersetzt keine öffentliche Serveradresse, keine Portweiterleitung und kein HTTPS. Für Betrieb, Sicherungen und Netzwerkeinstellungen gilt [AMP.md](AMP.md).

@@ -1,7 +1,7 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "scripts": {
     "dev": "node --watch dist/server/index.js",
@@ -38,7 +38,5 @@
     "vitest": "5.0.0"
   },
   "packageManager": "pnpm@11.19.0",
-  "engines": {
-    "node": "24.x"
-  }
+  "engines": { "node": "24.x" }
 }
