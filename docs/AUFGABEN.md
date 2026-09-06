@@ -6,5 +6,5 @@
 - [x] Echte WebRTC-Verbindungen und kooperative Einsätze
 - [x] Fehlerfälle, lokale Browserabnahme, Offline-Build und CI-Workflows
 - [x] Zugewiesenes GitHub-Ziel und getrennte Rechte prüfen; Pages konfigurieren
-- [ ] Commit und Pull Request mit tatsächlichem GitHub-Prüflauf
+- [x] Commit und Pull Request mit tatsächlichem GitHub-Prüflauf (25 Logiktests, 24 Browserprüfungen erfolgreich)
 - [ ] Geprüften Stand integrieren und reale HTTPS-Veröffentlichung abnehmen

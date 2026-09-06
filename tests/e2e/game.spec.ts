@@ -111,7 +111,7 @@ test("A/C: erster vollständiger Solo-Einsatz, Belohnung, Rückkehr und Reload",
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   const money = await page.locator(".money strong").innerText();
   await page.screenshot({
-    path: "test-results/leitstelle-desktop.png",
+    path: test.info().outputPath("leitstelle-desktop.png"),
     fullPage: true,
   });
   await page.reload();
@@ -231,7 +231,7 @@ test("J: mobile Bedienung und lokale Ressourcen", async ({ page }) => {
     page.getByRole("heading", { name: "Bereitschaft herstellen" }),
   ).toBeVisible();
   await page.screenshot({
-    path: "test-results/leitstelle-mobil.png",
+    path: test.info().outputPath("leitstelle-mobil.png"),
     fullPage: true,
   });
 });

@@ -1,5 +1,7 @@
 # Leitstellen-Verbund
 
+![Leitstellen-Verbund](docs/leitstelle-desktop.png)
+
 Ein deutsches Browser-Aufbauspiel für die fiktive Region Falkenried. Jeder Browser besitzt seinen eigenen Spielstand. Freunde verbinden sich freiwillig über echte WebRTC-Datenkanäle. Es gibt kein Spielkonto, keine zentrale Spielstand-Datenbank und keinen dauerhaften Spielserver.
 
 **Version 1.0:** Die implementierten Systeme, tatsächlich ausgeführten Prüfungen und Umgebungsgrenzen sind in [Abnahme](docs/ABNAHME.md) und [Testbericht](docs/TESTBERICHT.md) getrennt dokumentiert. Der Testbericht unterscheidet lokalen Build, GitHub-CI und überprüfte Veröffentlichung.

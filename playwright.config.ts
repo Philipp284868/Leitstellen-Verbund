@@ -4,7 +4,7 @@ export default defineConfig({
   timeout: 120000,
   expect: { timeout: 15000 },
   fullyParallel: false,
-  workers: 1,
+  workers: process.env.CI ? 2 : 1,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:4173/Leitstellen-Verbund/",

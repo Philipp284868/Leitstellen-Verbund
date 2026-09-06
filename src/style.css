@@ -991,6 +991,75 @@ li {
 .light .mission-meta b {
   color: #395265;
 }
+.light .good {
+  color: #176746 !important;
+}
+.light .warning,
+.light .status.waiting {
+  color: #80551d !important;
+}
+.light .status {
+  color: #247552;
+}
+.light .requirements > div {
+  background: #f4e8d2;
+  color: #674716;
+  border-color: #bda574;
+}
+.light .requirements .fulfilled {
+  background: #d4eadc;
+  color: #24593a;
+  border-color: #86ad91;
+}
+.light .station-card span:not(.org-icon) {
+  color: #50697b;
+}
+@media (max-width: 760px) {
+  .app {
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar {
+    order: 0;
+    flex-shrink: 0;
+  }
+  .navrail {
+    order: 1;
+    flex-shrink: 0;
+  }
+  .tutorial {
+    order: 2;
+    position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    margin: 0;
+    border-radius: 0;
+    padding: 12px 16px;
+  }
+  .tutorial p {
+    margin: 7px 0;
+    font-size: 14px;
+  }
+  .tutorial .eyebrow {
+    font-size: 12px;
+  }
+  .tutorial button {
+    padding: 4px 0;
+  }
+  .workspace {
+    order: 3;
+    flex: none;
+  }
+  .app:has(.tutorial) .workspace {
+    height: calc(100dvh - 300px);
+    min-height: 400px;
+  }
+  .radio-bar {
+    order: 4;
+    flex-shrink: 0;
+  }
+}
 @media (min-width: 1600px) {
   .workspace {
     grid-template-columns: 390px minmax(0, 1fr);
@@ -1261,5 +1330,26 @@ li {
 @media (max-width: 760px) {
   .map-wrap {
     min-height: 220px;
+  }
+}
+@media (max-width: 760px) {
+  .app .tutorial {
+    position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    margin: 0;
+    border-radius: 0;
+    padding: 12px 16px;
+  }
+  .app .tutorial .eyebrow {
+    font-size: 12px;
+  }
+  .app .tutorial p {
+    font-size: 14px;
+    margin: 7px 0;
+  }
+  .app .tutorial button {
+    padding: 4px 0;
   }
 }
