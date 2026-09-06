@@ -358,6 +358,14 @@ test("ein neuer bestätigter Servereinsatz löst ohne Bedienklick ein hörbares 
   await meter(page);
   const id = await login(page, true);
   await play(page);
+  // Wait for audible playback before testing a live event: initial/reconnect snapshots
+  // are deliberately silent, and Firefox starts its output device asynchronously.
+  await expect
+    .poll(async () => await levels(page))
+    .toMatchObject({ state: "running" });
+  await expect
+    .poll(async () => (await levels(page)).rms)
+    .toBeGreaterThan(0.0001);
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
