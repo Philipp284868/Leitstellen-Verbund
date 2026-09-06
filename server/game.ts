@@ -197,7 +197,7 @@ export class Game {
         const before = new Set(s.archive.map((m) => m.round));
         tick(
           s,
-          s.time + (Math.min(14400, Math.max(0, seconds)) / count) * s.speed,
+          s.time + Math.min(14400, Math.max(0, seconds)) / count,
           remote.get(id),
           false,
           false,

@@ -89,7 +89,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     // Reproduce the old polling rejection: request without Origin/Fetch-Metadata remains forbidden.
     const legacy = await fetch(origin + "/socket.io/?EIO=4&transport=polling");
     expect(legacy.status).toBe(403);
-    await a.getByLabel("Spielgeschwindigkeit").selectOption("32");
+    await expect(a.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
     await a
       .locator(".bottom-panel")
       .getByRole("button", { name: "Wache bauen" })
@@ -102,11 +102,9 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       .getByRole("button", { name: "Platzieren" })
       .click();
     const bounds = await a.locator("svg.map").boundingBox();
-    await a
-      .locator("svg.map")
-      .click({
-        position: { x: bounds!.width * 0.3, y: bounds!.height * 0.55 },
-      });
+    await a.locator("svg.map").click({
+      position: { x: bounds!.width * 0.3, y: bounds!.height * 0.55 },
+    });
     await expect(a.locator(".station-strip .station-card")).toHaveCount(1);
     await expect(a.locator(".money")).toContainText("195.000");
     await expect(b.locator(".station-strip .station-card")).toHaveCount(0);
@@ -143,7 +141,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await expect(a.locator(".radio-bar")).toContainText(
       "Mit Spielserver verbunden",
     );
-    await a.getByLabel("Spielgeschwindigkeit").selectOption("16");
+    await expect(a.locator(".radio-bar")).toContainText("Echtzeit");
     await expect
       .poll(
         () =>
@@ -151,7 +149,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
             (save) => save.player.name === "HttpAnna",
           )?.speed,
       )
-      .toBe(16);
+      .toBe(1);
     expect(errors).toEqual([]);
   } finally {
     await ca.close();

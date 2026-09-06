@@ -18,7 +18,7 @@ Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. HTTP-Frontend,
 
 Jede Aktion hat eine UUID. Der Server bindet sie an das angemeldete Konto und den Hash der geprüften Aktion. Gleiche ID und gleicher Inhalt ergeben keine erneute Mutation; eine andere Bedeutung wird abgelehnt. Der Browser übergibt weder Guthaben noch Eigentümer oder Zeitstempel als autoritativen Zustand. SQLite BEGIN IMMEDIATE, WAL und synchronous=FULL sichern die gemeinsame Speicherung von Zustand und Belegen.
 
-Ein Server-Takt liest die Konten, berechnet deren Bewegung, Ausbildung und Missionen und übernimmt den vollständigen Tick in einer Transaktion. Die Serverzeit bestimmt den Fortschritt; die bisherige Spielgeschwindigkeitswahl ist eine vom Server validierte Aktion. Browser-Anwesenheit beeinflusst die Simulation nicht. Nach Serverstillstand werden höchstens vier Stunden nachberechnet. Ein Rücksprung der Uhr erzeugt keine negative Spielzeit. Bei Speicher-/Validierungsfehlern pausiert die Simulation, statt nicht gespeicherte Zustände auszuliefern.
+Ein Server-Takt liest die Konten, berechnet deren Bewegung, Ausbildung und Missionen und übernimmt den vollständigen Tick in einer Transaktion. Die Serverzeit bestimmt den Fortschritt; eine echte Sekunde ergibt genau eine Simulationssekunde in beiden Modi. Eine Aktion zur Tempoänderung wird abgelehnt; alte Spielstände werden auf Tempo 1 normalisiert. Browser-Anwesenheit beeinflusst die Simulation nicht. Nach Serverstillstand werden höchstens vier Stunden nachberechnet. Ein Rücksprung der Uhr erzeugt keine negative Spielzeit. Bei Speicher-/Validierungsfehlern pausiert die Simulation, statt nicht gespeicherte Zustände auszuliefern.
 
 ## Kooperation
 

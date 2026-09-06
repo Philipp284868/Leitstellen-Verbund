@@ -1,3 +1,4 @@
+import { approach } from "./travel";
 import { useState } from "react";
 import { mt, capabilities, vt } from "./catalog";
 import {
@@ -133,6 +134,7 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
                 <b>{v.name}</b>
                 <small>
                   {reason || "Einsatzbereit"} · {statuses[v.status]}
+                  {!reason && <> · {approach(s, v, m.pos)}</>}
                 </small>
               </span>
             </label>

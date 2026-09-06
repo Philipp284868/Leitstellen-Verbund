@@ -435,19 +435,9 @@ function GameApp() {
               <span className="save-indicator">
                 {readonly ? "● Verbindung fehlt" : "● Server bestätigt"}
               </span>
-              <select
-                aria-label="Spielgeschwindigkeit"
-                value={s.speed}
-                onChange={(e) =>
-                  void act({ type: "speed", value: Number(e.target.value) })
-                }
-              >
-                {[1, 4, 8, 16, 32].map((x) => (
-                  <option key={x} value={x}>
-                    {x}× Tempo
-                  </option>
-                ))}
-              </select>
+              <span title="Eine Spielsekunde entspricht einer echten Sekunde">
+                ◷ Echtzeit
+              </span>
             </footer>
             {s.tutorial < 6 && (
               <details className="tutorial">

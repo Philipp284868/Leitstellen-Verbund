@@ -56,7 +56,7 @@ async function register(page: Page, label: string) {
     app.db.sql.prepare("SELECT role FROM users WHERE username=?").get(username)!
       .role,
   ).toBe("player");
-  await page.getByLabel("Spielgeschwindigkeit").selectOption("32");
+  await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
   return username;
 }
 async function enter(page: Page, username: string) {
@@ -86,6 +86,8 @@ async function resources(page: Page) {
   await page.locator("svg.map").click({
     position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
   });
+  await expect(page.locator(".station-strip .station-card")).toHaveCount(1);
+  app.game.step(30); // Advance the test server clock, never a player-controlled speed.
   await page.locator(".station-strip .station-card").first().click();
   await page.getByRole("button", { name: "18.000 Cr", exact: true }).click();
   await page
@@ -124,6 +126,14 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   await a.locator(".mission-card").first().click();
   await a.locator(".dispatch-list input").first().check();
   await a.getByRole("button", { name: "Alarmieren (1)", exact: true }).click();
+  await expect
+    .poll(() =>
+      [...app.db.all().values()].some((s) =>
+        s.vehicles.some((v) => v.status === "travel"),
+      ),
+    )
+    .toBe(true);
+  app.game.step(7200);
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
@@ -179,6 +189,14 @@ test("Gemeinsamer Einsatz läuft ohne Helferbrowser weiter; Neustart und Wiederh
     )
     .toBe(true);
   await cb.close();
+  await expect
+    .poll(() =>
+      [...app.db.all().values()].some((s) =>
+        s.vehicles.some((v) => v.status === "travel"),
+      ),
+    )
+    .toBe(true);
+  app.game.step(7200);
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
@@ -239,6 +257,10 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
       exact: false,
     })
     .click();
+  await expect
+    .poll(() => [...app.db.all().values()].some((s) => s.reliefActive))
+    .toBe(true);
+  app.game.step(125);
   await expect
     .poll(() => second.locator(".money strong").innerText())
     .not.toBe("250.000 Cr");
@@ -338,4 +360,3 @@ test("Mobilansicht und notwendige Ressourcen bleiben auf demselben eigenen Serve
     fullPage: true,
   });
 });
-

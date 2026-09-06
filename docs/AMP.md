@@ -1,4 +1,6 @@
-# Leitstellen-Verbund auf CubeCoders AMP – Version 2.5
+# Leitstellen-Verbund auf CubeCoders AMP – Version 2.6
+
+Version 2.6 vergrößert die Region und stellt beide Modi auf Echtzeit. [Updatehinweise zu Schema 5](VERSION-2.6.md). Das normale Update genügt; die bestehende Stadt bleibt an ihrem Platz.
 
 Version 2.5 ergänzt [Musik und Soundeffekte](AUDIO.md). Das normale Update genügt; Audio benötigt keine zusätzlichen Dateien, Ports oder Einstellungen in AMP.
 
@@ -70,7 +72,7 @@ node dist/server/cli.js backup
 node dist/server/cli.js restore --file /srv/leitstellen-data/backups/game-ZEIT-ID.sqlite --confirm
 ```
 
-Restore prüft Integrität, Schema und Kontobesitz, sichert den bisherigen Stand, widerruft Sitzungen und ersetzt die Datenbank. Sicherungen der Schemata 1, 2, 3 und 4 werden unterstützt; ältere Adminrollen aus Schema 1 werden wieder zu Spielern migriert. Eine Wiederherstellung setzt die gesamte Welt zurück, sie führt keine Spielstände zusammen. Die optionale `player-create`-CLI legt ausschließlich einen normalen Spieler an und benötigt das Passwort über `--password-stdin`; für reguläre Nutzer ist sie nicht nötig. `admin-create` und `invite` werden ausdrücklich abgelehnt.
+Restore prüft Integrität, Schema und Kontobesitz, sichert den bisherigen Stand, widerruft Sitzungen und ersetzt die Datenbank. Sicherungen der Schemata 1, 2, 3, 4 und 5 werden unterstützt; ältere Adminrollen aus Schema 1 werden wieder zu Spielern migriert. Eine Wiederherstellung setzt die gesamte Welt zurück, sie führt keine Spielstände zusammen. Die optionale `player-create`-CLI legt ausschließlich einen normalen Spieler an und benötigt das Passwort über `--password-stdin`; für reguläre Nutzer ist sie nicht nötig. `admin-create` und `invite` werden ausdrücklich abgelehnt.
 
 Für genehmigte alte Browserstände: Zielkonto zuerst im Spiel erstellen, sämtliche aktiven Aufträge des Kontos und fremde Unterstützung beenden, dann Server stoppen:
 

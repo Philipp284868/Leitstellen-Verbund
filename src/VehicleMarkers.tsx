@@ -1,15 +1,14 @@
+import { tripLabel } from "./travel";
 import { memo, useEffect, useRef } from "react";
 import { along } from "./world";
 import type { Vehicle } from "./model";
 export const VehicleMarkers = memo(function VehicleMarkers({
   vehicles,
   time,
-  speed,
   routes = true,
 }: {
   vehicles: Vehicle[];
   time: number;
-  speed: number;
   routes?: boolean;
 }) {
   const elements = useRef(new Map<string, SVGGElement>());
@@ -22,7 +21,7 @@ export const VehicleMarkers = memo(function VehicleMarkers({
     const started = performance.now();
     let frame = 0;
     const animate = (now: number) => {
-      const at = time + Math.min(2, (now - started) / 1000) * speed;
+      const at = time + Math.min(2, (now - started) / 1000);
       for (const v of vehicles) {
         if (!["travel", "return", "transport"].includes(v.status)) continue;
         const p = along(v.path, (at - v.depart) / (v.arrive - v.depart));
@@ -34,7 +33,7 @@ export const VehicleMarkers = memo(function VehicleMarkers({
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [vehicles, time, speed]);
+  }, [vehicles, time]);
   return (
     <>
       {vehicles
@@ -71,8 +70,7 @@ export const VehicleMarkers = memo(function VehicleMarkers({
                   strokeWidth="2"
                 />
                 <title>
-                  {v.name} · {Math.max(0, Math.ceil((v.arrive - time) / speed))}{" "}
-                  s
+                  {v.name} · {tripLabel(v, time)}
                 </title>
               </g>
             </g>

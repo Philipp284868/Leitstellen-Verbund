@@ -3,6 +3,8 @@ import { z } from "zod";
 import { bt, vt, mt, BALANCE } from "./catalog";
 import {
   WORLD,
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
   LEGACY_WORLD,
   nodes,
   nearest,
@@ -14,7 +16,10 @@ const id = z.string().min(1).max(100),
   num = z.number().finite().nonnegative().max(1e12),
   integer = num.int();
 export const point = z
-  .object({ x: z.number().min(0).max(1300), y: z.number().min(0).max(850) })
+  .object({
+    x: z.number().min(0).max(WORLD_WIDTH),
+    y: z.number().min(0).max(WORLD_HEIGHT),
+  })
   .strict();
 export const buildingSchema = z
   .object({
@@ -59,7 +64,7 @@ export const vehicleSchema = z
     ]),
     mission: id.nullable(),
     assignment: id.nullable(),
-    path: z.array(point).max(300),
+    path: z.array(point).max(4096),
     depart: num,
     arrive: num,
     patients: integer.max(10),
@@ -245,6 +250,7 @@ export function validate(data: unknown): Save {
       throw Error("Ungültige Personalzuordnung.");
   }
   for (const m of [...s.missions, ...s.archive]) mt(m.template);
+  s.speed = 1; // Accept historical saves, but never restore acceleration.
   validateReferences(s, legacy);
   return legacy ? validateReferences(migrateMap(s)) : s;
 }

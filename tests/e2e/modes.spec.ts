@@ -166,6 +166,10 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
   await page.locator("svg.map").focus();
   await page.keyboard.press("Home");
   await expect(page.locator(".map-legend")).toContainText("100 %");
+  await expect(
+    page.getByRole("button", { name: "Fahrwege", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Fahrwege", exact: true }).click();
   await page.getByRole("button", { name: "Fahrwege", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Fahrwege", exact: true }),
@@ -206,4 +210,79 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
   await expect(page.locator(".mission-sidebar")).toBeVisible();
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect(page.locator("svg.map")).toBeVisible();
+});
+
+test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf Desktop und Mobil", async ({
+  page,
+}, info) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const { id } = await account(page);
+  await play(page);
+  await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
+  await expect(page.locator(".radio-bar")).toContainText("Echtzeit");
+  await page
+    .getByRole("button", { name: "Gesamte Region", exact: true })
+    .click();
+  await expect(page.locator("svg.map")).toHaveAttribute(
+    "viewBox",
+    "0 0 5200 3400",
+  );
+  await page.screenshot({
+    path: info.outputPath("region-2.6-gesamt.png"),
+    fullPage: true,
+  });
+  await page.getByLabel("Stadtviertel anzeigen").selectOption("STEINFURT");
+  const box = (await page.locator("svg.map").getAttribute("viewBox"))!
+    .split(" ")
+    .map(Number);
+  expect(box[0]).toBeGreaterThan(3000);
+  expect(box[1]).toBeGreaterThan(2000);
+  await page.screenshot({
+    path: info.outputPath("region-2.6-steinfurt.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Meine Wachen", exact: true }).click();
+  await page.locator(".mission-card").first().click();
+  await expect(page.locator(".dispatch-list")).toContainText("km · ca.");
+  await page.locator(".dispatch-list input").first().check();
+  await page
+    .getByRole("button", { name: "Alarmieren (1)", exact: true })
+    .click();
+  await expect
+    .poll(() => app.db.all().get(id)!.vehicles[0].status)
+    .toBe("travel");
+  const initial = app.db.all().get(id)!;
+  const eta = initial.vehicles[0].arrive - initial.time;
+  app.game.step(2);
+  expect(
+    app.db.all().get(id)!.vehicles[0].arrive - app.db.all().get(id)!.time,
+  ).toBeCloseTo(eta - 2, 0);
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await expect(page.locator(".operations")).toContainText("bis Ziel");
+  await expect(page.locator(".operations")).toContainText("Gesamtstrecke");
+  const desktopOps = await page.locator(".operations").boundingBox();
+  const desktopWrap = await page.locator(".map-wrap").boundingBox();
+  expect(desktopOps!.y + desktopOps!.height).toBeLessThanOrEqual(
+    desktopWrap!.y + desktopWrap!.height + 1,
+  );
+  await page.screenshot({
+    path: info.outputPath("region-2.6-fahrten.png"),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".operations")).toBeVisible();
+  const operationsBox = await page.locator(".operations").boundingBox();
+  const wrapBox = await page.locator(".map-wrap").boundingBox();
+  expect(operationsBox!.y + operationsBox!.height).toBeLessThanOrEqual(
+    wrapBox!.y + wrapBox!.height + 1,
+  );
+  await page.screenshot({
+    path: info.outputPath("region-2.6-mobil.png"),
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

@@ -1,3 +1,4 @@
+import { towns, WORLD_WIDTH, WORLD_HEIGHT } from "./region";
 import { memo } from "react";
 import { roads, nodes, edges, districts, distance, type Point } from "./world";
 const river =
@@ -71,9 +72,10 @@ for (const road of roads) {
         height = industry ? 12 + random() * 7 : 6 + random() * 5;
       if (
         x < 15 ||
-        x > 980 ||
+        (x < 1300 && y < 850 && x > 980) ||
+        x > WORLD_WIDTH - 15 ||
         y < 15 ||
-        y > 820 ||
+        y > WORLD_HEIGHT - 15 ||
         nearRoad({ x, y }, Math.hypot(width, height) / 2 + 6) ||
         houses.some(
           (h) =>
@@ -112,10 +114,26 @@ for (let i = 0; i < 2200; i++) {
   )
     trees.push({ x, y, r: 3 + random() * 5 });
 }
+const regionalPatches: string[] = [];
+for (let i = 0; i < 200; i++) {
+  const x = 80 + random() * (WORLD_WIDTH - 160),
+    y = 80 + random() * (WORLD_HEIGHT - 160);
+  if ((x < 1450 && y < 1000) || towns.some((t) => distance(t, { x, y }) < 260))
+    continue;
+  const rx = 65 + random() * 150,
+    ry = 45 + random() * 100;
+  regionalPatches.push(
+    i % 3
+      ? `M${x - rx} ${y - ry * 0.7} Q${x - rx * 0.2} ${y - ry * 1.1} ${x + rx * 0.8} ${y - ry * 0.6} L${x + rx} ${y + ry * 0.4} Q${x + rx * 0.1} ${y + ry} ${x - rx * 0.7} ${y + ry * 0.8}Z`
+      : `M${x - rx} ${y} C${x - rx * 1.2} ${y - ry} ${x - rx * 0.2} ${y - ry * 1.3} ${x + rx * 0.4} ${y - ry} S${x + rx * 1.3} ${y - ry * 0.1} ${x + rx} ${y + ry * 0.5} S${x - rx * 0.3} ${y + ry * 1.2} ${x - rx} ${y}Z`,
+  );
+}
 export const MapTerrain = memo(function MapTerrain({
   labels,
+  zoom,
 }: {
   labels: boolean;
+  zoom: number;
 }) {
   return (
     <g className="map-terrain" pointerEvents="none">
@@ -130,7 +148,34 @@ export const MapTerrain = memo(function MapTerrain({
           <path d="M0 0V8" stroke="var(--map-field-line)" strokeWidth="1" />
         </pattern>
       </defs>
-      <rect width="1300" height="850" fill="var(--map-land)" />
+      <rect width={WORLD_WIDTH} height={WORLD_HEIGHT} fill="var(--map-land)" />
+      {regionalPatches.map((p, i) => (
+        <path
+          key={i}
+          d={p}
+          fill={
+            i % 3 === 0
+              ? "var(--map-park)"
+              : i % 3 === 1
+                ? "var(--map-field)"
+                : "var(--map-meadow)"
+          }
+          stroke="var(--map-hedge)"
+          strokeWidth="3"
+        />
+      ))}
+      <path
+        d="M5150 1620C4630 1500 4700 2080 4270 2030S3480 2150 3010 2060S2190 2260 1750 2100S640 2350 0 2000"
+        fill="none"
+        stroke="var(--map-shore)"
+        strokeWidth="22"
+      />
+      <path
+        d="M5150 1620C4630 1500 4700 2080 4270 2030S3480 2150 3010 2060S2190 2260 1750 2100S640 2350 0 2000"
+        fill="none"
+        stroke="var(--map-water)"
+        strokeWidth="13"
+      />
       <path
         d="M0 32C190 8 280 55 380 12S690 30 795 0M0 805C166 767 193 798 266 819M715 827C841 752 880 822 995 840"
         fill="none"
@@ -267,23 +312,30 @@ export const MapTerrain = memo(function MapTerrain({
       </g>
       {labels && (
         <g>
-          {districts.map((d) => (
-            <text
-              key={d.name}
-              x={d.x}
-              y={d.y}
-              textAnchor="middle"
-              fill="var(--map-label)"
-              stroke="var(--map-label-bg)"
-              strokeWidth="4"
-              paintOrder="stroke"
-              fontSize={d.name === "ALTSTADT" ? 14 : 11}
-              letterSpacing="2"
-              fontWeight="700"
-            >
-              {d.name}
-            </text>
-          ))}
+          {districts
+            .filter(
+              (d) =>
+                zoom >= 0.6 ||
+                d.name === "ALTSTADT" ||
+                towns.some((t) => t.name === d.name),
+            )
+            .map((d) => (
+              <text
+                key={d.name}
+                x={d.x}
+                y={d.y}
+                textAnchor="middle"
+                fill="var(--map-label)"
+                stroke="var(--map-label-bg)"
+                strokeWidth="4"
+                paintOrder="stroke"
+                fontSize={Math.max(d.name === "ALTSTADT" ? 14 : 11, 14 / zoom)}
+                letterSpacing="2"
+                fontWeight="700"
+              >
+                {zoom < 0.6 && d.name === "ALTSTADT" ? "FALKENRIED" : d.name}
+              </text>
+            ))}
           <text
             x="1160"
             y="675"

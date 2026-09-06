@@ -1,6 +1,16 @@
+import { tripLabel } from "./travel";
+import { towns } from "./region";
+import { Operations } from "./Operations";
 import { MapTerrain } from "./MapTerrain";
-import { memo, useRef, useState } from "react";
-import { districts, publicHospital, docks, type Point } from "./world";
+import { memo, useEffect, useRef, useState } from "react";
+import {
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
+  districts,
+  publicHospital,
+  docks,
+  type Point,
+} from "./world";
 import { mt, bt } from "./catalog";
 import type { Save } from "./model";
 import type { Friend } from "./network";
@@ -22,21 +32,57 @@ export const MapView = memo(function MapView({
   friends: Friend[];
 }) {
   const [zoom, setZoom] = useState(1),
-    [offset, setOffset] = useState({ x: 0, y: 0 }),
+    [offset, setOffset] = useState(() => ({
+      x: Math.max(
+        0,
+        Math.min(WORLD_WIDTH - 1300, (s.buildings[0]?.pos.x ?? 650) - 650),
+      ),
+      y: Math.max(
+        0,
+        Math.min(WORLD_HEIGHT - 850, (s.buildings[0]?.pos.y ?? 425) - 425),
+      ),
+    })),
     [filter, setFilter] = useState("Alle"),
     [labels, setLabels] = useState(true),
-    [routes, setRoutes] = useState(false),
+    [routes, setRoutes] = useState(true),
     [showFriends, setShowFriends] = useState(true);
+  const svg = useRef<SVGSVGElement>(null);
+  const [aspect, setAspect] = useState(1300 / 850);
+  const previousAspect = useRef(1300 / 850);
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => {
+      const next =
+        entry.contentRect.width / Math.max(1, entry.contentRect.height);
+      const old = previousAspect.current;
+      previousAspect.current = next;
+      setAspect(next);
+      if (zoom !== 0.25)
+        setOffset((p) => ({
+          ...p,
+          y: Math.max(
+            0,
+            Math.min(
+              WORLD_HEIGHT - 1300 / zoom / next,
+              p.y + (1300 / zoom / old - 1300 / zoom / next) / 2,
+            ),
+          ),
+        }));
+    });
+    if (svg.current) observer.observe(svg.current);
+    return () => observer.disconnect();
+  }, [zoom]);
+  const viewHeight = (z: number) =>
+    z === 0.25 ? WORLD_HEIGHT : 1300 / z / aspect;
   const visibleFriends = showFriends ? friends : [];
   const clamp = (p: Point, z: number) => ({
-    x: Math.max(0, Math.min(1300 - 1300 / z, p.x)),
-    y: Math.max(0, Math.min(850 - 850 / z, p.y)),
+    x: Math.max(0, Math.min(WORLD_WIDTH - 1300 / z, p.x)),
+    y: Math.max(0, Math.min(WORLD_HEIGHT - viewHeight(z), p.y)),
   });
   const resize = (
     value: number,
-    point = { x: offset.x + 650 / zoom, y: offset.y + 425 / zoom },
+    point = { x: offset.x + 650 / zoom, y: offset.y + viewHeight(zoom) / 2 },
   ) => {
-    const next = Math.max(1, Math.min(4, value));
+    const next = Math.max(0.25, Math.min(4, value));
     setOffset(
       clamp(
         {
@@ -55,15 +101,25 @@ export const MapView = memo(function MapView({
   return (
     <div className="map-wrap">
       <div className="map-toolbar">
-        <strong>Region Falkenried</strong>
+        <strong>Region Falkenried · 62,4 × 40,8 km</strong>
         <select
           aria-label="Stadtviertel anzeigen"
           defaultValue=""
           onChange={(e) => {
             const d = districts.find((d) => d.name === e.target.value);
             if (d) {
-              setZoom(2);
-              setOffset(clamp({ x: d.x - 325, y: d.y - 212.5 }, 2));
+              const town = towns.find((t) => t.name === d.name);
+              const z = town ? 1 : 2;
+              setZoom(z);
+              setOffset(
+                clamp(
+                  {
+                    x: d.x - 650 / z,
+                    y: d.y - (town ? 110 * town.size : 0) - viewHeight(z) / 2,
+                  },
+                  z,
+                ),
+              );
             }
           }}
         >
@@ -85,6 +141,24 @@ export const MapView = memo(function MapView({
         </select>
       </div>
       <div className="map-layers" aria-label="Kartenebenen">
+        <button
+          onClick={() => {
+            setZoom(0.25);
+            setOffset({ x: 0, y: 0 });
+          }}
+        >
+          Gesamte Region
+        </button>
+        <button
+          onClick={() => {
+            const p = s.buildings[0]?.pos ?? { x: 650, y: 425 };
+            setZoom(1);
+            setOffset(clamp({ x: p.x - 650, y: p.y - viewHeight(1) / 2 }, 1));
+          }}
+        >
+          Meine Wachen
+        </button>
+
         <button aria-pressed={labels} onClick={() => setLabels(!labels)}>
           Beschriftung
         </button>
@@ -101,8 +175,9 @@ export const MapView = memo(function MapView({
         )}
       </div>
       <svg
+        ref={svg}
         className={"map " + (placing ? "placing" : "")}
-        viewBox={`${offset.x} ${offset.y} ${1300 / zoom} ${850 / zoom}`}
+        viewBox={`${offset.x} ${offset.y} ${1300 / zoom} ${viewHeight(zoom)}`}
         role="img"
         aria-label="Interaktive Karte von Falkenried"
         tabIndex={0}
@@ -190,13 +265,13 @@ export const MapView = memo(function MapView({
               e.currentTarget.getScreenCTM()!.inverse(),
             );
             onPlace({
-              x: Math.max(0, Math.min(1300, pos.x)),
-              y: Math.max(0, Math.min(850, pos.y)),
+              x: Math.max(0, Math.min(WORLD_WIDTH, pos.x)),
+              y: Math.max(0, Math.min(WORLD_HEIGHT, pos.y)),
             });
           }
         }}
       >
-        <MapTerrain labels={labels} />
+        <MapTerrain labels={labels} zoom={zoom} />
         <g transform={`translate(${publicHospital.x},${publicHospital.y})`}>
           <rect x="-13" y="-13" width="26" height="26" rx="6" fill="#5cd4b0" />
           <text textAnchor="middle" y="6" fontSize="20" fill="#10392e">
@@ -357,12 +432,7 @@ export const MapView = memo(function MapView({
             )),
           )}
         {(filter === "Alle" || filter === "Fahrzeuge") && (
-          <VehicleMarkers
-            vehicles={s.vehicles}
-            time={s.time}
-            speed={s.speed}
-            routes={routes}
-          />
+          <VehicleMarkers vehicles={s.vehicles} time={s.time} routes={routes} />
         )}
         {(filter === "Alle" || filter === "Fahrzeuge") &&
           visibleFriends.flatMap((f) =>
@@ -389,7 +459,8 @@ export const MapView = memo(function MapView({
                     fill="#c9b4e8"
                   >
                     <title>
-                      {v.name} · {f.name} · {v.eta} s · {f.status}
+                      {v.name} · {f.name} · {tripLabel(v, v.arrive - v.eta)} ·{" "}
+                      {f.status}
                     </title>
                   </rect>
                 </g>
@@ -418,8 +489,13 @@ export const MapView = memo(function MapView({
         {friends.length > 0 && <span>◌ Verbund</span>}
         <span>! Einsatz</span>
         <span>＋ Klinikum</span>
-        <span>{Math.round(zoom * 100)} %</span>
+        <span>
+          {Math.round(zoom * 100)} % · Ausschnitt{" "}
+          {(15.6 / zoom).toLocaleString("de-DE", { maximumFractionDigits: 1 })}{" "}
+          km breit
+        </span>
       </div>
+      <Operations s={s} />
       {placing && (
         <div className="placement-hint">
           Bauplatz wählen · Klick auf eine Straßenkreuzung

@@ -140,7 +140,7 @@ describe("Autoritativer Server", () => {
     const endA = app.db.all().get(a)!, endB = app.db.all().get(b)!;
     expect(endA.archive.some((m) => m.round === mission.round)).toBe(true);
     expect(endA.money - startA).toBe(Math.floor(mt("sick").reward / 2)); expect(endB.money - startB).toBe(Math.floor(mt("sick").reward / 2));
-    app.game.step(200); expect(app.db.all().get(b)!.vehicles.find((v) => v.id === vehicle.id)!.status).toBe("ready");
+    app.game.step(7200); expect(app.db.all().get(b)!.vehicles.find((v) => v.id === vehicle.id)!.status).toBe("ready");
     app.game.command(b, support); expect(app.db.all().get(b)!.money).toBe(endB.money);
   });
   it("ruft fremde Kräfte nach explizitem Kooperationsabbruch zurück und schützt Speicherfehler atomar", async () => {

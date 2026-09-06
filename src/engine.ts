@@ -36,8 +36,7 @@ export type Action =
   | { type: "move"; id: string; home: string }
   | { type: "dispatch"; mission: string; vehicles: string[] }
   | { type: "recall"; id: string }
-  | { type: "favorite"; id: string }
-  | { type: "speed"; value: number };
+  | { type: "favorite"; id: string };
 export function money(s: Save, amount: number, text: string, receipt?: string) {
   if (receipt && s.receipts.includes(receipt)) return false;
   if (
@@ -395,10 +394,6 @@ export function apply(s: Save, a: Action) {
       if (v) v.favorite = !v.favorite;
       break;
     }
-    case "speed":
-      if (![1, 4, 8, 16, 32].includes(a.value))
-        throw Error("Ungültige Spielgeschwindigkeit.");
-      s.speed = a.value;
   }
 }
 export function generate(s: Save) {
@@ -415,9 +410,23 @@ export function generate(s: Save) {
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
   const t = candidates[(s.seed >>> 16) % candidates.length];
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
+  const relevantHomes = new Set(
+    s.vehicles
+      .filter((v) =>
+        Object.keys(vt(v.type).skills).some((k) => t.requirements[k]),
+      )
+      .map((v) => v.home),
+  );
+  const bases = s.buildings.filter(
+    (b) => b.ready <= s.time && relevantHomes.has(b.id),
+  );
+  const sites = nodes.filter((p) =>
+    bases.some((b) => distance(b.pos, p) <= 600),
+  );
+  if (!sites.length) return;
   const pos = t.water
     ? docks[s.seed % docks.length]
-    : nodes[s.seed % nodes.length];
+    : sites[s.seed % sites.length];
   s.missions.push({
     id: uid(),
     template: t.id,
