@@ -1,7 +1,7 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "type": "module",
   "scripts": {
     "dev": "node --watch dist/server/index.js",
@@ -9,7 +9,7 @@
     "preview": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run && node --test tests/hard-reset.node.mjs",
     "test:e2e": "playwright test",
     "start": "node dist/server/index.js"
   },
