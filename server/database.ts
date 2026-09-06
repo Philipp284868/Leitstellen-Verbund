@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -26,7 +26,7 @@ export class Database {
         );
       if (this.sql.prepare("PRAGMA quick_check").get()!.quick_check !== "ok")
         throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
-      // Back up the existing database before ANY migration. Password hashes and saves stay byte-for-byte unchanged.
+      // Preserve a full pre-migration copy, including the original map coordinates.
       if (existed && version < DATABASE_VERSION) {
         this.sql
           .prepare("VACUUM INTO ?")
@@ -78,6 +78,25 @@ export class Database {
             "CREATE TABLE solo_saves(user_id TEXT PRIMARY KEY REFERENCES users(id), data TEXT NOT NULL); PRAGMA user_version=3;",
           );
           this.audit("server-migration", "separate-solo-worlds-v3");
+        });
+      if (version < 4)
+        this.transaction(() => {
+          for (const table of ["saves", "solo_saves"]) {
+            for (const row of this.sql
+              .prepare(`SELECT user_id,data FROM ${table}`)
+              .all()) {
+              const raw = JSON.parse(String(row.data));
+              const save = validate(raw);
+              if (save.player.id !== row.user_id)
+                throw Error("Ungültiger Kontobesitz.");
+              if (raw.world !== save.world)
+                this.sql
+                  .prepare(`UPDATE ${table} SET data=? WHERE user_id=?`)
+                  .run(JSON.stringify(save), row.user_id);
+            }
+          }
+          this.sql.exec("PRAGMA user_version=4;");
+          this.audit("server-migration", "organic-region-v4");
         });
       if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
         throw Error("Ungültige SQLite-Kontoreferenzen.");

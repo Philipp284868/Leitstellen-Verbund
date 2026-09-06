@@ -1,6 +1,8 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
-## Version 2.3.0: neue Karte, Ingame-Oberfläche und getrennte Spielwelten
+## Version 2.4.0: natürlich gewachsene Region statt Straßenraster
+
+Die Spielkarte besitzt ein vollständig neues, geschwungenes Straßennetz: Altstadt, Wohnviertel, Dörfer, Felder, Wald und Seeufer. Fahrzeuge nutzen die dargestellten Straßen. Vorhandene Standorte und laufende Fahrten werden mit einer vorherigen Sicherung auf die neue Karte übertragen. [Karte und Update auf Schema 4](docs/VERSION-2.4.md).
 
 Einzelspieler und Multiplayer haben jeweils eigene Spielstände. Vorhandener Besitz bleibt im Multiplayer. Neue Multiplayer-Einsätze werden automatisch geteilt, Wachen bleiben sichtbar. Maximal zwei eigene offene Einsätze und unregelmäßige Abstände von 90–210 echten Sekunden sorgen für einen ruhigeren Ablauf. [Änderungen und Updatehinweise](docs/VERSION-2.3.md).
 
@@ -31,7 +33,7 @@ Stoppen → Aktualisieren → erfolgreichen Build abwarten → Start. Vorhandene
 
 ## Daten und Betrieb
 
-Die Migration von Schema 1 auf 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Schema 3 ergänzt getrennte Einzelspielerstände mit eigener Sicherung vor der Migration. Kein älteres Programm gegen die aktuelle Datenbank starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
+Die Migration von Schema 1 auf 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Schema 3 ergänzt getrennte Einzelspielerstände mit eigener Sicherung vor der Migration. Schema 4 übernimmt anschließend die Koordinaten beider Spielwelten auf die neue Karte. Kein älteres Programm gegen die aktuelle Datenbank starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
 
 Automatische Datenbanksicherungen stündlich und beim sauberen Stoppen bleiben erhalten. Serverwartung erfolgt ausschließlich mit Serverzugriff in AMP beziehungsweise über die optionale Offline-CLI, niemals über privilegierte Spielkonten. Keine Verwaltungsrechte werden an normale Spieler weitergereicht.
 

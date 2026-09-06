@@ -1,3 +1,4 @@
+import { districtAt } from "./world";
 import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
@@ -298,10 +299,7 @@ function GameApp() {
                             {m.shared ? " · VERBUND" : ""}
                           </span>
                           <h3>{t.name}</h3>
-                          <p>
-                            Falkenried · Planquadrat {Math.round(m.pos.x / 95)}/
-                            {Math.round(m.pos.y / 85)}
-                          </p>
+                          <p>Falkenried · {districtAt(m.pos)}</p>
                           <div className="mission-meta">
                             <span
                               className={

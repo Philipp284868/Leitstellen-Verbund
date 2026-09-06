@@ -766,3 +766,36 @@
   grid-row: 4;
   align-self: start;
 }
+/* Terrain palette: meadows, roof tiles and fields remain legible in both themes. */
+.map-wrap {
+  --map-land: #293d39;
+  --map-field: #444e35;
+  --map-meadow: #354c3b;
+  --map-field-line: #63704a;
+  --map-hedge: #273e32;
+  --map-contour: #3a5044;
+  --map-tree-shadow: #152d2b;
+  --map-roof-warm: #8c7460;
+  --map-roof-outline: #374647;
+  --map-block: #788483;
+  --map-roof: #657473;
+  --map-road: #a0a498;
+  --map-road-edge: #1d3332;
+  --map-line: #d4cfb3;
+}
+.light .map-wrap {
+  --map-land: #e5e8d5;
+  --map-field: #d8d4a0;
+  --map-meadow: #d0dda9;
+  --map-field-line: #b7b683;
+  --map-hedge: #bac89a;
+  --map-contour: #d3dbbc;
+  --map-tree-shadow: #859f7d;
+  --map-roof-warm: #bd9a81;
+  --map-roof-outline: #938e7b;
+  --map-block: #babcb1;
+  --map-roof: #c9bba2;
+  --map-road: #fffdf1;
+  --map-road-edge: #b4bca9;
+  --map-line: #c9c4ac;
+}

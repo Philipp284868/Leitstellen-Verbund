@@ -119,7 +119,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   it("Ausbildung blockiert Besatzung und schließt zeitbasiert ab", () => {
     const s = setup();
     s.xp = 150;
-    apply(s, { type: "build", kind: "school", pos: nodes[1] });
+    apply(s, { type: "build", kind: "school", pos: nodes[3] });
     tick(s, s.time + 30);
     apply(s, { type: "train", person: s.people[0].id, skill: "Drehleiter" });
     expect(readiness(s, s.vehicles[0])).not.toBe("");
@@ -142,8 +142,8 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     const s = setup();
     s.xp = 300;
     money(s, 200000, "Testkapital");
-    apply(s, { type: "build", kind: "ems", pos: nodes[1] });
-    apply(s, { type: "build", kind: "hospital", pos: nodes[2] });
+    apply(s, { type: "build", kind: "ems", pos: nodes[3] });
+    apply(s, { type: "build", kind: "hospital", pos: nodes[6] });
     tick(s, s.time + 30);
     const home = s.buildings.find((b) => b.type === "ems")!;
     apply(s, { type: "buy", kind: "rtw", home: home.id });
@@ -154,7 +154,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     generate(s);
     const m = s.missions[0];
     m.template = "sick";
-    m.pos = nodes[2];
+    m.pos = nodes[6];
     apply(s, { type: "dispatch", mission: m.id, vehicles: [v.id] });
     const before = s.money;
     tick(s, s.time + 120);

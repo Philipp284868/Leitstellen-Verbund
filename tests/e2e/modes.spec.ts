@@ -159,6 +159,10 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
   await expect(page.locator(".map-legend")).toContainText("100 %");
   await page.getByLabel("Stadtviertel anzeigen").selectOption("ALTSTADT");
   await expect(page.locator(".map-legend")).toContainText("200 %");
+  await page.screenshot({
+    path: info.outputPath("karte-altstadt.png"),
+    fullPage: true,
+  });
   await page.locator("svg.map").focus();
   await page.keyboard.press("Home");
   await expect(page.locator(".map-legend")).toContainText("100 %");

@@ -1,6 +1,14 @@
+import { migrateMap, validLegacySite } from "./world-migration";
 import { z } from "zod";
 import { bt, vt, mt, BALANCE } from "./catalog";
-import { WORLD, nodes, nearest, distance, isWaterSite } from "./world";
+import {
+  WORLD,
+  LEGACY_WORLD,
+  nodes,
+  nearest,
+  distance,
+  isWaterSite,
+} from "./world";
 const id = z.string().min(1).max(100),
   name = z.string().trim().min(1).max(48),
   num = z.number().finite().nonnegative().max(1e12),
@@ -194,7 +202,17 @@ export function fresh(player: string, station: string, now: number): Save {
   });
 }
 export function validate(data: unknown): Save {
-  const s = saveSchema.parse(data);
+  const legacy =
+    typeof data === "object" &&
+    data !== null &&
+    "world" in data &&
+    data.world === LEGACY_WORLD;
+  const s: Save = legacy
+    ? {
+        ...saveSchema.extend({ world: z.literal(LEGACY_WORLD) }).parse(data),
+        world: WORLD,
+      }
+    : saveSchema.parse(data);
   const ids = [
     ...s.buildings,
     ...s.vehicles,
@@ -227,9 +245,10 @@ export function validate(data: unknown): Save {
       throw Error("Ungültige Personalzuordnung.");
   }
   for (const m of [...s.missions, ...s.archive]) mt(m.template);
-  return validateReferences(s);
+  validateReferences(s, legacy);
+  return legacy ? validateReferences(migrateMap(s)) : s;
 }
-export function validateReferences(s: Save) {
+export function validateReferences(s: Save, legacy = false) {
   s.completed = Math.max(s.completed, s.archive.length);
   const assignments = s.vehicles.flatMap((v) =>
     v.assignment ? [v.assignment] : [],
@@ -239,8 +258,10 @@ export function validateReferences(s: Save) {
   for (const b of s.buildings) {
     const t = bt(b.type);
     if (
-      distance(b.pos, nodes[nearest(b.pos)]) > 1 ||
-      (t.water && !isWaterSite(b.pos))
+      legacy
+        ? !validLegacySite(b.pos, !!t.water)
+        : distance(b.pos, nodes[nearest(b.pos)]) > 1 ||
+          (t.water && !isWaterSite(b.pos))
     )
       throw Error("Ungültiger Bauplatz.");
     if (
