@@ -1,4 +1,6 @@
-# Leitstellen-Verbund auf CubeCoders AMP – Version 2.4
+# Leitstellen-Verbund auf CubeCoders AMP – Version 2.5
+
+Version 2.5 ergänzt [Musik und Soundeffekte](AUDIO.md). Das normale Update genügt; Audio benötigt keine zusätzlichen Dateien, Ports oder Einstellungen in AMP.
 
 Version 2.4 ersetzt das Straßenraster durch eine neue Region. [Updatehinweise zur Kartenmigration auf Schema 4](VERSION-2.4.md). Beide Spielstände bleiben erhalten; Standorte werden auf die neuen Straßen übertragen.
 

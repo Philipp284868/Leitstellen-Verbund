@@ -1,3 +1,4 @@
+import { SoundButton } from "./Sound";
 import {
   Radio,
   ArrowUpRight,
@@ -77,6 +78,7 @@ export function MainMenu({
           <i />
           {readonly ? "Verbindung unterbrochen" : "Mit Server verbunden"}
         </span>
+        <SoundButton />
         <button onClick={() => onOpen("settings")}>
           <Settings size={18} />
           <span>Konto & Einstellungen</span>

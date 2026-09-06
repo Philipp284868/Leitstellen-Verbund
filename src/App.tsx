@@ -1,8 +1,10 @@
+import { AudioSession, SoundButton, SoundSettings } from "./Sound";
+import { audio } from "./audio/controller";
 import { districtAt } from "./world";
 import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Radio,
   TowerControl,
@@ -35,7 +37,12 @@ import { download } from "./storage";
 import { updateApplication } from "./pwa";
 export function App() {
   const { mode } = useGame();
-  return <GameApp key={mode} />;
+  return (
+    <>
+      <AudioSession />
+      <GameApp key={mode} />
+    </>
+  );
 }
 function GameApp() {
   const { save: s, mode, loading, readonly, error, notice, user } = useGame();
@@ -47,6 +54,9 @@ function GameApp() {
     [light, setLight] = useState<boolean | null>(null),
     [reduced, setReduced] = useState<boolean | null>(null),
     [mobile, setMobile] = useState("map");
+  useEffect(() => {
+    audio.scene(screen === "game");
+  }, [screen]);
   const tutorial = [
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
     "Öffne deine Wache, warte die Bauzeit ab und kaufe zwei TSF-W.",
@@ -170,6 +180,7 @@ function GameApp() {
                 <progress value={s.xp % 150} max={150} />
                 <small>{s.xp % 150} / 150 Erfahrung</small>
               </div>
+              <SoundButton />
               <button
                 aria-label="Einstellungen"
                 onClick={() => setModal("settings")}
@@ -489,6 +500,7 @@ function GameApp() {
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
             <>
+              <SoundSettings />
               <Account />
               <label>
                 <input
