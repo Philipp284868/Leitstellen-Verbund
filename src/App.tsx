@@ -43,8 +43,8 @@ function GameApp() {
     [modal, setModal] = useState(""),
     [selected, setSelected] = useState(""),
     [placing, setPlacing] = useState(""),
-    [light, setLight] = useState(false),
-    [reduced, setReduced] = useState(false),
+    [light, setLight] = useState<boolean | null>(null),
+    [reduced, setReduced] = useState<boolean | null>(null),
     [mobile, setMobile] = useState("map");
   const tutorial = [
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
@@ -88,7 +88,7 @@ function GameApp() {
   };
   return (
     <div
-      className={`app ${screen === "game" ? "in-game" : ""} ${(s?.settings.light ?? light) ? "light" : ""} ${(s?.settings.reduced ?? reduced) ? "reduced" : ""}`}
+      className={`app ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
     >
       {error && (
         <div className="global-error" role="alert">
@@ -495,14 +495,17 @@ function GameApp() {
               <label>
                 <input
                   type="checkbox"
-                  checked={s?.settings.light ?? light}
+                  checked={light ?? s.settings.light}
+                  disabled={readonly || light !== null || reduced !== null}
                   onChange={(e) => {
                     const value = e.target.checked;
                     setLight(value);
                     if (s)
                       void change((s) => {
                         s.settings.light = value;
-                      }).catch(() => {});
+                      })
+                        .catch(() => {})
+                        .finally(() => setLight(null));
                   }}
                 />{" "}
                 Heller Modus
@@ -510,14 +513,17 @@ function GameApp() {
               <label>
                 <input
                   type="checkbox"
-                  checked={s?.settings.reduced ?? reduced}
+                  checked={reduced ?? s.settings.reduced}
+                  disabled={readonly || light !== null || reduced !== null}
                   onChange={(e) => {
                     const value = e.target.checked;
                     setReduced(value);
                     if (s)
                       void change((s) => {
                         s.settings.reduced = value;
-                      }).catch(() => {});
+                      })
+                        .catch(() => {})
+                        .finally(() => setReduced(null));
                   }}
                 />{" "}
                 Reduzierte Bewegung

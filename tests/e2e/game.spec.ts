@@ -83,11 +83,9 @@ async function resources(page: Page) {
     .getByRole("button", { name: "Platzieren" })
     .click();
   const mapBounds = await page.locator("svg.map").boundingBox();
-  await page
-    .locator("svg.map")
-    .click({
-      position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
-    });
+  await page.locator("svg.map").click({
+    position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
+  });
   await page.locator(".station-strip .station-card").first().click();
   await page.getByRole("button", { name: "18.000 Cr", exact: true }).click();
   await page
@@ -131,8 +129,20 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await a.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  // Random incident locations produce different return distances. Wait for the
+  // authoritative arrival deadline plus a bounded allowance for delivery/rendering.
+  const owner = String(
+    app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
+  );
+  const returning = app.db.all().get(owner)!;
+  const returnSeconds = Math.max(
+    0,
+    ...returning.vehicles.map(
+      (v) => (v.arrive - returning.time) / returning.speed,
+    ),
+  );
   await expect(a.getByText("Vollständig einsatzbereit")).toBeVisible({
-    timeout: 30000,
+    timeout: Math.min(100000, Math.ceil(returnSeconds * 1000) + 10000),
   });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   const money = await a.locator(".money strong").innerText();
@@ -273,13 +283,11 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
     page.getByRole("button", { name: "Geprüften Spielstand übernehmen" }),
   ).toHaveCount(0);
   await expect(page.locator(".money")).toContainText("250.000");
-  await page
-    .getByLabel("Spielstanddatei importieren")
-    .setInputFiles({
-      name: "kaputt.json",
-      mimeType: "application/json",
-      buffer: Buffer.from("{"),
-    });
+  await page.getByLabel("Spielstanddatei importieren").setInputFiles({
+    name: "kaputt.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("{"),
+  });
   await expect(page.getByRole("alert")).toBeVisible();
 });
 test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft die Sitzung", async ({
