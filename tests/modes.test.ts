@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
+import { Database, DATABASE_VERSION } from "../server/database";
 import { Auth } from "../server/auth";
 import { Game } from "../server/game";
 import { established } from "./e2e/fixtures";
@@ -75,7 +75,7 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
     expect(migrated.all("single").size).toBe(0);
     expect(
       migrated.sql.prepare("PRAGMA user_version").get()!.user_version,
-    ).toBe(3);
+    ).toBe(DATABASE_VERSION);
   } finally {
     migrated.close();
   }

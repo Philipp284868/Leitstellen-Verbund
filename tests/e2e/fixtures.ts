@@ -24,7 +24,7 @@ export function established(name: string): Save {
 }
 export function emsProfile(name: string) {
   const s = established(name);
-  apply(s, { type: "build", kind: "ems", pos: nodes[1] });
+  apply(s, { type: "build", kind: "ems", pos: nodes[3] });
   tick(s, s.time + 30);
   const home = s.buildings.find((b) => b.type === "ems")!;
   apply(s, { type: "buy", kind: "rtw", home: home.id });
