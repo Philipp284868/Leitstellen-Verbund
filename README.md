@@ -8,6 +8,8 @@ Ein deutsches Browser-Aufbauspiel für die fiktive Region Falkenried. Jeder Brow
 
 ## Spielen
 
+**[Leitstellen-Verbund im Browser starten](https://philipp284868.github.io/Leitstellen-Verbund/)** — erfolgreich veröffentlicht und am 6. September 2026 direkt über HTTPS mit Solo-, WebRTC- und Offline-Abläufen geprüft.
+
 1. „Neues Spiel“ wählen und Anzeigenamen sowie Leitstellennamen eingeben.
 2. Feuerwache bauen, Bauzeit abwarten, zwei TSF-W beschaffen und zwölf Mitarbeiter einstellen.
 3. Im Fuhrpark jedes Fahrzeug mit sechs Mitarbeitern besetzen.
@@ -54,7 +56,7 @@ pnpm test:e2e --project=chromium
 
 Das Zielrepository ist **Philipp284868/Leitstellen-Verbund**, Standardbranch **main**. Der CI-Workflow prüft Pull Requests mit ausschließlich lesenden Repository-Rechten. Der Pages-Workflow reagiert nur auf einen erfolgreichen Push-Prüflauf von `main`, baut exakt dessen Commit und veröffentlicht über die `github-pages`-Umgebung. Nur der Deployment-Job erhält `pages: write` und `id-token: write`.
 
-Eine konfigurierte Pages-Adresse ist noch kein Nachweis einer erfolgreichen Veröffentlichung. Den tatsächlichen Stand von Push, Pull Request und Deployment dokumentiert der Testbericht.
+Der Merge von [Pull Request #1](https://github.com/Philipp284868/Leitstellen-Verbund/pull/1), die erfolgreiche main-Prüfung, die Pages-Veröffentlichung und die tatsächliche HTTPS-Browserabnahme sind im [Testbericht](docs/TESTBERICHT.md) mit Nachweisen dokumentiert.
 
 ## Daten und Netzwerk
 

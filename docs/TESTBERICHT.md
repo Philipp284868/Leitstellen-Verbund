@@ -55,4 +55,20 @@ Die lokale Sichtprüfung mit Edge 152.0.4191.66 lieferte keine Browserfehler und
 - Pages: tatsächlich mit `build_type: workflow` eingerichtet, HTTPS erzwungen
 - `github-pages`-Umgebung: vorhanden, von GitHub mit Branch-Policy eingerichtet
 
-[Pull Request #1](https://github.com/Philipp284868/Leitstellen-Verbund/pull/1) enthält die Implementierung. Ein konfiguriertes Pages-Ziel ist kein erfolgreicher Deploymentnachweis. Die reale HTTPS-Abnahme folgt nach erfolgreicher Integration und Veröffentlichung.
+[Pull Request #1](https://github.com/Philipp284868/Leitstellen-Verbund/pull/1) wurde nach erfolgreicher Prüfung des letzten Feature-Commits `b7848b96f20d9ed16b94cb79c4fd13166237f194` tatsächlich in `main` gemergt. Merge-Commit: `284026949e3a44a068fcf795114a75401eca0aa0`.
+
+- [Letzter PR-Prüflauf](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34027699533): erfolgreich, 25 Logiktests und 24 Browserprüfungen, Browserdauer 4,5 Minuten.
+- [Prüfung des zusammengeführten main-Commits](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34028016727): erfolgreich, erneut 25 Logiktests und 24 Browserprüfungen in Chromium und Firefox.
+- [Tatsächliches Pages-Deployment](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34028258675): Build und Deployment erfolgreich.
+
+## Öffentliche HTTPS-Abnahme
+
+Geprüfte Adresse: **[Leitstellen-Verbund](https://philipp284868.github.io/Leitstellen-Verbund/)**. Am 6. September 2026 um 12:45 Uhr deutscher Ortszeit lieferte der tatsächliche Browseraufruf HTTP 200. JavaScript, CSS und Manifest wurden erfolgreich geladen; keine Browser-Anwendungsfehler. Manifest-Start, Manifest-Scope und Service-Worker-Scope zeigen exakt auf `/Leitstellen-Verbund/`; der Browser bestätigt einen sicheren HTTPS-Kontext.
+
+Anschließend wurden drei vorhandene Playwright-Abnahmeabläufe gegen diese öffentliche Adresse statt den lokalen Server ausgeführt. **Alle drei bestanden in 1,7 Minuten** mit Microsoft Edge 152.0.4191.66:
+
+1. Neues Profil, Wache, Fahrzeug, Besatzung, vollständiger Solo-Einsatz, Belohnung, Rückkehr und Reload.
+2. Zwei getrennte Profile mit eigenen Ressourcen, echter WebRTC-Angebot/Antwort-Austausch über die Oberfläche, Textchat und gemeinsamer Einsatz mit verbuchter Helferbelohnung.
+3. Schreibgeschützter zweiter Tab und erneutes Öffnen des gecachten Produktionsspiels ohne Netzwerk.
+
+Die HTTPS-Tests verwendeten frische isolierte Browserkontexte. Die Beschränkung bezüglich beliebiger Internetanschlüsse und ungetesteter eigener TURN-Server bleibt bestehen. Dieser Abschlussnachtrag ändert nur Dokumentation; der bereits öffentlich getestete Anwendungscode bleibt identisch.

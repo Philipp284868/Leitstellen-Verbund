@@ -7,4 +7,4 @@
 - [x] Fehlerfälle, lokale Browserabnahme, Offline-Build und CI-Workflows
 - [x] Zugewiesenes GitHub-Ziel und getrennte Rechte prüfen; Pages konfigurieren
 - [x] Commit und Pull Request mit tatsächlichem GitHub-Prüflauf (25 Logiktests, 24 Browserprüfungen erfolgreich)
-- [ ] Geprüften Stand integrieren und reale HTTPS-Veröffentlichung abnehmen
+- [x] Geprüften Stand integrieren und reale HTTPS-Veröffentlichung abnehmen (PR #1, main-CI, Pages und drei öffentliche Browserabläufe erfolgreich)
