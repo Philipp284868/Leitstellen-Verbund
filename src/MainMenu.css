@@ -1,0 +1,446 @@
+.command-menu {
+  --menu-panel: #14232d;
+  --menu-border: #2a3c46;
+  --menu-muted: #a5b7c2;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse at 85% 15%, #19383b 0, transparent 50%), #0c171e;
+  color: #edf3f5;
+  padding: 0 5%;
+  overflow: auto;
+}
+.menu-header {
+  max-width: 1440px;
+  margin: auto;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid var(--menu-border);
+}
+.menu-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+  color: #ed9876;
+}
+.menu-brand span {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #edf3f5;
+}
+.menu-brand strong {
+  display: block;
+  font-size: 17px;
+  letter-spacing: 3px;
+}
+.menu-connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--menu-muted);
+}
+.menu-connection i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #83d8b3;
+}
+.menu-connection.is-offline i {
+  background: #f0a677;
+}
+.menu-header button,
+.menu-utilities button {
+  background: transparent;
+  border-color: var(--menu-border);
+}
+.menu-content {
+  max-width: 1440px;
+  margin: auto;
+}
+.menu-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  min-height: 430px;
+  gap: 24px;
+  padding: 52px 0 42px;
+}
+.menu-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--menu-muted);
+}
+.menu-hero h1 {
+  font-size: clamp(38px, 4.2vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin: 20px 0;
+}
+.menu-hero h1 em {
+  font-style: normal;
+  color: #ee9c7e;
+}
+.menu-hero p {
+  font-size: 15px;
+  color: var(--menu-muted);
+  margin-bottom: 26px;
+}
+.menu-play {
+  min-height: 52px;
+  padding: 12px 24px;
+  min-width: 250px;
+  justify-content: space-between;
+}
+.menu-hero-copy > small {
+  display: block;
+  margin-top: 14px;
+  max-width: 420px;
+  font-size: 11px;
+  color: var(--menu-muted);
+  line-height: 1.6;
+}
+.menu-region {
+  position: relative;
+  transform: rotate(-3deg);
+  border: 1px solid var(--menu-border);
+  border-radius: 18px;
+  background: #14282e;
+  overflow: hidden;
+  color: #aac3c5;
+  box-shadow: 0 28px 70px #0003;
+}
+.menu-region svg {
+  display: block;
+  width: 100%;
+}
+.menu-map-label {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #14282e;
+  padding: 9px 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.menu-map-caption {
+  position: absolute;
+  bottom: 18px;
+  right: 20px;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.menu-overview {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr 1fr;
+  background: var(--menu-panel);
+  border: 1px solid var(--menu-border);
+  border-radius: 12px;
+  padding: 26px 8px;
+  margin-bottom: 38px;
+}
+.menu-overview > div {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+.menu-overview > div + div {
+  border-left: 1px solid var(--menu-border);
+}
+.menu-overview span {
+  font-size: 12px;
+  color: var(--menu-muted);
+}
+.menu-overview strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+}
+.menu-overview strong small {
+  font-size: 17px;
+  color: var(--menu-muted);
+}
+.menu-station h2 {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+.menu-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.menu-section-heading h2 {
+  font-size: 20px;
+}
+.menu-section-heading > span {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--menu-muted);
+}
+.menu-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.menu-shortcuts > button {
+  display: block;
+  text-align: left;
+  padding: 23px;
+  background: var(--menu-panel);
+  border: 1px solid var(--menu-border);
+  border-radius: 12px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.menu-shortcuts > button:hover {
+  background: #20353e;
+  border-color: #8eaaa9;
+}
+.menu-shortcut-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #9acac5;
+  margin-bottom: 26px;
+}
+.menu-shortcut-top > svg:last-child {
+  margin-left: auto;
+  color: var(--menu-muted);
+}
+.menu-shortcut-top > span {
+  font-size: 12px;
+  color: var(--menu-muted);
+}
+.menu-shortcuts h3 {
+  margin-bottom: 8px;
+  font-size: 17px;
+}
+.menu-shortcuts p {
+  font-size: 12px;
+  color: var(--menu-muted);
+  line-height: 1.6;
+}
+.menu-bottom {
+  margin: 24px 0 36px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+.menu-tip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-left: 2px solid #ed9876;
+  background: #ed987609;
+}
+.menu-tip > svg {
+  color: #ed9876;
+  flex-shrink: 0;
+}
+.menu-tip h3 {
+  font-size: 14px;
+}
+.menu-tip p {
+  font-size: 12px;
+  color: var(--menu-muted);
+  margin-top: 4px;
+}
+.menu-tip button {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border-color: var(--menu-border);
+  font-size: 12px;
+}
+.menu-utilities {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.menu-utilities button {
+  justify-content: flex-start;
+  font-size: 12px;
+}
+.menu-footer {
+  max-width: 1440px;
+  margin: auto;
+  border-top: 1px solid var(--menu-border);
+  padding: 22px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: var(--menu-muted);
+}
+.light .command-menu {
+  --menu-panel: #fff;
+  --menu-border: #cbd9dc;
+  --menu-muted: #50646f;
+  background: #eef4f4;
+  color: #182c35;
+}
+.light .menu-brand span {
+  color: #182c35;
+}
+.light .menu-hero h1 em {
+  color: #a64c2b;
+}
+.light .menu-shortcut-top {
+  color: #34776f;
+}
+.light .menu-shortcuts > button:hover {
+  background: #e2efed;
+}
+.light .menu-region {
+  color: #aac3c5;
+}
+.light .menu-region span {
+  color: #dcebea;
+}
+@media (min-width: 1500px) {
+  .menu-hero {
+    min-height: 480px;
+  }
+  .menu-shortcuts > button {
+    padding: 28px;
+  }
+}
+@media (max-width: 1000px) {
+  .command-menu {
+    padding: 0 4%;
+  }
+  .menu-header {
+    gap: 14px;
+  }
+  .menu-connection {
+    font-size: 11px;
+  }
+  .menu-shortcuts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .menu-overview > div {
+    padding: 0 16px;
+  }
+  .menu-overview strong {
+    font-size: 23px;
+  }
+  .menu-bottom {
+    grid-template-columns: 1fr;
+  }
+  .menu-utilities {
+    flex-direction: row;
+  }
+  .menu-hero {
+    min-height: 380px;
+  }
+  .menu-hero h1 {
+    font-size: 42px;
+  }
+}
+@media (max-width: 640px) {
+  .menu-header {
+    min-height: 82px;
+    flex-wrap: wrap;
+    padding: 18px 0;
+    gap: 14px;
+  }
+  .menu-header button {
+    font-size: 11px;
+    padding: 9px;
+  }
+  .menu-connection {
+    order: 3;
+    width: 100%;
+  }
+  .menu-hero {
+    grid-template-columns: 1fr;
+    padding: 32px 0;
+    gap: 26px;
+  }
+  .menu-hero h1 {
+    font-size: 43px;
+  }
+  .menu-region {
+    max-height: 170px;
+    transform: none;
+  }
+  .menu-region svg {
+    margin-top: -45px;
+  }
+  .menu-map-caption {
+    background: #14282e;
+    padding: 4px;
+  }
+  .menu-overview {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 0;
+    padding: 22px 4px;
+    margin-bottom: 28px;
+  }
+  .menu-overview > div:nth-child(3) {
+    border-left: 0;
+  }
+  .menu-station h2 {
+    font-size: 17px;
+  }
+  .menu-overview strong {
+    font-size: 23px;
+  }
+  .menu-section-heading {
+    align-items: flex-start;
+  }
+  .menu-section-heading > span {
+    display: none;
+  }
+  .menu-shortcuts {
+    gap: 10px;
+  }
+  .menu-shortcuts > button {
+    padding: 17px 14px;
+  }
+  .menu-shortcuts h3 {
+    font-size: 15px;
+  }
+  .menu-shortcut-top {
+    margin-bottom: 20px;
+  }
+  .menu-tip {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .menu-tip > div {
+    flex: 1;
+    min-width: 180px;
+  }
+  .menu-tip button {
+    margin-left: 40px;
+  }
+  .menu-utilities {
+    flex-wrap: wrap;
+  }
+  .menu-footer {
+    font-size: 9px;
+    letter-spacing: 0.6px;
+  }
+  .menu-play {
+    width: 100%;
+  }
+}
+.light .command-menu .menu-shortcuts > button { background: var(--menu-panel); color: #182c35; }
+.light .command-menu .menu-shortcuts > button:hover { background: #e2efed; }
+.menu-overview strong small { display: inline; }

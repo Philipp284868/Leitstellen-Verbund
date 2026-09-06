@@ -1,3 +1,4 @@
+import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
 import { useState } from "react";
 import {
@@ -112,54 +113,12 @@ export function App() {
         </div>
       )}
       {screen === "start" ? (
-        <main className="start-screen">
-          <div className="start-emblem">
-            <Radio size={52} />
-          </div>
-          <span className="eyebrow">REGION FALKENRIED</span>
-          <h1>
-            LEITSTELLEN<span>VERBUND</span>
-          </h1>
-          <p>
-            Deine Region. Deine Einsatzkräfte.
-            <br />
-            Gemeinsam in Bereitschaft.
-          </p>
-          <div className="start-actions">
-            <button className="primary" onClick={() => setScreen("game")}>
-              Leitstelle öffnen <ChevronRight />
-            </button>
-            <button disabled={!s} onClick={() => setScreen("game")}>
-              Fortsetzen{" "}
-              {s && (
-                <small>
-                  {s.player.station} · Stufe {level(s)}
-                </small>
-              )}
-            </button>
-            <button onClick={() => setModal("backups")}>
-              Spielstand importieren
-            </button>
-            <button
-              onClick={() => {
-                if (s) {
-                  setScreen("game");
-                  setModal("friends");
-                }
-              }}
-            >
-              Mit Freunden spielen
-            </button>
-            <div className="inline">
-              <button onClick={() => setModal("settings")}>
-                Einstellungen
-              </button>
-              <button onClick={() => setModal("help")}>Hilfe</button>
-            </div>
-          </div>
-          <small>Serverkonto · Getrennter Besitz · Gemeinsam disponieren</small>
-          <span className="version-label">VERSION 2.0 · EIGENER SERVER</span>
-        </main>
+        <MainMenu
+          save={s}
+          readonly={readonly}
+          onPlay={() => setScreen("game")}
+          onOpen={setModal}
+        />
       ) : (
         s && (
           <>
