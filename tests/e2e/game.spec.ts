@@ -11,7 +11,7 @@ const compiled = (await import(
 )) as { startServer: typeof startServer };
 let app: ReturnType<typeof startServer>, config: Config;
 const password = "Only-a-browser-test-password!";
-test.beforeAll(async () => {
+test.beforeEach(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-browser-")),
     port = 39000 + Math.floor(Math.random() * 15000);
   config = {
@@ -26,7 +26,7 @@ test.beforeAll(async () => {
   await app.listen();
   expect(app.db.sql.prepare("SELECT id FROM users").all()).toHaveLength(0);
 });
-test.afterAll(async () => {
+test.afterEach(async () => {
   await app.close();
 });
 async function register(page: Page, label: string) {
@@ -338,3 +338,4 @@ test("Mobilansicht und notwendige Ressourcen bleiben auf demselben eigenen Serve
     fullPage: true,
   });
 });
+
