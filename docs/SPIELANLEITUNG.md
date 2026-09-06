@@ -8,7 +8,7 @@ Im Hauptmenü den Modus wählen. Beide Welten verwenden dasselbe Konto, aber get
 
 ## Einstieg und Disposition
 
-Die erste Feuerwache kostet 55.000 Credits. Ein TSF-W kostet 18.000 Credits und benötigt sechs Mitarbeiter. Personal kostet einmalig 600 Credits je Person. Zwei TSF-W samt Besatzung und Wache lassen 151.800 Credits Reserve. Die Wache baut 25 Spielsekunden; die frei wählbare Geschwindigkeit beträgt 1×, 4×, 8×, 16× oder 32×.
+Die erste Feuerwache kostet 55.000 Credits. Ein TSF-W kostet 18.000 Credits und benötigt sechs Mitarbeiter. Personal kostet einmalig 600 Credits je Person. Zwei TSF-W samt Besatzung und Wache lassen 151.800 Credits Reserve. Die Wache baut 25 echte Sekunden. Das Spiel läuft fest in Echtzeit: Fahrten, Ausbildung, Bau und Einsatzarbeit werden nicht beschleunigt. Vor der Alarmierung stehen Entfernung und voraussichtliche Fahrzeit am Fahrzeug. Die Kartenübersicht zeigt laufende Fahrten mit Restkilometern, Countdown und Fortschritt.
 
 Wache auf einer Kreuzung platzieren, öffnen und Fahrzeuge kaufen. Personal einstellen und im Fuhrpark **Besetzen** wählen. Ein Fahrzeug ohne ausreichende, freie und passend ausgebildete Besatzung ist nicht alarmierbar. Fahrzeugzuweisung, Rückruf und Verkauf prüfen den tatsächlichen Zustand erneut.
 

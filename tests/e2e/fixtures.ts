@@ -3,7 +3,7 @@ import { apply, tick, generate } from "../../src/engine";
 import { nodes } from "../../src/world";
 export function established(name: string): Save {
   const s = fresh(name, `Leitstelle ${name}`, Date.now() / 1000);
-  s.speed = 32;
+  s.speed = 1;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
   tick(s, s.time + 30);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });

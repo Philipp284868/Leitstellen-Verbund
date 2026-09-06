@@ -33,18 +33,6 @@ export const actionSchema = z.discriminatedUnion("type", [
     .strict(),
   z
     .object({
-      type: z.literal("speed"),
-      value: z.union([
-        z.literal(1),
-        z.literal(4),
-        z.literal(8),
-        z.literal(16),
-        z.literal(32),
-      ]),
-    })
-    .strict(),
-  z
-    .object({
       type: z.literal("support"),
       peer: id,
       mission: id,

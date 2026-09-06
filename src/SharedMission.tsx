@@ -1,3 +1,4 @@
+import { approach, tripLabel } from "./travel";
 import { mt, vt, capabilities, type Skills } from "./catalog";
 import { type Save, type Mission } from "./model";
 import { type Friend, support } from "./network";
@@ -20,13 +21,19 @@ export function SharedMission({
   const force = [
     ...s.vehicles
       .filter((v) => v.mission === remoteKey)
-      .map((v) => ({ v, name: s.player.name, active: true })),
+      .map((v) => ({
+        v,
+        name: s.player.name,
+        active: true,
+        journey: tripLabel(v, s.time),
+      })),
     ...friends.flatMap((f) =>
       f.vehicles
         .filter((v) => v.mission === (f.id === friend.id ? m.id : remoteKey))
         .map((v) => ({
           v,
           name: f.name,
+          journey: tripLabel(v, v.arrive - v.eta),
           active: f.status.startsWith("Verbunden"),
         })),
     ),
@@ -60,12 +67,13 @@ export function SharedMission({
           </div>
         ))}
       </div>
-      {force.map(({ v, name, active }) => (
+      {force.map(({ v, name, active, journey }) => (
         <div className="person" key={v.id}>
           <span>
             {v.name}
             <small>
-              {name} · {active ? statuses[v.status] : "Offline · veraltet"}
+              {name} · {active ? statuses[v.status] : "Offline · veraltet"} ·{" "}
+              {journey}
             </small>
           </span>
         </div>
@@ -95,7 +103,7 @@ export function SharedMission({
             .filter((v) => !readiness(s, v))
             .map((v) => (
               <option key={v.id} value={v.id}>
-                {v.name}
+                {v.name} · {approach(s, v, m.pos)}
               </option>
             ))}
         </select>

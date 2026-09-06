@@ -1,3 +1,4 @@
+import { tripLabel } from "./travel";
 import { useState } from "react";
 import {
   buildings,
@@ -81,7 +82,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
       </div>
       {b.ready > s.time && (
         <p className="banner">
-          Bauarbeiten: noch {Math.ceil((b.ready - s.time) / s.speed)} Sekunden
+          Bauarbeiten: noch {Math.ceil(b.ready - s.time)} Sekunden
         </p>
       )}
       <div className="inline">
@@ -156,7 +157,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
                   Mitarbeiter {i + 1}
                   <small>
                     {p.training
-                      ? `In Ausbildung: ${p.training} (${Math.max(0, Math.ceil((p.ready - s.time) / s.speed))} s)`
+                      ? `In Ausbildung: ${p.training} (${Math.max(0, Math.ceil(p.ready - s.time))} s)`
                       : p.skills.join(", ") || "Grundausbildung"}{" "}
                     · {p.vehicle ? "Zugewiesen" : "Frei"}
                   </small>
@@ -302,7 +303,7 @@ export function Fleet({ s }: { s: Save }) {
                   <small className={readiness(s, v) ? "warning" : "good"}>
                     {v.status === "ready"
                       ? readiness(s, v) || "Vollständig einsatzbereit"
-                      : `${Math.max(0, Math.ceil((v.arrive - s.time) / s.speed))} s bis Ziel`}
+                      : tripLabel(v, s.time)}
                   </small>
                 </div>
               </div>

@@ -1,3 +1,5 @@
+import { regionalRoads, towns } from "./region";
+export { WORLD_WIDTH, WORLD_HEIGHT, METERS_PER_UNIT } from "./region";
 /** Fictional region: rendered streets and routing use the same curved geometry. */
 export const WORLD = "falkenried-2";
 export const LEGACY_WORLD = "falkenried-1";
@@ -8,6 +10,7 @@ export interface Point {
 export const distance = (a: Point, b: Point) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 export const districts = [
+  ...towns,
   { name: "ALTSTADT", x: 565, y: 360 },
   { name: "NORDHÖHE", x: 515, y: 170 },
   { name: "LINDENAU", x: 180, y: 165 },
@@ -434,6 +437,8 @@ const specs: [string, RoadKind, number[][]][] = [
     ],
   ],
 ];
+const originalRoadCount = specs.length;
+specs.push(...regionalRoads);
 export const nodes: Point[] = [];
 export const edges: [number, number][] = [];
 const index = new Map<string, number>();
@@ -449,7 +454,7 @@ function add(p: Point) {
   }
   return index.get(key)!;
 }
-export const roads = specs.map(([name, kind, coords]) => {
+export const roads = specs.map(([name, kind, coords], roadIndex) => {
   const anchors = coords.map(([x, y]) => ({ x, y })),
     ids: number[] = [];
   for (let i = 0; i < anchors.length - 1; i++) {
@@ -457,7 +462,10 @@ export const roads = specs.map(([name, kind, coords]) => {
       b = anchors[i],
       c = anchors[i + 1],
       d = anchors[Math.min(anchors.length - 1, i + 2)];
-    const count = Math.max(3, Math.ceil(distance(b, c) / 16));
+    const count = Math.max(
+      3,
+      Math.ceil(distance(b, c) / (roadIndex < originalRoadCount ? 16 : 32)),
+    );
     for (let j = 0; j < count; j++) {
       const t = j / count,
         t2 = t * t,
@@ -475,6 +483,66 @@ export const roads = specs.map(([name, kind, coords]) => {
   for (let i = 1; i < ids.length; i++) edges.push([ids[i - 1], ids[i]]);
   return { name, kind, ids, points: ids.map((i) => nodes[i]) };
 });
+// Connect every geometric crossing introduced by the regional roads. Each new
+// junction is inserted into both the rendered polyline and the routing graph.
+const segments = roads.flatMap((road, r) =>
+  road.ids.slice(1).map((b, i) => ({ r, i, a: road.ids[i], b })),
+);
+const cuts = new Map<string, { t: number; id: number }[]>();
+const cross = (ax: number, ay: number, bx: number, by: number) =>
+  ax * by - ay * bx;
+for (let i = 0; i < segments.length; i++)
+  for (let j = i + 1; j < segments.length; j++) {
+    const a = segments[i],
+      b = segments[j];
+    if (
+      (a.r < originalRoadCount && b.r < originalRoadCount) ||
+      a.a === b.a ||
+      a.a === b.b ||
+      a.b === b.a ||
+      a.b === b.b
+    )
+      continue;
+    const p = nodes[a.a],
+      q = nodes[a.b],
+      u = nodes[b.a],
+      v = nodes[b.b];
+    if (
+      Math.max(p.x, q.x) < Math.min(u.x, v.x) ||
+      Math.max(u.x, v.x) < Math.min(p.x, q.x) ||
+      Math.max(p.y, q.y) < Math.min(u.y, v.y) ||
+      Math.max(u.y, v.y) < Math.min(p.y, q.y)
+    )
+      continue;
+    const den = cross(q.x - p.x, q.y - p.y, v.x - u.x, v.y - u.y);
+    if (Math.abs(den) < 1e-9) continue;
+    const t = cross(u.x - p.x, u.y - p.y, v.x - u.x, v.y - u.y) / den;
+    const w = cross(u.x - p.x, u.y - p.y, q.x - p.x, q.y - p.y) / den;
+    if (t <= 1e-5 || t >= 1 - 1e-5 || w <= 1e-5 || w >= 1 - 1e-5) continue;
+    const id = nodes.length;
+    nodes.push({ x: p.x + t * (q.x - p.x), y: p.y + t * (q.y - p.y) });
+    for (const [segment, fraction] of [
+      [a, t],
+      [b, w],
+    ] as const) {
+      const key = `${segment.r}:${segment.i}`;
+      cuts.set(key, [...(cuts.get(key) ?? []), { t: fraction, id }]);
+    }
+  }
+for (const [r, road] of roads.entries()) {
+  road.ids = road.ids.flatMap((id, i) => [
+    id,
+    ...(cuts.get(`${r}:${i}`) ?? []).sort((a, b) => a.t - b.t).map((c) => c.id),
+  ]);
+  road.points = road.ids.map((id) => nodes[id]);
+}
+edges.length = 0;
+for (const road of roads)
+  for (let i = 1; i < road.ids.length; i++)
+    edges.push([road.ids[i - 1], road.ids[i]]);
+export const originalNodes = [
+  ...new Set(roads.slice(0, originalRoadCount).flatMap((r) => r.points)),
+];
 export const nearest = (p: Point) =>
   nodes.reduce(
     (a, n, i) => (distance(n, p) < distance(nodes[a], p) ? i : a),

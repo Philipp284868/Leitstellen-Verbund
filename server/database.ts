@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 4;
+export const DATABASE_VERSION = 5;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -97,6 +97,22 @@ export class Database {
           }
           this.sql.exec("PRAGMA user_version=4;");
           this.audit("server-migration", "organic-region-v4");
+        });
+      if (version < 5)
+        this.transaction(() => {
+          for (const table of ["saves", "solo_saves"])
+            for (const row of this.sql
+              .prepare(`SELECT user_id,data FROM ${table}`)
+              .all()) {
+              const save = validate(JSON.parse(String(row.data)));
+              if (save.player.id !== row.user_id)
+                throw Error("Ungültiger Kontobesitz.");
+              this.sql
+                .prepare(`UPDATE ${table} SET data=? WHERE user_id=?`)
+                .run(JSON.stringify(save), row.user_id);
+            }
+          this.sql.exec("PRAGMA user_version=5;");
+          this.audit("server-migration", "realtime-v5");
         });
       if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
         throw Error("Ungültige SQLite-Kontoreferenzen.");

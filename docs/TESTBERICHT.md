@@ -2,6 +2,14 @@
 
 Stand: 6. September 2026. Die folgenden Nachweise betreffen den Node-/SQLite-/Socket.IO-Umbau. Frühere Pages-/P2P-Tests gehören zum vorherigen Stand in der Git-Historie und werden hier nicht als Servernachweis verwendet.
 
+## Version 2.6 – Region und Echtzeit
+
+Lokal bestanden: Produktionsbuild, Typecheck und Lint sowie **75 Vitest-Prüfungen** (der Linux-Prozesstest `amp-autostart` läuft in CI). Die zunächst auf beschleunigten Zeitablauf ausgelegten Browserprüfungen wurden auf explizite Zeitfortsetzung ausschließlich im Testprozess umgestellt. Die zehn betroffenen Spiel- und Kartenabläufe bestanden in Edge; Musik und HTTP-Verbindung wurden ebenfalls geprüft. Alle 659 Straßenpunkte der bisherigen Version wurden direkt mit dem Git-Vorgänger verglichen und sind koordinatengleich. Das neue Netz umfasst 86 Straßen, 1959 Punkte, 2024 Verbindungen und 19 benannte Orte/Viertel.
+
+Die Linux-CI führt zusätzlich den vollständigen Prozess-Testumfang und je 16 Browserabläufe in Chromium und Firefox aus. Der verbindliche Status ist der erfolgreiche Prüflauf am finalen PR-Commit; lokale Windows-Prozessbeschränkungen werden nicht als erfolgreiche Linux-Prüfung ausgegeben. Neue Tests decken die 16-fache Kartenfläche, alle Straßenkreuzungen, lokale Einsatzgebiete, echte Fahrtdauern, Reststrecken, alte Tempo-Speicherstände in beiden Modi, die Ablehnung von Tempoaktionen und sichtbare Fahrtenangaben auf Desktop und Mobil ab. Details zur Bedienung und Übernahme: [Version 2.6](VERSION-2.6.md).
+
+Die folgenden Abschnitte dokumentieren den ursprünglichen Architekturumbau und dessen damaligen Testumfang.
+
 ## Tatsächlich lokal ausgeführt
 
 Umgebung: Windows, Node.js 24.19.0, pnpm 11.19.0, Playwright 1.63.0 mit installiertem Microsoft Edge 152.0.4191.66. Alle Datenbanken und Testkonten wurden in isolierten temporären Verzeichnissen angelegt. Kein Test greift auf den privaten AMP-Server zu.

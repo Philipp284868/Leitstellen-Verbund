@@ -1,6 +1,12 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
-## Version 2.5.0: Musik und Spielsound
+## Version 2.6.0: Große Region und feste Echtzeit
+
+Die Karte wächst auf die 16-fache Fläche: 62,4 × 40,8 km, zehn zusätzliche Orte und ein verbundenes Netz geschwungener Landstraßen. Die bisherige Stadt bleibt unverändert an ihrem Platz. Gesamte Region, Ortsauswahl und Rücksprung zu den eigenen Wachen erleichtern die Orientierung. Einsätze entstehen im Umkreis von bis zu 7,2 km um passende eigene Wachen; das Limit von zwei Einsätzen bleibt bestehen.
+
+Der Server läuft in beiden Modi fest in Echtzeit. Die Tempowahl entfällt. Alarmierung und Verbundhilfe zeigen Fahrweg und voraussichtliche Fahrzeit; die Fahrtenübersicht zeigt Restkilometer, Zeit bis Ziel und Fortschritt. [Bedienung, Datenübernahme und Grenzen](docs/VERSION-2.6.md).
+
+## Musik und Spielsound
 
 Die eigene Hintergrundmusik „Nachtschicht“ und dezente Ereignisklänge begleiten die Leitstelle. Musik und Effekte sind einzeln regelbar; der Lautsprecher schaltet alles stumm. Der Ton startet nach Interaktion und pausiert in inaktiven Tabs. Keine externen Audiodienste oder Downloads notwendig. [Klang, Bedienung und Update](docs/AUDIO.md).
 
@@ -37,7 +43,7 @@ Stoppen → Aktualisieren → erfolgreichen Build abwarten → Start. Vorhandene
 
 ## Daten und Betrieb
 
-Die Migration von Schema 1 auf 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Schema 3 ergänzt getrennte Einzelspielerstände mit eigener Sicherung vor der Migration. Schema 4 übernimmt anschließend die Koordinaten beider Spielwelten auf die neue Karte. Kein älteres Programm gegen die aktuelle Datenbank starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
+Die Migration von Schema 1 auf 2 sichert vor der Migration eine konsistente `pre-migration-v2-*.sqlite`, entfernt nur Sonderrechte und alte Einladungen, verhindert neue Adminrollen durch Datenbankregeln und übernimmt alle Spielstände unverändert. Schema 3 ergänzt getrennte Einzelspielerstände mit eigener Sicherung vor der Migration. Schema 4 übernimmt anschließend die Koordinaten beider Spielwelten auf die neue Karte. Schema 5 übernimmt alte Tempi in beiden Modi als feste Echtzeit; aktive Termine und Besitz bleiben erhalten. Kein älteres Programm gegen die aktuelle Datenbank starten. Ein Rollback erfordert passende alte Software und passende Sicherung zusammen. Die frühere Rolle bleibt nur in historischen Backups erhalten, nicht im laufenden Spiel.
 
 Automatische Datenbanksicherungen stündlich und beim sauberen Stoppen bleiben erhalten. Serverwartung erfolgt ausschließlich mit Serverzugriff in AMP beziehungsweise über die optionale Offline-CLI, niemals über privilegierte Spielkonten. Keine Verwaltungsrechte werden an normale Spieler weitergereicht.
 

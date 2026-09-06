@@ -18,7 +18,7 @@ export const BALANCE = {
   missionInterval: 120,
   activeMax: 2,
   hospitalSeconds: 90,
-  speed: 8,
+  speed: 1,
   disconnectSeconds: 30,
 };
 export const capabilities: Record<string, string> = {
