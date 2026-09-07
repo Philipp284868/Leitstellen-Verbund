@@ -1,0 +1,143 @@
+.desk-queue {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--hud-border);
+  max-height: 300px;
+  overflow: auto;
+}
+.desk-queue small {
+  display: block;
+  line-height: 1.5;
+}
+.desk-queue > strong {
+  font-size: 12px;
+  color: var(--hud-muted);
+}
+.desk-tools {
+  display: flex;
+  gap: 8px;
+}
+.desk-tools button {
+  flex: 1;
+}
+.call-card,
+.radio-request {
+  text-align: left;
+  border-left: 3px solid var(--hud-accent);
+  padding: 10px;
+}
+.radio-request {
+  border-left-color: #f6bb65;
+}
+.incident-desk section {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hud-border);
+}
+.call-conversation {
+  background: var(--hud-raised);
+  border-radius: 10px;
+  padding: 16px !important;
+}
+.call-properties,
+.desk-form,
+.question-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.call-properties {
+  font-size: 12px;
+  margin: 12px 0;
+  color: var(--hud-muted);
+}
+.question-grid {
+  margin: 12px 0;
+}
+.question-grid button {
+  flex: 1 1 220px;
+}
+.desk-form {
+  align-items: end;
+  margin: 12px 0;
+}
+.desk-form label {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.known-facts {
+  padding-left: 20px;
+}
+.radio-queue article {
+  padding: 12px;
+  background: var(--hud-raised);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+.incident-history ol {
+  padding: 0;
+  list-style: none;
+  max-height: 450px;
+  overflow: auto;
+}
+.incident-history li {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border-bottom: 1px solid var(--hud-border);
+}
+.incident-history small {
+  color: var(--hud-muted);
+  overflow-wrap: anywhere;
+}
+.requirement-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+.requirement-editor label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.requirement-editor input {
+  width: 60px;
+  margin-left: auto;
+}
+.fms-vehicle {
+  border: 1px solid var(--hud-border);
+  padding: 14px;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+.fms-vehicle details {
+  max-height: 250px;
+  overflow: auto;
+}
+.incident-desk > section > progress {
+  width: 100%;
+}
+.app.light .call-conversation,
+.app.light .radio-queue article {
+  color: var(--hud-text);
+}
+
+.desk-form > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.desk-form > label select {
+  width: 100%;
+}
+.desk-queue {
+  flex-shrink: 0;
+}
+.incident-desk .dispatch-list label {
+  min-width: 0;
+}
+.incident-desk .dispatch-list small {
+  overflow-wrap: anywhere;
+}

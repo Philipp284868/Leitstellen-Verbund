@@ -12,9 +12,21 @@ Die erste Feuerwache kostet 55.000 Credits. Ein TSF-W kostet 18.000 Credits und 
 
 Wache auf einer Kreuzung platzieren, öffnen und Fahrzeuge kaufen. Personal einstellen und im Fuhrpark **Besetzen** wählen. Ein Fahrzeug ohne ausreichende, freie und passend ausgebildete Besatzung ist nicht alarmierbar. Fahrzeugzuweisung, Rückruf und Verkauf prüfen den tatsächlichen Zustand erneut.
 
-Die Einsatzliste enthält höchstens zwei regulär erzeugte offene Einsätze je Welt. Angeboten werden Lagen, deren Fähigkeiten der eigene Fuhrpark grundsätzlich besitzt. Belegte Fahrzeuge verhindern nicht, dass der entsprechende Einsatztyp weiter existiert. Zusätzliche Organisationen und Ausbildung eröffnen anspruchsvollere Lagen. Neue Meldungen kommen einzeln mit 90–210 echten Sekunden Abstand, unabhängig vom Spieltempo. Bereits bestehende größere Einsatzlisten bleiben erhalten und werden zuerst abgearbeitet. Neue Multiplayer-Einsätze sind automatisch im Verbund sichtbar.
+Die Einsatzliste enthält höchstens zwei regulär erzeugte offene Einsätze je Welt. Angeboten werden Lagen, deren Fähigkeiten der eigene Fuhrpark grundsätzlich besitzt. Belegte Fahrzeuge verhindern nicht, dass der entsprechende Einsatztyp weiter existiert. Zusätzliche Organisationen und Ausbildung eröffnen anspruchsvollere Lagen. Neue Meldungen kommen einzeln mit 90–210 echten Sekunden Abstand, unabhängig vom Spieltempo. Bereits bestehende größere Einsatzlisten bleiben erhalten und werden zuerst abgearbeitet. Neue Multiplayer-Einsätze bleiben in der eigenen Leitstelle.
 
-Am Einsatz werden Fähigkeiten summiert, nicht bloß Fahrzeugzahlen. Ein Polizeifahrzeug kann keinen Brand löschen. Die Disposition zeigt Anforderung und aktuelle Menge sowie Stillstand. Alarmierungsvorlagen speichern Typzusammenstellungen; verfügbare passende Fahrzeuge werden beim Abruf ausgewählt. Favoriten und Namensfilter helfen im Fuhrpark.
+## Notruf bis Einsatzabschluss
+
+1. In der Notrufwarteschlange einen Anruf öffnen und **Notruf annehmen** wählen.
+2. **Wo genau ist der Notfall?** und **Was ist passiert?** erfragen. Sobald Ort und Meldebild bekannt sind, kann disponiert werden. Weitere Fragen sind freiwillig und passen sich der gemeldeten Organisation an. Antwortzeiten, Stress, Informationsqualität und Glaubwürdigkeit beeinflussen das Gespräch. Widersprüchliche Angaben bleiben sichtbar. Bei Abbruch ist je nach Verbindung ein Rückruf möglich.
+3. Unter **AAO** eigene Alarm- und Ausrückeordnungen mit Stichwort, Stufe, Organisation, Fahrzeugtypen, Fähigkeiten, Priorität und Alarmierungsart speichern. Im Einsatz eine AAO auswählen und **AAO-Vorschlag berechnen** klicken. Der Vorschlag alarmiert noch nicht. Alternativ frei nach Wache und Organisation auswählen; Fahrstrecke, Fahrzeit und Verfügbarkeit stehen am Fahrzeug.
+4. Auswahl prüfen und **Alarmieren**. Fehlbedarf wird angezeigt, verhindert eine bewusst knappe Erstdisposition aber nicht. **Nur DME** benötigt 60 Sekunden bis zum Ausrücken, **DME + Sirene** 45 Sekunden, **Wachalarm** 30 Sekunden. Das sind Spielwerte, keine Zusage realer BOS-Zeiten. Ohne Einzelüberschreibung gilt das unter **FMS / Funkstatus** gespeicherte Wachenprofil.
+5. Alarmierung (FMS 9), Ausrücken/Anfahrt (FMS 3) und Ankunft (FMS 4) verfolgen. Die erste Einheit meldet sich mit einem Sprechwunsch. **Lagemeldung aufnehmen** übernimmt bestätigte Erkenntnisse; das tatsächliche Meldebild kann abweichen. Ein FMS 0/5 ersetzt die operative Fahrzeugbindung nicht.
+6. Fehlende Fähigkeiten führen zu einer Nachforderung. Den Sprechwunsch bearbeiten und in derselben Disposition weitere Fahrzeuge alarmieren. Rückfragen liefern zusätzliche Lageinformationen. Funkmeldungen lassen sich erledigen; wiederholte Bearbeitung erzeugt keine zweite Wirkung.
+7. Sobald ausreichende Kräfte vor Ort und die Lage bekannt sind, arbeitet der Server den Einsatz ab. Patienten werden wie bisher versorgt und transportiert. Nach Abschluss erscheint **Einsatzhistorie**; unter **Einsatzarchiv → Verlauf ansehen** lässt sich der Vorgang erneut öffnen.
+
+Unter **FMS / Funkstatus** können berechtigte Disponenten den Funkstatus 0–9 mit Begründung korrigieren und die Bezeichnungen pro Organisation ändern. FMS 6 verhindert neue Alarmierungen. Manuelle Statusmeldungen ändern keine Fahrtroute oder laufende Fahrzeugzuweisung. Die FMS-Historie zeigt Serverzeit und Bearbeiter.
+
+Am Einsatz werden Fähigkeiten summiert, nicht bloß Fahrzeugzahlen. Ein Polizeifahrzeug kann keinen Brand löschen. Favoriten und Namensfilter im bestehenden Fuhrpark bleiben verfügbar. Mehrere Notrufe können dasselbe Ereignis beschreiben, ohne einen zweiten Einsatz anzulegen.
 
 ## Wege, Patienten und Boote
 

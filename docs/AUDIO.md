@@ -41,3 +41,7 @@ Automatisierte Prüfungen decken Ereignispriorität, doppelte und veraltete Stä
 Die Wiedergabe berücksichtigt die [Web-Audio-Hinweise zu Nutzerinteraktion und Autoplay](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices); Hintergrundpausen verwenden [AudioContext.suspend](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend).
 
 Die Linux-CI stellt für Firefox und Chromium ein virtuelles Audio-Ausgabegerät bereit (PulseAudio-Null-Sink). Damit wird die echte Browser-Audiowiedergabe geprüft. Dieses Gerät gehört ausschließlich zum Testsystem; der AMP-Spielserver benötigt keine Audiohardware oder PulseAudio.
+
+## Phase 1 ab Version 2.7
+
+Notruf, Nur DME, DME + Sirene und Wachalarm ergänzen die bestehenden Ereignisklänge. Sie entstehen aus bestätigten Serverereignissen; ein wiederholter Snapshot oder die erste Ansicht nach Reload spielt keine alte Alarmierung erneut ab. Die drei Profile benutzen unterscheidbare synthetisierte Signale und die bestehenden Effektregler. Stumm bleibt der gesamte Ablauf durch Text, FMS und Historie bedienbar. Ein vollständiges Soundprofil-/Uploadsystem bleibt Phase 5.

@@ -1,3 +1,10 @@
+import { deskOwner, workspace, membership } from "./workspaces";
+import { attachIncident } from "../src/simulation/calls";
+import { legacyIncident, publicSave } from "../src/simulation/incidents";
+import { alarm } from "../src/simulation/dispatch";
+import { deskCommand } from "../src/simulation/commands";
+import { writable, simId } from "../src/simulation/events";
+import { deskActions, type DeskAction } from "../src/simulation/actions";
 import { Database } from "./database";
 import { commandSchema } from "./actions";
 import { hash } from "./auth";
@@ -15,7 +22,6 @@ import {
   type Action,
 } from "../src/engine";
 import type { GameMode } from "../src/mode";
-import { uid } from "../src/model";
 import { vt, mt, type Skills } from "../src/catalog";
 import { along } from "../src/world";
 
@@ -35,38 +41,61 @@ export class Game {
           throw Error("Aktions-ID bereits für eine andere Aktion benutzt.");
         return;
       }
+      if (membership(this.db, user, action, mode)) {
+        this.db.sql
+          .prepare("INSERT INTO actions VALUES (?,?,?)")
+          .run(user, id, fingerprint);
+        return;
+      }
+      const owner = deskOwner(this.db, user, mode);
       const saves = this.db.all(mode),
-        s = saves.get(user);
+        s = saves.get(owner);
       if (!s) throw Error("Konto fehlt.");
       if (
         mode === "single" &&
         ["share", "unshare", "support"].includes(action.type)
       )
         throw Error("Zusammenarbeit ist nur im Multiplayer möglich.");
-      if (action.type === "share" || action.type === "unshare") {
+      if (action.type === "dispatch") {
+        const m = s.missions.find((m) => m.id === action.mission);
+        if (!m) throw Error("Eigener Einsatz fehlt.");
+        legacyIncident(s, m);
+        writable(m);
+        alarm(s, m, action.vehicles, user, action.priority, action.alarm);
+      } else if (
+        deskActions.some((schema) => schema.shape.type.value === action.type)
+      )
+        deskCommand(s, action as DeskAction, user);
+      else if (action.type === "share" || action.type === "unshare") {
         const m = s.missions.find((m) => m.id === action.id);
         if (!m) throw Error("Eigener Einsatz fehlt.");
+        if (action.type === "share" && m.control && !m.control.legacy)
+          throw Error(
+            "Neue Einsätze bleiben in der eigenen Leitstelle. Nachbarleitstellen folgen in Phase 3.",
+          );
         if (action.type === "share") m.shared = true;
         else {
           if (
-            m.transports.some((t) => t.owner !== user && t.status === "ordered")
+            m.transports.some(
+              (t) => t.owner !== owner && t.status === "ordered",
+            )
           )
             throw Error(
               "Laufender fremder Patiententransport muss zuerst ankommen.",
             );
           for (const helper of saves.values())
             for (const v of helper.vehicles.filter(
-              (v) => v.mission === `remote:${user}:${m.id}` && !v.patients,
+              (v) => v.mission === `remote:${owner}:${m.id}` && !v.patients,
             ))
               recall(helper, v);
           endCooperation(s, m.id);
         }
       } else if (action.type === "support") {
-        const owner = saves.get(action.peer),
-          m = owner?.missions.find((m) => m.id === action.mission);
+        const remoteOwner = saves.get(action.peer),
+          m = remoteOwner?.missions.find((m) => m.id === action.mission);
         const v = s.vehicles.find((v) => v.id === action.vehicle);
         if (
-          action.peer === user ||
+          action.peer === owner ||
           !m?.shared ||
           m.round !== action.round ||
           m.phase === "done" ||
@@ -87,9 +116,9 @@ export class Game {
             )
             .map((p) => p.player.id),
         ]);
-        if (participants.size >= 4 && !participants.has(user))
+        if (participants.size >= 4 && !participants.has(owner))
           throw Error("Maximal vier unterstützende Konten je Einsatz.");
-        v.assignment = uid();
+        v.assignment = simId(s);
         v.mission = `remote:${action.peer}:${m.id}`;
         s.contributions = s.contributions
           .filter((c) => c.status === "active")
@@ -263,7 +292,7 @@ export class Game {
           const count = s.missions.length;
           generate(s);
           if (s.missions.length > count) {
-            s.missions.at(-1)!.shared = mode === "multi";
+            attachIncident(s, s.missions.at(-1)!);
             s.missionWait = 90 + (s.seed % 121);
           }
         }
@@ -279,12 +308,20 @@ export class Game {
     this.db.sql.prepare("DELETE FROM limits WHERE until_at<?").run(now);
   }
   view(user: string, online: Set<string>, mode: GameMode = "multi") {
+    const actor = user;
+    user = deskOwner(this.db, user, mode);
+    const access = workspace(this.db, actor, mode);
     if (mode === "single") this.db.ensureSolo(user);
     const saves = this.db.all(mode),
       save = saves.get(user);
     if (!save) throw Error("Spielstand fehlt.");
     if (mode === "single")
-      return { mode, save, network: { friends: [], support: [] } };
+      return {
+        mode,
+        workspace: access,
+        save: publicSave(save),
+        network: { friends: [], support: [] },
+      };
     const sharedAssignment = (mission: string | null, owner: string) => {
       if (!mission) return false;
       if (mission.startsWith("remote:")) {
@@ -298,7 +335,14 @@ export class Game {
         ?.missions.some((m) => m.id === mission && m.shared);
     };
     const friends = Array.from(saves.values())
-      .filter((s) => s.player.id !== user)
+      .filter(
+        (s) =>
+          s.player.id !== user &&
+          (save.vehicles.some((v) =>
+            v.mission?.startsWith(`remote:${s.player.id}:`),
+          ) ||
+            s.vehicles.some((v) => v.mission?.startsWith(`remote:${user}:`))),
+      )
       .map((s) => ({
         id: s.player.id,
         name: s.player.name,
@@ -317,7 +361,13 @@ export class Game {
             ),
             eta: Math.max(0, v.arrive - s.time),
           })),
-        missions: s.missions.filter((m) => m.shared),
+        missions: publicSave(s).missions.filter(
+          (m) =>
+            m.shared &&
+            save.vehicles.some(
+              (v) => v.mission === `remote:${s.player.id}:${m.id}`,
+            ),
+        ),
       }));
     const support = friends.flatMap((f) =>
       f.vehicles
@@ -333,6 +383,11 @@ export class Game {
           at: Date.now(),
         })),
     );
-    return { mode, save, network: { friends, support } };
+    return {
+      mode,
+      workspace: access,
+      save: publicSave(save),
+      network: { friends, support },
+    };
   }
 }

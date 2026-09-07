@@ -1,3 +1,12 @@
+import { MissionPanel } from "./Panels";
+import {
+  DeskQueue,
+  IncidentPanel,
+  AAOPanel,
+  FMSPanel,
+  TeamPanel,
+  History,
+} from "./Desk";
 import { AudioSession, SoundButton, SoundSettings } from "./Sound";
 import { audio } from "./audio/controller";
 import { districtAt } from "./world";
@@ -25,13 +34,7 @@ import { mt, bt } from "./catalog";
 import { level } from "./model";
 import { MapView } from "./Map";
 import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
-import {
-  MissionPanel,
-  Friends,
-  BackupPanel,
-  ProgressPanel,
-  Help,
-} from "./Panels";
+import { BackupPanel, ProgressPanel, Help } from "./Panels";
 import { Modal, credits } from "./ui";
 import { download } from "./storage";
 import { updateApplication } from "./pwa";
@@ -61,8 +64,8 @@ function GameApp() {
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
     "Öffne deine Wache, warte die Bauzeit ab und kaufe zwei TSF-W.",
     "Stelle pro TSF-W sechs Mitarbeiter ein. Öffne den Fuhrpark und wähle „Besetzen“.",
-    "Wähle einen Einsatz, markiere geeignete Fahrzeuge und alarmiere sie.",
-    "Verfolge Anfahrt und Einsatz. Sobald alle Fähigkeiten vor Ort sind, beginnt die Abarbeitung.",
+    "Nimm einen Notruf an, erfrage Ort und Meldebild und alarmiere passende Fahrzeuge.",
+    "Verfolge die Anfahrt, nimm die erste Lagemeldung auf und fordere fehlende Kräfte nach.",
     "Erste Belohnung erhalten! Baue deinen Fuhrpark aus und erreiche Stufe 2.",
     "Tutorial abgeschlossen.",
   ];
@@ -292,6 +295,7 @@ function GameApp() {
                       : "Neue Meldungen kommen einzeln und zeitlich versetzt."}
                   </small>
                 </div>
+                <DeskQueue s={s} open={open} panel={setModal} />
                 <div className="mission-list">
                   {s.missions.map((m, i) => {
                     const t = mt(m.template);
@@ -310,7 +314,11 @@ function GameApp() {
                             {m.shared ? " · VERBUND" : ""}
                           </span>
                           <h3>{t.name}</h3>
-                          <p>Falkenried · {districtAt(m.pos)}</p>
+                          <p>
+                            {m.control && !m.control.locationKnown
+                              ? "Einsatzort noch erfragen"
+                              : `Falkenried · ${districtAt(m.pos)}`}
+                          </p>
                           <div className="mission-meta">
                             <span
                               className={
@@ -352,7 +360,7 @@ function GameApp() {
                     onClick={() => setModal("friends")}
                   >
                     <Users size={18} />
-                    <span>Verbund-Einsätze</span>
+                    <span>Disponenten derselben Leitstelle</span>
                     <b>
                       {net.friends.reduce((n, f) => n + f.missions.length, 0)}
                     </b>
@@ -475,7 +483,9 @@ function GameApp() {
                 building: "Wachendetails",
                 fleet: "Fuhrpark",
                 mission: "Einsatzdisposition",
-                friends: "Mit Freunden spielen",
+                friends: "Disponenten und Leitstelle",
+                aaos: "Alarm- und Ausrückeordnung",
+                fms: "FMS und Alarmierungsprofile",
                 backups: "Spielstände und Sicherungen",
                 progress: "Fortschritt und Erfolge",
                 archive: "Einsatzarchiv und Geldjournal",
@@ -589,21 +599,37 @@ function GameApp() {
                 )}
               {modal === "fleet" && <Fleet s={s} />}
               {modal === "mission" &&
-                s.missions.find((m) => m.id === selected) && (
+                s.missions.find((m) => m.id === selected) &&
+                (s.missions.find((m) => m.id === selected)!.control ? (
+                  <IncidentPanel
+                    key={selected}
+                    s={s}
+                    m={s.missions.find((m) => m.id === selected)!}
+                  />
+                ) : (
                   <MissionPanel
                     key={selected}
                     s={s}
                     m={s.missions.find((m) => m.id === selected)!}
                   />
-                )}
+                ))}
               {modal === "mission" &&
                 !s.missions.some((m) => m.id === selected) && (
-                  <p>
-                    Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
-                    Geldjournal.
-                  </p>
+                  <>
+                    <p>
+                      Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
+                      Geldjournal.
+                    </p>
+                    {s.archive
+                      .filter((m) => m.id === selected)
+                      .map((m) => (
+                        <History key={m.id} s={s} m={m} />
+                      ))}
+                  </>
                 )}
-              {modal === "friends" && <Friends s={s} />}
+              {modal === "friends" && <TeamPanel />}
+              {modal === "aaos" && <AAOPanel s={s} />}
+              {modal === "fms" && <FMSPanel s={s} />}
               {modal === "progress" && <ProgressPanel s={s} />}
               {modal === "archive" && (
                 <>
@@ -614,7 +640,9 @@ function GameApp() {
                   {s.archive.map((m) => (
                     <article className="person" key={m.id}>
                       <span>{mt(m.template).name}</span>
-                      <b>Abgeschlossen</b>
+                      <button onClick={() => open(m.id)}>
+                        Verlauf ansehen
+                      </button>
                     </article>
                   ))}
                   <h3>Geldjournal</h3>

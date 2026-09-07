@@ -664,7 +664,20 @@ export const vt = (id: string) => {
   return x;
 };
 export const mt = (id: string) => {
-  const x = missions.find((m) => m.id === id);
+  const x =
+    id === "incoming"
+      ? {
+          ...missions[0],
+          id: "incoming",
+          name: "Ungeklärter Notruf",
+          description: "Ort und Meldebild müssen erfragt werden.",
+          requirements: {},
+          patients: 0,
+          reward: 0,
+          seconds: 1,
+          level: 1,
+        }
+      : missions.find((m) => m.id === id);
   if (!x) throw Error("Unbekannte Einsatzart");
   return x;
 };

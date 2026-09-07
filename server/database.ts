@@ -1,10 +1,12 @@
+import { legacyIncident } from "../src/simulation/incidents";
+import { syncFms } from "../src/simulation/fms";
 import { DatabaseSync, backup } from "node:sqlite";
 import { mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 5;
+export const DATABASE_VERSION = 6;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -113,6 +115,50 @@ export class Database {
             }
           this.sql.exec("PRAGMA user_version=5;");
           this.audit("server-migration", "realtime-v5");
+        });
+      if (version < 6)
+        this.transaction(() => {
+          this.sql.exec(
+            "CREATE TABLE IF NOT EXISTS desk_members(user_id TEXT PRIMARY KEY REFERENCES users(id), owner_id TEXT NOT NULL REFERENCES users(id), CHECK(user_id<>owner_id)); CREATE TABLE IF NOT EXISTS desk_invites(user_id TEXT REFERENCES users(id),owner_id TEXT REFERENCES users(id),PRIMARY KEY(user_id,owner_id),CHECK(user_id<>owner_id));",
+          );
+          for (const mode of ["multi", "single"] as const) {
+            const saves = this.all(mode);
+            for (const [id, s] of saves) {
+              for (const m of [...s.missions, ...s.archive]) {
+                legacyIncident(s, m);
+                if (
+                  m.phase !== "done" &&
+                  m.shared &&
+                  ![...saves.values()].some((other) =>
+                    other.vehicles.some(
+                      (v) => v.mission === `remote:${id}:${m.id}`,
+                    ),
+                  )
+                )
+                  m.shared = false;
+              }
+              syncFms(s);
+              for (const [i, old] of s.templates.entries())
+                if (
+                  old.types.length &&
+                  !s.desk.aaos.some((a) => a.id === `legacy-${i}`)
+                )
+                  s.desk.aaos.push({
+                    id: `legacy-${i}`,
+                    name: old.name,
+                    keyword: old.name,
+                    level: 1,
+                    org: "Alle",
+                    types: old.types,
+                    skills: {},
+                    priority: "NORMAL",
+                    alarm: "dme",
+                  });
+              this.save(id, s, mode);
+            }
+          }
+          this.sql.exec("PRAGMA user_version=6");
+          this.audit("server-migration", "phase-one-v6");
         });
       if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
         throw Error("Ungültige SQLite-Kontoreferenzen.");

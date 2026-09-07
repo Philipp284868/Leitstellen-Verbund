@@ -34,6 +34,16 @@ export class AudioEvents {
       save.archive.some((m) => !archive.has(m.id))
     )
       return "complete";
+    const priorEvents = new Set(
+      before.missions.flatMap((m) => m.control?.events.map((e) => e.id) ?? []),
+    );
+    const freshEvents = save.missions
+      .flatMap((m) => m.control?.events ?? [])
+      .filter((e) => !priorEvents.has(e.id));
+    const alarm = freshEvents.find((e) => e.alarm);
+    if (alarm?.alarm) return alarm.alarm;
+    if (freshEvents.some((e) => e.type === "SPEAK_REQUESTED")) return "radio";
+    if (freshEvents.some((e) => e.type === "CALL_RECEIVED")) return "phone";
     const vehicles = new Map(before.vehicles.map((v) => [v.id, v]));
     if (
       save.vehicles.some(

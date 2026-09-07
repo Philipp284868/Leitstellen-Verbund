@@ -1,8 +1,10 @@
+import { deskActions, dispatchOptions } from "../src/simulation/actions";
 import { z } from "zod";
 import { point } from "../src/model";
 const id = z.string().min(1).max(100),
   name = z.string().trim().min(1).max(48);
 export const actionSchema = z.discriminatedUnion("type", [
+  ...deskActions,
   z.object({ type: z.literal("build"), kind: id, pos: point }).strict(),
   z.object({ type: z.literal("buy"), kind: id, home: id }).strict(),
   z
@@ -26,6 +28,7 @@ export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("move"), id, home: id }).strict(),
   z
     .object({
+      ...dispatchOptions,
       type: z.literal("dispatch"),
       mission: id,
       vehicles: z.array(id).min(1).max(30),

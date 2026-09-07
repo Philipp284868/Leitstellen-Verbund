@@ -1,3 +1,6 @@
+import { setFms } from "./simulation/fms";
+import { beforeStep, afterVehicles, afterStep } from "./simulation/incidents";
+import { simId } from "./simulation/events";
 import {
   BALANCE,
   bt,
@@ -7,7 +10,7 @@ import {
   extensions,
   type Skills,
 } from "./catalog";
-import { uid, level, type Save, type Mission, type Vehicle } from "./model";
+import { level, type Save, type Mission, type Vehicle } from "./model";
 import {
   nodes,
   nearest,
@@ -47,13 +50,14 @@ export function money(s: Save, amount: number, text: string, receipt?: string) {
     throw Error("Nicht genügend Credits oder ungültiger Betrag.");
   s.money += amount;
   if (receipt) s.receipts.push(receipt);
-  s.journal.unshift({ id: receipt ?? uid(), at: s.time, amount, text });
+  s.journal.unshift({ id: receipt ?? simId(s), at: s.time, amount, text });
   s.journal = s.journal.slice(0, 2000);
   return true;
 }
 export function readiness(s: Save, v: Vehicle) {
   const t = vt(v.type),
     b = s.buildings.find((b) => b.id === v.home);
+  if (s.desk.fleet[v.id]?.code === 6) return "FMS 6: nicht einsatzbereit";
   if (v.status !== "ready") return "Fahrzeug bereits gebunden";
   if (!b || b.ready > s.time) return "Wache im Bau";
   const crew = s.people.filter(
@@ -84,7 +88,7 @@ export function endCooperation(s: Save, id: string) {
   const m = s.missions.find((m) => m.id === id);
   if (!m || !m.shared) return;
   m.shared = false;
-  m.round = uid();
+  m.round = simId(s);
   m.contributors = [];
   m.transports = m.transports.filter(
     (t) => t.status === "delivered" || t.owner === s.player.id,
@@ -98,7 +102,9 @@ export function beginTrip(
 ) {
   const origin = ["travel", "return", "transport"].includes(v.status)
     ? along(v.path, (s.time - v.depart) / (v.arrive - v.depart))
-    : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
+    : v.status === "alarmed"
+      ? v.path[0]
+      : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
   v.path = route(origin, target, vt(v.type).mode);
   v.depart = s.time;
   v.arrive =
@@ -110,10 +116,11 @@ export function recall(s: Save, v: Vehicle) {
     (c) => c.assignment === v.assignment && c.status === "active",
   ))
     c.status = "returned";
-  v.assignment = null;
-  v.mission = null;
   v.patients = 0;
   beginTrip(s, v, s.buildings.find((b) => b.id === v.home)!.pos, "return");
+  setFms(s, v, 1, "server", "Rückfahrt zur Wache");
+  v.assignment = null;
+  v.mission = null;
 }
 export function apply(s: Save, a: Action) {
   switch (a.type) {
@@ -171,7 +178,7 @@ export function apply(s: Save, a: Action) {
         throw Error("Wasserrettung benötigt einen markierten Hafenbauplatz.");
       money(s, -t.price, `Bau: ${t.name}`);
       s.buildings.push({
-        id: uid(),
+        id: simId(s),
         owner: s.player.id,
         type: t.id,
         name: `${t.name} ${s.buildings.length + 1}`,
@@ -202,7 +209,7 @@ export function apply(s: Save, a: Action) {
         throw Error("Keine freien Stellplätze.");
       money(s, -t.price, `Kauf: ${t.name}`);
       s.vehicles.push({
-        id: uid(),
+        id: simId(s),
         owner: s.player.id,
         type: t.id,
         name: `${t.name} / ${s.vehicles.length + 1}`,
@@ -231,7 +238,7 @@ export function apply(s: Save, a: Action) {
       money(s, -a.count * BALANCE.hire, "Personal eingestellt");
       for (let i = 0; i < a.count; i++)
         s.people.push({
-          id: uid(),
+          id: simId(s),
           home: b.id,
           vehicle: null,
           skills: [],
@@ -374,7 +381,7 @@ export function apply(s: Save, a: Action) {
       for (const id of ids) {
         const v = s.vehicles.find((v) => v.id === id)!;
         v.mission = m.id;
-        v.assignment = uid();
+        v.assignment = simId(s);
         beginTrip(s, v, m.pos, "travel");
       }
       s.tutorial = Math.max(4, s.tutorial);
@@ -428,7 +435,7 @@ export function generate(s: Save) {
     ? docks[s.seed % docks.length]
     : sites[s.seed % sites.length];
   s.missions.push({
-    id: uid(),
+    id: simId(s),
     template: t.id,
     pos,
     progress: 0,
@@ -436,7 +443,7 @@ export function generate(s: Save) {
     created: s.time,
     completed: 0,
     shared: false,
-    round: uid(),
+    round: simId(s),
     contributors: [],
     transports: [],
   });
@@ -486,6 +493,7 @@ export function tick(
   const dt = steps ? delta / steps : 0;
   for (let step = 0; step < steps; step++) {
     s.time += dt;
+    beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {
       money(s, 1500, "Öffentlicher Bereitschaftsdienst");
       s.reliefActive = false;
@@ -515,7 +523,7 @@ export function tick(
           )?.id ?? "public";
         s.beds.push(
           ...Array.from({ length: v.patients }, () => ({
-            id: uid(),
+            id: simId(s),
             home,
             until: s.time + BALANCE.hospitalSeconds,
           })),
@@ -523,6 +531,13 @@ export function tick(
         const m = s.missions.find((m) => m.id === v.mission);
         const order = m?.transports.find((t) => t.assignment === v.assignment);
         if (order) order.status = "delivered";
+        setFms(
+          s,
+          v,
+          8,
+          "server",
+          "Transportziel erreicht und Patient übergeben",
+        );
         for (const t of s.transfers.filter(
           (t) => t.assignment === v.assignment,
         ))
@@ -530,7 +545,9 @@ export function tick(
         recall(s, v);
       }
     }
+    afterVehicles(s);
     for (const m of s.missions) {
+      if (m.control && !m.control.briefed) continue;
       if (m.shared && offline) continue;
       const t = mt(m.template),
         skills = { ...capacity(s, m.id) };
@@ -593,6 +610,7 @@ export function tick(
     s.archive.unshift(...s.missions.filter((m) => m.phase === "done"));
     s.archive = s.archive.slice(0, 500);
     s.missions = s.missions.filter((m) => m.phase !== "done");
+    afterStep(s);
   }
   s.time = end;
   if (allowGeneration && !offline && s.time >= s.nextMission) generate(s);

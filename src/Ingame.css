@@ -418,6 +418,11 @@
   box-shadow: 0 28px 90px #0005;
 }
 .app .modal > header {
+  position: sticky;
+  top: -26px;
+  z-index: 3;
+  background: var(--hud-panel);
+  padding-top: 12px;
   border-bottom: 1px solid var(--hud-border);
   padding-bottom: 18px;
   margin-bottom: 20px;
