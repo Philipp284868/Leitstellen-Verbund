@@ -12,6 +12,7 @@ Stand 07.09.2026. Ausgangspunkt: `c5f28eed0b28210a2f5df9639998aa66b1a6e050` (2.6
 | Neuer Stand: `pnpm typecheck`, `pnpm lint`, `git diff --check` | Erfolgreich |
 | Neue vollständige lokale Vitest-Reihe ohne Linux-Prozesstest `amp-autostart.test.ts` | 86 bestanden, 15 Dateien |
 | Gezielte Wiederprüfung nach letzten Backendkorrekturen: Phase 1, HTTP, Server, Kartenmigration/Restore | 27 bestanden, vier Dateien |
+| Zusätzliche Prüfung eines während des Gesprächs geschlossenen und wieder geöffneten SQLite-Stands | Alle 10 Phase-1-Tests bestanden; Bearbeiter, Angaben und Gesprächszustand erhalten |
 | Browser mit `PW_EDGE=1`, Chromium-Projekt über installiertes Edge | Alle 19 Szenarien erfolgreich geprüft; im Gesamtlauf 18 bestanden, ein zusätzlicher Konfigurationstest zunächst mit mehrdeutigem Testselektor. Nach Eingrenzung auf den Dialog alle drei Phase-1-Browserfälle bestanden. |
 
 Der vollständige neue Browserablauf umfasst Notrufabfrage, gespeicherte AAO, HLF, Ausrückzeit/FMS 3, Serverneustart, Ankunft/FMS 4 in der Historie, erste Lagemeldung, Löschwasser-Nachforderung, TLF, Abschluss und Archiv. Der zweite Fall prüft freie Disposition auf 390 Pixel Breite. Der dritte prüft FMS-Definitionen, manuelle Nichtverfügbarkeit, Reload und wirksames Wachenprofil.

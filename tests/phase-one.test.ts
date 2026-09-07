@@ -247,6 +247,15 @@ it("speichert AAO, Gespräche, Fahrt und Historie über Neustart; schützt fremd
       op: "ask",
       question: "address",
     });
+    const activeCall = db.all().get(owner)!;
+    expect(activeCall.missions[0].control!.calls[0].state).toBe("active");
+    db.close();
+    db = new Database(dir);
+    game = new Game(db);
+    expect(db.all().get(owner)).toEqual(activeCall);
+    expect(
+      game.view(member, new Set()).save.missions[0].control!.calls[0].actor,
+    ).toBe(owner);
     game.step(5);
     cmd(owner, {
       type: "call",
