@@ -181,6 +181,7 @@ try {
         s.generation = uid();
         s.desk.fleet = {};
         s.aid = [];
+        s.operations = { cooldown: 0, history: [] };
         s.desk.alarms = Object.fromEntries(
           Object.entries(s.desk.alarms).map(([id, profile]) => [
             ids.get(id) ?? id,

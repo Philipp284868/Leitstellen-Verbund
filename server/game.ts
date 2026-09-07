@@ -1,4 +1,11 @@
 import { stationProfile, personDuty } from "../src/simulation/staffing";
+import { majorActions, type MajorAction } from "../src/simulation/major-schema";
+import { majorCommand } from "../src/simulation/major-command";
+import { maybeMajor, campaignTick } from "../src/simulation/major-incidents";
+import {
+  effectiveSkills,
+  canTransport,
+} from "../src/simulation/major-resources";
 import {
   organizationActions,
   aidActions,
@@ -14,6 +21,7 @@ import {
   boardPatients,
   deliverPatients,
   patientSeats,
+  transportCandidates,
 } from "../src/simulation/patients";
 import { attachDynamics, followupsTick } from "../src/simulation/dynamics";
 import { deskOwner, workspace, membership } from "./workspaces";
@@ -87,10 +95,27 @@ export class Game {
                 (!v.fault || v.fault.state === "repaired") &&
                 authorizedHelper(s, m, helper, v),
             ))
-              for (const [k, n] of Object.entries(vt(v.type).skills))
+              for (const [k, n] of Object.entries(effectiveSkills(m, v)))
                 external[k] = (external[k] || 0) + n;
       }
       if (
+        majorActions.some((schema) => schema.shape.type.value === action.type)
+      ) {
+        const a = action as MajorAction;
+        const m = s.missions.find((m) => m.id === a.mission);
+        const foreign = m
+          ? [...saves.values()]
+              .filter((helper) => helper.player.id !== owner)
+              .flatMap((helper) =>
+                helper.vehicles.filter(
+                  (v) =>
+                    v.mission === `remote:${owner}:${m.id}` &&
+                    authorizedHelper(s, m, helper, v),
+                ),
+              )
+          : [];
+        majorCommand(s, a, user, foreign);
+      } else if (
         aidActions.some((schema) => schema.shape.type.value === action.type)
       ) {
         if (mode !== "multi")
@@ -234,10 +259,12 @@ export class Game {
     for (let n = 0; n < count; n++) {
       aidTick(saves);
       const remote = new Map<string, Record<string, Skills>>();
+      const remoteVehicles = new Map<string, Record<string, Vehicle[]>>();
       const carriers: Record<string, Skills> = {};
       const remoteDynamic = new Set<string>();
       for (const [ownerId, owner] of saves) {
         const skills: Record<string, Skills> = {};
+        const units: Record<string, Vehicle[]> = {};
         for (const m of owner.missions) {
           if (m.dynamics?.active)
             remoteDynamic.add(`remote:${ownerId}:${m.id}`);
@@ -253,16 +280,21 @@ export class Game {
               if (!m.contributors.includes(helperId))
                 m.contributors.push(helperId);
               const current = (skills[m.id] ||= {});
-              for (const [key, value] of Object.entries(vt(v.type).skills))
+              (units[m.id] ||= []).push(v);
+              for (const [key, value] of Object.entries(effectiveSkills(m, v)))
                 current[key] = (current[key] || 0) + value;
               if (
-                m.phase === "transport" &&
+                canTransport(m, v) &&
                 !m.transports.some((t) => t.assignment === v.assignment)
               ) {
                 const remaining =
                   (patientSeats(m) ?? mt(m.template).patients) -
                   m.transports.reduce((a, t) => a + t.patients, 0);
-                const seats = Math.min(remaining, vt(v.type).capacity);
+                const seats = Math.min(
+                  remaining,
+                  vt(v.type).capacity,
+                  m.major ? transportCandidates(m).length : Infinity,
+                );
                 if (
                   seats > 0 &&
                   hospital(helper, v.path.at(-1)!, seats, m, v)
@@ -313,6 +345,7 @@ export class Game {
           }
         }
         remote.set(ownerId, skills);
+        remoteVehicles.set(ownerId, units);
       }
       for (const [id, s] of saves) {
         const before = new Set(s.archive.map((m) => m.round));
@@ -324,6 +357,7 @@ export class Game {
           false,
           carriers,
           remoteDynamic,
+          remoteVehicles.get(id),
         );
         for (const m of s.archive.filter((m) => !before.has(m.round))) {
           this.db.sql
@@ -387,14 +421,39 @@ export class Game {
       if (seconds > 60) s.missionWait = 90 + (s.seed % 121);
       else {
         s.missionWait = Math.max(0, s.missionWait - Math.max(0, seconds));
-        followupsTick(s);
-        if (s.missionWait === 0 && s.missions.length < 2) {
+        campaignTick(s, (template, pos) => {
+          const m = {
+            id: simId(s),
+            template,
+            pos,
+            progress: 0,
+            phase: "offered" as const,
+            created: s.time,
+            completed: 0,
+            shared: false,
+            round: simId(s),
+            contributors: [],
+            transports: [],
+          };
+          s.missions.push(m);
+          attachIncident(s, m);
+          attachDynamics(s, m);
+          attachOrganizations(m);
+          return m;
+        });
+        if (!s.operations.campaign) followupsTick(s);
+        if (
+          !s.operations.campaign &&
+          s.missionWait === 0 &&
+          s.missions.length < 2
+        ) {
           const count = s.missions.length;
           generate(s);
           if (s.missions.length > count) {
             attachIncident(s, s.missions.at(-1)!);
             attachDynamics(s, s.missions.at(-1)!);
             attachOrganizations(s.missions.at(-1)!);
+            maybeMajor(s, s.missions.at(-1)!);
             s.missionWait = 90 + (s.seed % 121);
           }
         }

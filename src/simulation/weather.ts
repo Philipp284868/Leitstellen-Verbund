@@ -1,5 +1,5 @@
 import type { Save } from "../model";
-import { edges } from "../world";
+import { edges, nodes, distance } from "../world";
 import { DYNAMICS, sample } from "./random";
 import type { z } from "zod";
 import type { environmentSchema } from "./dynamics-schema";
@@ -133,6 +133,53 @@ export function updateWeather(s: Save) {
     s.environment.period !== Math.floor(s.time / DYNAMICS.weatherPeriod)
   )
     s.environment = environmentAt(s.time);
+  // Local incident closures survive weather-period changes and disappear after
+  // the corresponding danger has been removed. No unrelated desk is exposed.
+  s.environment.roads = s.environment.roads.filter(
+    (r) => !r.id.startsWith("major-road:"),
+  );
+  const related = s.operations.campaign?.missions || [];
+  for (const m of s.missions
+    .filter(
+      (m) =>
+        related.includes(m.id) ||
+        m.major?.kind === "flood" ||
+        m.major?.kind === "storm",
+    )
+    .slice(0, 6)) {
+    if (
+      !m.dynamics?.hazards.some(
+        (h) =>
+          !h.resolved &&
+          ["water", "weather", "technical", "electricity", "traffic"].includes(
+            h.kind,
+          ),
+      )
+    )
+      continue;
+    let best = edges[0],
+      nearest = Infinity;
+    for (const edge of edges) {
+      const d =
+        distance(nodes[edge[0]], m.pos) + distance(nodes[edge[1]], m.pos);
+      if (d < nearest) {
+        best = edge;
+        nearest = d;
+      }
+    }
+    s.environment.roads.push({
+      id: `major-road:${m.id}`,
+      kind:
+        m.template === "cellar" || m.major?.kind === "flood"
+          ? "flood"
+          : "obstacle",
+      edge: best,
+      start: m.created,
+      until: s.time + 1200,
+      delay: 120,
+      blocked: true,
+    });
+  }
 }
 export function weatherWeight(s: Save, template: string) {
   const kind = s.environment?.kind;

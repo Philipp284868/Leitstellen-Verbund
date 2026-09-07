@@ -209,16 +209,26 @@ export function patientSeats(m: Mission) {
     ? m.dynamics.patients.filter((p) => p.transport !== "none").length
     : undefined;
 }
-export function boardPatients(s: Save, m: Mission, v: Vehicle, count: number) {
-  if (!m.dynamics?.active) return;
-  for (const p of m.dynamics.patients
-    .filter((p) => p.transport === "scene" && p.condition !== "dead")
+export function transportCandidates(m: Mission) {
+  return (m.dynamics?.patients || [])
+    .filter(
+      (p) =>
+        p.transport === "scene" &&
+        p.condition !== "dead" &&
+        (!m.major || (!!p.triage && p.health >= 55 && p.treatment >= 80)),
+    )
     .sort(
       (a, b) =>
+        (a.triage ? ["I", "II", "III"].indexOf(a.triage) : 3) -
+          (b.triage ? ["I", "II", "III"].indexOf(b.triage) : 3) ||
         Number(b.priority === "urgent") - Number(a.priority === "urgent") ||
-        a.health - b.health,
-    )
-    .slice(0, count)) {
+        a.health - b.health ||
+        a.id.localeCompare(b.id),
+    );
+}
+export function boardPatients(s: Save, m: Mission, v: Vehicle, count: number) {
+  if (!m.dynamics?.active) return;
+  for (const p of transportCandidates(m).slice(0, count)) {
     p.transport = "aboard";
     p.vehicle = v.id;
     note(s, m, p, `Transport mit ${v.name} begonnen.`);

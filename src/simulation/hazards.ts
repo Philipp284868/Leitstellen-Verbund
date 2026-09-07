@@ -118,6 +118,7 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
 }
 export function requirements(m: Mission): Skills {
   const r = { ...mt(m.template).requirements };
+  if (m.major) r.command = Math.max(r.command || 0, 1);
   for (const task of m.organization?.tasks || [])
     if (!task.done)
       r[taskSkills[task.kind]] = Math.max(r[taskSkills[task.kind]] || 0, 1);
@@ -127,6 +128,11 @@ export function requirements(m: Mission): Skills {
   const waiting = m.dynamics.patients.filter(
     (p) => p.transport === "scene" && p.condition !== "dead",
   );
+  if (m.major && !waiting.length && !m.major.pending?.remaining) {
+    delete r.medical;
+    delete r.doctor;
+    delete r.transport;
+  }
   if (waiting.length) {
     r.medical = Math.max(r.medical || 0, 2);
     r.transport = Math.max(r.transport || 0, 1);

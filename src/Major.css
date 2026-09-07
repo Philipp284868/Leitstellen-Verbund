@@ -1,0 +1,82 @@
+.major-panel,
+.incident-desk .major-panel,
+.operations-overview {
+  border: 1px solid #dba85e66;
+  border-radius: 14px;
+  background: #dba85e0a;
+  padding: 16px;
+  margin: 16px 0;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.major-panel header h3 {
+  margin: 6px 0;
+}
+.modal .major-panel p {
+  margin: 0;
+}
+.major-panel fieldset {
+  min-width: 0;
+  border: 1px solid #8aabbc44;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+.major-panel legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.major-sections {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.major-section {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #668b9d10;
+  border-radius: 9px;
+}
+.major-panel label {
+  display: grid;
+  gap: 6px;
+}
+.major-panel select {
+  width: 100%;
+  min-width: 0;
+}
+.major-panel progress {
+  width: 100%;
+}
+.major-unit {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #8aabbc33;
+}
+.major-triage {
+  margin-top: 8px;
+}
+.operations-overview small,
+.major-panel small {
+  line-height: 1.5;
+  opacity: 0.8;
+}
+.operations-overview button {
+  text-align: left;
+  white-space: normal;
+}
+.major-panel button {
+  white-space: normal;
+}
+@media (max-width: 600px) {
+  .major-sections {
+    grid-template-columns: 1fr;
+  }
+  .major-panel,
+  .incident-desk .major-panel {
+    padding: 12px;
+  }
+  .major-panel fieldset {
+    padding: 9px;
+  }
+}

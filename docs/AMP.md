@@ -1,5 +1,7 @@
 # Leitstellen-Verbund auf CubeCoders AMP – Version 2.6
 
+**Update 2.10.0 / Phase 4:** Großlagenführung, MANV und Flächenlagen verwenden Schema 9. Die Migration sichert den vorherigen Stand und erhält beide Spielmodi samt laufenden Alarmierungen. Keine neuen AMP-Felder oder Umgebungsvariablen; regulär stoppen, sichern, `main` aktualisieren, Setup abschließen und starten. [Phase-4-Betrieb und Grenzen](PHASE-4.md).
+
 Version 2.6 vergrößert die Region und stellt beide Modi auf Echtzeit. [Updatehinweise zu Schema 5](VERSION-2.6.md). Das normale Update genügt; die bestehende Stadt bleibt an ihrem Platz.
 
 Version 2.5 ergänzt [Musik und Soundeffekte](AUDIO.md). Das normale Update genügt; Audio benötigt keine zusätzlichen Dateien, Ports oder Einstellungen in AMP.

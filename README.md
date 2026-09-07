@@ -1,5 +1,13 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.10.0: Große Lagen (Phase 4)
+
+MANV, Großbrände, Unwetter, Hochwasser und Massenereignisse erhalten echte Abschnittsführung, Bereitstellung, bewusste Kräftezuweisung und Ressourcenknappheit. Patienten werden gesichtet und nach Priorität auf geeignete Kliniken verteilt; freigegebene Transporte beginnen schon vor dem Abschluss der gesamten Lage. Auch ausdrücklich zugesagte Nachbarkräfte können Abschnitte übernehmen und Patienten transportieren.
+
+Flächenlagen erzeugen höchstens vier weitere Meldungen mit versetzten Abständen. Das Limit von zwei offenen Einsätzen bleibt bestehen; während einer Flächenlage konkurriert kein zusätzlicher normaler Generator um die freien Plätze. Kein Nachholstau nach einem Serverstillstand. Automatische Großlagen sind selten, alternativ kann ein geeignetes Grundereignis nach seiner Erkundung bewusst hochgestuft werden.
+
+**Schema 9:** Originalbackup vor der Migration, Erhalt beider Spielstände und laufender Alarmierungen. Keine neuen Dienste oder Umgebungsvariablen. [Phase-4-Anleitung](docs/PHASE-4.md) · [Prüfbericht](docs/PHASE-4-TESTBERICHT.md).
+
 ## Version 2.9.0: Organisationen und Nachbarleitstellen (Phase 3)
 
 BF-/FF-Wacheneinstellungen, individuelle Personalverfügbarkeit und Anreise, Mindestbesatzung, tatsächliche Umbesetzung und Reserve erweitern die Disposition. Polizei, THW und Rettungsdienst erhalten wirksame Einsatzaufträge. Krankenhäuser berücksichtigen Fachbereiche, Abmeldung, belegte und zugesagte Betten sowie geeignete alternative Transportziele.

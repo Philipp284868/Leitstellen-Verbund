@@ -141,6 +141,8 @@ export const fireSchema = z
   .strict();
 export const patientSchema = z
   .object({
+    triage: z.enum(["I", "II", "III"]).optional(),
+    hospital: z.string().max(100).optional(),
     id,
     age: z.number().int().min(0).max(100),
     sex: z.enum(["weiblich", "männlich", "divers"]),

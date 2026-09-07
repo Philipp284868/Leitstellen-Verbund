@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 8;
+export const DATABASE_VERSION = 9;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -188,6 +188,13 @@ export class Database {
             for (const [id, s] of this.all(mode)) this.save(id, s, mode);
           this.sql.exec("PRAGMA user_version=8");
           this.audit("server-migration", "organizations-and-explicit-aid-v8");
+        });
+      if (version < 9)
+        this.transaction(() => {
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) this.save(id, s, mode);
+          this.sql.exec("PRAGMA user_version=9");
+          this.audit("server-migration", "major-incidents-and-campaigns-v9");
         });
     } catch (e) {
       this.sql.close();

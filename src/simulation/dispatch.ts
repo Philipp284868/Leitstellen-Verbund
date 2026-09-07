@@ -1,4 +1,5 @@
 import { planTurnout, checkReserveSelection } from "./staffing";
+import { effectiveSkills } from "./major-resources";
 import type { Save, Mission } from "../model";
 import { bt, vt, mt, capabilities } from "../catalog";
 import { readiness, beginTrip } from "../engine";
@@ -60,7 +61,9 @@ export function propose(
     (v) =>
       chosen.includes(v.id) || (v.mission === m.id && v.status === "scene"),
   ))
-    for (const [k, n] of Object.entries(vt(v.type).skills))
+    for (const [k, n] of Object.entries(
+      chosen.includes(v.id) ? vt(v.type).skills : effectiveSkills(m, v),
+    ))
       skills[k] = (skills[k] || 0) + n;
   for (const [k, n] of Object.entries(required))
     if ((skills[k] || 0) < n)

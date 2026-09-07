@@ -265,7 +265,29 @@ export function afterStep(s: Save) {
 export function publicSave(source: Save): Save {
   const s = structuredClone(source);
   s.seed = 0;
+  s.operations.cooldown = 0;
+  if (
+    s.operations.campaign &&
+    !source.missions
+      .concat(source.archive)
+      .find((m) => m.id === s.operations.campaign!.missions[0])?.control
+      ?.briefed
+  )
+    delete s.operations.campaign;
+  if (s.operations.campaign) {
+    s.operations.campaign.next = 0;
+    s.operations.campaign.remaining = 0;
+  }
+  if (s.environment)
+    s.environment.roads = s.environment.roads.filter(
+      (r) =>
+        !r.id.startsWith("major-road:") ||
+        source.missions.find((m) => r.id === `major-road:${m.id}`)?.control
+          ?.briefed,
+    );
   for (const m of [...s.missions, ...s.archive]) {
+    if (!m.control?.briefed) delete m.major;
+    else if (m.major) delete m.major.pending;
     if (!m.control?.briefed) delete m.organization;
     if (m.dynamics) {
       delete m.dynamics.random;
@@ -277,7 +299,7 @@ export function publicSave(source: Save): Save {
       if (!m.control.briefed)
         m.control.events = m.control.events.filter(
           (e) =>
-            !/^(HAZARD_|PATIENT_|MISSION_ESCALATED|MISSION_DOWNGRADED|MISSION_STABILIZED|FIRE_SPREAD|CREW_EMERGENCY|SECONDARY_EVENT|FOLLOWUP_PENDING)/.test(
+            !/^(MAJOR_|HAZARD_|PATIENT_|MISSION_ESCALATED|MISSION_DOWNGRADED|MISSION_STABILIZED|FIRE_SPREAD|CREW_EMERGENCY|SECONDARY_EVENT|FOLLOWUP_PENDING)/.test(
               e.type,
             ),
         );

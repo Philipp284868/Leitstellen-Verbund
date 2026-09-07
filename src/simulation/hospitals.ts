@@ -7,6 +7,7 @@ import {
 } from "../world";
 import { routePlan } from "./traffic";
 import { specialties } from "./organizations-schema";
+import { transportCandidates } from "./patients";
 export function hospitalOptions(
   s: Save,
   origin: Point,
@@ -15,14 +16,7 @@ export function hospitalOptions(
   vehicle?: Vehicle,
 ) {
   const patients = m?.dynamics?.active
-    ? m.dynamics.patients
-        .filter((p) => p.transport === "scene" && p.condition !== "dead")
-        .sort(
-          (a, b) =>
-            Number(b.priority === "urgent") - Number(a.priority === "urgent") ||
-            a.health - b.health,
-        )
-        .slice(0, seats)
+    ? transportCandidates(m).slice(0, seats)
     : [];
   const needs = new Set<keyof typeof specialties>(["general"]);
   for (const p of patients) {
@@ -97,5 +91,8 @@ export function selectHospital(
     (h) => !h.reason,
   );
   // A closed/full/inappropriate preferred facility never strands a stable patient.
-  return options.find((h) => h.id === m?.organization?.hospital) ?? options[0];
+  const preference = m?.major
+    ? transportCandidates(m)[0]?.hospital || m.organization?.hospital
+    : m?.organization?.hospital;
+  return options.find((h) => h.id === preference) ?? options[0];
 }
