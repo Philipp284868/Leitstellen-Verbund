@@ -78,9 +78,19 @@ test("FF-Wache und Personal konfigurieren, Reserve freigeben und individuelle Au
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
   const fleet = page.locator(".fleet-card").first();
-  await fleet.getByLabel("Als Reserve zurückhalten").check();
+  const reserve = fleet.getByLabel("Als Reserve zurückhalten");
+  // This controlled input changes only after the server confirms the action.
+  // check()/uncheck() require the DOM state to change synchronously with a click.
+  await expect(reserve).not.toBeChecked();
+  await reserve.click();
+  await expect(reserve).toBeChecked();
   await expect(fleet).toContainText("Als Reserve zurückgehalten");
-  await fleet.getByLabel("Als Reserve zurückhalten").uncheck();
+  await reserve.click();
+  await expect(reserve).not.toBeChecked();
+  await expect(fleet).toContainText("Disposition freigegeben");
+  await expect
+    .poll(() => app.db.all().get(owner)!.vehicles[0].reserve)
+    .toBe(false);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.locator(".mission-card").first().click();
   await page.locator(".dispatch-list input").first().check();
