@@ -79,7 +79,7 @@ export function repairVehicle(s: Save, v: Vehicle, actor: string) {
       v.id,
     );
 }
-export function faultsTick(s: Save, v: Vehicle) {
+export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
   if (v.fault && v.fault.state !== "repaired") {
     if (v.fault.state !== "repairing" || v.fault.repairAt > s.time) return;
     v.fault.state = "repaired";
@@ -93,14 +93,18 @@ export function faultsTick(s: Save, v: Vehicle) {
         "server",
         v.id,
       );
-    if (!m && !v.patients) recall(s, v);
+    if (!m && !v.mission?.startsWith("remote:") && !v.patients) recall(s, v);
     else if (v.status !== "scene")
-      beginTrip(s, v, v.journey?.target || m!.pos, v.status);
+      beginTrip(s, v, v.journey?.target || m?.pos || v.path.at(-1)!, v.status);
     setFms(s, v, operativeCode(v), "server", "Reparatur abgeschlossen");
     return;
   }
   const j = v.journey;
-  if (!s.missions.some((m) => m.id === v.mission && m.dynamics?.active)) return;
+  if (
+    !remoteDynamic &&
+    !s.missions.some((m) => m.id === v.mission && m.dynamics?.active)
+  )
+    return;
   if (!j || !["travel", "scene", "transport"].includes(v.status)) return;
   // One draw per minute and assignment, not per browser/tick. Repairs never reroll an old minute.
   const bucket = Math.floor(s.time / 60),

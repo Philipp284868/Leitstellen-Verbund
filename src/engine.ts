@@ -1,3 +1,10 @@
+import { selectHospital } from "./simulation/hospitals";
+import {
+  suitableCrew,
+  crewRequired,
+  reserveReason,
+  personAvailable,
+} from "./simulation/staffing";
 import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
 import {
@@ -25,7 +32,6 @@ import { level, type Save, type Mission, type Vehicle } from "./model";
 import {
   nodes,
   nearest,
-  publicHospital,
   docks,
   isWaterSite,
   along,
@@ -71,14 +77,12 @@ export function readiness(s: Save, v: Vehicle) {
   if (s.desk.fleet[v.id]?.code === 6) return "FMS 6: nicht einsatzbereit";
   if (v.status !== "ready") return "Fahrzeug bereits gebunden";
   if (!b || b.ready > s.time) return "Wache im Bau";
-  const crew = s.people.filter(
-    (p) =>
-      p.vehicle === v.id &&
-      p.ready <= s.time &&
-      (!t.training || p.skills.includes(t.training)),
-  );
-  if (crew.length < t.crew)
-    return `${t.crew - crew.length} geeignete Besatzungsmitglieder fehlen${t.training ? " · " + t.training : ""}`;
+  const reserve = reserveReason(s, v);
+  if (reserve) return reserve;
+  const crew = suitableCrew(s, v),
+    needed = crewRequired(s, v);
+  if (crew.length < needed)
+    return `${needed - crew.length} geeignete Besatzungsmitglieder fehlen${t.training ? " · " + t.training : ""}`;
   return "";
 }
 export function capacity(s: Save, atScene?: string): Skills {
@@ -149,6 +153,8 @@ export function recall(s: Save, v: Vehicle) {
   beginTrip(s, v, s.buildings.find((b) => b.id === v.home)!.pos, "return");
   setFms(s, v, 1, "server", "Rückfahrt zur Wache");
   v.assignment = null;
+  delete v.turnout;
+  delete v.destination;
   v.mission = null;
 }
 export function apply(s: Save, a: Action) {
@@ -287,12 +293,12 @@ export function apply(s: Save, a: Action) {
           (p) =>
             p.home === v.home &&
             !p.vehicle &&
-            p.ready <= s.time &&
+            !personAvailable(s, p) &&
             (!t.training || p.skills.includes(t.training)),
         )
         .slice(0, t.crew - assigned);
       for (const p of candidates) p.vehicle = v.id;
-      if (assigned + candidates.length < t.crew)
+      if (assigned + candidates.length < crewRequired(s, v))
         throw Error(
           "Zuerst ausreichend geeignetes Personal einstellen oder ausbilden.",
         );
@@ -483,35 +489,23 @@ export function generate(s: Save) {
   });
   s.nextMission = s.time + BALANCE.missionInterval;
 }
-export function hospital(s: Save, origin: Point, seats: number) {
-  const options = [
-    { id: "public", pos: publicHospital, capacity: 100 },
-    ...s.buildings
-      .filter((b) => b.type === "hospital" && b.ready <= s.time)
-      .map((b) => ({ id: b.id, pos: b.pos, capacity: 20 * b.level })),
-  ];
-  return options
-    .filter(
-      (h) =>
-        s.beds.filter((b) => b.home === h.id).length +
-          s.vehicles
-            .filter(
-              (v) =>
-                v.status === "transport" && distance(v.path.at(-1)!, h.pos) < 1,
-            )
-            .reduce((a, v) => a + v.patients, 0) +
-          seats <=
-        h.capacity,
-    )
-    .sort((a, b) => distance(a.pos, origin) - distance(b.pos, origin))[0];
+export function hospital(
+  s: Save,
+  origin: Point,
+  seats: number,
+  m?: Mission,
+  v?: Vehicle,
+) {
+  return selectHospital(s, origin, seats, m, v);
 }
-export function transport(s: Save, v: Vehicle, patients: number) {
-  const target = hospital(s, v.path.at(-1)!, patients);
+export function transport(s: Save, v: Vehicle, patients: number, m?: Mission) {
+  const target = hospital(s, v.path.at(-1)!, patients, m, v);
   if (!target)
     throw Error(
-      "Alle Krankenhäuser belegt. Patienten warten versorgt am Einsatzort.",
+      "Keine geeignete Krankenhausaufnahme. Patienten warten versorgt am Einsatzort.",
     );
   v.patients = patients;
+  v.destination = target.id;
   beginTrip(s, v, target.pos, "transport");
 }
 export function tick(
@@ -520,6 +514,8 @@ export function tick(
   remote: Record<string, Skills> = {},
   offline = false,
   allowGeneration = true,
+  carriers: Record<string, Skills> = {},
+  remoteDynamic: Set<string> = new Set(),
 ) {
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
@@ -546,7 +542,7 @@ export function tick(
       return true;
     });
     for (const v of s.vehicles) {
-      faultsTick(s, v);
+      faultsTick(s, v, remoteDynamic.has(v.mission || ""));
       if (v.fault && v.fault.state !== "repaired") continue;
       trafficTick(s, v);
       if (v.journey?.blockedUntil || v.arrive > s.time) continue;
@@ -556,9 +552,11 @@ export function tick(
         v.path = [s.buildings.find((b) => b.id === v.home)!.pos];
       } else if (v.status === "transport") {
         const home =
+          v.destination ??
           s.buildings.find(
             (b) => b.type === "hospital" && distance(b.pos, v.path.at(-1)!) < 1,
-          )?.id ?? "public";
+          )?.id ??
+          "public";
         s.beds.push(
           ...Array.from({ length: v.patients }, () => ({
             id: simId(s),
@@ -584,8 +582,8 @@ export function tick(
         recall(s, v);
       }
     }
-    for (const m of s.missions) dynamicsTick(s, m, remote[m.id]);
-    afterVehicles(s);
+    for (const m of s.missions) dynamicsTick(s, m, remote[m.id], carriers);
+    afterVehicles(s, remote);
     for (const m of s.missions) {
       if (m.control && !m.control.briefed) continue;
       if (m.shared && offline) continue;
@@ -615,8 +613,8 @@ export function tick(
             !m.transports.some((t) => t.assignment === v.assignment),
         )) {
           const seats = Math.min(remaining, vt(v.type).capacity);
-          if (!seats || !hospital(s, v.path.at(-1)!, seats)) continue;
-          transport(s, v, seats);
+          if (!seats || !hospital(s, v.path.at(-1)!, seats, m, v)) continue;
+          transport(s, v, seats, m);
           boardPatients(s, m, v, seats);
           m.transports.push({
             assignment: v.assignment!,

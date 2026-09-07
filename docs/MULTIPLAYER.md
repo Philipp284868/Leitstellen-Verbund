@@ -1,4 +1,4 @@
-# Gemeinsam disponieren – Version 2.7
+# Gemeinsam disponieren – Version 2.9
 
 Alle Spieler öffnen dieselbe Spieladresse und registrieren sich mit einem eigenen Konto. Registrierung ist weiterhin frei. Eine Einladung **in eine Leitstelle** ist eine zusätzliche Spielberechtigung, kein Registrierungscode und keine Serververwaltung.
 
@@ -17,7 +17,9 @@ Der Textchat erreicht ausschließlich aktuell berechtigte Disponenten derselben 
 
 ## Unterschiedliche Leitstellen
 
-Neue Einsätze werden **nicht automatisch geteilt**. Andere Leitstellen erhalten weder den neuen Einsatz noch freie Zugriffsmöglichkeiten auf die Fahrzeuge. Das Unterstützungsanfragen-System mit Annahme, Ablehnung, Teilzusage und Rückfragen bleibt Phase 3.
+Neue Einsätze werden **nicht automatisch geteilt**. Andere Leitstellen erhalten weder den neuen Einsatz noch freie Zugriffsmöglichkeiten auf die Fahrzeuge. Unter **Freunde → Nachbarleitstellen** können gezielte Unterstützungsanfragen als privater Entwurf erstellt und ausdrücklich versendet werden. Nur die ausgewählte Leitstelle sieht die Anfrage. Sie kann Rückfragen stellen, ablehnen oder eigene Fahrzeuge teilweise beziehungsweise vollständig zusagen. Erst die Zusage alarmiert Fahrzeuge und erlaubt die begrenzte Ansicht des betroffenen Einsatzes, der gebundenen Fahrzeuge und ihrer Heimatwachen. Freier Fahrzeugbestand, Geld, Personal und andere Einsätze bleiben privat.
+
+Angenommene Kräfte zählen für Erkundung, AAO, Fähigkeiten, Maßnahmen und Patiententransporte. Die Einsatzleitung bleibt beim anfragenden Disponenten. Anfragen lassen sich zurückziehen oder beenden; laufende Patiententransporte werden zuerst abgeschlossen. Nach Einsatzende erfolgt die vorhandene einmalige Kooperationsauszahlung. Rückfragen und Anfragehistorie bleiben gespeichert. Die Anmeldung in einer anderen Leitstelle ist während eigener offener Hilfsanfragen gesperrt. [Vollständiger Ablauf und Grenzen](PHASE-3.md).
 
 Schema 6 schließt alte Freigaben ohne bereits zugeordnetes fremdes Fahrzeug. Bereits laufende alte Unterstützungen einschließlich Patiententransport und Auszahlung bleiben erhalten. Die bisherigen Serverregeln führen diese Übergangsfälle zu Ende; es entsteht daraus keine automatische Freigabe neuer Einsätze.
 

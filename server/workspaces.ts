@@ -78,6 +78,18 @@ export function membership(
       .run(target.id, user);
   } else if (a.type === "member-accept") {
     if (
+      [...db.all("multi").values()].some((s) =>
+        s.aid.some(
+          (r) =>
+            (r.owner === user || r.peer === user) &&
+            !["DONE", "DECLINED", "CANCELLED"].includes(r.state),
+        ),
+      )
+    )
+      throw Error(
+        "Offene Unterstützungsanfragen vor einem Leitstellenwechsel beenden.",
+      );
+    if (
       !db.sql
         .prepare("SELECT 1 FROM desk_invites WHERE user_id=? AND owner_id=?")
         .get(user, a.owner)

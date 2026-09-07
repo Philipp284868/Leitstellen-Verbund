@@ -100,6 +100,19 @@ async function resources(page: Page) {
   await expect(page.getByText("Vollständig einsatzbereit")).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
 }
+function advanceWithRepairs(ownerId: string, finished: () => boolean) {
+  for (let elapsed = 0; elapsed < 7200 && !finished(); elapsed += 30) {
+    for (const v of app.db
+      .all()
+      .get(ownerId)!
+      .vehicles.filter((v) => v.fault?.state === "awaiting"))
+      app.game.command(ownerId, {
+        id: crypto.randomUUID(),
+        action: { type: "repair", vehicle: v.id },
+      });
+    app.game.step(30);
+  }
+}
 async function pair(browser: Browser) {
   const ca = await browser.newContext(),
     cb = await browser.newContext(),
@@ -135,31 +148,37 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
       ),
     )
     .toBe(true);
-  app.game.step(7200);
+  const owner = String(
+    app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
+  );
+  const missionId = app.db.all().get(owner)!.missions[0].id;
+  advanceWithRepairs(owner, () =>
+    app.db
+      .all()
+      .get(owner)!
+      .vehicles.some((v) => v.mission === missionId && v.status === "scene"),
+  );
   await a
     .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
     .click();
-  app.game.step(7200);
+  advanceWithRepairs(owner, () =>
+    app.db
+      .all()
+      .get(owner)!
+      .archive.some((m) => m.id === missionId),
+  );
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await a.getByRole("button", { name: "Fuhrpark", exact: true }).click();
-  // Random incident locations produce different return distances. Wait for the
-  // authoritative arrival deadline plus a bounded allowance for delivery/rendering.
-  const owner = String(
-    app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
+  advanceWithRepairs(owner, () =>
+    app.db
+      .all()
+      .get(owner)!
+      .vehicles.every((v) => v.status === "ready"),
   );
-  const returning = app.db.all().get(owner)!;
-  const returnSeconds = Math.max(
-    0,
-    ...returning.vehicles.map(
-      (v) => (v.arrive - returning.time) / returning.speed,
-    ),
-  );
-  await expect(a.getByText("Vollständig einsatzbereit")).toBeVisible({
-    timeout: Math.min(100000, Math.ceil(returnSeconds * 1000) + 10000),
-  });
+  await expect(a.getByText("Vollständig einsatzbereit")).toBeVisible();
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   const money = await a.locator(".money strong").innerText();
   await enter(a, ua);
@@ -196,11 +215,28 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
       ),
     )
     .toBe(true);
-  app.game.step(7200);
+  const ownerId = String(
+    app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
+  );
+  const missionId = app.db.all().get(ownerId)!.missions[0].id;
+  const advance = (finished: () => boolean) =>
+    advanceWithRepairs(ownerId, finished);
+  // New accounts produce seeded but different incidents. A real breakdown requires a repair order.
+  advance(() =>
+    app.db
+      .all()
+      .get(ownerId)!
+      .vehicles.some((v) => v.mission === missionId && v.status === "scene"),
+  );
   await a
     .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
     .click();
-  app.game.step(7200);
+  advance(() =>
+    app.db
+      .all()
+      .get(ownerId)!
+      .archive.some((m) => m.id === missionId),
+  );
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });

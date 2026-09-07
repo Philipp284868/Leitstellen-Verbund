@@ -1,3 +1,4 @@
+import { planTurnout, checkReserveSelection } from "./staffing";
 import type { Save, Mission } from "../model";
 import { bt, vt, mt, capabilities } from "../catalog";
 import { readiness, beginTrip } from "../engine";
@@ -12,7 +13,13 @@ export function dispatchable(m: Mission) {
   if (m.control && (!m.control.locationKnown || !m.control.reportedTemplate))
     throw Error("Für die Disposition müssen Ort und Meldebild bekannt sein.");
 }
-export function propose(s: Save, m: Mission, aao: AAO, actor: string) {
+export function propose(
+  s: Save,
+  m: Mission,
+  aao: AAO,
+  actor: string,
+  remote: Record<string, number> = {},
+) {
   dispatchable(m);
   const candidates = s.vehicles
     .filter(
@@ -48,7 +55,7 @@ export function propose(s: Save, m: Mission, aao: AAO, actor: string) {
   };
   for (const [k, n] of Object.entries(aao.skills))
     required[k] = Math.max(required[k] || 0, n);
-  const skills: Record<string, number> = {};
+  const skills: Record<string, number> = { ...remote };
   for (const v of s.vehicles.filter(
     (v) =>
       chosen.includes(v.id) || (v.mission === m.id && v.status === "scene"),
@@ -92,12 +99,15 @@ export function alarm(
     route(v.path.at(-1)!, m.pos, vt(v.type).mode);
     return v;
   });
+  checkReserveSelection(s, vehicles);
   if (!vehicles.length) throw Error("Mindestens ein Fahrzeug auswählen.");
   for (const v of vehicles) {
     const selected = profile ?? s.desk.alarms[v.home] ?? "dme";
-    const delay = selected === "station" ? 30 : selected === "siren" ? 45 : 60;
+    const fallback =
+      selected === "station" ? 30 : selected === "siren" ? 45 : 60;
     v.mission = m.id;
     v.assignment = simId(s);
+    const delay = planTurnout(s, v, fallback);
     beginTrip(s, v, m.pos, "travel", mode);
     v.depart += delay;
     v.arrive += delay;

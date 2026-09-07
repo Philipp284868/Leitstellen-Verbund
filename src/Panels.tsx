@@ -557,9 +557,10 @@ export function Help() {
       <p>
         Unter Freunde können bestehende Benutzer als Disponenten derselben
         Leitstelle eingeladen werden. Nach Annahme arbeiten sie am gemeinsamen
-        Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht.
-        Leitstellenübergreifende Unterstützungsanfragen folgen in Phase 3.
-        Laufende alte Unterstützungen werden weitergeführt.
+        Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht. Unter
+        Freunde gezielte Unterstützungsanfragen an Nachbarleitstellen stellen;
+        erst eine ausdrückliche Zusage alarmiert fremde Kräfte. Laufende alte
+        Unterstützungen werden weitergeführt.
       </p>
       <h3>Speichern und Wiederherstellen</h3>
       <p>

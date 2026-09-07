@@ -1,3 +1,4 @@
+import type { AidRequest } from "./simulation/organizations-schema";
 import { audio } from "./audio/controller";
 import { useSyncExternalStore } from "react";
 import type { Building, Vehicle, Mission } from "./model";
@@ -8,7 +9,7 @@ export interface Friend {
   name: string;
   status: string;
   buildings: Building[];
-  vehicles: (Vehicle & { position: Point; eta: number })[];
+  vehicles: (Vehicle & { position: Point; eta: number; fms?: number })[];
   missions: Mission[];
   revision: number;
 }
@@ -20,7 +21,14 @@ interface Contribution {
   vehicle: Vehicle;
   at: number;
 }
+export interface AidView extends AidRequest {
+  ownerName: string;
+  peerName: string;
+  incident: { name: string; pos: Point; phase: string } | null;
+}
 let net = {
+  requests: [] as AidView[],
+  neighbors: [] as { id: string; name: string; online: boolean }[],
   friends: [] as Friend[],
   support: [] as Contribution[],
   chat: [] as { name: string; text: string }[],
@@ -32,12 +40,14 @@ function update() {
 export function setNetwork(data: {
   friends: Friend[];
   support: Contribution[];
+  requests?: AidView[];
+  neighbors?: { id: string; name: string; online: boolean }[];
 }) {
   net = { ...net, ...data };
   update();
 }
 export function resetNetwork() {
-  net = { friends: [], support: [], chat: [] };
+  net = { friends: [], support: [], chat: [], requests: [], neighbors: [] };
   update();
 }
 export function receiveChat(data: { name: string; text: string }) {

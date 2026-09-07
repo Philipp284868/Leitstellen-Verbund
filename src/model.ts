@@ -1,4 +1,12 @@
 import {
+  stationSchema,
+  dutySchema,
+  turnoutSchema,
+  hospitalSchema,
+  organizationMissionSchema,
+  aidSchema,
+} from "./simulation/organizations-schema";
+import {
   dynamicsSchema,
   environmentSchema,
   journeySchema,
@@ -37,6 +45,8 @@ export const buildingSchema = z
     pos: point,
     level: integer.min(1).max(10),
     ready: num,
+    organization: stationSchema.optional(),
+    hospital: hospitalSchema.optional(),
     extensions: z
       .array(z.enum(["technical", "hazmat", "air", "doctor"]))
       .max(4)
@@ -48,6 +58,7 @@ export const personSchema = z
     id,
     home: id,
     vehicle: id.nullable(),
+    duty: dutySchema.optional(),
     skills: z.array(z.string().max(30)).max(20),
     training: z.string().max(30),
     ready: num,
@@ -55,6 +66,9 @@ export const personSchema = z
   .strict();
 export const vehicleSchema = z
   .object({
+    turnout: turnoutSchema.optional(),
+    reserve: z.boolean().optional(),
+    destination: id.optional(),
     journey: journeySchema.optional(),
     fault: faultSchema.optional(),
     id,
@@ -81,6 +95,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    organization: organizationMissionSchema.optional(),
     control: incidentSchema.optional(),
     dynamics: dynamicsSchema.optional(),
     id,
@@ -119,6 +134,7 @@ export const journalSchema = z
   .strict();
 export const saveSchema = z
   .object({
+    aid: z.array(aidSchema).max(500).default([]),
     desk: deskSchema,
     environment: environmentSchema.optional(),
     version: z.literal(1),
@@ -242,8 +258,34 @@ export function validate(data: unknown): Save {
     throw Error("Doppelte Objekt-IDs im Spielstand.");
   if (new Set(s.receipts).size !== s.receipts.length)
     throw Error("Doppelte Abschlussbelege.");
+  for (const request of s.aid) {
+    if (
+      request.owner !== s.player.id ||
+      request.peer === request.owner ||
+      new Set(request.assignments.map((a) => a.assignment)).size !==
+        request.assignments.length
+    )
+      throw Error("Ungültige Unterstützungsanfrage.");
+    request.types.forEach(vt);
+  }
+  if (new Set(s.aid.map((r) => r.id)).size !== s.aid.length)
+    throw Error("Doppelte Unterstützungsanfrage.");
   for (const b of s.buildings) {
     bt(b.type);
+    if (
+      b.organization &&
+      !(
+        b.type === "fire"
+          ? ["bf", "ff", "works", "company", "airport"]
+          : [b.type === "heli" ? "ems" : b.type]
+      ).includes(b.organization.kind)
+    )
+      throw Error("Ungültige Wachenorganisation.");
+    if (
+      b.hospital &&
+      (b.type !== "hospital" || b.hospital.capacity > b.level * 20)
+    )
+      throw Error("Ungültiges Aufnahmeprofil.");
     if (b.owner !== s.player.id) throw Error("Fremder Gebäudebesitz.");
   }
   for (const v of s.vehicles) {
@@ -255,6 +297,8 @@ export function validate(data: unknown): Save {
       throw Error("Bereites Fahrzeug mit Zuweisung.");
   }
   for (const p of s.people) {
+    if (p.duty && (!nodes[p.duty.homeNode] || !nodes[p.duty.workNode]))
+      throw Error("Ungültiger Personalstandort.");
     if (
       !s.buildings.some((b) => b.id === p.home) ||
       (p.vehicle &&

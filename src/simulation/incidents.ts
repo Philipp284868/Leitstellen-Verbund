@@ -1,3 +1,5 @@
+import { turnoutReady } from "./staffing";
+import type { Skills } from "../catalog";
 import type { Save, Mission } from "../model";
 import { missing, capacity } from "../engine";
 import { capabilities, mt } from "../catalog";
@@ -43,6 +45,7 @@ export function beforeStep(s: Save) {
   callsTick(s);
   for (const v of s.vehicles)
     if (v.status === "alarmed" && v.depart <= s.time) {
+      if (!turnoutReady(s, v)) continue;
       v.status = "travel";
       const m = s.missions.find((m) => m.id === v.mission);
       if (m) {
@@ -94,7 +97,7 @@ export function request(
   if (v && (!v.fault || v.fault.state === "repaired"))
     setFms(s, v, priority === "NOTFALL" || priority === "PRIORITÄT" ? 0 : 5);
 }
-export function afterVehicles(s: Save) {
+export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
   syncFms(s);
   for (const m of s.missions) {
     const c = m.control;
@@ -134,14 +137,20 @@ export function afterVehicles(s: Save) {
         c.priority,
       );
     }
-    if (c.briefed && atScene.length) {
-      const deficit = missing(m, capacity(s, m.id));
+    if (
+      c.briefed &&
+      (atScene.length || Object.values(remote[m.id] || {}).some((n) => n > 0))
+    ) {
+      const skills = capacity(s, m.id);
+      for (const [k, n] of Object.entries(remote[m.id] || {}))
+        skills[k] = (skills[k] || 0) + n;
+      const deficit = missing(m, skills);
       const signature = deficit.map(([k, n]) => `${k}:${n}`).join(";");
       if (deficit.length && c.deficit !== signature)
         request(
           s,
           m,
-          atScene[0].id,
+          atScene[0]?.id || c.firstArrival,
           "request",
           `Nachforderung: ${deficit.map(([k, n]) => `${capabilities[k] || k} × ${n}`).join(", ")}`,
           "DRINGEND",
@@ -156,6 +165,7 @@ export function radioAction(
   id: string,
   op: "report" | "request" | "question" | "close",
   actor: string,
+  remote: Skills = {},
 ) {
   const c = m.control,
     r = c?.radio.find((r) => r.id === id);
@@ -185,12 +195,15 @@ export function radioAction(
   if (op === "question") {
     if (r.questioned) return;
     r.questioned = true;
+    const skills = capacity(s, m.id);
+    for (const [k, n] of Object.entries(remote))
+      skills[k] = (skills[k] || 0) + n;
     record(
       s,
       m,
       "RADIO_ANSWER",
       `Rückfrage beantwortet: ${
-        missing(m, capacity(s, m.id))
+        missing(m, skills)
           .map(([k, n]) => `${capabilities[k] || k} × ${n}`)
           .join(", ") || "Kräfte vor Ort ausreichend"
       }.`,
@@ -253,6 +266,7 @@ export function publicSave(source: Save): Save {
   const s = structuredClone(source);
   s.seed = 0;
   for (const m of [...s.missions, ...s.archive]) {
+    if (!m.control?.briefed) delete m.organization;
     if (m.dynamics) {
       delete m.dynamics.random;
       delete m.dynamics.pending;

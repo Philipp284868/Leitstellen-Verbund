@@ -1,3 +1,4 @@
+import { NeighborDesk } from "./NeighborDesk";
 import { DynamicsPanel } from "./Dynamics";
 import { travelNames } from "./simulation/traffic";
 import type { TravelMode } from "./simulation/dynamics-schema";
@@ -277,6 +278,10 @@ function Calls({ s, m }: { s: Save; m: Mission }) {
 }
 export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   const c = m.control!;
+  const net = useNetwork();
+  const support = net.support.filter(
+    (f) => f.mission === m.id && f.round === m.round,
+  );
   const [selected, setSelected] = useState<string[]>([]),
     [aao, setAao] = useState(""),
     [priority, setPriority] = useState<Priority>("NORMAL"),
@@ -296,6 +301,13 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
     skills = { ...capacity(s, m.id) };
   for (const v of chosen)
     for (const [k, n] of Object.entries(vt(v.type).skills))
+      skills[k] = (skills[k] || 0) + n;
+  for (const f of support.filter(
+    (f) =>
+      f.vehicle.status === "scene" &&
+      (!f.vehicle.fault || f.vehicle.fault.state === "repaired"),
+  ))
+    for (const [k, n] of Object.entries(vt(f.vehicle.type).skills))
       skills[k] = (skills[k] || 0) + n;
   const deficits = new Map(missing(m, skills));
   const selectedAAO = s.desk.aaos.find((x) => x.id === aao);
@@ -338,7 +350,9 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
               <article key={r.id}>
                 <b>
                   {r.priority} ·{" "}
-                  {s.vehicles.find((v) => v.id === r.vehicle)?.name}
+                  {s.vehicles.find((v) => v.id === r.vehicle)?.name ||
+                    support.find((f) => f.vehicle.id === r.vehicle)?.vehicle
+                      .name}
                 </b>
                 <p>{r.details}</p>
                 <div className="inline">
@@ -577,6 +591,12 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
       )}
       <section>
         <h3>Eingesetzte Fahrzeuge</h3>
+        {support.map((f) => (
+          <p key={f.assignment}>
+            <b>{f.vehicle.name} · Nachbarleitstelle</b> ·{" "}
+            {statuses[f.vehicle.status]} · {tripLabel(f.vehicle, s.time)}
+          </p>
+        ))}
         {s.vehicles
           .filter((v) => v.mission === m.id)
           .map((v) => (
@@ -914,6 +934,7 @@ export function TeamPanel() {
     );
   return (
     <>
+      <NeighborDesk />
       <h3>Disponenten derselben Leitstelle</h3>
       <p>
         Mitglieder arbeiten nach Annahme einer Einladung am selben Bestand und
@@ -1005,13 +1026,6 @@ export function TeamPanel() {
       <small>
         Nur Disponenten derselben Leitstelle. Keine dauerhafte Chatspeicherung.
       </small>
-      <h3>Nachbarleitstellen</h3>
-      <p>
-        Neue Einsätze werden nicht automatisch an andere Leitstellen
-        freigegeben. Das vollständige Unterstützungsanfragen-System folgt in
-        Phase 3. Bereits laufende alte Unterstützungen werden serverseitig zu
-        Ende geführt.
-      </p>
     </>
   );
 }

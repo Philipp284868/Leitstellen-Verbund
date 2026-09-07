@@ -180,6 +180,7 @@ try {
         s.player.station = old.player.station;
         s.generation = uid();
         s.desk.fleet = {};
+        s.aid = [];
         s.desk.alarms = Object.fromEntries(
           Object.entries(s.desk.alarms).map(([id, profile]) => [
             ids.get(id) ?? id,
@@ -196,6 +197,8 @@ try {
         for (const v of s.vehicles) {
           delete v.fault;
           delete v.journey;
+          delete v.turnout;
+          delete v.destination;
           v.status = "ready";
           v.mission = null;
           v.assignment = null;
