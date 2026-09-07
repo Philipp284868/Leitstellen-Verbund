@@ -1,5 +1,5 @@
 import type { Save, Mission, Vehicle } from "../model";
-import { mt, vt, type Skills } from "../catalog";
+import { mt, vt, BALANCE, type Skills } from "../catalog";
 import { nodes, distance } from "../world";
 import { record, simId } from "./events";
 import { sample } from "./random";
@@ -281,7 +281,7 @@ export function campaignTick(
   if (
     !c.remaining ||
     s.time < c.next ||
-    s.missions.length >= 2 ||
+    s.missions.length >= BALANCE.activeMax ||
     s.missionWait > 0
   )
     return false;

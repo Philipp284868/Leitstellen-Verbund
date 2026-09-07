@@ -17,6 +17,8 @@ export const BALANCE = {
   offlineMax: 14400,
   missionInterval: 120,
   activeMax: 2,
+  callIntervalMin: 90,
+  callIntervalMax: 210,
   hospitalSeconds: 90,
   speed: 1,
   disconnectSeconds: 30,
@@ -618,6 +620,14 @@ export const missions: Template[] = [
     1,
     3,
   ),
+  m(
+    "bma-false",
+    "Brandmeldeanlage – Fehlalarm",
+    "Feuerwehr",
+    { fire: 1 },
+    30,
+    5000,
+  ),
 ];
 export const bt = (id: string) => {
   const x = buildings.find((b) => b.id === id);
@@ -665,19 +675,28 @@ export const vt = (id: string) => {
 };
 export const mt = (id: string) => {
   const x =
-    id === "incoming"
+    id === "bma"
       ? {
           ...missions[0],
-          id: "incoming",
-          name: "Ungeklärter Notruf",
-          description: "Ort und Meldebild müssen erfragt werden.",
-          requirements: {},
-          patients: 0,
+          id: "bma",
+          name: "Ausgelöste Brandmeldeanlage",
+          description:
+            "Automatische Brandmeldung. Ursache durch Erkundung feststellen.",
           reward: 0,
-          seconds: 1,
-          level: 1,
         }
-      : missions.find((m) => m.id === id);
+      : id === "incoming"
+        ? {
+            ...missions[0],
+            id: "incoming",
+            name: "Ungeklärter Notruf",
+            description: "Ort und Meldebild müssen erfragt werden.",
+            requirements: {},
+            patients: 0,
+            reward: 0,
+            seconds: 1,
+            level: 1,
+          }
+        : missions.find((m) => m.id === id);
   if (!x) throw Error("Unbekannte Einsatzart");
   return x;
 };

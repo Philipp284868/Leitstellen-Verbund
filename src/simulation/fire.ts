@@ -25,7 +25,7 @@ export const fuels: Record<
   Chemikalien: { spread: 1.1, smoke: 1.5, explosion: 0.9 },
 };
 export function initialFire(m: Mission): Dynamics["fire"] {
-  if (!mt(m.template).requirements.fire) return;
+  if (!mt(m.template).requirements.fire || m.template === "bma-false") return;
   const fuel =
     (
       {

@@ -267,6 +267,7 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
       "dme",
       "siren",
       "station",
+      "priority",
       "mission",
       "dispatch",
       "arrival",

@@ -1,4 +1,6 @@
 import { stationProfile, personDuty } from "../src/simulation/staffing";
+import { BALANCE } from "../src/catalog";
+import { nextCallDelay } from "../src/simulation/balance";
 import { majorActions, type MajorAction } from "../src/simulation/major-schema";
 import { majorCommand } from "../src/simulation/major-command";
 import { maybeMajor, campaignTick } from "../src/simulation/major-incidents";
@@ -418,7 +420,7 @@ export class Game {
       s.revision++;
       // Arrival intervals use real seconds, independent of simulation speed.
       // Catch-up after a stopped server never creates a backlog of new calls.
-      if (seconds > 60) s.missionWait = 90 + (s.seed % 121);
+      if (seconds > 60) s.missionWait = nextCallDelay(s.seed);
       else {
         s.missionWait = Math.max(0, s.missionWait - Math.max(0, seconds));
         campaignTick(s, (template, pos) => {
@@ -445,7 +447,7 @@ export class Game {
         if (
           !s.operations.campaign &&
           s.missionWait === 0 &&
-          s.missions.length < 2
+          s.missions.length < BALANCE.activeMax
         ) {
           const count = s.missions.length;
           generate(s);
@@ -454,7 +456,7 @@ export class Game {
             attachDynamics(s, s.missions.at(-1)!);
             attachOrganizations(s.missions.at(-1)!);
             maybeMajor(s, s.missions.at(-1)!);
-            s.missionWait = 90 + (s.seed % 121);
+            s.missionWait = nextCallDelay(s.seed);
           }
         }
       }

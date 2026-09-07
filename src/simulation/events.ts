@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import type { eventSchema } from "./schema";
 import type { Save, Mission } from "../model";
+import { telemetry } from "./reports";
 export const simId = (s: Save) => `${s.generation}-${++s.desk.sequence}`;
 export function record(
   s: Save,
@@ -11,6 +12,7 @@ export function record(
   vehicle = "",
 ) {
   if (!m.control) return;
+  telemetry(s, m);
   const event: z.infer<typeof eventSchema> = {
     id: simId(s),
     at: s.time,

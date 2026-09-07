@@ -44,7 +44,7 @@ export function initialHazards(s: Save, m: Mission): Hazard[] {
   const t = mt(m.template),
     r = t.requirements,
     result: Hazard[] = [];
-  if (r.fire)
+  if (r.fire && m.template !== "bma-false")
     result.push(
       hazard("fire", "fire", 24, 0.035, r.fire),
       hazard("smoke", "fire", 15),

@@ -1,5 +1,7 @@
 # Serverdaten und Sicherungen
 
+Seit Version 2.11 speichert Schema 10 außerdem Einsatzberichte, aggregierte Statistiken und gemessene Fahrzeugkilometer. Die Migration sichert vorher den Originalstand und erhält beide Spielmodi. Alte Archive liefern nur noch belegbare Teilberichte. Einzelheiten: [Phase 5 – Migration und AMP](PHASE-5.md#migration-und-amp). Eigene Audiodateien und Arbeitsplatzlayout bleiben ausschließlich lokale Browserdaten und sind kein Bestandteil der Server-Datenbanksicherung.
+
 Verbindliche Konten, gesalzene Passwort-Hashes, gehashte Sitzungstoken, Einladungen, Spielstände, Aktions- und Belohnungsbelege liegen ausschließlich im konfigurierten SQLite-DATA_DIR des eigenen Servers. Es muss außerhalb des austauschbaren Programms liegen. Die .env wird nicht eingecheckt. Datenbankdateien und Sicherungen werden nicht über HTTP ausgeliefert.
 
 Alle Zustandsänderungen werden transaktional gespeichert. Migrationen erfolgen nach Vor-Sicherung und innerhalb einer Transaktion; unbekannte neuere Schemata werden abgelehnt. Konsistente SQLite-Online-Backups stehen dem Administrator in der Oberfläche zur Verfügung, entstehen zusätzlich stündlich und beim sauberen Stoppen. Die Wiederherstellung erfolgt ausschließlich nach Serverstopp mit Integritäts-, Schema- und Besitzprüfung, Vor-Sicherung und atomarem Austausch. Sitzungen werden dabei widerrufen. Genaue Befehle und Datenpfade: [AMP.md](AMP.md).

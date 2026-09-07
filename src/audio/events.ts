@@ -26,6 +26,20 @@ export class AudioEvents {
     }
     if (save.revision <= before.revision) return null;
     this.previous = save;
+    const previousRadio = new Set(
+      before.missions.flatMap((m) => m.control?.radio.map((r) => r.id) ?? []),
+    );
+    if (
+      save.missions.some((m) =>
+        m.control?.radio.some(
+          (r) =>
+            !previousRadio.has(r.id) &&
+            r.state === "open" &&
+            ["NOTFALL", "PRIORITÄT"].includes(r.priority),
+        ),
+      )
+    )
+      return "priority";
     if (level(save) > level(before)) return "level";
     const receipts = new Set(before.receipts),
       archive = new Set(before.archive.map((m) => m.id));

@@ -1,4 +1,5 @@
 import { selectHospital } from "./simulation/hospitals";
+import { measureTravel, telemetry } from "./simulation/reports";
 import { effectiveSkills, canTransport } from "./simulation/major-resources";
 import {
   suitableCrew,
@@ -550,6 +551,7 @@ export function tick(
       return true;
     });
     for (const v of s.vehicles) {
+      measureTravel(s, v, s.time - dt);
       faultsTick(s, v, remoteDynamic.has(v.mission || ""));
       if (v.fault && v.fault.state !== "repaired") continue;
       trafficTick(s, v);
@@ -662,6 +664,9 @@ export function tick(
             `solo:${m.round}:${s.player.id}`,
           )
         ) {
+          const measured = telemetry(s, m);
+          measured.credits = reward;
+          measured.xp = 50 + t.level * 10;
           s.xp += 50 + t.level * 10;
           s.completed++;
           s.tutorial = Math.max(5, s.tutorial);

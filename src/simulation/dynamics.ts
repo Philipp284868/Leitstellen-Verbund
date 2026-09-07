@@ -6,7 +6,7 @@ import {
 import type { Save, Mission, Vehicle } from "../model";
 import { majorTick } from "./major-incidents";
 import { majorComplete, effectiveSkills } from "./major-resources";
-import { mt, type Skills } from "../catalog";
+import { mt, BALANCE, type Skills } from "../catalog";
 import { level } from "../model";
 import { capacity } from "../engine";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
@@ -283,7 +283,7 @@ export function dynamicsComplete(m: Mission, time: number) {
 }
 export function followupsTick(s: Save) {
   // Shared cap with the normal generator; never catch up a backlog or chain grandchildren.
-  if (s.missions.length >= 2 || s.missionWait > 0) return;
+  if (s.missions.length >= BALANCE.activeMax || s.missionWait > 0) return;
   const parent = [...s.missions, ...s.archive].find(
     (m) =>
       m.dynamics?.pending &&
