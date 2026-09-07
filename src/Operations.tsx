@@ -52,7 +52,15 @@ export function Operations({ s }: { s: Save }) {
               <article key={v.id}>
                 <b>{v.name}</b>
                 <span>
-                  {statuses[v.status]} · {duration(seconds)} bis Ziel
+                  {statuses[v.status]} ·{" "}
+                  {duration(
+                    v.journey?.blockedUntil
+                      ? v.journey.blockedUntil - s.time
+                      : seconds,
+                  )}{" "}
+                  {v.journey?.blockedUntil
+                    ? "bis frühester Freigabe"
+                    : "bis Ziel"}
                 </span>
                 {v.journey?.reason && (
                   <small>
@@ -60,8 +68,9 @@ export function Operations({ s }: { s: Save }) {
                   </small>
                 )}
                 <small>
-                  {kilometers(remaining)} verbleibend / {kilometers(total)}{" "}
-                  Gesamtstrecke
+                  {v.journey?.blockedUntil
+                    ? "Verbleibender Fahrweg wird nach Freigabe neu berechnet"
+                    : `${kilometers(remaining)} verbleibend / ${kilometers(total)} Gesamtstrecke`}
                 </small>
                 <progress
                   value={total - remaining}

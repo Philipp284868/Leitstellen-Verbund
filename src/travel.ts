@@ -39,6 +39,8 @@ export function approach(
     : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
   try {
     const plan = routePlan(s, v, origin, target, mode);
+    if (plan.blockedUntil)
+      return `Fahrt ausgesetzt · früheste Freigabe in ${duration(plan.blockedUntil - s.time)}`;
     const meters = length(plan.path) * METERS_PER_UNIT;
     return `${kilometers(meters)} · ca. ${duration(plan.seconds)}${plan.blockedUntil ? " · Straße gesperrt" : ""}`;
   } catch {

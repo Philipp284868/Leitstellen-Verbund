@@ -121,8 +121,8 @@ export function trafficTick(s: Save, v: Vehicle) {
     j.blockedUntil = plan.blockedUntil;
     j.delay += plan.delay;
     j.reason = plan.blockedUntil
-      ? "Straße weiterhin gesperrt; warte auf Freigabe"
-      : "Straße wieder frei; Fahrt fortgesetzt";
+      ? "Fahrt weiterhin ausgesetzt; warte auf Freigabe"
+      : "Verbindung wieder frei; Fahrt fortgesetzt";
   }
   if (s.time < j.nextCheck || s.time >= v.arrive || j.events.length >= 30)
     return;

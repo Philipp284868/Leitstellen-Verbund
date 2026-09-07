@@ -133,7 +133,9 @@ export function beginTrip(
     serial: 0,
     target,
     blockedUntil: plan.blockedUntil,
-    reason: plan.blockedUntil ? "Straße gesperrt; warte auf Freigabe" : "",
+    reason: plan.blockedUntil
+      ? "Fahrt wetter- oder verkehrsbedingt ausgesetzt; warte auf Freigabe"
+      : "",
   };
   v.status = status;
 }

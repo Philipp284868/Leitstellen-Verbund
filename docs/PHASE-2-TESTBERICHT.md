@@ -13,6 +13,7 @@ Stand: 07.09.2026. Ausgangspunkt war der saubere Branch `dev` auf `8cbe4a92ed487
 | Vollständige Browserregression mit installiertem Edge (`PW_EDGE=1`, Chromium-Projekt) | **21 Tests bestanden** |
 | Zusätzliche gezielte Prüfung nach Ausfall-/Funkkorrekturen: Phase 1, Phase 2 und HTTP | **26 Tests bestanden, drei Dateien** |
 | Erneute Prüfung der zwei Phase-2-Browserabläufe nach letzten Historien-/Dynamikkorrekturen | **2 Tests bestanden** |
+| Zusätzliche Prüfung von Dynamik und Fahrten nach Präzisierung der Sperrenanzeige | **19 Tests bestanden, zwei Dateien** |
 | Visuelle Prüfung | Desktop-Gefahrenansicht und mobile Patientenansicht anhand tatsächlich erzeugter Screenshots geprüft |
 
 Die 15 neuen Systemtests prüfen vollständigen dynamischen Brandabschluss, begrenzte Eskalation/Brandübersprung, Rücknahme des erhöhten Bedarfs, Wetter-/Anfahrtsfaktoren, Umleitung beziehungsweise Warten an Sperren, Positionskontinuität bei Stau und Wetterwechsel, echte Fahrzeugpanne mit Reparatur, Patientendynamik und Transport, Reanimation/ROSC/Tod, wirksame Versorgungsschwerpunkte und Priorisierung, begrenzte Folgeaufträge, deterministische SQLite-Fortsetzung, Migration von Schema 6 samt Originalsicherung sowie fremde/doppelte Aktionen. Der vorhandene HTTP-/Socket-Test wurde um die Geheimhaltung neuer dynamischer Zustände vor Erkundung erweitert.
@@ -23,6 +24,7 @@ Die bestehende Regression deckt weiter Phase 1, getrennte Spielstände, autorisi
 
 ## Relevante Absicherungen aus der Integration
 
+- Bei einer ausgesetzten Fahrt benennt die Oberfläche die früheste Freigabe, nicht eine vermeintliche Ankunft am Ziel.
 - Eine Vollsperrung darf weder einen geraden Ersatzweg erzeugen noch ein Fahrzeug am Ziel erscheinen lassen. Ohne erreichbare Alternative bleibt es am Ausgangspunkt der verbleibenden Strecke stehen.
 - Bei einer Neuberechnung der laufenden Fahrt wird die bereits gefahrene Strecke berücksichtigt und die tatsächliche aktuelle Position als Ursprung benutzt.
 - Erneute tatsächliche Defekte können nach erledigter Meldung erneut Funk auslösen; unveränderte Defizite erzeugen weiterhin keine Meldung pro Tick. Ein defekter RTW erhält keinen neuen Patienten.

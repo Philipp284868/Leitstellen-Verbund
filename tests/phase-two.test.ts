@@ -12,6 +12,7 @@ import {
 } from "../src/simulation/dynamics";
 import { attachIncident } from "../src/simulation/calls";
 import { requirements } from "../src/simulation/hazards";
+import { approach, tripLabel } from "../src/travel";
 import { environmentAt } from "../src/simulation/weather";
 import { routePlan, trafficTick } from "../src/simulation/traffic";
 import {
@@ -178,8 +179,31 @@ it("umfährt gesperrte Kanten oder wartet tatsächlich; Verkehrsmeldung teleport
     },
   ];
   const plan = routePlan(s, v, v.path[0], target);
-  if (plan.blockedUntil) expect(plan.path).toEqual([v.path[0]]);
-  else {
+  if (plan.blockedUntil) {
+    expect(plan.path).toEqual([v.path[0]]);
+    expect(approach(s, v, target)).toContain("früheste Freigabe");
+    expect(
+      tripLabel(
+        {
+          ...v,
+          journey: {
+            mode: "priority",
+            planned: path,
+            plannedSeconds: 100,
+            delay: 300,
+            distanceDone: 0,
+            events: [],
+            nextCheck: s.time + 60,
+            serial: 0,
+            target,
+            blockedUntil: plan.blockedUntil,
+            reason: "Sperrung",
+          },
+        },
+        s.time,
+      ),
+    ).toContain("Freigabe");
+  } else {
     const p = plan.path.map(nearest);
     expect(
       p.some(
