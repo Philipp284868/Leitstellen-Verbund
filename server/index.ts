@@ -295,6 +295,11 @@ export function startServer(
   const io = new Server(http, {
     serveClient: false,
     maxHttpBufferSize: 8192,
+    perMessageDeflate: {
+      threshold: 4096,
+      serverNoContextTakeover: true,
+      clientNoContextTakeover: true,
+    },
     allowRequest: (req, done) =>
       done(
         null,

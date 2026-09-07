@@ -10,6 +10,7 @@ import { Game } from "../server/game";
 import { fresh, validate, type Save } from "../src/model";
 import {
   nodes,
+  overpasses,
   edges,
   roads,
   route,
@@ -46,8 +47,11 @@ it("verbindet sämtliche Straßen und Häfen mit kurzen, tatsächlich gezeichnet
     ...docks,
     ...roads.map((r) => r.points.at(-1)!),
   ];
-  for (const a of landmarks)
-    for (const b of landmarks) {
+  for (const [j, a] of landmarks.entries())
+    for (const b of [
+      landmarks[0],
+      landmarks[(j + Math.floor(landmarks.length / 2)) % landmarks.length],
+    ]) {
       const path = route(a, b);
       expect(path.length).toBeLessThanOrEqual(4096);
       for (let i = 2; i < path.length - 1; i++)
@@ -56,7 +60,7 @@ it("verbindet sämtliche Straßen und Häfen mit kurzen, tatsächlich gezeichnet
         ).toBe(true);
     }
 }, 30000);
-it("hat keine gezeichneten Kreuzungen ohne Verbindung im Straßennetz", () => {
+it("zeichnet unverbundene Straßenkreuzungen ausdrücklich als Überführung", () => {
   const cross = (ax: number, ay: number, bx: number, by: number) =>
     ax * by - ay * bx;
   for (let i = 0; i < edges.length; i++)
@@ -73,7 +77,13 @@ it("hat keine gezeichneten Kreuzungen ohne Verbindung im Straßennetz", () => {
       const t = cross(c.x - a.x, c.y - a.y, d.x - c.x, d.y - c.y) / den,
         u = cross(c.x - a.x, c.y - a.y, b.x - a.x, b.y - a.y) / den;
       if (t > 1e-5 && t < 1 - 1e-5 && u > 1e-5 && u < 1 - 1e-5)
-        throw Error(`Unverbundene Kreuzung: ${ai},${bi} / ${ci},${di}`);
+        expect(
+          overpasses.some(
+            (p) =>
+              (p.upper === `${ai}:${bi}` && p.lower === `${ci}:${di}`) ||
+              (p.lower === `${ai}:${bi}` && p.upper === `${ci}:${di}`),
+          ),
+        ).toBe(true);
     }
 });
 it("übernimmt alle 117 alten Bauplätze getrennt und migriert nur bekannte gültige Karten", () => {

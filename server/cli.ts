@@ -1,3 +1,4 @@
+import { level } from "../src/model";
 import { readFile, stat, copyFile, rename, unlink } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
@@ -11,9 +12,14 @@ import { acquireLock } from "./lock";
 
 const command = process.argv[2];
 if (
-  !["player-create", "backup", "restore", "legacy-import", "unlock"].includes(
-    command,
-  )
+  ![
+    "player-create",
+    "backup",
+    "restore",
+    "legacy-import",
+    "unlock",
+    "migration-preview",
+  ].includes(command)
 ) {
   throw Error(
     "Befehle: player-create, backup, restore, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
@@ -49,7 +55,48 @@ if (command === "unlock") {
 // Host-level maintenance remains offline; no game account receives these privileges.
 const release = acquireLock(c.dataDir);
 try {
-  if (command === "restore") {
+  if (command === "migration-preview") {
+    const db = new DatabaseSync(resolve(c.dataDir, "game.sqlite"), {
+      readOnly: true,
+    });
+    try {
+      const result = [];
+      for (const table of ["saves", "solo_saves"].filter((t) =>
+        db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+          )
+          .get(t),
+      ))
+        for (const row of db
+          .prepare(`SELECT user_id,data FROM ${table}`)
+          .all()) {
+          const old = JSON.parse(String(row.data)),
+            save = validate(old);
+          result.push({
+            mode: table,
+            user: row.user_id,
+            oldXp: old.xp,
+            newXp: save.xp,
+            level: level(save),
+            compensation: save.xp - old.xp,
+            activeTrips: save.vehicles.filter((v) =>
+              ["travel", "return", "transport"].includes(v.status),
+            ).length,
+            region: save.regionVersion,
+          });
+        }
+      console.log(
+        JSON.stringify(
+          { readOnly: true, targetVersion: DATABASE_VERSION, saves: result },
+          null,
+          2,
+        ),
+      );
+    } finally {
+      db.close();
+    }
+  } else if (command === "restore") {
     if (!process.argv.includes("--confirm"))
       throw Error("Wiederherstellung benötigt --confirm.");
     const file = resolve(arg("file"));

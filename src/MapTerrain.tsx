@@ -1,6 +1,14 @@
-import { towns, WORLD_WIDTH, WORLD_HEIGHT } from "./region";
+import { SpatialIndex } from "./spatial";
+import { towns, WORLD_WIDTH, WORLD_HEIGHT, WORLD_SEED } from "./region";
 import { memo } from "react";
-import { roads, nodes, edges, districts, distance, type Point } from "./world";
+import {
+  roads,
+  overpasses,
+  projectRoad,
+  districts,
+  distance,
+  type Point,
+} from "./world";
 const river =
   "M1020 -30C940 85 1050 173 1010 265S1056 336 1035 385S1090 431 1090 510";
 const lake =
@@ -21,21 +29,8 @@ const fields = [
   "M667 704Q713 669 745 712L785 773 726 827 661 780Z",
   "M893 78Q921 39 967 41L979 122 940 184 922 137Z",
 ];
-function segmentDistance(p: Point, a: Point, b: Point) {
-  const dx = b.x - a.x,
-    dy = b.y - a.y,
-    t = Math.max(
-      0,
-      Math.min(
-        1,
-        ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1),
-      ),
-    );
-  return distance(p, { x: a.x + t * dx, y: a.y + t * dy });
-}
-const nearRoad = (p: Point, margin: number) =>
-  edges.some(([a, b]) => segmentDistance(p, nodes[a], nodes[b]) < margin);
-let seed = 71493;
+const nearRoad = (p: Point, margin: number) => projectRoad(p).distance < margin;
+let seed: number = WORLD_SEED;
 const random = () => {
   seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
   return seed / 4294967296;
@@ -49,6 +44,7 @@ const houses: {
   height: number;
   tone: number;
 }[] = [];
+const houseIndex = new SpatialIndex<(typeof houses)[number]>();
 for (const road of roads) {
   for (let i = 1; i < road.points.length - 1; i++) {
     const p = road.points[i],
@@ -77,21 +73,26 @@ for (const road of roads) {
         y < 15 ||
         y > WORLD_HEIGHT - 15 ||
         nearRoad({ x, y }, Math.hypot(width, height) / 2 + 6) ||
-        houses.some(
-          (h) =>
-            distance(h, { x, y }) <
-            (Math.hypot(h.width, h.height) + Math.hypot(width, height)) / 2 + 2,
-        )
+        houseIndex
+          .query(x - 50, y - 50, 100, 100)
+          .some(
+            (h) =>
+              distance(h, { x, y }) <
+              (Math.hypot(h.width, h.height) + Math.hypot(width, height)) / 2 +
+                2,
+          )
       )
         continue;
-      houses.push({
+      const house = {
         x,
         y,
         angle: (angle * 180) / Math.PI,
         width,
         height,
         tone: Math.floor(random() * 3),
-      });
+      };
+      houses.push(house);
+      houseIndex.add(house);
     }
   }
 }
@@ -110,12 +111,14 @@ for (let i = 0; i < 2200; i++) {
   if (
     (forest || grove) &&
     !nearRoad({ x, y }, 13) &&
-    !houses.some((h) => distance(h, { x, y }) < 14)
+    !houseIndex
+      .query(x - 14, y - 14, 28, 28)
+      .some((h) => distance(h, { x, y }) < 14)
   )
     trees.push({ x, y, r: 3 + random() * 5 });
 }
 const regionalPatches: string[] = [];
-for (let i = 0; i < 200; i++) {
+for (let i = 0; i < 1200; i++) {
   const x = 80 + random() * (WORLD_WIDTH - 160),
     y = 80 + random() * (WORLD_HEIGHT - 160);
   if ((x < 1450 && y < 1000) || towns.some((t) => distance(t, { x, y }) < 260))
@@ -131,10 +134,70 @@ for (let i = 0; i < 200; i++) {
 export const MapTerrain = memo(function MapTerrain({
   labels,
   zoom,
+  x = 0,
+  y = 0,
+  width = WORLD_WIDTH,
+  height = WORLD_HEIGHT,
+  unitsPerPixel = 1,
 }: {
   labels: boolean;
   zoom: number;
+  unitsPerPixel?: number;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }) {
+  const visibleRoads = roads.filter((r) =>
+    r.points.some(
+      (p) =>
+        p.x >= x - 64 &&
+        p.y >= y - 64 &&
+        p.x <= x + width + 64 &&
+        p.y <= y + height + 64,
+    ),
+  );
+  const labelBoxes: {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }[] = [];
+  const visibleLabels = new Set(
+    districts
+      .filter(
+        (d) => d.x >= x && d.y >= y && d.x <= x + width && d.y <= y + height,
+      )
+      .filter((d) => {
+        const text =
+          zoom < 0.6 && d.name === "ALTSTADT" ? "FALKENRIED" : d.name;
+        const fontSize = Math.max(11, 11 * unitsPerPixel);
+        const half = text.length * (fontSize * 0.4 + 1) + 6 * unitsPerPixel,
+          box = {
+            left: d.x - half,
+            right: d.x + half,
+            top: d.y - 14 * unitsPerPixel,
+            bottom: d.y + 8 * unitsPerPixel,
+          };
+        if (
+          labelBoxes.some(
+            (b) =>
+              b.left < box.right &&
+              b.right > box.left &&
+              b.top < box.bottom &&
+              b.bottom > box.top,
+          )
+        )
+          return false;
+        labelBoxes.push(box);
+        return true;
+      })
+      .map((d) => d.name),
+  );
+  const visibleHouses =
+    zoom >= 0.7
+      ? houseIndex.query(x - 40, y - 40, width + 80, height + 80)
+      : [];
   return (
     <g className="map-terrain" pointerEvents="none">
       <defs>
@@ -220,7 +283,7 @@ export const MapTerrain = memo(function MapTerrain({
         stroke="var(--map-shore)"
         strokeWidth="6"
       />
-      {trees.map((t, i) => (
+      {(zoom >= 0.7 ? trees : []).map((t, i) => (
         <g key={i}>
           <circle
             cx={t.x + 1.5}
@@ -238,7 +301,7 @@ export const MapTerrain = memo(function MapTerrain({
         </g>
       ))}
       <g strokeLinecap="round" strokeLinejoin="round">
-        {roads.map((r) => (
+        {visibleRoads.map((r) => (
           <polyline
             key={r.name}
             points={r.points.map((p) => `${p.x},${p.y}`).join(" ")}
@@ -247,7 +310,7 @@ export const MapTerrain = memo(function MapTerrain({
             strokeWidth={r.kind === "main" ? 12 : r.kind === "country" ? 10 : 8}
           />
         ))}
-        {roads.map((r) => (
+        {visibleRoads.map((r) => (
           <polyline
             key={r.name}
             points={r.points.map((p) => `${p.x},${p.y}`).join(" ")}
@@ -256,7 +319,7 @@ export const MapTerrain = memo(function MapTerrain({
             strokeWidth={r.kind === "main" ? 8 : r.kind === "country" ? 6 : 4.5}
           />
         ))}
-        {roads
+        {visibleRoads
           .filter((r) => r.kind === "main" || r.kind === "country")
           .map((r) => (
             <polyline
@@ -269,8 +332,28 @@ export const MapTerrain = memo(function MapTerrain({
             />
           ))}
       </g>
+      <g>
+        {overpasses
+          .filter(
+            (p) =>
+              p.x >= x && p.y >= y && p.x <= x + width && p.y <= y + height,
+          )
+          .map((p) => (
+            <g
+              key={p.upper + "/" + p.lower}
+              transform={`translate(${p.x},${p.y}) rotate(${p.angle})`}
+            >
+              <path
+                d="M-10 -6H10M-10 6H10"
+                stroke="var(--map-road-edge)"
+                strokeWidth="2"
+              />
+              <path d="M-10 0H10" stroke="var(--map-road)" strokeWidth="9" />
+            </g>
+          ))}
+      </g>
       <g stroke="var(--map-roof-outline)" strokeWidth=".5">
-        {houses.map((h, i) => (
+        {visibleHouses.map((h, i) => (
           <g key={i} transform={`translate(${h.x},${h.y}) rotate(${h.angle})`}>
             <rect
               x={-h.width / 2 + 1.4}
@@ -313,12 +396,7 @@ export const MapTerrain = memo(function MapTerrain({
       {labels && (
         <g>
           {districts
-            .filter(
-              (d) =>
-                zoom >= 0.6 ||
-                d.name === "ALTSTADT" ||
-                towns.some((t) => t.name === d.name),
-            )
+            .filter((d) => visibleLabels.has(d.name))
             .map((d) => (
               <text
                 key={d.name}
@@ -329,7 +407,7 @@ export const MapTerrain = memo(function MapTerrain({
                 stroke="var(--map-label-bg)"
                 strokeWidth="4"
                 paintOrder="stroke"
-                fontSize={Math.max(d.name === "ALTSTADT" ? 14 : 11, 14 / zoom)}
+                fontSize={Math.max(11, 11 * unitsPerPixel)}
                 letterSpacing="2"
                 fontWeight="700"
               >

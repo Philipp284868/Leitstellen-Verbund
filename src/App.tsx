@@ -1,3 +1,5 @@
+import { Progression } from "./ProgressionPanel";
+import { progress } from "./progression";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { ReconnectSummary } from "./ReconnectSummary";
 import {
@@ -23,7 +25,14 @@ import { districtAt } from "./world";
 import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
-import { useState, useEffect, lazy, Suspense, type CSSProperties } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  lazy,
+  Suspense,
+  type CSSProperties,
+} from "react";
 const ArchivePanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ArchivePanel })),
 );
@@ -65,6 +74,20 @@ export function App() {
 }
 function GameApp() {
   const { save: s, mode, loading, readonly, error, notice, user } = useGame();
+  const priorProgress = useRef<{ generation: string; level: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!s || readonly) return;
+    const current = level(s),
+      previous = priorProgress.current;
+    if (previous?.generation === s.generation && current > previous.level)
+      emit({
+        notice: `Stufe ${previous.level} → ${current} erreicht. Neue Freischaltungen unter Fortschritt.`,
+      });
+    priorProgress.current = { generation: s.generation, level: current };
+  }, [s, readonly]);
+
   const net = useNetwork();
   const [screen, setScreen] = useState("start"),
     [modal, setModal] = useState(""),
@@ -165,6 +188,7 @@ function GameApp() {
     }
     setSelected(id);
     if (s?.buildings.some((b) => b.id === id)) setModal("building");
+    else if (s?.vehicles.some((v) => v.id === id)) setModal("");
     else setModal("mission");
   };
   return (
@@ -253,8 +277,13 @@ function GameApp() {
               </div>
               <div className="level">
                 <span>STUFE {level(s)}</span>
-                <progress value={s.xp % 150} max={150} />
-                <small>{s.xp % 150} / 150 Erfahrung</small>
+                <progress
+                  value={progress(s.xp).current}
+                  max={progress(s.xp).required}
+                />
+                <small>
+                  {progress(s.xp).current} / {progress(s.xp).required} Erfahrung
+                </small>
               </div>
               <SoundButton />
               <button
@@ -538,7 +567,9 @@ function GameApp() {
                   s={s}
                   selected={selected}
                   onSelect={open}
-                  placing={!!placing}
+                  placing={placing}
+                  readonly={readonly}
+                  onCancelPlace={() => setPlacing("")}
                   onPlace={(pos) => {
                     void act({ type: "build", kind: placing, pos });
                     setPlacing("");
@@ -756,7 +787,15 @@ function GameApp() {
                     b={s.buildings.find((b) => b.id === selected)!}
                   />
                 )}
-              {modal === "fleet" && <Fleet s={s} />}
+              {modal === "fleet" && (
+                <Fleet
+                  s={s}
+                  onSelect={(id) => {
+                    setSelected(id);
+                    setModal("");
+                  }}
+                />
+              )}
               {modal === "mission" &&
                 s.missions.find((m) => m.id === selected) &&
                 (s.missions.find((m) => m.id === selected)!.control ? (
@@ -795,7 +834,12 @@ function GameApp() {
               {modal === "friends" && <TeamPanel />}
               {modal === "aaos" && <AAOPanel s={s} />}
               {modal === "fms" && <FMSPanel s={s} />}
-              {modal === "progress" && <ProgressPanel s={s} />}
+              {modal === "progress" && (
+                <>
+                  <Progression s={s} />
+                  <ProgressPanel s={s} />
+                </>
+              )}
               {modal === "archive" && (
                 <Suspense fallback={<p>Auswertung wird geladen …</p>}>
                   <ArchivePanel s={s} open={open} />

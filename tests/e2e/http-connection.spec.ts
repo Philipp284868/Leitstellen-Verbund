@@ -108,6 +108,9 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await a.locator("svg.map").click({
       position: { x: bounds!.width * 0.3, y: bounds!.height * 0.55 },
     });
+    await a
+      .getByRole("button", { name: "Bau bestätigen", exact: true })
+      .click();
     await expect(a.locator(".station-strip .station-card")).toHaveCount(1);
     await expect(a.locator(".money")).toContainText("195.000");
     await expect(b.locator(".station-strip .station-card")).toHaveCount(0);

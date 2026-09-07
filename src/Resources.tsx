@@ -1,3 +1,4 @@
+import { buildReason, purchaseReason } from "./purchase";
 import {
   StationSettings,
   PersonSettings,
@@ -42,10 +43,10 @@ export function BuildingShop({
           <footer>
             <strong>{credits(b.price)}</strong>
             <button
-              disabled={s.money < b.price || level(s) < b.level}
+              disabled={!!buildReason(s, b.id)}
               onClick={() => onPlace(b.id)}
             >
-              {level(s) < b.level ? `Ab Stufe ${b.level}` : "Platzieren"}
+              {buildReason(s, b.id) || "Platzieren"}
             </button>
           </footer>
         </article>
@@ -107,8 +108,17 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
         </button>
       </div>
       <div className="inline">
-        <button onClick={() => void act({ type: "upgrade", id: b.id })}>
-          Ausbauen · {credits(BALANCE.upgrade * b.level)}
+        <button
+          disabled={
+            level(s) < Math.max(bt(b.type).level, b.level * 2) ||
+            s.money < BALANCE.upgrade * b.level ||
+            b.ready > s.time ||
+            b.level >= 10
+          }
+          onClick={() => void act({ type: "upgrade", id: b.id })}
+        >
+          Ausbauen · Stufe {Math.max(bt(b.type).level, b.level * 2)} ·{" "}
+          {credits(BALANCE.upgrade * b.level)}
         </button>
         <button
           className="danger"
@@ -218,6 +228,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
                     b.extensions.includes(
                       e.id as (typeof b.extensions)[number],
                     ) ||
+                    s.money < e.price ||
                     level(s) < e.level ||
                     b.ready > s.time
                   }
@@ -227,7 +238,11 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
                 >
                   {b.extensions.includes(e.id as (typeof b.extensions)[number])
                     ? "Gebaut"
-                    : credits(e.price)}
+                    : level(s) < e.level
+                      ? `Ab Stufe ${e.level}`
+                      : s.money < e.price
+                        ? "Nicht genügend Credits"
+                        : credits(e.price)}
                 </button>
               </div>
             ))}
@@ -249,16 +264,12 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
                     </small>
                   </div>
                   <button
-                    disabled={
-                      level(s) < v.level ||
-                      s.money < v.price ||
-                      b.ready > s.time
-                    }
+                    disabled={!!purchaseReason(s, v.id, b.id)}
                     onClick={() =>
                       void act({ type: "buy", kind: v.id, home: b.id })
                     }
                   >
-                    {level(s) < v.level ? `Stufe ${v.level}` : credits(v.price)}
+                    {purchaseReason(s, v.id, b.id) || credits(v.price)}
                   </button>
                 </article>
               ))}
@@ -268,7 +279,13 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
     </div>
   );
 }
-export function Fleet({ s }: { s: Save }) {
+export function Fleet({
+  s,
+  onSelect,
+}: {
+  s: Save;
+  onSelect?: (id: string) => void;
+}) {
   const [filter, setFilter] = useState(""),
     [favorite, setFavorite] = useState(false);
   return (
@@ -298,6 +315,11 @@ export function Fleet({ s }: { s: Save }) {
           )
           .map((v) => (
             <article className="fleet-card" key={v.id}>
+              {onSelect && (
+                <button onClick={() => onSelect(v.id)}>
+                  Auf Karte auswählen
+                </button>
+              )}
               <div className="inline">
                 <button
                   aria-label={`Favorit ${v.name}`}

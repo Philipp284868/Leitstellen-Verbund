@@ -1,0 +1,746 @@
+{
+  "kind": "Deterministische Modellschätzung, keine gemessenen Spielerzeiten",
+  "assumptions": {
+    "seed": 37,
+    "weather": "Freie Referenzbedingungen; echte Wetter-/Verkehrsänderungen können Zeiten verlängern",
+    "mapSamplesPerPhase": 48,
+    "cadenceSeconds": 150,
+    "activeMissionLimit": 2,
+    "parallelism": "1 bis 1,7 nutzbare Einsätze; kein maximaler Fuhrpark",
+    "work": "Originale Szenarioarbeit + 30 s Erkundung, bei Patienten 150 s Versorgung/Übergabe. Individuelle Verschlechterung nicht prognostiziert.",
+    "credits": "Unveränderte Szenariobelohnungen; Fahrzeuge, Wachen, Personal und Ausbildung bleiben kostenpflichtig."
+  },
+  "rows": [
+    {
+      "level": 1,
+      "types": [
+        "tsf"
+      ],
+      "parallel": 1,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "bma-false"
+      ],
+      "averageXp": 126.66666666666667,
+      "oldAverageXp": 60,
+      "xpRequired": 150,
+      "missionsPerLevel": 1.1842105263157894,
+      "meanOutboundSeconds": 147.88445586254582,
+      "meanReturnSeconds": 147.503837614089,
+      "meanRoadKm": 1.9833620044451086,
+      "meanWorkAndTransportSeconds": 56.666666666666664,
+      "vehicleCycleSeconds": 392.0549601433015,
+      "expectedMinutesPerLevel": 7.737926844933582,
+      "oldMinutesPerLevel": 16.33562333930423
+    },
+    {
+      "level": 5,
+      "types": [
+        "lf",
+        "tsf",
+        "rtw"
+      ],
+      "parallel": 1.4,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "shed",
+        "field",
+        "cellar",
+        "sick",
+        "transfer",
+        "bma-false"
+      ],
+      "averageXp": 137.5,
+      "oldAverageXp": 62.5,
+      "xpRequired": 290,
+      "missionsPerLevel": 2.109090909090909,
+      "meanOutboundSeconds": 146.58558754978858,
+      "meanReturnSeconds": 146.29273936306018,
+      "meanRoadKm": 1.9833620044451086,
+      "meanWorkAndTransportSeconds": 100,
+      "vehicleCycleSeconds": 432.8783269128487,
+      "expectedMinutesPerLevel": 10.868806476599666,
+      "oldMinutesPerLevel": 12.367952197509965
+    },
+    {
+      "level": 10,
+      "types": [
+        "hlf",
+        "lf",
+        "rtw",
+        "fustw"
+      ],
+      "parallel": 1.5,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "shed",
+        "field",
+        "tree",
+        "cellar",
+        "sick",
+        "transfer",
+        "fall",
+        "traffic",
+        "theft",
+        "crash",
+        "bma-false"
+      ],
+      "averageXp": 151.15384615384616,
+      "oldAverageXp": 65.38461538461539,
+      "xpRequired": 640,
+      "missionsPerLevel": 4.234096692111959,
+      "meanOutboundSeconds": 145.87828302303964,
+      "meanReturnSeconds": 145.65584378692856,
+      "meanRoadKm": 1.9833620044451086,
+      "meanWorkAndTransportSeconds": 110,
+      "vehicleCycleSeconds": 441.53412680996826,
+      "expectedMinutesPerLevel": 20.77220206422921,
+      "oldMinutesPerLevel": null
+    },
+    {
+      "level": 20,
+      "types": [
+        "hlf",
+        "lf",
+        "tlf",
+        "rtw",
+        "fustw",
+        "gkw"
+      ],
+      "parallel": 1.6,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "shed",
+        "field",
+        "tree",
+        "cellar",
+        "sick",
+        "transfer",
+        "fall",
+        "traffic",
+        "theft",
+        "debris",
+        "crash",
+        "bma-false"
+      ],
+      "averageXp": 154.28571428571428,
+      "oldAverageXp": 66.42857142857143,
+      "xpRequired": 1165,
+      "missionsPerLevel": 7.5509259259259265,
+      "meanOutboundSeconds": 236.69367193189296,
+      "meanReturnSeconds": 236.323180998251,
+      "meanRoadKm": 3.633255008426193,
+      "meanWorkAndTransportSeconds": 107.5,
+      "vehicleCycleSeconds": 620.516852930144,
+      "expectedMinutesPerLevel": 48.80704991941863,
+      "oldMinutesPerLevel": null
+    },
+    {
+      "level": 35,
+      "types": [
+        "hlf",
+        "lf",
+        "tlf",
+        "rtw",
+        "nef",
+        "fustw",
+        "gkw"
+      ],
+      "parallel": 1.7,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "shed",
+        "field",
+        "tree",
+        "cellar",
+        "sick",
+        "transfer",
+        "heart",
+        "fall",
+        "birth",
+        "traffic",
+        "theft",
+        "debris",
+        "crash",
+        "bma-false"
+      ],
+      "averageXp": 158.75,
+      "oldAverageXp": 66.875,
+      "xpRequired": 2050,
+      "missionsPerLevel": 12.913385826771654,
+      "meanOutboundSeconds": 236.3448421993827,
+      "meanReturnSeconds": 235.96567071018512,
+      "meanRoadKm": 3.633255008426193,
+      "meanWorkAndTransportSeconds": 121.875,
+      "vehicleCycleSeconds": 634.1855129095678,
+      "expectedMinutesPerLevel": 80.28904131323847,
+      "oldMinutesPerLevel": null
+    },
+    {
+      "level": 60,
+      "types": [
+        "hlf",
+        "lf",
+        "tlf",
+        "rtw",
+        "nef",
+        "fustw",
+        "gkw"
+      ],
+      "parallel": 1.7,
+      "eligibleScenarios": [
+        "bin",
+        "car",
+        "shed",
+        "field",
+        "tree",
+        "cellar",
+        "sick",
+        "transfer",
+        "heart",
+        "fall",
+        "birth",
+        "traffic",
+        "theft",
+        "debris",
+        "crash",
+        "bma-false"
+      ],
+      "averageXp": 158.75,
+      "oldAverageXp": 66.875,
+      "xpRequired": 3165,
+      "missionsPerLevel": 19.937007874015748,
+      "meanOutboundSeconds": 236.3448421993827,
+      "meanReturnSeconds": 235.96567071018512,
+      "meanRoadKm": 3.633255008426193,
+      "meanWorkAndTransportSeconds": 121.875,
+      "vehicleCycleSeconds": 634.1855129095678,
+      "expectedMinutesPerLevel": 123.95844671043892,
+      "oldMinutesPerLevel": null
+    }
+  ],
+  "milestones": [
+    {
+      "level": 4,
+      "estimatedHours": 0.4771721554375708
+    },
+    {
+      "level": 7,
+      "estimatedHours": 1.1274178108057333
+    },
+    {
+      "level": 10,
+      "estimatedHours": 2.1018625293974273
+    },
+    {
+      "level": 11,
+      "estimatedHours": 2.448065897134581
+    },
+    {
+      "level": 12,
+      "estimatedHours": 2.9078672449104874
+    },
+    {
+      "level": 15,
+      "estimatedHours": 4.400869268276963
+    },
+    {
+      "level": 20,
+      "estimatedHours": 7.267865907350265
+    },
+    {
+      "level": 24,
+      "estimatedHours": 10.668299857387012
+    },
+    {
+      "level": 30,
+      "estimatedHours": 17.193362539747056
+    },
+    {
+      "level": 50,
+      "estimatedHours": 47.325884189894644
+    },
+    {
+      "level": 100,
+      "estimatedHours": 167.17849293398993
+    },
+    {
+      "level": 101,
+      "estimatedHours": 170.15832605264794
+    }
+  ],
+  "unlocks": {
+    "buildings": [
+      {
+        "id": "fire",
+        "name": "Feuerwache",
+        "org": "Feuerwehr",
+        "price": 55000,
+        "slots": 4,
+        "people": 30,
+        "level": 1
+      },
+      {
+        "id": "ems",
+        "name": "Rettungswache",
+        "org": "Rettungsdienst",
+        "price": 42000,
+        "slots": 4,
+        "people": 16,
+        "level": 4
+      },
+      {
+        "id": "police",
+        "name": "Polizeiwache",
+        "org": "Polizei",
+        "price": 40000,
+        "slots": 4,
+        "people": 20,
+        "level": 7
+      },
+      {
+        "id": "thw",
+        "name": "THW-Unterkunft",
+        "org": "THW",
+        "price": 62000,
+        "slots": 4,
+        "people": 32,
+        "level": 15
+      },
+      {
+        "id": "water",
+        "name": "Wasserrettungsstation",
+        "org": "Wasserrettung",
+        "price": 48000,
+        "slots": 4,
+        "people": 20,
+        "level": 20,
+        "water": true
+      },
+      {
+        "id": "hospital",
+        "name": "Krankenhaus",
+        "org": "Infrastruktur",
+        "price": 100000,
+        "slots": 0,
+        "people": 0,
+        "level": 12
+      },
+      {
+        "id": "school",
+        "name": "Ausbildungszentrum",
+        "org": "Infrastruktur",
+        "price": 35000,
+        "slots": 0,
+        "people": 0,
+        "level": 5
+      },
+      {
+        "id": "heli",
+        "name": "Rettungshubschrauberstation",
+        "org": "Rettungsdienst",
+        "price": 95000,
+        "slots": 2,
+        "people": 12,
+        "level": 30
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "tsf",
+        "name": "TSF-W",
+        "home": "fire",
+        "price": 18000,
+        "crew": 6,
+        "skills": {
+          "fire": 1,
+          "water": 1
+        },
+        "level": 1,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "lf",
+        "name": "LF 20",
+        "home": "fire",
+        "price": 30000,
+        "crew": 9,
+        "skills": {
+          "fire": 2,
+          "water": 2,
+          "pump": 1
+        },
+        "level": 2,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "hlf",
+        "name": "HLF 20",
+        "home": "fire",
+        "price": 45000,
+        "crew": 9,
+        "skills": {
+          "fire": 2,
+          "rescue": 2,
+          "water": 1
+        },
+        "level": 6,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "tlf",
+        "name": "TLF 4000",
+        "home": "fire",
+        "price": 35000,
+        "crew": 3,
+        "skills": {
+          "fire": 1,
+          "water": 4
+        },
+        "level": 3,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "dlk",
+        "name": "DLK 23",
+        "home": "fire",
+        "price": 48000,
+        "crew": 3,
+        "skills": {
+          "ladder": 2
+        },
+        "level": 10,
+        "training": "Drehleiter",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "elw",
+        "name": "ELW 1",
+        "home": "fire",
+        "price": 22000,
+        "crew": 2,
+        "skills": {
+          "command": 2
+        },
+        "level": 8,
+        "training": "Führung",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 120
+      },
+      {
+        "id": "rw",
+        "name": "RW",
+        "home": "fire",
+        "price": 43000,
+        "crew": 3,
+        "skills": {
+          "rescue": 3,
+          "technical": 1
+        },
+        "level": 14,
+        "training": "Bergung",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "haz",
+        "name": "GW-Gefahrgut",
+        "home": "fire",
+        "price": 48000,
+        "crew": 3,
+        "skills": {
+          "hazmat": 3
+        },
+        "level": 24,
+        "training": "Gefahrgut",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "air",
+        "name": "GW-Atemschutz",
+        "home": "fire",
+        "price": 30000,
+        "crew": 3,
+        "skills": {
+          "air": 4
+        },
+        "level": 18,
+        "training": "Atemschutz",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "rtw",
+        "name": "RTW",
+        "home": "ems",
+        "price": 25000,
+        "crew": 2,
+        "skills": {
+          "medical": 2,
+          "transport": 1
+        },
+        "level": 4,
+        "training": "",
+        "mode": "road",
+        "capacity": 1,
+        "speed": 110
+      },
+      {
+        "id": "ktw",
+        "name": "KTW",
+        "home": "ems",
+        "price": 16000,
+        "crew": 2,
+        "skills": {
+          "medical": 1,
+          "transport": 1
+        },
+        "level": 4,
+        "training": "",
+        "mode": "road",
+        "capacity": 1,
+        "speed": 110
+      },
+      {
+        "id": "nef",
+        "name": "NEF",
+        "home": "ems",
+        "price": 28000,
+        "crew": 2,
+        "skills": {
+          "doctor": 1,
+          "medical": 1
+        },
+        "level": 11,
+        "training": "Notarzt",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 120
+      },
+      {
+        "id": "rth",
+        "name": "RTH",
+        "home": "heli",
+        "price": 110000,
+        "crew": 3,
+        "skills": {
+          "medical": 2,
+          "doctor": 1,
+          "transport": 1,
+          "flight": 1
+        },
+        "level": 30,
+        "training": "Luftrettung",
+        "mode": "air",
+        "capacity": 1,
+        "speed": 180
+      },
+      {
+        "id": "fustw",
+        "name": "Funkstreifenwagen",
+        "home": "police",
+        "price": 16000,
+        "crew": 2,
+        "skills": {
+          "police": 2,
+          "crowd": 1
+        },
+        "level": 7,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 120
+      },
+      {
+        "id": "pmtw",
+        "name": "Polizei-MTW",
+        "home": "police",
+        "price": 24000,
+        "crew": 6,
+        "skills": {
+          "police": 1,
+          "crowd": 4
+        },
+        "level": 13,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 110
+      },
+      {
+        "id": "gkw",
+        "name": "GKW",
+        "home": "thw",
+        "price": 35000,
+        "crew": 9,
+        "skills": {
+          "technical": 3,
+          "rescue": 1
+        },
+        "level": 15,
+        "training": "Bergung",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "mzgw",
+        "name": "MzGW",
+        "home": "thw",
+        "price": 32000,
+        "crew": 6,
+        "skills": {
+          "technical": 1,
+          "pump": 3,
+          "logistics": 2
+        },
+        "level": 17,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "tmtw",
+        "name": "THW-MTW",
+        "home": "thw",
+        "price": 18000,
+        "crew": 6,
+        "skills": {
+          "logistics": 3,
+          "command": 1
+        },
+        "level": 15,
+        "training": "",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 110
+      },
+      {
+        "id": "gww",
+        "name": "GW-Wasserrettung",
+        "home": "water",
+        "price": 28000,
+        "crew": 4,
+        "skills": {
+          "diver": 2,
+          "rescue": 1
+        },
+        "level": 20,
+        "training": "Wasserrettung",
+        "mode": "road",
+        "capacity": 0,
+        "speed": 90
+      },
+      {
+        "id": "boat",
+        "name": "Rettungsboot",
+        "home": "water",
+        "price": 18000,
+        "crew": 2,
+        "skills": {
+          "boat": 2,
+          "diver": 1
+        },
+        "level": 20,
+        "training": "Wasserrettung",
+        "mode": "water",
+        "capacity": 0,
+        "speed": 30
+      }
+    ],
+    "extensions": [
+      {
+        "id": "technical",
+        "home": "fire",
+        "name": "Technische Hilfeleistung",
+        "price": 12000,
+        "level": 14,
+        "types": [
+          "rw"
+        ]
+      },
+      {
+        "id": "hazmat",
+        "home": "fire",
+        "name": "Gefahrgut-Erweiterung",
+        "price": 16000,
+        "level": 24,
+        "types": [
+          "haz"
+        ]
+      },
+      {
+        "id": "air",
+        "home": "fire",
+        "name": "Atemschutzwerkstatt",
+        "price": 12000,
+        "level": 18,
+        "types": [
+          "air"
+        ]
+      },
+      {
+        "id": "doctor",
+        "home": "ems",
+        "name": "Notarztstandort",
+        "price": 12000,
+        "level": 11,
+        "types": [
+          "nef"
+        ]
+      }
+    ]
+  },
+  "world": {
+    "widthMeters": 100000,
+    "heightMeters": 100000,
+    "nodes": 6527,
+    "roads": 250,
+    "sections": 6718,
+    "gradeSeparatedCrossings": 107
+  },
+  "performance": {
+    "platform": "win32",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13700K",
+    "node": "v24.19.0",
+    "vehicles": 500,
+    "activeLongTrips": 120,
+    "routeSamples": 120,
+    "routeMs": {
+      "median": 0.37610000000006494,
+      "p95": 1.5100999999999658,
+      "max": 2.434600000000046
+    },
+    "positionMsFor500": {
+      "median": 0.059700000000020736,
+      "p95": 0.10829999999998563
+    },
+    "fleetJsonBytes": 7566662,
+    "fleetGzipBytes": 1680917
+  }
+}

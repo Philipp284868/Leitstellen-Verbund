@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 10;
+export const DATABASE_VERSION = 11;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -206,6 +206,13 @@ export class Database {
             }
           this.sql.exec("PRAGMA user_version=10");
           this.audit("server-migration", "reports-and-statistics-v10");
+        });
+      if (version < 11)
+        this.transaction(() => {
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) this.save(id, s, mode);
+          this.sql.exec("PRAGMA user_version=11");
+          this.audit("server-migration", "progression-region-motion-v11");
         });
     } catch (e) {
       this.sql.close();

@@ -1,3 +1,6 @@
+import { WORLD_SEED } from "./region";
+import { migrateTravel } from "./travel-migration";
+import { progress, xpForLevel } from "./progression";
 import { majorSchema, operationsSchema } from "./simulation/major-schema";
 import {
   reportSchema,
@@ -150,12 +153,23 @@ export const saveSchema = z
     desk: deskSchema,
     environment: environmentSchema.optional(),
     version: z.literal(1),
+    regionVersion: z.literal(3).optional(),
+    worldSeed: z.literal(WORLD_SEED).default(WORLD_SEED),
     world: z.literal(WORLD),
     generation: id,
     revision: integer,
     player: z.object({ id, name, station: name }).strict(),
     money: integer,
     xp: integer,
+    progression: z
+      .object({
+        version: z.literal(1),
+        compensation: integer,
+        previousXp: integer,
+        previousLevel: integer,
+      })
+      .strict()
+      .optional(),
     completed: integer.default(0),
     time: num,
     seed: integer,
@@ -220,16 +234,23 @@ export type Vehicle = z.infer<typeof vehicleSchema>;
 export type Mission = z.infer<typeof missionSchema>;
 export type Building = z.infer<typeof buildingSchema>;
 export const uid = (): string => crypto.randomUUID();
-export const level = (s: Save) => Math.min(10, 1 + Math.floor(s.xp / 150));
+export const level = (s: Save) => progress(s.xp).level;
 export function fresh(player: string, station: string, now: number): Save {
   return saveSchema.parse({
     version: 1,
     world: WORLD,
+    regionVersion: 3,
     generation: uid(),
     revision: 0,
     player: { id: uid(), name: player, station },
     money: BALANCE.start,
     xp: 0,
+    progression: {
+      version: 1,
+      compensation: 0,
+      previousXp: 0,
+      previousLevel: 1,
+    },
     time: now,
     seed: Number.parseInt(uid().slice(0, 8), 16),
     nextMission: now,
@@ -259,6 +280,13 @@ export function validate(data: unknown): Save {
         world: WORLD,
       }
     : saveSchema.parse(data);
+  if (!s.progression) {
+    const previousXp = s.xp,
+      previousLevel = Math.min(10, 1 + Math.floor(previousXp / 150));
+    const compensation = Math.max(0, xpForLevel(previousLevel) - previousXp);
+    s.xp += compensation;
+    s.progression = { version: 1, compensation, previousXp, previousLevel };
+  }
   const ids = [
     ...s.buildings,
     ...s.vehicles,
@@ -321,7 +349,9 @@ export function validate(data: unknown): Save {
   for (const m of [...s.missions, ...s.archive]) mt(m.template);
   s.speed = 1; // Accept historical saves, but never restore acceleration.
   validateReferences(s, legacy);
-  return legacy ? validateReferences(migrateMap(s)) : s;
+  const mapped = legacy ? validateReferences(migrateMap(s)) : s;
+  migrateTravel(mapped);
+  return mapped;
 }
 export function validateReferences(s: Save, legacy = false) {
   s.completed = Math.max(s.completed, s.archive.length);

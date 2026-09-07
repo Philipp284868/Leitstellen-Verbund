@@ -530,11 +530,10 @@ export function Help() {
       </ol>
       <h3>Ausbauen und ausbilden</h3>
       <p>
-        Ab Stufe 2 werden Rettungsdienst, Polizei und Ausbildung verfügbar; ab
-        Stufe 3 THW und Wasserrettung, ab Stufe 4 Luftrettung. Pro Einsatz gibt
-        es Erfahrung. Es gibt keine laufenden Pflichtkosten. Wachen erweitern
-        ihre Stell- und Personalplätze. Spezialfahrzeuge brauchen passende
-        Fachausbildung der gesamten Besatzung.
+        Die gemeinsame Fortschrittsansicht zeigt alle aktuellen Freischaltungen.
+        Neue Organisationen erhalten gleichzeitig ein Einstiegsfahrzeug. XP gibt
+        es für abgeschlossene Einsätze; Zeit, zusätzliche Fahrzeuge und
+        wiederholte Meldungen erhöhen die Belohnung nicht.
       </p>
       <h3>Patienten und Wasserrettung</h3>
       <p>

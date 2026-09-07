@@ -106,6 +106,9 @@ test("Modi trennen Guthaben und Wachen, mehrere Tabs und Reload behalten ihre ei
   await page.locator("svg.map").click({
     position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
   });
+  await page
+    .getByRole("button", { name: "Bau bestätigen", exact: true })
+    .click();
   await expect(page.locator(".money")).toContainText("195.000");
   expect(app.db.all().get(id)!.money).toBe(multi.money);
   const second = await context.newPage();
@@ -235,7 +238,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
     .click();
   await expect(page.locator("svg.map")).toHaveAttribute(
     "viewBox",
-    "0 0 5200 3400",
+    `0 0 ${100000 / 12} ${100000 / 12}`,
   );
   await page.screenshot({
     path: info.outputPath("region-2.6-gesamt.png"),

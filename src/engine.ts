@@ -1,3 +1,6 @@
+import { buildReason, purchaseReason } from "./purchase";
+import { vehiclePosition } from "./vehicle-position";
+import { addXp, missionXp } from "./progression";
 import { selectHospital } from "./simulation/hospitals";
 import { measureTravel, telemetry } from "./simulation/reports";
 import { effectiveSkills, canTransport } from "./simulation/major-resources";
@@ -37,7 +40,8 @@ import {
   nearest,
   docks,
   isWaterSite,
-  along,
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
   distance,
   type Point,
 } from "./world";
@@ -93,7 +97,7 @@ export function capacity(s: Save, atScene?: string): Skills {
   for (const v of s.vehicles.filter((v) =>
     atScene ? v.mission === atScene && v.status === "scene" : true,
   )) {
-    if (v.fault && v.fault.state !== "repaired") continue;
+    if (atScene && v.fault && v.fault.state !== "repaired") continue;
     for (const [k, n] of Object.entries(
       effectiveSkills(
         atScene ? s.missions.find((m) => m.id === atScene) : undefined,
@@ -126,7 +130,7 @@ export function beginTrip(
   mode: TravelMode = status === "return" ? "normal" : "priority",
 ) {
   const origin = ["travel", "return", "transport"].includes(v.status)
-    ? along(v.path, (s.time - v.depart) / (v.arrive - v.depart))
+    ? vehiclePosition(v, s.time)
     : v.status === "alarmed"
       ? v.path[0]
       : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
@@ -135,6 +139,9 @@ export function beginTrip(
   v.depart = s.time;
   v.arrive = s.time + plan.seconds;
   v.journey = {
+    motion: plan.motion,
+    motionVersion: 1,
+    wait: plan.wait,
     mode,
     planned: plan.planned,
     plannedSeconds: plan.plannedSeconds,
@@ -208,8 +215,19 @@ export function apply(s: Save, a: Action) {
       break;
     }
     case "build": {
+      const reason = buildReason(s, a.kind, a.pos);
+      if (reason) throw Error(reason);
       const t = bt(a.kind);
       if (level(s) < t.level) throw Error(`Freischaltung ab Stufe ${t.level}.`);
+      if (
+        !Number.isFinite(a.pos.x) ||
+        !Number.isFinite(a.pos.y) ||
+        a.pos.x < 0 ||
+        a.pos.y < 0 ||
+        a.pos.x > WORLD_WIDTH ||
+        a.pos.y > WORLD_HEIGHT
+      )
+        throw Error("Bauplatz außerhalb des Spielgebiets.");
       const pos = nodes[nearest(a.pos)];
       if (
         s.buildings.some(
@@ -234,6 +252,8 @@ export function apply(s: Save, a: Action) {
       break;
     }
     case "buy": {
+      const reason = purchaseReason(s, a.kind, a.home);
+      if (reason) throw Error(reason);
       const t = vt(a.kind),
         b = s.buildings.find((b) => b.id === a.home);
       if (!b || b.type !== t.home || b.ready > s.time)
@@ -347,6 +367,8 @@ export function apply(s: Save, a: Action) {
       const b = s.buildings.find((b) => b.id === a.id);
       if (!b || b.ready > s.time || b.level >= 10)
         throw Error("Ausbau derzeit nicht möglich.");
+      const required = Math.max(bt(b.type).level, b.level * 2);
+      if (level(s) < required) throw Error(`Ausbau ab Stufe ${required}.`);
       money(s, -BALANCE.upgrade * b.level, "Wachenausbau");
       b.level++;
       b.ready = s.time + BALANCE.upgradeSeconds;
@@ -476,7 +498,9 @@ export function generate(s: Save) {
     (b) => b.ready <= s.time && relevantHomes.has(b.id),
   );
   const sites = nodes.filter((p) =>
-    bases.some((b) => distance(b.pos, p) <= 600),
+    bases.some(
+      (b) => distance(b.pos, p) <= (s.vehicles.length <= 4 ? 180 : 400),
+    ),
   );
   if (!sites.length) return;
   const pos = t.water
@@ -528,10 +552,17 @@ export function tick(
 ) {
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
-  const steps = Math.min(1200, Math.ceil(delta / 10));
-  const dt = steps ? delta / steps : 0;
-  for (let step = 0; step < steps; step++) {
-    s.time += dt;
+  while (s.time < end - 1e-8) {
+    let next = Math.min(end, Math.floor(s.time + 1 + 1e-8));
+    for (const v of s.vehicles)
+      if (
+        ["travel", "transport", "return"].includes(v.status) &&
+        !v.journey?.blockedUntil &&
+        v.arrive > s.time + 1e-8
+      )
+        next = Math.min(next, v.arrive);
+    const dt = next - s.time;
+    s.time = next;
     updateWeather(s);
     beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {
@@ -666,8 +697,8 @@ export function tick(
         ) {
           const measured = telemetry(s, m);
           measured.credits = reward;
-          measured.xp = 50 + t.level * 10;
-          s.xp += 50 + t.level * 10;
+          measured.xp = missionXp(t);
+          addXp(s, measured.xp);
           s.completed++;
           s.tutorial = Math.max(5, s.tutorial);
         }

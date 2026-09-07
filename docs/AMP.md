@@ -14,19 +14,19 @@ Ab Version 2.2 ist die Registrierung offen. Auf der Spielwebsite **Neues Konto e
 
 ## AMP-Einträge
 
-| Feld | Wert |
-| --- | --- |
-| App Download Type | Git repo |
-| App Download Source | `https://github.com/Philipp284868/Leitstellen-Verbund.git` |
-| Git Repo Branch | `main` |
-| Node.js Release Stream | 24 |
-| Node.js Version | leer |
-| npm Install Type | None |
-| Run App Setup Commands | aktiviert |
-| App Setup Commands | `node scripts/amp-setup.mjs` |
-| App Name | `dist/server/index.js` |
-| App Installation Location | leer |
-| Run App Pre-start Commands | deaktiviert |
+| Feld                       | Wert                                                       |
+| -------------------------- | ---------------------------------------------------------- |
+| App Download Type          | Git repo                                                   |
+| App Download Source        | `https://github.com/Philipp284868/Leitstellen-Verbund.git` |
+| Git Repo Branch            | `main`                                                     |
+| Node.js Release Stream     | 24                                                         |
+| Node.js Version            | leer                                                       |
+| npm Install Type           | None                                                       |
+| Run App Setup Commands     | aktiviert                                                  |
+| App Setup Commands         | `node scripts/amp-setup.mjs`                               |
+| App Name                   | `dist/server/index.js`                                     |
+| App Installation Location  | leer                                                       |
+| Run App Pre-start Commands | deaktiviert                                                |
 
 `main` enthält den freigegebenen Stand; `dev` dient der Entwicklung. Ein neuer Commit wird nicht automatisch auf einer laufenden AMP-Instanz installiert. Stoppen → Aktualisieren → erfolgreichen Setup-/Buildabschluss abwarten → Start. Arbeitsverzeichnis ist die Repository-Wurzel mit `package.json`, `.env` und `scripts/`.
 
@@ -98,7 +98,6 @@ Das reguläre Setup installiert weiterhin dieselbe Node-24-Anwendung; es kommen 
 
 Spielerregistrierung bleibt frei. Die neuen Einladungen unter **Freunde** betreffen ausschließlich die gemeinsame Disposition eines Leitstellenbestands, keine Administratorrolle oder Serververwaltung.
 
-
 ## Update 2.8 / Phase 2
 
 Schema 7 ergänzt das simulierte Wetter sowie persistente Gefahren, Patienten, Verkehr und Fahrzeugdefekte. Bestehende Einsätze und Fahrtermine bleiben ohne nachträgliche Eskalation erhalten; neue Einsätze verwenden die Dynamik. Vor der Migration wird eine vollständige SQLite-Sicherung angelegt. Keine neue Umgebungsvariable oder zusätzlicher Dienst. Stoppen, sichern, `main` aktualisieren, erfolgreiches Setup abwarten und starten. [Bedienung, Migration und Grenzen](PHASE-2.md).
@@ -106,3 +105,7 @@ Schema 7 ergänzt das simulierte Wetter sowie persistente Gefahren, Patienten, V
 ## Update auf 2.9.0 / Phase 3
 
 Schema 8 ergänzt Organisationsprofile, Personalverfügbarkeit, Aufnahmeprofile und ausdrücklich angenommene Nachbarhilfe in den bestehenden Spielständen. Vor der Migration wird die vollständige SQLite-Sicherung angelegt. Beide Modi, Bestände, aktive Termine und alte Einsätze bleiben erhalten; neue Organisationspflichten werden nicht nachträglich eingebaut. Keine neue `.env`, keine Zusatzdienste. Wie bisher stoppen, sichern, `main` aktualisieren, erfolgreiches Setup abwarten und starten. [Bedienung und Grenzen](PHASE-3.md).
+
+## Update auf 2.12: Progression und 100-km-Region
+
+Server stoppen, vorhandene Daten sichern, neuen Build erstellen. Die optionale Offline-Vorschau `node dist/server/cli.js migration-preview` verwendet dieselbe Konfiguration und liest beide Spielstände ohne Datenänderung. Beim nächsten regulären Start erstellt Schema 11 zuerst eine konsistente Sicherung und übernimmt Progression sowie aktive Fahrten. XP, Besitz und Standorte der organischen Welt bleiben erhalten; ein nötiger Stufenausgleich wird separat protokolliert. Details und vollständige Freischaltungen: [Progression und Karte](PROGRESSION-KARTE.md).

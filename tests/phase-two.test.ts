@@ -1,3 +1,4 @@
+import { vehiclePosition } from "../src/vehicle-position";
 import { it, expect } from "vitest";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -29,7 +30,7 @@ import { validate } from "../src/model";
 import { Database } from "../server/database";
 import { Auth } from "../server/auth";
 import { Game } from "../server/game";
-import { nodes, route, nearest, along, distance } from "../src/world";
+import { nodes, route, nearest, distance } from "../src/world";
 function dynamic(template = "field") {
   const s = phaseFixture("owner", template),
     m = s.missions[0];
@@ -122,7 +123,7 @@ it("Wetter beeinflusst Fahrzeiten, Nachtruhe und Berufsverkehr; Wetter ist zeitl
     target = nodes[20];
   const normal = routePlan(s, v, v.path[0], target, "normal").seconds;
   const emergency = routePlan(s, v, v.path[0], target, "emergency").seconds;
-  expect(normal).toBeGreaterThan(emergency);
+  expect(normal).toBeCloseTo(emergency); // Limits apply to both modes without arbitrary urgency multipliers.
   s.environment!.rain = 80;
   s.environment!.kind = "ice";
   s.environment!.density = 1.7;
@@ -221,7 +222,7 @@ it("umfährt gesperrte Kanten oder wartet tatsächlich; Verkehrsmeldung teleport
   s.time = v.depart + 0.1;
   v.status = "travel";
   v.journey!.nextCheck = s.time;
-  const current = along(v.path, (s.time - v.depart) / (v.arrive - v.depart));
+  const current = vehiclePosition(v, s.time);
   s.environment!.roads = [
     {
       id: "jam-test",
@@ -401,7 +402,7 @@ it("Wetterwechsel während einer Fahrt passt ETA ohne Positionssprung an", () =>
   s.time = v.depart + 1;
   v.status = "travel";
   v.journey!.nextCheck = s.time;
-  const origin = along(v.path, (s.time - v.depart) / (v.arrive - v.depart)),
+  const origin = vehiclePosition(v, s.time),
     eta = v.arrive;
   s.environment!.period++;
   s.environment!.rain = 80;

@@ -1,5 +1,5 @@
+import { vehiclePosition } from "../vehicle-position";
 import type { Save, Vehicle } from "../model";
-import { along } from "../world";
 import { beginTrip, recall } from "../engine";
 import { setFms, operativeCode } from "./fms";
 import { request } from "./incidents";
@@ -24,9 +24,7 @@ export function breakVehicle(
   )
     return;
   const position =
-    v.status === "scene"
-      ? v.path.at(-1)!
-      : along(v.path, (s.time - v.depart) / Math.max(1, v.arrive - v.depart));
+    v.status === "scene" ? v.path.at(-1)! : vehiclePosition(v, s.time);
   v.fault = {
     kind,
     since: s.time,
@@ -83,6 +81,10 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
   if (v.fault && v.fault.state !== "repaired") {
     if (v.fault.state !== "repairing" || v.fault.repairAt > s.time) return;
     v.fault.state = "repaired";
+    if (v.journey) {
+      delete v.journey.motion;
+      delete v.journey.motionVersion;
+    }
     const m = s.missions.find((m) => m.id === v.mission);
     if (m)
       record(

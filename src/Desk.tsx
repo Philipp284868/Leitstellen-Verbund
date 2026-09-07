@@ -614,7 +614,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     </b>
                     <small>
                       {readiness(s, v) ||
-                        `Einsatzbereit · ${approach(s, v, m.pos, travel)}`}
+                        `Einsatzbereit · ${approach(s, v, m.pos, travel, alarm || undefined)}`}
                     </small>
                   </span>
                 </label>

@@ -1,3 +1,4 @@
+import { xpForLevel } from "../src/progression";
 import { expect, it } from "vitest";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
@@ -243,7 +244,7 @@ it("Krankenhäuser lehnen ungeeignete Patienten ab, reservieren Betten und lenke
     v = addAmbulance(s),
     m = s.missions[0];
   s.money += 100000;
-  s.xp = 1000;
+  s.xp = xpForLevel(30);
   apply(s, { type: "build", kind: "hospital", pos: nodes[30] });
   tick(s, s.time + 30, {}, false, false);
   const b = s.buildings.at(-1)!;

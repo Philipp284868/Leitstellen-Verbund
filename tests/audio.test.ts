@@ -1,3 +1,4 @@
+import { xpForLevel, progress } from "../src/progression";
 import { it, expect } from "vitest";
 import { AudioEvents } from "../src/audio/events";
 import { fresh, type Save } from "../src/model";
@@ -87,14 +88,14 @@ it("unterscheidet Alarmierung, Ankunft, Rückkehr, Bau und Erfolg, ohne Sammelme
   expect(events.observe(next, "multi", true)).toBe("complete");
   s = next;
   next = update(s);
-  next.xp += 150;
+  next.xp = xpForLevel(progress(s.xp).level + 1);
   expect(events.observe(next, "multi", true)).toBe("level");
   const capped = update(next);
-  capped.xp = 1500;
+  capped.xp = xpForLevel(10);
   events.observe(capped, "multi", true);
   const more = update(capped);
-  more.xp += 150;
-  expect(events.observe(more, "multi", true)).toBeNull();
+  more.xp = xpForLevel(11);
+  expect(events.observe(more, "multi", true)).toBe("level");
   expect(
     events.observe(fresh("Neu", "Neue Leitstelle", 100), "multi", true),
   ).toBeNull();

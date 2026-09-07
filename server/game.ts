@@ -1,3 +1,5 @@
+import { vehiclePosition } from "../src/vehicle-position";
+import { addXp } from "../src/progression";
 import { stationProfile, personDuty } from "../src/simulation/staffing";
 import { BALANCE } from "../src/catalog";
 import { nextCallDelay } from "../src/simulation/balance";
@@ -52,7 +54,6 @@ import {
 import type { Save, Vehicle } from "../src/model";
 import type { GameMode } from "../src/mode";
 import { vt, mt, type Skills } from "../src/catalog";
-import { along } from "../src/world";
 
 export class Game {
   constructor(public db: Database) {}
@@ -383,7 +384,7 @@ export class Game {
               .run(receipt, helperId, amount);
             if (inserted.changes) {
               money(helper, amount, `Verbund: ${mt(m.template).name}`, receipt);
-              helper.xp += 25;
+              addXp(helper, 60);
             }
           }
         }
@@ -533,10 +534,7 @@ export class Game {
             vehicles: visible.map((v) => ({
               ...v,
               turnout: undefined,
-              position: along(
-                v.path,
-                (other.time - v.depart) / (v.arrive - v.depart || 1),
-              ),
+              position: vehiclePosition(v, other.time),
               eta: Math.max(0, v.arrive - other.time),
               fms: other.desk.fleet[v.id]?.code ?? 2,
             })),

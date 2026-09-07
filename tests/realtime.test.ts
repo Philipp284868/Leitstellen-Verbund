@@ -1,3 +1,4 @@
+import { vehicleMotion } from "../src/vehicle-position";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
@@ -23,8 +24,9 @@ import {
 import { towns } from "../src/region";
 import { trip, duration } from "../src/travel";
 
-it("erweitert die Fläche um Faktor 16 und erhält die ursprünglichen Straßenpunkte", () => {
-  expect((WORLD_WIDTH * WORLD_HEIGHT) / (1300 * 850)).toBe(16);
+it("erweitert die Fläche auf exakt 100 × 100 km und erhält die ursprünglichen Straßenpunkte", () => {
+  expect(WORLD_WIDTH * 12).toBe(100000);
+  expect(WORLD_HEIGHT * 12).toBe(100000);
   expect(towns).toHaveLength(10);
   expect(nodes[0]).toEqual({ x: 340, y: 440 });
   expect(originalNodes.length).toBeGreaterThan(600);
@@ -58,8 +60,12 @@ it("berechnet Fahrzeit und Reststrecke aus demselben tatsächlichen Straßenweg"
   beginTrip(s, v, nodes[80], "travel");
   const total = length(v.path) * 12,
     seconds = v.arrive - v.depart;
-  expect(seconds).toBeCloseTo(total / (60 / 3.6));
-  expect(trip(v, s.time + seconds / 2).remaining).toBeCloseTo(total / 2);
+  expect(seconds).toBeCloseTo(
+    v.journey!.motion!.at(-1)!.start + v.journey!.motion!.at(-1)!.duration,
+  );
+  expect(trip(v, s.time + seconds / 2).remaining).toBeCloseTo(
+    total - vehicleMotion(v, s.time + seconds / 2).meters,
+  );
   expect(trip(v, v.arrive + 10).remaining).toBe(0);
   expect(duration(301)).toBe("5 min 1 s");
   v.status = "scene";

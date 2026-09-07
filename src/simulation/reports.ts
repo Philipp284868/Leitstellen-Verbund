@@ -1,6 +1,6 @@
 import type { Save, Mission, Vehicle } from "../model";
 import { mt } from "../catalog";
-import { length, METERS_PER_UNIT } from "../world";
+import { vehicleMotion } from "../vehicle-position";
 import { timingKeys, type Report } from "./report-schema";
 
 export function telemetry(s: Save, m: Mission) {
@@ -31,15 +31,10 @@ export function measureTravel(s: Save, v: Vehicle, previous: number) {
     (v.fault && v.fault.state !== "repaired")
   )
     return;
-  const fraction = (time: number) =>
-    Math.max(
-      0,
-      Math.min(1, (time - v.depart) / Math.max(1, v.arrive - v.depart)),
-    );
-  const meters =
-    Math.max(0, fraction(s.time) - fraction(previous)) *
-    length(v.path) *
-    METERS_PER_UNIT;
+  const meters = Math.max(
+    0,
+    vehicleMotion(v, s.time).meters - vehicleMotion(v, previous).meters,
+  );
   s.statistics.meters += meters;
   v.odometer = (v.odometer ?? 0) + meters;
   const m = s.missions.find((m) => m.id === v.mission);

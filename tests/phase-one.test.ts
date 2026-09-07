@@ -445,5 +445,5 @@ it("Rückruf vor dem Ausrücken startet an der Wache und teleportiert nicht zur 
   apply(s, { type: "recall", id: v.id });
   expect(v.path[0]).toEqual(s.buildings[0].pos);
   expect(v.mission).toBeNull();
-  expect(v.arrive - s.time).toBe(3);
+  expect(v.arrive - s.time).toBe(0); // Already at home: no artificial minimum driving time.
 });
