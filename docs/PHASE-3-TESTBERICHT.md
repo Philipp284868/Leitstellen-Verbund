@@ -50,6 +50,8 @@ Die bestehenden Browserprüfungen für Registrierung, getrennte Konten und Modi,
 
 ## Windows-Grenzen und verbindlicher CI-Lauf
 
+Der erste Linux-CI-Lauf bestand 121 von 122 Vitest-Prüfungen. Der bestehende kombinierte HTTP-/Socket-Test überschritt sein allgemeines Fünf-Sekunden-Limit, während parallel die umfangreichen Karten-/Routingprüfungen liefen. Für diesen Integrationstest mit echten Passwort-Hashes, mehreren HTTP-/Socket-Austauschen und einer absichtlichen Ratenbegrenzungswartezeit gilt jetzt ein eigenes Limit von 30 Sekunden. Sämtliche fachlichen und Sicherheitsassertionen bleiben erhalten; der folgende vollständige CI-Lauf entscheidet über die Abnahme.
+
 Ein lokaler Vitest-Durchlauf traf zufällig den von Windows ausgeschlossenen Port `28385` (`listen EACCES`). `netsh interface ipv4 show excludedportrange protocol=tcp` bestätigte diesen Ausschluss. Ein anschließender vollständiger Durchlauf bestand. Dies war kein abgeschalteter Sicherheitstest und keine Änderung der Server-Portprüfung.
 
 Die vorhandenen 16 Node-Prozesstests wurden ebenfalls lokal angestoßen: 13 bestanden, zwei scheiterten beim Erstellen von Datei-Symlinks mit Windows-`EPERM`, ein vollständiger Reset-/Neustart-Prozessfall lief in sein 30-Sekunden-Zeitlimit. Diese Reihe gilt damit **nicht als unter Windows bestanden**. Der gesonderte AMP-Autostarttest ist für Linux vorgesehen und wird aus dem Windows-Vitest-Aufruf ausgeschlossen. Die unveränderte GitHub-Actions-Pipeline führt beide Bereiche unter Ubuntu mit Node 24 vollständig aus.
