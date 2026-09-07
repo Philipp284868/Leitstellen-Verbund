@@ -89,3 +89,9 @@ AMP soll SIGTERM oder SIGINT zustellen und mindestens 30 Sekunden für den Stopp
 Eine Node-Instanz pro Datenverzeichnis, kein Cluster. Bei Stillstand werden höchstens vier Stunden nachberechnet. Ohne Serververbindung werden keine Online-Aktionen bestätigt. Offene Registrierung ist durch Eingabevalidierung, persistente Anmelde- und Registrierungsratenlimits sowie begrenzte gleichzeitige Passwortberechnung abgesichert, nicht gegen jeden verteilten Missbrauch. Passwort-Hashes, Sitzungen, CSRF-/Origin-Prüfungen und Eigentumsprüfungen bleiben bestehen.
 
 Ein GitHub-Update installiert nichts selbstständig auf dem privaten AMP-Server und konfiguriert keinen Router, DNS oder TLS. Maßgeblich für ausgeführte Tests sind die CI-Ergebnisse des jeweiligen Commits. Frühere Testberichte beschreiben frühere Versionen.
+
+## Update auf 2.7 / Phase 1
+
+Das reguläre Setup installiert weiterhin dieselbe Node-24-Anwendung; es kommen keine Umgebungsvariablen oder Dienste hinzu. Schema 6 ergänzt Notrufe, Disposition, FMS, Historien und angenommene Leitstellenmitgliedschaften. Vorhandene Bestände und aktive Fahrten werden migriert; vor der Änderung wird eine konsistente Sicherung im bisherigen Dateinamensschema angelegt. Alte automatische Freigaben ohne zugeordnete fremde Fahrzeuge werden geschlossen; laufende alte Unterstützungen und Transporte bleiben erhalten. [Vollständige Migrations- und Betriebsgrenzen](PHASE-1.md).
+
+Spielerregistrierung bleibt frei. Die neuen Einladungen unter **Freunde** betreffen ausschließlich die gemeinsame Disposition eines Leitstellenbestands, keine Administratorrolle oder Serververwaltung.
