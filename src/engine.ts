@@ -1,4 +1,5 @@
 import { selectHospital } from "./simulation/hospitals";
+import { effectiveSkills, canTransport } from "./simulation/major-resources";
 import {
   suitableCrew,
   crewRequired,
@@ -9,6 +10,7 @@ import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
 import {
   patientSeats,
+  transportCandidates,
   boardPatients,
   deliverPatients,
 } from "./simulation/patients";
@@ -91,7 +93,12 @@ export function capacity(s: Save, atScene?: string): Skills {
     atScene ? v.mission === atScene && v.status === "scene" : true,
   )) {
     if (v.fault && v.fault.state !== "repaired") continue;
-    for (const [k, n] of Object.entries(vt(v.type).skills))
+    for (const [k, n] of Object.entries(
+      effectiveSkills(
+        atScene ? s.missions.find((m) => m.id === atScene) : undefined,
+        v,
+      ),
+    ))
       total[k] = (total[k] || 0) + n;
   }
   return total;
@@ -516,6 +523,7 @@ export function tick(
   allowGeneration = true,
   carriers: Record<string, Skills> = {},
   remoteDynamic: Set<string> = new Set(),
+  remoteUnits: Record<string, Vehicle[]> = {},
 ) {
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
@@ -582,7 +590,8 @@ export function tick(
         recall(s, v);
       }
     }
-    for (const m of s.missions) dynamicsTick(s, m, remote[m.id], carriers);
+    for (const m of s.missions)
+      dynamicsTick(s, m, remote[m.id], carriers, remoteUnits[m.id]);
     afterVehicles(s, remote);
     for (const m of s.missions) {
       if (m.control && !m.control.briefed) continue;
@@ -592,16 +601,17 @@ export function tick(
       for (const [k, n] of Object.entries(remote[m.id] ?? {}))
         skills[k] = (skills[k] || 0) + n;
       if (m.phase === "offered" || m.phase === "working") {
-        if (missing(m, skills).length) continue;
-        m.phase = "working";
-        m.progress = Math.min(
-          t.seconds,
-          m.progress + dt * (m.dynamics?.tactic === "defensive" ? 0.65 : 1),
-        );
-        if (m.progress >= t.seconds && dynamicsComplete(m, s.time))
-          m.phase = "transport";
+        if (!missing(m, skills).length) {
+          m.phase = "working";
+          m.progress = Math.min(
+            t.seconds,
+            m.progress + dt * (m.dynamics?.tactic === "defensive" ? 0.65 : 1),
+          );
+          if (m.progress >= t.seconds && dynamicsComplete(m, s.time))
+            m.phase = "transport";
+        }
       }
-      if (m.phase === "transport") {
+      if (m.phase === "transport" || canTransport(m)) {
         let remaining =
           (patientSeats(m) ?? t.patients) -
           m.transports.reduce((n, t) => n + t.patients, 0);
@@ -610,9 +620,14 @@ export function tick(
             v.mission === m.id &&
             v.status === "scene" &&
             (!v.fault || v.fault.state === "repaired") &&
+            canTransport(m, v) &&
             !m.transports.some((t) => t.assignment === v.assignment),
         )) {
-          const seats = Math.min(remaining, vt(v.type).capacity);
+          const seats = Math.min(
+            remaining,
+            vt(v.type).capacity,
+            m.major ? transportCandidates(m).length : Infinity,
+          );
           if (!seats || !hospital(s, v.path.at(-1)!, seats, m, v)) continue;
           transport(s, v, seats, m);
           boardPatients(s, m, v, seats);
@@ -625,6 +640,7 @@ export function tick(
           });
           remaining -= seats;
         }
+        if (m.phase !== "transport") continue;
         if (
           m.transports
             .filter((t) => t.status === "delivered")

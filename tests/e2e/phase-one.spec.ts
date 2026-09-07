@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { test, expect } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -13,7 +14,7 @@ const compiled = (await import(
 let app: ReturnType<typeof startServer>, config: Config, owner: string;
 const password = "Phase-browser-password-123!";
 test.beforeEach(async () => {
-  const port = 39000 + Math.floor(Math.random() * 14000);
+  const port = 0;
   config = {
     host: "127.0.0.1",
     port,
@@ -22,8 +23,7 @@ test.beforeEach(async () => {
     secure: false,
     trustedProxies: [],
   };
-  app = compiled.startServer(config);
-  await app.listen();
+  app = await listenBrowserServer(compiled.startServer, config);
   owner = await app.auth.create("dispatcher", password, "Disponent", "Nord");
   app.db.save(owner, phaseFixture(owner));
 });

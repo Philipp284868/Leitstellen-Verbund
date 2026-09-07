@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { interviewUI, joinDesk } from "./desk-helpers";
 import { test, expect, type Page, type Browser } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -14,7 +15,7 @@ let app: ReturnType<typeof startServer>, config: Config;
 const password = "Only-a-browser-test-password!";
 test.beforeEach(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-browser-")),
-    port = 39000 + Math.floor(Math.random() * 15000);
+    port = 0;
   config = {
     host: "127.0.0.1",
     port,
@@ -23,8 +24,7 @@ test.beforeEach(async () => {
     secure: false,
     trustedProxies: [],
   };
-  app = compiled.startServer(config);
-  await app.listen();
+  app = await listenBrowserServer(compiled.startServer, config);
   expect(app.db.sql.prepare("SELECT id FROM users").all()).toHaveLength(0);
 });
 test.afterEach(async () => {
@@ -206,21 +206,24 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
       ),
     )
     .toBe(true);
-  app.game.step(61);
-  await cb.close();
-  await expect
-    .poll(() =>
-      [...app.db.all().values()].some((s) =>
-        s.vehicles.some((v) => v.status === "travel"),
-      ),
-    )
-    .toBe(true);
   const ownerId = String(
     app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
   );
   const missionId = app.db.all().get(ownerId)!.missions[0].id;
   const advance = (finished: () => boolean) =>
     advanceWithRepairs(ownerId, finished);
+  await cb.close();
+  // Verify the recorded departure, not a transient status after an arbitrary
+  // 61-second jump: a nearby incident can already have been reached by then.
+  const departed = () =>
+    app.db.all().get(ownerId)!.missions.find((m) => m.id === missionId)!
+      .control!.events.some((e) => e.type === "VEHICLE_DEPARTED");
+  advance(departed);
+  expect(departed()).toBe(true);
+  expect(
+    app.db.all().get(ownerId)!.missions.find((m) => m.id === missionId)!
+      .control!.events.some((e) => e.text.startsWith("FMS 3:")),
+  ).toBe(true);
   // New accounts produce seeded but different incidents. A real breakdown requires a repair order.
   advance(() =>
     app.db

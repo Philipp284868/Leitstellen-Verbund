@@ -3,8 +3,10 @@ import {
   organizationsComplete,
   attachOrganizations,
 } from "./organizations";
-import type { Save, Mission } from "../model";
-import { mt, vt, type Skills } from "../catalog";
+import type { Save, Mission, Vehicle } from "../model";
+import { majorTick } from "./major-incidents";
+import { majorComplete, effectiveSkills } from "./major-resources";
+import { mt, type Skills } from "../catalog";
 import { level } from "../model";
 import { capacity } from "../engine";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
@@ -172,6 +174,7 @@ export function dynamicsTick(
   m: Mission,
   remote: Skills = {},
   carriers: Record<string, Skills> = {},
+  remoteUnits: Vehicle[] = [],
 ) {
   const d = m.dynamics;
   if (!d?.active || m.phase === "done") return;
@@ -194,13 +197,14 @@ export function dynamicsTick(
         v.arrive > t &&
         (!v.fault || v.fault.state === "repaired"),
     ))
-      for (const [k, n] of Object.entries(vt(v.type).skills))
+      for (const [k, n] of Object.entries(effectiveSkills(m, v)))
         skills[k] = Math.max(0, (skills[k] || 0) - n);
     for (const [k, n] of Object.entries(remote))
       skills[k] = (skills[k] || 0) + n;
     if (d.tactic === "defensive") {
       skills.hazmat = Math.max(skills.hazmat || 0, (skills.fire || 0) * 0.5);
     }
+    majorTick(s, m, skills, DYNAMICS.quantum, remoteUnits);
     organizationsTick(s, m, skills, DYNAMICS.quantum);
     hazardTick(s, m, skills, DYNAMICS.quantum);
     fireTick(s, m, skills, DYNAMICS.quantum);
@@ -268,6 +272,7 @@ export function dynamicsTick(
 }
 export function dynamicsComplete(m: Mission, time: number) {
   return (
+    majorComplete(m) &&
     organizationsComplete(m) &&
     (!m.dynamics?.active ||
       (!!m.dynamics.aftermath &&

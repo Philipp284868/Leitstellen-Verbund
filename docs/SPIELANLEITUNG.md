@@ -1,5 +1,7 @@
 # Die Region übernehmen
 
+**Große Lagen ab Version 2.10:** Nach der Erkundung eines geeigneten Einsatzes lässt sich die Großlagenführung aufrufen: Abschnitte beauftragen, alarmierte Fahrzeuge aus der Bereitstellung zuweisen, Einsatzleitung besetzen, Patienten sichten und priorisierte Transporte freigeben. Unwetter-/Hochwasserlagen erzeugen einzelne versetzte Meldungen; höchstens zwei Einsätze bleiben gleichzeitig offen. [Vollständige Phase-4-Anleitung](PHASE-4.md).
+
 Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder mit einem vorhandenen Konto anmelden. Jeder kann sich ohne Einladung registrieren. Alle Konten sind normale Spieler. Eigener Besitz wird auf dem Server gespeichert; alle Konten verbinden sich automatisch. Frühere Admin-Konten bleiben mit denselben Zugangsdaten und Spielständen als normale Spieler erhalten.
 
 ## Einzelspieler und Multiplayer

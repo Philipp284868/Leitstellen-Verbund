@@ -1,4 +1,5 @@
 import { OrganizationTasks } from "./Organizations";
+import { MajorPanel } from "./Major";
 import type { Save, Mission } from "./model";
 import { act } from "./store";
 import { duration, kilometers } from "./travel";
@@ -212,6 +213,7 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
   return (
     <section className="dynamics-panel" aria-label="Dynamische Einsatzlage">
       <OrganizationTasks s={s} m={m} />
+      <MajorPanel s={s} m={m} />
       <div className={`dynamics-heading state-${d.state}`}>
         <h3>Dynamische Lage · Alarmstufe {d.level}</h3>
         <b>{states[d.state]}</b>

@@ -1,3 +1,4 @@
+import { majorSchema, operationsSchema } from "./simulation/major-schema";
 import {
   stationSchema,
   dutySchema,
@@ -95,6 +96,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    major: majorSchema.optional(),
     organization: organizationMissionSchema.optional(),
     control: incidentSchema.optional(),
     dynamics: dynamicsSchema.optional(),
@@ -120,7 +122,7 @@ export const missionSchema = z
           })
           .strict(),
       )
-      .max(20)
+      .max(100)
       .default([]),
   })
   .strict();
@@ -134,6 +136,7 @@ export const journalSchema = z
   .strict();
 export const saveSchema = z
   .object({
+    operations: operationsSchema,
     aid: z.array(aidSchema).max(500).default([]),
     desk: deskSchema,
     environment: environmentSchema.optional(),
@@ -345,6 +348,15 @@ export function validateReferences(s: Save, legacy = false) {
   }
   for (const m of [...s.missions, ...s.archive]) {
     const t = mt(m.template);
+    if (
+      m.major &&
+      (new Set(m.major.sections.map((x) => x.kind)).size !==
+        m.major.sections.length ||
+        new Set(m.major.placements.map((x) => x.vehicle)).size !==
+          m.major.placements.length ||
+        m.major.evacuated > m.major.evacuees)
+    )
+      throw Error("Ungültige Großlagenzuordnung.");
     if (
       m.progress > t.seconds ||
       m.transports.reduce((n, t) => n + t.patients, 0) >

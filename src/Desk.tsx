@@ -1,4 +1,6 @@
 import { NeighborDesk } from "./NeighborDesk";
+import { OperationsOverview } from "./Major";
+import { effectiveSkills } from "./simulation/major-resources";
 import { DynamicsPanel } from "./Dynamics";
 import { travelNames } from "./simulation/traffic";
 import type { TravelMode } from "./simulation/dynamics-schema";
@@ -77,6 +79,7 @@ export function DeskQueue({
     );
   return (
     <section className="desk-queue" aria-label="Notruf und Funk">
+      <OperationsOverview s={s} open={open} />
       <div className="desk-tools">
         <button onClick={() => panel("aaos")}>AAO</button>
         <button onClick={() => panel("fms")}>FMS / Funkstatus</button>
@@ -307,7 +310,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
       f.vehicle.status === "scene" &&
       (!f.vehicle.fault || f.vehicle.fault.state === "repaired"),
   ))
-    for (const [k, n] of Object.entries(vt(f.vehicle.type).skills))
+    for (const [k, n] of Object.entries(effectiveSkills(m, f.vehicle)))
       skills[k] = (skills[k] || 0) + n;
   const deficits = new Map(missing(m, skills));
   const selectedAAO = s.desk.aaos.find((x) => x.id === aao);
@@ -323,6 +326,28 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
         {c.priority} · {stages[c.stage]} · Einsatz {m.id.slice(-8)}
       </span>
       <h2>{mt(m.template).name}</h2>
+      {c.locationKnown && (
+        <label>
+          Dispositionspriorität
+          <select
+            aria-label="Dispositionspriorität"
+            value={c.priority}
+            onChange={(e) =>
+              void act({
+                type: "mission-priority",
+                mission: m.id,
+                priority: e.target.value as Priority,
+              })
+            }
+          >
+            {priorities.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <Calls s={s} m={m} />
       <section>
         <h3>Bekannte Informationen</h3>

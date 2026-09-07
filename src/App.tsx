@@ -289,7 +289,11 @@ function GameApp() {
                   </span>
                 </div>
                 <div className="dispatch-pace">
-                  <span>RUHIGE EINSATZLAGE</span>
+                  <span>
+                    {s.operations.campaign || s.missions.some((m) => m.major)
+                      ? "GROSSLAGENFÜHRUNG"
+                      : "RUHIGE EINSATZLAGE"}
+                  </span>
                   <small>
                     {s.missions.length >= 2
                       ? "Erst laufende Einsätze abschließen. Neue Meldungen warten."
@@ -298,49 +302,64 @@ function GameApp() {
                 </div>
                 <DeskQueue s={s} open={open} panel={setModal} />
                 <div className="mission-list">
-                  {s.missions.map((m, i) => {
-                    const t = mt(m.template);
-                    return (
-                      <button
-                        key={m.id}
-                        className={`mission-card ${selected === m.id ? "selected" : ""}`}
-                        onClick={() => open(m.id)}
-                      >
-                        <div className="mission-number">
-                          {String(i + 1).padStart(2, "0")}
-                        </div>
-                        <div>
-                          <span className="eyebrow">
-                            {t.org}
-                            {m.shared ? " · VERBUND" : ""}
-                          </span>
-                          <h3>{t.name}</h3>
-                          <p>
-                            {m.control && !m.control.locationKnown
-                              ? "Einsatzort noch erfragen"
-                              : `Falkenried · ${districtAt(m.pos)}`}
-                          </p>
-                          <div className="mission-meta">
-                            <span
-                              className={
-                                m.phase === "offered"
-                                  ? "status waiting"
-                                  : "status"
-                              }
-                            >
-                              {m.phase === "offered"
-                                ? "Kräfte benötigt"
-                                : m.phase === "working"
-                                  ? "In Bearbeitung"
-                                  : "Transport"}
-                            </span>
-                            <b>{credits(t.reward)}</b>
+                  {[...s.missions]
+                    .sort(
+                      (a, b) =>
+                        ["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"].indexOf(
+                          b.control?.priority || "NORMAL",
+                        ) -
+                          [
+                            "NORMAL",
+                            "DRINGEND",
+                            "PRIORITÄT",
+                            "NOTFALL",
+                          ].indexOf(a.control?.priority || "NORMAL") ||
+                        a.created - b.created,
+                    )
+                    .map((m, i) => {
+                      const t = mt(m.template);
+                      return (
+                        <button
+                          key={m.id}
+                          className={`mission-card ${selected === m.id ? "selected" : ""}`}
+                          onClick={() => open(m.id)}
+                        >
+                          <div className="mission-number">
+                            {String(i + 1).padStart(2, "0")}
                           </div>
-                          <progress value={m.progress} max={t.seconds} />
-                        </div>
-                      </button>
-                    );
-                  })}
+                          <div>
+                            <span className="eyebrow">
+                              {t.org}
+                              {m.major ? " · GROSSLAGE" : ""}
+                              {m.shared ? " · VERBUND" : ""}
+                            </span>
+                            <h3>{t.name}</h3>
+                            <p>
+                              {m.control && !m.control.locationKnown
+                                ? "Einsatzort noch erfragen"
+                                : `Falkenried · ${districtAt(m.pos)}`}
+                            </p>
+                            <div className="mission-meta">
+                              <span
+                                className={
+                                  m.phase === "offered"
+                                    ? "status waiting"
+                                    : "status"
+                                }
+                              >
+                                {m.phase === "offered"
+                                  ? "Kräfte benötigt"
+                                  : m.phase === "working"
+                                    ? "In Bearbeitung"
+                                    : "Transport"}
+                              </span>
+                              <b>{credits(t.reward)}</b>
+                            </div>
+                            <progress value={m.progress} max={t.seconds} />
+                          </div>
+                        </button>
+                      );
+                    })}
                   {!s.missions.length && (
                     <div className="empty">
                       <Radio size={32} />

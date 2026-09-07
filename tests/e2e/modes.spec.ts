@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -6,6 +7,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import { established } from "./fixtures";
+import { nodes } from "../../src/world";
+import { attachIncident } from "../../src/simulation/calls";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -15,22 +18,23 @@ let origin: string;
 const password = "World-separation-browser-123!";
 test.beforeAll(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-mode-browser-"));
-  const port = 40000 + Math.floor(Math.random() * 12000);
+  const port = 0;
   origin = `http://127.0.0.1:${port}`;
-  app = compiled.startServer({
+  const config = {
     host: "127.0.0.1",
     port,
     publicUrl: origin,
     dataDir: dir,
     secure: false,
     trustedProxies: [],
-  });
-  await app.listen();
+  };
+  app = await listenBrowserServer(compiled.startServer, config);
+  origin = config.publicUrl;
 });
 test.afterAll(async () => {
   await app.close();
 });
-async function account(page: Page) {
+async function account(page: Page, distantIncident = false) {
   const username = "mode-" + crypto.randomUUID().slice(0, 8);
   const id = await app.auth.create(
     username,
@@ -45,6 +49,15 @@ async function account(page: Page) {
   for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
   app.db.save(id, s);
   app.game.step(1);
+  if (distantIncident) {
+    // Keep the real routed journey visible throughout desktop/mobile checks.
+    const prepared = app.db.all().get(id)!;
+    const mission = prepared.missions[0];
+    mission.pos = nodes.find((p) => p.x > 3000 && p.y > 2000)!;
+    delete mission.control;
+    attachIncident(prepared, mission);
+    app.db.save(id, prepared);
+  }
   await login(page, username);
   return { id, username };
 }
@@ -213,7 +226,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
   page,
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  const { id } = await account(page);
+  const { id } = await account(page, true);
   await play(page);
   await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
   await expect(page.locator(".radio-bar")).toContainText("Echtzeit");
@@ -249,10 +262,12 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
   await expect
     .poll(() => app.db.all().get(id)!.vehicles[0].status)
     .toBe("alarmed");
-  app.game.step(61);
+  const alarmed = app.db.all().get(id)!;
+  app.game.step(alarmed.vehicles[0].depart - alarmed.time + 1);
   expect(app.db.all().get(id)!.vehicles[0].status).toBe("travel");
   const initial = app.db.all().get(id)!;
   const eta = initial.vehicles[0].arrive - initial.time;
+  expect(eta).toBeGreaterThan(120);
   app.game.step(2);
   expect(
     app.db.all().get(id)!.vehicles[0].arrive - app.db.all().get(id)!.time,
