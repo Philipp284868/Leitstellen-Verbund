@@ -1,3 +1,4 @@
+import { xpForLevel } from "../src/progression";
 import { fresh, type Save } from "../src/model";
 import { apply, generate, tick } from "../src/engine";
 import { nodes } from "../src/world";
@@ -7,7 +8,7 @@ export function phaseFixture(owner: string, template = "field"): Save {
   s.player.id = owner;
   s.generation = "11111111-2222-4333-8444-555555555555";
   s.seed = 124;
-  s.xp = 150;
+  s.xp = xpForLevel(30);
   s.tutorial = 6;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
   tick(s, s.time + 30, {}, false, false);

@@ -1,0 +1,56 @@
+import type { Save } from "./model";
+import { progress } from "./progression";
+import { bt, vt, extensions } from "./catalog";
+import {
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
+  nodes,
+  nearest,
+  isWaterSite,
+  distance,
+  type Point,
+} from "./world";
+export function buildReason(s: Save, kind: string, pos?: Point) {
+  const t = bt(kind);
+  if (progress(s.xp).level < t.level)
+    return `Freischaltung ab Stufe ${t.level}.`;
+  if (s.money < t.price) return "Nicht genügend Credits.";
+  if (pos) {
+    if (
+      !Number.isFinite(pos.x) ||
+      !Number.isFinite(pos.y) ||
+      pos.x < 0 ||
+      pos.y < 0 ||
+      pos.x > WORLD_WIDTH ||
+      pos.y > WORLD_HEIGHT
+    )
+      return "Bauplatz außerhalb des Spielgebiets.";
+    const site = nodes[nearest(pos)];
+    if (distance(site, pos) > 25)
+      return "Bauplatz benötigt eine Straßenanbindung (höchstens 300 m).";
+    if (s.buildings.some((b) => distance(b.pos, site) < 20))
+      return "Bauplatz bereits belegt.";
+    if (t.water && !isWaterSite(site))
+      return "Wasserrettung benötigt einen markierten Hafenbauplatz.";
+  }
+  return "";
+}
+export function purchaseReason(s: Save, kind: string, home: string) {
+  const t = vt(kind),
+    b = s.buildings.find((b) => b.id === home);
+  if (progress(s.xp).level < t.level)
+    return `Freischaltung ab Stufe ${t.level}.`;
+  if (!b || b.type !== t.home)
+    return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;
+  if (b.ready > s.time) return "Wache befindet sich im Bau.";
+  if (
+    s.vehicles.filter((v) => v.home === home).length >=
+    bt(b.type).slots * b.level
+  )
+    return "Keine freien Stellplätze.";
+  const e = extensions.find((e) => e.types.includes(kind));
+  if (e && !b.extensions.includes(e.id as (typeof b.extensions)[number]))
+    return `Benötigte Wachenerweiterung: ${e.name}.`;
+  if (s.money < t.price) return "Nicht genügend Credits.";
+  return "";
+}

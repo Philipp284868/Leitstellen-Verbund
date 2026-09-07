@@ -1,3 +1,7 @@
+import { SpatialIndex } from "./spatial";
+import { fastestPath, type Link } from "./routing";
+import { extendedRoadSpecs, regionTowns } from "./region-extension";
+import { METERS_PER_UNIT } from "./region";
 import { regionalRoads, towns } from "./region";
 export { WORLD_WIDTH, WORLD_HEIGHT, METERS_PER_UNIT } from "./region";
 /** Fictional region: rendered streets and routing use the same curved geometry. */
@@ -11,6 +15,7 @@ export const distance = (a: Point, b: Point) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 export const districts = [
   ...towns,
+  ...regionTowns,
   { name: "ALTSTADT", x: 565, y: 360 },
   { name: "NORDHÖHE", x: 515, y: 170 },
   { name: "LINDENAU", x: 180, y: 165 },
@@ -454,7 +459,10 @@ function add(p: Point) {
   }
   return index.get(key)!;
 }
-export const roads = specs.map(([name, kind, coords], roadIndex) => {
+const makeRoad = (
+  [name, kind, coords]: [string, RoadKind, number[][]],
+  roadIndex: number,
+) => {
   const anchors = coords.map(([x, y]) => ({ x, y })),
     ids: number[] = [];
   for (let i = 0; i < anchors.length - 1; i++) {
@@ -482,7 +490,8 @@ export const roads = specs.map(([name, kind, coords], roadIndex) => {
   ids.push(add(anchors.at(-1)!));
   for (let i = 1; i < ids.length; i++) edges.push([ids[i - 1], ids[i]]);
   return { name, kind, ids, points: ids.map((i) => nodes[i]) };
-});
+};
+export const roads = specs.map(makeRoad);
 // Connect every geometric crossing introduced by the regional roads. Each new
 // junction is inserted into both the rendered polyline and the routing graph.
 const segments = roads.flatMap((road, r) =>
@@ -536,6 +545,9 @@ for (const [r, road] of roads.entries()) {
   ]);
   road.points = road.ids.map((id) => nodes[id]);
 }
+// Append after the old intersection pass: legacy node IDs remain byte-for-byte stable.
+// New crossings are grade-separated; only shared authored anchors form junctions.
+roads.push(...extendedRoadSpecs().map((r, i) => makeRoad(r, specs.length + i)));
 edges.length = 0;
 for (const road of roads)
   for (let i = 1; i < road.ids.length; i++)
@@ -543,11 +555,24 @@ for (const road of roads)
 export const originalNodes = [
   ...new Set(roads.slice(0, originalRoadCount).flatMap((r) => r.points)),
 ];
-export const nearest = (p: Point) =>
-  nodes.reduce(
-    (a, n, i) => (distance(n, p) < distance(nodes[a], p) ? i : a),
-    0,
-  );
+const nodeGrid = new SpatialIndex<Point & { id: number }>();
+nodes.forEach((p, id) => nodeGrid.add({ ...p, id }));
+export function nearest(p: Point) {
+  for (let radius = 32; radius < 32768; radius *= 2) {
+    const candidates = nodeGrid.query(
+      p.x - radius,
+      p.y - radius,
+      radius * 2,
+      radius * 2,
+    );
+    if (!candidates.length) continue;
+    const best = candidates.reduce((a, b) =>
+      distance(a, p) <= distance(b, p) ? a : b,
+    );
+    if (distance(best, p) <= radius) return best.id;
+  }
+  throw Error("Position außerhalb der Region.");
+}
 export const publicHospital = nodes[nearest({ x: 623, y: 610 })];
 export const docks = [
   { x: 1010, y: 610 },
@@ -557,16 +582,168 @@ export const docks = [
 export const isWaterSite = (p: Point) => docks.some((d) => distance(d, p) < 22);
 export const districtAt = (p: Point) =>
   districts.reduce((a, b) => (distance(a, p) < distance(b, p) ? a : b)).name;
-const adjacency = nodes.map(() => [] as number[]);
-for (const [a, b] of edges) {
-  adjacency[a].push(b);
-  adjacency[b].push(a);
+export type RoadSection = {
+  id: string;
+  a: number;
+  b: number;
+  meters: number;
+  limit: number;
+  name: string;
+  kind: RoadKind;
+  direction: "both";
+  source: "world-rule";
+  access: "road";
+};
+export const roadSections: RoadSection[] = roads.flatMap((r) =>
+  r.ids.slice(1).map((b, i) => ({
+    id: `${r.ids[i]}:${b}`,
+    a: r.ids[i],
+    b,
+    meters: distance(nodes[r.ids[i]], nodes[b]) * METERS_PER_UNIT,
+    limit: r.name.startsWith("Schnellstraße")
+      ? 100
+      : r.kind === "country"
+        ? 80
+        : r.kind === "lane"
+          ? 30
+          : 50,
+    name: r.name,
+    kind: r.kind,
+    direction: "both" as const,
+    source: "world-rule" as const,
+    access: "road" as const,
+  })),
+);
+const adjacency: Link[][] = nodes.map(() => []);
+const sectionByPair = new Map<string, RoadSection>();
+const allNodeIds = new Map(nodes.map((p, i) => [`${p.x},${p.y}`, i]));
+const sectionGrid = new Map<string, RoadSection[]>();
+for (const e of roadSections) {
+  for (const [a, b] of [
+    [e.a, e.b],
+    [e.b, e.a],
+  ]) {
+    adjacency[a].push({
+      to: b,
+      meters: e.meters,
+      limit: e.limit,
+      id: `${a}:${b}`,
+      allowed: true,
+    });
+    sectionByPair.set(`${a}:${b}`, e);
+  }
+  const a = nodes[e.a],
+    b = nodes[e.b];
+  for (
+    let x = Math.floor(Math.min(a.x, b.x) / 64);
+    x <= Math.floor(Math.max(a.x, b.x) / 64);
+    x++
+  )
+    for (
+      let y = Math.floor(Math.min(a.y, b.y) / 64);
+      y <= Math.floor(Math.max(a.y, b.y) / 64);
+      y++
+    ) {
+      const k = `${x}:${y}`;
+      if (!sectionGrid.has(k)) sectionGrid.set(k, []);
+      sectionGrid.get(k)!.push(e);
+    }
 }
-export function route(
+export const overpasses: {
+  x: number;
+  y: number;
+  upper: string;
+  lower: string;
+  angle: number;
+}[] = [];
+const checkedCrossings = new Set<string>();
+for (const group of sectionGrid.values())
+  for (let i = 0; i < group.length; i++)
+    for (let j = i + 1; j < group.length; j++) {
+      const a = group[i],
+        b = group[j],
+        key = [a.id, b.id].sort().join("/");
+      if (
+        checkedCrossings.has(key) ||
+        a.a === b.a ||
+        a.a === b.b ||
+        a.b === b.a ||
+        a.b === b.b
+      )
+        continue;
+      checkedCrossings.add(key);
+      const p = nodes[a.a],
+        q = nodes[a.b],
+        u = nodes[b.a],
+        v = nodes[b.b];
+      const den = cross(q.x - p.x, q.y - p.y, v.x - u.x, v.y - u.y);
+      if (Math.abs(den) < 1e-9) continue;
+      const t = cross(u.x - p.x, u.y - p.y, v.x - u.x, v.y - u.y) / den,
+        w = cross(u.x - p.x, u.y - p.y, q.x - p.x, q.y - p.y) / den;
+      if (t > 1e-5 && t < 1 - 1e-5 && w > 1e-5 && w < 1 - 1e-5)
+        overpasses.push({
+          x: p.x + t * (q.x - p.x),
+          y: p.y + t * (q.y - p.y),
+          upper: a.id,
+          lower: b.id,
+          angle: (Math.atan2(q.y - p.y, q.x - p.x) * 180) / Math.PI,
+        });
+    }
+checkedCrossings.clear();
+export function projectRoad(p: Point) {
+  let best:
+    | { point: Point; section: RoadSection; fraction: number; distance: number }
+    | undefined;
+  const x = Math.floor(p.x / 64),
+    y = Math.floor(p.y / 64);
+  for (let radius = 0; radius < 140; radius++) {
+    const candidates = new Set<RoadSection>();
+    for (let dx = -radius; dx <= radius; dx++)
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+        for (const e of sectionGrid.get(`${x + dx}:${y + dy}`) ?? [])
+          candidates.add(e);
+      }
+    for (const e of candidates) {
+      const a = nodes[e.a],
+        b = nodes[e.b],
+        dx = b.x - a.x,
+        dy = b.y - a.y;
+      const f = Math.max(
+        0,
+        Math.min(
+          1,
+          ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1),
+        ),
+      );
+      const point = { x: a.x + dx * f, y: a.y + dy * f },
+        d = distance(p, point);
+      if (!best || d < best.distance)
+        best = { point, section: e, fraction: f, distance: d };
+    }
+    if (best && best.distance < Math.max(0, radius - 1) * 64) return best;
+  }
+  if (!best) throw Error("Keine Straßendaten verfügbar.");
+  return best;
+}
+export function roadSectionBetween(a: Point, b: Point) {
+  const ai = allNodeIds.get(`${a.x},${a.y}`),
+    bi = allNodeIds.get(`${b.x},${b.y}`);
+  return (
+    (ai !== undefined && bi !== undefined
+      ? sectionByPair.get(`${ai}:${bi}`)
+      : undefined) ??
+    projectRoad({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }).section
+  );
+}
+function findRoute(
   a: Point,
   b: Point,
   mode: "road" | "air" | "water" = "road",
   blocked: ReadonlySet<string> = new Set(),
+  maxSpeed = 120,
+  delays: ReadonlyMap<string, number> = new Map(),
+  timeFactor = 1,
 ): Point[] {
   if (mode === "air") return [a, b];
   if (mode === "water") {
@@ -574,39 +751,81 @@ export function route(
       throw Error("Boote benötigen einen Wasserzugang.");
     return [a, { x: 1115, y: a.y }, { x: 1115, y: b.y }, b];
   }
-  const start = nearest(a),
-    goal = nearest(b),
-    open = new Set([start]),
-    cost = new Map([[start, 0]]),
-    prev = new Map<number, number>();
-  while (open.size) {
-    const current = [...open].sort(
-      (x, y) =>
-        cost.get(x)! +
-        distance(nodes[x], nodes[goal]) -
-        (cost.get(y)! + distance(nodes[y], nodes[goal])),
-    )[0];
-    if (current === goal) {
-      const result = [goal];
-      let c = goal;
-      while (prev.has(c)) {
-        c = prev.get(c)!;
-        result.unshift(c);
-      }
-      return [a, ...result.map((i) => nodes[i]), b];
-    }
-    open.delete(current);
-    for (const n of adjacency[current]) {
-      if (blocked.has(`${current}:${n}`)) continue;
-      const c = cost.get(current)! + distance(nodes[current], nodes[n]);
-      if (c < (cost.get(n) ?? Infinity)) {
-        cost.set(n, c);
-        prev.set(n, current);
-        open.add(n);
-      }
-    }
-  }
-  throw Error("Kein erreichbarer Straßenweg.");
+  const start = projectRoad(a),
+    goal = projectRoad(b);
+  if (start.distance > 25 || goal.distance > 25)
+    throw Error("Ziel hat keine erreichbare Straßenanbindung.");
+  const cost = (e: RoadSection, f: number) =>
+    ((e.meters * Math.abs(f)) / (Math.min(maxSpeed, e.limit) / 3.6)) *
+      timeFactor +
+    (Math.abs(f) > 1e-7
+      ? (delays.get(e.id) ?? delays.get(`${e.b}:${e.a}`) ?? 0)
+      : 0);
+  const open = (e: RoadSection) =>
+    !blocked.has(e.id) && !blocked.has(`${e.b}:${e.a}`);
+  const directCost =
+    start.section === goal.section && open(start.section)
+      ? cost(start.section, goal.fraction - start.fraction)
+      : Infinity;
+  const starts: [number, number][] = [];
+  const goals = new Map<number, number>();
+  if (open(start.section) || start.fraction < 1e-7)
+    starts.push([start.section.a, cost(start.section, start.fraction)]);
+  if (open(start.section) || start.fraction > 1 - 1e-7)
+    starts.push([start.section.b, cost(start.section, 1 - start.fraction)]);
+  if (open(goal.section) || goal.fraction < 1e-7)
+    goals.set(goal.section.a, cost(goal.section, goal.fraction));
+  if (open(goal.section) || goal.fraction > 1 - 1e-7)
+    goals.set(goal.section.b, cost(goal.section, 1 - goal.fraction));
+  const result = fastestPath(
+    adjacency,
+    starts,
+    goals,
+    maxSpeed,
+    blocked,
+    delays,
+    timeFactor,
+  );
+  if (directCost <= result.seconds)
+    return [a, start.point, goal.point, b].filter(
+      (p, i, ps) => !i || distance(p, ps[i - 1]) > 1e-7,
+    );
+  return [
+    a,
+    start.point,
+    ...result.path.map((i) => nodes[i]),
+    goal.point,
+    b,
+  ].filter((p, i, ps) => !i || distance(p, ps[i - 1]) > 1e-7);
+}
+const routeCache = new Map<string, Point[]>();
+export function route(
+  a: Point,
+  b: Point,
+  mode: "road" | "air" | "water" = "road",
+  blocked: ReadonlySet<string> = new Set(),
+  maxSpeed = 120,
+  delays: ReadonlyMap<string, number> = new Map(),
+  timeFactor = 1,
+) {
+  const key = JSON.stringify([
+    a.x,
+    a.y,
+    b.x,
+    b.y,
+    mode,
+    maxSpeed,
+    timeFactor,
+    [...blocked].sort(),
+    [...delays].sort(),
+  ]);
+  const cached = routeCache.get(key);
+  if (cached) return [...cached];
+  const result = findRoute(a, b, mode, blocked, maxSpeed, delays, timeFactor);
+  if (routeCache.size >= 512)
+    routeCache.delete(routeCache.keys().next().value!);
+  routeCache.set(key, result);
+  return [...result];
 }
 export const length = (path: Point[]) =>
   path.slice(1).reduce((s, p, i) => s + distance(path[i], p), 0);

@@ -1,3 +1,5 @@
+import { routePlan } from "./traffic";
+import type { Alarm } from "./schema";
 import type { Save, Vehicle, Building } from "../model";
 import { vt } from "../catalog";
 import { nodes, nearest, route, length, METERS_PER_UNIT } from "../world";
@@ -127,30 +129,48 @@ export function planTurnout(s: Save, v: Vehicle, fallback: number) {
     .map((p) => {
       const d = personDuty(s, p),
         reason = personAvailable(s, p);
-      const available =
+      let available =
         !reason &&
         (!vt(v.type).training || p.skills.includes(vt(v.type).training)) &&
         (profile.kind !== "ff" ||
           sample(key(`${p.id}:${v.assignment}`), "arrival", 0) * 100 <
             d.reachability);
-      let seconds = 0;
+      let seconds = 0,
+        commuteReason = "";
       if (profile.kind === "ff" && !d.standby) {
         const date = new Date((s.time + 3600) * 1000),
           hour = date.getUTCHours(),
           day = date.getUTCDay();
         const work = d.workdays && day > 0 && day < 6 && hour >= 8 && hour < 17;
         const origin = nodes[work ? d.workNode : d.homeNode];
-        const speed =
-          d.commute === "car" ? 40 : d.commute === "bicycle" ? 15 : 5;
-        seconds =
-          ((length(route(origin, b.pos)) * METERS_PER_UNIT) / (speed / 3.6)) *
-          Math.max(1, s.environment?.density || 1);
-        seconds *=
-          s.environment?.kind === "ice" || s.environment?.kind === "snow"
-            ? 1.4
-            : s.environment?.rain
-              ? 1.15
-              : 1;
+        if (d.commute === "car") {
+          try {
+            const plan = routePlan(
+              s,
+              { type: "fustw" },
+              origin,
+              b.pos,
+              "normal",
+            );
+            seconds = plan.seconds;
+            if (plan.blockedUntil) {
+              available = false;
+              commuteReason =
+                "Straßenanreise gesperrt; nach Freigabe erneut alarmieren";
+            }
+          } catch {
+            available = false;
+            commuteReason = "Kein Straßenweg zur Wache";
+          }
+        } else {
+          const speed = d.commute === "bicycle" ? 15 : 5;
+          seconds =
+            (length(route(origin, b.pos, "road", new Set(), speed)) *
+              METERS_PER_UNIT) /
+            (speed / 3.6);
+          if (s.environment?.kind === "ice" || s.environment?.kind === "snow")
+            seconds *= 1.4;
+        }
         seconds += hour < 6 || hour >= 23 ? 90 : 30;
       }
       return {
@@ -161,7 +181,7 @@ export function planTurnout(s: Save, v: Vehicle, fallback: number) {
           ? profile.kind === "ff" && !d.standby
             ? "Auf dem Weg zur Wache"
             : "Auf der Wache"
-          : reason || "Alarm nicht quittiert",
+          : reason || commuteReason || "Alarm nicht quittiert",
       };
     });
   const minimum = crewRequired(s, v),
@@ -222,4 +242,13 @@ export function checkReserveSelection(s: Save, vehicles: Vehicle[]) {
     if (available - vehicles.filter((v) => v.home === home).length < count)
       throw Error("Auswahl unterschreitet die konfigurierte Gebietsreserve.");
   }
+}
+
+export function turnoutEstimate(s: Save, v: Vehicle, alarm?: Alarm) {
+  const selected = alarm ?? s.desk.alarms[v.home] ?? "dme";
+  return planTurnout(
+    s,
+    structuredClone(v),
+    selected === "station" ? 30 : selected === "siren" ? 45 : 60,
+  );
 }

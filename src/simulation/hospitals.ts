@@ -1,10 +1,5 @@
 import type { Save, Mission, Vehicle } from "../model";
-import {
-  publicHospital,
-  distance,
-  METERS_PER_UNIT,
-  type Point,
-} from "../world";
+import { publicHospital, distance, type Point } from "../world";
 import { routePlan } from "./traffic";
 import { specialties } from "./organizations-schema";
 import { transportCandidates } from "./patients";
@@ -58,14 +53,14 @@ export function hospitalOptions(
         )
         .reduce((n, v) => n + v.patients, 0);
       const missing = [...needs].filter((n) => !h.specialties.includes(n));
-      let seconds = (distance(origin, h.pos) * METERS_PER_UNIT) / (60 / 3.6);
-      let reachable = true;
-      if (vehicle) {
-        try {
-          seconds = routePlan(s, vehicle, origin, h.pos).seconds;
-        } catch {
-          reachable = false;
-        }
+      let seconds = Infinity,
+        reachable = true;
+      try {
+        const plan = routePlan(s, vehicle ?? { type: "rtw" }, origin, h.pos);
+        seconds = plan.seconds;
+        reachable = !plan.blockedUntil;
+      } catch {
+        reachable = false;
       }
       const reason = !h.open
         ? "Abgemeldet"

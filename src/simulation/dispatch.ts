@@ -1,4 +1,8 @@
-import { planTurnout, checkReserveSelection } from "./staffing";
+import {
+  planTurnout,
+  turnoutEstimate,
+  checkReserveSelection,
+} from "./staffing";
 import { reportUnit, telemetry } from "./reports";
 import { effectiveSkills } from "./major-resources";
 import type { Save, Mission } from "../model";
@@ -31,9 +35,12 @@ export function propose(
     )
     .map((v) => {
       try {
+        const plan = routePlan(s, v, v.path.at(-1)!, m.pos);
         return {
           v,
-          eta: routePlan(s, v, v.path.at(-1)!, m.pos).seconds,
+          eta: plan.blockedUntil
+            ? Infinity
+            : plan.seconds + turnoutEstimate(s, v, aao.alarm),
         };
       } catch {
         return { v, eta: Infinity };

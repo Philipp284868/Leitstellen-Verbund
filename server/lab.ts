@@ -1,3 +1,4 @@
+import { xpForLevel } from "../src/progression";
 // Offline developer sandbox. Never imported by the HTTP server or client.
 import { z } from "zod";
 import { createHash } from "node:crypto";
@@ -82,7 +83,7 @@ export function createLab(seed: number): Lab {
   s.generation = `lab-${seed}`;
   s.seed = seed;
   s.tutorial = 6;
-  s.xp = 150;
+  s.xp = xpForLevel(6);
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
   tick(s, s.time + 30, {}, false, false);
   for (const [kind, count] of [

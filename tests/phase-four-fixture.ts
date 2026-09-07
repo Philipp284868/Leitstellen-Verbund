@@ -1,3 +1,4 @@
+import { xpForLevel } from "../src/progression";
 import { organizationFixture } from "./phase-three-fixture";
 import { vt } from "../src/catalog";
 import { nodes, distance } from "../src/world";
@@ -10,7 +11,7 @@ export function majorFixture(
 ) {
   const s = organizationFixture(owner, template, `four-${identity}`);
   s.money = 1000000;
-  s.xp = 1500;
+  s.xp = xpForLevel(30);
   s.buildings[0].level = 10;
   s.missions[0].control!.briefed = true;
   s.missions[0].control!.stage = "working";

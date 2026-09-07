@@ -1,5 +1,13 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.12.0: Progression, 100-km-Region und Straßenfahrzeiten
+
+Die Level-10-Sperre entfällt. Eine gemeinsame XP-Kurve, gestaffelte Freischaltungen und eine bestandsschützende Migration ergänzen den vollständigen Spielablauf. Die organische Welt wächst ohne Verschiebung alter Straßenknoten auf 100 × 100 km. Fahrzeuge nutzen Abschnittslimits, zeitbasierte Routen, Beschleunigung und Bremsung; Karte, ETA und Ankunft teilen dasselbe Modell.
+
+[Änderungen, Freischalttabelle und Migration](docs/PROGRESSION-KARTE.md) · [Reproduzierbare Balancing-Schätzung](docs/PROGRESSION-AUDIT.json) · [Tatsächliche Abnahme](docs/ABNAHME-2.12.md)
+
+Vor dem Update den Server stoppen und sichern. Optional `node dist/server/cli.js migration-preview` mit dem neuen Build ausführen. SQLite-Schema 11 wird beim regulären Start nach automatischer Sicherung übernommen. `main` bleibt der AMP-Zweig; keine automatische Produktionsbereitstellung.
+
 ## Version 2.11.0: Auswertung und Feinschliff (Phase 5)
 
 Persistente Einsatzberichte und Statistiken, CSV/JSON-Export, Druckansicht und Ereignis-Replay ergänzen den vollständigen Spielablauf. Eigene Fahrstrecken und Zeitsegmente werden serverseitig gemessen. Historische Lücken bleiben als nicht erfasst erkennbar. Ein zusätzlicher Brandmeldeanlagen-Fall wird erst durch Erkundung als Fehlalarm bestätigt; der Katalog umfasst jetzt 41 Einsatzarten.
@@ -68,16 +76,16 @@ Die vorhandene Karte, acht Gebäudetypen, 20 Fahrzeugtypen, 40 Einsätze, Person
 
 Branch **main** für den Spielserver, **dev** für Entwicklung. Es werden keine zusätzlichen dauerhaften Branches benötigt.
 
-| Einstellung | Wert |
-| --- | --- |
-| Node.js Release Stream | 24 |
-| Node.js Version | leer |
-| npm Install Type | None |
-| Run App Setup Commands | aktiviert |
-| App Setup Commands | `node scripts/amp-setup.mjs` |
-| App Name | `dist/server/index.js` |
-| App Installation Location | leer |
-| Run App Pre-start Commands | deaktiviert |
+| Einstellung                | Wert                         |
+| -------------------------- | ---------------------------- |
+| Node.js Release Stream     | 24                           |
+| Node.js Version            | leer                         |
+| npm Install Type           | None                         |
+| Run App Setup Commands     | aktiviert                    |
+| App Setup Commands         | `node scripts/amp-setup.mjs` |
+| App Name                   | `dist/server/index.js`       |
+| App Installation Location  | leer                         |
+| Run App Pre-start Commands | deaktiviert                  |
 
 Stoppen → Aktualisieren → erfolgreichen Build abwarten → Start. Vorhandene `.env` und den dauerhaften Datenordner nicht löschen. Keine neue Konfigurationsdatei und keine einmalige Startdatei notwendig. Nach dem Start Browser neu laden und **Neues Konto erstellen** wählen oder das bestehende Konto verwenden.
 

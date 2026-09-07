@@ -1,3 +1,4 @@
+import { unlockLevel } from "./progression";
 export type Org =
   | "Feuerwehr"
   | "Rettungsdienst"
@@ -159,11 +160,20 @@ const v = (
   price,
   crew,
   skills,
-  level,
+  level: unlockLevel("vehicle", id) || level,
   training,
   mode,
   capacity,
-  speed: mode === "air" ? 180 : mode === "water" ? 30 : 60,
+  speed:
+    mode === "air"
+      ? 180
+      : mode === "water"
+        ? 30
+        : ["nef", "fustw", "elw"].includes(id)
+          ? 120
+          : ["rtw", "ktw", "pmtw", "tmtw"].includes(id)
+            ? 110
+            : 90,
 });
 export const vehicles: VehicleType[] = [
   v("tsf", "TSF-W", "fire", 18000, 6, { fire: 1, water: 1 }),
@@ -668,6 +678,8 @@ export const extensions = [
     types: ["nef"],
   },
 ];
+for (const b of buildings) b.level = unlockLevel("building", b.id);
+for (const e of extensions) e.level = unlockLevel("extension", e.id);
 export const vt = (id: string) => {
   const x = vehicles.find((v) => v.id === id);
   if (!x) throw Error("Unbekannter Fahrzeugtyp");

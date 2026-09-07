@@ -1,3 +1,4 @@
+import { xpForLevel } from "../src/progression";
 import { describe, it, expect } from "vitest";
 import { fresh, validate, level, achievementProgress } from "../src/model";
 import {
@@ -118,7 +119,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   });
   it("Ausbildung blockiert Besatzung und schließt zeitbasiert ab", () => {
     const s = setup();
-    s.xp = 150;
+    s.xp = xpForLevel(5);
     apply(s, { type: "build", kind: "school", pos: nodes[3] });
     tick(s, s.time + 30);
     apply(s, { type: "train", person: s.people[0].id, skill: "Drehleiter" });
@@ -126,7 +127,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     tick(s, s.time + 200);
     expect(s.people[0].skills).toContain("Drehleiter");
     expect(readiness(s, s.vehicles[0])).toBe("");
-    expect(level(s)).toBe(2);
+    expect(level(s)).toBe(5);
   });
   it("falsche Fahrzeuge erfüllen keine Brandanforderung", () => {
     const s = setup();
@@ -140,7 +141,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   });
   it("behandelt Patienten, fährt zum eigenen Krankenhaus und gibt Betten frei", () => {
     const s = setup();
-    s.xp = 300;
+    s.xp = xpForLevel(12);
     money(s, 200000, "Testkapital");
     apply(s, { type: "build", kind: "ems", pos: nodes[3] });
     apply(s, { type: "build", kind: "hospital", pos: nodes[6] });

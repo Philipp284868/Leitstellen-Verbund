@@ -1,8 +1,11 @@
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../region";
 import { z } from "zod";
 const time = z.number().finite().nonnegative();
 const value = z.number().finite().min(0).max(100);
 const id = z.string().min(1).max(100);
-const point = z.object({ x: time.max(6240), y: time.max(4080) }).strict();
+const point = z
+  .object({ x: time.max(WORLD_WIDTH), y: time.max(WORLD_HEIGHT) })
+  .strict();
 export const weatherKinds = [
   "sun",
   "cloud",
@@ -54,6 +57,28 @@ export const environmentSchema = z
   .strict();
 export const journeySchema = z
   .object({
+    motion: z
+      .array(
+        z
+          .object({
+            from: point,
+            to: point,
+            meters: time,
+            limit: time.positive(),
+            edge: id,
+            start: time,
+            duration: time,
+            velocity: time,
+            acceleration: z.number().finite(),
+            offset: time,
+            traveled: time,
+          })
+          .strict(),
+      )
+      .max(20000)
+      .optional(),
+    motionVersion: z.literal(1).optional(),
+    wait: time.optional(),
     mode: z.enum(["normal", "priority", "emergency"]),
     planned: z.array(point).max(4096),
     plannedSeconds: time,
