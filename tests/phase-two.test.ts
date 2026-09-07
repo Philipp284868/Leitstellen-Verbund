@@ -21,7 +21,7 @@ import {
 } from "../src/simulation/faults";
 import { patientTick, patientsReady } from "../src/simulation/patients";
 import { deskCommand } from "../src/simulation/commands";
-import { publicSave } from "../src/simulation/incidents";
+import { publicSave, radioAction } from "../src/simulation/incidents";
 import { alarm } from "../src/simulation/dispatch";
 import { tick, capacity, readiness } from "../src/engine";
 import { validate } from "../src/model";
@@ -231,6 +231,13 @@ it("Defekt bindet Fahrzeug, verhindert Fähigkeiten und Ankunft, Reparatur ist w
   expect(v.path).toEqual([pos]);
   expect(v.assignment).toBe(assignment);
   expect(v.status).toBe("travel");
+  radioAction(
+    s,
+    m,
+    m.control!.radio.find((r) => r.details.includes("ausgefallen"))!.id,
+    "close",
+    "owner",
+  );
   repairVehicle(s, v, "owner");
   const at = v.fault!.repairAt;
   repairVehicle(s, v, "owner");
@@ -242,6 +249,15 @@ it("Defekt bindet Fahrzeug, verhindert Fähigkeiten und Ankunft, Reparatur ist w
   expect(v.assignment).toBe(assignment);
   expect(
     m.control!.events.filter((e) => e.type === "REPAIR_ORDERED"),
+  ).toHaveLength(1);
+  breakVehicle(s, v, "engine");
+  expect(
+    m.control!.radio.filter((r) => r.details.includes("ausgefallen")),
+  ).toHaveLength(2);
+  expect(
+    m.control!.radio.filter(
+      (r) => r.details.includes("ausgefallen") && r.state === "open",
+    ),
   ).toHaveLength(1);
 });
 it("einzelne Patienten verschlechtern sich, benötigen Notarzt, werden versorgt und transportiert", () => {
@@ -297,6 +313,30 @@ it("Reanimation kann reproduzierbar ROSC oder Tod ergeben; fehlende Kräfte werd
   expect(dead.p.transport).toBe("none");
   expect(run(true)).toEqual(run(true));
   expect(run(true).p.health).toBeGreaterThan(12);
+});
+it("weist einem defekten RTW keinen neuen Patienten zu", () => {
+  const s = emsProfile("Defekter RTW"),
+    m = s.missions[0],
+    v = s.vehicles.find((v) => v.type === "rtw")!;
+  attachIncident(s, m);
+  attachDynamics(s, m);
+  m.control!.briefed = true;
+  m.phase = "transport";
+  m.dynamics!.hazards.forEach((h) => {
+    h.value = 0;
+    h.resolved = true;
+  });
+  m.dynamics!.patients[0].treatment = 100;
+  v.status = "scene";
+  v.mission = m.id;
+  v.assignment = "broken-rtw";
+  v.path = [m.pos];
+  v.arrive = s.time;
+  breakVehicle(s, v, "technical");
+  tick(s, s.time + 5, {}, false, false);
+  expect(v.patients).toBe(0);
+  expect(m.transports).toEqual([]);
+  expect(m.dynamics!.patients[0].transport).toBe("scene");
 });
 it("Versorgungsschwerpunkte wirken nur mit realen Kräften; Priorisierung verteilt knappe Versorgung", () => {
   const s = emsProfile("Versorgung"),

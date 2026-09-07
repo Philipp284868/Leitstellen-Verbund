@@ -68,6 +68,7 @@ export const incidentSchema = z
     reportedTemplate: z.string().max(100),
     briefed: z.boolean(),
     firstArrival: z.string().max(100),
+    deficit: z.string().max(600).optional(),
     facts: z
       .array(
         z

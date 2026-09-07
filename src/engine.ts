@@ -609,6 +609,7 @@ export function tick(
           (v) =>
             v.mission === m.id &&
             v.status === "scene" &&
+            (!v.fault || v.fault.state === "repaired") &&
             !m.transports.some((t) => t.assignment === v.assignment),
         )) {
           const seats = Math.min(remaining, vt(v.type).capacity);

@@ -70,7 +70,13 @@ export function request(
   const c = m.control!;
   if (
     c.radio.length >= 50 ||
-    c.radio.some((r) => r.reason === reason && r.details === details)
+    c.radio.some(
+      (r) =>
+        r.state === "open" &&
+        r.reason === reason &&
+        r.vehicle === vehicle &&
+        r.details === details,
+    )
   )
     return;
   c.radio.push({
@@ -130,7 +136,8 @@ export function afterVehicles(s: Save) {
     }
     if (c.briefed && atScene.length) {
       const deficit = missing(m, capacity(s, m.id));
-      if (deficit.length)
+      const signature = deficit.map(([k, n]) => `${k}:${n}`).join(";");
+      if (deficit.length && c.deficit !== signature)
         request(
           s,
           m,
@@ -139,6 +146,7 @@ export function afterVehicles(s: Save) {
           `Nachforderung: ${deficit.map(([k, n]) => `${capabilities[k] || k} × ${n}`).join(", ")}`,
           "DRINGEND",
         );
+      c.deficit = signature;
     }
   }
 }
