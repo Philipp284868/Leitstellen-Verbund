@@ -217,10 +217,10 @@ export function Friends({ s }: { s: Save }) {
     <section>
       <p>
         Alle Konten auf diesem Server sind automatisch verbunden. Ein
-        geschlossener Browser beendet keinen Einsatz. Neue Einsätze werden
-        automatisch freigegeben. Wachen bleiben sichtbar, auch wenn gerade kein
-        Fahrzeug unterstützt. Bestehende private Einsätze kannst du einzeln
-        freigeben.
+        geschlossener Browser beendet keinen Einsatz. Neue Einsätze werden nicht
+        mehr automatisch freigegeben. Diese Ansicht dient alten Unterstützungen,
+        wenn ein Fahrzeug unterstützt. Bestehende private Einsätze kannst du
+        einzeln freigeben.
       </p>
       {net.friends.map((f) => (
         <article className="friend" key={f.id}>
@@ -516,12 +516,12 @@ export function Help() {
           Fuhrpark „Besetzen“ wählen.
         </li>
         <li>
-          Einen Einsatz auswählen, Anforderungen prüfen, Fahrzeuge markieren und
-          alarmieren.
+          Notruf annehmen, Ort und Meldebild erfragen. Mit AAO oder freier
+          Auswahl geeignete Fahrzeuge alarmieren.
         </li>
         <li>
-          Fahrzeuge fahren auf dem lokalen Straßennetz. Nur passende Fähigkeiten
-          am Einsatzort lassen den Fortschritt steigen.
+          Ausrücken und FMS auf dem lokalen Straßennetz verfolgen. Nach Ankunft
+          die erste Lagemeldung aufnehmen und fehlende Kräfte nachfordern.
         </li>
         <li>
           Nach Abschluss werden Credits einmalig gebucht und Fahrzeuge kehren
@@ -546,21 +546,20 @@ export function Help() {
       </p>
       <h3>Serverzeit und Verbindung</h3>
       <p>
-        Die Geschwindigkeit ist zwischen 1× und 32× wählbar. Neue Einsätze
-        treffen unabhängig davon einzeln mit 90–210 echten Sekunden Abstand ein;
-        höchstens zwei eigene offene Einsätze je Welt. Der Server simuliert
-        deine Leitstelle auch bei geschlossenem Browser. Ohne Serververbindung
-        können keine Aktionen bestätigt werden. Nach Serverstillstand werden
-        höchstens vier Stunden nachberechnet.
+        Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln mit
+        90–210 echten Sekunden Abstand ein; höchstens zwei eigene offene
+        Einsätze je Welt. Der Server simuliert deine Leitstelle auch bei
+        geschlossenem Browser. Ohne Serververbindung können keine Aktionen
+        bestätigt werden. Nach Serverstillstand werden höchstens vier Stunden
+        nachberechnet.
       </p>
       <h3>Freunde und Belohnungen</h3>
       <p>
-        Alle registrierten Konten erreichen denselben Server. Neue
-        Multiplayer-Einsätze werden automatisch freigegeben; andere Spieler
-        bieten ihre eigenen einsatzbereiten Fahrzeuge an. Fremde Wachen bleiben
-        sichtbar. Der Einsatzgeber erhält bei bestätigter Unterstützung die
-        Hälfte der Belohnung, die andere Hälfte teilen sich die tatsächlich
-        angekommenen Helfer. Der Server speichert alle Gutschriften atomar.
+        Unter Freunde können bestehende Benutzer als Disponenten derselben
+        Leitstelle eingeladen werden. Nach Annahme arbeiten sie am gemeinsamen
+        Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht.
+        Leitstellenübergreifende Unterstützungsanfragen folgen in Phase 3.
+        Laufende alte Unterstützungen werden weitergeführt.
       </p>
       <h3>Speichern und Wiederherstellen</h3>
       <p>

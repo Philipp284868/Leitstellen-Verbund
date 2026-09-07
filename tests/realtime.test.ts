@@ -1,3 +1,5 @@
+import { legacyIncident } from "../src/simulation/incidents";
+import { syncFms } from "../src/simulation/fms";
 import { it, expect } from "vitest";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -98,10 +100,15 @@ it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit in
           ),
         ).speed,
       ).toBe(1);
+    const expected = structuredClone(old);
+    expected.speed = 1;
+    for (const m of [...expected.missions, ...expected.archive])
+      legacyIncident(expected, m);
+    syncFms(expected);
     const game = new Game(db);
     for (const mode of ["single", "multi"] as const) {
       const s = db.all(mode).get(id)!;
-      expect(s).toEqual({ ...old, speed: 1 });
+      expect(s).toEqual(expected);
       expect(() =>
         game.command(
           id,

@@ -39,10 +39,7 @@ it("trennt Besitz, Guthaben, Aktionen und Multiplayeransichten auch nach Neustar
     expect(db.all("single").get(a)!.buildings).toHaveLength(1);
     expect(db.all("single").get(a)!.money).toBe(195000);
     expect(db.all().get(a)).toEqual(before);
-    expect(
-      game.view(b, new Set()).network.friends.find((f) => f.id === a)!
-        .buildings,
-    ).toHaveLength(0);
+    expect(game.view(b, new Set()).network.friends).toHaveLength(0);
     expect(() => game.command(a, cmd, "multi")).toThrow("Aktions-ID");
     expect(() =>
       game.command(a, command({ type: "share", id: "anything" }), "single"),
@@ -95,7 +92,7 @@ it("erzeugt einzeln mit echten, versetzten Wartezeiten und hÃ¶chstens zwei EinsÃ
     const s = db.all().get(a)!,
       t = db.all().get(b)!;
     expect(s.missions).toHaveLength(1);
-    expect(s.missions[0].shared).toBe(true);
+    expect(s.missions[0].shared).toBe(false);
     expect(s.missionWait).toBeGreaterThanOrEqual(90);
     expect(s.missionWait).toBeLessThanOrEqual(210);
     expect(s.missionWait).not.toBe(t.missionWait);
@@ -129,12 +126,7 @@ it("Sicherungen enthalten beide Welten und private Spielfinanzen werden nicht ge
       "single",
     );
     db.save(a, owned(established("Anna"), a));
-    const friend = game
-      .view(b, new Set())
-      .network.friends.find((f) => f.id === a)!;
-    expect(friend.buildings).toHaveLength(1);
-    expect(friend).not.toHaveProperty("money");
-    expect(friend).not.toHaveProperty("people");
+    expect(game.view(b, new Set()).network.friends).toEqual([]);
     const backup = await db.backup();
     expect((await readFile(backup)).length).toBeGreaterThan(0);
   } finally {

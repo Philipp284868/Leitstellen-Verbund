@@ -1,3 +1,4 @@
+import { deskSchema, incidentSchema } from "./simulation/schema";
 import { migrateMap, validLegacySite } from "./world-migration";
 import { z } from "zod";
 import { bt, vt, mt, BALANCE } from "./catalog";
@@ -72,6 +73,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    control: incidentSchema.optional(),
     id,
     template: id,
     pos: point,
@@ -108,6 +110,7 @@ export const journalSchema = z
   .strict();
 export const saveSchema = z
   .object({
+    desk: deskSchema,
     version: z.literal(1),
     world: z.literal(WORLD),
     generation: id,

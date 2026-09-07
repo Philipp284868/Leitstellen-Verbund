@@ -1,0 +1,251 @@
+import type { Save, Mission } from "../model";
+import { missing, capacity } from "../engine";
+import { capabilities, mt } from "../catalog";
+import { record, simId } from "./events";
+import { syncFms, setFms, operativeCode } from "./fms";
+import { callsTick } from "./calls";
+import type { Incident } from "./schema";
+export function legacyIncident(s: Save, m: Mission) {
+  if (m.control) return;
+  m.control = {
+    priority: "NORMAL",
+    legacy: true,
+    stage:
+      m.phase === "done"
+        ? "closed"
+        : m.phase === "working"
+          ? "working"
+          : "disposition",
+    locationKnown: true,
+    reportedTemplate: m.template,
+    briefed: true,
+    firstArrival: "",
+    facts: [
+      {
+        key: "legacy",
+        text: mt(m.template).name,
+        source: "migration",
+        confidence: "bestätigt",
+      },
+    ],
+    calls: [],
+    radio: [],
+    events: [],
+  };
+  record(
+    s,
+    m,
+    "MIGRATED",
+    "Bestehender Einsatz übernommen. Frühere Einzelmeldungen wurden nicht aufgezeichnet.",
+  );
+}
+export function beforeStep(s: Save) {
+  callsTick(s);
+  for (const v of s.vehicles)
+    if (v.status === "alarmed" && v.depart <= s.time) {
+      v.status = "travel";
+      const m = s.missions.find((m) => m.id === v.mission);
+      if (m) {
+        if (m.control?.stage === "alarming") m.control.stage = "enroute";
+        record(
+          s,
+          m,
+          "VEHICLE_DEPARTED",
+          `${v.name} ausgerückt; Anfahrt begonnen.`,
+          "server",
+          v.id,
+        );
+      }
+      setFms(s, v, 3);
+    }
+}
+function request(
+  s: Save,
+  m: Mission,
+  vehicle: string,
+  reason: "arrival" | "request" | "question",
+  details: string,
+  priority: Incident["radio"][number]["priority"] = "NORMAL",
+) {
+  const c = m.control!;
+  if (
+    c.radio.length >= 50 ||
+    c.radio.some((r) => r.reason === reason && r.details === details)
+  )
+    return;
+  c.radio.push({
+    id: simId(s),
+    vehicle,
+    reason,
+    priority,
+    state: "open",
+    created: s.time,
+    answered: 0,
+    details,
+  });
+  record(s, m, "SPEAK_REQUESTED", details, "server", vehicle);
+  const v = s.vehicles.find((v) => v.id === vehicle);
+  if (v)
+    setFms(s, v, priority === "NOTFALL" || priority === "PRIORITÄT" ? 0 : 5);
+}
+export function afterVehicles(s: Save) {
+  syncFms(s);
+  for (const m of s.missions) {
+    const c = m.control;
+    if (!c || c.legacy) continue;
+    const atScene = s.vehicles.filter(
+      (v) => v.mission === m.id && v.status === "scene",
+    );
+    for (const v of atScene)
+      if (
+        !c.events.some(
+          (e) =>
+            e.type === "VEHICLE_ARRIVED" &&
+            e.vehicle === v.id &&
+            e.assignment === v.assignment,
+        )
+      )
+        record(
+          s,
+          m,
+          "VEHICLE_ARRIVED",
+          `${v.name} an der Einsatzstelle.`,
+          "server",
+          v.id,
+        );
+    if (!c.firstArrival && atScene.length) {
+      c.firstArrival = atScene[0].id;
+      c.stage = "recon";
+      request(
+        s,
+        m,
+        c.firstArrival,
+        "arrival",
+        "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
+        c.priority,
+      );
+    }
+    if (c.briefed && atScene.length) {
+      const deficit = missing(m, capacity(s, m.id));
+      if (deficit.length)
+        request(
+          s,
+          m,
+          atScene[0].id,
+          "request",
+          `Nachforderung: ${deficit.map(([k, n]) => `${capabilities[k] || k} × ${n}`).join(", ")}`,
+          "DRINGEND",
+        );
+    }
+  }
+}
+export function radioAction(
+  s: Save,
+  m: Mission,
+  id: string,
+  op: "report" | "request" | "question" | "close",
+  actor: string,
+) {
+  const c = m.control,
+    r = c?.radio.find((r) => r.id === id);
+  if (!c || !r) throw Error("Sprechwunsch fehlt.");
+  if (r.state === "handled") return;
+  if (!c.briefed && r.reason === "arrival") {
+    c.briefed = true;
+    c.reportedTemplate = m.template;
+    c.stage = "working";
+    c.facts.push({
+      key: "recon",
+      text: c.secret?.detail ?? mt(m.template).name,
+      source: r.vehicle,
+      confidence: "bestätigt",
+    });
+    record(
+      s,
+      m,
+      "REPORT_RECEIVED",
+      c.secret?.detail ?? mt(m.template).name,
+      actor,
+      r.vehicle,
+    );
+  }
+  if (op === "question") {
+    if (r.questioned) return;
+    r.questioned = true;
+    record(
+      s,
+      m,
+      "RADIO_ANSWER",
+      `Rückfrage beantwortet: ${
+        missing(m, capacity(s, m.id))
+          .map(([k, n]) => `${capabilities[k] || k} × ${n}`)
+          .join(", ") || "Kräfte vor Ort ausreichend"
+      }.`,
+      actor,
+      r.vehicle,
+    );
+    return;
+  }
+  if (op === "request")
+    record(
+      s,
+      m,
+      "REINFORCEMENT_REQUESTED",
+      `${r.details} – Disposition weiterer Kräfte angefordert.`,
+      actor,
+      r.vehicle,
+    );
+  r.state = "handled";
+  r.answered = s.time;
+  record(
+    s,
+    m,
+    "SPEAK_HANDLED",
+    `Sprechwunsch erledigt (${op}).`,
+    actor,
+    r.vehicle,
+  );
+  const v = s.vehicles.find((v) => v.id === r.vehicle);
+  if (v && !c.radio.some((x) => x.vehicle === v.id && x.state === "open"))
+    setFms(s, v, operativeCode(v), actor, "Funkgespräch beendet");
+}
+export function afterStep(s: Save) {
+  for (const m of s.missions)
+    if (m.control?.briefed && m.phase === "transport")
+      m.control.stage = "transport";
+  for (const m of s.archive)
+    if (m.control && m.control.stage !== "closed") {
+      m.control.stage = "closed";
+      for (const c of m.control.calls)
+        if (c.state !== "ended") {
+          if (c.state === "active") c.duration += s.time - c.started;
+          c.state = "ended";
+          c.ended = s.time;
+        }
+      for (const r of m.control.radio)
+        if (r.state === "open") {
+          r.state = "handled";
+          r.answered = s.time;
+        }
+      record(
+        s,
+        m,
+        "MISSION_COMPLETED",
+        `Einsatz abgeschlossen: ${mt(m.template).name}. Belohnung serverseitig gebucht.`,
+      );
+    }
+  syncFms(s);
+}
+export function publicSave(source: Save): Save {
+  const s = structuredClone(source);
+  s.seed = 0;
+  for (const m of [...s.missions, ...s.archive])
+    if (m.control) {
+      delete m.control.secret;
+      if (!m.control.briefed && !m.control.legacy) {
+        m.template = m.control.reportedTemplate || "incoming";
+        if (!m.control.locationKnown) m.pos = { x: 0, y: 0 };
+      }
+    }
+  return s;
+}

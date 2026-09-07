@@ -1,3 +1,4 @@
+import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -110,7 +111,7 @@ test("Modi trennen Guthaben und Wachen, mehrere Tabs und Reload behalten ihre ei
   expect(app.db.all("single").get(id)!.money).toBe(195000);
   await second.close();
 });
-test("Multiplayer zeigt fremde Wachen ohne Fahrzeugunterstützung und neue Einsätze automatisch", async ({
+test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat", async ({
   browser,
 }) => {
   const ca = await browser.newContext(),
@@ -120,17 +121,13 @@ test("Multiplayer zeigt fremde Wachen ohne Fahrzeugunterstützung und neue Eins�
   const first = await account(a);
   await account(b);
   await play(b);
-  await expect(
-    b.locator(`svg.map [aria-label="Feuerwache 1 von Alex"]`).first(),
-  ).toBeVisible();
-  expect(
-    app.game
-      .view(first.id, new Set())
-      .network.friends.some((f) => f.buildings.length > 0),
-  ).toBe(true);
-  await expect(b.locator(".shared-inbox b")).not.toHaveText("0");
+  await expect(b.locator('svg.map [aria-label*="von Alex"]')).toHaveCount(0);
+  expect(app.game.view(first.id, new Set()).network.friends).toEqual([]);
   await b.locator(".shared-inbox").click();
-  await expect(b.getByLabel("Eigenes Fahrzeug anbieten").first()).toBeVisible();
+  await expect(b.getByLabel("Eigenes Fahrzeug anbieten")).toHaveCount(0);
+  await expect(
+    b.getByText("Neue Einsätze werden nicht automatisch", { exact: false }),
+  ).toBeVisible();
   await b.getByRole("button", { name: "Schließen", exact: true }).click();
   await b.getByRole("button", { name: "Hauptmenü", exact: true }).click();
   await b.getByRole("button", { name: "Einzelspieler", exact: true }).click();
@@ -243,6 +240,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
   });
   await page.getByRole("button", { name: "Meine Wachen", exact: true }).click();
   await page.locator(".mission-card").first().click();
+  await interviewUI(page, app);
   await expect(page.locator(".dispatch-list")).toContainText("km · ca.");
   await page.locator(".dispatch-list input").first().check();
   await page
@@ -250,7 +248,9 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
     .click();
   await expect
     .poll(() => app.db.all().get(id)!.vehicles[0].status)
-    .toBe("travel");
+    .toBe("alarmed");
+  app.game.step(61);
+  expect(app.db.all().get(id)!.vehicles[0].status).toBe("travel");
   const initial = app.db.all().get(id)!;
   const eta = initial.vehicles[0].arrive - initial.time;
   app.game.step(2);

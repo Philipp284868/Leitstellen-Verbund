@@ -8,6 +8,13 @@ import type { GameMode } from "./mode";
 import { createId } from "./ids";
 export interface Snapshot {
   mode: GameMode;
+  workspace?: {
+    outgoing: { id: string; name: string }[];
+    owner: string;
+    canManage: boolean;
+    members: { id: string; name: string }[];
+    invitations: { owner: string; name: string }[];
+  };
   save: Save | null;
   loading: boolean;
   readonly: boolean;
@@ -59,7 +66,13 @@ function clear() {
   previous?.disconnect();
   csrf = "";
   resetNetwork();
-  emit({ save: null, user: null, readonly: true, loading: false });
+  emit({
+    save: null,
+    workspace: undefined,
+    user: null,
+    readonly: true,
+    loading: false,
+  });
 }
 export async function api(path: string, data?: unknown, mode = snapshot.mode) {
   const r = await fetch(`/api/${path}`, {
@@ -82,14 +95,24 @@ export async function api(path: string, data?: unknown, mode = snapshot.mode) {
   return result;
 }
 function accept(data: {
+  workspace?: Snapshot["workspace"];
   mode: GameMode;
   save: Save;
   network: Parameters<typeof setNetwork>[0];
 }) {
   if (data.mode !== snapshot.mode) return;
-  if (!snapshot.user || data.save.player.id !== snapshot.user.id) return;
-  if (!snapshot.save || data.save.revision >= snapshot.save.revision) {
-    emit({ save: data.save });
+  if (
+    !snapshot.user ||
+    data.save.player.id !== (data.workspace?.owner ?? snapshot.user.id)
+  )
+    return;
+  if (
+    !snapshot.save ||
+    data.save.generation !== snapshot.save.generation ||
+    data.save.revision >= snapshot.save.revision
+  ) {
+    if (snapshot.workspace?.owner !== data.workspace?.owner) resetNetwork();
+    emit({ save: data.save, workspace: data.workspace });
     setNetwork(data.network);
   }
 }
@@ -98,7 +121,13 @@ export async function refresh() {
   const data = await api("me", undefined, mode);
   if (mode !== snapshot.mode) return;
   csrf = data.csrf;
-  emit({ user: data.user, save: data.save, loading: false, error: "" });
+  emit({
+    user: data.user,
+    save: data.save,
+    workspace: data.workspace,
+    loading: false,
+    error: "",
+  });
   setNetwork(data.network);
   if (!socket) {
     socket = io({
@@ -224,6 +253,7 @@ export async function switchMode(mode: GameMode) {
   resetNetwork();
   emit({
     mode,
+    workspace: undefined,
     save: null,
     readonly: true,
     loading: true,

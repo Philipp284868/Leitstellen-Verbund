@@ -364,41 +364,43 @@ export const MapView = memo(function MapView({
             )),
           )}
         {(filter === "Alle" || filter === "Einsätze") &&
-          s.missions.map((m) => (
-            <g
-              key={m.id}
-              transform={`translate(${m.pos.x},${m.pos.y})`}
-              className="map-marker"
-              role="button"
-              tabIndex={0}
-              aria-label={mt(m.template).name}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(m.id);
-              }}
-              onKeyDown={(e) => e.key === "Enter" && onSelect(m.id)}
-            >
-              <circle
-                r={selected === m.id ? 23 : 18}
-                fill="#f7b764"
-                stroke={selected === m.id ? "#fff" : "#17222d"}
-                strokeWidth="3"
-              />
-              <text
-                textAnchor="middle"
-                y="7"
-                fontSize="23"
-                fontWeight="900"
-                fill="#3d2b1d"
+          s.missions
+            .filter((m) => !m.control || m.control.locationKnown)
+            .map((m) => (
+              <g
+                key={m.id}
+                transform={`translate(${m.pos.x},${m.pos.y})`}
+                className="map-marker"
+                role="button"
+                tabIndex={0}
+                aria-label={mt(m.template).name}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(m.id);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && onSelect(m.id)}
               >
-                !
-              </text>
-              <title>
-                {mt(m.template).name}
-                {m.shared ? " · Gemeinsam" : ""}
-              </title>
-            </g>
-          ))}
+                <circle
+                  r={selected === m.id ? 23 : 18}
+                  fill="#f7b764"
+                  stroke={selected === m.id ? "#fff" : "#17222d"}
+                  strokeWidth="3"
+                />
+                <text
+                  textAnchor="middle"
+                  y="7"
+                  fontSize="23"
+                  fontWeight="900"
+                  fill="#3d2b1d"
+                >
+                  !
+                </text>
+                <title>
+                  {mt(m.template).name}
+                  {m.shared ? " · Gemeinsam" : ""}
+                </title>
+              </g>
+            ))}
         {(filter === "Alle" || filter === "Einsätze") &&
           visibleFriends.flatMap((f, fi) =>
             f.missions.map((m) => (

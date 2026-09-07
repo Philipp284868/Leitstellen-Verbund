@@ -179,6 +179,13 @@ try {
         s.player.name = old.player.name;
         s.player.station = old.player.station;
         s.generation = uid();
+        s.desk.fleet = {};
+        s.desk.alarms = Object.fromEntries(
+          Object.entries(s.desk.alarms).map(([id, profile]) => [
+            ids.get(id) ?? id,
+            profile,
+          ]),
+        );
         s.missions = [];
         s.archive = [];
         s.receipts = [];

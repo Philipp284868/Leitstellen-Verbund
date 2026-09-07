@@ -1,3 +1,4 @@
+import { interviewUI, joinDesk } from "./desk-helpers";
 import { test, expect, type Page, type Browser } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -124,15 +125,20 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   await expect(b.locator(".money")).toContainText("250.000");
   await expect(b.locator(".station-strip .station-card")).toHaveCount(0);
   await a.locator(".mission-card").first().click();
+  await interviewUI(a, app);
   await a.locator(".dispatch-list input").first().check();
   await a.getByRole("button", { name: "Alarmieren (1)", exact: true }).click();
   await expect
     .poll(() =>
       [...app.db.all().values()].some((s) =>
-        s.vehicles.some((v) => v.status === "travel"),
+        s.vehicles.some((v) => v.status === "alarmed"),
       ),
     )
     .toBe(true);
+  app.game.step(7200);
+  await a
+    .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
+    .click();
   app.game.step(7200);
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
@@ -162,32 +168,26 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   await ca.close();
   await cb.close();
 });
-test("Gemeinsamer Einsatz läuft ohne Helferbrowser weiter; Neustart und Wiederherstellung erhalten Besitz", async ({
+test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neustart und Wiederherstellung erhalten Besitz", async ({
   browser,
 }) => {
   const { ca, cb, a, b, ua, ub } = await pair(browser);
   await resources(a);
   await resources(b);
-  await b.getByRole("button", { name: "Freunde", exact: true }).click();
+  await joinDesk(a, b, ub);
   await a.locator(".mission-card").first().click();
-  await expect(
-    a.getByRole("button", { name: "Freigegeben", exact: true }),
-  ).toBeVisible();
-  await b
-    .getByLabel("Eigenes Fahrzeug anbieten")
-    .first()
-    .selectOption({ index: 1 });
+  await interviewUI(a, app);
+  await b.locator(".mission-card").first().click();
+  await b.locator(".dispatch-list input").first().check();
+  await b.getByRole("button", { name: "Alarmieren (1)", exact: true }).click();
   await expect
     .poll(() =>
-      Array.from(app.db.all().values())
-        .find(
-          (s) =>
-            s.player.name === "Ben" &&
-            s.vehicles.some((v) => v.mission?.startsWith("remote:")),
-        )
-        ?.vehicles.some((v) => v.status === "travel"),
+      [...app.db.all().values()].some((s) =>
+        s.vehicles.some((v) => v.status === "alarmed"),
+      ),
     )
     .toBe(true);
+  app.game.step(61);
   await cb.close();
   await expect
     .poll(() =>
@@ -196,6 +196,10 @@ test("Gemeinsamer Einsatz läuft ohne Helferbrowser weiter; Neustart und Wiederh
       ),
     )
     .toBe(true);
+  app.game.step(7200);
+  await a
+    .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
+    .click();
   app.game.step(7200);
   await expect(
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
@@ -315,13 +319,14 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
 test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft die Sitzung", async ({
   browser,
 }) => {
-  const { ca, cb, a, b, ua } = await pair(browser);
+  const { ca, cb, a, b, ua, ub } = await pair(browser);
+  await joinDesk(a, b, ub);
   await a.getByRole("button", { name: "Freunde", exact: true }).click();
   await b.getByRole("button", { name: "Freunde", exact: true }).click();
   await a.getByLabel("Chatnachricht").fill("<b>Nur Text</b>");
   await a.getByRole("button", { name: "Senden", exact: true }).click();
   await expect(b.locator(".chat-log")).toContainText("<b>Nur Text</b>");
-  await expect(b.locator(".chat-log b")).toHaveText("Anna");
+  await expect(b.locator(".chat-log b")).toHaveText(ua);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await a.getByRole("button", { name: "Einstellungen", exact: true }).click();
   await a

@@ -261,6 +261,10 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
     g.volumes(1, 1);
     for (let i = 0; i < 264; i++) g.beat(i, 0.05 + i * lib.BEAT, true);
     const cues: Cue[] = [
+      "phone",
+      "dme",
+      "siren",
+      "station",
       "mission",
       "dispatch",
       "arrival",

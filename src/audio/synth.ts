@@ -2,6 +2,10 @@
  * No recordings or third-party samples. See docs/AUDIO.md. */
 export const BEAT = 60 / 78;
 export type Cue =
+  | "phone"
+  | "dme"
+  | "siren"
+  | "station"
   | "mission"
   | "dispatch"
   | "arrival"
@@ -247,6 +251,18 @@ export class SoundGraph {
         this.tone(frequency(m), t + i * spacing, duration, volume, out),
       );
     switch (cue) {
+      case "phone":
+        notes([81, 86, 81, 86], 0.13, 0.1, 0.14);
+        break;
+      case "dme":
+        notes([88, 88, 88, 88], 0.12, 0.07, 0.13);
+        break;
+      case "siren":
+        notes([69, 76, 69, 76], 0.28, 0.32, 0.13);
+        break;
+      case "station":
+        notes([74, 69, 65], 0.22, 0.38, 0.17);
+        break;
       case "mission":
         notes([74, 81, 78], 0.14, 0.26, 0.22);
         break;

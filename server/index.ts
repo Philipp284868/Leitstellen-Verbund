@@ -1,3 +1,4 @@
+import { deskOwner } from "./workspaces";
 import {
   createServer,
   type IncomingMessage,
@@ -336,12 +337,17 @@ export function startServer(
           throw Error("Kein Verbundfunk im Einzelspieler.");
         const text = z.string().trim().min(1).max(500).parse(input);
         auth.limit(`chat:${session.user_id}`, 2, 1000);
-        const name = game.view(session.user_id, online(), "multi").save.player
-          .name;
+        const name = String(
+          db.sql
+            .prepare("SELECT username FROM users WHERE id=?")
+            .get(session.user_id)!.username,
+        );
+        const owner = deskOwner(db, session.user_id, "multi");
         for (const peer of io.sockets.sockets.values()) {
           if (
             peer.data.mode === "multi" &&
-            auth.session(peer.request.headers.cookie)
+            auth.session(peer.request.headers.cookie) &&
+            deskOwner(db, peer.data.user, "multi") === owner
           )
             peer.emit("chat", { name, text });
         }

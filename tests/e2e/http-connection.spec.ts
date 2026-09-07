@@ -1,3 +1,4 @@
+import { joinDesk } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { networkInterfaces, tmpdir } from "node:os";
@@ -110,6 +111,12 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await expect(b.locator(".station-strip .station-card")).toHaveCount(0);
     await expect(b.locator(".money")).toContainText("250.000");
 
+    const target = String(
+      app.db.sql
+        .prepare("SELECT username FROM users WHERE username LIKE ?")
+        .get("httpben-%")!.username,
+    );
+    await joinDesk(a, b, target);
     await a.getByRole("button", { name: "Freunde", exact: true }).click();
     await b.getByRole("button", { name: "Freunde", exact: true }).click();
     await a.getByLabel("Chatnachricht").fill("HTTP-Verbindung erfolgreich");
