@@ -1,7 +1,10 @@
 import type { Save, Mission } from "../model";
 import { bt, vt, mt, capabilities } from "../catalog";
 import { readiness, beginTrip } from "../engine";
-import { length, route } from "../world";
+import { route } from "../world";
+import { routePlan } from "./traffic";
+import { requirements } from "./hazards";
+import type { TravelMode } from "./dynamics-schema";
 import { record, simId } from "./events";
 import { setFms, alarmNames } from "./fms";
 import type { AAO, Alarm, Priority } from "./schema";
@@ -21,9 +24,7 @@ export function propose(s: Save, m: Mission, aao: AAO, actor: string) {
       try {
         return {
           v,
-          eta:
-            (length(route(v.path.at(-1)!, m.pos, vt(v.type).mode)) * 12) /
-            (vt(v.type).speed / 3.6),
+          eta: routePlan(s, v, v.path.at(-1)!, m.pos).seconds,
         };
       } catch {
         return { v, eta: Infinity };
@@ -41,7 +42,9 @@ export function propose(s: Save, m: Mission, aao: AAO, actor: string) {
     else deficit.push(`Fehlt: ${vt(type).name}`);
   }
   const required = {
-    ...mt(m.control?.reportedTemplate || m.template).requirements,
+    ...(m.control?.briefed
+      ? requirements(m)
+      : mt(m.control?.reportedTemplate || m.template).requirements),
   };
   for (const [k, n] of Object.entries(aao.skills))
     required[k] = Math.max(required[k] || 0, n);
@@ -77,6 +80,7 @@ export function alarm(
   actor: string,
   priority: Priority = "NORMAL",
   profile?: Alarm,
+  mode: TravelMode = "priority",
 ) {
   dispatchable(m);
   const vehicles = [...new Set(ids)].map((id) => {
@@ -94,10 +98,11 @@ export function alarm(
     const delay = selected === "station" ? 30 : selected === "siren" ? 45 : 60;
     v.mission = m.id;
     v.assignment = simId(s);
-    beginTrip(s, v, m.pos, "travel");
+    beginTrip(s, v, m.pos, "travel", mode);
     v.depart += delay;
     v.arrive += delay;
     v.status = "alarmed";
+    if (v.journey) v.journey.nextCheck = v.depart + 60;
     const event = record(
       s,
       m,

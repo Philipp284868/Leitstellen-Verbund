@@ -1,3 +1,6 @@
+import { DynamicsPanel } from "./Dynamics";
+import { travelNames } from "./simulation/traffic";
+import type { TravelMode } from "./simulation/dynamics-schema";
 import { useEffect, useState } from "react";
 import type { Mission, Save } from "./model";
 import { vehicles, vt, bt, mt, capabilities } from "./catalog";
@@ -278,6 +281,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
     [aao, setAao] = useState(""),
     [priority, setPriority] = useState<Priority>("NORMAL"),
     [alarm, setAlarm] = useState<Alarm | "">(""),
+    [travel, setTravel] = useState<TravelMode>("priority"),
     [home, setHome] = useState(""),
     [org, setOrg] = useState("Alle");
   const proposal = c.proposal;
@@ -324,6 +328,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           ))}
         </ul>
       </section>
+      <DynamicsPanel s={s} m={m} />
       {c.radio.some((r) => r.state === "open") && (
         <section className="radio-queue">
           <h3>Sprechwünsche und Lagemeldungen</h3>
@@ -396,6 +401,20 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
       {c.locationKnown && c.reportedTemplate && m.phase !== "done" && (
         <section>
           <h3>Kräfte alarmieren / nachfordern</h3>
+          <label>
+            Anfahrtsart
+            <select
+              aria-label="Anfahrtsart"
+              value={travel}
+              onChange={(e) => setTravel(e.target.value as TravelMode)}
+            >
+              {Object.entries(travelNames).map(([id, name]) => (
+                <option value={id} key={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
           <p>
             {c.briefed
               ? "Bedarf nach Erkundung"
@@ -531,7 +550,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     </b>
                     <small>
                       {readiness(s, v) ||
-                        `Einsatzbereit · ${approach(s, v, m.pos)}`}
+                        `Einsatzbereit · ${approach(s, v, m.pos, travel)}`}
                     </small>
                   </span>
                 </label>
@@ -543,6 +562,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
             onClick={() => {
               void act({
                 type: "dispatch",
+                travel,
                 mission: m.id,
                 vehicles: selectedReady,
                 priority,

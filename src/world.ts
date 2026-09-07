@@ -566,6 +566,7 @@ export function route(
   a: Point,
   b: Point,
   mode: "road" | "air" | "water" = "road",
+  blocked: ReadonlySet<string> = new Set(),
 ): Point[] {
   if (mode === "air") return [a, b];
   if (mode === "water") {
@@ -596,6 +597,7 @@ export function route(
     }
     open.delete(current);
     for (const n of adjacency[current]) {
+      if (blocked.has(`${current}:${n}`)) continue;
       const c = cost.get(current)! + distance(nodes[current], nodes[n]);
       if (c < (cost.get(n) ?? Infinity)) {
         cost.set(n, c);

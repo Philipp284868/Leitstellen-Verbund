@@ -59,7 +59,7 @@ export function beforeStep(s: Save) {
       setFms(s, v, 3);
     }
 }
-function request(
+export function request(
   s: Save,
   m: Mission,
   vehicle: string,
@@ -70,7 +70,13 @@ function request(
   const c = m.control!;
   if (
     c.radio.length >= 50 ||
-    c.radio.some((r) => r.reason === reason && r.details === details)
+    c.radio.some(
+      (r) =>
+        r.state === "open" &&
+        r.reason === reason &&
+        r.vehicle === vehicle &&
+        r.details === details,
+    )
   )
     return;
   c.radio.push({
@@ -85,7 +91,7 @@ function request(
   });
   record(s, m, "SPEAK_REQUESTED", details, "server", vehicle);
   const v = s.vehicles.find((v) => v.id === vehicle);
-  if (v)
+  if (v && (!v.fault || v.fault.state === "repaired"))
     setFms(s, v, priority === "NOTFALL" || priority === "PRIORITÄT" ? 0 : 5);
 }
 export function afterVehicles(s: Save) {
@@ -94,7 +100,10 @@ export function afterVehicles(s: Save) {
     const c = m.control;
     if (!c || c.legacy) continue;
     const atScene = s.vehicles.filter(
-      (v) => v.mission === m.id && v.status === "scene",
+      (v) =>
+        v.mission === m.id &&
+        v.status === "scene" &&
+        (!v.fault || v.fault.state === "repaired"),
     );
     for (const v of atScene)
       if (
@@ -127,7 +136,8 @@ export function afterVehicles(s: Save) {
     }
     if (c.briefed && atScene.length) {
       const deficit = missing(m, capacity(s, m.id));
-      if (deficit.length)
+      const signature = deficit.map(([k, n]) => `${k}:${n}`).join(";");
+      if (deficit.length && c.deficit !== signature)
         request(
           s,
           m,
@@ -136,6 +146,7 @@ export function afterVehicles(s: Save) {
           `Nachforderung: ${deficit.map(([k, n]) => `${capabilities[k] || k} × ${n}`).join(", ")}`,
           "DRINGEND",
         );
+      c.deficit = signature;
     }
   }
 }
@@ -152,6 +163,8 @@ export function radioAction(
   if (r.state === "handled") return;
   if (!c.briefed && r.reason === "arrival") {
     c.briefed = true;
+    if (m.dynamics?.active && m.dynamics.level > 1)
+      c.priority = m.dynamics.level >= 3 ? "NOTFALL" : "DRINGEND";
     c.reportedTemplate = m.template;
     c.stage = "working";
     c.facts.push({
@@ -239,13 +252,26 @@ export function afterStep(s: Save) {
 export function publicSave(source: Save): Save {
   const s = structuredClone(source);
   s.seed = 0;
-  for (const m of [...s.missions, ...s.archive])
+  for (const m of [...s.missions, ...s.archive]) {
+    if (m.dynamics) {
+      delete m.dynamics.random;
+      delete m.dynamics.pending;
+      if (!m.control?.briefed) delete m.dynamics;
+    }
     if (m.control) {
       delete m.control.secret;
+      if (!m.control.briefed)
+        m.control.events = m.control.events.filter(
+          (e) =>
+            !/^(HAZARD_|PATIENT_|MISSION_ESCALATED|MISSION_DOWNGRADED|MISSION_STABILIZED|FIRE_SPREAD|CREW_EMERGENCY|SECONDARY_EVENT|FOLLOWUP_PENDING)/.test(
+              e.type,
+            ),
+        );
       if (!m.control.briefed && !m.control.legacy) {
         m.template = m.control.reportedTemplate || "incoming";
         if (!m.control.locationKnown) m.pos = { x: 0, y: 0 };
       }
     }
+  }
   return s;
 }

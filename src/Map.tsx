@@ -1,6 +1,8 @@
 import { tripLabel } from "./travel";
 import { towns } from "./region";
 import { Operations } from "./Operations";
+import { roadNames } from "./simulation/weather";
+import { nodes } from "./world";
 import { MapTerrain } from "./MapTerrain";
 import { memo, useEffect, useRef, useState } from "react";
 import {
@@ -272,6 +274,21 @@ export const MapView = memo(function MapView({
         }}
       >
         <MapTerrain labels={labels} zoom={zoom} />
+        {routes &&
+          s.environment?.roads.map((e) => (
+            <g key={e.id} pointerEvents="none">
+              <line
+                x1={nodes[e.edge[0]]?.x}
+                y1={nodes[e.edge[0]]?.y}
+                x2={nodes[e.edge[1]]?.x}
+                y2={nodes[e.edge[1]]?.y}
+                stroke={e.blocked ? "#ee7770" : "#ebb45e"}
+                strokeWidth={5 / zoom}
+                strokeDasharray="5 3"
+              />
+              <title>{roadNames[e.kind]}</title>
+            </g>
+          ))}
         <g transform={`translate(${publicHospital.x},${publicHospital.y})`}>
           <rect x="-13" y="-13" width="26" height="26" rx="6" fill="#5cd4b0" />
           <text textAnchor="middle" y="6" fontSize="20" fill="#10392e">

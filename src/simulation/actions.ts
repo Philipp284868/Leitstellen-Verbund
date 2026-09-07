@@ -4,6 +4,23 @@ const id = z.string().min(1).max(100);
 export const deskActions = [
   z
     .object({
+      type: z.literal("tactic"),
+      mission: id,
+      tactic: z.enum(["standard", "defensive", "rescue"]),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("patient-care"),
+      mission: id,
+      patient: id,
+      care: z.enum(["standard", "oxygen", "bleeding", "cpr", "temperature"]),
+      priority: z.enum(["normal", "urgent"]),
+    })
+    .strict(),
+  z.object({ type: z.literal("repair"), vehicle: id }).strict(),
+  z
+    .object({
       type: z.literal("call"),
       mission: id,
       call: id,
@@ -56,6 +73,7 @@ export const deskActions = [
   z.object({ type: z.literal("member-remove"), user: id }).strict(),
 ] as const;
 export const dispatchOptions = {
+  travel: z.enum(["normal", "priority", "emergency"]).optional(),
   priority: prioritySchema.optional(),
   alarm: alarmSchema.optional(),
 };

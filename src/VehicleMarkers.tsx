@@ -65,7 +65,11 @@ export const VehicleMarkers = memo(function VehicleMarkers({
                   width="18"
                   height="12"
                   rx="3"
-                  fill="#d9ffff"
+                  fill={
+                    v.fault && v.fault.state !== "repaired"
+                      ? "#ff967f"
+                      : "#d9ffff"
+                  }
                   stroke="#25aab8"
                   strokeWidth="2"
                 />

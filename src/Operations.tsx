@@ -1,3 +1,4 @@
+import { EnvironmentPanel } from "./Dynamics";
 import type { Save } from "./model";
 import { readiness } from "./engine";
 import { duration, kilometers, travelling, trip } from "./travel";
@@ -12,6 +13,7 @@ export function Operations({ s }: { s: Save }) {
   const busy = s.vehicles.filter((v) => v.status !== "ready").length;
   return (
     <section className="operations" aria-label="Fahrten und Einsatzstatistik">
+      <EnvironmentPanel s={s} />
       <div className="stat-row">
         <span>
           Bereit{" "}
@@ -50,11 +52,25 @@ export function Operations({ s }: { s: Save }) {
               <article key={v.id}>
                 <b>{v.name}</b>
                 <span>
-                  {statuses[v.status]} · {duration(seconds)} bis Ziel
+                  {statuses[v.status]} ·{" "}
+                  {duration(
+                    v.journey?.blockedUntil
+                      ? v.journey.blockedUntil - s.time
+                      : seconds,
+                  )}{" "}
+                  {v.journey?.blockedUntil
+                    ? "bis frühester Freigabe"
+                    : "bis Ziel"}
                 </span>
+                {v.journey?.reason && (
+                  <small>
+                    {v.journey.reason} · Mehrzeit {duration(v.journey.delay)}
+                  </small>
+                )}
                 <small>
-                  {kilometers(remaining)} verbleibend / {kilometers(total)}{" "}
-                  Gesamtstrecke
+                  {v.journey?.blockedUntil
+                    ? "Verbleibender Fahrweg wird nach Freigabe neu berechnet"
+                    : `${kilometers(remaining)} verbleibend / ${kilometers(total)} Gesamtstrecke`}
                 </small>
                 <progress
                   value={total - remaining}

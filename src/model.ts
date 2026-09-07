@@ -1,3 +1,9 @@
+import {
+  dynamicsSchema,
+  environmentSchema,
+  journeySchema,
+  faultSchema,
+} from "./simulation/dynamics-schema";
 import { deskSchema, incidentSchema } from "./simulation/schema";
 import { migrateMap, validLegacySite } from "./world-migration";
 import { z } from "zod";
@@ -49,6 +55,8 @@ export const personSchema = z
   .strict();
 export const vehicleSchema = z
   .object({
+    journey: journeySchema.optional(),
+    fault: faultSchema.optional(),
     id,
     owner: id,
     type: id,
@@ -74,6 +82,7 @@ export const vehicleSchema = z
 export const missionSchema = z
   .object({
     control: incidentSchema.optional(),
+    dynamics: dynamicsSchema.optional(),
     id,
     template: id,
     pos: point,
@@ -111,6 +120,7 @@ export const journalSchema = z
 export const saveSchema = z
   .object({
     desk: deskSchema,
+    environment: environmentSchema.optional(),
     version: z.literal(1),
     world: z.literal(WORLD),
     generation: id,
@@ -293,7 +303,8 @@ export function validateReferences(s: Save, legacy = false) {
     const t = mt(m.template);
     if (
       m.progress > t.seconds ||
-      m.transports.reduce((n, t) => n + t.patients, 0) > t.patients ||
+      m.transports.reduce((n, t) => n + t.patients, 0) >
+        (m.dynamics?.active ? m.dynamics.patients.length : t.patients) ||
       new Set(m.contributors).size !== m.contributors.length
     )
       throw Error("Ungültiger Einsatzfortschritt.");

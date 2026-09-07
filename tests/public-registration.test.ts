@@ -1,3 +1,5 @@
+import { attachDynamics } from "../src/simulation/dynamics";
+import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
 import { it, expect, afterEach } from "vitest";
@@ -205,6 +207,9 @@ it("wandelt bestehende Administratoren mit unveränderten IDs, Passwort-Hashes u
   for (const m of [...expected.missions, ...expected.archive])
     legacyIncident(expected, m);
   syncFms(expected);
+  updateWeather(expected);
+  for (const m of [...expected.missions, ...expected.archive])
+    attachDynamics(expected, m, false);
   expect(
     JSON.parse(
       String(

@@ -1,3 +1,4 @@
+import { environmentAt } from "../src/simulation/weather";
 import { it, expect } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -65,10 +66,16 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
   db.close();
   const migrated = new Database(dir);
   try {
+    const expected = JSON.parse(String(original));
+    expected.environment = environmentAt(expected.time);
     expect(
-      migrated.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(a)!
-        .data,
-    ).toBe(original);
+      JSON.parse(
+        String(
+          migrated.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(a)!
+            .data,
+        ),
+      ),
+    ).toEqual(expected);
     expect(migrated.all("single").size).toBe(0);
     expect(
       migrated.sql.prepare("PRAGMA user_version").get()!.user_version,
