@@ -194,6 +194,8 @@ try {
         s.deliveryAcks = [];
         s.beds = [];
         for (const v of s.vehicles) {
+          delete v.fault;
+          delete v.journey;
           v.status = "ready";
           v.mission = null;
           v.assignment = null;

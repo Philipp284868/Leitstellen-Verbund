@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { io, type Socket } from "socket.io-client";
 import { startServer } from "../server/index";
 import { phaseFixture } from "./phase-fixture";
+import { attachDynamics } from "../src/simulation/dynamics";
 it("HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden mit dem Rechteentzug", async () => {
   const port = 23000 + Math.floor(Math.random() * 3000),
     origin = `http://127.0.0.1:${port}`;
@@ -35,6 +36,7 @@ it("HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden
         "Süd",
       );
     const s = phaseFixture(a);
+    attachDynamics(s, s.missions[0]);
     s.missions[0].control!.secret!.detail = "INTERNAL-TRUTH-ONLY";
     app.db.save(a, s);
     const sessions = [app.auth.issue(a), app.auth.issue(b)];
@@ -57,6 +59,7 @@ it("HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden
       expect(value.save.missions[0].pos).toEqual({ x: 0, y: 0 });
       expect(JSON.stringify(value)).not.toContain("INTERNAL-TRUTH");
       expect(value.save.missions[0].control).not.toHaveProperty("secret");
+      expect(value.save.missions[0]).not.toHaveProperty("dynamics");
     }
     const received = [[] as string[], [] as string[]];
     for (let i = 0; i < 2; i++) {

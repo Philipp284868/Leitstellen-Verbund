@@ -1,5 +1,13 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.8.0: Dynamische Einsatzlagen (Phase 2)
+
+Neue Einsätze entwickeln jetzt Gefahren, Brände und einzelne Patienten. Kräfte vor Ort, taktische Entscheidungen und Verzögerungen beeinflussen Eskalation, Nachforderungen, Versorgung und Abschluss. Seltene Folgeereignisse bleiben begrenzt und der eigenen Leitstelle zugeordnet. Simuliertes Wetter, Verkehr, tatsächliche Straßensperren und reparierbare Fahrzeugdefekte verändern Fahrten und Ressourcenverfügbarkeit.
+
+Die neue Lageansicht erscheint nach Erkundung; Patientenverläufe und Gefahren bleiben auch im Archiv erhalten. **Migration auf Schema 7:** vorhandene laufende Einsätze bleiben ohne nachträglich hinzugefügte Gefahren fortsetzbar; die Dynamik beginnt mit neuen Einsätzen. Keine neuen Umgebungsvariablen erforderlich.
+
+[Bedienung und technische Grenzen](docs/PHASE-2.md) · [Testbericht Phase 2](docs/PHASE-2-TESTBERICHT.md).
+
 ## Version 2.7.0: Interaktiver Leitstellenablauf (Phase 1)
 
 Neue Ereignisse beginnen als Notruf. Ort und Meldebild erfragen, eine eigene AAO anwenden oder frei disponieren, Alarmierungsart wählen und Ausrücken sowie FMS verfolgen. Nach der ersten Lagemeldung können weitere Kräfte nötig werden. Der Verlauf bleibt im Einsatz und anschließend im Archiv erhalten. DME, Sirene und Wachalarm nutzen unterschiedliche Ausrückzeiten und die vorhandene Audioinfrastruktur.

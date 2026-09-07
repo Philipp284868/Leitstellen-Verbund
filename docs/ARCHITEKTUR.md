@@ -43,3 +43,8 @@ Socket.IO übermittelt den freigegebenen Leitstellenstand an berechtigte Konten.
 Die SVG-Karte und getrennte Fahrzeuganimation bleiben bestehen. Der Client bestätigt keine Offline-Aktionen und persistiert Serveransichten nicht automatisch als geteilten Offline-Cache. Statische gehashte Assets dürfen gecacht werden, API, Socket.IO, HTML und Kontoexporte erhalten no-store. Der alte Offline-Worker wird stillgelegt, ohne IndexedDB-Bestände zu löschen.
 
 Dies ist eine Einzelserverarchitektur mit freier Spielerregistrierung und ausdrücklich angenommenen Leitstellenmitgliedschaften. SQLite und das Prozess-Lock ersetzen keinen Mehrserver-Cluster. Pro Tick werden alle Konten verarbeitet; umfassende Lastmessungen mit vielen gleichzeitig angemeldeten Konten sind separat erforderlich. Der vorhandene Test für 100 Wachen/300 Fahrzeuge/50 Einsätze bleibt erhalten, beweist aber keine unbegrenzte Serverkapazität.
+
+
+## Phase 2 / Schema 7
+
+`simulation/dynamics` orchestriert die getrennten Module `hazards`, `fire`, `patients`, `weather`, `traffic` und `faults`. Gefahrenschritte und zufällige Folgeentscheidungen besitzen persistierte Zeit-/Ereignisfortschritte. `engine` nutzt aktuellen Ressourcenbedarf und wartet vor Transport/Abschluss auf beherrschte Gefahren und versorgte Patienten. `world.route` akzeptiert gesperrte Kanten; Fahrten behalten Sollweg, tatsächlichen Weg, Verzögerungen und Reparaturzustände. Wetter wird deterministisch aus der regionalen Zeitperiode ermittelt. Die UI-Komponente `Dynamics` zeigt freigegebene Lage und Aufträge. `publicSave` entfernt interne Dynamik vor Erkundung und Zufall/Folgepläne generell. Migration 7 ergänzt Bestandsfälle inaktiv, ohne aktive Fahrten zu ändern. [Details](PHASE-2.md).

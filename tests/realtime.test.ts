@@ -1,3 +1,5 @@
+import { attachDynamics } from "../src/simulation/dynamics";
+import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
 import { it, expect } from "vitest";
@@ -51,6 +53,8 @@ it("erzeugt auch bei einer abgelegenen Wache ausschließlich lokale Einsätze", 
 it("berechnet Fahrzeit und Reststrecke aus demselben tatsächlichen Straßenweg", () => {
   const s = established("Fahrt"),
     v = s.vehicles[0];
+  // The geometry check isolates weather and road closures; their effects have separate Phase-2 tests.
+  s.environment = undefined;
   beginTrip(s, v, nodes[80], "travel");
   const total = length(v.path) * 12,
     seconds = v.arrive - v.depart;
@@ -105,6 +109,9 @@ it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit in
     for (const m of [...expected.missions, ...expected.archive])
       legacyIncident(expected, m);
     syncFms(expected);
+    updateWeather(expected);
+    for (const m of [...expected.missions, ...expected.archive])
+      attachDynamics(expected, m, false);
     const game = new Game(db);
     for (const mode of ["single", "multi"] as const) {
       const s = db.all(mode).get(id)!;

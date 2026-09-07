@@ -1,0 +1,211 @@
+import { z } from "zod";
+const time = z.number().finite().nonnegative();
+const value = z.number().finite().min(0).max(100);
+const id = z.string().min(1).max(100);
+const point = z.object({ x: time.max(6240), y: time.max(4080) }).strict();
+export const weatherKinds = [
+  "sun",
+  "cloud",
+  "rain",
+  "heavy-rain",
+  "storm",
+  "gale",
+  "hurricane",
+  "fog",
+  "snow",
+  "ice",
+  "heat",
+  "frost",
+] as const;
+export const roadEventSchema = z
+  .object({
+    id,
+    kind: z.enum([
+      "jam",
+      "construction",
+      "accident",
+      "closure",
+      "obstacle",
+      "crossing",
+      "flood",
+    ]),
+    edge: z.tuple([
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+    ]),
+    start: time,
+    until: time,
+    delay: time.max(900),
+    blocked: z.boolean(),
+  })
+  .strict();
+export const environmentSchema = z
+  .object({
+    version: z.literal(1),
+    period: z.number().int(),
+    kind: z.enum(weatherKinds),
+    temperature: z.number().finite().min(-30).max(50),
+    wind: time.max(180),
+    rain: value,
+    visibility: time.max(30000),
+    density: z.number().min(0).max(2),
+    roads: z.array(roadEventSchema).max(12),
+  })
+  .strict();
+export const journeySchema = z
+  .object({
+    mode: z.enum(["normal", "priority", "emergency"]),
+    planned: z.array(point).max(4096),
+    plannedSeconds: time,
+    delay: time,
+    distanceDone: time,
+    events: z.array(id).max(60),
+    nextCheck: time,
+    serial: z.number().int().nonnegative(),
+    target: point,
+    blockedUntil: time,
+    reason: z.string().max(180),
+  })
+  .strict();
+export const faultSchema = z
+  .object({
+    kind: z.enum([
+      "engine",
+      "tire",
+      "technical",
+      "radio",
+      "equipment",
+      "energy",
+    ]),
+    since: time,
+    repairAt: time,
+    state: z.enum(["awaiting", "repairing", "repaired"]),
+    mission: z.string().max(100),
+    assignment: z.string().max(100),
+    position: point,
+  })
+  .strict();
+export const hazardKinds = [
+  "fire",
+  "smoke",
+  "heat",
+  "collapse",
+  "electricity",
+  "gas",
+  "hazmat",
+  "water",
+  "traffic",
+  "violence",
+  "crowd",
+  "weather",
+  "visibility",
+  "darkness",
+  "technical",
+] as const;
+export const hazardSchema = z
+  .object({
+    kind: z.enum(hazardKinds),
+    initial: value,
+    value,
+    growth: z.number().finite().min(0).max(2),
+    reduction: z.number().finite().min(0).max(5),
+    threshold: value,
+    skill: id,
+    required: z.number().int().min(1).max(20),
+    resolved: z.boolean(),
+  })
+  .strict();
+export const fireSchema = z
+  .object({
+    fuel: id,
+    area: time.max(100000),
+    temperature: time.max(1600),
+    smoke: value,
+    intensity: value,
+    spread: time.max(20),
+    explosion: value,
+    suppression: value,
+    sections: z
+      .array(
+        z
+          .object({
+            name: z.string().max(80),
+            burning: value,
+            damage: value,
+            smoke: value,
+          })
+          .strict(),
+      )
+      .max(12),
+  })
+  .strict();
+export const patientSchema = z
+  .object({
+    id,
+    age: z.number().int().min(0).max(100),
+    sex: z.enum(["weiblich", "männlich", "divers"]),
+    condition: z.enum([
+      "stable",
+      "deteriorating",
+      "critical",
+      "cpr",
+      "recovering",
+      "dead",
+    ]),
+    health: value,
+    consciousness: z.enum(["wach", "eingetrübt", "bewusstlos"]),
+    breathing: time.max(60),
+    pulse: time.max(220),
+    systolic: time.max(220),
+    oxygen: value,
+    temperature: z.number().min(25).max(43),
+    pain: z.number().min(0).max(10),
+    bloodLoss: value,
+    injury: z.string().max(100),
+    treatment: value,
+    prognosis: value,
+    priority: z.enum(["normal", "urgent"]),
+    care: z.enum(["standard", "oxygen", "bleeding", "cpr", "temperature"]),
+    cprCycles: z.number().int().min(0).max(6),
+    nextCpr: time,
+    transport: z.enum(["scene", "aboard", "delivered", "none"]),
+    vehicle: z.string().max(100),
+    history: z
+      .array(z.object({ at: time, text: z.string().max(180) }).strict())
+      .max(100),
+  })
+  .strict();
+export const dynamicsSchema = z
+  .object({
+    version: z.literal(1),
+    active: z.boolean(),
+    last: time,
+    state: z.enum([
+      "developing",
+      "escalating",
+      "critical",
+      "stabilizing",
+      "aftermath",
+      "resolved",
+    ]),
+    level: z.number().int().min(1).max(4),
+    tactic: z.enum(["standard", "defensive", "rescue"]),
+    hazards: z.array(hazardSchema).max(15),
+    fire: fireSchema.optional(),
+    patients: z.array(patientSchema).max(30),
+    extra: z.record(id, z.number().int().min(0).max(20)),
+    events: z.array(id).max(40),
+    nextEvent: time,
+    eventChecks: z.number().int().nonnegative().default(0),
+    aftermath: time,
+    parent: z.string().max(100),
+    children: z.array(id).max(2),
+    pending: z.object({ template: id, due: time }).strict().optional(),
+    random: z.number().int().nonnegative().optional(),
+    weatherAtCall: z.string().max(100),
+  })
+  .strict();
+export type Dynamics = z.infer<typeof dynamicsSchema>;
+export type Hazard = z.infer<typeof hazardSchema>;
+export type Patient = z.infer<typeof patientSchema>;
+export type TravelMode = z.infer<typeof journeySchema>["mode"];

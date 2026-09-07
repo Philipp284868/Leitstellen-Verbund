@@ -41,6 +41,7 @@ export function setFms(
     channel: bt(vt(v.type).home).org,
     history: [],
   });
+  if (v.fault && v.fault.state !== "repaired") code = 6;
   if (f.code === code && f.history.length) {
     f.operative = v.status;
     return;

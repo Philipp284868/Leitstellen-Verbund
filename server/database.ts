@@ -1,3 +1,5 @@
+import { attachDynamics } from "../src/simulation/dynamics";
+import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
 import { DatabaseSync, backup } from "node:sqlite";
@@ -6,7 +8,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 6;
+export const DATABASE_VERSION = 7;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -159,6 +161,18 @@ export class Database {
           }
           this.sql.exec("PRAGMA user_version=6");
           this.audit("server-migration", "phase-one-v6");
+        });
+      if (version < 7)
+        this.transaction(() => {
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) {
+              updateWeather(s);
+              for (const m of [...s.missions, ...s.archive])
+                attachDynamics(s, m, false);
+              this.save(id, s, mode);
+            }
+          this.sql.exec("PRAGMA user_version=7");
+          this.audit("server-migration", "phase-two-v7");
         });
       if (this.sql.prepare("PRAGMA foreign_key_check").all().length)
         throw Error("Ungültige SQLite-Kontoreferenzen.");

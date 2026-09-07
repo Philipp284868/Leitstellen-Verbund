@@ -1,3 +1,14 @@
+import { requirements } from "./simulation/hazards";
+import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
+import {
+  patientSeats,
+  boardPatients,
+  deliverPatients,
+} from "./simulation/patients";
+import { updateWeather, weatherWeight } from "./simulation/weather";
+import { routePlan, trafficTick } from "./simulation/traffic";
+import { faultsTick } from "./simulation/faults";
+import type { TravelMode } from "./simulation/dynamics-schema";
 import { setFms } from "./simulation/fms";
 import { beforeStep, afterVehicles, afterStep } from "./simulation/incidents";
 import { simId } from "./simulation/events";
@@ -14,8 +25,6 @@ import { level, type Save, type Mission, type Vehicle } from "./model";
 import {
   nodes,
   nearest,
-  route,
-  length,
   publicHospital,
   docks,
   isWaterSite,
@@ -57,6 +66,8 @@ export function money(s: Save, amount: number, text: string, receipt?: string) {
 export function readiness(s: Save, v: Vehicle) {
   const t = vt(v.type),
     b = s.buildings.find((b) => b.id === v.home);
+  if (v.fault && v.fault.state !== "repaired")
+    return "Fahrzeugdefekt: Reparatur erforderlich";
   if (s.desk.fleet[v.id]?.code === 6) return "FMS 6: nicht einsatzbereit";
   if (v.status !== "ready") return "Fahrzeug bereits gebunden";
   if (!b || b.ready > s.time) return "Wache im Bau";
@@ -75,13 +86,14 @@ export function capacity(s: Save, atScene?: string): Skills {
   for (const v of s.vehicles.filter((v) =>
     atScene ? v.mission === atScene && v.status === "scene" : true,
   )) {
+    if (v.fault && v.fault.state !== "repaired") continue;
     for (const [k, n] of Object.entries(vt(v.type).skills))
       total[k] = (total[k] || 0) + n;
   }
   return total;
 }
 export const missing = (m: Mission, skills: Skills) =>
-  Object.entries(mt(m.template).requirements)
+  Object.entries(requirements(m))
     .filter(([k, n]) => (skills[k] || 0) < n)
     .map(([k, n]) => [k, n - (skills[k] || 0)] as const);
 export function endCooperation(s: Save, id: string) {
@@ -99,19 +111,34 @@ export function beginTrip(
   v: Vehicle,
   target: Point,
   status: Vehicle["status"],
+  mode: TravelMode = status === "return" ? "normal" : "priority",
 ) {
   const origin = ["travel", "return", "transport"].includes(v.status)
     ? along(v.path, (s.time - v.depart) / (v.arrive - v.depart))
     : v.status === "alarmed"
       ? v.path[0]
       : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
-  v.path = route(origin, target, vt(v.type).mode);
+  const plan = routePlan(s, v, origin, target, mode);
+  v.path = plan.path;
   v.depart = s.time;
-  v.arrive =
-    s.time + Math.max(3, (length(v.path) * 12) / (vt(v.type).speed / 3.6));
+  v.arrive = s.time + plan.seconds;
+  v.journey = {
+    mode,
+    planned: plan.planned,
+    plannedSeconds: plan.plannedSeconds,
+    delay: plan.delay,
+    distanceDone: 0,
+    events: [...plan.events, `weather-${s.environment?.period ?? 0}`],
+    nextCheck: s.time + 60,
+    serial: 0,
+    target,
+    blockedUntil: plan.blockedUntil,
+    reason: plan.blockedUntil ? "Straße gesperrt; warte auf Freigabe" : "",
+  };
   v.status = status;
 }
 export function recall(s: Save, v: Vehicle) {
+  if (v.fault && v.fault.state !== "repaired") return;
   for (const c of s.contributions.filter(
     (c) => c.assignment === v.assignment && c.status === "active",
   ))
@@ -391,6 +418,8 @@ export function apply(s: Save, a: Action) {
       const v = s.vehicles.find((v) => v.id === a.id);
       if (!v || v.status === "ready" || v.status === "return")
         throw Error("Kein laufender Auftrag.");
+      if (v.fault && v.fault.state !== "repaired")
+        throw Error("Vor dem Rückruf die Reparatur beauftragen und abwarten.");
       if (v.patients)
         throw Error("Patiententransport muss zuerst abgeschlossen werden.");
       recall(s, v);
@@ -415,7 +444,10 @@ export function generate(s: Save) {
   );
   if (!candidates.length) return;
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
-  const t = candidates[(s.seed >>> 16) % candidates.length];
+  const weighted = candidates.flatMap((t) =>
+    Array.from({ length: weatherWeight(s, t.id) }, () => t),
+  );
+  const t = weighted[(s.seed >>> 16) % weighted.length];
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
   const relevantHomes = new Set(
     s.vehicles
@@ -493,6 +525,7 @@ export function tick(
   const dt = steps ? delta / steps : 0;
   for (let step = 0; step < steps; step++) {
     s.time += dt;
+    updateWeather(s);
     beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {
       money(s, 1500, "Öffentlicher Bereitschaftsdienst");
@@ -511,7 +544,10 @@ export function tick(
       return true;
     });
     for (const v of s.vehicles) {
-      if (v.arrive > s.time) continue;
+      faultsTick(s, v);
+      if (v.fault && v.fault.state !== "repaired") continue;
+      trafficTick(s, v);
+      if (v.journey?.blockedUntil || v.arrive > s.time) continue;
       if (v.status === "travel") v.status = "scene";
       else if (v.status === "return") {
         v.status = "ready";
@@ -529,6 +565,7 @@ export function tick(
           })),
         );
         const m = s.missions.find((m) => m.id === v.mission);
+        if (m) deliverPatients(s, m, v);
         const order = m?.transports.find((t) => t.assignment === v.assignment);
         if (order) order.status = "delivered";
         setFms(
@@ -545,6 +582,7 @@ export function tick(
         recall(s, v);
       }
     }
+    for (const m of s.missions) dynamicsTick(s, m, remote[m.id]);
     afterVehicles(s);
     for (const m of s.missions) {
       if (m.control && !m.control.briefed) continue;
@@ -556,12 +594,17 @@ export function tick(
       if (m.phase === "offered" || m.phase === "working") {
         if (missing(m, skills).length) continue;
         m.phase = "working";
-        m.progress = Math.min(t.seconds, m.progress + dt);
-        if (m.progress >= t.seconds) m.phase = "transport";
+        m.progress = Math.min(
+          t.seconds,
+          m.progress + dt * (m.dynamics?.tactic === "defensive" ? 0.65 : 1),
+        );
+        if (m.progress >= t.seconds && dynamicsComplete(m, s.time))
+          m.phase = "transport";
       }
       if (m.phase === "transport") {
         let remaining =
-          t.patients - m.transports.reduce((n, t) => n + t.patients, 0);
+          (patientSeats(m) ?? t.patients) -
+          m.transports.reduce((n, t) => n + t.patients, 0);
         for (const v of s.vehicles.filter(
           (v) =>
             v.mission === m.id &&
@@ -571,6 +614,7 @@ export function tick(
           const seats = Math.min(remaining, vt(v.type).capacity);
           if (!seats || !hospital(s, v.path.at(-1)!, seats)) continue;
           transport(s, v, seats);
+          boardPatients(s, m, v, seats);
           m.transports.push({
             assignment: v.assignment!,
             owner: s.player.id,
@@ -583,9 +627,11 @@ export function tick(
         if (
           m.transports
             .filter((t) => t.status === "delivered")
-            .reduce((n, t) => n + t.patients, 0) < t.patients
+            .reduce((n, t) => n + t.patients, 0) <
+          (patientSeats(m) ?? t.patients)
         )
           continue;
+        if (m.dynamics) m.dynamics.state = "resolved";
         m.phase = "done";
         m.completed = s.time;
         const reward = m.contributors.length

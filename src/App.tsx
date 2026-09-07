@@ -1,3 +1,4 @@
+import { DynamicsPanel } from "./Dynamics";
 import { MissionPanel } from "./Panels";
 import {
   DeskQueue,
@@ -623,7 +624,10 @@ function GameApp() {
                     {s.archive
                       .filter((m) => m.id === selected)
                       .map((m) => (
-                        <History key={m.id} s={s} m={m} />
+                        <div key={m.id}>
+                          <DynamicsPanel s={s} m={m} />
+                          <History s={s} m={m} />
+                        </div>
                       ))}
                   </>
                 )}

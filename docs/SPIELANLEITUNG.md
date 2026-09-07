@@ -51,3 +51,8 @@ Es gibt keine laufenden Pflichtkosten, Offline-Strafen oder negativen Guthaben. 
 Wichtige Änderungen werden sofort auf dem Server gespeichert. Der Server simuliert bei geschlossenem Browser weiter; nach Serverstillstand werden höchstens vier Stunden nachberechnet. Exportdateien und freiwillige lokale Kopien stehen unter Sicherungen bereit. Eine verbindliche Übernahme alter Dateien bleibt eine ausdrücklich genehmigte Wartungsaufgabe des Serverbetreibers bei gestopptem Spielserver; es gibt dafür keine Admin-Spielkonten.
 
 Karte ziehen, Mausrad oder +/− zum Zoomen verwenden. Marker lassen sich mit Tab und Enter bedienen. Auf kleinen Displays zwischen Karte und Einsatzliste wechseln. Dialoge schließen mit Escape; der Tastaturfokus bleibt im Dialog. Reduzierte Bewegung und heller Modus sind in den Einstellungen verfügbar.
+
+
+## Dynamische Lage (Phase 2)
+
+Nach der ersten Lagemeldung Gefahren, Brandbereiche und Patienten im Einsatzdialog prüfen. Taktik und Versorgungsschwerpunkte verändern den Ablauf, ersetzen aber keine Kräfte. Bei kritischen Lagen oder Defekten Sprechwünsche bearbeiten und Ersatz nachfordern. Defekte Fahrzeuge im Betriebsbereich unter der Karte reparieren lassen. Wetter, Verkehr und Anfahrtsart beeinflussen die ETA; Sperren können Umleitungen oder Wartezeit verursachen. Die Einsatzdichte bleibt ruhig und auf zwei aktive Fälle begrenzt. [Vollständige Bedienung](PHASE-2.md).

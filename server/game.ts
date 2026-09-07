@@ -1,3 +1,4 @@
+import { attachDynamics, followupsTick } from "../src/simulation/dynamics";
 import { deskOwner, workspace, membership } from "./workspaces";
 import { attachIncident } from "../src/simulation/calls";
 import { legacyIncident, publicSave } from "../src/simulation/incidents";
@@ -61,7 +62,15 @@ export class Game {
         if (!m) throw Error("Eigener Einsatz fehlt.");
         legacyIncident(s, m);
         writable(m);
-        alarm(s, m, action.vehicles, user, action.priority, action.alarm);
+        alarm(
+          s,
+          m,
+          action.vehicles,
+          user,
+          action.priority,
+          action.alarm,
+          action.travel,
+        );
       } else if (
         deskActions.some((schema) => schema.shape.type.value === action.type)
       )
@@ -288,11 +297,13 @@ export class Game {
       if (seconds > 60) s.missionWait = 90 + (s.seed % 121);
       else {
         s.missionWait = Math.max(0, s.missionWait - Math.max(0, seconds));
+        followupsTick(s);
         if (s.missionWait === 0 && s.missions.length < 2) {
           const count = s.missions.length;
           generate(s);
           if (s.missions.length > count) {
             attachIncident(s, s.missions.at(-1)!);
+            attachDynamics(s, s.missions.at(-1)!);
             s.missionWait = 90 + (s.seed % 121);
           }
         }
