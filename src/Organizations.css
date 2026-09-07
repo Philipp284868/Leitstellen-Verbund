@@ -1,0 +1,143 @@
+.org-settings,
+.person-settings,
+.neighbor-desk {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--line, #334155);
+  border-radius: 12px;
+}
+.org-settings summary,
+.person-settings summary,
+.neighbor-desk summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding: 0.35rem 0;
+}
+.org-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.org-form label,
+.neighbor-desk label,
+.org-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.org-form label:has(input[type="checkbox"]),
+.org-settings label:has(input[type="checkbox"]),
+.neighbor-desk label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+}
+.org-form input,
+.org-form select,
+.neighbor-desk select,
+.neighbor-desk textarea {
+  width: 100%;
+  min-width: 0;
+}
+.org-form input[type="checkbox"],
+.neighbor-desk input[type="checkbox"],
+.org-settings input[type="checkbox"] {
+  width: auto;
+}
+.neighbor-desk textarea {
+  min-height: 85px;
+  margin-bottom: 0.6rem;
+}
+.org-settings button,
+.person-settings button {
+  margin-top: 0.8rem;
+}
+.person-settings fieldset {
+  border: 0;
+  padding: 0;
+}
+.person-settings {
+  width: 100%;
+  font-size: 0.9rem;
+}
+.aid-card {
+  border: 1px solid var(--line, #334155);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  background: var(--panel, #152236);
+}
+.aid-card header,
+.aid-card footer {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.aid-card h4 {
+  margin: 0.4rem 0;
+}
+.aid-card h5 {
+  margin: 0.5rem 0;
+}
+.aid-vehicles label {
+  padding: 0.4rem 0;
+}
+.aid-messages {
+  max-height: 240px;
+  overflow: auto;
+  border-left: 3px solid #38bdf8;
+  padding-left: 1rem;
+}
+.aid-card footer {
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+.vehicle-staffing {
+  width: 100%;
+  border-top: 1px solid var(--line, #334155);
+  padding-top: 0.7rem;
+  margin-top: 0.5rem;
+}
+.vehicle-staffing small,
+.aid-vehicles small,
+.organization-tasks small {
+  display: block;
+  margin: 0.3rem 0;
+  opacity: 0.8;
+}
+.organization-tasks article {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.7rem 0;
+  padding: 0.8rem;
+  border: 1px solid var(--line, #334155);
+  border-radius: 10px;
+}
+.organization-tasks article > div {
+  flex: 1;
+  min-width: 180px;
+}
+.organization-tasks progress {
+  max-width: 150px;
+}
+@media (max-width: 600px) {
+  .org-form {
+    grid-template-columns: 1fr;
+  }
+  .aid-card header {
+    align-items: flex-start;
+  }
+  .organization-tasks article {
+    display: block;
+  }
+  .neighbor-desk {
+    padding: 0.7rem;
+  }
+  .person-settings {
+    padding: 0.5rem;
+  }
+}

@@ -79,7 +79,7 @@ describe("Autoritativer Server", () => {
         id: crypto.randomUUID(),
         action: { type: "share", id: m.id },
       }),
-    ).toThrow("Phase 3");
+    ).toThrow("Unterstützungsanfrage");
   });
   it("liefert Client und API auf einem Port, ohne private Caches oder externe Ressourcen", async () => {
     const { origin, request } = await server();

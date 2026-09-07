@@ -1,5 +1,13 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.9.0: Organisationen und Nachbarleitstellen (Phase 3)
+
+BF-/FF-Wacheneinstellungen, individuelle Personalverfügbarkeit und Anreise, Mindestbesatzung, tatsächliche Umbesetzung und Reserve erweitern die Disposition. Polizei, THW und Rettungsdienst erhalten wirksame Einsatzaufträge. Krankenhäuser berücksichtigen Fachbereiche, Abmeldung, belegte und zugesagte Betten sowie geeignete alternative Transportziele.
+
+Unter **Freunde → Nachbarleitstellen** lassen sich Unterstützung anfragen, Rückfragen beantworten, teilweise zusagen, ablehnen und beenden. Ausschließlich ausdrücklich zugesagte Kräfte und der zugehörige Einsatz werden sichtbar. Fremde Fahrzeuge arbeiten und transportieren serverseitig weiter, auch ohne offenen Helferbrowser. Die gemeinsame Disposition innerhalb derselben Leitstelle bleibt erhalten; Einzelspieler und Multiplayer bleiben getrennt.
+
+**Migration auf Schema 8:** Bestände und laufende Einsätze werden ohne neue nachträgliche Einsatzpflichten übernommen. Keine neuen Umgebungsvariablen oder Dienste. Neue Organisationsaufträge entstehen bei neuen Einsätzen. [Bedienung, Migration und fachliche Grenzen](docs/PHASE-3.md) · [Testbericht](docs/PHASE-3-TESTBERICHT.md).
+
 ## Version 2.8.0: Dynamische Einsatzlagen (Phase 2)
 
 Neue Einsätze entwickeln jetzt Gefahren, Brände und einzelne Patienten. Kräfte vor Ort, taktische Entscheidungen und Verzögerungen beeinflussen Eskalation, Nachforderungen, Versorgung und Abschluss. Seltene Folgeereignisse bleiben begrenzt und der eigenen Leitstelle zugeordnet. Simuliertes Wetter, Verkehr, tatsächliche Straßensperren und reparierbare Fahrzeugdefekte verändern Fahrten und Ressourcenverfügbarkeit.
@@ -12,7 +20,7 @@ Die neue Lageansicht erscheint nach Erkundung; Patientenverläufe und Gefahren b
 
 Neue Ereignisse beginnen als Notruf. Ort und Meldebild erfragen, eine eigene AAO anwenden oder frei disponieren, Alarmierungsart wählen und Ausrücken sowie FMS verfolgen. Nach der ersten Lagemeldung können weitere Kräfte nötig werden. Der Verlauf bleibt im Einsatz und anschließend im Archiv erhalten. DME, Sirene und Wachalarm nutzen unterschiedliche Ausrückzeiten und die vorhandene Audioinfrastruktur.
 
-**Multiplayer-Regel geändert:** Neue Einsätze bleiben innerhalb der eigenen Leitstelle. Unter **Freunde** können bestehende Benutzer nach ausdrücklicher Einladung und Annahme denselben Leitstellenbestand disponieren. Einzelspieler und der persönliche bisherige Multiplayerbestand bleiben getrennt erhalten. Nachbarleitstellen-Anfragen gehören zur späteren Phase 3.
+**Multiplayer-Regel geändert:** Neue Einsätze bleiben innerhalb der eigenen Leitstelle. Unter **Freunde** können bestehende Benutzer nach ausdrücklicher Einladung und Annahme denselben Leitstellenbestand disponieren. Einzelspieler und der persönliche bisherige Multiplayerbestand bleiben getrennt erhalten. Seit Version 2.9 stehen zusätzlich ausdrückliche Nachbarleitstellen-Anfragen zur Verfügung.
 
 [Bedienung, Migration auf Schema 6, Tests und Abgrenzung](docs/PHASE-1.md).
 

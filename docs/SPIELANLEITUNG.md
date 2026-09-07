@@ -56,3 +56,7 @@ Karte ziehen, Mausrad oder +/− zum Zoomen verwenden. Marker lassen sich mit Ta
 ## Dynamische Lage (Phase 2)
 
 Nach der ersten Lagemeldung Gefahren, Brandbereiche und Patienten im Einsatzdialog prüfen. Taktik und Versorgungsschwerpunkte verändern den Ablauf, ersetzen aber keine Kräfte. Bei kritischen Lagen oder Defekten Sprechwünsche bearbeiten und Ersatz nachfordern. Defekte Fahrzeuge im Betriebsbereich unter der Karte reparieren lassen. Wetter, Verkehr und Anfahrtsart beeinflussen die ETA; Sperren können Umleitungen oder Wartezeit verursachen. Die Einsatzdichte bleibt ruhig und auf zwei aktive Fälle begrenzt. [Vollständige Bedienung](PHASE-2.md).
+
+## Organisationen und gezielte Nachbarhilfe ab Version 2.9
+
+Wachenprofile, Personalverfügbarkeit und Krankenhausaufnahme werden in den jeweiligen Wachendetails eingestellt. Der Fuhrpark zeigt Reserve, Umbesetzung und individuelle Ankunft der FF-Besatzung. Nach der Erkundung passende Organisationsaufträge im Einsatz beauftragen; reale Kräfte vor Ort arbeiten sie ab. Unter Freunde gezielte Anfragen an Nachbarleitstellen stellen, Rückfragen beantworten und Fahrzeuge ausdrücklich zusagen. [Vollständige Phase-3-Anleitung](PHASE-3.md).

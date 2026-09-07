@@ -6,6 +6,8 @@ import { io, type Socket } from "socket.io-client";
 import { startServer } from "../server/index";
 import { phaseFixture } from "./phase-fixture";
 import { attachDynamics } from "../src/simulation/dynamics";
+// Real password hashing, HTTP/WebSocket exchanges and the rate-limit wait share
+// this budget; parallel world/routing tests can exhaust Vitest's 5-second default.
 it("HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden mit dem Rechteentzug", async () => {
   const port = 23000 + Math.floor(Math.random() * 3000),
     origin = `http://127.0.0.1:${port}`;
@@ -160,4 +162,4 @@ it("HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden
     sockets.forEach((s) => s.close());
     await app.close();
   }
-});
+}, 30000);

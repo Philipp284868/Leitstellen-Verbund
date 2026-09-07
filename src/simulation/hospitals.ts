@@ -1,0 +1,101 @@
+import type { Save, Mission, Vehicle } from "../model";
+import {
+  publicHospital,
+  distance,
+  METERS_PER_UNIT,
+  type Point,
+} from "../world";
+import { routePlan } from "./traffic";
+import { specialties } from "./organizations-schema";
+export function hospitalOptions(
+  s: Save,
+  origin: Point,
+  seats: number,
+  m?: Mission,
+  vehicle?: Vehicle,
+) {
+  const patients = m?.dynamics?.active
+    ? m.dynamics.patients
+        .filter((p) => p.transport === "scene" && p.condition !== "dead")
+        .sort(
+          (a, b) =>
+            Number(b.priority === "urgent") - Number(a.priority === "urgent") ||
+            a.health - b.health,
+        )
+        .slice(0, seats)
+    : [];
+  const needs = new Set<keyof typeof specialties>(["general"]);
+  for (const p of patients) {
+    if (p.age < 18) needs.add("pediatric");
+    if (p.condition === "critical" || p.condition === "cpr" || p.cprCycles)
+      needs.add("intensive");
+    if (/brand|feuer|rauch/i.test(p.injury)) needs.add("burns");
+    if (/unfall|verletzung|sturz/i.test(p.injury)) needs.add("trauma");
+  }
+  return [
+    {
+      id: "public",
+      name: "Regionalklinik",
+      pos: publicHospital,
+      capacity: 100,
+      open: true,
+      specialties: Object.keys(specialties),
+    },
+    ...s.buildings
+      .filter((b) => b.type === "hospital" && b.ready <= s.time)
+      .map((b) => ({
+        id: b.id,
+        name: b.name,
+        pos: b.pos,
+        capacity: b.hospital?.capacity ?? 20 * b.level,
+        open: b.hospital?.open ?? true,
+        specialties: b.hospital?.specialties ?? Object.keys(specialties),
+      })),
+  ]
+    .map((h) => {
+      const occupied = s.beds.filter((b) => b.home === h.id).length;
+      const reserved = s.vehicles
+        .filter(
+          (v) =>
+            v.status === "transport" &&
+            (v.destination
+              ? v.destination === h.id
+              : distance(v.path.at(-1)!, h.pos) < 1),
+        )
+        .reduce((n, v) => n + v.patients, 0);
+      const missing = [...needs].filter((n) => !h.specialties.includes(n));
+      let seconds = (distance(origin, h.pos) * METERS_PER_UNIT) / (60 / 3.6);
+      let reachable = true;
+      if (vehicle) {
+        try {
+          seconds = routePlan(s, vehicle, origin, h.pos).seconds;
+        } catch {
+          reachable = false;
+        }
+      }
+      const reason = !h.open
+        ? "Abgemeldet"
+        : missing.length
+          ? `Fachbereich fehlt: ${missing.map((x) => specialties[x]).join(", ")}`
+          : occupied + reserved + seats > h.capacity
+            ? "Keine freie Aufnahme"
+            : !reachable
+              ? "Kein Fahrweg"
+              : "";
+      return { ...h, occupied, reserved, seconds, reason };
+    })
+    .sort((a, b) => a.seconds - b.seconds || a.id.localeCompare(b.id));
+}
+export function selectHospital(
+  s: Save,
+  origin: Point,
+  seats: number,
+  m?: Mission,
+  v?: Vehicle,
+) {
+  const options = hospitalOptions(s, origin, seats, m, v).filter(
+    (h) => !h.reason,
+  );
+  // A closed/full/inappropriate preferred facility never strands a stable patient.
+  return options.find((h) => h.id === m?.organization?.hospital) ?? options[0];
+}

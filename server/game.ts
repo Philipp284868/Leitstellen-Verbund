@@ -1,3 +1,20 @@
+import { stationProfile, personDuty } from "../src/simulation/staffing";
+import {
+  organizationActions,
+  aidActions,
+  type OrganizationAction,
+  type AidAction,
+} from "../src/simulation/organizations-schema";
+import {
+  organizationCommand,
+  attachOrganizations,
+} from "../src/simulation/organizations";
+import { aidCommand, aidTick, aidView, authorizedHelper } from "./aid";
+import {
+  boardPatients,
+  deliverPatients,
+  patientSeats,
+} from "../src/simulation/patients";
 import { attachDynamics, followupsTick } from "../src/simulation/dynamics";
 import { deskOwner, workspace, membership } from "./workspaces";
 import { attachIncident } from "../src/simulation/calls";
@@ -22,6 +39,7 @@ import {
   endCooperation,
   type Action,
 } from "../src/engine";
+import type { Save, Vehicle } from "../src/model";
 import type { GameMode } from "../src/mode";
 import { vt, mt, type Skills } from "../src/catalog";
 import { along } from "../src/world";
@@ -57,7 +75,37 @@ export class Game {
         ["share", "unshare", "support"].includes(action.type)
       )
         throw Error("Zusammenarbeit ist nur im Multiplayer möglich.");
-      if (action.type === "dispatch") {
+      const external: Skills = {};
+      if ("mission" in action) {
+        const m = s.missions.find((m) => m.id === action.mission);
+        if (m)
+          for (const helper of saves.values())
+            for (const v of helper.vehicles.filter(
+              (v) =>
+                v.mission === `remote:${owner}:${m.id}` &&
+                v.status === "scene" &&
+                (!v.fault || v.fault.state === "repaired") &&
+                authorizedHelper(s, m, helper, v),
+            ))
+              for (const [k, n] of Object.entries(vt(v.type).skills))
+                external[k] = (external[k] || 0) + n;
+      }
+      if (
+        aidActions.some((schema) => schema.shape.type.value === action.type)
+      ) {
+        if (mode !== "multi")
+          throw Error("Unterstützungsanfragen nur im Multiplayer.");
+        const eligible = new Set(
+          [...saves.keys()].filter((id) => deskOwner(this.db, id, mode) === id),
+        );
+        aidCommand(saves, s, action as AidAction, user, eligible);
+      } else if (
+        organizationActions.some(
+          (schema) => schema.shape.type.value === action.type,
+        )
+      )
+        organizationCommand(s, action as OrganizationAction, user);
+      else if (action.type === "dispatch") {
         const m = s.missions.find((m) => m.id === action.mission);
         if (!m) throw Error("Eigener Einsatz fehlt.");
         legacyIncident(s, m);
@@ -74,13 +122,13 @@ export class Game {
       } else if (
         deskActions.some((schema) => schema.shape.type.value === action.type)
       )
-        deskCommand(s, action as DeskAction, user);
+        deskCommand(s, action as DeskAction, user, external);
       else if (action.type === "share" || action.type === "unshare") {
         const m = s.missions.find((m) => m.id === action.id);
         if (!m) throw Error("Eigener Einsatz fehlt.");
         if (action.type === "share" && m.control && !m.control.legacy)
           throw Error(
-            "Neue Einsätze bleiben in der eigenen Leitstelle. Nachbarleitstellen folgen in Phase 3.",
+            "Neue Einsätze bleiben in der eigenen Leitstelle. Bitte eine Unterstützungsanfrage im Leitstellenverbund erstellen.",
           );
         if (action.type === "share") m.shared = true;
         else {
@@ -148,7 +196,19 @@ export class Game {
         action.types.forEach(vt);
         if (s.templates.length >= 12) throw Error("Maximal zwölf Vorlagen.");
         s.templates.push({ name: action.name, types: action.types });
-      } else apply(s, action as Action);
+      } else {
+        apply(s, action as Action);
+        if (action.type === "build") {
+          const b = s.buildings.at(-1)!;
+          if (!["hospital", "school"].includes(b.type))
+            b.organization = stationProfile(b);
+        }
+        if (action.type === "hire")
+          for (const p of s.people.filter(
+            (p) => p.home === action.home && !p.duty,
+          ))
+            p.duty = personDuty(s, p);
+      }
       for (const [id, value] of saves) {
         value.revision++;
         this.db.save(id, value, mode);
@@ -172,16 +232,23 @@ export class Game {
       Math.ceil(Math.min(14400, Math.max(0, seconds)) / 5),
     );
     for (let n = 0; n < count; n++) {
+      aidTick(saves);
       const remote = new Map<string, Record<string, Skills>>();
+      const carriers: Record<string, Skills> = {};
+      const remoteDynamic = new Set<string>();
       for (const [ownerId, owner] of saves) {
         const skills: Record<string, Skills> = {};
-        for (const m of owner.missions.filter((m) => m.shared)) {
+        for (const m of owner.missions) {
+          if (m.dynamics?.active)
+            remoteDynamic.add(`remote:${ownerId}:${m.id}`);
           for (const [helperId, helper] of saves) {
             if (helperId === ownerId) continue;
             for (const v of helper.vehicles.filter(
               (v) =>
                 v.mission === `remote:${ownerId}:${m.id}` &&
-                v.status === "scene",
+                v.status === "scene" &&
+                (!v.fault || v.fault.state === "repaired") &&
+                authorizedHelper(owner, m, helper, v),
             )) {
               if (!m.contributors.includes(helperId))
                 m.contributors.push(helperId);
@@ -193,11 +260,15 @@ export class Game {
                 !m.transports.some((t) => t.assignment === v.assignment)
               ) {
                 const remaining =
-                  mt(m.template).patients -
+                  (patientSeats(m) ?? mt(m.template).patients) -
                   m.transports.reduce((a, t) => a + t.patients, 0);
                 const seats = Math.min(remaining, vt(v.type).capacity);
-                if (seats > 0 && hospital(helper, v.path.at(-1)!, seats)) {
-                  transport(helper, v, seats);
+                if (
+                  seats > 0 &&
+                  hospital(helper, v.path.at(-1)!, seats, m, v)
+                ) {
+                  transport(helper, v, seats, m);
+                  boardPatients(owner, m, v, seats);
                   const assignment = v.assignment!;
                   m.transports.push({
                     assignment,
@@ -217,6 +288,13 @@ export class Game {
                 }
               }
             }
+            for (const v of helper.vehicles.filter(
+              (v) =>
+                v.patients &&
+                v.mission === `remote:${ownerId}:${m.id}` &&
+                authorizedHelper(owner, m, helper, v),
+            ))
+              carriers[v.id] = vt(v.type).skills;
             for (const order of m.transports.filter(
               (t) => t.owner === helperId && t.status === "ordered",
             )) {
@@ -224,8 +302,13 @@ export class Game {
                 helper.transfers.some(
                   (t) => t.assignment === order.assignment && t.delivered,
                 )
-              )
+              ) {
                 order.status = "delivered";
+                const vehicle = helper.vehicles.find(
+                  (v) => v.id === order.vehicle,
+                );
+                if (vehicle) deliverPatients(owner, m, vehicle);
+              }
             }
           }
         }
@@ -239,6 +322,8 @@ export class Game {
           remote.get(id),
           false,
           false,
+          carriers,
+          remoteDynamic,
         );
         for (const m of s.archive.filter((m) => !before.has(m.round))) {
           this.db.sql
@@ -276,7 +361,11 @@ export class Game {
           if (
             !saves
               .get(ownerId)
-              ?.missions.some((m) => m.id === missionId && m.shared)
+              ?.missions.some(
+                (m) =>
+                  m.id === missionId &&
+                  authorizedHelper(saves.get(ownerId)!, m, helper, v),
+              )
           )
             recall(helper, v);
         }
@@ -290,6 +379,7 @@ export class Game {
         helper.receipts = helper.receipts.slice(-10000);
       }
     }
+    aidTick(saves);
     for (const [id, s] of saves) {
       s.revision++;
       // Arrival intervals use real seconds, independent of simulation speed.
@@ -304,6 +394,7 @@ export class Game {
           if (s.missions.length > count) {
             attachIncident(s, s.missions.at(-1)!);
             attachDynamics(s, s.missions.at(-1)!);
+            attachOrganizations(s.missions.at(-1)!);
             s.missionWait = 90 + (s.seed % 121);
           }
         }
@@ -320,6 +411,9 @@ export class Game {
   }
   view(user: string, online: Set<string>, mode: GameMode = "multi") {
     const actor = user;
+    const onlineDesks = new Set(
+      [...online].map((id) => deskOwner(this.db, id, mode)),
+    );
     user = deskOwner(this.db, user, mode);
     const access = workspace(this.db, actor, mode);
     if (mode === "single") this.db.ensureSolo(user);
@@ -331,55 +425,66 @@ export class Game {
         mode,
         workspace: access,
         save: publicSave(save),
-        network: { friends: [], support: [] },
+        network: { friends: [], support: [], requests: [], neighbors: [] },
       };
-    const sharedAssignment = (mission: string | null, owner: string) => {
-      if (!mission) return false;
-      if (mission.startsWith("remote:")) {
-        const [, coordinator, id] = mission.split(":");
-        return !!saves
-          .get(coordinator)
-          ?.missions.some((m) => m.id === id && m.shared);
-      }
-      return !!saves
-        .get(owner)
-        ?.missions.some((m) => m.id === mission && m.shared);
+    const related = (
+      coordinator: string,
+      missionId: string,
+      helper: Save,
+      v: Vehicle,
+    ) => {
+      const o = saves.get(coordinator),
+        m = o?.missions.find((m) => m.id === missionId);
+      return !!o && !!m && authorizedHelper(o, m, helper, v);
     };
-    const friends = Array.from(saves.values())
-      .filter(
-        (s) =>
-          s.player.id !== user &&
-          (save.vehicles.some((v) =>
-            v.mission?.startsWith(`remote:${s.player.id}:`),
-          ) ||
-            s.vehicles.some((v) => v.mission?.startsWith(`remote:${user}:`))),
-      )
-      .map((s) => ({
-        id: s.player.id,
-        name: s.player.name,
-        status: online.has(s.player.id)
-          ? "Verbunden · Online"
-          : "Verbunden · Server simuliert (Browser offline)",
-        revision: s.revision,
-        buildings: s.buildings,
-        vehicles: s.vehicles
-          .filter((v) => sharedAssignment(v.mission, s.player.id))
-          .map((v) => ({
-            ...v,
-            position: along(
-              v.path,
-              (s.time - v.depart) / (v.arrive - v.depart || 1),
+    const friends = [...saves.values()]
+      .filter((other) => other.player.id !== user)
+      .flatMap((other) => {
+        const incoming = other.vehicles.filter(
+          (v) =>
+            v.mission?.startsWith(`remote:${user}:`) &&
+            related(user, v.mission.split(":")[2], other, v),
+        );
+        const outgoing = save.vehicles.filter(
+          (v) =>
+            v.mission?.startsWith(`remote:${other.player.id}:`) &&
+            related(other.player.id, v.mission.split(":")[2], save, v),
+        );
+        if (!incoming.length && !outgoing.length) return [];
+        const missionIds = new Set(
+          outgoing.map((v) => v.mission!.split(":")[2]),
+        );
+        const visible = other.vehicles.filter(
+          (v) =>
+            incoming.includes(v) || (v.mission && missionIds.has(v.mission)),
+        );
+        return [
+          {
+            id: other.player.id,
+            name: other.player.name,
+            status: onlineDesks.has(other.player.id)
+              ? "Verbunden · Online"
+              : "Verbunden · Server simuliert",
+            revision: other.revision,
+            buildings: other.buildings.filter((b) =>
+              visible.some((v) => v.home === b.id),
             ),
-            eta: Math.max(0, v.arrive - s.time),
-          })),
-        missions: publicSave(s).missions.filter(
-          (m) =>
-            m.shared &&
-            save.vehicles.some(
-              (v) => v.mission === `remote:${s.player.id}:${m.id}`,
+            vehicles: visible.map((v) => ({
+              ...v,
+              turnout: undefined,
+              position: along(
+                v.path,
+                (other.time - v.depart) / (v.arrive - v.depart || 1),
+              ),
+              eta: Math.max(0, v.arrive - other.time),
+              fms: other.desk.fleet[v.id]?.code ?? 2,
+            })),
+            missions: publicSave(other).missions.filter((m) =>
+              missionIds.has(m.id),
             ),
-        ),
-      }));
+          },
+        ];
+      });
     const support = friends.flatMap((f) =>
       f.vehicles
         .filter((v) => v.mission?.startsWith(`remote:${user}:`))
@@ -398,7 +503,22 @@ export class Game {
       mode,
       workspace: access,
       save: publicSave(save),
-      network: { friends, support },
+      network: {
+        friends,
+        support,
+        requests: aidView(saves, user),
+        neighbors: [...saves.values()]
+          .filter(
+            (p) =>
+              p.player.id !== user &&
+              deskOwner(this.db, p.player.id, mode) === p.player.id,
+          )
+          .map((p) => ({
+            id: p.player.id,
+            name: p.player.station,
+            online: onlineDesks.has(p.player.id),
+          })),
+      },
     };
   }
 }

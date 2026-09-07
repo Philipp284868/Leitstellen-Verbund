@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 7;
+export const DATABASE_VERSION = 8;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -182,6 +182,13 @@ export class Database {
           .get()
       )
         throw Error("Unzulässige Kontorolle. Datenbank nicht löschen.");
+      if (version < 8)
+        this.transaction(() => {
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) this.save(id, s, mode);
+          this.sql.exec("PRAGMA user_version=8");
+          this.audit("server-migration", "organizations-and-explicit-aid-v8");
+        });
     } catch (e) {
       this.sql.close();
       throw e;

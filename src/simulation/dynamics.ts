@@ -1,3 +1,8 @@
+import {
+  organizationsTick,
+  organizationsComplete,
+  attachOrganizations,
+} from "./organizations";
 import type { Save, Mission } from "../model";
 import { mt, vt, type Skills } from "../catalog";
 import { level } from "../model";
@@ -162,7 +167,12 @@ function escalate(s: Save, m: Mission, skills: Skills) {
     );
   }
 }
-export function dynamicsTick(s: Save, m: Mission, remote: Skills = {}) {
+export function dynamicsTick(
+  s: Save,
+  m: Mission,
+  remote: Skills = {},
+  carriers: Record<string, Skills> = {},
+) {
   const d = m.dynamics;
   if (!d?.active || m.phase === "done") return;
   const elapsed =
@@ -191,9 +201,10 @@ export function dynamicsTick(s: Save, m: Mission, remote: Skills = {}) {
     if (d.tactic === "defensive") {
       skills.hazmat = Math.max(skills.hazmat || 0, (skills.fire || 0) * 0.5);
     }
+    organizationsTick(s, m, skills, DYNAMICS.quantum);
     hazardTick(s, m, skills, DYNAMICS.quantum);
     fireTick(s, m, skills, DYNAMICS.quantum);
-    patientTick(s, m, skills, DYNAMICS.quantum);
+    patientTick(s, m, skills, DYNAMICS.quantum, carriers);
     escalate(s, m, skills);
     const critical = d.patients.find(
       (p) => p.condition === "critical" || p.condition === "cpr",
@@ -257,11 +268,12 @@ export function dynamicsTick(s: Save, m: Mission, remote: Skills = {}) {
 }
 export function dynamicsComplete(m: Mission, time: number) {
   return (
-    !m.dynamics?.active ||
-    (!!m.dynamics.aftermath &&
-      m.dynamics.aftermath <= time &&
-      patientsReady(m) &&
-      m.dynamics.hazards.every((h) => h.resolved))
+    organizationsComplete(m) &&
+    (!m.dynamics?.active ||
+      (!!m.dynamics.aftermath &&
+        m.dynamics.aftermath <= time &&
+        patientsReady(m) &&
+        m.dynamics.hazards.every((h) => h.resolved)))
   );
 }
 export function followupsTick(s: Save) {
@@ -292,6 +304,7 @@ export function followupsTick(s: Save) {
   s.missions.push(child);
   attachIncident(s, child);
   attachDynamics(s, child);
+  attachOrganizations(child);
   child.dynamics!.parent = parent.id;
   d.children.push(child.id);
   delete d.pending;

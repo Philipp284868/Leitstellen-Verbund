@@ -1,3 +1,9 @@
+import {
+  StationSettings,
+  PersonSettings,
+  VehicleStaffing,
+  HospitalSettings,
+} from "./Organizations";
 import { tripLabel } from "./travel";
 import { useState } from "react";
 import {
@@ -56,11 +62,15 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
     <div className="resource-panel">
       <span className="eyebrow">{bt(b.type).org} · Eigene Wache</span>
       <h2>{b.name}</h2>
+      <StationSettings key={`${b.id}-station`} s={s} b={b} />
+      <HospitalSettings key={`${b.id}-hospital`} s={s} b={b} />
       {b.type === "hospital" && (
         <p className="banner">
-          Patientenaufnahme geöffnet ·{" "}
-          {s.beds.filter((x) => x.home === b.id).length} / {20 * b.level} Betten
-          belegt
+          {b.hospital?.open === false
+            ? "Patientenaufnahme abgemeldet"
+            : "Patientenaufnahme geöffnet"}{" "}
+          · {s.beds.filter((x) => x.home === b.id).length} /{" "}
+          {b.hospital?.capacity ?? 20 * b.level} Betten belegt
         </p>
       )}
       <div className="stat-row">
@@ -152,9 +162,9 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
           </label>
           <div className="people-list">
             {crew.map((p, i) => (
-              <div className="person" key={p.id}>
+              <div className="person" key={p.id} style={{ flexWrap: "wrap" }}>
                 <span>
-                  Mitarbeiter {i + 1}
+                  {p.duty?.name || `Mitarbeiter ${i + 1}`}
                   <small>
                     {p.training
                       ? `In Ausbildung: ${p.training} (${Math.max(0, Math.ceil(p.ready - s.time))} s)`
@@ -189,6 +199,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
                     Entlassen
                   </button>
                 )}
+                <PersonSettings s={s} person={p} />
               </div>
             ))}
           </div>
@@ -369,6 +380,7 @@ export function Fleet({ s }: { s: Save }) {
                   </>
                 )}
               </div>
+              <VehicleStaffing s={s} v={v} />
             </article>
           ))}
       </div>

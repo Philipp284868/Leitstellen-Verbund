@@ -1,3 +1,4 @@
+import { taskSkills } from "./organizations";
 import type { Mission, Save } from "../model";
 import { mt, type Skills } from "../catalog";
 import type { Hazard } from "./dynamics-schema";
@@ -117,6 +118,9 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
 }
 export function requirements(m: Mission): Skills {
   const r = { ...mt(m.template).requirements };
+  for (const task of m.organization?.tasks || [])
+    if (!task.done)
+      r[taskSkills[task.kind]] = Math.max(r[taskSkills[task.kind]] || 0, 1);
   if (!m.dynamics?.active) return r;
   for (const [k, n] of Object.entries(m.dynamics.extra))
     r[k] = Math.max(r[k] || 0, n);

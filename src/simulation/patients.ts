@@ -61,7 +61,13 @@ function note(s: Save, m: Mission, p: Patient, text: string) {
   p.history = p.history.slice(-100);
   record(s, m, "PATIENT_CHANGED", `${p.id.slice(-6)}: ${text}`);
 }
-export function patientTick(s: Save, m: Mission, skills: Skills, dt: number) {
+export function patientTick(
+  s: Save,
+  m: Mission,
+  skills: Skills,
+  dt: number,
+  carriers: Record<string, Skills> = {},
+) {
   const d = m.dynamics!;
   let medical = skills.medical || 0;
   const order = [...d.patients].sort(
@@ -77,13 +83,18 @@ export function patientTick(s: Save, m: Mission, skills: Skills, dt: number) {
       p.transport === "aboard"
         ? s.vehicles.find((v) => v.id === p.vehicle)
         : undefined;
-    const care = carrier
-      ? vt(carrier.type).skills.medical || 0
-      : Math.min(p.health >= 85 && p.treatment >= 80 ? 0.2 : 2, medical);
-    if (!carrier) medical = Math.max(0, medical - care);
-    const doctor = carrier
-      ? vt(carrier.type).skills.doctor || 0
-      : skills.doctor || 0;
+    const transportSkills = carrier
+      ? vt(carrier.type).skills
+      : carriers[p.vehicle];
+    const care =
+      p.transport === "aboard"
+        ? transportSkills?.medical || 0
+        : Math.min(p.health >= 85 && p.treatment >= 80 ? 0.2 : 2, medical);
+    if (p.transport !== "aboard") medical = Math.max(0, medical - care);
+    const doctor =
+      p.transport === "aboard"
+        ? transportSkills?.doctor || 0
+        : skills.doctor || 0;
     const smoke = p.transport === "scene" ? (d.fire?.smoke || 0) / 1500 : 0;
     const protection = d.tactic === "rescue" ? 1.2 : 1;
     const bonus =

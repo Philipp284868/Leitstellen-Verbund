@@ -361,9 +361,17 @@ function GameApp() {
                     onClick={() => setModal("friends")}
                   >
                     <Users size={18} />
-                    <span>Disponenten derselben Leitstelle</span>
+                    <span>Leitstellenverbund und Disponenten</span>
                     <b>
-                      {net.friends.reduce((n, f) => n + f.missions.length, 0)}
+                      {
+                        net.requests.filter(
+                          (r) =>
+                            r.peer === s.player.id &&
+                            ["SENT", "ACCEPTED", "IN_PROGRESS"].includes(
+                              r.state,
+                            ),
+                        ).length
+                      }
                     </b>
                   </button>
                 )}
@@ -484,7 +492,7 @@ function GameApp() {
                 building: "Wachendetails",
                 fleet: "Fuhrpark",
                 mission: "Einsatzdisposition",
-                friends: "Disponenten und Leitstelle",
+                friends: "Leitstellenverbund und Disponenten",
                 aaos: "Alarm- und Ausrückeordnung",
                 fms: "FMS und Alarmierungsprofile",
                 backups: "Spielstände und Sicherungen",

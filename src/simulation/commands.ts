@@ -8,7 +8,12 @@ import { repairVehicle } from "./faults";
 import { record } from "./events";
 import { writable } from "./events";
 import type { DeskAction } from "./actions";
-export function deskCommand(s: Save, a: DeskAction, actor: string) {
+export function deskCommand(
+  s: Save,
+  a: DeskAction,
+  actor: string,
+  remote: Record<string, number> = {},
+) {
   if ("mission" in a) {
     const m = s.missions.find((m) => m.id === a.mission);
     if (!m?.control) throw Error("Eigener laufender Einsatz fehlt.");
@@ -37,11 +42,11 @@ export function deskCommand(s: Save, a: DeskAction, actor: string) {
       }
     }
     if (a.type === "call") callAction(s, m, a.call, a.op, actor, a.question);
-    if (a.type === "radio") radioAction(s, m, a.id, a.op, actor);
+    if (a.type === "radio") radioAction(s, m, a.id, a.op, actor, remote);
     if (a.type === "aao-propose") {
       const aa = s.desk.aaos.find((x) => x.id === a.aao);
       if (!aa) throw Error("AAO fehlt.");
-      propose(s, m, aa, actor);
+      propose(s, m, aa, actor, remote);
     }
   } else if (a.type === "repair") {
     const v = s.vehicles.find((v) => v.id === a.vehicle);

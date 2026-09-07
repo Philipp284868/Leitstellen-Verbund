@@ -1,0 +1,36 @@
+import { phaseFixture } from "./phase-fixture";
+import { validate, type Save } from "../src/model";
+import { attachDynamics } from "../src/simulation/dynamics";
+import { attachOrganizations } from "../src/simulation/organizations";
+import { apply, tick } from "../src/engine";
+import { nodes } from "../src/world";
+export function organizationFixture(
+  owner: string,
+  template = "field",
+  identity = "north",
+) {
+  const raw = phaseFixture(owner, template);
+  const s = validate(
+    JSON.parse(
+      JSON.stringify(raw).replaceAll(raw.generation, `phase-three-${identity}`),
+    ),
+  );
+  s.player.station = `Leitstelle ${owner.slice(0, 8)}`;
+  const m = s.missions[0];
+  m.control!.locationKnown = true;
+  m.control!.reportedTemplate = template;
+  attachDynamics(s, m);
+  attachOrganizations(m);
+  return s;
+}
+export function addAmbulance(s: Save) {
+  s.money += 100000;
+  apply(s, { type: "build", kind: "ems", pos: nodes[3] });
+  tick(s, s.time + 30, {}, false, false);
+  const b = s.buildings.at(-1)!;
+  apply(s, { type: "buy", kind: "rtw", home: b.id });
+  apply(s, { type: "hire", home: b.id, count: 2 });
+  const v = s.vehicles.at(-1)!;
+  apply(s, { type: "assign", vehicle: v.id });
+  return v;
+}
