@@ -1,4 +1,5 @@
 import { attachDynamics } from "../src/simulation/dynamics";
+import { migrateReports } from "../src/simulation/reports";
 import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
@@ -8,7 +9,7 @@ import { resolve } from "node:path";
 import { validate, fresh, type Save } from "../src/model";
 
 import type { GameMode } from "../src/mode";
-export const DATABASE_VERSION = 9;
+export const DATABASE_VERSION = 10;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -195,6 +196,16 @@ export class Database {
             for (const [id, s] of this.all(mode)) this.save(id, s, mode);
           this.sql.exec("PRAGMA user_version=9");
           this.audit("server-migration", "major-incidents-and-campaigns-v9");
+        });
+      if (version < 10)
+        this.transaction(() => {
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) {
+              migrateReports(s);
+              this.save(id, s, mode);
+            }
+          this.sql.exec("PRAGMA user_version=10");
+          this.audit("server-migration", "reports-and-statistics-v10");
         });
     } catch (e) {
       this.sql.close();

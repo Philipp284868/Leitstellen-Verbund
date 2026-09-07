@@ -2,6 +2,7 @@
  * No recordings or third-party samples. See docs/AUDIO.md. */
 export const BEAT = 60 / 78;
 export type Cue =
+  | "priority"
   | "phone"
   | "dme"
   | "siren"
@@ -238,7 +239,7 @@ export class SoundGraph {
         this.hiss(at, 0.07, 0.028, this.music, 4800);
     }
   }
-  cue(cue: Cue, at = this.context.currentTime) {
+  cue(cue: Cue, at = this.context.currentTime, level = 1) {
     const t = at + 0.008,
       out = this.effects;
     const notes = (
@@ -248,9 +249,12 @@ export class SoundGraph {
       volume = 0.2,
     ) =>
       values.forEach((m, i) =>
-        this.tone(frequency(m), t + i * spacing, duration, volume, out),
+        this.tone(frequency(m), t + i * spacing, duration, volume * level, out),
       );
     switch (cue) {
+      case "priority":
+        notes([86, 74, 86, 74], 0.16, 0.15, 0.19);
+        break;
       case "phone":
         notes([81, 86, 81, 86], 0.13, 0.1, 0.14);
         break;
@@ -268,7 +272,7 @@ export class SoundGraph {
         break;
       case "dispatch":
         notes([62, 69, 74], 0.09, 0.2, 0.17);
-        this.hiss(t, 0.09, 0.07, out, 1700);
+        this.hiss(t, 0.09, 0.07 * level, out, 1700);
         break;
       case "arrival":
         notes([69, 74], 0.12, 0.26, 0.13);
@@ -286,14 +290,14 @@ export class SoundGraph {
         notes([57, 64, 69], 0.07, 0.3, 0.13);
         break;
       case "radio":
-        this.hiss(t, 0.1, 0.1, out, 2100);
+        this.hiss(t, 0.1, 0.1 * level, out, 2100);
         notes([79, 76], 0.095, 0.1, 0.09);
         break;
       case "error":
         notes([50, 49], 0.14, 0.2, 0.16);
         break;
       case "click":
-        this.tone(650, t, 0.045, 0.065, out);
+        this.tone(650, t, 0.045, 0.065 * level, out);
         break;
     }
     if (!["click", "return"].includes(cue)) {
@@ -302,6 +306,20 @@ export class SoundGraph {
       gain.setValueAtTime(0.48, t);
       gain.setTargetAtTime(1, t + 0.6, 0.3);
     }
+  }
+  sample(buffer: AudioBuffer, level = 1) {
+    const source = this.context.createBufferSource(),
+      gain = this.context.createGain();
+    source.buffer = buffer;
+    gain.gain.value = level;
+    source.connect(gain);
+    gain.connect(this.effects);
+    this.track(
+      source,
+      [gain],
+      this.context.currentTime + 0.008,
+      buffer.duration,
+    );
   }
   volumes(music: number, effects: number) {
     const t = this.context.currentTime;

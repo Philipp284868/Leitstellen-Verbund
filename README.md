@@ -1,5 +1,13 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.11.0: Auswertung und Feinschliff (Phase 5)
+
+Persistente Einsatzberichte und Statistiken, CSV/JSON-Export, Druckansicht und Ereignis-Replay ergänzen den vollständigen Spielablauf. Eigene Fahrstrecken und Zeitsegmente werden serverseitig gemessen. Historische Lücken bleiben als nicht erfasst erkennbar. Ein zusätzlicher Brandmeldeanlagen-Fall wird erst durch Erkundung als Fehlalarm bestätigt; der Katalog umfasst jetzt 41 Einsatzarten.
+
+Der Arbeitsplatz bietet anpassbare Spalten, Filter, Suche und sichere Tastenkürzel. Neue Signalregler, Klangprofile und lokale eigene Audiodateien ergänzen die vorhandene Musik. Das separate Entwicklerlabor prüft reproduzierbare Abläufe und Balancing ohne Zugriff auf die Serverdatenbank. Echter Spielrhythmus: weiterhin höchstens zwei offene Einsätze, einzeln im Abstand von 90–210 Sekunden.
+
+**Schema 10:** Sicherung vor der Migration, Erhalt beider Modi, neue Teilberichte für vorhandene Archive. Keine neuen AMP-Einstellungen. [Phase-5-Anleitung](docs/PHASE-5.md) · [Prüfbericht](docs/PHASE-5-TESTBERICHT.md).
+
 ## Version 2.10.0: Große Lagen (Phase 4)
 
 MANV, Großbrände, Unwetter, Hochwasser und Massenereignisse erhalten echte Abschnittsführung, Bereitstellung, bewusste Kräftezuweisung und Ressourcenknappheit. Patienten werden gesichtet und nach Priorität auf geeignete Kliniken verteilt; freigegebene Transporte beginnen schon vor dem Abschluss der gesamten Lage. Auch ausdrücklich zugesagte Nachbarkräfte können Abschnitte übernehmen und Patienten transportieren.

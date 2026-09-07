@@ -1,7 +1,7 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.10.0",
+  "version": "2.11.0",
   "type": "module",
   "scripts": {
     "dev": "node --watch dist/server/index.js",
@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run && node --test tests/hard-reset.node.mjs",
     "test:e2e": "playwright test",
+    "lab": "node scripts/lab.mjs",
     "start": "node dist/server/index.js"
   },
   "dependencies": {
@@ -38,5 +39,7 @@
     "vitest": "5.0.0"
   },
   "packageManager": "pnpm@11.19.0",
-  "engines": { "node": "24.x" }
+  "engines": {
+    "node": "24.x"
+  }
 }

@@ -1,4 +1,5 @@
 import { turnoutReady } from "./staffing";
+import { finalizeReport } from "./reports";
 import type { Skills } from "../catalog";
 import type { Save, Mission } from "../model";
 import { missing, capacity } from "../engine";
@@ -191,6 +192,15 @@ export function radioAction(
       actor,
       r.vehicle,
     );
+    if (m.template === "bma-false")
+      record(
+        s,
+        m,
+        "FALSE_ALARM_CONFIRMED",
+        "Fehlalarm durch die erste Lagemeldung bestätigt.",
+        actor,
+        r.vehicle,
+      );
   }
   if (op === "question") {
     if (r.questioned) return;
@@ -260,6 +270,7 @@ export function afterStep(s: Save) {
         `Einsatz abgeschlossen: ${mt(m.template).name}. Belohnung serverseitig gebucht.`,
       );
     }
+  for (const m of s.archive) finalizeReport(s, m);
   syncFms(s);
 }
 export function publicSave(source: Save): Save {

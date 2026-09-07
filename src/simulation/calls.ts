@@ -8,6 +8,14 @@ export const scenarios: Record<
   string,
   { report: string; people: string; hazard: string; detail: string }
 > = {
+  "bma-false": {
+    report: "bma",
+    people:
+      "Keine verletzten Personen gemeldet; Gebäude noch nicht vollständig kontrolliert.",
+    hazard: "Brandmeldeanlage ausgelöst. Rauch und Feuer nicht bestätigt.",
+    detail:
+      "Fehlalarm bestätigt: Gebäude kontrolliert, kein Brand und keine verletzten Personen. Anlage zurückstellen und Betreiber informieren.",
+  },
   car: {
     report: "bin",
     people: "Personenzahl unklar; niemand im Fahrzeug bestätigt.",

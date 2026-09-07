@@ -1,6 +1,15 @@
 import { useSyncExternalStore } from "react";
 import { BEAT, SoundGraph, type Cue } from "./synth";
+import { defaultChannels, channelFor, type SoundChannel } from "./profiles";
+import {
+  customSounds,
+  storeSound,
+  checkSoundFile,
+  normalizeSound,
+} from "./custom";
 export interface SoundPreferences {
+  masterVolume: number;
+  channels: Record<SoundChannel, number>;
   muted: boolean;
   music: boolean;
   effects: boolean;
@@ -8,6 +17,8 @@ export interface SoundPreferences {
   effectsVolume: number;
 }
 export const defaultSound: SoundPreferences = {
+  masterVolume: 100,
+  channels: { ...defaultChannels },
   muted: false,
   music: true,
   effects: true,
@@ -18,7 +29,18 @@ const KEY = "lv-audio-v1";
 export function parseSound(value: string | null): SoundPreferences {
   try {
     const v = JSON.parse(value ?? "{}");
+    const volume = (v: unknown, fallback: number) =>
+      typeof v === "number" && Number.isFinite(v)
+        ? Math.max(0, Math.min(100, v))
+        : fallback;
     return {
+      masterVolume: volume(v.masterVolume, 100),
+      channels: Object.fromEntries(
+        Object.entries(defaultChannels).map(([k, n]) => [
+          k,
+          volume(v.channels?.[k], n),
+        ]),
+      ) as Record<SoundChannel, number>,
       muted: typeof v.muted === "boolean" ? v.muted : false,
       music: typeof v.music === "boolean" ? v.music : true,
       effects: typeof v.effects === "boolean" ? v.effects : true,
@@ -37,6 +59,7 @@ export function parseSound(value: string | null): SoundPreferences {
 }
 type Status = "waiting" | "playing" | "paused" | "muted" | "unavailable";
 class AudioController {
+  private custom = new Map<SoundChannel, AudioBuffer>();
   private context: AudioContext | null = null;
   private graph: SoundGraph | null = null;
   private active = false;
@@ -50,7 +73,11 @@ class AudioController {
   private timer: ReturnType<typeof setInterval> | null = null;
   private listeners = new Set<() => void>();
   private recent = new Map<Cue, number>();
-  private snapshot: { preferences: SoundPreferences; status: Status } = {
+  private snapshot: {
+    preferences: SoundPreferences;
+    status: Status;
+    customNames: Partial<Record<SoundChannel, string>>;
+  } = {
     preferences: (() => {
       try {
         return parseSound(localStorage.getItem(KEY));
@@ -59,6 +86,7 @@ class AudioController {
       }
     })(),
     status: "waiting",
+    customNames: {},
   };
   subscribe = (f: () => void) => {
     this.listeners.add(f);
@@ -116,6 +144,30 @@ class AudioController {
         }
         this.context = new AudioContext();
         this.graph = new SoundGraph(this.context);
+        try {
+          for (const stored of await customSounds()) {
+            try {
+              checkSoundFile(stored.name, stored.data);
+              this.custom.set(
+                stored.channel,
+                normalizeSound(
+                  await this.context.decodeAudioData(stored.data.slice(0)),
+                ),
+              );
+              this.snapshot = {
+                ...this.snapshot,
+                customNames: {
+                  ...this.snapshot.customNames,
+                  [stored.channel]: stored.name,
+                },
+              };
+            } catch {
+              /* Unsupported stored files retain the original signal. */
+            }
+          }
+        } catch {
+          /* Private browsing can disable local file persistence. */
+        }
         this.context.onstatechange = () => {
           if (this.context?.state === "running" && this.wanted())
             this.notify("playing");
@@ -152,8 +204,8 @@ class AudioController {
     const c = this.context,
       p = this.snapshot.preferences;
     this.graph?.volumes(
-      p.music ? p.musicVolume / 100 : 0,
-      p.effects ? p.effectsVolume / 100 : 0,
+      p.music ? (p.musicVolume * p.masterVolume) / 10000 : 0,
+      p.effects ? (p.effectsVolume * p.masterVolume) / 10000 : 0,
     );
     if (!c) {
       if (this.snapshot.status !== "unavailable")
@@ -222,7 +274,42 @@ class AudioController {
               : 1.2;
     if (now - (this.recent.get(cue) ?? -Infinity) < interval) return;
     this.recent.set(cue, now);
-    this.graph?.cue(cue);
+    const channel = channelFor(cue),
+      level = p.channels[channel] / 100;
+    if (!level) return;
+    const custom = this.custom.get(channel);
+    if (custom && cue !== "priority") this.graph?.sample(custom, level);
+    else this.graph?.cue(cue, undefined, level);
+  }
+  async setCustom(channel: SoundChannel, file?: File) {
+    if (!file) {
+      await storeSound(channel);
+      this.custom.delete(channel);
+      const names = { ...this.snapshot.customNames };
+      delete names[channel];
+      this.snapshot = { ...this.snapshot, customNames: names };
+    } else {
+      if (file.size > 2 * 1024 * 1024)
+        throw Error("Audiodatei ist größer als 2 MB.");
+      const data = await file.arrayBuffer();
+      checkSoundFile(file.name, data);
+      await this.unlock();
+      if (!this.context)
+        throw Error(
+          "Audio ist nicht verfügbar. Ton einschalten und erneut versuchen.",
+        );
+      const buffer = normalizeSound(
+        await this.context.decodeAudioData(data.slice(0)),
+      );
+      const name = file.name.slice(0, 80);
+      await storeSound(channel, { channel, name, data });
+      this.custom.set(channel, buffer);
+      this.snapshot = {
+        ...this.snapshot,
+        customNames: { ...this.snapshot.customNames, [channel]: name },
+      };
+    }
+    this.listeners.forEach((f) => f());
   }
   private claim() {
     if (!this.active || !this.unlocked || this.snapshot.preferences.muted)

@@ -1,5 +1,7 @@
 # Version 2.5 – Musik und Spielsound
 
+Aktueller Zusatz in Version 2.11: Gesamtlautstärke, sechs Signalkanäle, Klangprofile und lokale eigene Audiodateien. Details, Dateigrenzen und Rücksetzen stehen in der [Phase-5-Anleitung](PHASE-5.md#musik-signale-und-eigene-dateien). Die folgenden Abschnitte beschreiben die weiterhin verwendete musikalische Grundlage aus Version 2.5; deren damalige Versions- und Migrationsangaben sind historisch.
+
 ## Klanggestaltung
 
 **Nachtschicht** ist eine eigene instrumentale Komposition für die Leitstelle: 78 BPM, D-Moll, 64 Takte (rund 3 Minuten 17 Sekunden) mit wiederkehrenden Motiven und vier unterschiedlich besetzten Abschnitten. Weiche Klaviertöne, zurückhaltender Bass, warme Flächen, Stereoverteilung und Hall begleiten das Spiel. Im Hauptmenü ist das Arrangement ruhiger; im Einsatzbildschirm kommt ein leiser Rhythmus hinzu. Die Musik wiederholt sich mit überlappenden Ausklängen. Das Spieltempo verändert die Musikgeschwindigkeit nicht.

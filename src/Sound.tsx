@@ -4,6 +4,7 @@ import { audio, useSound } from "./audio/controller";
 import { AudioEvents } from "./audio/events";
 import { useGame } from "./store";
 import "./Sound.css";
+import { SoundProfiles } from "./SoundProfiles";
 export function AudioSession() {
   const { save, mode, readonly, user, error } = useGame();
   const { status } = useSound();
@@ -145,6 +146,7 @@ export function SoundSettings() {
           Funkprobe
         </button>
       </div>
+      <SoundProfiles />
       <p className="sound-hint">
         Gilt für diesen Browser in beiden Spielmodi. Beim Verlassen des aktiven
         Fensters pausiert der Ton. Alle Meldungen bleiben auch als Text

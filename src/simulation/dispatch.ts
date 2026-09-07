@@ -1,4 +1,5 @@
 import { planTurnout, checkReserveSelection } from "./staffing";
+import { reportUnit, telemetry } from "./reports";
 import { effectiveSkills } from "./major-resources";
 import type { Save, Mission } from "../model";
 import { bt, vt, mt, capabilities } from "../catalog";
@@ -104,7 +105,23 @@ export function alarm(
   });
   checkReserveSelection(s, vehicles);
   if (!vehicles.length) throw Error("Mindestens ein Fahrzeug auswählen.");
+  const proposal = m.control?.proposal;
+  if (
+    proposal &&
+    proposal.vehicles.length === vehicles.length &&
+    proposal.vehicles.every((id) => ids.includes(id))
+  ) {
+    const aao = s.desk.aaos.find((a) => a.id === proposal.aao);
+    const t = telemetry(s, m);
+    if (aao && t.aaos.length < 100)
+      t.aaos.push({
+        id: aao.id,
+        name: aao.name,
+        sufficient: proposal.missing.length === 0,
+      });
+  }
   for (const v of vehicles) {
+    reportUnit(s, m, v);
     const selected = profile ?? s.desk.alarms[v.home] ?? "dme";
     const fallback =
       selected === "station" ? 30 : selected === "siren" ? 45 : 60;

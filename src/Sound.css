@@ -98,3 +98,34 @@
     padding: 7px;
   }
 }
+.sound-profiles {
+  border-top: 1px solid var(--hud-border);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+.sound-profiles > summary {
+  cursor: pointer;
+  font-weight: 650;
+  margin-bottom: 16px;
+}
+.sound-mixes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+.sound-custom {
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid var(--hud-border);
+  border-radius: 10px;
+  min-width: 0;
+}
+.sound-custom > label {
+  display: grid;
+  gap: 8px;
+}
+.sound-custom input[type="file"] {
+  max-width: 100%;
+  min-width: 0;
+}

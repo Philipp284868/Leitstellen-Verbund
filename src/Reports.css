@@ -1,0 +1,164 @@
+.report-panel,
+.archive-console {
+  color: var(--hud-text);
+  min-width: 0;
+}
+.report-panel > p,
+.archive-console > p {
+  color: var(--hud-muted);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+.report-grid > div {
+  padding: 16px;
+  border: 1px solid var(--hud-border);
+  background: var(--hud-raised);
+  border-radius: 10px;
+}
+.report-grid dt {
+  color: var(--hud-muted);
+  font-size: 12px;
+}
+.report-grid dd {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 650;
+}
+.report-grid small,
+.archive-item small,
+.replay-current small {
+  display: block;
+  font-size: 12px;
+  margin-top: 7px;
+  color: var(--hud-muted);
+  font-weight: 400;
+}
+.report-actions,
+.report-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.report-tabs button[aria-pressed="true"] {
+  background: var(--hud-accent);
+  color: var(--hud-bg);
+}
+.report-note {
+  border-left: 3px solid var(--hud-accent);
+  padding: 12px;
+  background: var(--hud-raised);
+}
+.report-panel details,
+.replay {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid var(--hud-border);
+  border-radius: 10px;
+}
+.replay label {
+  display: block;
+  margin: 18px 0 8px;
+}
+.replay input[type="range"] {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+.replay-current {
+  margin: 18px 0;
+  padding: 18px;
+  background: var(--hud-raised);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+.replay-events {
+  padding-left: 22px;
+}
+.replay-events li {
+  margin: 12px 0;
+  line-height: 1.5;
+}
+.report-filters {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+.report-filters label {
+  display: grid;
+  gap: 8px;
+}
+.report-filters label:has([type="checkbox"]) {
+  display: flex;
+}
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hud-border);
+}
+@media (max-width: 560px) {
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+  .archive-item {
+    align-items: flex-start;
+  }
+  .report-actions button {
+    flex: 1 1 130px;
+  }
+}
+@media print {
+  .app.in-game {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .app > :not(.scrim) {
+    display: none !important;
+  }
+  .scrim,
+  .modal {
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+    width: auto !important;
+    border: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+  .modal * {
+    color: black !important;
+    background: white !important;
+  }
+  .report-actions,
+  .replay,
+  .modal > header {
+    display: none !important;
+  }
+  .incident-history,
+  .incident-history * {
+    color: black !important;
+    background: white !important;
+  }
+  .incident-history ol {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .incident-history > label {
+    display: none;
+  }
+}

@@ -26,7 +26,7 @@ describe("Kataloge und Erreichbarkeit", () => {
   it("enthält 8 Gebäude, 20 Fahrzeuge und 40 unterschiedliche Einsatzanforderungen", () => {
     expect(buildings).toHaveLength(8);
     expect(vehicles).toHaveLength(20);
-    expect(missions).toHaveLength(40);
+    expect(missions).toHaveLength(41);
     expect(
       new Set(missions.map((m) => JSON.stringify(m.requirements))).size,
     ).toBe(40);

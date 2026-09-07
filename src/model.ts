@@ -1,5 +1,10 @@
 import { majorSchema, operationsSchema } from "./simulation/major-schema";
 import {
+  reportSchema,
+  telemetrySchema,
+  statisticsSchema,
+} from "./simulation/report-schema";
+import {
   stationSchema,
   dutySchema,
   turnoutSchema,
@@ -67,6 +72,7 @@ export const personSchema = z
   .strict();
 export const vehicleSchema = z
   .object({
+    odometer: num.optional(),
     turnout: turnoutSchema.optional(),
     reserve: z.boolean().optional(),
     destination: id.optional(),
@@ -96,6 +102,8 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    telemetry: telemetrySchema.optional(),
+    report: reportSchema.optional(),
     major: majorSchema.optional(),
     organization: organizationMissionSchema.optional(),
     control: incidentSchema.optional(),
@@ -136,6 +144,7 @@ export const journalSchema = z
   .strict();
 export const saveSchema = z
   .object({
+    statistics: statisticsSchema,
     operations: operationsSchema,
     aid: z.array(aidSchema).max(500).default([]),
     desk: deskSchema,

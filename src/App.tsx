@@ -1,3 +1,12 @@
+import { WorkspaceSettings } from "./WorkspaceSettings";
+import { ReconnectSummary } from "./ReconnectSummary";
+import {
+  parseWorkspace,
+  shortcutFor,
+  missionList,
+  type WorkspacePreferences,
+} from "./workspace";
+import "./Workspace.css";
 import { DynamicsPanel } from "./Dynamics";
 import { MissionPanel } from "./Panels";
 import {
@@ -14,7 +23,13 @@ import { districtAt } from "./world";
 import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense, type CSSProperties } from "react";
+const ArchivePanel = lazy(() =>
+  import("./Reports").then((m) => ({ default: m.ArchivePanel })),
+);
+const ReportPanel = lazy(() =>
+  import("./Reports").then((m) => ({ default: m.ReportPanel })),
+);
 import {
   Radio,
   TowerControl,
@@ -61,6 +76,57 @@ function GameApp() {
   useEffect(() => {
     audio.scene(screen === "game");
   }, [screen]);
+  const [layout, setLayout] = useState(() => {
+    try {
+      return parseWorkspace(localStorage.getItem("lv-workspace-v1"));
+    } catch {
+      return parseWorkspace(null);
+    }
+  });
+  const [search, setSearch] = useState(""),
+    [filter, setFilter] = useState("all"),
+    [sort, setSort] = useState("priority");
+  const updateLayout = (next: WorkspacePreferences) => {
+    setLayout(next);
+    try {
+      localStorage.setItem("lv-workspace-v1", JSON.stringify(next));
+    } catch {
+      /* Layout remains usable this visit. */
+    }
+  };
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!s || screen !== "game" || e.defaultPrevented) return;
+      const editing =
+        e.target instanceof Element &&
+        !!e.target.closest("input,textarea,select,[contenteditable=true]");
+      const action = shortcutFor(e, layout.keys, editing);
+      if (!action) return;
+      e.preventDefault();
+      if (action === "police" || action === "ems") {
+        setFilter(action === "police" ? "Polizei" : "Rettungsdienst");
+        setMobile("missions");
+        setModal("");
+      } else if (action === "missions") {
+        setFilter("all");
+        setMobile("missions");
+        setModal("");
+      } else if (action === "call" || action === "alarm") {
+        const mission =
+          action === "call"
+            ? s.missions.find((m) =>
+                m.control?.calls.some((c) => c.state === "ringing"),
+              )
+            : (s.missions.find((m) => m.id === selected) ?? s.missions[0]);
+        if (mission) {
+          setSelected(mission.id);
+          setModal("mission");
+        }
+      } else setModal(action);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [s, screen, selected, layout.keys]);
   const tutorial = [
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
     "Öffne deine Wache, warte die Bauzeit ab und kaufe zwei TSF-W.",
@@ -103,8 +169,14 @@ function GameApp() {
   };
   return (
     <div
+      style={{ "--desk-width": `${layout.width}px` } as CSSProperties}
+      data-sidebar={layout.side}
+      data-compact={layout.compact}
+      data-queue-bottom={layout.queueBottom}
+      data-stations-top={layout.stationsTop}
       className={`app ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
     >
+      <ReconnectSummary />
       {error && (
         <div className="global-error" role="alert">
           <strong>{error}</strong>
@@ -300,23 +372,74 @@ function GameApp() {
                       : "Neue Meldungen kommen einzeln und zeitlich versetzt."}
                   </small>
                 </div>
-                <DeskQueue s={s} open={open} panel={setModal} />
+                <div className="queue-slot">
+                  <DeskQueue s={s} open={open} panel={setModal} />
+                </div>
+                <details className="mission-filters">
+                  <summary>Suchen, filtern und sortieren</summary>
+                  <label>
+                    Einsätze durchsuchen
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Einsatz, Ort, Fahrzeug, Patient …"
+                    />
+                  </label>
+                  <label>
+                    Einsatzfilter
+                    <select
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
+                    >
+                      {[
+                        ["all", "Alle Einsätze"],
+                        ["Feuerwehr", "Feuerwehr"],
+                        ["Rettungsdienst", "Rettungsdienst"],
+                        ["Polizei", "Polizei"],
+                        ["THW", "THW"],
+                        ["critical", "Kritisch"],
+                        ["major", "Großlagen / MANV"],
+                        ["request", "Offene Sprechwünsche"],
+                        ["mine", "Von mir angenommen"],
+                      ].map(([id, name]) => (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Einsatzsortierung
+                    <select
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value)}
+                    >
+                      {[
+                        ["priority", "Priorität"],
+                        ["time", "Älteste zuerst"],
+                        ["distance", "Entfernung zur ersten Wache"],
+                        ["escalation", "Eskalation"],
+                        ["patients", "Patientenzahl"],
+                      ].map(([id, name]) => (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setFilter("all");
+                      setSort("priority");
+                    }}
+                  >
+                    Filter zurücksetzen
+                  </button>
+                </details>
                 <div className="mission-list">
-                  {[...s.missions]
-                    .sort(
-                      (a, b) =>
-                        ["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"].indexOf(
-                          b.control?.priority || "NORMAL",
-                        ) -
-                          [
-                            "NORMAL",
-                            "DRINGEND",
-                            "PRIORITÄT",
-                            "NOTFALL",
-                          ].indexOf(a.control?.priority || "NORMAL") ||
-                        a.created - b.created,
-                    )
-                    .map((m, i) => {
+                  {missionList(s, search, filter, sort, user?.id).map(
+                    (m, i) => {
                       const t = mt(m.template);
                       return (
                         <button
@@ -359,7 +482,14 @@ function GameApp() {
                           </div>
                         </button>
                       );
-                    })}
+                    },
+                  )}
+                  {!!s.missions.length &&
+                    !missionList(s, search, filter, sort, user?.id).length && (
+                      <p className="filter-empty">
+                        Keine Einsätze passen zum Filter.
+                      </p>
+                    )}
                   {!s.missions.length && (
                     <div className="empty">
                       <Radio size={32} />
@@ -528,6 +658,7 @@ function GameApp() {
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
             <>
+              <WorkspaceSettings value={layout} change={updateLayout} />
               <SoundSettings />
               <Account />
               <label>
@@ -652,6 +783,9 @@ function GameApp() {
                       .filter((m) => m.id === selected)
                       .map((m) => (
                         <div key={m.id}>
+                          <Suspense fallback={<p>Bericht wird geladen …</p>}>
+                            <ReportPanel m={m} />
+                          </Suspense>
                           <DynamicsPanel s={s} m={m} />
                           <History s={s} m={m} />
                         </div>
@@ -663,30 +797,9 @@ function GameApp() {
               {modal === "fms" && <FMSPanel s={s} />}
               {modal === "progress" && <ProgressPanel s={s} />}
               {modal === "archive" && (
-                <>
-                  <h3>
-                    {s.completed} Einsätze abgeschlossen · {s.treated} Patienten
-                    behandelt
-                  </h3>
-                  {s.archive.map((m) => (
-                    <article className="person" key={m.id}>
-                      <span>{mt(m.template).name}</span>
-                      <button onClick={() => open(m.id)}>
-                        Verlauf ansehen
-                      </button>
-                    </article>
-                  ))}
-                  <h3>Geldjournal</h3>
-                  {s.journal.map((j) => (
-                    <article className="person" key={j.id}>
-                      <span>{j.text}</span>
-                      <b className={j.amount > 0 ? "good" : ""}>
-                        {j.amount > 0 ? "+" : ""}
-                        {credits(j.amount)}
-                      </b>
-                    </article>
-                  ))}
-                </>
+                <Suspense fallback={<p>Auswertung wird geladen …</p>}>
+                  <ArchivePanel s={s} open={open} />
+                </Suspense>
               )}
             </>
           )}

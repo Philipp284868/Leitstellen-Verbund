@@ -1,0 +1,142 @@
+.workspace-settings {
+  border: 1px solid var(--hud-border);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 22px;
+}
+.workspace-settings summary {
+  font-weight: 650;
+  cursor: pointer;
+}
+.workspace-settings > label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+  align-items: center;
+}
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.shortcut-grid label {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+.shortcut-grid input {
+  width: 48px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.mission-filters {
+  margin: 0 14px 10px;
+  padding: 10px;
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.mission-filters summary {
+  font-size: 12px;
+  cursor: pointer;
+}
+.mission-filters label {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.mission-filters input,
+.mission-filters select {
+  min-width: 0;
+  width: 100%;
+}
+.filter-empty {
+  padding: 16px;
+}
+.reconnect-summary {
+  position: fixed;
+  bottom: 52px;
+  right: 18px;
+  z-index: 45;
+  width: min(420px, calc(100vw - 36px));
+  padding: 16px;
+  background: var(--hud-raised);
+  border: 1px solid var(--hud-accent);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #0005;
+}
+.reconnect-summary p {
+  line-height: 1.5;
+}
+.app[data-compact="true"] .mission-card {
+  padding: 10px;
+  gap: 10px;
+}
+.app[data-compact="true"] .mission-card h3 {
+  font-size: 14px;
+}
+.app[data-compact="true"] .mission-card progress,
+.app[data-compact="true"] .mission-card p {
+  display: none;
+}
+.app[data-queue-bottom="true"] .queue-slot {
+  order: 2;
+}
+.app[data-queue-bottom="true"] .shared-inbox {
+  order: 3;
+}
+.app[data-queue-bottom="true"] .archive-link {
+  order: 4;
+}
+@media (min-width: 901px) {
+  .app.in-game .mission-sidebar {
+    overflow-y: auto;
+  }
+  .app.in-game .mission-sidebar > * {
+    flex-shrink: 0;
+  }
+  .app.in-game .mission-list {
+    flex: 1 0 auto;
+  }
+  .app.in-game .map-column {
+    overflow-y: auto;
+  }
+  .app.in-game .bottom-panel {
+    flex-shrink: 0;
+  }
+  .app.in-game .map-wrap {
+    flex: 1 0 510px;
+    grid-template-rows: auto auto minmax(220px, 1fr) auto minmax(0, 150px);
+  }
+  .app.in-game .operations {
+    min-height: 0;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .app.in-game[data-sidebar] .workspace {
+    grid-template-columns: var(--desk-width, 320px) minmax(0, 1fr);
+  }
+  .app.in-game[data-sidebar="right"] .workspace {
+    grid-template-columns: minmax(0, 1fr) var(--desk-width, 320px);
+  }
+  .in-game[data-sidebar="right"] .mission-sidebar {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .in-game[data-sidebar="right"] .map-column {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .in-game[data-stations-top="true"] .bottom-panel {
+    order: -1;
+  }
+}
+@media (max-width: 560px) {
+  .shortcut-grid {
+    grid-template-columns: 1fr;
+  }
+}

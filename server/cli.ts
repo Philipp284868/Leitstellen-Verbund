@@ -6,6 +6,7 @@ import { config } from "./config";
 import { Database, DATABASE_VERSION } from "./database";
 import { Auth } from "./auth";
 import { validate, uid } from "../src/model";
+import { statisticsSchema } from "../src/simulation/report-schema";
 import { acquireLock } from "./lock";
 
 const command = process.argv[2];
@@ -182,6 +183,7 @@ try {
         s.desk.fleet = {};
         s.aid = [];
         s.operations = { cooldown: 0, history: [] };
+        s.statistics = statisticsSchema.parse(undefined);
         s.desk.alarms = Object.fromEntries(
           Object.entries(s.desk.alarms).map(([id, profile]) => [
             ids.get(id) ?? id,
@@ -196,6 +198,7 @@ try {
         s.deliveryAcks = [];
         s.beds = [];
         for (const v of s.vehicles) {
+          delete v.odometer;
           delete v.fault;
           delete v.journey;
           delete v.turnout;
