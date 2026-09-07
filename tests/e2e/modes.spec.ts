@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -15,17 +16,18 @@ let origin: string;
 const password = "World-separation-browser-123!";
 test.beforeAll(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-mode-browser-"));
-  const port = 40000 + Math.floor(Math.random() * 12000);
+  const port = 0;
   origin = `http://127.0.0.1:${port}`;
-  app = compiled.startServer({
+  const config = {
     host: "127.0.0.1",
     port,
     publicUrl: origin,
     dataDir: dir,
     secure: false,
     trustedProxies: [],
-  });
-  await app.listen();
+  };
+  app = await listenBrowserServer(compiled.startServer, config);
+  origin = config.publicUrl;
 });
 test.afterAll(async () => {
   await app.close();

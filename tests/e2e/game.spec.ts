@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { interviewUI, joinDesk } from "./desk-helpers";
 import { test, expect, type Page, type Browser } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -14,7 +15,7 @@ let app: ReturnType<typeof startServer>, config: Config;
 const password = "Only-a-browser-test-password!";
 test.beforeEach(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-browser-")),
-    port = 39000 + Math.floor(Math.random() * 15000);
+    port = 0;
   config = {
     host: "127.0.0.1",
     port,
@@ -23,8 +24,7 @@ test.beforeEach(async () => {
     secure: false,
     trustedProxies: [],
   };
-  app = compiled.startServer(config);
-  await app.listen();
+  app = await listenBrowserServer(compiled.startServer, config);
   expect(app.db.sql.prepare("SELECT id FROM users").all()).toHaveLength(0);
 });
 test.afterEach(async () => {

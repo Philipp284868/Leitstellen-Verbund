@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { established } from "./fixtures";
 import { generate } from "../../src/engine";
 import { test, expect, type Page } from "@playwright/test";
@@ -14,17 +15,18 @@ const compiled = (await import(
 let app: ReturnType<typeof startServer>, origin: string;
 test.beforeAll(async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-sound-")),
-    port = 43000 + Math.floor(Math.random() * 10000);
+    port = 0;
   origin = `http://127.0.0.1:${port}`;
-  app = compiled.startServer({
+  const config = {
     host: "127.0.0.1",
     port,
     publicUrl: origin,
     dataDir: dir,
     secure: false,
     trustedProxies: [],
-  });
-  await app.listen();
+  };
+  app = await listenBrowserServer(compiled.startServer, config);
+  origin = config.publicUrl;
 });
 test.afterAll(async () => {
   await app.close();

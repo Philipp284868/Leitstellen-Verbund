@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -18,7 +19,7 @@ let app: ReturnType<typeof startServer>,
 const password = "Phase-four-browser-password-123!";
 test.use({ actionTimeout: 15000 });
 test.beforeEach(async () => {
-  const port = 40000 + Math.floor(Math.random() * 11000);
+  const port = 0;
   config = {
     host: "127.0.0.1",
     port,
@@ -27,8 +28,7 @@ test.beforeEach(async () => {
     secure: false,
     trustedProxies: [],
   };
-  app = compiled.startServer(config);
-  await app.listen();
+  app = await listenBrowserServer(compiled.startServer, config);
   owner = await app.auth.create("north", password, "Nord", "Nord");
   peer = await app.auth.create("south", password, "Süd", "Süd");
   app.db.save(owner, majorFixture(owner));

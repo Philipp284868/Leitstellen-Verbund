@@ -47,6 +47,8 @@ Die Linux-spezifische AMP-Autostartprüfung ist im Windows-Vitest-Aufruf ausgesc
 
 Bei den ersten neuen Browserläufen passten zwei Testselektoren nicht zur tatsächlichen Oberfläche: Die Sichtungsfelder besitzen eindeutige zugängliche Namen, und mobil muss zuerst zur Einsatzliste gewechselt werden. Beides wurde im Test korrigiert; keine Produktionsprüfung wurde deaktiviert. Der erste CLI-Testaufruf wurde auf die tatsächlich erforderlichen Argumente `restore --file … --confirm` berichtigt. Anschließend bestanden die jeweiligen vollständigen neuen Prüfreihen.
 
+Der erste Linux-CI-Lauf bestand 141 Logiktests, 16 Prozessprüfungen und 53 von 54 Browserabläufen, darunter alle sechs neuen Großlagenfälle. Ein bestehender Chromium-Test scheiterte vor seinem Ablauf mit `EADDRINUSE` an der bisherigen zufälligen Portauswahl. Der gemeinsame Browser-Testaufbau lässt freie Ports jetzt vom Betriebssystem auswählen und wiederholt ausschließlich eine mögliche Portbelegung zwischen Auswahl und Bindung. Testfehler selbst werden nicht wiederholt. Der abschließende vollständige CI-Lauf am korrigierten PR-Kopf ist im PR verlinkt.
+
 ## Technische Grenzen
 
 Die fachlichen Spielvereinfachungen sind in [PHASE-4.md](PHASE-4.md) dokumentiert: logische Bereitstellung am vorhandenen Einsatzort, abstrakte Löschwassermengen, Evakuierungsgruppen, vorhandener Fahrzeugkatalog und begrenzte Ereigniswellen. Das bestehende Hauptbundle bleibt über 500 kB und erzeugt die bekannte Build-Warnung; der Build ist erfolgreich. Keine Simulation von Hochwassergeometrie oder realen klinischen Behandlungsvorgaben wird behauptet. Phase 5 bleibt weitere Roadmap.

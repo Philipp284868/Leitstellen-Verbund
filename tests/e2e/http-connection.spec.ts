@@ -1,3 +1,4 @@
+import { listenBrowserServer } from "./server-helper";
 import { joinDesk } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -21,17 +22,18 @@ test.beforeAll(async () => {
       "HTTP-Browserabnahme benötigt eine lokale Nicht-Loopback-IPv4-Adresse.",
     );
   directory = await mkdtemp(resolve(tmpdir(), "lv-http-browser-"));
-  const port = 33000 + Math.floor(Math.random() * 20000);
+  const port = 0;
   origin = `http://${address}:${port}`;
-  app = compiled.startServer({
+  const config = {
     host: address,
     port,
     publicUrl: origin,
     dataDir: directory,
     secure: false,
     trustedProxies: [],
-  });
-  await app.listen();
+  };
+  app = await listenBrowserServer(compiled.startServer, config);
+  origin = config.publicUrl;
 });
 test.afterAll(async () => {
   if (app) await app.close();
