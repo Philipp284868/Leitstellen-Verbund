@@ -154,4 +154,11 @@
     color: black !important;
     background: white !important;
   }
+  .incident-history ol {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .incident-history > label {
+    display: none;
+  }
 }

@@ -98,6 +98,11 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await expect(panel).toBeVisible();
   await expect(page.locator(".navrail")).toBeHidden();
   await expect(panel.locator("dd").first()).toHaveCSS("color", "rgb(0, 0, 0)");
+  expect(
+    await page
+      .locator(".incident-history ol")
+      .evaluate((list) => list.clientHeight >= list.scrollHeight),
+  ).toBe(true);
   await page.screenshot({
     path: info.outputPath("phase5-druckansicht.png"),
     fullPage: true,
