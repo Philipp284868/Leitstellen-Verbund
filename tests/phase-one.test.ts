@@ -223,7 +223,7 @@ it("speichert AAO, Gespräche, Fahrt und Historie über Neustart; schützt fremd
       "Einladung",
     );
     const oldMember = db.all().get(member)!;
-    game.view(member, new Set(), "single");
+    db.save(member, structuredClone(db.all().get(member)!), "single");
     const solo = db.all("single").get(member)!;
     cmd(owner, { type: "member-invite", username: "member" });
     cmd(member, { type: "member-accept", owner });

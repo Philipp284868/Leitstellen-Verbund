@@ -41,7 +41,7 @@ async function enter(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
 }
 test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht überstehen einen Serverneustart", async ({
@@ -128,14 +128,14 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await app.listen();
   await page.goto(config.publicUrl);
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await expect(page.locator(".reconnect-summary")).toContainText("1 Notrufe");
   expect(app.db.all().get(owner)!.archive[0].report).toEqual(savedReport);
   expect(errors).toEqual([]);
 });
 
-test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Desktop und Mobilgerät", async ({
+test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Desktop und kleinem Desktopfenster", async ({
   page,
 }, info) => {
   const errors: string[] = [];
@@ -186,7 +186,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     path: info.outputPath("phase5-arbeitsplatz.png"),
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await showIncidents(page);
   await expect(page.locator(".mission-card")).toBeVisible();
   expect(
@@ -195,12 +195,12 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     ),
   ).toBe(true);
   await page.screenshot({
-    path: info.outputPath("phase5-mobil.png"),
+    path: info.outputPath("phase5-desktop-compact.png"),
     fullPage: true,
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await expect(page.locator(".app")).toHaveAttribute("data-sidebar", "right");
   await page.keyboard.press("z");
@@ -298,7 +298,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })

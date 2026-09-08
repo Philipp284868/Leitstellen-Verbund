@@ -1,10 +1,10 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.13.0",
+  "version": "2.14.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch dist/server/index.js",
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "preview": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",

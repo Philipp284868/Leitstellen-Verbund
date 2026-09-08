@@ -57,7 +57,7 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: false })
+    .getByRole("button", { name: "Spielen", exact: false })
     .click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",

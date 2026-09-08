@@ -6,9 +6,10 @@ import { syncFms } from "../src/simulation/fms";
 import { DatabaseSync, backup } from "node:sqlite";
 import { mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { validate, fresh, type Save } from "../src/model";
+import { validate, type Save } from "../src/model";
 
-import type { GameMode } from "../src/mode";
+// Historical migration storage only. The runtime never opens the single-player archive.
+type StoredWorld = "multi" | "single";
 export const DATABASE_VERSION = 11;
 export class Database {
   sql: DatabaseSync;
@@ -230,7 +231,7 @@ export class Database {
       throw e;
     }
   }
-  all(mode: GameMode = "multi"): Map<string, Save> {
+  all(mode: StoredWorld = "multi"): Map<string, Save> {
     return new Map(
       this.sql
         .prepare(
@@ -240,28 +241,13 @@ export class Database {
         .map((r) => [String(r.user_id), validate(JSON.parse(String(r.data)))]),
     );
   }
-  save(id: string, s: Save, mode: GameMode = "multi") {
+  save(id: string, s: Save, mode: StoredWorld = "multi") {
     if (id !== s.player.id) throw Error("Kontobesitz stimmt nicht überein.");
     this.sql
       .prepare(
         `INSERT INTO ${mode === "single" ? "solo_saves" : "saves"} VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data`,
       )
       .run(id, JSON.stringify(validate(s)));
-  }
-  ensureSolo(id: string) {
-    if (
-      this.sql.prepare("SELECT user_id FROM solo_saves WHERE user_id=?").get(id)
-    )
-      return;
-    const original = this.all().get(id);
-    if (!original) throw Error("Konto fehlt.");
-    const save = fresh(
-      original.player.name,
-      original.player.station,
-      Date.now() / 1000,
-    );
-    save.player.id = id;
-    this.save(id, save, "single");
   }
   audit(actor: string, event: string) {
     this.sql

@@ -34,16 +34,16 @@ test.beforeEach(async () => {
 test.afterEach(async () => {
   await app.close();
 });
-async function enter(page: Page, mobile = false) {
-  if (mobile) await page.setViewportSize({ width: 390, height: 844 });
+async function enter(page: Page, compact = false) {
+  if (compact) await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto(config.publicUrl);
   await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
-  if (mobile) await showIncidents(page);
+  if (compact) await showIncidents(page);
   await page.locator(".mission-card").first().click();
 }
 test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik und Abschluss", async ({
@@ -87,7 +87,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   await app.listen();
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await expect(page.locator(".fault-card")).toContainText("Reparatur läuft");
   saved = app.db.all().get(owner)!;
@@ -157,7 +157,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   ).toHaveLength(1);
   expect(errors).toEqual([]);
 });
-test("mobile Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und Krankenhausübergabe", async ({
+test("Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und Krankenhausübergabe", async ({
   page,
 }, info) => {
   const s = emsProfile("Patient"),
@@ -213,12 +213,12 @@ test("mobile Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und
     .toBe("urgent");
   await page.locator(".patient-card header").scrollIntoViewIfNeeded();
   await page.screenshot({
-    path: info.outputPath("phase2-patient-mobil.png"),
+    path: info.outputPath("phase2-patient-desktop-compact.png"),
     fullPage: true,
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await showIncidents(page);
   await page.locator(".mission-card").first().click();

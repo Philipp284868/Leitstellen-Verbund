@@ -1,9 +1,7 @@
 import {
   Radio,
   Play,
-  FilePlus2,
   Users,
-  MapPinned,
   Settings,
   Power,
   ChevronRight,
@@ -23,7 +21,7 @@ import { SoundButton } from "./Sound";
 import type { Save } from "./model";
 import { progress } from "./progression";
 import { credits } from "./ui";
-import { useGame, switchMode } from "./store";
+import { useGame } from "./store";
 import { modeName } from "./mode";
 import { readiness } from "./engine";
 import { RegionScene } from "./RegionScene";
@@ -34,41 +32,39 @@ export function MainMenu({
   readonly,
   onPlay,
   onOpen,
-  onMultiplayer,
 }: {
   save: Save;
   readonly: boolean;
   onPlay: () => void;
-  onMultiplayer: () => void;
   onOpen: (panel: string) => void;
 }) {
   const { mode } = useGame();
   const xp = progress(s.xp);
   const actions = [
     {
-      name: "Weiterspielen",
-      text: `${modeName(mode)} · letzten bestätigten Stand öffnen`,
+      name: "Spielen",
+      text: "Mit der verbundenen Leitstelle spielen",
       icon: Play,
       action: onPlay,
       primary: true,
     },
     {
-      name: "Neues Spiel",
-      text: "Deine eigene Leitstelle aufbauen",
-      icon: FilePlus2,
-      action: () => onOpen("new"),
-    },
-    {
-      name: "Mehrspieler",
-      text: "Gemeinsam für eine sichere Region",
+      name: "Leitstellen",
+      text: "Disponenten, Einladungen und Nachbarleitstellen",
       icon: Users,
-      action: () => (mode === "multi" ? onOpen("friends") : onMultiplayer()),
+      action: () => onOpen("friends"),
     },
     {
-      name: "Szenario",
-      text: "Einsatzarten, Anforderungen & Herausforderungen",
-      icon: MapPinned,
-      action: () => onOpen("scenarios"),
+      name: "Hilfe / Wiki",
+      text: "Bedienung, Einsatzabläufe und Serverbetrieb",
+      icon: BookOpen,
+      action: () => onOpen("help"),
+    },
+    {
+      name: "Neuigkeiten",
+      text: "Freigegebene Änderungen und Community",
+      icon: Newspaper,
+      action: () => onOpen("news"),
     },
     {
       name: "Einstellungen",
@@ -77,7 +73,7 @@ export function MainMenu({
       action: () => onOpen("settings"),
     },
     {
-      name: "Beenden",
+      name: "Abmelden",
       text: "Sitzung sicher verlassen",
       icon: Power,
       action: () => onOpen("exit"),
@@ -142,7 +138,7 @@ export function MainMenu({
         </button>
         <section className="menu-panel">
           <h2>
-            Letzter Spielstand <ChevronRight size={16} />
+            Verbundener Server <ChevronRight size={16} />
           </h2>
           <button className="last-save" onClick={onPlay}>
             <div className="save-preview">
@@ -150,7 +146,7 @@ export function MainMenu({
             </div>
             <div>
               <strong>{s.player.station}</strong>
-              <small>Region Falkenried</small>
+              <small>{window.location.host}</small>
               <span>
                 <Clock size={14} />
                 Stand{" "}
@@ -165,7 +161,7 @@ export function MainMenu({
                 <Siren size={14} />
                 {s.missions.length} aktive Einsätze
               </span>
-              <span>{modeName(mode)} · Server-Spielstand</span>
+              <span>{modeName(mode)} · Autoritativer Server</span>
             </div>
           </button>
         </section>
@@ -234,15 +230,7 @@ export function MainMenu({
           FÜR EINE STARKE REGION
         </p>
         <div className="menu-worlds" aria-label="Spielmodus">
-          {(["single", "multi"] as const).map((value) => (
-            <button
-              key={value}
-              aria-pressed={mode === value}
-              onClick={() => void switchMode(value)}
-            >
-              {modeName(value)}
-            </button>
-          ))}
+          <span>PC · Multiplayer · Maus & Tastatur</span>
         </div>
         <span
           className={`menu-connection ${readonly ? "is-offline" : ""}`}

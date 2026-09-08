@@ -1,37 +1,29 @@
 import type { Database } from "./database";
 import type { GameMode } from "../src/mode";
 import type { ServerAction } from "./actions";
-export const deskOwner = (db: Database, user: string, mode: GameMode) =>
-  mode === "single"
-    ? user
-    : String(
-        db.sql
-          .prepare("SELECT owner_id FROM desk_members WHERE user_id=?")
-          .get(user)?.owner_id ?? user,
-      );
+export const deskOwner = (db: Database, user: string, _mode: GameMode) =>
+  String(
+    db.sql
+      .prepare("SELECT owner_id FROM desk_members WHERE user_id=?")
+      .get(user)?.owner_id ?? user,
+  );
 export function workspace(db: Database, user: string, mode: GameMode) {
   const owner = deskOwner(db, user, mode);
-  const members =
-    mode === "single"
-      ? []
-      : db.sql
-          .prepare(
-            "SELECT users.id,users.username FROM users WHERE id=? OR id IN (SELECT user_id FROM desk_members WHERE owner_id=?)",
-          )
-          .all(owner, owner)
-          .map((r) => ({ id: String(r.id), name: String(r.username) }));
-  const invitations =
-    mode === "single"
-      ? []
-      : db.sql
-          .prepare(
-            "SELECT owner_id,username FROM desk_invites JOIN users ON users.id=owner_id WHERE user_id=?",
-          )
-          .all(user)
-          .map((r) => ({
-            owner: String(r.owner_id),
-            name: String(r.username),
-          }));
+  const members = db.sql
+    .prepare(
+      "SELECT users.id,users.username FROM users WHERE id=? OR id IN (SELECT user_id FROM desk_members WHERE owner_id=?)",
+    )
+    .all(owner, owner)
+    .map((r) => ({ id: String(r.id), name: String(r.username) }));
+  const invitations = db.sql
+    .prepare(
+      "SELECT owner_id,username FROM desk_invites JOIN users ON users.id=owner_id WHERE user_id=?",
+    )
+    .all(user)
+    .map((r) => ({
+      owner: String(r.owner_id),
+      name: String(r.username),
+    }));
   const outgoing =
     mode !== "multi" || owner !== user
       ? []

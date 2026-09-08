@@ -46,7 +46,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await app.close();
 });
-test("Menüziele, sichere Spielanlage, Szenarien, Moduswechsel und Beenden sind verbunden", async ({
+test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelden", async ({
   page,
 }) => {
   await page.goto(origin);
@@ -55,54 +55,25 @@ test("Menüziele, sichere Spielanlage, Szenarien, Moduswechsel und Beenden sind 
     .getByLabel("Passwort", { exact: true })
     .fill("Reference-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  const before = [...app.db.all().values()][0].buildings.map((b) => b.id);
-  await page.getByRole("button", { name: "Neues Spiel", exact: true }).click();
-  await expect(
-    page.getByRole("button", {
-      name: "Bestehende Leitstelle fortsetzen",
-      exact: true,
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Szenario", exact: true }).click();
-  await page.getByLabel("Einsatzart suchen").fill("Flächenbrand");
-  await expect(
-    page.getByRole("navigation", { name: "Szenarien" }).getByRole("button"),
-  ).toHaveCount(1);
-  await page
-    .getByRole("navigation", { name: "Szenarien" })
-    .getByRole("button")
-    .click();
-  await expect(page.locator(".scenario-layout article")).toContainText(
-    "Brandbekämpfung",
-  );
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Einzelspieler", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Einzelspieler", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Neues Spiel", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Erste Wache planen", exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Mehrspieler", exact: true }).click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "Leitstellenverbund und Disponenten",
-  );
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  expect([...app.db.all().values()][0].buildings.map((b) => b.id)).toEqual(
-    before,
-  );
-  await page.getByRole("button", { name: "Beenden", exact: true }).click();
-  await expect(
-    page.getByRole("button", {
-      name: "Abmelden und Spiel verlassen",
-      exact: true,
-    }),
-  ).toBeVisible();
+  for (const old of ["Einzelspieler", "Neues Spiel", "Mehrspieler", "Szenario"])
+    await expect(
+      page.getByRole("button", { name: old, exact: true }),
+    ).toHaveCount(0);
+  for (const entry of [
+    "Leitstellen",
+    "Hilfe / Wiki",
+    "Neuigkeiten",
+    "Einstellungen",
+  ]) {
+    await page.getByRole("button", { name: entry, exact: true }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  }
+  await page.setViewportSize({ width: 900, height: 600 });
+  await expect(page.locator(".desktop-required")).toBeVisible();
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await expect(page.locator(".desktop-required")).toBeHidden();
+  await page.getByRole("button", { name: "Abmelden", exact: true }).click();
   await page
     .getByRole("button", { name: "Abmelden und Spiel verlassen", exact: true })
     .click();
@@ -114,7 +85,7 @@ for (const size of [
   { width: 1920, height: 1080 },
   { width: 2560, height: 1440 },
   { width: 1366, height: 768 },
-  { width: 390, height: 844 },
+  { width: 3440, height: 1440 },
 ])
   test(`Referenzkomposition und bedienbares HUD ${size.width}x${size.height}`, async ({
     page,
@@ -129,15 +100,15 @@ for (const size of [
       .fill("Reference-password-123!");
     await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Weiterspielen", exact: true }),
+      page.getByRole("button", { name: "Spielen", exact: true }),
     ).toBeVisible();
     await expect(page.locator(".menu-intel")).toContainText("Max Berger");
     for (const name of [
-      "Neues Spiel",
-      "Mehrspieler",
-      "Szenario",
+      "Leitstellen",
+      "Hilfe / Wiki",
+      "Neuigkeiten",
       "Einstellungen",
-      "Beenden",
+      "Abmelden",
     ])
       await expect(
         page.getByRole("button", { name, exact: true }),
@@ -149,16 +120,14 @@ for (const size of [
           height: document.documentElement.scrollHeight,
         })),
       ).toEqual({ width: size.width, height: size.height });
-    const folder = resolve("docs/screenshots/2.13");
+    const folder = resolve("docs/screenshots/2.14");
     await mkdir(folder, { recursive: true });
     if (info.project.name === "chromium")
       await page.screenshot({
         path: resolve(folder, `menu-${size.width}.png`),
         fullPage: true,
       });
-    await page
-      .getByRole("button", { name: "Weiterspielen", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Spielen", exact: true }).click();
     await page.locator(".mission-card").first().click();
     const dock = page.getByRole("complementary", {
       name: "Einsatzdisposition",

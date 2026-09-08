@@ -82,6 +82,10 @@ export function inspectImport(text: string) {
     !("save" in raw)
   )
     throw Error("Unbekanntes Format oder nicht unterstützte Version.");
+  if ("mode" in raw && raw.mode === "single")
+    throw Error(
+      "Einzelspielerstände sind ausschließlich Archive und können nicht übernommen werden.",
+    );
   if (
     !("exportedAt" in raw) ||
     typeof raw.exportedAt !== "number" ||

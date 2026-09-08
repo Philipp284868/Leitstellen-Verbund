@@ -8,11 +8,12 @@ import {
   achievementProgress,
   level,
 } from "./model";
-import { act, change, emit, api, useGame, switchMode } from "./store";
+import { act, change, emit, api, useGame } from "./store";
 import { readiness, capacity, missing } from "./engine";
 import { useNetwork, chat, share, stopSharing } from "./network";
 import {
   exportText,
+  read,
   download,
   inspectImport,
   backups,
@@ -199,20 +200,6 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
 export function Friends({ s }: { s: Save }) {
   const net = useNetwork(),
     [text, setText] = useState("");
-  const { mode } = useGame();
-  if (mode === "single")
-    return (
-      <section className="empty">
-        <h3>Deine eigene Region</h3>
-        <p>
-          Im Einzelspieler bleiben Wachen, Fahrzeuge und Einsätze privat. Dein
-          separater Multiplayer-Spielstand wartet im Hauptmenü auf dich.
-        </p>
-        <button onClick={() => void switchMode("multi")}>
-          Zum Multiplayer wechseln
-        </button>
-      </section>
-    );
   return (
     <section>
       <p>
@@ -311,6 +298,24 @@ export function BackupPanel({ s }: { s: Save | null }) {
       >
         Spielstand exportieren
       </button>
+      <button
+        onClick={() =>
+          void api("archive-export")
+            .then((data) =>
+              download(
+                "einzelspieler-archiv.json",
+                JSON.stringify(data, null, 2),
+              ),
+            )
+            .catch((e) => setError(String(e)))
+        }
+      >
+        Alten Einzelspielerstand als Archiv exportieren
+      </button>
+      <p>
+        Archive bleiben unverändert auf dem Server. Sie können nicht gespielt
+        oder in die Multiplayer-Wirtschaft importiert werden.
+      </p>
       <label>
         Spielstanddatei importieren
         <input
@@ -362,6 +367,31 @@ export function BackupPanel({ s }: { s: Save | null }) {
           </button>
         </article>
       )}
+      <button
+        onClick={() =>
+          void read()
+            .then((row) => {
+              if (!row) throw Error("Keine alte Browserkopie vorhanden.");
+              download(
+                "browser-archiv.json",
+                JSON.stringify(
+                  {
+                    format: "leitstellen-verbund-archive",
+                    version: 1,
+                    source: "browser-archive",
+                    exportedAt: Date.now(),
+                    save: row.data,
+                  },
+                  null,
+                  2,
+                ),
+              );
+            })
+            .catch((e) => setError(String(e)))
+        }
+      >
+        Vorhandene Browserkopie als Archiv exportieren
+      </button>
       <h3>Freiwillige lokale Sicherungen dieses Kontos</h3>
       <p>
         Auf gemeinsam genutzten Geräten besser nur eine Datei exportieren.
@@ -500,11 +530,12 @@ export function Help() {
         ohne Einladung registrieren. Es gibt ausschließlich normale
         Spielerkonten.
       </p>
-      <h3>Deine Spielwelten</h3>
+      <h3>Dein Multiplayer-Server</h3>
       <p>
-        Einzelspieler und Multiplayer besitzen getrennte Wachen, Guthaben und
-        Fortschritte. Wähle den Modus im Hauptmenü. Vorhandener Besitz bleibt im
-        Multiplayer. Beide Welten laufen auf dem Server weiter.
+        Melde dich am gewünschten Spielserver an und öffne deine berechtigte
+        Leitstelle mit Spielen. Der Server verwaltet Welt, Besitz und
+        Fortschritt. Unter Leitstellen findest du Einladungen zur gemeinsamen
+        Disposition.
       </p>
       <h3>Die erste Schicht</h3>
       <ol>
@@ -564,18 +595,18 @@ export function Help() {
       <h3>Speichern und Wiederherstellen</h3>
       <p>
         Besitz und Spielaktionen werden in SQLite auf dem Server gespeichert.
-        Mehrere Tabs im selben Modus sehen denselben Stand; Einzelspieler und
-        Multiplayer bleiben getrennt. Exportdateien und freiwillige lokale
-        Kopien stehen unter Sicherungen bereit. Die gesamte Datenbank wird
-        regelmäßig automatisch gesichert. Wiederherstellung und Übernahme alter
-        Browserdateien bleiben Wartungsaufgaben des Serverbetreibers außerhalb
-        der Spielkonten.
+        Mehrere Tabs sehen denselben bestätigten Serverstand. Alte
+        Einzelspielerstände bleiben inaktive Archive. Exportdateien und
+        freiwillige lokale Kopien stehen unter Sicherungen bereit. Die gesamte
+        Datenbank wird regelmäßig automatisch gesichert. Wiederherstellung und
+        Übernahme alter Browserdateien bleiben Wartungsaufgaben des
+        Serverbetreibers außerhalb der Spielkonten.
       </p>
       <h3>Bedienung</h3>
       <p>
         Karte ziehen und mit Mausrad oder +/− zoomen. Gebäude und Einsätze
-        anklicken oder mit Tab und Enter auswählen. Auf kleinen Displays
-        zwischen Einsätzen und Karte wechseln. Menüs lassen sich mit Escape
+        anklicken oder mit Tab und Enter auswählen. Einsatzliste und
+        Kartenwerkzeuge lassen sich einklappen. Menüs lassen sich mit Escape
         schließen.
       </p>
     </div>

@@ -211,9 +211,9 @@ it("Server trennt Statistiken nach Leitstelle und Modus; Client darf weder Messw
     db.save(owner, s);
     const game = new Game(db);
     expect(game.view(owner, new Set()).save.statistics.completed).toBe(1);
-    expect(
-      game.view(owner, new Set(), "single").save.statistics.completed,
-    ).toBe(0);
+    expect(() => game.view(owner, new Set(), "single" as never)).toThrow(
+      "Multiplayer",
+    );
     expect(game.view(peer, new Set()).save.archive).toEqual([]);
     for (const action of [
       { type: "statistics", completed: 99 },

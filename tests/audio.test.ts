@@ -37,22 +37,22 @@ it("meldet neue Einsätze einmal und spielt beim Einstieg, Reload oder alten Sna
   events.reset();
   expect(events.observe(next, "multi", true)).toBeNull();
 });
-it("isoliert Modus, Konto, Spielgeneration und Offline-Wiederverbindung", () => {
+it("isoliert Konto, Spielgeneration und Offline-Wiederverbindung", () => {
   const events = new AudioEvents(),
     s = established("Test");
   events.observe(s, "multi", true);
   const next = update(s);
   generate(next);
-  expect(events.observe(next, "single", true)).toBeNull();
+  expect(events.observe(next, "multi", true)).toBe("mission");
   expect(
     events.observe(
       { ...next, player: { ...next.player, id: "anderes-konto" } },
-      "single",
+      "multi",
       true,
     ),
   ).toBeNull();
   expect(
-    events.observe({ ...next, generation: "neu" }, "single", true),
+    events.observe({ ...next, generation: "neu" }, "multi", true),
   ).toBeNull();
   expect(events.observe(next, "multi", false)).toBeNull();
   expect(events.observe(next, "multi", true)).toBeNull();

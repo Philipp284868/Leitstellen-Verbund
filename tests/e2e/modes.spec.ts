@@ -1,4 +1,4 @@
-import { openPanel, showIncidents } from "./ui-navigation";
+import { showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
@@ -51,7 +51,7 @@ async function account(page: Page, distantIncident = false) {
   app.db.save(id, s);
   app.game.step(1);
   if (distantIncident) {
-    // Keep the real routed journey visible throughout desktop/mobile checks.
+    // Keep the real routed journey visible throughout desktop window checks.
     const prepared = app.db.all().get(id)!;
     const mission = prepared.missions[0];
     mission.pos = nodes.find((p) => p.x > 3000 && p.y > 2000)!;
@@ -70,60 +70,35 @@ async function login(page: Page, username: string) {
   await page.locator(".command-menu").waitFor();
 }
 async function play(page: Page) {
-  await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
   );
 }
-test("Modi trennen Guthaben und Wachen, mehrere Tabs und Reload behalten ihre eigene Welt", async ({
+test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe Serverwelt", async ({
   page,
   context,
 }) => {
-  const { id } = await account(page),
-    multi = app.db.all().get(id)!;
-  await page
-    .getByRole("button", { name: "Einzelspieler", exact: true })
-    .click();
+  await page.addInitScript(() => sessionStorage.setItem("lv-mode", "single"));
+  const { id } = await account(page);
+  const before = app.db.all().get(id)!;
   await expect(
     page.getByRole("button", { name: "Einzelspieler", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  ).toHaveCount(0);
   await play(page);
-  await expect(page.locator(".hud-budget")).toContainText("250.000");
-  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(0);
-  await openPanel(page, "Wachen");
-  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
-  await page
-    .locator(".shop-card")
-    .filter({
-      has: page.getByRole("heading", { name: "Feuerwache", exact: true }),
-    })
-    .getByRole("button", { name: "Platzieren" })
-    .click();
-  const mapBounds = await page.locator("svg.map").boundingBox();
-  await page.locator("svg.map").click({
-    position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
-  });
-  await page
-    .getByRole("button", { name: "Bau bestätigen", exact: true })
-    .click();
-  await expect(page.locator(".hud-budget")).toContainText("195.000");
-  expect(app.db.all().get(id)!.money).toBe(multi.money);
   const second = await context.newPage();
   await second.goto(origin);
   await play(second);
-  await expect(second.locator(".hud-mode")).toHaveText("Multiplayer");
-  await expect(second.locator("svg.map [data-own-station]")).toHaveCount(1);
+  for (const p of [page, second]) {
+    await expect(p.locator(".hud-mode")).toHaveText("Multiplayer");
+    await expect(p.locator("svg.map [data-own-station]")).toHaveCount(
+      before.buildings.length,
+    );
+  }
   await page.reload();
   await play(page);
-  await expect(page.locator(".hud-mode")).toHaveText("Einzelspieler");
-  await expect(page.locator(".hud-budget")).toContainText("195.000");
-  await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
-  await page.getByRole("button", { name: "Multiplayer", exact: true }).click();
-  await play(page);
-  await expect(page.locator(".hud-mode")).toHaveText("Multiplayer");
-  expect(app.db.all("single").get(id)!.money).toBe(195000);
+  expect(app.db.all("single").size).toBe(0);
+  expect(app.db.all().get(id)!.money).toBe(before.money);
   await second.close();
 });
 test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat", async ({
@@ -145,14 +120,10 @@ test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat
   ).toBeVisible();
   await b.getByRole("button", { name: "Schließen", exact: true }).click();
   await b.getByRole("button", { name: "Hauptmenü", exact: true }).click();
-  await b.getByRole("button", { name: "Einzelspieler", exact: true }).click();
-  await play(b);
-  await expect(b.locator(".shared-inbox")).toHaveCount(0);
-  await expect(b.locator('svg.map [aria-label*="von Alex"]')).toHaveCount(0);
   await ca.close();
   await cb.close();
 });
-test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", async ({
+test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per Tastatur bedienbar", async ({
   page,
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -211,9 +182,9 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
     path: info.outputPath("hud-hell.png"),
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.screenshot({
-    path: info.outputPath("hud-mobil.png"),
+    path: info.outputPath("hud-desktop-compact.png"),
     fullPage: true,
   });
   expect(
@@ -227,7 +198,7 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
   await expect(page.locator("svg.map")).toBeVisible();
 });
 
-test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf Desktop und Mobil", async ({
+test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in großen und kleinen Desktopfenstern", async ({
   page,
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -290,7 +261,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
     path: info.outputPath("region-2.6-fahrten.png"),
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await expect(page.locator(".operations")).toBeVisible();
   const operationsBox = await page.locator(".operations").boundingBox();
   const wrapBox = await page.locator(".map-wrap").boundingBox();
@@ -298,7 +269,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
     wrapBox!.y + wrapBox!.height + 1,
   );
   await page.screenshot({
-    path: info.outputPath("region-2.6-mobil.png"),
+    path: info.outputPath("region-desktop-1366.png"),
     fullPage: true,
   });
   expect(

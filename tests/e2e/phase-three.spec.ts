@@ -46,7 +46,7 @@ async function enter(page: Page, username = "north") {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
 }
 test("FF-Wache und Personal konfigurieren, Reserve freigeben und individuelle Ausrückbereitschaft verfolgen", async ({
@@ -180,7 +180,7 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
     await app.listen();
     await page.reload();
     await page
-      .getByRole("button", { name: "Weiterspielen", exact: true })
+      .getByRole("button", { name: "Spielen", exact: true })
       .click();
     app.game.step(120);
     await page.locator(".mission-card").first().click();
@@ -216,7 +216,7 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
     await context.close();
   }
 });
-test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung wirksam", async ({
+test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung wirksam", async ({
   page,
 }, info) => {
   const s = organizationFixture(owner, "sick"),
@@ -224,7 +224,7 @@ test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbi
     m = s.missions[0];
   m.control!.briefed = true;
   app.db.save(owner, s);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await enter(page);
@@ -254,7 +254,7 @@ test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbi
     .toBe("alarmed");
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
@@ -265,7 +265,7 @@ test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbi
     "Beauftragt",
   );
   await page.screenshot({
-    path: info.outputPath("phase3-mobile-ems.png"),
+    path: info.outputPath("phase3-desktop-ems.png"),
     fullPage: true,
   });
   for (

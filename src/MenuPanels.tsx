@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { missions, bt, capabilities } from "./catalog";
 import type { Save } from "./model";
-import { useGame, switchMode, logout, emit } from "./store";
+import { logout, emit } from "./store";
 import { missionXp, progress } from "./progression";
 import { credits } from "./ui";
 import { IncidentIcon } from "./HudIcons";
@@ -20,68 +20,10 @@ export function MenuPanels({
   onPlay: () => void;
   onSelect: (id: string) => void;
 }) {
-  const { mode, readonly } = useGame();
   const [query, setQuery] = useState("");
   const [scenario, setScenario] = useState(missions[0].id);
   const t = missions.find((m) => m.id === scenario)!;
   const leave = () => void logout().catch((e) => emit({ error: String(e) }));
-  if (panel === "new")
-    return (
-      <section className="menu-flow">
-        <h3>Deine Leitstelle. Dein Spielstand.</h3>
-        <p>
-          Einzelspieler und Multiplayer besitzen jeweils eigene Wachen, eigenes
-          Guthaben und eigenen Fortschritt.
-        </p>
-        <div className="inline">
-          <button
-            aria-pressed={mode === "single"}
-            onClick={() => void switchMode("single")}
-          >
-            Einzelspieler
-          </button>
-          <button
-            aria-pressed={mode === "multi"}
-            onClick={() => void switchMode("multi")}
-          >
-            Multiplayer
-          </button>
-        </div>
-        {s.buildings.length ? (
-          <>
-            <p>
-              In dieser Spielwelt besteht bereits die Leitstelle{" "}
-              <strong>{s.player.station}</strong>. Sie bleibt mit allen Wachen
-              und Einsätzen erhalten.
-            </p>
-            <button className="primary" onClick={onPlay}>
-              Bestehende Leitstelle fortsetzen
-            </button>
-            <p>
-              Für einen weiteren getrennten Bestand kannst du den anderen
-              Spielmodus wählen oder dich abmelden und ein neues Spielerkonto
-              erstellen.
-            </p>
-            <button onClick={() => onOpen("exit")}>Zum Kontowechsel</button>
-          </>
-        ) : (
-          <>
-            <p>
-              Deine neue Leitstelle <strong>{s.player.station}</strong> beginnt
-              mit {credits(s.money)}. Wähle den Standort deiner ersten
-              Feuerwache auf der Karte.
-            </p>
-            <button
-              className="primary"
-              disabled={readonly}
-              onClick={() => onOpen("build")}
-            >
-              Erste Wache planen
-            </button>
-          </>
-        )}
-      </section>
-    );
   if (panel === "exit")
     return (
       <section className="menu-flow">
@@ -99,7 +41,7 @@ export function MenuPanels({
         <small>Nach dem Abmelden kannst du diesen Browser-Tab schließen.</small>
       </section>
     );
-  if (panel === "scenarios")
+  if (panel === "catalog")
     return (
       <section className="scenario-catalog">
         <p>

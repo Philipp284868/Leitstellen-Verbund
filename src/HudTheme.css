@@ -231,3 +231,27 @@
   transition: none !important;
   scroll-behavior: auto !important;
 }
+
+.desktop-required {
+  display: none;
+}
+@media screen and (max-width: 1099px), screen and (max-height: 649px) {
+  .desktop-required {
+    display: grid;
+    place-content: center;
+    padding: 36px;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #07151e;
+    color: #e4eef4;
+  }
+  .desktop-required ~ * {
+    visibility: hidden;
+  }
+}
+@media print {
+  .desktop-required {
+    display: none;
+  }
+}

@@ -219,7 +219,7 @@ export function GameHud({
           Sicherer leben.
         </p>
       </header>
-      <main className="map-column mobile-visible">
+      <main className="map-column">
         <MapView
           s={s}
           selected={selected}

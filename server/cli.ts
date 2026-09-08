@@ -1,5 +1,12 @@
 import { level } from "../src/model";
-import { readFile, stat, copyFile, rename, unlink } from "node:fs/promises";
+import {
+  readFile,
+  writeFile,
+  stat,
+  copyFile,
+  rename,
+  unlink,
+} from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
 import { parseMode } from "../src/mode";
@@ -15,6 +22,7 @@ if (
   ![
     "player-create",
     "backup",
+    "archive-export",
     "restore",
     "legacy-import",
     "unlock",
@@ -183,7 +191,34 @@ try {
         );
         console.log("Normales Spielerkonto angelegt. Keine Sonderrechte.");
       } else if (command === "backup") console.log(await db.backup());
-      else if (command === "legacy-import") {
+      else if (command === "archive-export") {
+        const user = db.sql
+          .prepare("SELECT id FROM users WHERE username=?")
+          .get(arg("username"));
+        if (!user) throw Error("Konto fehlt.");
+        const row = db.sql
+          .prepare("SELECT data FROM solo_saves WHERE user_id=?")
+          .get(user.id);
+        if (!row)
+          throw Error("Kein archivierter Einzelspielerstand vorhanden.");
+        const target = arg("file");
+        await writeFile(
+          target,
+          JSON.stringify(
+            {
+              format: "leitstellen-verbund-archive",
+              version: 1,
+              source: "retired-single-player",
+              exportedAt: Date.now(),
+              save: JSON.parse(String(row.data)),
+            },
+            null,
+            2,
+          ),
+          { flag: "wx", mode: 0o600 },
+        );
+        console.log("Inaktives Archiv exportiert. Keine Daten verändert.");
+      } else if (command === "legacy-import") {
         if (!process.argv.includes("--confirm-replace-and-reset-active"))
           throw Error(
             "Explizite Freigabe --confirm-replace-and-reset-active erforderlich.",
@@ -203,14 +238,13 @@ try {
           : "multi";
         if (raw.mode && raw.mode !== mode)
           throw Error(
-            "Export gehört zu einem anderen Spielmodus. Ziel ausdrücklich mit --mode single oder --mode multi wählen.",
+            "Archivierte Einzelspielerstände dürfen nicht in die Multiplayer-Wirtschaft importiert werden.",
           );
         let s = validate(raw.save);
         const user = db.sql
           .prepare("SELECT id FROM users WHERE username=?")
           .get(arg("username"));
         if (!user) throw Error("Zielkonto fehlt.");
-        if (mode === "single") db.ensureSolo(String(user.id));
         const old = db.all(mode).get(String(user.id))!;
         const ids = new Map([
           [s.player.id, String(user.id)],

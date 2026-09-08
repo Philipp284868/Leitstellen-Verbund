@@ -976,26 +976,18 @@ export function FMSPanel({ s }: { s: Save }) {
   );
 }
 export function TeamPanel() {
-  const { workspace, user, mode } = useGame(),
+  const { workspace, user } = useGame(),
     [username, setUsername] = useState(""),
     [text, setText] = useState("");
   const net = useNetwork();
-  if (mode === "single")
-    return (
-      <p>
-        Einzelspieler ist eine eigene private Spielwelt. Gemeinsame Disposition
-        steht im Multiplayer zur Verfügung.
-      </p>
-    );
   return (
     <>
       <NeighborDesk />
       <h3>Disponenten derselben Leitstelle</h3>
       <p>
         Mitglieder arbeiten nach Annahme einer Einladung am selben Bestand und
-        dürfen die Spielaktionen dieser Leitstelle ausführen. Eigene
-        Einzelspielerstände und das bisherige eigene Multiplayer-Vermögen werden
-        nicht gelöscht.
+        dürfen die Spielaktionen dieser Leitstelle ausführen. Das bisherige
+        eigene Multiplayer-Vermögen wird nicht gelöscht.
       </p>
       {workspace?.members.map((m) => (
         <p key={m.id}>

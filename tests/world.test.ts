@@ -153,7 +153,7 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
       s.player.id = id;
       for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
       db.save(id, s);
-      db.ensureSolo(id);
+      db.save(id, structuredClone(db.all().get(id)!), "single");
     }
     const game = new Game(db),
       owner = db.all().get(a)!,

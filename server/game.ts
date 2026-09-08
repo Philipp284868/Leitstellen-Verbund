@@ -52,16 +52,15 @@ import {
   type Action,
 } from "../src/engine";
 import type { Save, Vehicle } from "../src/model";
-import type { GameMode } from "../src/mode";
+import { parseMode, type GameMode } from "../src/mode";
 import { vt, mt, type Skills } from "../src/catalog";
 
 export class Game {
   constructor(public db: Database) {}
   command(user: string, input: unknown, mode: GameMode = "multi") {
+    parseMode(mode);
     const { id, action } = commandSchema.parse(input),
-      fingerprint = hash(
-        JSON.stringify(mode === "multi" ? action : { mode, action }),
-      );
+      fingerprint = hash(JSON.stringify(action));
     return this.db.transaction(() => {
       const prior = this.db.sql
         .prepare("SELECT fingerprint FROM actions WHERE user_id=? AND id=?")
@@ -81,11 +80,6 @@ export class Game {
       const saves = this.db.all(mode),
         s = saves.get(owner);
       if (!s) throw Error("Konto fehlt.");
-      if (
-        mode === "single" &&
-        ["share", "unshare", "support"].includes(action.type)
-      )
-        throw Error("Zusammenarbeit ist nur im Multiplayer möglich.");
       const external: Skills = {};
       if ("mission" in action) {
         const m = s.missions.find((m) => m.id === action.mission);
@@ -249,7 +243,6 @@ export class Game {
   step(seconds: number, now = Date.now()) {
     this.db.transaction(() => {
       this.stepMode(seconds, now, "multi");
-      this.stepMode(seconds, now, "single");
     });
   }
   private stepMode(seconds: number, now: number, mode: GameMode) {
@@ -472,23 +465,16 @@ export class Game {
     this.db.sql.prepare("DELETE FROM limits WHERE until_at<?").run(now);
   }
   view(user: string, online: Set<string>, mode: GameMode = "multi") {
+    parseMode(mode);
     const actor = user;
     const onlineDesks = new Set(
       [...online].map((id) => deskOwner(this.db, id, mode)),
     );
     user = deskOwner(this.db, user, mode);
     const access = workspace(this.db, actor, mode);
-    if (mode === "single") this.db.ensureSolo(user);
     const saves = this.db.all(mode),
       save = saves.get(user);
     if (!save) throw Error("Spielstand fehlt.");
-    if (mode === "single")
-      return {
-        mode,
-        workspace: access,
-        save: publicSave(save),
-        network: { friends: [], support: [], requests: [], neighbors: [] },
-      };
     const related = (
       coordinator: string,
       missionId: string,

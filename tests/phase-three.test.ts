@@ -299,16 +299,16 @@ it("Entwürfe sind privat; Versand gewährt nur der Ziel-Leitstelle die Anfrage;
         vehicles: [w.db.all().get(w.owner)!.vehicles[0].id],
       }),
     ).toThrow("angefragte");
-    w.db.ensureSolo(w.owner);
+
     expect(() =>
       w.game.command(
         w.owner,
         { id: crypto.randomUUID(), action: { type: "aid-send", id: r.id } },
-        "single",
+        "single" as never,
       ),
     ).toThrow("Multiplayer");
-    expect(w.game.view(w.owner, new Set(), "single").network.neighbors).toEqual(
-      [],
+    expect(() => w.game.view(w.owner, new Set(), "single" as never)).toThrow(
+      "Multiplayer",
     );
   } finally {
     w.db.close();

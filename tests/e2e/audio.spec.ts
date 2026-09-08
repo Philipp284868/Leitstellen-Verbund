@@ -99,7 +99,7 @@ async function login(page: Page, ready = false) {
 }
 async function play(page: Page) {
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
@@ -149,9 +149,9 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
     path: info.outputPath("audio-desktop.png"),
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.screenshot({
-    path: info.outputPath("audio-mobil.png"),
+    path: info.outputPath("audio-desktop-compact.png"),
     fullPage: true,
   });
   expect(

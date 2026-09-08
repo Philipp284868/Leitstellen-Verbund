@@ -16,3 +16,13 @@ Ausgangsmessung: geprüfter CI-Lauf 34207512025, 171 Vitest-Tests 31,65 s, 16 No
 4. Tatsächliche Wiki-/Project-/Community-Einrichtung und geprüfter Release-Entwurf.
 
 Kein automatisches Produktionsdeployment. Noch nicht abgeschlossene Schritte sind keine zugesicherte Produkteigenschaft.
+
+## Umgesetzter Produktabschnitt
+
+Aktiver Einzelspieler aus Menü, Store-Umschaltung, HTTP-/Socket-Zugriff und Server-Ticks entfernt. Archivexport prüft Kontobesitz und wird weder gespielt noch importiert. Historische SQL-Migrationen bleiben erhalten; Schema 11 unverändert. Alte Browserkopien können separat exportiert werden. Dedizierte Smartphone-CSS-Blöcke entfernt; gemeinsame Desktop-Anpassungen und Pointer-Steuerung erhalten. Keine ungenutzte Abhängigkeit nachgewiesen: insbesondere Dexie bleibt für vorhandene freiwillige Sicherungen/Archivexport und Audio erhalten.
+
+Lokal: 171 Tests (einschließlich neuem Shutdown-Test, ohne Linux-AMP-Prozesstest), Typecheck, Lint, Build; 37 Edge-Browserfälle mit zwei Workern in 2,2 Minuten. Der Linux-only-Betriebsteil ist separat in CI verpflichtend. Ein ausdrücklich ausgeführter Windows-Lauf der 16 Node-Betriebstests hatte 13 Erfolge, zwei EPERM-Fehler beim Anlegen von Dateisymlinks und einen Prozess-Timeout; er wird nicht als bestanden dargestellt.
+
+Erster veröffentlichter Teilstand: 2650a13. Dessen CI 34211890063 meldete 73/74 Browserfälle erfolgreich; ein Firefox-Teardown hing an einer offenen HTTP-Verbindung. Korrektur e80ee67 begrenzt das Netzwerk-Drain, wartet laufende Anfragen ab, sichert den Bestand und ist idempotent. Ein gezielter Test mit unvollständigen HTTP-Headern besteht.
+
+GitHub: dev unmittelbar vor Löschung erneut mit main verglichen (0 exklusive Commits), remote und lokal entfernt. Beide alten lokalen Feature-Branches waren integriert und remote bereits entfernt; ebenfalls gelöscht. Nur main bleibt. Issues #19–22 und sechs aussagekräftige Labels angelegt. Discussions #23 (Ankündigung), #24 (Hilfe), #25 (Ideen) veröffentlicht. Dependabot-Warnungen, privater Sicherheitsmeldeweg, Secret Scanning und Push Protection aktiviert; keine automatischen Update-Branches oder Major-Upgrades.

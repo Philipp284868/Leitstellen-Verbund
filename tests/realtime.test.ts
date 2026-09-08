@@ -71,7 +71,7 @@ it("berechnet Fahrzeit und Reststrecke aus demselben tatsächlichen Straßenweg"
   v.status = "scene";
   expect(trip(v, s.time).seconds).toBe(0);
 });
-it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit in beiden Modi", async () => {
+it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit und lässt das Einzelspielerarchiv ruhen", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-realtime-"));
   let db = new Database(dir);
   try {
@@ -81,7 +81,7 @@ it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit in
       "Clock",
       "Clock",
     );
-    db.ensureSolo(id);
+    db.save(id, structuredClone(db.all().get(id)!), "single");
     const old = established("Clock");
     old.player.id = id;
     for (const item of [...old.buildings, ...old.vehicles]) item.owner = id;
@@ -126,14 +126,14 @@ it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit in
         game.command(
           id,
           { id: crypto.randomUUID(), action: { type: "speed", value: 32 } },
-          mode,
+          mode as never,
         ),
       ).toThrow();
     }
     game.step(1);
     for (const mode of ["single", "multi"] as const) {
       const s = db.all(mode).get(id)!;
-      expect(s.time - old.time).toBeCloseTo(1);
+      expect(s.time - old.time).toBeCloseTo(mode === "multi" ? 1 : 0);
       expect(s.vehicles[0].arrive).toBe(old.vehicles[0].arrive);
       expect(s.money).toBe(old.money);
       expect(s.speed).toBe(1);

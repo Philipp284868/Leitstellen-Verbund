@@ -48,7 +48,7 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: false })
+    .getByRole("button", { name: "Spielen", exact: false })
     .click();
   await expect(page.locator(".hud-budget")).toContainText("250.000");
   await expect(page.locator(".radio-bar")).toContainText(
@@ -69,7 +69,7 @@ async function enter(page: Page, username: string) {
     await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   }
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: false })
+    .getByRole("button", { name: "Spielen", exact: false })
     .click();
 }
 async function resources(page: Page) {
@@ -124,7 +124,7 @@ async function pair(browser: Browser) {
     ub = await register(b, "Ben");
   return { ca, cb, a, b, ua, ub };
 }
-test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rückkehr und Reload", async ({
+test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponenten, Belohnung, Rückkehr und Reload", async ({
   browser,
 }) => {
   const { ca, cb, a, b, ua } = await pair(browser);
@@ -386,7 +386,7 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
   await ca.close();
   await cb.close();
 });
-test("Mobilansicht und notwendige Ressourcen bleiben auf demselben eigenen Server", async ({
+test("kleine Desktopansicht und notwendige Ressourcen bleiben auf demselben eigenen Server", async ({
   page,
 }) => {
   const external: string[] = [],
@@ -395,7 +395,7 @@ test("Mobilansicht und notwendige Ressourcen bleiben auf demselben eigenen Serve
     if (!r.url().startsWith(config.publicUrl)) external.push(r.url());
   });
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await register(page, "Mobil");
   await expect(
     page.getByRole("button", { name: "Karte", exact: true }),
@@ -408,7 +408,7 @@ test("Mobilansicht und notwendige Ressourcen bleiben auf demselben eigenen Serve
   expect(external).toEqual([]);
   expect(errors).toEqual([]);
   await page.screenshot({
-    path: test.info().outputPath("amp-mobile.png"),
+    path: test.info().outputPath("amp-desktop-compact.png"),
     fullPage: true,
   });
 });

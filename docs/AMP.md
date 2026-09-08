@@ -1,3 +1,7 @@
+# Aktuell: PC-Multiplayer ab 2.14
+
+Einzelspielerarchive bleiben erhalten und werden nicht weiter simuliert. Export unter Sicherungen oder CLI `archive-export`; kein Import in die Multiplayer-Wirtschaft. Historische Migrationsabschnitte unten beschreiben ältere Versionen.
+
 # Leitstellen-Verbund auf CubeCoders AMP – Version 2.6
 
 **Update 2.10.0 / Phase 4:** Großlagenführung, MANV und Flächenlagen verwenden Schema 9. Die Migration sichert den vorherigen Stand und erhält beide Spielmodi samt laufenden Alarmierungen. Keine neuen AMP-Felder oder Umgebungsvariablen; regulär stoppen, sichern, `main` aktualisieren, Setup abschließen und starten. [Phase-4-Betrieb und Grenzen](PHASE-4.md).
@@ -28,7 +32,7 @@ Ab Version 2.2 ist die Registrierung offen. Auf der Spielwebsite **Neues Konto e
 | App Installation Location  | leer                                                       |
 | Run App Pre-start Commands | deaktiviert                                                |
 
-`main` enthält den freigegebenen Stand; `dev` dient der Entwicklung. Ein neuer Commit wird nicht automatisch auf einer laufenden AMP-Instanz installiert. Stoppen → Aktualisieren → erfolgreichen Setup-/Buildabschluss abwarten → Start. Arbeitsverzeichnis ist die Repository-Wurzel mit `package.json`, `.env` und `scripts/`.
+`main` ist der einzige reguläre Entwicklungsbranch. Nur konkret geprüfte Commits installieren; ein Entwicklungscommit ist keine automatische stabile Freigabe. Ein neuer Commit wird nicht automatisch auf einer laufenden AMP-Instanz installiert. Stoppen → Aktualisieren → erfolgreichen Setup-/Buildabschluss abwarten → Start. Arbeitsverzeichnis ist die Repository-Wurzel mit `package.json`, `.env` und `scripts/`.
 
 Das Setup benötigt Node 24, lädt die festgelegte pnpm-Version unter `.tools/`, installiert mit der Lockdatei einschließlich Build-Werkzeugen und baut `dist/server/index.js`, `dist/server/cli.js` sowie `dist/client/`. Es überschreibt keine vorhandene `.env` und löscht keine Spieldaten. Runtime-Abhängigkeiten bleiben in `node_modules`; nicht nur einzelne Serverdateien hochladen. Kein Vite-Dev- oder Previewserver wird für den Produktivbetrieb eingesetzt.
 

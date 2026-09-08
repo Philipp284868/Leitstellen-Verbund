@@ -101,7 +101,7 @@ test("großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bl
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(
@@ -152,7 +152,7 @@ test("großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bl
 test.afterEach(async () => {
   await app.close();
 });
-test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, Mobilansicht und Wiederverbindung", async ({
+test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, kleine Desktopansicht und Wiederverbindung", async ({
   page,
   context,
 }, info) => {
@@ -166,7 +166,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, M
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(
@@ -260,7 +260,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, M
     path: info.outputPath("region-1100.png"),
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   const beforeZoom = await page.locator("svg.map").getAttribute("viewBox");
   await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
@@ -275,7 +275,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, M
     ),
   ).toBe(true);
   await page.screenshot({
-    path: info.outputPath("region-mobile-390.png"),
+    path: info.outputPath("region-desktop-1366.png"),
     fullPage: true,
   });
   expect(errors).toEqual([]);

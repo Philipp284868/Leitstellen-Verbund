@@ -23,15 +23,7 @@ export interface Snapshot {
   user: { id: string; username: string; role: string } | null;
 }
 let snapshot: Snapshot = {
-  mode: (() => {
-    try {
-      return sessionStorage.getItem("lv-mode") === "single"
-        ? "single"
-        : "multi";
-    } catch {
-      return "multi";
-    }
-  })(),
+  mode: "multi",
   save: null,
   loading: true,
   readonly: true,
@@ -242,36 +234,4 @@ if (typeof window !== "undefined") {
     socket?.disconnect();
   });
   window.addEventListener("online", () => socket?.connect());
-}
-
-export async function switchMode(mode: GameMode) {
-  if (mode === snapshot.mode) return;
-  const previous = socket;
-  socket = null;
-  previous?.removeAllListeners();
-  previous?.disconnect();
-  resetNetwork();
-  emit({
-    mode,
-    workspace: undefined,
-    save: null,
-    readonly: true,
-    loading: true,
-    error: "",
-    notice: "",
-  });
-  try {
-    sessionStorage.setItem("lv-mode", mode);
-  } catch {
-    /* Mode still works without browser storage. */
-  }
-  try {
-    await refresh();
-  } catch (e) {
-    emit({
-      loading: false,
-      error:
-        e instanceof Error ? e.message : "Modus konnte nicht geladen werden.",
-    });
-  }
 }

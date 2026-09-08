@@ -31,7 +31,7 @@ const ReportPanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ReportPanel })),
 );
 import { Radio, TowerControl, ChevronRight } from "lucide-react";
-import { useGame, emit, retryStorage, change, switchMode } from "./store";
+import { useGame, emit, retryStorage, change } from "./store";
 import { bt } from "./catalog";
 import { level } from "./model";
 import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
@@ -40,32 +40,22 @@ import { Modal } from "./ui";
 import { download } from "./storage";
 import { updateApplication } from "./pwa";
 export function App() {
-  const { mode } = useGame();
-  const [pendingPanel, setPendingPanel] = useState("");
   return (
     <>
       <AudioSession />
-      <GameApp
-        key={mode}
-        pendingPanel={pendingPanel}
-        clearPending={() => setPendingPanel("")}
-        onMultiplayer={() => {
-          setPendingPanel("friends");
-          void switchMode("multi");
-        }}
-      />
+      <div className="desktop-required" role="status">
+        <h1>Leitstellen-Verbund für PC</h1>
+        <p>
+          Bitte das Browserfenster auf mindestens 1100 × 650 Pixel vergrößern
+          oder den Browser-Zoom verkleinern. Maus und Tastatur werden empfohlen.
+        </p>
+        <p>Der Server läuft weiter. Deine Daten bleiben erhalten.</p>
+      </div>
+      <GameApp />
     </>
   );
 }
-function GameApp({
-  pendingPanel,
-  clearPending,
-  onMultiplayer,
-}: {
-  pendingPanel: string;
-  clearPending: () => void;
-  onMultiplayer: () => void;
-}) {
+function GameApp() {
   const { save: s, mode, loading, readonly, error, notice, user } = useGame();
   const priorProgress = useRef<{ generation: string; level: number } | null>(
     null,
@@ -87,12 +77,6 @@ function GameApp({
     [placing, setPlacing] = useState(""),
     [light, setLight] = useState<boolean | null>(null),
     [reduced, setReduced] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (pendingPanel && s && !loading) {
-      setModal(pendingPanel);
-      clearPending();
-    }
-  }, [pendingPanel, s, loading, clearPending]);
   useEffect(() => {
     audio.scene(screen === "game");
   }, [screen]);
@@ -239,7 +223,6 @@ function GameApp({
       )}
       {screen === "start" ? (
         <MainMenu
-          onMultiplayer={onMultiplayer}
           save={s}
           readonly={readonly}
           onPlay={() => setScreen("game")}
@@ -309,8 +292,7 @@ function GameApp({
           title={
             (
               {
-                new: "Neues Spiel",
-                scenarios: "Szenarien und Einsatzarten",
+                catalog: "Einsatzkatalog",
                 exit: "Spiel verlassen",
                 news: "Neuigkeiten",
                 credits: "Credits",
@@ -346,7 +328,23 @@ function GameApp({
             }}
             onSelect={open}
           />
-          {modal === "help" && <Help />}
+          {modal === "help" && (
+            <>
+              <p>
+                <a
+                  href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Wiki öffnen
+                </a>
+              </p>
+              <button onClick={() => setModal("catalog")}>
+                Einsatzkatalog
+              </button>
+              <Help />
+            </>
+          )}
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
             <>

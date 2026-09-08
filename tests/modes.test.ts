@@ -27,32 +27,48 @@ async function fixture() {
   const b = await auth.create("ben", pass, "Ben", "Süd");
   return { dir, db, game, a, b };
 }
-it("trennt Besitz, Guthaben, Aktionen und Multiplayeransichten auch nach Neustart", async () => {
+it("weist entfernte Modi ab und erhält das inaktive Archiv bytegleich nach Neustart", async () => {
   const { dir, db, game, a, b } = await fixture();
+  db.save(a, owned(established("Archiv"), a), "single");
+  const archived = db.sql
+    .prepare("SELECT data FROM solo_saves WHERE user_id=?")
+    .get(a)!.data;
   try {
     const before = db.all().get(a)!;
-    const solo = game.view(a, new Set(), "single");
-    expect(solo.network.friends).toEqual([]);
-    expect(solo.save.generation).not.toBe(before.generation);
-    const cmd = command({ type: "build", kind: "fire", pos: nodes[0] });
-    game.command(a, cmd, "single");
-    game.command(a, cmd, "single");
-    expect(db.all("single").get(a)!.buildings).toHaveLength(1);
-    expect(db.all("single").get(a)!.money).toBe(195000);
+    for (const value of ["single", "invalid"]) {
+      expect(() => game.view(a, new Set(), value as never)).toThrow(
+        "Multiplayer",
+      );
+      expect(() =>
+        game.command(
+          a,
+          command({ type: "build", kind: "fire", pos: nodes[0] }),
+          value as never,
+        ),
+      ).toThrow("Multiplayer");
+    }
     expect(db.all().get(a)).toEqual(before);
-    expect(game.view(b, new Set()).network.friends).toHaveLength(0);
-    expect(() => game.command(a, cmd, "multi")).toThrow("Aktions-ID");
-    expect(() =>
-      game.command(a, command({ type: "share", id: "anything" }), "single"),
-    ).toThrow("Multiplayer");
+    const cmd = command({ type: "build", kind: "fire", pos: nodes[0] });
+    game.command(a, cmd);
+    game.command(a, cmd);
+    expect(db.all().get(a)!.buildings).toHaveLength(1);
+    expect(db.all().get(a)!.money).toBe(195000);
+    expect(game.view(b, new Set()).network.friends).toEqual([]);
+    game.step(10);
+    expect(
+      db.sql.prepare("SELECT data FROM solo_saves WHERE user_id=?").get(a)!
+        .data,
+    ).toBe(archived);
     await db.backup();
   } finally {
     db.close();
   }
   const again = new Database(dir);
   try {
-    expect(again.all("single").get(a)!.money).toBe(195000);
-    expect(again.all().get(a)!.money).toBe(250000);
+    expect(
+      again.sql.prepare("SELECT data FROM solo_saves WHERE user_id=?").get(a)!
+        .data,
+    ).toBe(archived);
   } finally {
     again.close();
   }
@@ -115,10 +131,6 @@ it("erzeugt einzeln mit echten, versetzten Wartezeiten und höchstens zwei Eins�
     db.save(a, existing);
     game.step(14400);
     expect(db.all().get(a)!.missions).toHaveLength(0);
-    game.view(a, new Set(), "single");
-    db.save(a, owned(established("Solo"), a), "single");
-    game.step(1);
-    expect(db.all("single").get(a)!.missions[0].shared).toBe(false);
   } finally {
     db.close();
   }
@@ -126,12 +138,7 @@ it("erzeugt einzeln mit echten, versetzten Wartezeiten und höchstens zwei Eins�
 it("Sicherungen enthalten beide Welten und private Spielfinanzen werden nicht geteilt", async () => {
   const { db, game, a, b } = await fixture();
   try {
-    game.view(a, new Set(), "single");
-    game.command(
-      a,
-      command({ type: "build", kind: "fire", pos: nodes[1] }),
-      "single",
-    );
+    db.save(a, owned(established("Archiv"), a), "single");
     db.save(a, owned(established("Anna"), a));
     expect(game.view(b, new Set()).network.friends).toEqual([]);
     const backup = await db.backup();
@@ -143,7 +150,7 @@ it("Sicherungen enthalten beide Welten und private Spielfinanzen werden nicht ge
 import { startServer } from "../server/index";
 import { io, type Socket } from "socket.io-client";
 import { spawnSync } from "node:child_process";
-it("HTTP und Socket isolieren Einzelspieler einschließlich Chat und Export; Restore behält beide Welten", async () => {
+it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore bewahren das Archiv", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-mode-api-")),
     port = 23000 + Math.floor(Math.random() * 9000),
     origin = `http://127.0.0.1:${port}`;
@@ -183,61 +190,106 @@ it("HTTP und Socket isolieren Einzelspieler einschließlich Chat und Export; Res
       });
     expect((await request("me", "invalid")).status).toBe(400);
     expect(
-      (await request("action", "single", command({ type: "relief" }), "wrong"))
+      (await request("action", "multi", command({ type: "relief" }), "wrong"))
         .status,
     ).toBe(403);
+    for (const path of ["me", "export", "action"])
+      expect(
+        (
+          await request(
+            path,
+            "single",
+            path === "action" ? command({ type: "relief" }) : undefined,
+          )
+        ).status,
+      ).toBe(400);
     expect(app.db.all("single").size).toBe(0);
-    const res = await request(
-      "action",
-      "single",
-      command({ type: "build", kind: "fire", pos: nodes[0] }),
+    const archived = owned(established("Archiv"), user);
+    archived.money = 195000;
+    app.db.save(user, archived, "single");
+    const archive = await (await request("archive-export", "multi")).json();
+    expect(archive.source).toBe("retired-single-player");
+    expect(archive.save).toEqual(archived);
+    const other = await app.auth.create(
+      "otherarchive",
+      pass,
+      "Andere",
+      "Andere",
     );
-    expect(res.status).toBe(200);
-    expect((await res.json()).mode).toBe("single");
-    const solo = await (await request("export", "single")).json(),
-      multi = await (await request("export", "multi")).json();
-    expect(solo.save.money).toBe(195000);
+    const otherCookie = `lv_session=${app.auth.issue(other).value}`;
+    expect(
+      (
+        await fetch(`${origin}/api/archive-export`, {
+          headers: { cookie: otherCookie, origin },
+        })
+      ).status,
+    ).toBe(404);
+    const multi = await (await request("export", "multi")).json();
     expect(multi.save.money).toBe(250000);
-    expect(solo.mode).toBe("single");
-    for (const mode of ["single", "multi"]) {
-      const socket = io(origin, {
-        autoConnect: false,
-        transports: ["websocket"],
-        extraHeaders: { cookie, origin },
-        auth: { csrf: session.csrf, mode },
-      });
-      sockets.push(socket);
-      const snapshot = await new Promise<{
-        mode: string;
-        network: { friends: unknown[] };
-        save: Save;
-      }>((done, reject) => {
-        socket.once("snapshot", done);
-        socket.once("connect_error", reject);
-        socket.connect();
-      });
-      expect(snapshot.mode).toBe(mode);
-      if (mode === "single") expect(snapshot.network.friends).toEqual([]);
-    }
-    const [singleSocket, multiSocket] = sockets;
-    const privateMessages: unknown[] = [];
-    singleSocket.on("chat", (m) => privateMessages.push(m));
+    const single = io(origin, {
+      autoConnect: false,
+      transports: ["websocket"],
+      extraHeaders: { cookie, origin },
+      auth: { csrf: session.csrf, mode: "single" },
+      reconnection: false,
+    });
+    sockets.push(single);
+    const rejected = new Promise<Error>((done) =>
+      single.once("connect_error", done),
+    );
+    single.connect();
+    expect((await rejected).message).toContain("Multiplayer");
+    const multiSocket = io(origin, {
+      autoConnect: false,
+      transports: ["websocket"],
+      extraHeaders: { cookie, origin },
+      auth: { csrf: session.csrf, mode: "multi" },
+    });
+    sockets.push(multiSocket);
+    const ready = new Promise<{ mode: string }>((done) =>
+      multiSocket.once("snapshot", done),
+    );
+    multiSocket.connect();
+    expect((await ready).mode).toBe("multi");
     const heard = new Promise<{ text: string }>((done) =>
       multiSocket.once("chat", done),
     );
-    multiSocket.emit("chat", "Nur Multiplayer");
-    expect((await heard).text).toBe("Nur Multiplayer");
-    const rejected = new Promise<string>((done) =>
-      singleSocket.once("notice", done),
-    );
-    singleSocket.emit("chat", "Darf nicht ankommen");
-    expect(await rejected).toContain("abgelehnt");
-    expect(privateMessages).toEqual([]);
+    multiSocket.emit("chat", "Multiplayer bleibt verbunden");
+    expect((await heard).text).toBe("Multiplayer bleibt verbunden");
     backup = await app.db.backup();
   } finally {
     for (const socket of sockets) socket.disconnect();
     await app.close();
   }
+  const archiveFile = resolve(dir, "solo-archive.json");
+  const exported = spawnSync(
+    process.execPath,
+    [
+      "dist/server/cli.js",
+      "archive-export",
+      "--username",
+      "modeapi",
+      "--file",
+      archiveFile,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DATA_DIR: dir,
+        PUBLIC_URL: origin,
+        PORT: String(port),
+        HOST: "127.0.0.1",
+        ALLOW_HTTP: "true",
+        TRUSTED_PROXIES: "",
+      },
+    },
+  );
+  expect(exported.status, exported.stderr).toBe(0);
+  expect(JSON.parse(await readFile(archiveFile, "utf8"))).toMatchObject({
+    source: "retired-single-player",
+    save: { money: 195000 },
+  });
   const result = spawnSync(
     process.execPath,
     ["dist/server/cli.js", "restore", "--file", backup, "--confirm"],

@@ -37,7 +37,7 @@ for (const manual of [false, true])
       ? "Freie Disposition führt auf schmalem Bildschirm vom Notruf bis zum Archiv"
       : "Notruf, gespeicherte AAO, HLF, FMS, Neustart, Lagemeldung, Nachforderung und Abschluss",
     async ({ page }, info) => {
-      if (manual) await page.setViewportSize({ width: 390, height: 844 });
+      if (manual) await page.setViewportSize({ width: 1366, height: 768 });
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.goto(config.publicUrl);
@@ -45,7 +45,7 @@ for (const manual of [false, true])
       await page.getByLabel("Passwort", { exact: true }).fill(password);
       await page.getByRole("button", { name: "Anmelden", exact: true }).click();
       await page
-        .getByRole("button", { name: "Weiterspielen", exact: true })
+        .getByRole("button", { name: "Spielen", exact: true })
         .click();
       if (manual) await showIncidents(page);
       await expect(
@@ -99,7 +99,7 @@ for (const manual of [false, true])
         await app.listen();
         await page.reload();
         await page
-          .getByRole("button", { name: "Weiterspielen", exact: true })
+          .getByRole("button", { name: "Spielen", exact: true })
           .click();
         await page.locator(".mission-card").first().click();
         expect(
@@ -142,7 +142,7 @@ for (const manual of [false, true])
         .toBe("alarmed");
       await page.screenshot({
         path: info.outputPath(
-          manual ? "phase1-mobil.png" : "phase1-disposition.png",
+          manual ? "phase1-desktop-compact.png" : "phase1-disposition.png",
         ),
         fullPage: true,
       });
@@ -188,7 +188,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await openPanel(page, "FMS");
   const vehicle = page.locator(".fms-vehicle").first();
@@ -224,7 +224,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .toBe("station");
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);

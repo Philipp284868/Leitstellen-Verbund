@@ -44,7 +44,7 @@ async function enter(page: Page, username = "north") {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
 }
 function command(action: ServerAction) {
@@ -200,7 +200,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   await app.listen();
   await page.reload();
   await page
-    .getByRole("button", { name: "Weiterspielen", exact: true })
+    .getByRole("button", { name: "Spielen", exact: true })
     .click();
   await page.locator(".mission-card").first().click();
   await expect(
@@ -214,11 +214,11 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   expect(restored.hospital).toBe("public");
   expect(restored.transport).toBe("aboard");
 });
-test("mobile Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte Leitstellen", async ({
+test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte Leitstellen", async ({
   page,
   browser,
 }, info) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   app.db.save(owner, majorFixture(owner, "cellar"));
   const context = await browser.newContext(),
     other = await context.newPage();
@@ -242,7 +242,7 @@ test("mobile Hochwasserführung zeigt versetzte Meldungen, Priorisierung und get
       })
       .scrollIntoViewIfNeeded();
     await page.screenshot({
-      path: info.outputPath("phase4-hochwasser-mobil.png"),
+      path: info.outputPath("phase4-hochwasser-desktop-compact.png"),
       fullPage: true,
     });
     await page.getByRole("button", { name: "Schließen", exact: true }).click();

@@ -238,10 +238,26 @@ export function startServer(
                 "Simulation pausiert wegen Speicherfehler. Serverbetreiber informieren.",
             });
           auth.limit(`action:${session.user_id}`, 60, 1000);
-          if (mode === "single") db.ensureSolo(session.user_id);
           game.command(session.user_id, await body(req), mode);
           publish();
           return reply(res, 200, game.view(session.user_id, online(), mode));
+        }
+        if (path === "/api/archive-export" && req.method === "GET") {
+          const row = db.sql
+            .prepare("SELECT data FROM solo_saves WHERE user_id=?")
+            .get(session.user_id);
+          if (!row)
+            return reply(res, 404, {
+              error:
+                "Kein archivierter Einzelspielerstand für dieses Konto vorhanden.",
+            });
+          return reply(res, 200, {
+            format: "leitstellen-verbund-archive",
+            version: 1,
+            source: "retired-single-player",
+            exportedAt: Date.now(),
+            save: JSON.parse(String(row.data)),
+          });
         }
         if (path === "/api/export" && req.method === "GET")
           return reply(res, 200, {
@@ -337,7 +353,9 @@ export function startServer(
     try {
       socket.data.mode = parseMode(socket.handshake.auth.mode);
     } catch {
-      return next(Error("Ungültiger Spielmodus."));
+      return next(
+        Error("Dieser Server unterstützt ausschließlich Multiplayer."),
+      );
     }
     socket.data.user = session.user_id;
     socket.data.session = session.hash;
@@ -353,7 +371,9 @@ export function startServer(
         const session = auth.session(socket.request.headers.cookie);
         if (!session) return socket.disconnect(true);
         if (socket.data.mode !== "multi")
-          throw Error("Kein Verbundfunk im Einzelspieler.");
+          throw Error(
+            "Verbundfunk erfordert eine gültige Multiplayer-Verbindung.",
+          );
         const text = z.string().trim().min(1).max(500).parse(input);
         auth.limit(`chat:${session.user_id}`, 2, 1000);
         const name = String(
