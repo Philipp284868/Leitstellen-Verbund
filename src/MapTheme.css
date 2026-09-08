@@ -1,0 +1,25 @@
+/* One geographic palette for the menu and the interactive region. */
+.region-scene,
+.map-wrap {
+  --map-land: #556347;
+  --map-park: #415e38;
+  --map-tree: #3b5835;
+  --map-field: #85856b;
+  --map-water: #234c5c;
+  --map-roof: #b2ada0;
+  --map-label: #f0f2e9;
+  --map-shore: #536b61;
+  --map-waterline: #83a5b1;
+  --map-meadow: #657751;
+  --map-hedge: #3f5638;
+  --map-field-line: #4d603b80;
+  --map-tree-shadow: #172e25a0;
+  --map-road: #aaa58e;
+  --map-road-edge: #384b43;
+  --map-line: #d0c8a7;
+  --map-roof-warm: #af8b72;
+  --map-block: #acb1a3;
+  --map-roof-outline: #4f574c;
+  --map-label-bg: #21382bcc;
+  --map-contour: #738367;
+}

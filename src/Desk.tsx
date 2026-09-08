@@ -1,5 +1,4 @@
 import { NeighborDesk } from "./NeighborDesk";
-import { OperationsOverview } from "./Major";
 import { effectiveSkills } from "./simulation/major-resources";
 import { DynamicsPanel } from "./Dynamics";
 import { travelNames } from "./simulation/traffic";
@@ -79,7 +78,6 @@ export function DeskQueue({
     );
   return (
     <section className="desk-queue" aria-label="Notruf und Funk">
-      <OperationsOverview s={s} open={open} />
       <div className="desk-tools">
         <button onClick={() => panel("aaos")}>AAO</button>
         <button onClick={() => panel("fms")}>FMS / Funkstatus</button>
@@ -346,7 +344,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   }
   const deficit = [...deficits];
   return (
-    <div className="incident-desk">
+    <div className="incident-desk" data-hud-section="details">
       <span className="eyebrow">
         {c.priority} · {stages[c.stage]} · Einsatz {m.id.slice(-8)}
       </span>
@@ -373,7 +371,14 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           </select>
         </label>
       )}
-      <Calls s={s} m={m} />
+      {c.calls.some((call) => call.state !== "ended") ? (
+        <Calls s={s} m={m} />
+      ) : (
+        <details className="closed-calls">
+          <summary>Abgeschlossene Notrufgespräche ({c.calls.length})</summary>
+          <Calls s={s} m={m} />
+        </details>
+      )}
       <section>
         <h3>Bekannte Informationen</h3>
         {!c.facts.length && (
@@ -392,7 +397,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
       </section>
       <DynamicsPanel s={s} m={m} />
       {c.radio.some((r) => r.state === "open") && (
-        <section className="radio-queue">
+        <section className="radio-queue" data-hud-section="radio">
           <h3>Sprechwünsche und Lagemeldungen</h3>
           {c.radio
             .filter((r) => r.state === "open")
@@ -463,7 +468,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
         </section>
       )}
       {c.locationKnown && c.reportedTemplate && m.phase !== "done" && (
-        <section>
+        <section data-hud-section="vehicles">
           <h3>Kräfte alarmieren / nachfordern</h3>
           <label>
             Anfahrtsart
@@ -639,7 +644,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           </button>
         </section>
       )}
-      <section>
+      <section data-hud-section="arrival">
         <h3>Eingesetzte Fahrzeuge</h3>
         {support.map((f) => (
           <p key={f.assignment}>

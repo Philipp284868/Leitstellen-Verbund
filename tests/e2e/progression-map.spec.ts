@@ -101,13 +101,20 @@ test("großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bl
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
+  await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(
     page.getByText("Region Falkenried · 100 × 100 km", { exact: true }),
   ).toBeVisible();
   const readyMs = Date.now() - started;
   const before = Date.now();
+  if (
+    (await page
+      .getByRole("button", { name: "Layer", exact: true })
+      .getAttribute("aria-pressed")) !== "true"
+  )
+    await page.getByRole("button", { name: "Layer", exact: true }).click();
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();
@@ -159,11 +166,18 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, M
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
+  await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(
     page.getByText("Region Falkenried · 100 × 100 km", { exact: true }),
   ).toBeVisible();
+  if (
+    (await page
+      .getByRole("button", { name: "Layer", exact: true })
+      .getAttribute("aria-pressed")) !== "true"
+  )
+    await page.getByRole("button", { name: "Layer", exact: true }).click();
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();

@@ -1,3 +1,5 @@
+import { Truck } from "lucide-react";
+import { vt, bt } from "./catalog";
 import { tripLabel } from "./travel";
 import { memo, useEffect, useRef } from "react";
 import { vehiclePosition } from "./vehicle-position";
@@ -65,13 +67,19 @@ export const VehicleMarkers = memo(function VehicleMarkers({
         const p = vehiclePosition(v, time);
         return (
           <g key={v.id}>
-            {routes && v.id === selected && (
+            {routes && (v.id === selected || v.mission === selected) && (
               <polyline
+                pointerEvents="none"
                 points={v.path.map((p) => `${p.x},${p.y}`).join(" ")}
                 fill="none"
-                stroke="#80dacf"
+                stroke={
+                  bt(vt(v.type).home).org === "Feuerwehr"
+                    ? "#f06a52"
+                    : "#6cc7f5"
+                }
                 strokeWidth="3"
-                opacity=".6"
+                opacity=".95"
+                vectorEffect="non-scaling-stroke"
                 strokeDasharray="5 5"
               />
             )}
@@ -95,21 +103,40 @@ export const VehicleMarkers = memo(function VehicleMarkers({
               }}
               transform={`translate(${p.x},${p.y})`}
             >
-              <rect
-                transform={`scale(${Math.max(1, unitsPerPixel)})`}
-                x="-9"
-                y="-6"
-                width="18"
-                height="12"
-                rx="3"
-                fill={
-                  v.fault && v.fault.state !== "repaired"
-                    ? "#ff967f"
-                    : "#d9ffff"
-                }
-                stroke="#25aab8"
-                strokeWidth="2"
-              />
+              <g transform={`scale(${unitsPerPixel})`}>
+                <rect
+                  x="-13"
+                  y="-13"
+                  width="26"
+                  height="26"
+                  rx="5"
+                  fill={
+                    v.fault && v.fault.state !== "repaired"
+                      ? "#b97a2b"
+                      : bt(vt(v.type).home).org === "Feuerwehr"
+                        ? "#9d3c31"
+                        : "#285c7e"
+                  }
+                  stroke={v.id === selected ? "#fff" : "#c4d5dd"}
+                  strokeWidth="2"
+                />
+                <Truck x={-10} y={-10} width={20} height={20} color="white" />
+                {(v.id === selected || v.mission === selected) && (
+                  <g>
+                    <rect
+                      x="15"
+                      y="-11"
+                      width={Math.min(150, v.name.length * 6 + 12)}
+                      height="22"
+                      rx="3"
+                      fill="#091822ed"
+                    />
+                    <text x="21" y="4" fontSize="11" fill="#eef3f5">
+                      {v.name.slice(0, 23)}
+                    </text>
+                  </g>
+                )}
+              </g>
               {group.length > 1 && (
                 <text
                   y={-10 * unitsPerPixel}

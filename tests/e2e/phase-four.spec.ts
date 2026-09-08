@@ -1,3 +1,4 @@
+import { showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -43,7 +44,7 @@ async function enter(page: Page, username = "north") {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
 }
 function command(action: ServerAction) {
@@ -199,7 +200,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   await app.listen();
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await page.locator(".mission-card").first().click();
   await expect(
@@ -224,7 +225,7 @@ test("mobile Hochwasserführung zeigt versetzte Meldungen, Priorisierung und get
   try {
     await enter(other, "south");
     await enter(page);
-    await page.getByRole("button", { name: /Einsätze \(/ }).click();
+    await showIncidents(page);
     await page.locator(".mission-card").first().click();
     await page
       .getByRole("button", {

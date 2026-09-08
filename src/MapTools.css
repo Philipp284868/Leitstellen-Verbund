@@ -1,14 +1,3 @@
-.app.in-game .map-wrap {
-  display: flex;
-  flex-direction: column;
-  min-height: 600px;
-  position: relative;
-}
-.app.in-game .map-wrap > svg.map {
-  flex: 1 0 300px;
-  width: 100%;
-  min-height: 300px;
-}
 .map-search {
   display: flex;
   gap: 6px;
@@ -119,9 +108,6 @@
   margin: 6px 0;
 }
 @media (max-width: 900px) {
-  .app.in-game .map-wrap {
-    min-height: 650px;
-  }
   .map-scale {
     bottom: 190px;
   }
@@ -130,15 +116,6 @@
   }
 }
 
-.app.in-game .map-wrap {
-  min-height: 710px;
-  flex: 1 0 auto;
-  height: auto;
-}
-.app.in-game .map-wrap > svg.map {
-  min-height: 410px;
-  flex-basis: 410px;
-}
 .map-search label input,
 .map-search select {
   height: 32px;
@@ -157,45 +134,9 @@
 .app.in-game .map-layers {
   margin: 5px 10px;
 }
-@media (max-width: 900px) {
-  .app.in-game .map-wrap {
-    min-height: 710px;
-  }
-  .app.in-game .map-wrap > svg.map {
-    min-height: 330px;
-    flex-basis: 330px;
-  }
-}
 
-.app.in-game .map-wrap .operations {
-  min-height: 0;
-  max-height: 180px;
-  overflow: auto;
-  flex: 0 0 180px;
-}
-.app.in-game .map-zoom {
-  position: static;
-  flex-direction: row;
-  justify-content: flex-end;
-  margin: 6px 12px;
-}
-.app.in-game .map-scale {
-  position: static;
-  align-self: flex-end;
-  margin: 0 12px 8px;
-}
 .app.in-game .environment-panel {
   background: var(--hud-panel);
   color: var(--hud-text);
   border-color: var(--hud-border);
-}
-@media (max-width: 900px) {
-  .app.in-game .map-wrap {
-    flex: 0 0 auto;
-    height: auto;
-    overflow: visible;
-  }
-  .app.in-game .map-wrap > svg.map {
-    flex: 0 0 330px;
-  }
 }

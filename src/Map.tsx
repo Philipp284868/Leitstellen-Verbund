@@ -1,3 +1,4 @@
+import { IncidentIcon } from "./HudIcons";
 import { buildReason } from "./purchase";
 import { vehiclePosition, vehicleMotion } from "./vehicle-position";
 import { roadSections, METERS_PER_UNIT, nearest, distance } from "./world";
@@ -153,6 +154,9 @@ export const MapView = memo(function MapView({
   useEffect(() => {
     if (following && vehicle) center(vehiclePosition(vehicle, s.time));
   }, [following, vehicle?.id, s.time]);
+  useEffect(() => {
+    if (selectionPosition) center(selectionPosition);
+  }, [selected, !!selectionPosition]);
   const results = search.trim()
     ? [
         ...s.buildings.map((b) => ({ id: b.id, name: b.name, pos: b.pos })),
@@ -330,6 +334,7 @@ export const MapView = memo(function MapView({
         </button>
 
         <button
+          data-center-selection
           disabled={!selectionPosition}
           onClick={() => selectionPosition && center(selectionPosition)}
         >
@@ -530,10 +535,11 @@ export const MapView = memo(function MapView({
             .map((b) => (
               <g
                 key={b.id}
-                transform={`translate(${b.pos.x},${b.pos.y}) scale(${Math.max(1, unitsPerPixel)})`}
+                transform={`translate(${b.pos.x},${b.pos.y}) scale(${unitsPerPixel})`}
                 className="map-marker"
                 role="button"
                 tabIndex={0}
+                data-own-station
                 aria-label={b.name}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -611,7 +617,7 @@ export const MapView = memo(function MapView({
             .map((m) => (
               <g
                 key={m.id}
-                transform={`translate(${m.pos.x},${m.pos.y}) scale(${Math.max(1, unitsPerPixel)})`}
+                transform={`translate(${m.pos.x},${m.pos.y}) scale(${unitsPerPixel})`}
                 className="map-marker"
                 role="button"
                 tabIndex={0}
@@ -624,19 +630,19 @@ export const MapView = memo(function MapView({
               >
                 <circle
                   r={selected === m.id ? 23 : 18}
-                  fill="#f7b764"
+                  fill={
+                    mt(m.template).org === "Feuerwehr"
+                      ? "#ba4236"
+                      : mt(m.template).org === "Polizei"
+                        ? "#2c73a0"
+                        : "#269161"
+                  }
                   stroke={selected === m.id ? "#fff" : "#17222d"}
                   strokeWidth="3"
                 />
-                <text
-                  textAnchor="middle"
-                  y="7"
-                  fontSize="23"
-                  fontWeight="900"
-                  fill="#3d2b1d"
-                >
-                  !
-                </text>
+                <g transform="translate(-12,-12)" color="white">
+                  <IncidentIcon org={mt(m.template).org} />
+                </g>
                 <title>
                   {mt(m.template).name}
                   {m.shared ? " · Gemeinsam" : ""}

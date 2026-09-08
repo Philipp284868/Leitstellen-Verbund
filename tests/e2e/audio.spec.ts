@@ -99,7 +99,7 @@ async function login(page: Page, ready = false) {
 }
 async function play(page: Page) {
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
@@ -161,7 +161,7 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   ).toBe(true);
   await page.reload();
   await page.locator(".command-menu").waitFor();
-  await page.getByRole("button", { name: "Konto & Einstellungen" }).click();
+  await page.getByRole("button", { name: "Einstellungen" }).click();
   await expect(
     page.getByRole("slider", { name: "Musiklautstärke" }),
   ).toHaveValue("0");
@@ -186,7 +186,7 @@ test("nur der aktive Tab spielt und Abmeldung beendet die Ausgabe", async ({
     .toMatchObject({ state: "running" });
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await page.bringToFront();
-  await page.getByRole("button", { name: "Leitstelle", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect.poll(async () => (await levels(other)).state).toBe("suspended");
   await expect.poll(async () => (await levels(page)).state).toBe("running");
   await page

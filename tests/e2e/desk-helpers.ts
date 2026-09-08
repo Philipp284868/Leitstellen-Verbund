@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { expect, type Page } from "@playwright/test";
 export async function interviewUI(
   page: Page,
@@ -25,7 +26,7 @@ export async function interviewUI(
   ).toHaveCount(0);
 }
 export async function joinDesk(owner: Page, member: Page, username: string) {
-  await owner.getByRole("button", { name: "Freunde", exact: true }).click();
+  await openPanel(owner, "Freunde");
   await owner.getByLabel("Bestehenden Benutzernamen einladen").fill(username);
   await owner
     .getByRole("button", { name: "Disponenten einladen", exact: true })
@@ -33,7 +34,7 @@ export async function joinDesk(owner: Page, member: Page, username: string) {
   await expect(
     owner.getByText(`Einladung versendet an ${username}`, { exact: false }),
   ).toBeVisible();
-  await member.getByRole("button", { name: "Freunde", exact: true }).click();
+  await openPanel(member, "Freunde");
   await member
     .getByRole("button", { name: "Einladung annehmen", exact: true })
     .click();

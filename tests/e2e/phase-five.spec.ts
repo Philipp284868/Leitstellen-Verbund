@@ -1,3 +1,4 @@
+import { showIncidents } from "./ui-navigation";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -40,7 +41,7 @@ async function enter(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
 }
 test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht überstehen einen Serverneustart", async ({
@@ -127,7 +128,7 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await app.listen();
   await page.goto(config.publicUrl);
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await expect(page.locator(".reconnect-summary")).toContainText("1 Notrufe");
   expect(app.db.all().get(owner)!.archive[0].report).toEqual(savedReport);
@@ -155,7 +156,6 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     .getByLabel("Breite der Einsatzspalte", { exact: true })
     .selectOption("380");
   await page.getByLabel("Kompakte Einsatzkarten", { exact: true }).check();
-  await page.getByLabel("Wachen oberhalb der Karte", { exact: true }).check();
   await page
     .getByLabel("Taste: Archiv und Statistik", { exact: true })
     .fill("z");
@@ -187,7 +187,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Einsätze (1)", exact: true }).click();
+  await showIncidents(page);
   await expect(page.locator(".mission-card")).toBeVisible();
   expect(
     await page.evaluate(
@@ -200,7 +200,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await expect(page.locator(".app")).toHaveAttribute("data-sidebar", "right");
   await page.keyboard.press("z");
@@ -298,7 +298,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })

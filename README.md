@@ -1,5 +1,15 @@
 # Leitstellen-Verbund – eigener AMP-Server
 
+## Version 2.13.0: Kartenorientiertes Hauptmenü und In-Game-HUD
+
+Das neue Hauptmenü zeigt die eigene Region mit sechs Hauptaktionen links und Profil, Spielstand, Leitstellenkennzahlen und Neuigkeiten rechts. Im Spiel liegt die interaktive Karte hinter einer schmalen Statusleiste, der kompakten Einsatzliste, einer rechten Einsatzdisposition und einer unteren Aktionsleiste. Einsatzwahl, echte Alarmierung, Funk, FMS, Anfahrten und Archiv bleiben verbunden. **Echtzeit 1× bleibt verbindlich.**
+
+**Bedienung:** Gebäude → Wache bauen; Fahrzeuge → Fuhrpark; Personal → Wachenteam. **Layer** öffnet Ortssuche, Organisationsfilter, Kartenebenen und Fahrten-/Wetterübersicht. **Einstellungen → Weitere Spielbereiche** führt zu AAO, FMS, Freunde, Fortschritt, Sicherungen und Hilfe. Die rechte Einsatzleiste bietet Abschnittssprünge für Details, Fahrzeuge, FMS und Anfahrt. Abgeschlossene Notrufgespräche sind aufklappbar; offene Sprechwünsche bleiben bearbeitbar.
+
+„Neues Spiel“ führt in die sichere Anlage einer Wache im gewählten Modus oder zur bestehenden Leitstelle. Bestehende Welten werden nicht überschrieben. „Szenario“ öffnet den tatsächlichen Einsatzkatalog; ein eigener freier Szenario-Start gehört nicht zum vorhandenen Server. „Beenden“ meldet nach bewusster Auswahl ab.
+
+**Keine Datenmigration gegenüber 2.12:** SQLite-Schema 11, Serverautorität, 100-km-Region, Routengeometrie, Fortschritt, Konten und getrennte Spielstände bleiben erhalten. Keine zusätzlichen Dienste oder externen Kartenressourcen. Der alte Schalter für eine Wachenleiste oberhalb der Karte entfällt mit dieser Leiste; seine gespeicherte Browserpräferenz wird ignoriert. [Umsetzung, Abnahme und Screenshots](docs/UI-ABNAHME-2.13.md).
+
 ## Version 2.12.0: Progression, 100-km-Region und Straßenfahrzeiten
 
 Die Level-10-Sperre entfällt. Eine gemeinsame XP-Kurve, gestaffelte Freischaltungen und eine bestandsschützende Migration ergänzen den vollständigen Spielablauf. Die organische Welt wächst ohne Verschiebung alter Straßenknoten auf 100 × 100 km. Fahrzeuge nutzen Abschnittslimits, zeitbasierte Routen, Beschleunigung und Bremsung; Karte, ETA und Ankunft teilen dasselbe Modell.

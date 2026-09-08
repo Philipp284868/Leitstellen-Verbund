@@ -306,8 +306,11 @@ it("einzelne Patienten verschlechtern sich, benötigen Notarzt, werden versorgt 
   expect(patientsReady(m)).toBe(true);
   const rtw = s.vehicles.find((v) => v.type === "rtw")!;
   alarm(s, m, [rtw.id], s.player.id, "DRINGEND", "station");
-  for (let n = 0; n < 1500 && s.missions.includes(m); n++)
+  for (let n = 0; n < 1500 && s.missions.includes(m); n++) {
+    // A random vehicle fault requires a real repair, also in a patient scenario.
+    if (rtw.fault?.state === "awaiting") repairVehicle(s, rtw, s.player.id);
     tick(s, s.time + 5, {}, false, false);
+  }
   expect(s.archive.some((x) => x.id === m.id)).toBe(true);
   expect(p.transport).toBe("delivered");
   expect(m.transports).toHaveLength(1);

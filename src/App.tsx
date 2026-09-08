@@ -1,28 +1,19 @@
 import { Progression } from "./ProgressionPanel";
-import { progress } from "./progression";
+import { GameHud } from "./GameHud";
+import { MenuPanels } from "./MenuPanels";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { ReconnectSummary } from "./ReconnectSummary";
 import {
   parseWorkspace,
   shortcutFor,
-  missionList,
   type WorkspacePreferences,
 } from "./workspace";
 import "./Workspace.css";
 import { DynamicsPanel } from "./Dynamics";
 import { MissionPanel } from "./Panels";
-import {
-  DeskQueue,
-  IncidentPanel,
-  AAOPanel,
-  FMSPanel,
-  TeamPanel,
-  History,
-} from "./Desk";
-import { AudioSession, SoundButton, SoundSettings } from "./Sound";
+import { IncidentPanel, AAOPanel, FMSPanel, TeamPanel, History } from "./Desk";
+import { AudioSession, SoundSettings } from "./Sound";
 import { audio } from "./audio/controller";
-import { districtAt } from "./world";
-import { modeName } from "./mode";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
 import {
@@ -39,40 +30,42 @@ const ArchivePanel = lazy(() =>
 const ReportPanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ReportPanel })),
 );
-import {
-  Radio,
-  TowerControl,
-  Truck,
-  Users,
-  ChartNoAxesCombined,
-  Settings,
-  HelpCircle,
-  Download,
-  Plus,
-  MapPin,
-  Activity,
-  ChevronRight,
-} from "lucide-react";
-import { useGame, act, emit, retryStorage, change } from "./store";
-import { useNetwork } from "./network";
-import { mt, bt } from "./catalog";
+import { Radio, TowerControl, ChevronRight } from "lucide-react";
+import { useGame, emit, retryStorage, change, switchMode } from "./store";
+import { bt } from "./catalog";
 import { level } from "./model";
-import { MapView } from "./Map";
 import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
 import { BackupPanel, ProgressPanel, Help } from "./Panels";
-import { Modal, credits } from "./ui";
+import { Modal } from "./ui";
 import { download } from "./storage";
 import { updateApplication } from "./pwa";
 export function App() {
   const { mode } = useGame();
+  const [pendingPanel, setPendingPanel] = useState("");
   return (
     <>
       <AudioSession />
-      <GameApp key={mode} />
+      <GameApp
+        key={mode}
+        pendingPanel={pendingPanel}
+        clearPending={() => setPendingPanel("")}
+        onMultiplayer={() => {
+          setPendingPanel("friends");
+          void switchMode("multi");
+        }}
+      />
     </>
   );
 }
-function GameApp() {
+function GameApp({
+  pendingPanel,
+  clearPending,
+  onMultiplayer,
+}: {
+  pendingPanel: string;
+  clearPending: () => void;
+  onMultiplayer: () => void;
+}) {
   const { save: s, mode, loading, readonly, error, notice, user } = useGame();
   const priorProgress = useRef<{ generation: string; level: number } | null>(
     null,
@@ -88,14 +81,18 @@ function GameApp() {
     priorProgress.current = { generation: s.generation, level: current };
   }, [s, readonly]);
 
-  const net = useNetwork();
   const [screen, setScreen] = useState("start"),
     [modal, setModal] = useState(""),
     [selected, setSelected] = useState(""),
     [placing, setPlacing] = useState(""),
     [light, setLight] = useState<boolean | null>(null),
-    [reduced, setReduced] = useState<boolean | null>(null),
-    [mobile, setMobile] = useState("map");
+    [reduced, setReduced] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (pendingPanel && s && !loading) {
+      setModal(pendingPanel);
+      clearPending();
+    }
+  }, [pendingPanel, s, loading, clearPending]);
   useEffect(() => {
     audio.scene(screen === "game");
   }, [screen]);
@@ -128,11 +125,9 @@ function GameApp() {
       e.preventDefault();
       if (action === "police" || action === "ems") {
         setFilter(action === "police" ? "Polizei" : "Rettungsdienst");
-        setMobile("missions");
         setModal("");
       } else if (action === "missions") {
         setFilter("all");
-        setMobile("missions");
         setModal("");
       } else if (action === "call" || action === "alarm") {
         const mission =
@@ -198,7 +193,7 @@ function GameApp() {
       data-compact={layout.compact}
       data-queue-bottom={layout.queueBottom}
       data-stations-top={layout.stationsTop}
-      className={`app ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
+      className={`app command-hud ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
     >
       <ReconnectSummary />
       {error && (
@@ -244,429 +239,85 @@ function GameApp() {
       )}
       {screen === "start" ? (
         <MainMenu
+          onMultiplayer={onMultiplayer}
           save={s}
           readonly={readonly}
           onPlay={() => setScreen("game")}
           onOpen={setModal}
         />
       ) : (
-        s && (
-          <>
-            <header className="topbar">
-              <button
-                aria-label="Hauptmenü"
-                className="brand"
-                onClick={() => setScreen("start")}
-              >
-                <Radio />
-                <span>
-                  LEITSTELLEN<b>VERBUND</b>
-                </span>
-              </button>
-              <span className="hud-mode">{modeName(mode)}</span>
-              <div className="station-title">
-                <span className="live-dot" />
-                <div>
-                  <strong>{s.player.station}</strong>
-                  <small>Region Falkenried · {s.player.name}</small>
-                </div>
-              </div>
-              <div className="money">
-                <small>VERFÜGBARE CREDITS</small>
-                <strong>{credits(s.money)}</strong>
-              </div>
-              <div className="level">
-                <span>STUFE {level(s)}</span>
-                <progress
-                  value={progress(s.xp).current}
-                  max={progress(s.xp).required}
-                />
-                <small>
-                  {progress(s.xp).current} / {progress(s.xp).required} Erfahrung
-                </small>
-              </div>
-              <SoundButton />
-              <button
-                aria-label="Einstellungen"
-                onClick={() => setModal("settings")}
-              >
-                <Settings />
-              </button>
-            </header>
-            <nav className="navrail">
-              <button
-                className={!modal ? "active" : ""}
-                aria-label="Leitstelle"
-                onClick={() => setModal("")}
-              >
-                <TowerControl />
-                <span>Leitstelle</span>
-              </button>
-              <button
-                className={modal === "stations" ? "active" : ""}
-                aria-label="Wachen"
-                onClick={() => setModal("stations")}
-              >
-                <MapPin />
-                <span>Wachen</span>
-              </button>
-              <button
-                className={modal === "fleet" ? "active" : ""}
-                aria-label="Fuhrpark"
-                onClick={() => setModal("fleet")}
-              >
-                <Truck />
-                <span>Fuhrpark</span>
-              </button>
-              <button
-                className={modal === "friends" ? "active" : ""}
-                aria-label="Freunde"
-                onClick={() => setModal("friends")}
-              >
-                <Users />
-                <span>Freunde</span>
-              </button>
-              <button
-                className={modal === "progress" ? "active" : ""}
-                aria-label="Fortschritt"
-                onClick={() => setModal("progress")}
-              >
-                <ChartNoAxesCombined />
-                <span>Fortschritt</span>
-              </button>
-              <button
-                className={modal === "backups" ? "active" : ""}
-                aria-label="Sicherungen"
-                onClick={() => setModal("backups")}
-              >
-                <Download />
-                <span>Sicherung</span>
-              </button>
-              <button
-                className={modal === "help" ? "active" : ""}
-                aria-label="Hilfe"
-                onClick={() => setModal("help")}
-              >
-                <HelpCircle />
-                <span>Hilfe</span>
-              </button>
-            </nav>
-            <div className="workspace">
-              <div className="mobile-tabs">
-                <button
-                  aria-pressed={mobile === "missions"}
-                  onClick={() => setMobile("missions")}
-                >
-                  Einsätze ({s.missions.length})
-                </button>
-                <button
-                  aria-pressed={mobile === "map"}
-                  onClick={() => setMobile("map")}
-                >
-                  Karte
-                </button>
-              </div>
-              <aside
-                className={`mission-sidebar ${mobile === "missions" ? "mobile-visible" : ""}`}
-              >
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">EINSATZGESCHÄHEN</span>
-                    <h2>
-                      Offene Einsätze <span>{s.missions.length}</span>
-                    </h2>
-                  </div>
-                  <Activity size={20} />
-                </div>
-                <div className="sidebar-summary">
-                  <span>
-                    <i className="live-dot" />{" "}
-                    {s.vehicles.filter((v) => v.status === "ready").length} an
-                    Wache
-                  </span>
-                  <span>
-                    {s.vehicles.filter((v) => v.status !== "ready").length}{" "}
-                    unterwegs
-                  </span>
-                </div>
-                <div className="dispatch-pace">
-                  <span>
-                    {s.operations.campaign || s.missions.some((m) => m.major)
-                      ? "GROSSLAGENFÜHRUNG"
-                      : "RUHIGE EINSATZLAGE"}
-                  </span>
-                  <small>
-                    {s.missions.length >= 2
-                      ? "Erst laufende Einsätze abschließen. Neue Meldungen warten."
-                      : "Neue Meldungen kommen einzeln und zeitlich versetzt."}
-                  </small>
-                </div>
-                <div className="queue-slot">
-                  <DeskQueue s={s} open={open} panel={setModal} />
-                </div>
-                <details className="mission-filters">
-                  <summary>Suchen, filtern und sortieren</summary>
-                  <label>
-                    Einsätze durchsuchen
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Einsatz, Ort, Fahrzeug, Patient …"
-                    />
-                  </label>
-                  <label>
-                    Einsatzfilter
-                    <select
-                      value={filter}
-                      onChange={(e) => setFilter(e.target.value)}
-                    >
-                      {[
-                        ["all", "Alle Einsätze"],
-                        ["Feuerwehr", "Feuerwehr"],
-                        ["Rettungsdienst", "Rettungsdienst"],
-                        ["Polizei", "Polizei"],
-                        ["THW", "THW"],
-                        ["critical", "Kritisch"],
-                        ["major", "Großlagen / MANV"],
-                        ["request", "Offene Sprechwünsche"],
-                        ["mine", "Von mir angenommen"],
-                      ].map(([id, name]) => (
-                        <option key={id} value={id}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Einsatzsortierung
-                    <select
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value)}
-                    >
-                      {[
-                        ["priority", "Priorität"],
-                        ["time", "Älteste zuerst"],
-                        ["distance", "Entfernung zur ersten Wache"],
-                        ["escalation", "Eskalation"],
-                        ["patients", "Patientenzahl"],
-                      ].map(([id, name]) => (
-                        <option key={id} value={id}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    onClick={() => {
-                      setSearch("");
-                      setFilter("all");
-                      setSort("priority");
-                    }}
-                  >
-                    Filter zurücksetzen
-                  </button>
-                </details>
-                <div className="mission-list">
-                  {missionList(s, search, filter, sort, user?.id).map(
-                    (m, i) => {
-                      const t = mt(m.template);
-                      return (
-                        <button
-                          key={m.id}
-                          className={`mission-card ${selected === m.id ? "selected" : ""}`}
-                          onClick={() => open(m.id)}
-                        >
-                          <div className="mission-number">
-                            {String(i + 1).padStart(2, "0")}
-                          </div>
-                          <div>
-                            <span className="eyebrow">
-                              {t.org}
-                              {m.major ? " · GROSSLAGE" : ""}
-                              {m.shared ? " · VERBUND" : ""}
-                            </span>
-                            <h3>{t.name}</h3>
-                            <p>
-                              {m.control && !m.control.locationKnown
-                                ? "Einsatzort noch erfragen"
-                                : `Falkenried · ${districtAt(m.pos)}`}
-                            </p>
-                            <div className="mission-meta">
-                              <span
-                                className={
-                                  m.phase === "offered"
-                                    ? "status waiting"
-                                    : "status"
-                                }
-                              >
-                                {m.phase === "offered"
-                                  ? "Kräfte benötigt"
-                                  : m.phase === "working"
-                                    ? "In Bearbeitung"
-                                    : "Transport"}
-                              </span>
-                              <b>{credits(t.reward)}</b>
-                            </div>
-                            <progress value={m.progress} max={t.seconds} />
-                          </div>
-                        </button>
-                      );
-                    },
-                  )}
-                  {!!s.missions.length &&
-                    !missionList(s, search, filter, sort, user?.id).length && (
-                      <p className="filter-empty">
-                        Keine Einsätze passen zum Filter.
-                      </p>
-                    )}
-                  {!s.missions.length && (
-                    <div className="empty">
-                      <Radio size={32} />
-                      <h3>Bereitschaft herstellen</h3>
-                      <p>
-                        Mit geeigneten Fahrzeugen gehen hier automatisch
-                        passende Einsätze ein.
-                      </p>
-                      <button onClick={() => setModal("build")}>
-                        Erste Wache bauen
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {mode === "multi" && (
-                  <button
-                    className="shared-inbox"
-                    onClick={() => setModal("friends")}
-                  >
-                    <Users size={18} />
-                    <span>Leitstellenverbund und Disponenten</span>
-                    <b>
-                      {
-                        net.requests.filter(
-                          (r) =>
-                            r.peer === s.player.id &&
-                            ["SENT", "ACCEPTED", "IN_PROGRESS"].includes(
-                              r.state,
-                            ),
-                        ).length
-                      }
-                    </b>
-                  </button>
-                )}
-                <button
-                  className="archive-link"
-                  onClick={() => setModal("archive")}
-                >
-                  Einsatzarchiv <span>{s.completed} abgeschlossen →</span>
-                </button>
-              </aside>
-              <main
-                className={`map-column ${mobile === "map" ? "mobile-visible" : ""}`}
-              >
-                <MapView
+        <GameHud
+          s={s}
+          mode={mode}
+          selected={selected}
+          open={open}
+          setModal={setModal}
+          placing={placing}
+          setPlacing={setPlacing}
+          readonly={readonly}
+          notice={notice}
+          onMenu={() => setScreen("start")}
+          showDetail={modal === "mission"}
+          onCloseDetail={() => setModal("")}
+          search={search}
+          setSearch={setSearch}
+          filter={filter}
+          setFilter={setFilter}
+          sort={sort}
+          setSort={setSort}
+          userId={user?.id}
+          tutorial={tutorial[s.tutorial]}
+          detail={
+            s.missions.find((m) => m.id === selected) ? (
+              s.missions.find((m) => m.id === selected)!.control ? (
+                <IncidentPanel
+                  key={selected}
                   s={s}
-                  selected={selected}
-                  onSelect={open}
-                  placing={placing}
-                  readonly={readonly}
-                  onCancelPlace={() => setPlacing("")}
-                  onPlace={(pos) => {
-                    void act({ type: "build", kind: placing, pos });
-                    setPlacing("");
-                  }}
-                  friends={net.friends}
+                  m={s.missions.find((m) => m.id === selected)!}
                 />
-                <section className="bottom-panel">
-                  <div className="panel-heading">
-                    <span className="eyebrow">DEINE BEREITSCHAFT</span>
-                    <button
-                      className="primary"
-                      onClick={() => setModal("build")}
-                    >
-                      <Plus size={16} /> Wache bauen
-                    </button>
-                  </div>
-                  <div className="station-strip">
-                    {s.buildings.map((b) => (
-                      <button
-                        className="station-card"
-                        key={b.id}
-                        onClick={() => open(b.id)}
-                      >
-                        <span className={`org-icon ${b.type}`}>
-                          <TowerControl size={22} />
-                        </span>
-                        <div>
-                          <b>{b.name}</b>
-                          <small>
-                            {bt(b.type).org} · Stufe {b.level}
-                          </small>
-                          <span>
-                            {s.vehicles.filter((v) => v.home === b.id).length}{" "}
-                            Fahrzeuge ·{" "}
-                            {s.people.filter((p) => p.home === b.id).length}{" "}
-                            Personal
-                          </span>
-                        </div>
-                        <ChevronRight size={16} />
-                      </button>
-                    ))}
-                    {!s.buildings.length && (
-                      <p>
-                        Der erste Schritt: eine Feuerwache für 55.000 Credits
-                        bauen.
-                      </p>
-                    )}
-                  </div>
-                </section>
-              </main>
-            </div>
-            <footer className="radio-bar">
-              <span>
-                <Radio size={17} /> FUNK
-              </span>
-              <p aria-live="polite">
-                {notice ||
-                  "Leitstelle betriebsbereit. Dein Spielstand wird auf dem Server gespeichert."}
-              </p>
-              <span className="save-indicator">
-                {readonly ? "● Verbindung fehlt" : "● Server bestätigt"}
-              </span>
-              <span title="Eine Spielsekunde entspricht einer echten Sekunde">
-                ◷ Echtzeit
-              </span>
-            </footer>
-            {s.tutorial < 6 && (
-              <details className="tutorial">
-                <summary>Deine erste Schicht · Anleitung öffnen</summary>
-                <span className="eyebrow">
-                  DEINE ERSTE SCHICHT · {s.tutorial + 1}/6
-                </span>
-                <p>{tutorial[s.tutorial]}</p>
-                <button
-                  onClick={() =>
-                    s.tutorial === 0
-                      ? setModal("build")
-                      : s.tutorial < 3
-                        ? setModal("stations")
-                        : s.tutorial === 3
-                          ? setModal("fleet")
-                          : setModal("help")
-                  }
-                >
-                  Nächster Schritt →
-                </button>
-              </details>
-            )}
-          </>
-        )
+              ) : (
+                <MissionPanel
+                  key={selected}
+                  s={s}
+                  m={s.missions.find((m) => m.id === selected)!}
+                />
+              )
+            ) : (
+              <>
+                <p>
+                  Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
+                  Geldjournal.
+                </p>
+                {s.archive
+                  .filter((m) => m.id === selected)
+                  .map((m) => (
+                    <div key={m.id}>
+                      <Suspense fallback={<p>Bericht wird geladen …</p>}>
+                        <ReportPanel m={m} />
+                      </Suspense>
+                      <DynamicsPanel s={s} m={m} />
+                      <History s={s} m={m} />
+                    </div>
+                  ))}
+              </>
+            )
+          }
+        />
       )}
-      {modal && (
+      {modal && !(screen === "game" && modal === "mission") && (
         <Modal
           title={
             (
               {
-                new: "Neue Leitstelle",
+                new: "Neues Spiel",
+                scenarios: "Szenarien und Einsatzarten",
+                exit: "Spiel verlassen",
+                news: "Neuigkeiten",
+                credits: "Credits",
+                privacy: "Datenschutz im Spiel",
+                support: "Support",
+                language: "Sprache",
+                personnel: "Personalübersicht",
                 build: "Wache bauen",
                 stations: "Wachen verwalten",
                 building: "Wachendetails",
@@ -685,10 +336,37 @@ function GameApp() {
           }
           onClose={() => setModal("")}
         >
+          <MenuPanels
+            panel={modal}
+            s={s}
+            onOpen={setModal}
+            onPlay={() => {
+              setScreen("game");
+              setModal("");
+            }}
+            onSelect={open}
+          />
           {modal === "help" && <Help />}
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
             <>
+              <nav
+                className="hud-management"
+                aria-label="Weitere Spielbereiche"
+              >
+                {[
+                  ["aaos", "AAO"],
+                  ["fms", "FMS"],
+                  ["friends", "Freunde"],
+                  ["progress", "Fortschritt"],
+                  ["backups", "Sicherungen"],
+                  ["help", "Hilfe"],
+                ].map(([id, label]) => (
+                  <button key={id} onClick={() => setModal(id)}>
+                    {label}
+                  </button>
+                ))}
+              </nav>
               <WorkspaceSettings value={layout} change={updateLayout} />
               <SoundSettings />
               <Account />
