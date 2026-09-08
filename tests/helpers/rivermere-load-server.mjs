@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 const f = await import(pathToFileURL(process.argv[2]).href);
 const { startServer } = await import(
-  pathToFileURL(resolve("dist/worlds/rivermere/dist/server/index.js")).href
+  pathToFileURL(resolve("dist/server/index.js")).href
 );
 const c = {
   host: "127.0.0.1",

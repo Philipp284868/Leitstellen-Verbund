@@ -1,3 +1,4 @@
+import { buildReason } from "../../src/purchase";
 import { xpForLevel } from "../../src/progression";
 import { fresh, uid, type Save } from "../../src/model";
 import { apply, tick, generate } from "../../src/engine";
@@ -26,7 +27,11 @@ export function established(name: string): Save {
 export function emsProfile(name: string) {
   const s = established(name);
   s.xp = Math.max(s.xp, xpForLevel(4));
-  apply(s, { type: "build", kind: "ems", pos: nodes[3] });
+  apply(s, {
+    type: "build",
+    kind: "ems",
+    pos: [nodes[3], ...nodes].find((p) => !buildReason(s, "ems", p))!,
+  });
   tick(s, s.time + 30);
   const home = s.buildings.find((b) => b.type === "ems")!;
   apply(s, { type: "buy", kind: "rtw", home: home.id });

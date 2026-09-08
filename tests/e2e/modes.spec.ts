@@ -41,11 +41,11 @@ async function account(page: Page, distantIncident = false) {
     username,
     password,
     "Alex",
-    "Leitstelle Falkenried",
+    "Leitstelle Rivermere",
   );
   const s = established("Alex");
   s.player.id = id;
-  s.player.station = "Leitstelle Falkenried";
+  s.player.station = "Leitstelle Rivermere";
   s.missionWait = 0;
   for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
   app.db.save(id, s);
@@ -54,7 +54,7 @@ async function account(page: Page, distantIncident = false) {
     // Keep the real routed journey visible throughout desktop window checks.
     const prepared = app.db.all().get(id)!;
     const mission = prepared.missions[0];
-    mission.pos = nodes.find((p) => p.x > 3000 && p.y > 2000)!;
+    mission.pos = nodes.find((p) => p.x > 6500 && p.y > 5500)!;
     delete mission.control;
     attachIncident(prepared, mission);
     app.db.save(id, prepared);
@@ -143,7 +143,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
     .getByRole("button", { name: "Karte zentrieren", exact: true })
     .click();
   await expect(page.locator(".map-legend")).toContainText("100 %");
-  await page.getByLabel("Stadtviertel anzeigen").selectOption("ALTSTADT");
+  await page.getByLabel("Stadtviertel anzeigen").selectOption("Old Town");
   await expect(page.locator(".map-legend")).toContainText("200 %");
   await page.screenshot({
     path: info.outputPath("karte-altstadt.png"),
@@ -224,14 +224,14 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
     path: info.outputPath("region-2.6-gesamt.png"),
     fullPage: true,
   });
-  await page.getByLabel("Stadtviertel anzeigen").selectOption("STEINFURT");
+  await page.getByLabel("Stadtviertel anzeigen").selectOption("Southwell");
   const box = (await page.locator("svg.map").getAttribute("viewBox"))!
     .split(" ")
     .map(Number);
   expect(box[0]).toBeGreaterThan(3000);
   expect(box[1]).toBeGreaterThan(2000);
   await page.screenshot({
-    path: info.outputPath("region-2.6-steinfurt.png"),
+    path: info.outputPath("region-rivermere-southwell.png"),
     fullPage: true,
   });
   await page.getByRole("button", { name: "Meine Wachen", exact: true }).click();

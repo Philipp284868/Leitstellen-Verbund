@@ -1,6 +1,6 @@
 import { beforeAll, describe, it, expect } from "vitest";
 import { build } from "esbuild";
-import { mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
@@ -38,6 +38,29 @@ beforeAll(async () => {
   repeated = await import(pathToFileURL(outfile).href);
 }, 20000);
 describe("Rivermere als eigenständige Serverwelt", () => {
+  it("liefert nur Rivermere am Standardprogrammziel und schützt alte Daten bytegleich", async () => {
+    expect(existsSync("dist/worlds")).toBe(false);
+    const compiled = await import(
+      pathToFileURL(resolve("dist/server/index.js")).href
+    );
+    const dir = mkdtempSync(resolve(tmpdir(), "lv-legacy-rejected-"));
+    const legacy = new Database(dir);
+    legacy.close();
+    const file = resolve(dir, "game.sqlite"),
+      before = readFileSync(file);
+    expect(() =>
+      compiled.startServer({
+        host: "127.0.0.1",
+        port: 0,
+        publicUrl: "http://127.0.0.1:0",
+        dataDir: dir,
+        secure: false,
+        trustedProxies: [],
+      }),
+    ).toThrow(/Weltkonflikt/);
+    expect(readFileSync(file)).toEqual(before);
+    expect(existsSync(resolve(dir, "server.lock"))).toBe(false);
+  });
   it("hat metrische 100 km, zentrale Großstadt und dieselben sichtbaren Routenabschnitte", () => {
     expect(f.WORLD_WIDTH * f.METERS_PER_UNIT).toBe(100000);
     expect(f.WORLD_HEIGHT * f.METERS_PER_UNIT).toBe(100000);
@@ -133,7 +156,7 @@ describe("Rivermere als eigenständige Serverwelt", () => {
 
 it("erhält die neue Welt und laufende Anfahrt beim echten Serverneustart", async () => {
   const compiled = (await import(
-    pathToFileURL(resolve("dist/worlds/rivermere/dist/server/index.js")).href
+    pathToFileURL(resolve("dist/server/index.js")).href
   )) as { startServer: typeof import("../server/index").startServer };
   const config = {
     host: "127.0.0.1",

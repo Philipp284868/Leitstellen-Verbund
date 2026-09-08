@@ -2,9 +2,9 @@
 
 Stand: 08.09.2026. Arbeitsauftrag: [Issue #26](https://github.com/Philipp284868/Leitstellen-Verbund/issues/26).
 
-## Zwei geografisch getrennte Serveranwendungen
+## Ausschließlich Rivermere
 
-Der normale Build erzeugt weiterhin `dist/server/index.js` mit Falkenried und zusätzlich `dist/worlds/rivermere/dist/server/index.js` mit Rivermere. Beide verwenden dieselben Spiel-, Authentifizierungs-, Socket-, Dispositions- und Speichermechanismen. Jeder Server liefert seinen dazu gebauten Client aus. Es gibt keinen Einzelspielermodus und keinen clientseitigen Geografieumschalter.
+Der normale Build erzeugt ausschließlich Rivermere: `dist/server/index.js`, `dist/server/cli.js` und `dist/client/`. AMP, `npm start`, die Entwicklungsvorschau und das Linux-Paket verwenden dieselbe neue Karte. `LV_WORLD` ist kein Kartenumschalter mehr. Die frühere zusätzliche Ausgabe unter `dist/worlds/` wird beim Build entfernt. Es gibt keinen Einzelspielermodus und keinen clientseitigen Geografieumschalter. Historischer Geografiecode bleibt ausschließlich für Migrationsprüfungen erhalten; entsprechende Testprogramme liegen unter `.tools`, niemals im ausgelieferten Paket.
 
 Rivermere ist eine neue Serverwelt, keine Umplatzierung bestehender Falkenried-Wachen. Die Komposition unterscheidet sich wesentlich: Rivermere liegt zentral, Falkenrieds historische Innenstadt im Nordwesten. Eine Koordinatenumrechnung könnte diese Änderung nicht verlustfrei leisten. Ein bestehendes Datenverzeichnis darf deshalb nicht für die andere Welt verwendet werden. Auch Konten, Besitz und laufende Einsätze werden nicht automatisch zwischen Serverwelten übertragen.
 
@@ -12,9 +12,9 @@ Rivermere ist eine neue Serverwelt, keine Umplatzierung bestehender Falkenried-W
 
 1. Bestehende Instanz mit dem Backup-Verfahren aus `AMP.md` sichern. Bei laufender Instanz die vorhandene Online-Sicherung verwenden.
 2. Nur lesende Vorschau: `node scripts/world-preview.mjs /absoluter/pfad/game.sqlite`. Sie zeigt Weltkennungen, Schema, Gebäude, Fahrzeuge, aktive Fahrten und Einsätze. Sie schreibt nichts und führt keinen Transfer aus.
-3. Das bisherige Programmziel `dist/server/index.js` weiterhin mit seinem bisherigen `DATA_DIR` betreiben.
-4. Für Rivermere eine zusätzliche Instanz mit eigenem Port, eigener HTTPS-Adresse und einem ausdrücklich gesetzten eigenen persistenten `DATA_DIR` einrichten. Programmziel: `dist/worlds/rivermere/dist/server/index.js`. Ohne `DATA_DIR` verweigert diese Anwendung den Start. Umgebungsvariablen in AMP setzen; die `.env` einer anderen Installation wird nicht automatisch übernommen.
-5. Beide Instanzen getrennt sichern. Ein Client verbindet sich mit der Adresse seiner Serverwelt. Kein automatischer Produktivstart oder Weltenwechsel.
+3. Die bisherige Anwendung kontrolliert stoppen und das alte Datenverzeichnis als Sicherung aufbewahren. Keine zweite aktive alte Karte ist vorgesehen.
+4. AMP-Programmziel auf `dist/server/index.js` setzen. Ein bereits vorhandenes Rivermere-`DATA_DIR` unverändert weiterverwenden. War bisher Falkenried aktiv, ein neues persistentes Rivermere-Datenverzeichnis wählen: Eine verlustfreie geografische Übernahme ist nicht möglich; Konten und Fortschritt werden nicht automatisch übertragen. Der Start gegen Falkenried-Daten wird vor SQLite-Änderungen mit Weltkonflikt abgewiesen. Ohne ausdrücklich gesetztes `DATA_DIR` startet der Server nicht.
+5. Port und HTTPS-Adresse können beim kontrollierten Austausch derselben Instanz beibehalten werden. Bei Wechsel vom früheren verschachtelten Rivermere-Programmziel `.env` im Hauptprogrammverzeichnis beziehungsweise AMP-Umgebungsvariablen prüfen. Kein automatischer Produktivstart; Produktionsdaten werden durch den Quellcode-Build nicht verändert.
 
 SQLite-Schema 12 schreibt eine dauerhafte Weltkennung mit Seed und Generierungsversion in `meta`. Die bestehende Vorab-Sicherung bei Schemawechseln bleibt aktiv. Die Migration verändert keine Besitzdaten, Positionen, Einsatzorte, Fahrwege oder Fahrzeiten. Erneutes Öffnen erzeugt keine weitere Migration. Eine inkompatible Weltkennung oder ein fremder gespeicherter Spielstand wird vor SQLite-Schreiboperationen abgewiesen. Alte Falkenried-Migrationen gelten weiterhin ausschließlich für Falkenried.
 

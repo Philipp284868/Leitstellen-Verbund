@@ -9,7 +9,7 @@ const env = {
   HOST: "127.0.0.1",
   PORT: String(backend),
   PUBLIC_URL: `http://127.0.0.1:${frontend}`,
-  DATA_DIR: resolve("../leitstellen-verbund-development-data"),
+  DATA_DIR: resolve("../leitstellen-verbund-rivermere-development-data"),
   ALLOW_HTTP: "true",
   TRUSTED_PROXIES: "",
   LV_DEV_BACKEND: `http://127.0.0.1:${backend}`,

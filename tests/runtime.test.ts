@@ -10,6 +10,8 @@ it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert n
   const base = await mkdtemp(resolve(tmpdir(), "lv-runtime-")), program = resolve(base, "app"), data = resolve(base, "data");
   await mkdir(program); await mkdir(data);
   await cp(resolve("dist"), resolve(program, "dist"), { recursive: true });
+  // Historical restore fixture; the shipped Rivermere runtime is covered by AMP and E2E tests.
+  await cp(resolve(".tools/legacy-tests/server"), resolve(program, "dist/server"), { recursive: true });
   await symlink(resolve("node_modules"), resolve(program, "node_modules"), "junction");
   await writeFile(resolve(program, "package.json"), '{"type":"module"}');
   const port = 31000 + Math.floor(Math.random() * 7000), origin = `http://127.0.0.1:${port}`, env = { ...process.env };

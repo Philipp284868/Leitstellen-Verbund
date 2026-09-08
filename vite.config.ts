@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   base: "/",
   define: {
-    __LV_WORLD__: JSON.stringify(process.env.LV_WORLD || "falkenried-2"),
+    __LV_WORLD__: JSON.stringify("rivermere-1"),
   },
   plugins: [react()],
   server: process.env.LV_DEV_BACKEND
@@ -23,15 +23,11 @@ export default defineConfig({
       }
     : undefined,
   build: {
-    outDir:
-      process.env.LV_WORLD === "rivermere-1"
-        ? "dist/worlds/rivermere/dist/client"
-        : "dist/client",
+    outDir: "dist/client",
     rolldownOptions: {
       output: {
         codeSplitting: { groups: [{ name: "vendor", test: /node_modules/ }] },
       },
     },
   },
-  test: { include: ["tests/**/*.test.ts"] },
 });

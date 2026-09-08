@@ -1,13 +1,18 @@
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, rmSync } from "node:fs";
+import { resolve, relative } from "node:path";
 import { spawn } from "node:child_process";
+// Remove only the obsolete generated secondary distribution, never world data.
+const obsolete = resolve("dist/worlds");
+if (relative(resolve("dist"), obsolete) !== "worlds")
+  throw Error("Ungültiger Buildpfad.");
+rmSync(obsolete, { recursive: true, force: true });
 // Dependency installation may use NODE_ENV=development. The shipped application must not.
 for (const args of [
   ["node_modules/typescript/bin/tsc", "--noEmit"],
   ["node_modules/vite/bin/vite.js", "build"],
   ["scripts/build-server.mjs"],
   ["scripts/sync-project-news.mjs"],
-  ["scripts/build-rivermere.mjs"],
 ]) {
   await new Promise((done, reject) => {
     const child = spawn(process.execPath, args, {

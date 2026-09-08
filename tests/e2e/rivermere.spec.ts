@@ -22,7 +22,7 @@ await build({
 });
 const f = (await import(pathToFileURL(fixturePath).href)) as typeof Fixture;
 const compiled = (await import(
-  pathToFileURL(resolve("dist/worlds/rivermere/dist/server/index.js")).href
+  pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
 let app: ReturnType<typeof startServer>, origin: string, helper: string;
 test.beforeAll(async () => {

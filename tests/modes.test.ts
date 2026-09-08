@@ -265,7 +265,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   const exported = spawnSync(
     process.execPath,
     [
-      "dist/server/cli.js",
+      ".tools/legacy-tests/server/cli.js",
       "archive-export",
       "--username",
       "modeapi",
@@ -292,7 +292,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   });
   const result = spawnSync(
     process.execPath,
-    ["dist/server/cli.js", "restore", "--file", backup, "--confirm"],
+    [".tools/legacy-tests/server/cli.js", "restore", "--file", backup, "--confirm"],
     {
       encoding: "utf8",
       env: {

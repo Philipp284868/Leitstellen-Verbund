@@ -163,7 +163,7 @@ test('Node 24: echter Spielserver, zwei Konten, Reset-CLI, Neustart und erneute 
   const listener = createServer(); listener.listen(0, '127.0.0.1'); await once(listener, 'listening');
   const port = listener.address().port; await new Promise(done => listener.close(done));
   const origin = `http://127.0.0.1:${port}`;
-  writeFileSync(resolve(f.app, '.env'), `HOST=127.0.0.1\nPORT=${port}\nPUBLIC_URL=${origin}\nDATA_DIR=\n`);
+  writeFileSync(resolve(f.app, '.env'), `HOST=127.0.0.1\nPORT=${port}\nPUBLIC_URL=${origin}\nDATA_DIR=${f.data.replaceAll("\\", "/")}\n`);
   const env = { ...process.env };
   for (const key of ['HOST', 'PORT', 'PUBLIC_URL', 'DATA_DIR', 'ALLOW_HTTP', 'TRUSTED_PROXIES']) delete env[key];
   const pass = 'Reset-test-only-password-278';

@@ -9,6 +9,6 @@ Rivermere ist eine eigene 100 × 100 Kilometer große Serverwelt. Stadt, Außeno
 - Fahrzeugfolgen wird bewusst aktiviert und durch manuelles Verschieben beendet.
 - Kamera und Zoomempfindlichkeit bleiben lokal. Regler unter Kartensteuerung.
 
-Bestehende Welten werden nicht umplatziert. Falkenried behält Wachen, Einsätze und Fahrten. Rivermere benötigt eine zusätzliche Instanz mit eigenem persistenten Datenverzeichnis. Schema 12 ergänzt die Weltkennung ohne Ortsänderungen. Falsche Weltzuordnungen werden beim Start abgewiesen.
+Rivermere ist die einzige ausgelieferte Karte. Das Standardprogrammziel lautet `dist/server/index.js`; eine zusätzliche Karteninstanz oder Kartenauswahl gibt es nicht mehr. Vorhandene Rivermere-Daten können unverändert weiterverwendet werden. Falkenried-Daten bleiben als geschützter Bestand erhalten und werden beim Start abgewiesen; Wachen und laufende Fahrten werden nicht auf die andere Geografie verschoben. War bisher die alte Karte aktiv, benötigt der Betreiber für Rivermere ein eigenes persistentes Datenverzeichnis. Schema 12 und bestehender Fortschritt in Rivermere bleiben unverändert.
 
 [Vollständige Anleitung, Sicherung und Migrationsvorschau](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/RIVERMERE.md).

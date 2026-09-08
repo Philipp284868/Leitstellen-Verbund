@@ -9,7 +9,7 @@ import { listenBrowserServer } from "./server-helper";
 import { phaseFixture } from "../phase-fixture";
 import { beginTrip } from "../../src/engine";
 import { nodes, nearest } from "../../src/world";
-import { regionTowns } from "../../src/region-extension";
+import { settlements as regionTowns } from "../../src/rivermere/geography";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -104,7 +104,7 @@ test(
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
     await page.getByRole("button", { name: "Layer", exact: true }).click();
     await expect(
-      page.getByText("Region Falkenried · 100 × 100 km", { exact: true }),
+      page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
     ).toBeVisible();
     const readyMs = Date.now() - started;
     const before = Date.now();
@@ -168,7 +168,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(
-    page.getByText("Region Falkenried · 100 × 100 km", { exact: true }),
+    page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
   ).toBeVisible();
   if (
     (await page
@@ -189,10 +189,10 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     path: info.outputPath("region-overview-1600.png"),
     fullPage: true,
   });
-  await page.getByLabel("Karte durchsuchen", { exact: true }).fill("SÜDBRUCK");
+  await page.getByLabel("Karte durchsuchen", { exact: true }).fill("Brookdale");
   await page
     .locator(".map-search-results")
-    .getByRole("button", { name: "SÜDBRUCK", exact: true })
+    .getByRole("button", { name: "Brookdale", exact: true })
     .click();
   await page.screenshot({
     path: info.outputPath("region-new-town.png"),

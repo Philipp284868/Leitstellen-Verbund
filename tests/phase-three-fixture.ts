@@ -1,3 +1,4 @@
+import { buildReason } from "../src/purchase";
 import { phaseFixture } from "./phase-fixture";
 import { validate, type Save } from "../src/model";
 import { attachDynamics } from "../src/simulation/dynamics";
@@ -25,7 +26,11 @@ export function organizationFixture(
 }
 export function addAmbulance(s: Save) {
   s.money += 100000;
-  apply(s, { type: "build", kind: "ems", pos: nodes[3] });
+  apply(s, {
+    type: "build",
+    kind: "ems",
+    pos: [nodes[3], ...nodes].find((p) => !buildReason(s, "ems", p))!,
+  });
   tick(s, s.time + 30, {}, false, false);
   const b = s.buildings.at(-1)!;
   apply(s, { type: "buy", kind: "rtw", home: b.id });

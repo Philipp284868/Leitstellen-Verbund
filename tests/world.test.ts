@@ -270,7 +270,7 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
     const target = await mkdtemp(resolve(tmpdir(), "lv-map-restore-"));
     const restored = spawnSync(
       process.execPath,
-      ["dist/server/cli.js", "restore", "--file", backup, "--confirm"],
+      [".tools/legacy-tests/server/cli.js", "restore", "--file", backup, "--confirm"],
       {
         encoding: "utf8",
         env: {

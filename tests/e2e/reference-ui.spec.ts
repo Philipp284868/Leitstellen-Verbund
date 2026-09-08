@@ -28,17 +28,17 @@ test.beforeAll(async () => {
     "reference",
     "Reference-password-123!",
     "Max Berger",
-    "Leitstelle Falkenried",
+    "Leitstelle Rivermere",
   );
   const s = phaseFixture(owner);
   s.player.name = "Max Berger";
-  s.player.station = "Leitstelle Falkenried";
+  s.player.station = "Leitstelle Rivermere";
   s.missionWait = 9999;
   const m = s.missions[0];
   m.control!.locationKnown = true;
   m.control!.reportedTemplate = m.template;
   m.control!.calls[0].state = "ended";
-  m.pos = nodes[nearest({ x: 640, y: 320 })];
+  m.pos = nodes[nearest({ x: 4300, y: 3700 })];
   alarm(s, m, [s.vehicles[0].id], owner, "NORMAL", "station");
   tick(s, s.vehicles[0].depart + 40, {}, false, false);
   app.db.save(owner, s);
@@ -193,7 +193,7 @@ for (const size of [
     );
     await page.getByRole("button", { name: "Layer", exact: true }).click();
     await expect(page.getByLabel("Karte durchsuchen")).toBeVisible();
-    await page.getByLabel("Karte durchsuchen").fill("Falkenried");
+    await page.getByLabel("Karte durchsuchen").fill("Rivermere");
     await expect(page.locator(".map-search-results")).toBeVisible();
     await page.getByRole("button", { name: "Karte", exact: true }).click();
     await page

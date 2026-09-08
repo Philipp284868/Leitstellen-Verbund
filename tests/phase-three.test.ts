@@ -702,7 +702,7 @@ it("aktive Unterstützungsanfrage übersteht echte CLI-Wiederherstellung und spi
       dir = await mkdtemp(resolve(tmpdir(), "lv-aid-restore-"));
     const result = spawnSync(
       process.execPath,
-      ["dist/server/cli.js", "restore", "--file", file, "--confirm"],
+      [".tools/legacy-tests/server/cli.js", "restore", "--file", file, "--confirm"],
       { encoding: "utf8", env: { ...process.env, DATA_DIR: dir } },
     );
     expect(result.status, result.stderr).toBe(0);

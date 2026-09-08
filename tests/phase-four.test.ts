@@ -724,7 +724,7 @@ it("aktive Großlage übersteht echte CLI-Sicherung und Wiederherstellung mit id
     const restoredDir = await mkdtemp(resolve(tmpdir(), "lv-phase4-restore-"));
     const result = spawnSync(
       process.execPath,
-      ["dist/server/cli.js", "restore", "--file", backup, "--confirm"],
+      [".tools/legacy-tests/server/cli.js", "restore", "--file", backup, "--confirm"],
       {
         cwd: process.cwd(),
         env: { ...process.env, DATA_DIR: restoredDir },

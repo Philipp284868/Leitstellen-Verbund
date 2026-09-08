@@ -29,24 +29,24 @@ test.beforeAll(async () => {
     "reference",
     "Reference-password-123!",
     "Max Berger",
-    "Leitstelle Falkenried",
+    "Leitstelle Rivermere",
   );
   const s = phaseFixture(owner);
   s.player.name = "Max Berger";
-  s.player.station = "Leitstelle Falkenried";
+  s.player.station = "Leitstelle Rivermere";
   s.missionWait = 9999;
   const m = s.missions[0];
   m.control!.locationKnown = true;
   m.control!.reportedTemplate = m.template;
   m.control!.calls[0].state = "ended";
-  m.pos = nodes[nearest({ x: 640, y: 320 })];
+  m.pos = nodes[nearest({ x: 4300, y: 3700 })];
   alarm(s, m, [s.vehicles[0].id], owner, "NORMAL", "station");
   tick(s, s.vehicles[0].depart + 40, {}, false, false);
   s.buildings.push({
     ...structuredClone(s.buildings[0]),
     id: "input-empty-station",
     name: "Testwache ohne Fahrzeuge",
-    pos: nodes[nearest({ x: 720, y: 390 })],
+    pos: nodes[nearest({ x: 4400, y: 3600 })],
   });
   app.db.save(owner, s);
 });
@@ -64,7 +64,7 @@ test("Kartenbeschriftung bleibt beim Ziehen unmarkiert", async ({ page }) => {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   const map = page.locator("svg.map");
   await expect(map).toBeVisible();
-  const label = map.locator("text").filter({ hasText: "ALTSTADT" }).first();
+  const label = map.locator("text").filter({ hasText: "Old Town" }).first();
   const box = await label.boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
@@ -110,7 +110,7 @@ test("Markerdrag, Folgeklick, Mausrad und Eingabefokus sind getrennt", async ({
   const selectedView = await map.getAttribute("viewBox");
   await page.getByRole("button", { name: "Layer", exact: true }).click();
   const search = page.getByLabel("Karte durchsuchen");
-  await search.fill("ALTSTADT");
+  await search.fill("Old Town");
   await search.press("Control+a");
   expect(
     await search.evaluate(

@@ -351,7 +351,7 @@ it("Vorschau und SQLite-Migration erhalten aktive Positionen, Konten und XP übe
     db.close();
     const preview = spawnSync(
       process.execPath,
-      ["dist/server/cli.js", "migration-preview"],
+      [".tools/legacy-tests/server/cli.js", "migration-preview"],
       {
         encoding: "utf8",
         env: {

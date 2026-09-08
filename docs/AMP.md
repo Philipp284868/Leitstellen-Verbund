@@ -110,9 +110,9 @@ Schema 7 ergänzt das simulierte Wetter sowie persistente Gefahren, Patienten, V
 
 Schema 8 ergänzt Organisationsprofile, Personalverfügbarkeit, Aufnahmeprofile und ausdrücklich angenommene Nachbarhilfe in den bestehenden Spielständen. Vor der Migration wird die vollständige SQLite-Sicherung angelegt. Beide Modi, Bestände, aktive Termine und alte Einsätze bleiben erhalten; neue Organisationspflichten werden nicht nachträglich eingebaut. Keine neue `.env`, keine Zusatzdienste. Wie bisher stoppen, sichern, `main` aktualisieren, erfolgreiches Setup abwarten und starten. [Bedienung und Grenzen](PHASE-3.md).
 
-## Zusätzliche Serverwelt Rivermere
+## Rivermere als einzige Spielkarte
 
-Der Build erzeugt neben dem bisherigen Programmziel auch `dist/worlds/rivermere/dist/server/index.js`. Rivermere benötigt eine zusätzliche Instanz, einen eigenen Port und ein ausdrücklich gesetztes eigenes persistentes `DATA_DIR`. Falkenried wird nicht geografisch umgestellt. Schema 12 ergänzt eine Weltkennung ohne Änderungen an Positionen oder Besitz. Anleitung, Sicherung und nur lesende Vorschau: [RIVERMERE.md](RIVERMERE.md).
+Der Build liefert ausschließlich Rivermere am Standardprogrammziel `dist/server/index.js`. Eine bisherige Rivermere-Instanz verwendet ihr vorhandenes `DATA_DIR` weiter; das frühere verschachtelte Programmziel entfällt. Falkenried-Daten werden vor SQLite-Änderungen abgewiesen und nicht automatisch verschoben oder zurückgesetzt. Beim Wechsel von Falkenried muss der Betreiber ein eigenes Rivermere-Datenverzeichnis einrichten. Schema 12 bleibt unverändert. Anleitung, Sicherung und nur lesende Vorschau: [RIVERMERE.md](RIVERMERE.md).
 
 ## Update auf 2.12: Progression und 100-km-Region
 
