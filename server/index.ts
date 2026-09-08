@@ -93,7 +93,21 @@ export function startServer(
       ? real
       : address;
   }
-  const http = createServer(async (req, res) => {
+  const pendingHttp = new Set<Promise<void>>();
+  const http = createServer((req, res) => {
+    const task = handleHttp(req, res);
+    pendingHttp.add(task);
+    void task.then(
+      () => pendingHttp.delete(task),
+      () => pendingHttp.delete(task),
+    );
+  });
+  const connections = new Set<import("node:net").Socket>();
+  http.on("connection", (socket) => {
+    connections.add(socket);
+    socket.once("close", () => connections.delete(socket));
+  });
+  async function handleHttp(req: IncomingMessage, res: ServerResponse) {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
@@ -291,7 +305,7 @@ export function startServer(
         },
       );
     }
-  });
+  }
   const io = new Server(http, {
     serveClient: false,
     maxHttpBufferSize: 8192,
@@ -400,6 +414,7 @@ export function startServer(
       .then(() => db.backup())
       .catch(() => console.error("Automatische Sicherung fehlgeschlagen."));
   }, 3600000);
+  let closePromise: Promise<void> | undefined;
   return {
     db,
     auth,
@@ -411,20 +426,30 @@ export function startServer(
         http.once("error", reject);
         http.listen(c.port, c.host, done);
       }),
-    close: async () => {
-      stopping = true;
-      clearInterval(timer);
-      clearInterval(backupTimer);
-      await new Promise<void>((done) => io.close(() => done()));
-      http.closeIdleConnections();
-      await backupJob;
-      try {
-        await db.backup();
-      } finally {
-        db.close();
-        release();
-      }
-    },
+    close: () =>
+      (closePromise ??= (async () => {
+        stopping = true;
+        clearInterval(timer);
+        clearInterval(backupTimer);
+        // Allow normal responses to drain; incomplete headers must not keep shutdown alive.
+        const closed = new Promise<void>((done) => io.close(() => done()));
+        const deadline = setTimeout(() => {
+          http.closeAllConnections();
+          for (const connection of connections) connection.destroy();
+        }, 2000);
+        deadline.unref();
+        http.closeIdleConnections();
+        await closed;
+        clearTimeout(deadline);
+        await Promise.allSettled([...pendingHttp]);
+        await backupJob;
+        try {
+          await db.backup();
+        } finally {
+          db.close();
+          release();
+        }
+      })()),
   };
 }
 if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
