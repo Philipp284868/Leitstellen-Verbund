@@ -36,6 +36,9 @@ export const roadEventSchema = z
       z.number().int().nonnegative(),
       z.number().int().nonnegative(),
     ]),
+    roadId: id.optional(),
+    roadName: z.string().max(256).optional(),
+    position: point.optional(),
     start: time,
     until: time,
     delay: time.max(900),
@@ -75,12 +78,12 @@ export const journeySchema = z
           })
           .strict(),
       )
-      .max(20000)
+      .max(600000)
       .optional(),
     motionVersion: z.literal(1).optional(),
     wait: time.optional(),
     mode: z.enum(["normal", "priority", "emergency"]),
-    planned: z.array(point).max(4096),
+    planned: z.array(point).max(200000),
     plannedSeconds: time,
     delay: time,
     distanceDone: time,

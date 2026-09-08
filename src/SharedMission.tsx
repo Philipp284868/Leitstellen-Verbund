@@ -1,4 +1,5 @@
-import { approach, tripLabel } from "./travel";
+import { tripLabel } from "./travel";
+import { ApproachText } from "./germany/GeoQueries";
 import { mt, vt, capabilities, type Skills } from "./catalog";
 import { type Save, type Mission } from "./model";
 import { type Friend, support } from "./network";
@@ -103,7 +104,7 @@ export function SharedMission({
             .filter((v) => !readiness(s, v))
             .map((v) => (
               <option key={v.id} value={v.id}>
-                {v.name} · {approach(s, v, m.pos)}
+                {v.name} · <ApproachText s={s} vehicle={v} target={m.pos} />
               </option>
             ))}
         </select>

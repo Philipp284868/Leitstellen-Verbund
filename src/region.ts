@@ -1,9 +1,17 @@
-import { IS_RIVERMERE } from "./world-choice";
+import { IS_GERMANY, IS_RIVERMERE } from "./world-choice";
+import {
+  WORLD_WIDTH as GERMANY_WIDTH,
+  WORLD_HEIGHT as GERMANY_HEIGHT,
+} from "./germany/projection";
 /** Regional extensions. The original city and every existing junction stay fixed. */
-export const WORLD_WIDTH = 100000 / 12;
-export const WORLD_HEIGHT = 100000 / 12;
+export const WORLD_WIDTH = IS_GERMANY ? GERMANY_WIDTH : 100000 / 12;
+export const WORLD_HEIGHT = IS_GERMANY ? GERMANY_HEIGHT : 100000 / 12;
 export const METERS_PER_UNIT = 12;
-export const WORLD_SEED = IS_RIVERMERE ? 57180908 : 71493;
+export const WORLD_SEED = IS_GERMANY
+  ? 20260907
+  : IS_RIVERMERE
+    ? 57180908
+    : 71493;
 export const towns = [
   { name: "ROSENFELD", x: 1810, y: 390, size: 1.2, angle: -0.2 },
   { name: "HOHENBRÜCK", x: 2860, y: 570, size: 1.8, angle: 0.25 },

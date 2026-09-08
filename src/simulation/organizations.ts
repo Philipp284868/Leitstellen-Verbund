@@ -108,6 +108,8 @@ export function organizationCommand(
       throw Error("Einsatzkraft ist bereits gebunden.");
     if (!nodes[a.duty.homeNode] || !nodes[a.duty.workNode])
       throw Error("Wohn- oder Arbeitsort ungültig.");
+    if (IS_GERMANY && (!isLandSite(nodes[a.duty.homeNode]) || !isLandSite(nodes[a.duty.workNode])))
+      throw Error("Wohn- und Arbeitsorte benötigen eine zugängliche Straße an Land.");
     p.duty = { ...a.duty, load: p.duty?.load || 0 };
   } else if (a.type === "vehicle-reserve") {
     const v = s.vehicles.find((v) => v.id === a.vehicle);
@@ -171,3 +173,5 @@ export function organizationCommand(
     }
   }
 }
+import { IS_GERMANY } from "../world-choice";
+import { isLandSite } from "../germany/world";

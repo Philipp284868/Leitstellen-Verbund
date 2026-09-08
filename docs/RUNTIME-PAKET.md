@@ -6,6 +6,8 @@ Der Release-Entwurf enthält die gebaute Website, den Node.js-Server und seine e
 
 Node.js 24 bereitstellen. SHA256SUMS mit `sha256sum -c SHA256SUMS` prüfen. Das tar.gz in ein neues leeres Programmverzeichnis entpacken. `.env.example` nach `.env` kopieren und öffentliche HTTPS-Adresse, tatsächlichen Port und dauerhaftes DATA_DIR außerhalb des Programmverzeichnisses eintragen. `node dist/server/index.js` startet die Anwendung. Kein npm-Install und kein Build beim Start erforderlich. Hinter einem Reverse Proxy die tatsächlichen Proxy-Adressen konfigurieren; Details in docs/AMP.md. Die mitgelieferte Kommandozeile `node dist/server/cli.js` verwendet dieselbe Konfiguration.
 
+Ab Version 2.16 ist zusätzlich das gebaute Deutschlandprogramm unter `dist/germany/` enthalten. `node scripts/start-germany.mjs` startet diese Welt mit passendem externem Geodatenpaket und eigenem `DATA_DIR`. Das Archiv enthält die Pipeline-/Startskripte, aber keine großen Kartenartefakte. Ein vorbereiteter lokaler Router samt Java-Laufzeit und das Kartenpaket müssen über `GEODATA_DIR` erreichbar sein. [Deutschland-Anleitung](DEUTSCHLAND.md). Der vorhandene Rivermere-Einstieg wird durch Entpacken oder Update nicht umgeschaltet.
+
 Keinen bestehenden Datenordner überschreiben. Updates in ein neues Programmverzeichnis entpacken, den alten Server sauber stoppen und die vorhandene Konfiguration mit demselben DATA_DIR verwenden. Vorher eine geprüfte Sicherung erstellen. Keine Datenbank oder Zugangsdaten sind im Paket enthalten.
 
 ## Kontrollierte Herstellung

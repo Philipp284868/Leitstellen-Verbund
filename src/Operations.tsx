@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { EnvironmentPanel } from "./Dynamics";
 import type { Save } from "./model";
-import { readiness } from "./engine";
+import { fleetReadiness } from "./fleet-view";
 import { duration, kilometers, travelling, trip } from "./travel";
 import { statuses } from "./ui";
 
@@ -10,7 +10,8 @@ export const Operations = memo(function Operations({ s }: { s: Save }) {
     .filter(travelling)
     .map((v) => ({ v, ...trip(v, s.time) }))
     .sort((a, b) => a.seconds - b.seconds);
-  const ready = s.vehicles.filter((v) => !readiness(s, v)).length;
+  const available = fleetReadiness(s);
+  const ready = s.vehicles.filter((v) => !available(v)).length;
   const busy = s.vehicles.filter((v) => v.status !== "ready").length;
   return (
     <section className="operations" aria-label="Fahrten und Einsatzstatistik">

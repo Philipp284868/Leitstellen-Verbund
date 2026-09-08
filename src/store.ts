@@ -6,6 +6,11 @@ import type { Action } from "./engine";
 import { setNetwork, resetNetwork, receiveChat } from "./network";
 import type { GameMode } from "./mode";
 import { createId } from "./ids";
+import { IS_GERMANY } from "./world-choice";
+import {
+  RouteSnapshotDecoder,
+  type RouteSnapshotFrame,
+} from "./germany/snapshot";
 export interface Snapshot {
   mode: GameMode;
   workspace?: {
@@ -122,13 +127,17 @@ export async function refresh() {
   });
   setNetwork(data.network);
   if (!socket) {
+    const routeDecoder = new RouteSnapshotDecoder<
+      Parameters<typeof accept>[0]
+    >();
     socket = io({
       autoConnect: false,
       // A browser WebSocket handshake supplies Origin on both HTTP and HTTPS.
       // Keep the server's strict Origin, session and CSRF checks unchanged.
       transports: ["websocket", "polling"],
       tryAllTransports: true,
-      auth: (cb) => cb({ csrf, mode }),
+      auth: (cb) =>
+        cb({ csrf, mode, ...(IS_GERMANY ? { routeSnapshots: 1 } : {}) }),
       withCredentials: true,
     });
     socket.on("connect", () =>
@@ -139,6 +148,7 @@ export async function refresh() {
       }),
     );
     socket.on("disconnect", (reason) => {
+      routeDecoder.reset();
       emit({
         readonly: true,
         notice:
@@ -154,7 +164,29 @@ export async function refresh() {
       });
       void api("me").catch(() => {});
     });
-    socket.on("snapshot", accept);
+    socket.on(
+      "snapshot",
+      (
+        frame:
+          | Parameters<typeof accept>[0]
+          | RouteSnapshotFrame<Parameters<typeof accept>[0]>,
+      ) => {
+        if ("protocol" in frame && frame.protocol === "lv-routes-1") {
+          try {
+            const data = routeDecoder.decode(frame);
+            if (data) accept(data);
+          } catch {
+            emit({
+              readonly: true,
+              notice:
+                "Kartendaten werden nachgeladen; Verbindung wird erneuert.",
+            });
+            routeDecoder.reset();
+            socket?.disconnect().connect();
+          }
+        } else accept(frame as Parameters<typeof accept>[0]);
+      },
+    );
     socket.on("chat", receiveChat);
     socket.on("notice", notice);
   }

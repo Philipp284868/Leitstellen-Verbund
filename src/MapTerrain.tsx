@@ -1,4 +1,4 @@
-import { IS_RIVERMERE } from "./world-choice";
+import { IS_RIVERMERE, IS_GERMANY } from "./world-choice";
 import { Terrain } from "./rivermere/Terrain";
 import { SpatialIndex } from "./spatial";
 import { towns, WORLD_WIDTH, WORLD_HEIGHT, WORLD_SEED } from "./region";
@@ -130,7 +130,7 @@ for (let i = 0; i < (IS_RIVERMERE ? 0 : 8200); i++) {
     trees.push({ x, y, r: 2 + random() * 3 });
 }
 const regionalPatches: string[] = [];
-for (let i = 0; i < 1200; i++) {
+for (let i = 0; i < (IS_GERMANY ? 0 : 1200); i++) {
   const x = 80 + random() * (WORLD_WIDTH - 160),
     y = 80 + random() * (WORLD_HEIGHT - 160);
   if ((x < 1450 && y < 1000) || towns.some((t) => distance(t, { x, y }) < 260))

@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import type { Mission } from "./model";
 import { mt } from "./catalog";
 import { districtAt } from "./world";
+import { IS_GERMANY } from "./world-choice";
 import { IncidentIcon } from "./HudIcons";
 
 export function IncidentDock({
@@ -28,7 +29,10 @@ export function IncidentDock({
   const org = known ? mt(mission.template).org : "Unbekannt";
   const location =
     mission && (!mission.control || mission.control.locationKnown)
-      ? districtAt(mission.pos)
+      ? IS_GERMANY
+        ? mission.control?.secret?.address ||
+          "Einsatzort auf der Deutschlandkarte"
+        : districtAt(mission.pos)
       : "Ort und Meldebild aufnehmen";
   return (
     <aside

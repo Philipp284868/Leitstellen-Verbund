@@ -25,7 +25,7 @@ import { progress } from "./progression";
 import { credits } from "./ui";
 import { useGame } from "./store";
 import { modeName } from "./mode";
-import { readiness } from "./engine";
+import { fleetReadiness } from "./fleet-view";
 import { RegionScene } from "./RegionScene";
 import { version } from "../package.json";
 import "./MainMenu.css";
@@ -41,6 +41,7 @@ export function MainMenu({
   onOpen: (panel: string) => void;
 }) {
   const { mode } = useGame();
+  const available = fleetReadiness(s);
   const xp = progress(s.xp);
   const news = useProjectNews()[0];
   const actions = [
@@ -185,7 +186,7 @@ export function MainMenu({
               [
                 Truck,
                 "Verfügbare Fahrzeuge",
-                s.vehicles.filter((v) => !readiness(s, v)).length,
+                s.vehicles.filter((v) => !available(v)).length,
               ],
               [Users, "Einsatzkräfte gesamt", s.people.length],
               [Wallet, "Budget", credits(s.money)],

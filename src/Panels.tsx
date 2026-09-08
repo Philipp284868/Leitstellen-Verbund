@@ -1,4 +1,4 @@
-import { approach } from "./travel";
+import { ApproachText } from "./germany/GeoQueries";
 import { useState } from "react";
 import { mt, capabilities, vt } from "./catalog";
 import {
@@ -135,7 +135,12 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
                 <b>{v.name}</b>
                 <small>
                   {reason || "Einsatzbereit"} · {statuses[v.status]}
-                  {!reason && <> · {approach(s, v, m.pos)}</>}
+                  {!reason && (
+                    <>
+                      {" "}
+                      · <ApproachText s={s} vehicle={v} target={m.pos} />
+                    </>
+                  )}
                 </small>
               </span>
             </label>

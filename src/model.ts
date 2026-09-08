@@ -1,4 +1,5 @@
 import { WORLD_SEED } from "./region";
+import { IS_GERMANY } from "./world-choice";
 import { migrateTravel } from "./travel-migration";
 import { progress, xpForLevel } from "./progression";
 import { majorSchema, operationsSchema } from "./simulation/major-schema";
@@ -97,7 +98,7 @@ export const vehicleSchema = z
     ]),
     mission: id.nullable(),
     assignment: id.nullable(),
-    path: z.array(point).max(4096),
+    path: z.array(point).max(200000),
     depart: num,
     arrive: num,
     patients: integer.max(10),
@@ -412,6 +413,7 @@ export function validateReferences(s: Save, legacy = false) {
   for (const bed of s.beds)
     if (
       bed.home !== "public" &&
+      !(IS_GERMANY && /^public:(?:node|way|relation):[0-9]+$/.test(bed.home)) &&
       !s.buildings.some((b) => b.id === bed.home && b.type === "hospital")
     )
       throw Error("Patient ohne Krankenhaus.");

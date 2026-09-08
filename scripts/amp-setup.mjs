@@ -94,5 +94,5 @@ await run(process.execPath, [pnpm, "build"], root, {
   CI: "true",
 });
 console.log(
-  "AMP-Setup erfolgreich. Startdatei: dist/server/index.js. Daten und .env wurden nicht verändert.",
+  "AMP-Setup erfolgreich. Bestehender Server: dist/server/index.js; neuer Deutschland-Server: scripts/start-germany.mjs (benötigt eigene Spiel- und Geodaten). Daten und .env wurden nicht verändert.",
 );

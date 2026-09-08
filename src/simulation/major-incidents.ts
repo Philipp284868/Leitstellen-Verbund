@@ -294,7 +294,7 @@ export function campaignTick(
       ? ["cellar", "supply", "tree", "crash"]
       : ["tree", "supply", "cellar", "debris"];
   const index = 4 - c.remaining;
-  const near = nodes.filter(
+  const near = (IS_GERMANY ? querySites(first.pos, 200) : nodes).filter(
     (n) => distance(n, first.pos) < 200 && distance(n, first.pos) > 15,
   );
   const pos =
@@ -313,3 +313,5 @@ export function campaignTick(
   s.missionWait = 120;
   return true;
 }
+import { IS_GERMANY } from "../world-choice";
+import { querySites } from "../germany/world";

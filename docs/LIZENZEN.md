@@ -1,8 +1,10 @@
 # Quellen und Lizenzen
 
-Die Region Falkenried, Bezirksnamen, Straßenkoordinaten, Einsatztexte, Farbgestaltung und das App-Symbol wurden für dieses Projekt erstellt. Es wurden keine Kartenkacheln, fremden Spielgrafiken, Markenlogos oder nachgebauten Markenoberflächen übernommen. Die Karte ist eine fiktive geometrische Spielkarte. Es besteht keine offizielle Verbindung zu Feuerwehr-, Rettungsdienst-, Polizei- oder THW-Organisationen.
+Die historischen Regionen Falkenried und Rivermere sind fiktive Spielwelten. Die neue Deutschlandwelt verwendet echte offene Geodaten und lokal erzeugte Kartenkacheln. OpenStreetMap/Geofabrik stehen unter ODbL; OpenMapTiles wird sichtbar genannt; Natural Earth ist Public Domain. Copernicus DEM besitzt eigene Lizenz- und Attributionsbedingungen. Maßgebliche Quellen, Snapshotkennungen und Nutzungshinweise stehen in [Deutschland-Daten](DEUTSCHLAND-DATEN.md) und [Höhendaten](DEUTSCHLAND-HOEHEN.md). Es besteht keine offizielle Verbindung zu Feuerwehr-, Rettungsdienst-, Polizei- oder THW-Organisationen.
 
 UI-Symbole stammen aus **Lucide**, ISC-Lizenz. Abhängigkeiten werden über die Lockdatei reproduzierbar installiert; ihre Lizenztexte liegen in den jeweiligen Paketen. React und React DOM: MIT. Vite und Vitest: MIT. TypeScript: Apache-2.0. Dexie: Apache-2.0. Zod: MIT. Playwright: Apache-2.0. ESLint und Prettier: MIT.
+
+MapLibre GL JS: BSD-3-Clause. Die separaten Aufbereitungs-/Routingwerkzeuge GraphHopper und Planetiler: Apache-2.0. Deren ausführbare Artefakte werden anhand fester Prüfsummen außerhalb des Quellcodepakets bereitgestellt. Lizenztexte und Hinweise der jeweiligen Werkzeuge/Daten bleiben bei Weitergabe maßgeblich.
 
 Primärquellen für die technische Auswahl:
 

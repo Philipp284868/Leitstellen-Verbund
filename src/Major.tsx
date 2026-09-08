@@ -11,8 +11,8 @@ import {
 } from "./simulation/major-schema";
 import { placement, sectionSkills } from "./simulation/major-resources";
 import { vt } from "./catalog";
-import { readiness } from "./engine";
-import { hospitalOptions } from "./simulation/hospitals";
+import { fleetReadiness } from "./fleet-view";
+import { useHospitalOptions } from "./germany/GeoQueries";
 import "./Major.css";
 
 export function OperationsOverview({
@@ -24,8 +24,9 @@ export function OperationsOverview({
 }) {
   const active = s.missions.filter((m) => m.major);
   const campaign = s.operations.campaign;
-  const ready = s.vehicles.filter((v) => !readiness(s, v));
   if (!active.length && !campaign && !s.operations.history.length) return null;
+  const available = fleetReadiness(s);
+  const ready = s.vehicles.filter((v) => !available(v));
   return (
     <section className="operations-overview" aria-label="Großlagenübersicht">
       <strong>Großlagenführung · {ready.length} Fahrzeuge disponierbar</strong>
@@ -136,6 +137,15 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
   const { readonly } = useGame();
   const [pending, setPending] = useState(false);
   const disabled = readonly || m.phase === "done";
+  const hospitals = useHospitalOptions(
+    s,
+    m.pos,
+    0,
+    undefined,
+    undefined,
+    !!m.control?.briefed &&
+      !!m.major?.sections.some((section) => section.kind === "medical"),
+  );
   if (!m.control?.briefed || !m.dynamics?.active) return null;
   const g = m.major;
   if (!g) {
@@ -333,7 +343,11 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
           <legend>MANV · Sichtung und Klinikverteilung</legend>
           <details>
             <summary>Aufnahmekapazitäten der eigenen Leitstelle</summary>
-            {hospitalOptions(s, m.pos, 0).map((h) => (
+            {hospitals.loading && (
+              <p role="status">Aufnahmekapazitäten werden geladen …</p>
+            )}
+            {hospitals.error && <p role="alert">{hospitals.error}</p>}
+            {hospitals.options.map((h) => (
               <p key={h.id}>
                 {h.name}: {Math.max(0, h.capacity - h.occupied - h.reserved)}{" "}
                 frei · {h.occupied} belegt · {h.reserved} zugesagt

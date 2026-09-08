@@ -48,6 +48,9 @@ export function personDuty(s: Save, p: Person): Duty {
   if (p.duty) return p.duty;
   const b = s.buildings.find((b) => b.id === p.home)!,
     node = nearest(b.pos);
+  const local = IS_GERMANY ? querySites(b.pos, 400, 64) : [];
+  const localNode = (offset: number) =>
+    local.length ? nearest(local[(key(p.id) + offset) % local.length]) : node;
   return (
     p.duty ?? {
       name: `Einsatzkraft ${p.id.slice(-5)}`,
@@ -56,8 +59,12 @@ export function personDuty(s: Save, p: Person): Duty {
       absence: "none",
       until: 0,
       reachability: 100,
-      homeNode: Math.min(nodes.length - 1, node + 1 + (key(p.id) % 8)),
-      workNode: Math.min(nodes.length - 1, node + 5 + (key(p.id) % 20)),
+      homeNode: IS_GERMANY
+        ? localNode(0)
+        : Math.min(nodes.length - 1, node + 1 + (key(p.id) % 8)),
+      workNode: IS_GERMANY
+        ? localNode(17)
+        : Math.min(nodes.length - 1, node + 5 + (key(p.id) % 20)),
       commute: "car",
       workdays: true,
       standby: false,
@@ -252,3 +259,5 @@ export function turnoutEstimate(s: Save, v: Vehicle, alarm?: Alarm) {
     selected === "station" ? 30 : selected === "siren" ? 45 : 60,
   );
 }
+import { IS_GERMANY } from "../world-choice";
+import { querySites } from "../germany/world";

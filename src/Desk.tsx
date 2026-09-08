@@ -6,11 +6,13 @@ import type { TravelMode } from "./simulation/dynamics-schema";
 import { useEffect, useState } from "react";
 import type { Mission, Save } from "./model";
 import { vehicles, vt, bt, mt, capabilities } from "./catalog";
-import { readiness, capacity, missing } from "./engine";
+import { capacity, missing } from "./engine";
+import { fleetReadiness } from "./fleet-view";
 import { chat, useNetwork } from "./network";
 import { act, useGame } from "./store";
 import { createId } from "./ids";
-import { approach, duration, tripLabel } from "./travel";
+import { duration, tripLabel } from "./travel";
+import { ApproachText } from "./germany/GeoQueries";
 import {
   fmsDefaults,
   fmsName,
@@ -304,6 +306,7 @@ function Calls({ s, m }: { s: Save; m: Mission }) {
 }
 export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   const c = m.control!;
+  const ready = fleetReadiness(s);
   const net = useNetwork();
   const support = net.support.filter(
     (f) => f.mission === m.id && f.round === m.round,
@@ -321,7 +324,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   }, [proposal?.id]); // A fresh server proposal is an editable selection, never an alarm.
   const selectedReady = selected.filter((id) => {
     const v = s.vehicles.find((v) => v.id === id);
-    return v && !readiness(s, v);
+    return v && !ready(v);
   });
   const chosen = s.vehicles.filter((v) => selectedReady.includes(v.id)),
     skills = { ...capacity(s, m.id) };
@@ -602,7 +605,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                 <label key={v.id}>
                   <input
                     type="checkbox"
-                    disabled={!!readiness(s, v)}
+                    disabled={!!ready(v)}
                     checked={selectedReady.includes(v.id)}
                     onChange={(e) =>
                       setSelected((ids) =>
@@ -618,8 +621,18 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                       {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
                     </b>
                     <small>
-                      {readiness(s, v) ||
-                        `Einsatzbereit · ${approach(s, v, m.pos, travel, alarm || undefined)}`}
+                      {ready(v) || (
+                        <>
+                          <span>Einsatzbereit · </span>
+                          <ApproachText
+                            s={s}
+                            vehicle={v}
+                            target={m.pos}
+                            mode={travel}
+                            alarm={alarm || undefined}
+                          />
+                        </>
+                      )}
                     </small>
                   </span>
                 </label>

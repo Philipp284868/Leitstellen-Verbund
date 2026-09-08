@@ -21,15 +21,31 @@ export function hospitalOptions(
     if (/brand|feuer|rauch/i.test(p.injury)) needs.add("burns");
     if (/unfall|verletzung|sturz/i.test(p.injury)) needs.add("trauma");
   }
+  const publicOptions = IS_GERMANY
+    ? germanyProvider()
+        .hospitals(origin, 5)
+        .map((h) => ({
+          id: `public:${h.id}`,
+          name: h.name,
+          pos: { x: h.x, y: h.y },
+          osmLocation: h.osmLocation,
+          capacity: 100,
+          open: true,
+          // Capacity and treatment are game rules; OSM identifies the real hospital location.
+          specialties: Object.keys(specialties),
+        }))
+    : [
+        {
+          id: "public",
+          name: "Regionalklinik",
+          pos: publicHospital,
+          capacity: 100,
+          open: true,
+          specialties: Object.keys(specialties),
+        },
+      ];
   return [
-    {
-      id: "public",
-      name: "Regionalklinik",
-      pos: publicHospital,
-      capacity: 100,
-      open: true,
-      specialties: Object.keys(specialties),
-    },
+    ...publicOptions,
     ...s.buildings
       .filter((b) => b.type === "hospital" && b.ready <= s.time)
       .map((b) => ({
@@ -91,3 +107,5 @@ export function selectHospital(
     : m?.organization?.hospital;
   return options.find((h) => h.id === preference) ?? options[0];
 }
+import { IS_GERMANY } from "../world-choice";
+import { germanyProvider } from "../germany/world";

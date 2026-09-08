@@ -1,4 +1,6 @@
 import type { Save } from "../model";
+import { IS_GERMANY } from "../world-choice";
+import { projectRoad, querySites } from "../germany/world";
 import { edges, nodes, distance } from "../world";
 import { DYNAMICS, sample } from "./random";
 import type { z } from "zod";
@@ -96,7 +98,7 @@ export function environmentAt(time: number): z.infer<typeof environmentSchema> {
     "crossing",
     "flood",
   ] as const;
-  const roads = Array.from({ length: 3 }, (_, n) => {
+  const roads = Array.from({ length: IS_GERMANY ? 0 : 3 }, (_, n) => {
     const kind =
       eventKinds[
         Math.floor(
@@ -128,11 +130,43 @@ export function environmentAt(time: number): z.infer<typeof environmentSchema> {
   };
 }
 export function updateWeather(s: Save) {
-  if (
+  const changed =
     !s.environment ||
-    s.environment.period !== Math.floor(s.time / DYNAMICS.weatherPeriod)
-  )
+    s.environment.period !== Math.floor(s.time / DYNAMICS.weatherPeriod);
+  if (changed) {
     s.environment = environmentAt(s.time);
+    if (IS_GERMANY && s.buildings.length) {
+      const bases = [...s.buildings].sort((a, b) => a.id.localeCompare(b.id));
+      const period = s.environment.period;
+      for (let n = 0; n < Math.min(3, bases.length); n++) {
+        const sites = querySites(bases[n].pos, 400, 32);
+        if (!sites.length) continue;
+        const p =
+          sites[
+            Math.floor(sample(s.seed, `road-site-${n}`, period) * sites.length)
+          ];
+        try {
+          const section = projectRoad(p).section;
+          s.environment.roads.push({
+            id: `road-${period}-${n}`,
+            kind: "jam",
+            edge: [section.a, section.b],
+            roadId: section.id,
+            roadName: section.name.slice(0, 256),
+            position: { x: p.x, y: p.y },
+            start: period * DYNAMICS.weatherPeriod,
+            until: (period + 1) * DYNAMICS.weatherPeriod,
+            delay: 90,
+            blocked: false,
+          });
+        } catch {
+          /* No verified driveable edge: do not invent a road event. */
+        }
+      }
+    }
+  }
+  if (!s.environment)
+    throw Error("Wetterzustand konnte nicht erstellt werden.");
   // Local incident closures survive weather-period changes and disappear after
   // the corresponding danger has been removed. No unrelated desk is exposed.
   s.environment.roads = s.environment.roads.filter(
@@ -159,7 +193,19 @@ export function updateWeather(s: Save) {
       continue;
     let best = edges[0],
       nearest = Infinity;
-    for (const edge of edges) {
+    let roadId: string | undefined;
+    let roadName: string | undefined;
+    if (IS_GERMANY) {
+      try {
+        const section = projectRoad(m.pos).section;
+        best = [section.a, section.b];
+        roadId = section.id;
+        roadName = section.name.slice(0, 256);
+      } catch {
+        continue;
+      }
+    }
+    for (const edge of IS_GERMANY ? [] : edges) {
       const d =
         distance(nodes[edge[0]], m.pos) + distance(nodes[edge[1]], m.pos);
       if (d < nearest) {
@@ -174,6 +220,9 @@ export function updateWeather(s: Save) {
           ? "flood"
           : "obstacle",
       edge: best,
+      ...(roadId
+        ? { roadId, roadName, position: { x: m.pos.x, y: m.pos.y } }
+        : {}),
       start: m.created,
       until: s.time + 1200,
       delay: 120,

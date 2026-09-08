@@ -20,6 +20,7 @@ import {
 } from "./simulation/patients";
 import { updateWeather, weatherWeight } from "./simulation/weather";
 import { routePlan, trafficTick } from "./simulation/traffic";
+import { withAutomaticRouting } from "./simulation/routing-context";
 import { faultsTick } from "./simulation/faults";
 import type { TravelMode } from "./simulation/dynamics-schema";
 import { setFms } from "./simulation/fms";
@@ -152,9 +153,11 @@ export function beginTrip(
     serial: 0,
     target,
     blockedUntil: plan.blockedUntil,
-    reason: plan.blockedUntil
-      ? "Fahrt wetter- oder verkehrsbedingt ausgesetzt; warte auf Freigabe"
-      : "",
+    reason:
+      plan.reason ||
+      (plan.blockedUntil
+        ? "Fahrt wetter- oder verkehrsbedingt ausgesetzt; warte auf Freigabe"
+        : ""),
   };
   v.status = status;
 }
@@ -497,12 +500,24 @@ export function generate(s: Save) {
   const bases = s.buildings.filter(
     (b) => b.ready <= s.time && relevantHomes.has(b.id),
   );
-  const sites = nodes.filter((p) =>
+  const localSites = IS_GERMANY
+    ? [
+        ...new Map(
+          bases
+            .flatMap((b) =>
+              querySites(b.pos, s.vehicles.length <= 4 ? 180 : 400),
+            )
+            .map((p) => [`${p.x},${p.y}`, p]),
+        ).values(),
+      ]
+    : nodes;
+  const sites = localSites.filter((p) =>
     bases.some(
       (b) => distance(b.pos, p) <= (s.vehicles.length <= 4 ? 180 : 400),
     ),
   );
   if (!sites.length) return;
+  if (t.water && !docks.length) return;
   const pos = t.water
     ? docks[s.seed % docks.length]
     : sites[s.seed % sites.length];
@@ -540,7 +555,10 @@ export function transport(s: Save, v: Vehicle, patients: number, m?: Mission) {
   v.destination = target.id;
   beginTrip(s, v, target.pos, "transport");
 }
-export function tick(
+export function tick(...args: Parameters<typeof tickState>) {
+  return withAutomaticRouting(() => tickState(...args));
+}
+function tickState(
   s: Save,
   wall: number,
   remote: Record<string, Skills> = {},
@@ -714,3 +732,5 @@ export function tick(
   s.time = end;
   if (allowGeneration && !offline && s.time >= s.nextMission) generate(s);
 }
+import { IS_GERMANY } from "./world-choice";
+import { querySites } from "./germany/world";

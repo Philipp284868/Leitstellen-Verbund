@@ -11,11 +11,13 @@ import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
 import { parseMode } from "../src/mode";
 import { config } from "./config";
-import { Database, DATABASE_VERSION } from "./database";
+import { Database, DATABASE_VERSION, assertWorldMetadata } from "./database";
+import { IS_GERMANY } from "../src/world-choice";
 import { Auth } from "./auth";
 import { validate, uid } from "../src/model";
 import { statisticsSchema } from "../src/simulation/report-schema";
 import { acquireLock } from "./lock";
+import { prepareGeography } from "./germany/runtime";
 
 const command = process.argv[2];
 if (
@@ -61,13 +63,16 @@ if (command === "unlock") {
   process.exit(0);
 }
 // Host-level maintenance remains offline; no game account receives these privileges.
-const release = acquireLock(c.dataDir);
+const geography = await prepareGeography(c);
+let release = () => {};
 try {
+  release = acquireLock(c.dataDir);
   if (command === "migration-preview") {
     const db = new DatabaseSync(resolve(c.dataDir, "game.sqlite"), {
       readOnly: true,
     });
     try {
+      assertWorldMetadata(db, IS_GERMANY);
       const result = [];
       for (const table of ["saves", "solo_saves"].filter((t) =>
         db
@@ -110,6 +115,7 @@ try {
     const file = resolve(arg("file"));
     const input = new DatabaseSync(file, { readOnly: true });
     try {
+      assertWorldMetadata(input, IS_GERMANY);
       const version = Number(
         input.prepare("PRAGMA user_version").get()!.user_version,
       );
@@ -324,4 +330,5 @@ try {
   }
 } finally {
   release();
+  await geography?.close();
 }

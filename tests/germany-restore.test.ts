@@ -1,0 +1,243 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { build } from "esbuild";
+import { DatabaseSync } from "node:sqlite";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { execFile, fork, type ChildProcess } from "node:child_process";
+import type * as Fixture from "./germany-simulation-fixture";
+
+const dataset = "e".repeat(64);
+let f: typeof Fixture,
+  cli: string,
+  dir: string,
+  geodataDir: string,
+  dataDir: string,
+  routerUrl: string;
+let router: ChildProcess,
+  provider: Awaited<ReturnType<typeof Fixture.initializeGermany>> | undefined,
+  db: InstanceType<typeof Fixture.Database> | undefined;
+let owner: string, cookie: string, backup: string;
+beforeAll(async () => {
+  mkdirSync(".tools", { recursive: true });
+  const fixture = resolve(`.tools/germany-restore-fixture-${process.pid}.mjs`);
+  cli = resolve(`.tools/germany-restore-${process.pid}/server/cli.js`);
+  const common = {
+    bundle: true,
+    format: "esm" as const,
+    platform: "node" as const,
+    packages: "external" as const,
+    define: { __LV_WORLD__: JSON.stringify("germany-1") },
+    plugins: [
+      {
+        name: "germany-world",
+        setup(b: import("esbuild").PluginBuild) {
+          b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
+            path: resolve("src/germany/world.ts"),
+          }));
+        },
+      },
+    ],
+  };
+  await Promise.all([
+    build({
+      ...common,
+      entryPoints: ["tests/germany-simulation-fixture.ts"],
+      outfile: fixture,
+    }),
+    build({ ...common, entryPoints: ["server/cli.ts"], outfile: cli }),
+  ]);
+  f = await import(pathToFileURL(fixture).href);
+}, 20000);
+beforeEach(async () => {
+  dir = mkdtempSync(resolve(tmpdir(), "lv-germany-restore-"));
+  geodataDir = resolve(dir, "geo");
+  dataDir = resolve(dir, "save");
+  mkdirSync(geodataDir);
+  mkdirSync(dataDir);
+  writeFileSync(
+    resolve(geodataDir, "manifest.json"),
+    JSON.stringify({
+      schema: 1,
+      worldId: "germany-1",
+      status: "ready",
+      snapshot: "2026-09-07",
+      dataset,
+      graphRuntimeIdentity: JSON.parse(
+        readFileSync(
+          resolve("tests/fixtures/germany-graph-runtime.json"),
+          "utf8",
+        ),
+      ),
+    }),
+  );
+  const index = new DatabaseSync(resolve(geodataDir, "index.sqlite"));
+  index.exec(`CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT);
+    CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,name TEXT,road_class TEXT,bridge INTEGER,tunnel INTEGER,access TEXT);
+    CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);
+    CREATE TABLE places(id INTEGER PRIMARY KEY,osm_type TEXT,osm_id TEXT,kind TEXT,name TEXT,display_name TEXT,lon REAL,lat REAL,region TEXT);
+    CREATE VIRTUAL TABLE places_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);
+    CREATE VIRTUAL TABLE places_fts USING fts5(name,display_name,content='places',content_rowid='id');
+    INSERT INTO anchors VALUES(16000000000,13.4,52.52,'Teststraße','residential',0,0,'');
+    INSERT INTO anchors_rtree VALUES(16000000000,13.4,13.4,52.52,52.52);`);
+  index.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
+  index.close();
+  const tiles = new DatabaseSync(resolve(geodataDir, "maps.mbtiles"));
+  tiles.exec(
+    "CREATE TABLE metadata(name TEXT PRIMARY KEY,value TEXT); CREATE TABLE tiles(zoom_level INTEGER,tile_column INTEGER,tile_row INTEGER,tile_data BLOB)",
+  );
+  tiles.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
+  tiles.close();
+  router = fork(resolve("tests/helpers/germany-router.mjs"), {
+    stdio: ["ignore", "ignore", "ignore", "ipc"],
+  });
+  routerUrl = await new Promise<string>((done, reject) => {
+    router.once("message", (message: { origin: string }) =>
+      done(message.origin),
+    );
+    router.once("error", reject);
+  });
+  provider = await f.initializeGermany({
+    indexPath: resolve(geodataDir, "index.sqlite"),
+    dataset,
+    routerUrl,
+  });
+  db = new f.Database(dataDir);
+  const auth = new f.Auth(db);
+  owner = await auth.create(
+    "restore-player",
+    "Only-isolated-test-284!",
+    "Disponent",
+    "Berlin",
+  );
+  cookie = `lv_session=${auth.issue(owner).value}`;
+  const save = db.all().get(owner)!;
+  save.money = 123456;
+  db.save(owner, save);
+  backup = await db.backup();
+  save.money = 654321;
+  db.save(owner, save);
+  db.close();
+  db = undefined;
+}, 20000);
+afterEach(async () => {
+  db?.close();
+  db = undefined;
+  await provider?.close();
+  provider = undefined;
+  if (router?.connected)
+    await new Promise<void>((done) => {
+      router.once("exit", () => done());
+      router.send("stop");
+    });
+  if (dir) rmSync(dir, { recursive: true, force: true });
+});
+async function cliCommand(args: string[]) {
+  return new Promise<{ code: number; output: string }>((done) => {
+    execFile(
+      process.execPath,
+      [cli, ...args],
+      {
+        cwd: resolve("."),
+        windowsHide: true,
+        timeout: 20000,
+        env: {
+          ...process.env,
+          NODE_ENV: "production",
+          HOST: "127.0.0.1",
+          PORT: "8991",
+          PUBLIC_URL: "http://127.0.0.1:8991",
+          DATA_DIR: dataDir,
+          GEODATA_DIR: geodataDir,
+          GRAPHHOPPER_URL: routerUrl,
+        },
+      },
+      (error, stdout, stderr) =>
+        done({
+          code: error ? Number(error.code) || 1 : 0,
+          output: stdout + stderr,
+        }),
+    );
+  });
+}
+const restore = () => cliCommand(["restore", "--file", backup, "--confirm"]);
+describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", () => {
+  it.each(["different", "missing"])(
+    "weist migration-preview bei %s PBF-Metadaten schreibgeschützt zurück",
+    async (mismatch) => {
+      const target = resolve(dataDir, "game.sqlite");
+      const input = new DatabaseSync(target);
+      if (mismatch === "different")
+        input
+          .prepare("UPDATE meta SET value=? WHERE key='geodata-dataset-v1'")
+          .run("f".repeat(64));
+      else input.exec("DELETE FROM meta WHERE key='geodata-dataset-v1'");
+      input.close();
+      const before = readFileSync(target);
+      const result = await cliCommand(["migration-preview"]);
+      expect(result.code).not.toBe(0);
+      expect(result.output).toMatch(/Geodaten|Datenstand|Datensatz|PBF/i);
+      expect(result.output).not.toContain('"readOnly": true');
+      expect(readFileSync(target)).toEqual(before);
+    },
+    25000,
+  );
+  it("liefert eine passende migration-preview ohne den Spielstand oder Sitzungen zu verändern", async () => {
+    const target = resolve(dataDir, "game.sqlite"),
+      before = readFileSync(target);
+    const result = await cliCommand(["migration-preview"]);
+    expect(result.code, result.output).toBe(0);
+    expect(result.output).toContain('"readOnly": true');
+    expect(result.output).toContain(`"user": "${owner}"`);
+    expect(readFileSync(target)).toEqual(before);
+    db = new f.Database(dataDir);
+    expect(db.all().get(owner)!.money).toBe(654321);
+    expect(new f.Auth(db).session(cookie)?.user_id).toBe(owner);
+  }, 25000);
+  it.each(["different", "missing"])(
+    "weist %s PBF-Metadaten vor jeder Änderung der Zielwelt zurück",
+    async (mismatch) => {
+      const input = new DatabaseSync(backup);
+      if (mismatch === "different")
+        input
+          .prepare("UPDATE meta SET value=? WHERE key='geodata-dataset-v1'")
+          .run("f".repeat(64));
+      else input.exec("DELETE FROM meta WHERE key='geodata-dataset-v1'");
+      input.close();
+      const target = resolve(dataDir, "game.sqlite"),
+        before = readFileSync(target),
+        entries = readdirSync(dataDir);
+      const result = await restore();
+      expect(result.code).not.toBe(0);
+      expect(result.output).toMatch(/Geodaten|Datenstand|Datensatz|PBF/i);
+      expect(readFileSync(target)).toEqual(before);
+      expect(readdirSync(dataDir)).toEqual(entries);
+      db = new f.Database(dataDir);
+      expect(new f.Auth(db).session(cookie)?.user_id).toBe(owner);
+      expect(db.all().get(owner)!.money).toBe(654321);
+    },
+    25000,
+  );
+  it("stellt eine kompatible Sicherung wieder her und widerruft deren Sitzungen", async () => {
+    const result = await restore();
+    expect(result.code, result.output).toBe(0);
+    expect(result.output).toContain("Wiederhergestellt");
+    db = new f.Database(dataDir);
+    expect(db.all().get(owner)!.money).toBe(123456);
+    expect(new f.Auth(db).session(cookie)).toBeNull();
+    expect(db.sql.prepare("SELECT count(*) n FROM sessions").get()!.n).toBe(0);
+    expect(
+      db.sql
+        .prepare("SELECT value FROM meta WHERE key='geodata-dataset-v1'")
+        .get()!.value,
+    ).toBe(dataset);
+  }, 25000);
+});

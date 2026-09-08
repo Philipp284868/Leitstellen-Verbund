@@ -1,4 +1,7 @@
 import { motionProfile } from "../motion";
+import { IS_GERMANY } from "../world-choice";
+import { GermanyRoutingError } from "../germany/errors";
+import { automaticRouting } from "./routing-context";
 import { vehiclePosition, vehicleMotion } from "../vehicle-position";
 import { roadSectionBetween, distance } from "../world";
 import type { Save, Vehicle } from "../model";
@@ -13,6 +16,10 @@ const pathSections = (path: Point[]) =>
     .slice(1)
     .map((p, i) => roadSectionBetween(path[i], p))
     .filter((e) => e !== null);
+const roadKeys = (e: NonNullable<Save["environment"]>["roads"][number]) =>
+  e.roadId
+    ? [e.roadId]
+    : [`${e.edge[0]}:${e.edge[1]}`, `${e.edge[1]}:${e.edge[0]}`];
 export const travelNames = {
   normal: "Normalfahrt",
   priority: "Sonderrechte",
@@ -44,6 +51,39 @@ export function routePlan(
   target: Point,
   mode: TravelMode = "priority",
 ) {
+  try {
+    return calculateRoutePlan(s, v, origin, target, mode);
+  } catch (error) {
+    if (
+      !IS_GERMANY ||
+      !automaticRouting() ||
+      !(error instanceof GermanyRoutingError) ||
+      error.code === "blocked"
+    )
+      throw error;
+    // Keep the target and assignment, but never invent a replacement road or continue through a new closure.
+    return {
+      motion: [],
+      wait: 0,
+      path: [origin],
+      planned: [origin],
+      plannedSeconds: 0,
+      seconds: 60,
+      delay: 60,
+      blockedUntil: s.time + 60,
+      events: [],
+      reason:
+        "Straßenrouting vorübergehend nicht verfügbar; Fahrzeug wartet. Neuer Versuch in 60 s.",
+    };
+  }
+}
+function calculateRoutePlan(
+  s: Save,
+  v: Vehicle | { type: string },
+  origin: Point,
+  target: Point,
+  mode: TravelMode,
+) {
   const t = vt(v.type),
     planned = route(origin, target, t.mode, new Set(), t.speed);
   const events = (s.environment?.roads ?? [])
@@ -61,8 +101,7 @@ export function routePlan(
         (p) =>
           p.velocity === 0 &&
           p.acceleration === 0 &&
-          (p.edge === `${e.edge[0]}:${e.edge[1]}` ||
-            p.edge === `${e.edge[1]}:${e.edge[0]}`),
+          roadKeys(e).includes(p.edge),
       );
       return wait
         ? {
@@ -75,14 +114,7 @@ export function routePlan(
           }
         : e;
     });
-  const blocked = new Set(
-    events
-      .filter((e) => e.blocked)
-      .flatMap((e) => [
-        `${e.edge[0]}:${e.edge[1]}`,
-        `${e.edge[1]}:${e.edge[0]}`,
-      ]),
-  );
+  const blocked = new Set(events.filter((e) => e.blocked).flatMap(roadKeys));
   let path = planned;
   let blockedUntil = 0;
   if (t.mode === "air" && (s.environment?.wind || 0) >= 80) {
@@ -98,14 +130,18 @@ export function routePlan(
         blocked,
         t.speed,
         new Map(
-          events.flatMap((e) => [
-            [`${e.edge[0]}:${e.edge[1]}`, e.delay] as const,
-            [`${e.edge[1]}:${e.edge[0]}`, e.delay] as const,
-          ]),
+          events.flatMap((e) =>
+            roadKeys(e).map((key) => [key, e.delay] as const),
+          ),
         ),
         travelFactor(s, v, mode),
       );
     } catch (error) {
+      if (
+        IS_GERMANY &&
+        (!(error instanceof GermanyRoutingError) || error.code !== "blocked")
+      )
+        throw error;
       if (!blocked.size) throw error;
       blockedUntil = Math.min(
         ...events.filter((e) => e.blocked).map((e) => e.until),
@@ -117,10 +153,11 @@ export function routePlan(
   const relevant =
     t.mode === "road"
       ? events.filter((e) =>
-          sections.some(
-            (section) =>
-              (section.a === e.edge[0] && section.b === e.edge[1]) ||
-              (section.a === e.edge[1] && section.b === e.edge[0]),
+          sections.some((section) =>
+            e.roadId
+              ? section.id === e.roadId
+              : (section.a === e.edge[0] && section.b === e.edge[1]) ||
+                (section.a === e.edge[1] && section.b === e.edge[0]),
           ),
         )
       : [];
@@ -135,20 +172,27 @@ export function routePlan(
             ? relevant.filter(
                 (e) =>
                   !paused.has(e.id) &&
-                  ((e.edge[0] === road.a && e.edge[1] === road.b) ||
-                    (e.edge[0] === road.b && e.edge[1] === road.a)),
+                  (e.roadId
+                    ? e.roadId === road.id
+                    : (e.edge[0] === road.a && e.edge[1] === road.b) ||
+                      (e.edge[0] === road.b && e.edge[1] === road.a)),
               )
             : [];
         waits.forEach((e) => paused.add(e.id));
         return {
           from,
           to,
-          meters: distance(from, to) * METERS_PER_UNIT,
+          meters:
+            IS_GERMANY && road
+              ? road.meters
+              : distance(from, to) * METERS_PER_UNIT,
           limit:
             Math.min(t.speed, road?.limit ?? t.speed) /
             (conditions ? travelFactor(s, v, mode) : 1),
           edge: road?.id ?? t.mode,
-          waitSeconds: waits.reduce((n, e) => n + e.delay, 0),
+          waitSeconds:
+            waits.reduce((n, e) => n + e.delay, 0) +
+            (road && "waitSeconds" in road ? Number(road.waitSeconds || 0) : 0),
         };
       }),
       t.mode === "road" ? (t.crew >= 6 ? 0.9 : 1.5) : 2,
@@ -175,6 +219,7 @@ export function routePlan(
     delay: Math.max(0, seconds - plannedSeconds),
     blockedUntil,
     events: relevant.map((e) => e.id),
+    reason: "",
   };
 }
 export function trafficTick(s: Save, v: Vehicle) {
@@ -195,10 +240,16 @@ export function trafficTick(s: Save, v: Vehicle) {
     v.depart = s.time;
     v.arrive = s.time + plan.seconds;
     j.blockedUntil = plan.blockedUntil;
+    if (!j.plannedSeconds && !plan.blockedUntil) {
+      j.planned = plan.planned;
+      j.plannedSeconds = plan.plannedSeconds;
+    }
     j.delay += plan.delay;
-    j.reason = plan.blockedUntil
-      ? "Fahrt weiterhin ausgesetzt; warte auf Freigabe"
-      : "Verbindung wieder frei; Fahrt fortgesetzt";
+    j.reason =
+      plan.reason ||
+      (plan.blockedUntil
+        ? "Fahrt weiterhin ausgesetzt; warte auf Freigabe"
+        : "Verbindung wieder frei; Fahrt fortgesetzt");
   }
   if (s.time < j.nextCheck || s.time >= v.arrive || j.events.length >= 30)
     return;
@@ -216,25 +267,36 @@ export function trafficTick(s: Save, v: Vehicle) {
     if (i) passed += distance(v.path[i - 1], p) * METERS_PER_UNIT;
     return passed > covered;
   });
-  const sections = pathSections([origin, ...remaining]);
+  const sections = IS_GERMANY ? [] : pathSections([origin, ...remaining]);
+  const remainingEdges = new Set(
+    IS_GERMANY
+      ? (j.motion ?? [])
+          .filter((phase) => phase.start + phase.duration >= s.time - v.depart)
+          .map((phase) => phase.edge)
+      : [],
+  );
   const event = active.find((e) =>
-    sections.some(
-      (section) =>
-        (section.a === e.edge[0] && section.b === e.edge[1]) ||
-        (section.a === e.edge[1] && section.b === e.edge[0]),
-    ),
+    IS_GERMANY
+      ? roadKeys(e).some((key) => remainingEdges.has(key))
+      : sections.some(
+          (section) =>
+            (section.a === e.edge[0] && section.b === e.edge[1]) ||
+            (section.a === e.edge[1] && section.b === e.edge[0]),
+        ),
   );
   const weatherKey = `weather-${s.environment?.period ?? 0}`;
   const weatherChange = !j.events.includes(weatherKey);
   if (!event && !weatherChange) return;
-  j.distanceDone += vehicleMotion(v, s.time).meters;
   const plan = routePlan(s, v, origin, j.target, j.mode);
-  j.events.push(event?.id ?? weatherKey);
+  j.distanceDone += vehicleMotion(v, s.time).meters;
+  if (!plan.reason) j.events.push(event?.id ?? weatherKey);
   j.delay += Math.max(0, s.time + plan.seconds - v.arrive);
   j.blockedUntil = plan.blockedUntil;
-  j.reason = event
-    ? `${roadNames[event.kind]}: ${plan.blockedUntil ? "keine Umleitung; warte auf Freigabe" : "Route neu berechnet"}`
-    : "Wetter und Verkehrslage geändert; Ankunft neu berechnet";
+  j.reason =
+    plan.reason ||
+    (event
+      ? `${roadNames[event.kind]}: ${plan.blockedUntil ? "keine Umleitung; warte auf Freigabe" : "Route neu berechnet"}`
+      : "Wetter und Verkehrslage geändert; Ankunft neu berechnet");
   j.motion = plan.motion;
   j.motionVersion = 1;
   j.wait = plan.wait;

@@ -1,6 +1,7 @@
 import type { Save, Mission } from "./model";
 import { mt } from "./catalog";
 import { distance, districtAt } from "./world";
+import { IS_GERMANY } from "./world-choice";
 export const shortcutNames = {
   call: "Nächster Notruf",
   fms: "FMS",
@@ -94,7 +95,12 @@ export function missionList(
     )
       return false;
     const units = s.vehicles.filter((v) => v.mission === m.id);
-    const text = `${m.id} ${mt(m.template).name} ${c?.locationKnown ? districtAt(m.pos) : ""} ${c?.facts.map((f) => f.text).join(" ") ?? ""} ${m.dynamics?.patients.map((p) => p.id).join(" ") ?? ""} ${units.map((v) => `${v.name} ${s.buildings.find((b) => b.id === v.home)?.name}`).join(" ")}`;
+    const location = c?.locationKnown
+      ? IS_GERMANY
+        ? (c.secret?.address ?? "")
+        : districtAt(m.pos)
+      : "";
+    const text = `${m.id} ${mt(m.template).name} ${location} ${c?.facts.map((f) => f.text).join(" ") ?? ""} ${m.dynamics?.patients.map((p) => p.id).join(" ") ?? ""} ${units.map((v) => `${v.name} ${s.buildings.find((b) => b.id === v.home)?.name}`).join(" ")}`;
     return text
       .toLocaleLowerCase("de")
       .includes(query.trim().toLocaleLowerCase("de"));

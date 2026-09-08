@@ -4,6 +4,7 @@ import type { Save, Mission } from "./model";
 import { act } from "./store";
 import { duration, kilometers } from "./travel";
 import { length, nodes } from "./world";
+import { IS_GERMANY } from "./world-choice";
 import { hazardNames } from "./simulation/hazards";
 import { conditionNames, careNames } from "./simulation/patients";
 import { faultNames } from "./simulation/faults";
@@ -58,8 +59,11 @@ export function EnvironmentPanel({ s }: { s: Save }) {
         <summary>Straßenmeldungen ({e.roads.length})</summary>
         {e.roads.map((e) => (
           <p key={e.id}>
-            {roadNames[e.kind]} · {Math.round(nodes[e.edge[0]]?.x || 0)} /{" "}
-            {Math.round(nodes[e.edge[0]]?.y || 0)} ·{" "}
+            {roadNames[e.kind]} ·{" "}
+            {IS_GERMANY
+              ? e.roadName || `Straßenabschnitt ${e.edge[0]}–${e.edge[1]}`
+              : `${Math.round(nodes[e.edge[0]]?.x || 0)} / ${Math.round(nodes[e.edge[0]]?.y || 0)}`}{" "}
+            ·{" "}
             {e.blocked
               ? "Umleitung oder Warten erforderlich"
               : `bis zu ${e.delay} s Verzögerung`}{" "}

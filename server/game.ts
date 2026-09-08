@@ -1,4 +1,5 @@
 import { vehiclePosition } from "../src/vehicle-position";
+import { withAutomaticRouting } from "../src/simulation/routing-context";
 import { addXp } from "../src/progression";
 import { stationProfile, personDuty } from "../src/simulation/staffing";
 import { BALANCE } from "../src/catalog";
@@ -241,9 +242,11 @@ export class Game {
     });
   }
   step(seconds: number, now = Date.now()) {
-    this.db.transaction(() => {
-      this.stepMode(seconds, now, "multi");
-    });
+    withAutomaticRouting(() =>
+      this.db.transaction(() => {
+        this.stepMode(seconds, now, "multi");
+      }),
+    );
   }
   private stepMode(seconds: number, now: number, mode: GameMode) {
     const saves = this.db.all(mode);

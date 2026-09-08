@@ -1,3 +1,7 @@
+# Deutschlandwelt ab Version 2.16
+
+Für eine neue Deutschland-Instanz gilt die [Deutschland-Anleitung](DEUTSCHLAND.md): fertig vorbereitete echte Geodaten, getrenntes `DATA_DIR`, eigenes `GEODATA_DIR` und App Name `scripts/start-germany.mjs`. Das reguläre Setup baut beide Programme. Die folgenden bisherigen `dist/server/…`-Pfade bleiben für vorhandene Rivermere-Installationen bestehen. Ein Update wechselt die Welt nicht automatisch.
+
 # Aktuell: PC-Multiplayer ab 2.14
 
 Einzelspielerarchive bleiben erhalten und werden nicht weiter simuliert. Export unter Sicherungen oder CLI `archive-export`; kein Import in die Multiplayer-Wirtschaft. Historische Migrationsabschnitte unten beschreiben ältere Versionen.
@@ -51,7 +55,7 @@ ALLOW_HTTP=false
 
 `PORT` muss zum tatsächlich zugewiesenen internen AMP-Anwendungsport passen, nicht zum AMP-Verwaltungsport. `PUBLIC_URL` ist die genaue Browseradresse ohne Unterpfad, Benutzerinformationen oder Query. Website, `/api/` und `/socket.io/` liegen unter dieser Adresse. Die vorhandene ausdrückliche HTTP-Testausnahme ändert weder Erreichbarkeit noch Verschlüsselung. Für öffentliche Anmeldung HTTPS verwenden; dieses Update fügt keinen HTTPS-Webserver hinzu und behebt keine davon unabhängigen HTTP-Browserprobleme.
 
-Bei leerem `DATA_DIR` verwendet der Server `leitstellen-data` neben dem Programmordner. Alternativ einen absoluten dauerhaften Datenpfad eintragen. Daten innerhalb des Programmordners werden auch nach Symlink-Auflösung abgelehnt. Nur dem tatsächlichen App-Benutzer Schreibrechte geben. Bei Containern muss der Datenordner dauerhaft vom Host eingebunden sein, beispielsweise Host `/srv/leitstellen-data` nach Container `/data/leitstellen`. Auch der Standardordner muss dauerhaft gemountet sein. Ein Wechsel des Datenpfads ist kein Update und würde eine andere Datenbank verwenden.
+`DATA_DIR` muss für Rivermere ausdrücklich gesetzt sein. Einen absoluten dauerhaften Datenpfad außerhalb des Programmordners eintragen; bei fehlendem Wert startet der Server mit einer konkreten Fehlermeldung nicht. Daten innerhalb des Programmordners werden auch nach Symlink-Auflösung abgelehnt. Nur dem tatsächlichen App-Benutzer Schreibrechte geben. Bei Containern muss der Datenordner dauerhaft vom Host eingebunden sein, beispielsweise Host `/srv/leitstellen-data` nach Container `/data/leitstellen`. Auch ein Ordner neben dem Programmordner muss dauerhaft gemountet sein. Ein Wechsel des Datenpfads ist kein Update und würde eine andere Datenbank verwenden.
 
 ## Migration auf Schema 2
 
@@ -110,9 +114,9 @@ Schema 7 ergänzt das simulierte Wetter sowie persistente Gefahren, Patienten, V
 
 Schema 8 ergänzt Organisationsprofile, Personalverfügbarkeit, Aufnahmeprofile und ausdrücklich angenommene Nachbarhilfe in den bestehenden Spielständen. Vor der Migration wird die vollständige SQLite-Sicherung angelegt. Beide Modi, Bestände, aktive Termine und alte Einsätze bleiben erhalten; neue Organisationspflichten werden nicht nachträglich eingebaut. Keine neue `.env`, keine Zusatzdienste. Wie bisher stoppen, sichern, `main` aktualisieren, erfolgreiches Setup abwarten und starten. [Bedienung und Grenzen](PHASE-3.md).
 
-## Rivermere als einzige Spielkarte
+## Vorherige Umstellung auf Rivermere
 
-Der Build liefert ausschließlich Rivermere am Standardprogrammziel `dist/server/index.js`. Eine bisherige Rivermere-Instanz verwendet ihr vorhandenes `DATA_DIR` weiter; das frühere verschachtelte Programmziel entfällt. Falkenried-Daten werden vor SQLite-Änderungen abgewiesen und nicht automatisch verschoben oder zurückgesetzt. Beim Wechsel von Falkenried muss der Betreiber ein eigenes Rivermere-Datenverzeichnis einrichten. Schema 12 bleibt unverändert. Anleitung, Sicherung und nur lesende Vorschau: [RIVERMERE.md](RIVERMERE.md).
+Rivermere bleibt am Standardprogrammziel `dist/server/index.js` erhalten. Eine bisherige Rivermere-Instanz verwendet ihr vorhandenes `DATA_DIR` weiter; das frühere verschachtelte Programmziel entfällt. Falkenried-Daten werden vor SQLite-Änderungen abgewiesen und nicht automatisch verschoben oder zurückgesetzt. Beim Wechsel von Falkenried muss der Betreiber ein eigenes Rivermere-Datenverzeichnis einrichten. Schema 12 bleibt unverändert. Anleitung, Sicherung und nur lesende Vorschau: [RIVERMERE.md](RIVERMERE.md).
 
 ## Update auf 2.12: Progression und 100-km-Region
 

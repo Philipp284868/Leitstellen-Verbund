@@ -1,10 +1,12 @@
-import { IS_RIVERMERE } from "../src/world-choice";
+import { IS_GERMANY, IS_RIVERMERE, WORLD_NAME } from "../src/world-choice";
 import { existsSync, realpathSync, mkdirSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 import { resolve, relative, isAbsolute, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const root = resolve(fileURLToPath(new URL("../../", import.meta.url)));
+export const root = resolve(
+  fileURLToPath(new URL(IS_GERMANY ? "../../../" : "../../", import.meta.url)),
+);
 export interface Config {
   host: string;
   port: number;
@@ -12,6 +14,8 @@ export interface Config {
   dataDir: string;
   secure: boolean;
   trustedProxies: string[];
+  geodataDir?: string;
+  routerUrl?: string;
 }
 export function config(): Config {
   const env = resolve(root, ".env");
@@ -40,23 +44,53 @@ export function config(): Config {
     throw Error(
       "Öffentlicher Betrieb benötigt HTTPS; ALLOW_HTTP=true ist nur für ein privates Testnetz.",
     );
-  if (IS_RIVERMERE && !process.env.DATA_DIR)
+  if ((IS_RIVERMERE || IS_GERMANY) && !process.env.DATA_DIR)
     throw Error(
-      "Rivermere benötigt ein ausdrücklich gesetztes eigenes DATA_DIR. Bestehende Welten werden nicht umgestellt.",
+      `${WORLD_NAME} benötigt ein ausdrücklich gesetztes eigenes DATA_DIR. Bestehende Welten werden nicht umgestellt.`,
     );
   const dataDir = resolve(
+    root,
     process.env.DATA_DIR || resolve(root, "../leitstellen-data"),
   );
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   const rel = relative(realpathSync(root), realpathSync(dataDir));
   if (!(rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)))
     throw Error("DATA_DIR muss außerhalb des Programmverzeichnisses liegen.");
+  if (IS_GERMANY && !process.env.GEODATA_DIR)
+    throw Error(
+      "Deutschland benötigt GEODATA_DIR mit einem fertig aufbereiteten Geodatenpaket. Anleitung: docs/DEUTSCHLAND-DATEN.md.",
+    );
+  if (IS_GERMANY) {
+    const geo = realpathSync(resolve(root, process.env.GEODATA_DIR!));
+    const inside = (parent: string, child: string) => {
+      const rel = relative(parent, child);
+      return (
+        rel === "" ||
+        !(rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel))
+      );
+    };
+    if (inside(realpathSync(root), geo))
+      throw Error(
+        "GEODATA_DIR muss dauerhaft außerhalb des Programmverzeichnisses liegen.",
+      );
+    if (
+      inside(geo, realpathSync(dataDir)) ||
+      inside(realpathSync(dataDir), geo)
+    )
+      throw Error("Spieldaten und Geodaten benötigen getrennte Verzeichnisse.");
+  }
   return {
     host,
     port,
     publicUrl: url.origin,
     dataDir,
     secure: url.protocol === "https:",
+    ...(IS_GERMANY
+      ? {
+          geodataDir: resolve(root, process.env.GEODATA_DIR!),
+          routerUrl: process.env.GRAPHHOPPER_URL || "http://127.0.0.1:8989",
+        }
+      : {}),
     trustedProxies: (process.env.TRUSTED_PROXIES || "")
       .split(",")
       .map((s) => s.trim())

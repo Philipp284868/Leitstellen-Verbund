@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { parseProjectNews } from "../src/project-news.ts";
 const fallback = JSON.parse(
   await readFile(
@@ -43,3 +44,8 @@ await writeFile(
   new URL("../dist/client/project-news.json", import.meta.url),
   JSON.stringify({ items }, null, 2) + "\n",
 );
+if (existsSync(new URL("../dist/germany/client", import.meta.url)))
+  await writeFile(
+    new URL("../dist/germany/client/project-news.json", import.meta.url),
+    JSON.stringify({ items }, null, 2) + "\n",
+  );

@@ -1,4 +1,7 @@
 import { WORLD } from "../src/world";
+import { WORLD_SEED } from "../src/region";
+import { IS_GERMANY, WORLD_NAME } from "../src/world-choice";
+import { germanyProvider } from "../src/germany/world";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { migrateReports } from "../src/simulation/reports";
 import { updateWeather } from "../src/simulation/weather";
@@ -12,6 +15,35 @@ import { validate, type Save } from "../src/model";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
 export const DATABASE_VERSION = 12;
+/** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
+export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
+  const hasMeta = sql
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'",
+    )
+    .get();
+  const identity = hasMeta
+    ? sql.prepare("SELECT value FROM meta WHERE key='world-identity-v1'").get()
+    : undefined;
+  if (identity && JSON.parse(String(identity.value)).world !== WORLD)
+    throw Error(
+      "Weltkonflikt: Dieses Datenverzeichnis gehört einer anderen Serverwelt.",
+    );
+  if (IS_GERMANY) {
+    const dataset = hasMeta
+      ? sql
+          .prepare("SELECT value FROM meta WHERE key='geodata-dataset-v1'")
+          .get()
+      : undefined;
+    if (
+      ((requireDataset || identity) && !dataset) ||
+      (dataset && dataset.value !== germanyProvider().dataset)
+    )
+      throw Error(
+        "Geodatenversion passt nicht zum Spielstand. Bisheriges Datenpaket weiterverwenden; keine automatische Neuzuordnung.",
+      );
+  }
+}
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -22,21 +54,7 @@ export class Database {
     if (existed) {
       const check = new DatabaseSync(this.path, { readOnly: true });
       try {
-        if (
-          check
-            .prepare(
-              "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'",
-            )
-            .get()
-        ) {
-          const identity = check
-            .prepare("SELECT value FROM meta WHERE key='world-identity-v1'")
-            .get();
-          if (identity && JSON.parse(String(identity.value)).world !== WORLD)
-            throw Error(
-              "Weltkonflikt: Dieses Datenverzeichnis gehört einer anderen Serverwelt.",
-            );
-        }
+        assertWorldMetadata(check);
         for (const table of ["saves", "solo_saves"]) {
           if (
             !check
@@ -53,7 +71,7 @@ export class Database {
               !(WORLD === "falkenried-2" && world === "falkenried-1")
             )
               throw Error(
-                `Weltkonflikt: Datenbestand ${world}, Anwendung ${WORLD}. Bestehende Welt unverändert weiterbetreiben; für Rivermere ein eigenes DATA_DIR verwenden.`,
+                `Weltkonflikt: Datenbestand ${world}, Anwendung ${WORLD}. Bestehende Welt unverändert weiterbetreiben; für ${WORLD_NAME} ein eigenes DATA_DIR verwenden.`,
               );
           }
         }
@@ -267,13 +285,19 @@ export class Database {
             .run(
               JSON.stringify({
                 world: WORLD,
-                seed: WORLD === "rivermere-1" ? 57180908 : 71493,
-                generator: WORLD === "rivermere-1" ? 1 : 3,
+                seed: WORLD_SEED,
+                generator: IS_GERMANY || WORLD === "rivermere-1" ? 1 : 3,
               }),
             );
           this.sql.exec("PRAGMA user_version=12");
           this.audit("server-migration", "world-identity-v12-no-relocation");
         });
+      if (IS_GERMANY)
+        this.sql
+          .prepare(
+            "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
+          )
+          .run(germanyProvider().dataset);
     } catch (e) {
       this.sql.close();
       throw e;

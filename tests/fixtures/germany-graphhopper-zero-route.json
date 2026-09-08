@@ -1,0 +1,48 @@
+{
+  "hints": {
+    "visited_nodes.sum": 0,
+    "visited_nodes.average": 0
+  },
+  "info": {
+    "copyrights": ["GraphHopper", "OpenStreetMap contributors"],
+    "took": 2,
+    "road_data_timestamp": "2026-09-07T20:21:20Z"
+  },
+  "paths": [
+    {
+      "distance": 0,
+      "weight": 0,
+      "time": 0,
+      "transfers": 0,
+      "legs": [],
+      "points_encoded": false,
+      "bbox": [13.404987, 52.520013, 13.404987, 52.520013],
+      "points": {
+        "type": "LineString",
+        "coordinates": [
+          [13.404987, 52.520013],
+          [13.404987, 52.520013]
+        ]
+      },
+      "details": {
+        "edge_id": [],
+        "road_environment": [],
+        "max_speed": [],
+        "road_class": [],
+        "time": [],
+        "car_average_speed": [],
+        "average_speed": [],
+        "street_name": []
+      },
+      "ascend": 0,
+      "descend": 0,
+      "snapped_waypoints": {
+        "type": "LineString",
+        "coordinates": [
+          [13.404987, 52.520013],
+          [13.404987, 52.520013]
+        ]
+      }
+    }
+  ]
+}

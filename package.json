@@ -1,11 +1,14 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.15.0",
+  "version": "2.16.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
+    "build:germany": "node scripts/build-germany.mjs",
+    "start:germany": "node scripts/start-germany.mjs",
+    "geodata": "node scripts/geodata/pipeline.mjs",
     "preview": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -23,6 +26,7 @@
   "dependencies": {
     "dexie": "4.3.0",
     "lucide-react": "0.577.0",
+    "maplibre-gl": "6.8.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "socket.io": "4.8.3",

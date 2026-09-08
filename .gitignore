@@ -4,6 +4,8 @@ test-results/
 playwright-report/
 *.local
 *.log
+__pycache__/
+*.py[cod]
 
 .tools/
 .env

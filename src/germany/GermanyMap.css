@@ -1,0 +1,251 @@
+.germany-map {
+  position: relative;
+  min-height: 560px;
+  background: #243a3d;
+}
+.germany-viewport,
+.germany-scene-map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.germany-viewport {
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  cursor: grab;
+}
+.germany-viewport.dragging,
+.germany-viewport.dragging * {
+  cursor: grabbing !important;
+}
+.germany-viewport .maplibregl-canvas-container,
+.germany-scene-map .maplibregl-canvas-container {
+  position: absolute;
+  inset: 0;
+}
+.germany-viewport .maplibregl-canvas {
+  outline-offset: -3px;
+}
+.germany-labels {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.germany-markers {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.germany-marker {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 4px;
+  border: 2px solid #bfced1;
+  border-radius: 6px;
+  color: #f0f6f4;
+  background: #28556b;
+  box-shadow: 0 2px 7px #07131cb0;
+  font-size: 20px;
+  cursor: pointer;
+}
+.germany-marker svg {
+  width: 19px;
+  height: 19px;
+}
+.germany-marker.mission {
+  background: #af4839;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+}
+.germany-marker.station {
+  background: #36675a;
+}
+.germany-marker.friend {
+  border-color: #cab5ec;
+  border-style: dashed;
+  background: #64557d;
+}
+.germany-marker.selected {
+  outline: 2px solid #e8f8fb;
+  outline-offset: 3px;
+  z-index: 5;
+}
+.germany-marker small {
+  position: absolute;
+  left: 34px;
+  top: 1px;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #0b1b24ed;
+  border: 1px solid #627d8b;
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 11px;
+  color: #eff6f8;
+  pointer-events: none;
+}
+.germany-marker b {
+  font-size: 12px;
+}
+.germany-site-pin {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  color: #91ffe3;
+  border: 2px solid currentColor;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 24px;
+  text-align: center;
+  pointer-events: none;
+  background: #15362dd9;
+}
+.germany-map-message,
+.germany-offline {
+  position: absolute;
+  z-index: 7;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(480px, 75%);
+  background: #102532f5;
+  border: 1px solid #758c95;
+  color: #e4edef;
+  border-radius: 5px;
+  padding: 12px 15px;
+  font-size: 13px;
+  box-shadow: 0 4px 20px #07101866;
+}
+.germany-map-message[role="alert"] {
+  border-color: #c88d70;
+}
+.germany-map-message button {
+  display: block;
+  margin-top: 8px;
+}
+.germany-offline {
+  top: auto;
+  bottom: 85px;
+}
+.germany-map .map-search-results button {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+}
+.germany-map .map-search-results small {
+  color: #8ea8b5;
+  font-size: 10px;
+}
+.germany-map .maplibregl-ctrl-attrib,
+.germany-scene .maplibregl-ctrl-attrib {
+  background: #10212bed;
+  color: #b7cbd3;
+  font-size: 10px;
+  padding: 2px 7px;
+  line-height: 17px;
+  max-width: min(620px, 55vw);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.germany-map .maplibregl-ctrl-attrib a,
+.germany-scene .maplibregl-ctrl-attrib a {
+  color: #b7cbd3;
+}
+.germany-map .maplibregl-ctrl-bottom-right,
+.germany-map .maplibregl-ctrl-bottom-left {
+  z-index: 4;
+}
+.germany-map .maplibregl-ctrl-scale {
+  color: #e4edf0;
+  background: #112833ca;
+  border-color: #aabdc4;
+  margin-bottom: 16px;
+}
+.germany-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+  margin: 0;
+}
+.germany-map .germany-placement {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  width: min(600px, 65%);
+  border: 1px solid #80a294;
+  border-radius: 6px;
+}
+.germany-map .map-vehicle-detail {
+  position: absolute;
+  left: 16px;
+  bottom: 65px;
+  z-index: 4;
+  max-width: 340px;
+  display: grid;
+  border-radius: 5px;
+  background: #102734ec;
+}
+.app.command-hud .germany-map .map-vehicle-detail {
+  left: calc(var(--left-width) + 30px);
+}
+.app.command-hud .germany-map .map-zoom {
+  bottom: 35px;
+}
+.app.command-hud .germany-map .map-control-help {
+  bottom: 78px;
+}
+.app.command-hud .germany-map:has(.germany-viewport.dragging) .germany-markers {
+  pointer-events: none;
+}
+.germany-scene {
+  overflow: hidden;
+}
+.germany-scene.miniature {
+  position: relative;
+  min-height: 120px;
+}
+.germany-scene-error {
+  position: absolute;
+  bottom: 40px;
+  left: 28%;
+  color: #c1d3d8;
+  padding: 8px 12px;
+  background: #0c1d29e0;
+  max-width: 42%;
+  font-size: 12px;
+}
+.germany-scene .maplibregl-ctrl-bottom-right {
+  z-index: 1;
+  bottom: 64px;
+}
+.app.command-hud:has(.germany-map) .hud-feed {
+  bottom: 112px;
+}
+.germany-map input,
+.germany-map textarea {
+  user-select: text;
+}
+@media (max-width: 1100px) {
+  .germany-map .germany-placement {
+    width: 88%;
+  }
+  .germany-map .maplibregl-ctrl-attrib {
+    font-size: 9px;
+  }
+}

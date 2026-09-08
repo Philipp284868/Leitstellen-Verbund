@@ -44,8 +44,22 @@ try {
     "docs/LIZENZEN.md",
     "docs/AMP.md",
     "docs/RUNTIME-PAKET.md",
+    "docs/DEUTSCHLAND.md",
+    "docs/DEUTSCHLAND-DATEN.md",
+    "docs/DEUTSCHLAND-ROUTING.md",
+    "docs/DEUTSCHLAND-HOEHEN.md",
+    "docs/DEUTSCHLAND-LASTPRUEFUNG.md",
+    "docs/DEUTSCHLAND-TESTBERICHT.md",
+    "scripts/start-germany.mjs",
+    "scripts/geodata",
   ])
-    await cp(file, join(stage, file), { recursive: true });
+    await cp(file, join(stage, file), {
+      recursive: true,
+      // Ignored Python caches contain machine paths and timestamped bytecode;
+      // they must not make an otherwise clean release non-reproducible.
+      filter: (path) =>
+        !/(?:^|[\\/])__pycache__(?:[\\/]|$)|\.py[co]$/.test(path),
+    });
   execFileSync(
     process.execPath,
     [

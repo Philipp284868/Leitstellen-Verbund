@@ -18,7 +18,8 @@ import {
   type Duty,
   type Station,
 } from "./simulation/organizations-schema";
-import { hospitalOptions } from "./simulation/hospitals";
+import { useHospitalOptions, DutyLocation } from "./germany/GeoQueries";
+import { IS_GERMANY } from "./world-choice";
 import { nodes, districts, nearest, districtAt } from "./world";
 import { duration } from "./travel";
 import "./Organizations.css";
@@ -218,31 +219,41 @@ export function PersonSettings({
               onChange={(e) => patch({ reachability: Number(e.target.value) })}
             />
           </label>
-          {(["homeNode", "workNode"] as const).map((key) => (
-            <label key={key}>
-              {key === "homeNode" ? "Wohnort" : "Arbeitsort"}
-              <select
-                value={duty[key]}
-                onChange={(e) => patch({ [key]: Number(e.target.value) })}
-              >
-                <option value={duty[key]}>
-                  {districtAt(nodes[duty[key]])} · Standort {duty[key]}
-                </option>
-                {districts.map((d) => (
-                  <option key={d.name} value={nearest(d)}>
-                    {d.name}
-                  </option>
-                ))}
-                <option
-                  value={nearest(
-                    s.buildings.find((b) => b.id === person.home)!.pos,
-                  )}
+          {(["homeNode", "workNode"] as const).map((key) =>
+            IS_GERMANY ? (
+              <DutyLocation
+                key={key}
+                label={key === "homeNode" ? "Wohnort" : "Arbeitsort"}
+                nodeId={duty[key]}
+                home={s.buildings.find((b) => b.id === person.home)!.pos}
+                onChange={(nodeId) => patch({ [key]: nodeId })}
+              />
+            ) : (
+              <label key={key}>
+                {key === "homeNode" ? "Wohnort" : "Arbeitsort"}
+                <select
+                  value={duty[key]}
+                  onChange={(e) => patch({ [key]: Number(e.target.value) })}
                 >
-                  Direkt an der Wache
-                </option>
-              </select>
-            </label>
-          ))}
+                  <option value={duty[key]}>
+                    {districtAt(nodes[duty[key]])} · Standort {duty[key]}
+                  </option>
+                  {districts.map((d) => (
+                    <option key={d.name} value={nearest(d)}>
+                      {d.name}
+                    </option>
+                  ))}
+                  <option
+                    value={nearest(
+                      s.buildings.find((b) => b.id === person.home)!.pos,
+                    )}
+                  >
+                    Direkt an der Wache
+                  </option>
+                </select>
+              </label>
+            ),
+          )}
           <label>
             Anreise
             <select
@@ -376,6 +387,14 @@ export function VehicleStaffing({ s, v }: { s: Save; v: Vehicle }) {
   );
 }
 export function HospitalSettings({ s, b }: { s: Save; b: Building }) {
+  const hospitals = useHospitalOptions(
+    s,
+    b.pos,
+    0,
+    undefined,
+    undefined,
+    b.type === "hospital",
+  );
   const [profile, setProfile] = useState(
     b.hospital ?? {
       open: true,
@@ -384,7 +403,7 @@ export function HospitalSettings({ s, b }: { s: Save; b: Building }) {
     },
   );
   if (b.type !== "hospital") return null;
-  const h = hospitalOptions(s, b.pos, 0).find((h) => h.id === b.id) ?? {
+  const h = hospitals.options.find((h) => h.id === b.id) ?? {
     occupied: 0,
     reserved: 0,
   };
@@ -393,6 +412,10 @@ export function HospitalSettings({ s, b }: { s: Save; b: Building }) {
       <summary>
         Krankenhausaufnahme · {h.occupied} belegt · {h.reserved} zugesagt
       </summary>
+      {hospitals.loading && (
+        <p role="status">Aufnahmekapazitäten werden geladen …</p>
+      )}
+      {hospitals.error && <p role="alert">{hospitals.error}</p>}
       <label>
         <input
           type="checkbox"
@@ -449,9 +472,10 @@ export function HospitalSettings({ s, b }: { s: Save; b: Building }) {
   );
 }
 export function OrganizationTasks({ s, m }: { s: Save; m: Mission }) {
+  const v = s.vehicles.find((v) => v.mission === m.id && vt(v.type).capacity);
+  const hospitals = useHospitalOptions(s, m.pos, 1, m, v, !!m.control?.briefed);
+  const options = hospitals.options;
   if (!m.control?.briefed) return null;
-  const v = s.vehicles.find((v) => v.mission === m.id && vt(v.type).capacity),
-    options = hospitalOptions(s, m.pos, 1, m, v);
   return (
     <section className="organization-tasks" aria-label="Organisationsaufträge">
       <h3>Organisationen im Einsatz</h3>
@@ -491,6 +515,10 @@ export function OrganizationTasks({ s, m }: { s: Save; m: Mission }) {
       )}
       {m.dynamics?.patients.length ? (
         <>
+          {hospitals.loading && (
+            <p role="status">Erreichbare Kliniken werden geladen …</p>
+          )}
+          {hospitals.error && <p role="alert">{hospitals.error}</p>}
           <label>
             Bevorzugtes Krankenhaus
             <select

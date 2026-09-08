@@ -1,6 +1,7 @@
 # Bekannte Grenzen und Roadmap
 
-- Keine fotorealistische 3D-/Satellitenkarte; echte stilisierte Spielwelt.
+- Reale Deutschland-Vektorkarte mit offenem Höhendatensatz; keine fotorealistische 3D-/Satellitenansicht.
+- Noch kein freigegebenes Deutschland-Bootsnetz und keine kantengenaue Umfahrung dynamischer Straßensperren; siehe [[Deutschland]].
 - Kein globaler Serverbrowser; Beitritt über die Adresse des Betreibers.
 - Keine frei konfigurierbare Hierarchie feiner Disponentenrollen; Inhaber/Mitglieder gemäß aktuellem Modell.
 - Kein separater frei startbarer Szenario-Spielmodus; der Einsatzkatalog ist eine Informationsansicht.

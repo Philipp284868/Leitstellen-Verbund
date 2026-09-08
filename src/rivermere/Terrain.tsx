@@ -1,4 +1,4 @@
-import { IS_RIVERMERE } from "../world-choice";
+import { IS_RIVERMERE, IS_GERMANY } from "../world-choice";
 import { memo, useId } from "react";
 import { roads, overpasses, projectRoad, distance } from "../world";
 import { SpatialIndex } from "../spatial";
@@ -27,7 +27,7 @@ type Footprint = {
 };
 const houses = new SpatialIndex<Footprint>();
 export const footprints: Footprint[] = [];
-for (const [ri, road] of (IS_RIVERMERE ? roads : []).entries()) {
+for (const [ri, road] of (IS_RIVERMERE && !IS_GERMANY ? roads : []).entries()) {
   const ruralRoad = road.kind === "country";
   let nextHouse = ruralRoad ? 90 : 5;
   for (let i = 1; i < road.points.length; i++) {
@@ -75,7 +75,7 @@ const overviewBlocks = Array.from({ length: 4 }, (_, tone) =>
     .map((h) => `M${h.x - 4},${h.y - 3}h8v6h-8Z`)
     .join(" "),
 );
-const patches = Array.from({ length: 1500 }, (_, i) => {
+const patches = Array.from({ length: IS_GERMANY ? 0 : 1500 }, (_, i) => {
   const x = random() * extent,
     y = random() * extent,
     rx = 25 + random() * 110,
@@ -113,7 +113,7 @@ const forestShapes = forests.map((f, index) => ({
   ),
 }));
 const groves = forests.map(() => Array.from({ length: 4 }, () => ""));
-if (IS_RIVERMERE)
+if (IS_RIVERMERE && !IS_GERMANY)
   for (let i = 0; i < 9000; i++) {
     const f = forests[i % forests.length],
       x = f.x + (random() * 2 - 1) * f.rx,

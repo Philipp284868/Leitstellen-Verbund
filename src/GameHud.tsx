@@ -1,4 +1,4 @@
-import { WORLD_NAME } from "./world-choice";
+import { WORLD_NAME, IS_GERMANY } from "./world-choice";
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import {
   Radio,
@@ -370,7 +370,10 @@ export function GameHud({
                     <p>
                       {m.control && !m.control.locationKnown
                         ? "Einsatzort noch erfragen"
-                        : `${WORLD_NAME} · ${districtAt(m.pos)}`}
+                        : IS_GERMANY
+                          ? m.control?.secret?.address ||
+                            "Einsatzort auf der Deutschlandkarte"
+                          : `${WORLD_NAME} · ${districtAt(m.pos)}`}
                     </p>
                     <div className="mission-meta">
                       <span

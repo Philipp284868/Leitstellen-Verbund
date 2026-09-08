@@ -1,5 +1,6 @@
 import type { Save } from "./model";
 import { progress } from "./progression";
+import { IS_GERMANY } from "./world-choice";
 import { bt, vt, extensions } from "./catalog";
 import {
   WORLD_WIDTH,
@@ -13,6 +14,8 @@ import {
 } from "./world";
 export function buildReason(s: Save, kind: string, pos?: Point) {
   const t = bt(kind);
+  if (IS_GERMANY && t.water)
+    return "Für Deutschland ist noch kein befahrbares Wasserrettungsnetz verfügbar.";
   if (progress(s.xp).level < t.level)
     return `Freischaltung ab Stufe ${t.level}.`;
   if (s.money < t.price) return "Nicht genügend Credits.";

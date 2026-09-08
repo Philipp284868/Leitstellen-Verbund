@@ -83,12 +83,14 @@ export function attachIncident(s: Save, m: Mission) {
   const seed = s.seed,
     scenario = scenarios[m.template],
     t = mt(m.template);
-  const road = roads.reduce((a, b) =>
-    Math.min(...a.points.map((p) => distance(p, m.pos))) <
-    Math.min(...b.points.map((p) => distance(p, m.pos)))
-      ? a
-      : b,
-  );
+  const road = IS_GERMANY
+    ? null
+    : roads.reduce((a, b) =>
+        Math.min(...a.points.map((p) => distance(p, m.pos))) <
+        Math.min(...b.points.map((p) => distance(p, m.pos)))
+          ? a
+          : b,
+      );
   m.shared = false;
   m.control = {
     priority: "NORMAL",
@@ -105,7 +107,9 @@ export function attachIncident(s: Save, m: Mission) {
     secret: {
       seed,
       report: scenario?.report ?? m.template,
-      address: `${road.name} ${1 + (seed % 89)}, ${districtAt(m.pos)}`,
+      address: IS_GERMANY
+        ? addressAt(m.pos)
+        : `${road!.name} ${1 + (seed % 89)}, ${districtAt(m.pos)}`,
       people:
         scenario?.people ??
         (t.patients
@@ -338,3 +342,5 @@ export function callAction(
     actor,
   );
 }
+import { IS_GERMANY } from "../world-choice";
+import { addressAt } from "../germany/world";

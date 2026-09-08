@@ -1,0 +1,15 @@
+{
+  "version": "11.0",
+  "import_date": "2026-09-07T12:00:00Z",
+  "data_date": "2026-09-07T10:00:00Z",
+  "bbox": [13.3, 52.4, 13.5, 52.6],
+  "profiles": [{ "name": "car" }],
+  "elevation": false,
+  "encoded_values": {
+    "car_access": ["true", "false"],
+    "car_average_speed": [">number", "<number"],
+    "road_class": ["RESIDENTIAL", "PRIMARY"],
+    "road_environment": ["ROAD", "BRIDGE", "TUNNEL"],
+    "max_speed": [">number", "<number"]
+  }
+}

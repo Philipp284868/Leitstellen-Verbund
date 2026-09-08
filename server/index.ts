@@ -1,4 +1,12 @@
 import { deskOwner } from "./workspaces";
+import { IS_GERMANY } from "../src/world-choice";
+import { prepareGeography, type Geography } from "./germany/runtime";
+import { germanyProvider } from "../src/germany/world";
+import { inBounds } from "../src/germany/projection";
+import { buildReason } from "../src/purchase";
+import { approach } from "../src/travel";
+import { hospitalOptions } from "../src/simulation/hospitals";
+import { alarmSchema } from "../src/simulation/schema";
 import {
   createServer,
   type IncomingMessage,
@@ -6,7 +14,8 @@ import {
 } from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve, extname } from "node:path";
-import { Server } from "socket.io";
+import { Server, type Socket } from "socket.io";
+import { RouteSnapshotEncoder } from "./germany/snapshots";
 import { z } from "zod";
 import { config, root, type Config } from "./config";
 import { Database } from "./database";
@@ -41,8 +50,11 @@ async function body(req: IncomingMessage) {
 }
 export function startServer(
   c: Config,
-  clientDir = resolve(root, "dist/client"),
+  clientDir = resolve(root, IS_GERMANY ? "dist/germany/client" : "dist/client"),
+  geography?: Geography,
 ) {
+  if (IS_GERMANY && !geography)
+    throw Error("Deutschland-Geodaten vor dem Serverstart initialisieren.");
   const release = acquireLock(c.dataDir);
   let db: Database;
   try {
@@ -120,7 +132,20 @@ export function startServer(
     try {
       if (stopping)
         return reply(res, 503, { error: "Server wird angehalten." });
-      const path = new URL(req.url || "/", c.publicUrl).pathname;
+      const requestUrl = new URL(req.url || "/", c.publicUrl);
+      const path = requestUrl.pathname;
+      if (path.startsWith("/geo/") && geography) {
+        if (req.method !== "GET")
+          return reply(res, 405, { error: "GET erforderlich." });
+        if (
+          path !== "/geo/manifest" &&
+          !path.startsWith("/geo/tiles/") &&
+          !path.startsWith("/geo/dem/")
+        )
+          auth.limit(`geo:${ip(req)}`, 120, 60000);
+        if (geography.maps.handle(path, requestUrl, res)) return;
+        return reply(res, 404, { error: "Geodaten-Endpunkt nicht verfügbar." });
+      }
       if (path === "/api/health" && req.method === "GET")
         return reply(res, failed ? 503 : 200, { ok: !failed });
       // Retired privileged endpoints are not available to anybody, including former administrators.
@@ -173,6 +198,67 @@ export function startServer(
           return reply(res, 200, { ok: true });
         }
         if (!session) return reply(res, 401, { error: "Bitte anmelden." });
+        if (path.startsWith("/api/geo/") && IS_GERMANY) {
+          if (req.method !== "GET")
+            return reply(res, 405, { error: "GET erforderlich." });
+          auth.limit(`geo-player:${session.user_id}`, 120, 60000);
+          const params = requestUrl.searchParams,
+            p = { x: Number(params.get("x")), y: Number(params.get("y")) };
+          if (!params.has("x") || !params.has("y") || !inBounds(p))
+            return reply(res, 400, { error: "Ungültiger Kartenstandort." });
+          const s = game.view(session.user_id, online(), mode).save;
+          if (path === "/api/geo/site") {
+            const kind = params.get("type") || "fire",
+              anchor = germanyProvider().nearest(p);
+            const reason =
+              params.get("purpose") === "staff"
+                ? germanyProvider().isLandSite(anchor)
+                  ? null
+                  : "Wohn- und Arbeitsorte benötigen einen zugänglichen Straßenstandort an Land."
+                : buildReason(s, kind, p) || null;
+            return reply(res, 200, {
+              point: { x: anchor.x, y: anchor.y },
+              nodeId: anchor.id,
+              reason,
+            });
+          }
+          const vehicleId = params.get("vehicle"),
+            missionId = params.get("mission");
+          const v = vehicleId
+            ? s.vehicles.find((v) => v.id === vehicleId)
+            : undefined;
+          const m = missionId
+            ? s.missions.find((m) => m.id === missionId)
+            : undefined;
+          if ((vehicleId && !v) || (missionId && !m))
+            return reply(res, 403, {
+              error: "Objekt gehört nicht zur berechtigten Leitstelle.",
+            });
+          if (path === "/api/geo/approach") {
+            if (!v) return reply(res, 400, { error: "Fahrzeug fehlt." });
+            const travel = z
+              .enum(["normal", "priority", "emergency"])
+              .parse(params.get("mode") || "priority");
+            const alarm = params.get("alarm")
+              ? alarmSchema.parse(params.get("alarm"))
+              : undefined;
+            return reply(res, 200, { text: approach(s, v, p, travel, alarm) });
+          }
+          if (path === "/api/geo/hospitals") {
+            const seats = z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100)
+              .parse(params.get("seats") || "0");
+            return reply(res, 200, {
+              options: hospitalOptions(s, p, seats, m, v),
+            });
+          }
+          return reply(res, 404, {
+            error: "Geodaten-Endpunkt nicht verfügbar.",
+          });
+        }
         if (
           req.method === "POST" &&
           req.headers["x-csrf-token"] !== session.csrf
@@ -239,8 +325,8 @@ export function startServer(
             });
           auth.limit(`action:${session.user_id}`, 60, 1000);
           game.command(session.user_id, await body(req), mode);
-          publish();
-          return reply(res, 200, game.view(session.user_id, online(), mode));
+          const publishedView = publish();
+          return reply(res, 200, publishedView(session.user_id, mode));
         }
         if (path === "/api/archive-export" && req.method === "GET") {
           const row = db.sql
@@ -364,10 +450,7 @@ export function startServer(
     next();
   });
   io.on("connection", (socket) => {
-    socket.emit(
-      "snapshot",
-      game.view(socket.data.user, online(), socket.data.mode),
-    );
+    deliverSnapshot(socket, online());
     socket.on("chat", (input: unknown) => {
       try {
         const session = auth.session(socket.request.headers.cookie);
@@ -400,16 +483,45 @@ export function startServer(
       }
     });
   });
+  const encoders = new WeakMap<Socket, RouteSnapshotEncoder>();
+  function deliverSnapshot(
+    socket: Socket,
+    peers: Set<string>,
+    view = game.view(socket.data.user, peers, socket.data.mode),
+  ) {
+    if (IS_GERMANY && socket.handshake.auth.routeSnapshots === 1) {
+      let encoder = encoders.get(socket);
+      if (!encoder) {
+        encoder = new RouteSnapshotEncoder();
+        encoders.set(socket, encoder);
+      }
+      socket.emit("snapshot", encoder.encode(view));
+    } else socket.emit("snapshot", view);
+  }
   function publish() {
     const peers = online();
+    // Reuse only within this synchronous publication. Different actors must
+    // retain their own permissions/workspace even when they share a dispatch.
+    const views = new Map<string, ReturnType<typeof game.view>>();
+    const viewFor = (actor: string, mode: ReturnType<typeof parseMode>) => {
+      const key = JSON.stringify([actor, mode]);
+      let view = views.get(key);
+      if (!view) {
+        view = game.view(actor, peers, mode);
+        views.set(key, view);
+      }
+      return view;
+    };
     for (const socket of io.sockets.sockets.values()) {
       if (!auth.session(socket.request.headers.cookie)) socket.disconnect(true);
       else
-        socket.emit(
-          "snapshot",
-          game.view(socket.data.user, peers, socket.data.mode),
+        deliverSnapshot(
+          socket,
+          peers,
+          viewFor(socket.data.user, socket.data.mode),
         );
     }
+    return viewFor;
   }
   let last = Date.now();
   const timer = setInterval(() => {
@@ -470,13 +582,21 @@ export function startServer(
         } finally {
           db.close();
           release();
+          await geography?.close();
         }
       })()),
   };
 }
 if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   const c = config(),
-    app = startServer(c);
+    geography = await prepareGeography(c);
+  let app: ReturnType<typeof startServer>;
+  try {
+    app = startServer(c, undefined, geography);
+  } catch (error) {
+    await geography?.close();
+    throw error;
+  }
   try {
     await app.listen();
   } catch (e) {
@@ -500,4 +620,14 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
+  if (process.connected) process.once("disconnect", stop);
+  process.on("message", (message) => {
+    if (
+      message &&
+      typeof message === "object" &&
+      "type" in message &&
+      message.type === "shutdown"
+    )
+      stop();
+  });
 }
