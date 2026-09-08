@@ -9,6 +9,7 @@ import { nodes, nearest } from "../../src/world";
 import { alarm } from "../../src/simulation/dispatch";
 import { tick } from "../../src/engine";
 import { phaseFixture } from "../phase-fixture";
+test.use({ actionTimeout: 15000 });
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -232,4 +233,43 @@ test("Abbruch, HUD-Grenzen, Bauvorschau und erneutes Öffnen bleiben sicher", as
   await expect(
     page.getByRole("button", { name: "Bau abbrechen", exact: true }),
   ).toHaveCount(0);
+});
+
+test("CSS-Pixelschwelle bleibt bei doppelter Pixeldichte korrekt", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 1920, height: 1080 },
+    deviceScaleFactor: 2,
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto(origin);
+    await page.getByLabel("Benutzername", { exact: true }).fill("reference");
+    await page
+      .getByLabel("Passwort", { exact: true })
+      .fill("Reference-password-123!");
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+    await page.getByRole("button", { name: "Spielen", exact: true }).click();
+    const map = page.locator("svg.map"),
+      before = await map.getAttribute("viewBox");
+    await page.mouse.move(950, 500);
+    await page.mouse.down();
+    await page.mouse.move(946, 500);
+    await expect(map).not.toHaveClass(/dragging/);
+    await expect(map).toHaveAttribute("viewBox", before!);
+    await page.mouse.move(944, 500);
+    await expect(map).toHaveClass(/dragging/);
+    await page.mouse.up();
+    const after = (await map.getAttribute("viewBox"))!.split(" ").map(Number);
+    expect(after[0] - Number(before!.split(" ")[0])).toBeCloseTo(
+      (6 * 1300) / 1920,
+      2,
+    );
+    await map.focus();
+    await page.keyboard.press("Control+-");
+    await expect(map).toHaveAttribute("viewBox", after.join(" "));
+  } finally {
+    await context.close();
+  }
 });

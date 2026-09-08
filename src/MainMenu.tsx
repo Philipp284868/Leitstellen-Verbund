@@ -1,3 +1,4 @@
+import { WORLD_NAME } from "./world-choice";
 import {
   Radio,
   Play,
@@ -173,7 +174,9 @@ export function MainMenu({
             <Building2 />
             <div>
               <strong>{s.player.station}</strong>
-              <small>Falkenried · {modeName(mode)}</small>
+              <small>
+                {WORLD_NAME} · {modeName(mode)}
+              </small>
             </div>
           </div>
           <dl className="menu-stats">

@@ -1,3 +1,4 @@
+import { IS_RIVERMERE } from "./world-choice";
 import type { Save } from "./model";
 import { vt, mt, bt } from "./catalog";
 import {
@@ -24,17 +25,20 @@ export function validLegacySite(p: Point, water: boolean) {
 // Allocate each old parcel a distinct roadside location. Shared coordinates remain
 // identical for every account, without collapsing neighboring old stations.
 const reserved = [publicHospital, ...docks];
-const mapped = legacyNodes.map((p, i) => {
-  if (i === 58) return publicHospital;
-  const dock = [76, 89, 102].indexOf(i);
-  if (dock >= 0) return docks[dock];
-  const candidate = [...originalNodes]
-    .sort((a, b) => distance(a, p) - distance(b, p))
-    .find((n) => reserved.every((q) => distance(n, q) >= 22));
-  if (!candidate) throw Error("Kartenmigration: Kein freier Ersatzbauplatz.");
-  reserved.push(candidate);
-  return candidate;
-});
+const mapped = IS_RIVERMERE
+  ? []
+  : legacyNodes.map((p, i) => {
+      if (i === 58) return publicHospital;
+      const dock = [76, 89, 102].indexOf(i);
+      if (dock >= 0) return docks[dock];
+      const candidate = [...originalNodes]
+        .sort((a, b) => distance(a, p) - distance(b, p))
+        .find((n) => reserved.every((q) => distance(n, q) >= 22));
+      if (!candidate)
+        throw Error("Kartenmigration: Kein freier Ersatzbauplatz.");
+      reserved.push(candidate);
+      return candidate;
+    });
 /** Coordinate-only migration: IDs, ownership, rewards, assignments and trip clocks stay intact. */
 export function migrateMap(s: Save): Save {
   const relocate = (p: Point, water = false): Point => {

@@ -1,3 +1,11 @@
+import { IS_RIVERMERE } from "./world-choice";
+import {
+  roadSpecs as rivermereSpecs,
+  settlements,
+  quarters,
+  river,
+  riverDistance,
+} from "./rivermere/geography";
 import { SpatialIndex } from "./spatial";
 import { fastestPath, type Link } from "./routing";
 import { extendedRoadSpecs, regionTowns } from "./region-extension";
@@ -5,7 +13,7 @@ import { METERS_PER_UNIT } from "./region";
 import { regionalRoads, towns } from "./region";
 export { WORLD_WIDTH, WORLD_HEIGHT, METERS_PER_UNIT } from "./region";
 /** Fictional region: rendered streets and routing use the same curved geometry. */
-export const WORLD = "falkenried-2";
+export const WORLD = IS_RIVERMERE ? "rivermere-1" : "falkenried-2";
 export const LEGACY_WORLD = "falkenried-1";
 export interface Point {
   x: number;
@@ -13,19 +21,21 @@ export interface Point {
 }
 export const distance = (a: Point, b: Point) =>
   Math.hypot(a.x - b.x, a.y - b.y);
-export const districts = [
-  ...towns,
-  ...regionTowns,
-  { name: "ALTSTADT", x: 565, y: 360 },
-  { name: "NORDHÖHE", x: 515, y: 170 },
-  { name: "LINDENAU", x: 180, y: 165 },
-  { name: "WESTEND", x: 345, y: 420 },
-  { name: "GEWERBEPARK", x: 815, y: 320 },
-  { name: "SÜDSTADT", x: 560, y: 600 },
-  { name: "MÜHLENDORF", x: 185, y: 660 },
-  { name: "SEEBRUCK", x: 865, y: 675 },
-  { name: "FALKENFORST", x: 1135, y: 145 },
-];
+export const districts = IS_RIVERMERE
+  ? [...settlements, ...quarters]
+  : [
+      ...towns,
+      ...regionTowns,
+      { name: "ALTSTADT", x: 565, y: 360 },
+      { name: "NORDHÖHE", x: 515, y: 170 },
+      { name: "LINDENAU", x: 180, y: 165 },
+      { name: "WESTEND", x: 345, y: 420 },
+      { name: "GEWERBEPARK", x: 815, y: 320 },
+      { name: "SÜDSTADT", x: 560, y: 600 },
+      { name: "MÜHLENDORF", x: 185, y: 660 },
+      { name: "SEEBRUCK", x: 865, y: 675 },
+      { name: "FALKENFORST", x: 1135, y: 145 },
+    ];
 type RoadKind = "main" | "street" | "lane" | "country";
 // Matching waypoint coordinates connect junctions across named streets.
 const specs: [string, RoadKind, number[][]][] = [
@@ -442,8 +452,9 @@ const specs: [string, RoadKind, number[][]][] = [
     ],
   ],
 ];
+if (IS_RIVERMERE) specs.splice(0, specs.length, ...rivermereSpecs());
 const originalRoadCount = specs.length;
-specs.push(...regionalRoads);
+if (!IS_RIVERMERE) specs.push(...regionalRoads);
 export const nodes: Point[] = [];
 export const edges: [number, number][] = [];
 const index = new Map<string, number>();
@@ -484,7 +495,13 @@ const makeRoad = (
           (-a[k] + c[k]) * t +
           (2 * a[k] - 5 * b[k] + 4 * c[k] - d[k]) * t2 +
           (-a[k] + 3 * b[k] - 3 * c[k] + d[k]) * t3);
-      ids.push(add({ x: component("x"), y: component("y") }));
+      ids.push(
+        add(
+          IS_RIVERMERE
+            ? { x: b.x + (c.x - b.x) * t, y: b.y + (c.y - b.y) * t }
+            : { x: component("x"), y: component("y") },
+        ),
+      );
     }
   }
   ids.push(add(anchors.at(-1)!));
@@ -500,44 +517,83 @@ const segments = roads.flatMap((road, r) =>
 const cuts = new Map<string, { t: number; id: number }[]>();
 const cross = (ax: number, ay: number, bx: number, by: number) =>
   ax * by - ay * bx;
-for (let i = 0; i < segments.length; i++)
-  for (let j = i + 1; j < segments.length; j++) {
-    const a = segments[i],
-      b = segments[j];
-    if (
-      (a.r < originalRoadCount && b.r < originalRoadCount) ||
-      a.a === b.a ||
-      a.a === b.b ||
-      a.b === b.a ||
-      a.b === b.b
+const crossingPairs: [number, number][] = [];
+if (IS_RIVERMERE) {
+  const cells = new Map<string, number[]>(),
+    seen = new Set<string>();
+  segments.forEach((s, i) => {
+    const a = nodes[s.a],
+      b = nodes[s.b];
+    for (
+      let x = Math.floor(Math.min(a.x, b.x) / 64);
+      x <= Math.floor(Math.max(a.x, b.x) / 64);
+      x++
     )
-      continue;
-    const p = nodes[a.a],
-      q = nodes[a.b],
-      u = nodes[b.a],
-      v = nodes[b.b];
-    if (
-      Math.max(p.x, q.x) < Math.min(u.x, v.x) ||
-      Math.max(u.x, v.x) < Math.min(p.x, q.x) ||
-      Math.max(p.y, q.y) < Math.min(u.y, v.y) ||
-      Math.max(u.y, v.y) < Math.min(p.y, q.y)
-    )
-      continue;
-    const den = cross(q.x - p.x, q.y - p.y, v.x - u.x, v.y - u.y);
-    if (Math.abs(den) < 1e-9) continue;
-    const t = cross(u.x - p.x, u.y - p.y, v.x - u.x, v.y - u.y) / den;
-    const w = cross(u.x - p.x, u.y - p.y, q.x - p.x, q.y - p.y) / den;
-    if (t <= 1e-5 || t >= 1 - 1e-5 || w <= 1e-5 || w >= 1 - 1e-5) continue;
-    const id = nodes.length;
-    nodes.push({ x: p.x + t * (q.x - p.x), y: p.y + t * (q.y - p.y) });
-    for (const [segment, fraction] of [
-      [a, t],
-      [b, w],
-    ] as const) {
-      const key = `${segment.r}:${segment.i}`;
-      cuts.set(key, [...(cuts.get(key) ?? []), { t: fraction, id }]);
-    }
+      for (
+        let y = Math.floor(Math.min(a.y, b.y) / 64);
+        y <= Math.floor(Math.max(a.y, b.y) / 64);
+        y++
+      ) {
+        const key = `${x}:${y}`,
+          group = cells.get(key) || [];
+        for (const j of group) {
+          const pair = `${j}:${i}`;
+          if (!seen.has(pair)) {
+            seen.add(pair);
+            crossingPairs.push([j, i]);
+          }
+        }
+        group.push(i);
+        cells.set(key, group);
+      }
+  });
+}
+function* pairs(): Generator<[number, number]> {
+  if (IS_RIVERMERE) yield* crossingPairs;
+  else
+    for (let i = 0; i < segments.length; i++)
+      for (let j = i + 1; j < segments.length; j++) yield [i, j];
+}
+for (const [i, j] of pairs()) {
+  const a = segments[i],
+    b = segments[j];
+  if (
+    (!IS_RIVERMERE && a.r < originalRoadCount && b.r < originalRoadCount) ||
+    (IS_RIVERMERE &&
+      (roads[a.r].name === "Rivermere – Eastgate" ||
+        roads[b.r].name === "Rivermere – Eastgate")) ||
+    a.a === b.a ||
+    a.a === b.b ||
+    a.b === b.a ||
+    a.b === b.b
+  )
+    continue;
+  const p = nodes[a.a],
+    q = nodes[a.b],
+    u = nodes[b.a],
+    v = nodes[b.b];
+  if (
+    Math.max(p.x, q.x) < Math.min(u.x, v.x) ||
+    Math.max(u.x, v.x) < Math.min(p.x, q.x) ||
+    Math.max(p.y, q.y) < Math.min(u.y, v.y) ||
+    Math.max(u.y, v.y) < Math.min(p.y, q.y)
+  )
+    continue;
+  const den = cross(q.x - p.x, q.y - p.y, v.x - u.x, v.y - u.y);
+  if (Math.abs(den) < 1e-9) continue;
+  const t = cross(u.x - p.x, u.y - p.y, v.x - u.x, v.y - u.y) / den;
+  const w = cross(u.x - p.x, u.y - p.y, q.x - p.x, q.y - p.y) / den;
+  if (t <= 1e-5 || t >= 1 - 1e-5 || w <= 1e-5 || w >= 1 - 1e-5) continue;
+  const id = nodes.length;
+  nodes.push({ x: p.x + t * (q.x - p.x), y: p.y + t * (q.y - p.y) });
+  for (const [segment, fraction] of [
+    [a, t],
+    [b, w],
+  ] as const) {
+    const key = `${segment.r}:${segment.i}`;
+    cuts.set(key, [...(cuts.get(key) ?? []), { t: fraction, id }]);
   }
+}
 for (const [r, road] of roads.entries()) {
   road.ids = road.ids.flatMap((id, i) => [
     id,
@@ -547,7 +603,10 @@ for (const [r, road] of roads.entries()) {
 }
 // Append after the old intersection pass: legacy node IDs remain byte-for-byte stable.
 // New crossings are grade-separated; only shared authored anchors form junctions.
-roads.push(...extendedRoadSpecs().map((r, i) => makeRoad(r, specs.length + i)));
+if (!IS_RIVERMERE)
+  roads.push(
+    ...extendedRoadSpecs().map((r, i) => makeRoad(r, specs.length + i)),
+  );
 edges.length = 0;
 for (const road of roads)
   for (let i = 1; i < road.ids.length; i++)
@@ -573,12 +632,26 @@ export function nearest(p: Point) {
   }
   throw Error("Position außerhalb der Region.");
 }
-export const publicHospital = nodes[nearest({ x: 623, y: 610 })];
-export const docks = [
-  { x: 1010, y: 610 },
-  { x: 1035, y: 700 },
-  { x: 1020, y: 763 },
-];
+export const publicHospital =
+  nodes[nearest(IS_RIVERMERE ? { x: 4300, y: 4500 } : { x: 623, y: 610 })];
+export const docks = IS_RIVERMERE
+  ? [
+      ...[
+        { x: 4200, y: 3600 },
+        { x: 4100, y: 4000 },
+        { x: 5000, y: 5000 },
+      ].map((target) => {
+        const candidates = nodes.filter((p) => riverDistance(p) < 20);
+        return candidates.reduce((a, b) =>
+          distance(a, target) < distance(b, target) ? a : b,
+        );
+      }),
+    ]
+  : [
+      { x: 1010, y: 610 },
+      { x: 1035, y: 700 },
+      { x: 1020, y: 763 },
+    ];
 export const isWaterSite = (p: Point) => docks.some((d) => distance(d, p) < 22);
 export const districtAt = (p: Point) =>
   districts.reduce((a, b) => (distance(a, p) < distance(b, p) ? a : b)).name;
@@ -593,6 +666,7 @@ export type RoadSection = {
   direction: "both";
   source: "world-rule";
   access: "road";
+  bridge?: boolean;
 };
 export const roadSections: RoadSection[] = roads.flatMap((r) =>
   r.ids.slice(1).map((b, i) => ({
@@ -612,6 +686,12 @@ export const roadSections: RoadSection[] = roads.flatMap((r) =>
     direction: "both" as const,
     source: "world-rule" as const,
     access: "road" as const,
+    ...(IS_RIVERMERE
+      ? {
+          bridge:
+            riverDistance(nodes[r.ids[i]]) < 50 || riverDistance(nodes[b]) < 50,
+        }
+      : {}),
   })),
 );
 const adjacency: Link[][] = nodes.map(() => []);
@@ -749,6 +829,38 @@ function findRoute(
   if (mode === "water") {
     if (!isWaterSite(a) || !isWaterSite(b))
       throw Error("Boote benötigen einen Wasserzugang.");
+    if (IS_RIVERMERE) {
+      const project = (p: Point) => {
+        let best = { point: river[0], index: 0, distance: Infinity };
+        for (let i = 1; i < river.length; i++) {
+          const u = river[i - 1],
+            v = river[i],
+            dx = v.x - u.x,
+            dy = v.y - u.y;
+          const t = Math.max(
+            0,
+            Math.min(
+              1,
+              ((p.x - u.x) * dx + (p.y - u.y) * dy) / (dx * dx + dy * dy),
+            ),
+          );
+          const point = { x: u.x + dx * t, y: u.y + dy * t },
+            d = distance(p, point);
+          if (d < best.distance)
+            best = { point, index: i - 1 + t, distance: d };
+        }
+        return best;
+      };
+      const first = project(a),
+        last = project(b);
+      const middle = river.filter(
+        (_, i) =>
+          i > Math.min(first.index, last.index) &&
+          i < Math.max(first.index, last.index),
+      );
+      if (first.index > last.index) middle.reverse();
+      return [a, first.point, ...middle, last.point, b];
+    }
     return [a, { x: 1115, y: a.y }, { x: 1115, y: b.y }, b];
   }
   const start = projectRoad(a),

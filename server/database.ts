@@ -1,3 +1,4 @@
+import { WORLD } from "../src/world";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { migrateReports } from "../src/simulation/reports";
 import { updateWeather } from "../src/simulation/weather";
@@ -10,7 +11,7 @@ import { validate, type Save } from "../src/model";
 
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 11;
+export const DATABASE_VERSION = 12;
 export class Database {
   sql: DatabaseSync;
   path: string;
@@ -18,6 +19,48 @@ export class Database {
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     this.path = resolve(dir, "game.sqlite");
     const existed = existsSync(this.path);
+    if (existed) {
+      const check = new DatabaseSync(this.path, { readOnly: true });
+      try {
+        if (
+          check
+            .prepare(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'",
+            )
+            .get()
+        ) {
+          const identity = check
+            .prepare("SELECT value FROM meta WHERE key='world-identity-v1'")
+            .get();
+          if (identity && JSON.parse(String(identity.value)).world !== WORLD)
+            throw Error(
+              "Weltkonflikt: Dieses Datenverzeichnis gehört einer anderen Serverwelt.",
+            );
+        }
+        for (const table of ["saves", "solo_saves"]) {
+          if (
+            !check
+              .prepare(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+              )
+              .get(table)
+          )
+            continue;
+          for (const row of check.prepare(`SELECT data FROM ${table}`).all()) {
+            const world = JSON.parse(String(row.data)).world;
+            if (
+              world !== WORLD &&
+              !(WORLD === "falkenried-2" && world === "falkenried-1")
+            )
+              throw Error(
+                `Weltkonflikt: Datenbestand ${world}, Anwendung ${WORLD}. Bestehende Welt unverändert weiterbetreiben; für Rivermere ein eigenes DATA_DIR verwenden.`,
+              );
+          }
+        }
+      } finally {
+        check.close();
+      }
+    }
     this.sql = new DatabaseSync(this.path);
     try {
       this.sql.exec(
@@ -214,6 +257,22 @@ export class Database {
             for (const [id, s] of this.all(mode)) this.save(id, s, mode);
           this.sql.exec("PRAGMA user_version=11");
           this.audit("server-migration", "progression-region-motion-v11");
+        });
+      if (version < 12)
+        this.transaction(() => {
+          this.sql
+            .prepare(
+              "INSERT INTO meta(key,value) VALUES('world-identity-v1',?) ON CONFLICT(key) DO NOTHING",
+            )
+            .run(
+              JSON.stringify({
+                world: WORLD,
+                seed: WORLD === "rivermere-1" ? 57180908 : 71493,
+                generator: WORLD === "rivermere-1" ? 1 : 3,
+              }),
+            );
+          this.sql.exec("PRAGMA user_version=12");
+          this.audit("server-migration", "world-identity-v12-no-relocation");
         });
     } catch (e) {
       this.sql.close();

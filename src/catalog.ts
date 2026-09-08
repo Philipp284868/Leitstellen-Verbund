@@ -1,3 +1,4 @@
+import { WORLD_NAME } from "./world-choice";
 import { unlockLevel } from "./progression";
 export type Org =
   | "Feuerwehr"
@@ -297,7 +298,7 @@ const m = (
   patients,
   level,
   water,
-  description: `${name} in der Region Falkenried. Lage erkunden, benötigte Kräfte bereitstellen und die Gefahrenstelle sichern.`,
+  description: `${name} in der Region ${WORLD_NAME}. Lage erkunden, benötigte Kräfte bereitstellen und die Gefahrenstelle sichern.`,
 });
 export const missions: Template[] = [
   m("bin", "Müllbehälterbrand", "Feuerwehr", { fire: 1 }, 20, 6500),

@@ -1,3 +1,4 @@
+import { IS_RIVERMERE } from "../src/world-choice";
 import { existsSync, realpathSync, mkdirSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 import { resolve, relative, isAbsolute, sep } from "node:path";
@@ -38,6 +39,10 @@ export function config(): Config {
   )
     throw Error(
       "Öffentlicher Betrieb benötigt HTTPS; ALLOW_HTTP=true ist nur für ein privates Testnetz.",
+    );
+  if (IS_RIVERMERE && !process.env.DATA_DIR)
+    throw Error(
+      "Rivermere benötigt ein ausdrücklich gesetztes eigenes DATA_DIR. Bestehende Welten werden nicht umgestellt.",
     );
   const dataDir = resolve(
     process.env.DATA_DIR || resolve(root, "../leitstellen-data"),

@@ -2,7 +2,7 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.14.0
+## Version 2.15.0
 
 Anmelden → **Spielen** → berechtigte Leitstelle betreten. Der verbundene Server wird mit seiner tatsächlichen Adresse angezeigt. **Leitstellen** öffnet gemeinsame Disponenten und ausdrückliche Nachbarhilfe. Unabhängige Leitstellen teilen neue Einsätze nicht automatisch.
 
@@ -31,6 +31,7 @@ Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration
 - [AMP-Betrieb, Sicherung und Wiederherstellung](docs/AMP.md)
 - [Notruf/AAO/FMS](docs/PHASE-1.md), [Dynamik](docs/PHASE-2.md), [Organisationen und Nachbarhilfe](docs/PHASE-3.md), [Großlagen](docs/PHASE-4.md), [Auswertung](docs/PHASE-5.md)
 - [Level, Freischaltungen und Straßenfahrzeiten](docs/PROGRESSION-KARTE.md)
+- [Rivermere: neue Serverwelt, Kartensteuerung und geschützter Betrieb](docs/RIVERMERE.md)
 - [Abnahme, Bildschirmaufnahmen und offene Einrichtungsschritte](docs/ABNAHME-PC-MULTIPLAYER.md)
 - [Bestandsaufnahme und Umstellungsverlauf](docs/PC-MULTIPLAYER-UMSTELLUNG.md)
 - [Roadmap/Auftrag](https://github.com/Philipp284868/Leitstellen-Verbund/issues/19) · [Fehler melden](https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose) · [Community](https://github.com/Philipp284868/Leitstellen-Verbund/discussions) · [Releases](https://github.com/Philipp284868/Leitstellen-Verbund/releases)

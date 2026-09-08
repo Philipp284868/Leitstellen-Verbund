@@ -7,6 +7,7 @@ for (const args of [
   ["node_modules/vite/bin/vite.js", "build"],
   ["scripts/build-server.mjs"],
   ["scripts/sync-project-news.mjs"],
+  ["scripts/build-rivermere.mjs"],
 ]) {
   await new Promise((done, reject) => {
     const child = spawn(process.execPath, args, {

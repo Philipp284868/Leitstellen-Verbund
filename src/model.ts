@@ -273,6 +273,7 @@ export function validate(data: unknown): Save {
     typeof data === "object" &&
     data !== null &&
     "world" in data &&
+    WORLD === "falkenried-2" &&
     data.world === LEGACY_WORLD;
   const s: Save = legacy
     ? {

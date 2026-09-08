@@ -1,3 +1,4 @@
+import { IS_RIVERMERE } from "./world-choice";
 import { memo } from "react";
 import { MapTerrain } from "./MapTerrain";
 import type { Save } from "./model";
@@ -14,18 +15,18 @@ export const RegionScene = memo(function RegionScene({
   return (
     <svg
       className={`region-scene ${miniature ? "miniature" : ""}`}
-      viewBox="30 0 1280 850"
+      viewBox={IS_RIVERMERE ? "1700 1700 5400 4300" : "30 0 1280 850"}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
       <MapTerrain
         labels={!miniature}
-        zoom={1}
-        x={0}
-        y={0}
-        width={1400}
-        height={900}
-        unitsPerPixel={1}
+        zoom={IS_RIVERMERE ? 0.3 : 1}
+        x={IS_RIVERMERE ? 1700 : 0}
+        y={IS_RIVERMERE ? 1700 : 0}
+        width={IS_RIVERMERE ? 5400 : 1400}
+        height={IS_RIVERMERE ? 4300 : 900}
+        unitsPerPixel={IS_RIVERMERE ? 3 : 1}
       />
       {!miniature &&
         save.buildings.map((b) => (

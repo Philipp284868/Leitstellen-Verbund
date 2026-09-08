@@ -1,3 +1,5 @@
+import { IS_RIVERMERE } from "./world-choice";
+import { Terrain } from "./rivermere/Terrain";
 import { SpatialIndex } from "./spatial";
 import { towns, WORLD_WIDTH, WORLD_HEIGHT, WORLD_SEED } from "./region";
 import { memo, useId } from "react";
@@ -45,7 +47,7 @@ const houses: {
   tone: number;
 }[] = [];
 const houseIndex = new SpatialIndex<(typeof houses)[number]>();
-for (const road of roads) {
+for (const road of IS_RIVERMERE ? [] : roads) {
   for (let i = 1; i < road.points.length - 1; i++) {
     for (const fraction of [0.2, 0.5, 0.8]) {
       const p = {
@@ -107,7 +109,7 @@ for (const road of roads) {
   }
 }
 const trees: { x: number; y: number; r: number }[] = [];
-for (let i = 0; i < 8200; i++) {
+for (let i = 0; i < (IS_RIVERMERE ? 0 : 8200); i++) {
   const x = random() * 1300,
     y = random() * 850;
   const forest =
@@ -141,7 +143,7 @@ for (let i = 0; i < 1200; i++) {
       : `M${x - rx} ${y} C${x - rx * 1.2} ${y - ry} ${x - rx * 0.2} ${y - ry * 1.3} ${x + rx * 0.4} ${y - ry} S${x + rx * 1.3} ${y - ry * 0.1} ${x + rx} ${y + ry * 0.5} S${x - rx * 0.3} ${y + ry * 1.2} ${x - rx} ${y}Z`,
   );
 }
-export const MapTerrain = memo(function MapTerrain({
+const LegacyMapTerrain = memo(function LegacyMapTerrain({
   labels,
   zoom,
   x = 0,
@@ -485,3 +487,5 @@ export const MapTerrain = memo(function MapTerrain({
     </g>
   );
 });
+
+export const MapTerrain = IS_RIVERMERE ? Terrain : LegacyMapTerrain;

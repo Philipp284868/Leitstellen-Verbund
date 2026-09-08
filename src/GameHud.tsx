@@ -1,3 +1,4 @@
+import { WORLD_NAME } from "./world-choice";
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import {
   Radio,
@@ -159,8 +160,8 @@ export function GameHud({
           <span>
             <strong>{s.player.station}</strong>
             <small>
-              <span className="hud-mode">{modeName(mode)}</span> · Region
-              Falkenried
+              <span className="hud-mode">{modeName(mode)}</span> · Region{" "}
+              {WORLD_NAME}
             </small>
           </span>
         </button>
@@ -369,7 +370,7 @@ export function GameHud({
                     <p>
                       {m.control && !m.control.locationKnown
                         ? "Einsatzort noch erfragen"
-                        : `Falkenried · ${districtAt(m.pos)}`}
+                        : `${WORLD_NAME} · ${districtAt(m.pos)}`}
                     </p>
                     <div className="mission-meta">
                       <span
