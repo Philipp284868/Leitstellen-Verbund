@@ -21,3 +21,11 @@ Historische Geografie bleibt für vorhandene Migrations- und Wiederherstellungsp
 - Node-Reset-Suite lokal: 13 bestanden, zwei Datei-Symlink-Prüfungen durch Windows-EPERM verhindert, echter Prozessablauf unter Windows mit Timeout. Die vollständige Linux-Suite bleibt unverändert verpflichtend; das Serverfixture verwendet nun das für Rivermere erforderliche ausdrückliche DATA_DIR.
 
 Den aktuellen vollständigen Linux-CI-Status zeigen die GitHub-Actions-Läufe des zugehörigen main-Commits. Kein Produktionsserver wurde installiert, gestartet, zurückgesetzt oder automatisch aktualisiert.
+
+## Nachprüfung der CI-Lastmessung
+
+Der erste Rivermere-Standardcommit `da4c490` bestand in Linux 185 Vitest- und 16 Node-Prüfungen, den Paketstart sowie die Sicherheitsprüfung. Beide Browser bestanden ihre 42 regulären Abläufe. Chromium überschritt anschließend bei der Übersicht/Suche/Auswahl mit 14.089 ms die unveränderte Grenze von 10.000 ms; Firefox erreichte während der Lastphase das gesamte Job-Zeitlimit. Dieser Lauf war nicht erfolgreich.
+
+Die betroffene Übersichtsmessung betrieb Simulation und Playwright-Steuerung im selben Node-Prozess. Sie verwendet jetzt wie die vorhandene zweite Rivermere-Lastprüfung einen separaten echten Serverprozess mit SQLite, Socket.IO und laufenden Fahrten. Die Lastdaten werden gemeinsam erzeugt und vor der Messung auf 100 Wachen, 500 Fahrzeuge, 40 Einsätze und 100 aktive Fahrten geprüft; die ursprüngliche Zielortverschiebung von fünf Orten bleibt erhalten. Zehn-Sekunden-Grenze und vollständige Bedienfolge bleiben unverändert. Lokal besteht die isolierte Edge-Messung mit 1.647 ms; beide Lastfälle bestehen und der Server stoppt sauber.
+
+Die vollständigen Browserfälle werden in der CI pro Browser auf zwei getrennte Runner verteilt. Jede Teilmenge führt ihre Lastfälle erst nach den normalen Fällen mit einem Worker aus. Testfristen und das zwölfminütige Job-Limit wurden nicht angehoben. Eindeutige Artefaktnamen erhalten die Ergebnisse beider Teilmengen.

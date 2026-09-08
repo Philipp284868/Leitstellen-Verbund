@@ -8,13 +8,14 @@ import type { Config } from "../../server/config";
 import { listenBrowserServer } from "./server-helper";
 import { phaseFixture } from "../phase-fixture";
 import { beginTrip } from "../../src/engine";
-import { nodes, nearest } from "../../src/world";
-import { settlements as regionTowns } from "../../src/rivermere/geography";
+import { nodes } from "../../src/world";
+import { startOverviewLoadServer } from "./load-server";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
 let app: ReturnType<typeof startServer>, config: Config, vehicleName: string;
-test.beforeEach(async () => {
+test.beforeEach(async ({ page: _page }, info) => {
+  if (info.tags.includes("@load")) return;
   config = {
     host: "127.0.0.1",
     port: 0,
@@ -43,113 +44,79 @@ test(
   "großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bleibt bedienbar",
   { tag: "@load" },
   async ({ page }, info) => {
-    const [owner, s] = [...app.db.all()][0];
-    const building = structuredClone(s.buildings[0]),
-      unit = structuredClone(s.vehicles[1]);
-    s.missions = [];
-    s.buildings = [];
-    s.vehicles = [];
-    s.people = [];
-    s.desk.fleet = {};
-    for (let i = 0; i < 100; i++) {
-      const pos = nodes[nearest(regionTowns[i % regionTowns.length])];
-      s.buildings.push({
-        ...building,
-        id: `load-home-${i}`,
-        name: `Lastwache ${i}`,
-        pos,
-        level: 2,
-      });
-      for (let j = 0; j < 5; j++) {
-        const v = {
-          ...structuredClone(unit),
-          id: `load-unit-${i}-${j}`,
-          name: `Lastfahrzeug ${i}-${j}`,
-          home: `load-home-${i}`,
-          path: [pos],
-          status: "ready" as const,
-        };
-        if (j === 0) {
-          v.path = [nodes[nearest(regionTowns[(i + 5) % regionTowns.length])]];
-          beginTrip(s, v, pos, "return");
-        }
-        s.vehicles.push(v);
-      }
-    }
-    for (let i = 0; i < 40; i++)
-      s.missions.push({
-        id: `load-mission-${i}`,
-        template: "bin",
-        pos: nodes[nearest(regionTowns[i % regionTowns.length])],
-        progress: 0,
-        phase: "offered",
-        created: s.time,
-        completed: 0,
-        shared: false,
-        round: `load-round-${i}`,
-        contributors: [],
-        transports: [],
-      });
-    app.db.save(owner, s);
-    const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(e.message));
-    await page.setViewportSize({ width: 1600, height: 1000 });
-    const started = Date.now();
-    await page.goto(config.publicUrl);
-    await page.getByLabel("Benutzername", { exact: true }).fill("maptest");
-    await page
-      .getByLabel("Passwort", { exact: true })
-      .fill("Map-browser-password-123!");
-    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-    await page.getByRole("button", { name: "Spielen", exact: true }).click();
-    await page.getByRole("button", { name: "Layer", exact: true }).click();
-    await expect(
-      page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
-    ).toBeVisible();
-    const readyMs = Date.now() - started;
-    const before = Date.now();
-    if (
-      (await page
-        .getByRole("button", { name: "Layer", exact: true })
-        .getAttribute("aria-pressed")) !== "true"
-    )
+    const load = await startOverviewLoadServer();
+    try {
+      expect([
+        load.buildings,
+        load.vehicles,
+        load.incidents,
+        load.activeTrips,
+      ]).toEqual([100, 500, 40, 100]);
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.setViewportSize({ width: 1600, height: 1000 });
+      const started = Date.now();
+      await page.goto(load.origin);
+      await page
+        .getByLabel("Benutzername", { exact: true })
+        .fill("rivermere-load");
+      await page
+        .getByLabel("Passwort", { exact: true })
+        .fill("Rivermere-password-123!");
+      await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+      await page.getByRole("button", { name: "Spielen", exact: true }).click();
       await page.getByRole("button", { name: "Layer", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Gesamte Region", exact: true })
-      .click();
-    await page
-      .getByLabel("Karte durchsuchen", { exact: true })
-      .fill("Lastfahrzeug 99-4");
-    await page
-      .locator(".map-search-results")
-      .getByRole("button", { name: "Lastfahrzeug 99-4", exact: true })
-      .click();
-    await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
-      "Lastfahrzeug 99-4",
-    );
-    const metrics = {
-      browser: info.project.name,
-      buildings: 100,
-      vehicles: 500,
-      activeTrips: 100,
-      missions: 40,
-      loginAndOpenMs: readyMs,
-      overviewSearchSelectMs: Date.now() - before,
-      svgElements: await page.locator("svg.map *").count(),
-    };
-    await writeFile(
-      info.outputPath("large-map-performance.json"),
-      JSON.stringify(metrics, null, 2),
-    );
-    await page.screenshot({
-      path: info.outputPath("region-large-fleet.png"),
-      fullPage: true,
-    });
-    expect(metrics.overviewSearchSelectMs).toBeLessThan(10000);
-    expect(errors).toEqual([]);
+      await expect(
+        page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
+      ).toBeVisible();
+      const readyMs = Date.now() - started;
+      const before = Date.now();
+      if (
+        (await page
+          .getByRole("button", { name: "Layer", exact: true })
+          .getAttribute("aria-pressed")) !== "true"
+      )
+        await page.getByRole("button", { name: "Layer", exact: true }).click();
+      await page
+        .getByRole("button", { name: "Gesamte Region", exact: true })
+        .click();
+      await page
+        .getByLabel("Karte durchsuchen", { exact: true })
+        .fill("Regionsfahrzeug 99-4");
+      await page
+        .locator(".map-search-results")
+        .getByRole("button", { name: "Regionsfahrzeug 99-4", exact: true })
+        .click();
+      await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
+        "Regionsfahrzeug 99-4",
+      );
+      const metrics = {
+        browser: info.project.name,
+        buildings: 100,
+        vehicles: 500,
+        activeTrips: 100,
+        missions: 40,
+        loginAndOpenMs: readyMs,
+        overviewSearchSelectMs: Date.now() - before,
+        svgElements: await page.locator("svg.map *").count(),
+      };
+      await writeFile(
+        info.outputPath("large-map-performance.json"),
+        JSON.stringify(metrics, null, 2),
+      );
+      await page.screenshot({
+        path: info.outputPath("region-large-fleet.png"),
+        fullPage: true,
+      });
+      expect(metrics.overviewSearchSelectMs).toBeLessThan(10000);
+      expect(errors).toEqual([]);
+    } finally {
+      await load.stop();
+    }
   },
 );
-test.afterEach(async () => {
+test.afterEach(async ({ page: _page }, info) => {
+  if (info.tags.includes("@load")) return;
   await app.close();
 });
 test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, kleine Desktopansicht und Wiederverbindung", async ({

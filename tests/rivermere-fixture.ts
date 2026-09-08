@@ -17,7 +17,7 @@ import { phaseFixture as baseFixture } from "./phase-fixture";
 import { nodes, nearest } from "../src/world";
 import { settlements } from "../src/rivermere/geography";
 import { beginTrip } from "../src/engine";
-export function regionalLoadFixture(owner: string) {
+export function regionalLoadFixture(owner: string, destinationOffset = 3) {
   const s = baseFixture(owner),
     home = structuredClone(s.buildings[0]),
     unit = structuredClone(s.vehicles[1]);
@@ -47,7 +47,11 @@ export function regionalLoadFixture(owner: string) {
         status: "ready" as const,
       };
       if (j === 0) {
-        v.path = [nodes[nearest(settlements[(i + 3) % settlements.length])]];
+        v.path = [
+          nodes[
+            nearest(settlements[(i + destinationOffset) % settlements.length])
+          ],
+        ];
         beginTrip(s, v, pos, "return");
       }
       s.vehicles.push(v);

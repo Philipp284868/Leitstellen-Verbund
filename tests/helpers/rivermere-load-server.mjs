@@ -21,13 +21,17 @@ const owner = await app.auth.create(
   "Lastprüfung",
   "Rivermere Lastprüfung",
 );
-const load = f.regionalLoadFixture(owner);
+const load = f.regionalLoadFixture(
+  owner,
+  process.argv[3] === "overview" ? 5 : 3,
+);
 app.db.save(owner, load);
 process.send?.({
   origin: c.publicUrl,
   buildings: load.buildings.length,
   vehicles: load.vehicles.length,
   incidents: load.missions.length,
+  activeTrips: load.vehicles.filter((v) => v.status === "return").length,
 });
 let stopping = false;
 const stop = () => {
