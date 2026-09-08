@@ -16,12 +16,26 @@ const unit = files.filter((f) =>
 );
 const integration = files.filter((f) => !unit.includes(f));
 const pnpm = [".tools/pnpm-11.19.0/bin/pnpm.cjs"];
-const vitest = (list) => [...pnpm, "exec", "vitest", "run", ...list];
+const vitest = (list) => [
+  ...pnpm,
+  "exec",
+  "vitest",
+  "run",
+  ...(stage === "ci" ? ["--maxWorkers=2"] : []),
+  ...list,
+];
+// Generate and compare the complete additional world without competing with
+// transactional transport/restore fixtures on a small CI runner.
+const regional = files.filter((f) => f.endsWith("/rivermere.test.ts"));
 const jobs = {
   quick: [[...pnpm, "typecheck"], vitest(unit)],
   unit: [vitest(unit)],
   integration: [vitest(integration), ["--test", "tests/hard-reset.node.mjs"]],
-  ci: [vitest(files), ["--test", "tests/hard-reset.node.mjs"]],
+  ci: [
+    vitest(files.filter((f) => !regional.includes(f))),
+    vitest(regional),
+    ["--test", "tests/hard-reset.node.mjs"],
+  ],
   full: [
     [...pnpm, "build"],
     [...pnpm, "lint"],
