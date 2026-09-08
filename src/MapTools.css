@@ -140,3 +140,80 @@
   color: var(--hud-text);
   border-color: var(--hud-border);
 }
+
+/* Only gameplay surfaces suppress native selection; reports and editors remain copyable. */
+svg.map,
+svg.map *,
+.map-toolbar,
+.map-layers,
+.map-zoom,
+.map-legend,
+.map-scale,
+.hud-topbar,
+.hud-bottom {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+svg.map.dragging,
+svg.map.dragging * {
+  cursor: grabbing;
+}
+.map-wrap input,
+.map-wrap textarea,
+.map-control-help p {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.map-wrap input[type="range"] {
+  user-select: none;
+}
+.map-wrap :focus-visible {
+  outline: 2px solid #6ecbff;
+  outline-offset: 3px;
+}
+.map-control-help {
+  position: absolute;
+  right: 60px;
+  bottom: 48px;
+  z-index: 5;
+  max-width: 320px;
+  padding: 8px 12px;
+  background: #0a1925ee;
+  border: 1px solid #314b60;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.map-control-help summary {
+  cursor: pointer;
+  user-select: none;
+}
+.map-control-help label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.map-search-results,
+.mission-list,
+.incident-dock,
+.map-control-help {
+  overscroll-behavior: contain;
+}
+
+.hud-shell .topbar,
+.hud-shell button,
+.hud-shell .mission-card {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hud-shell input,
+.hud-shell textarea,
+.hud-shell [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.hud-shell .mission-sidebar,
+.hud-shell .incident-dock,
+.hud-shell .map-search-results {
+  overscroll-behavior: contain;
+}

@@ -33,7 +33,11 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }
           if (e.key === "Tab") {
             const controls = [
               ...ref.current!.querySelectorAll<HTMLElement>(

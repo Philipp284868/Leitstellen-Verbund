@@ -1,3 +1,5 @@
+import { readCamera, DRAG_THRESHOLD, wheelPixels } from "./map-camera";
+import { WORLD_NAME, WORLD_CENTER } from "./world-choice";
 import { IncidentIcon } from "./HudIcons";
 import { buildReason } from "./purchase";
 import { vehiclePosition, vehicleMotion } from "./vehicle-position";
@@ -52,6 +54,19 @@ export const MapView = memo(function MapView({
   onCancelPlace?: () => void;
 }) {
   const overview = 1300 / WORLD_WIDTH;
+  const cameraKey = `lv-camera-v1:${s.world}:${s.player.id}`;
+  const [restored] = useState(() => {
+    try {
+      return readCamera(
+        localStorage.getItem(cameraKey),
+        s.world,
+        s.worldSeed,
+        WORLD_WIDTH,
+      );
+    } catch {
+      return null;
+    }
+  });
   const [search, setSearch] = useState(""),
     [org, setOrg] = useState("Alle"),
     [status, setStatus] = useState("Alle"),
@@ -63,16 +78,26 @@ export const MapView = memo(function MapView({
   const section = motion
     ? roadSections.find((r) => r.id === motion.edge)
     : null;
-  const [zoom, setZoom] = useState(1),
+  const [zoom, setZoom] = useState(restored?.zoom ?? 1),
     [offset, setOffset] = useState(() => ({
-      x: Math.max(
-        0,
-        Math.min(WORLD_WIDTH - 1300, (s.buildings[0]?.pos.x ?? 650) - 650),
-      ),
-      y: Math.max(
-        0,
-        Math.min(WORLD_HEIGHT - 850, (s.buildings[0]?.pos.y ?? 425) - 425),
-      ),
+      x:
+        restored?.x ??
+        Math.max(
+          0,
+          Math.min(
+            WORLD_WIDTH - 1300,
+            (s.buildings[0]?.pos.x ?? WORLD_CENTER.x) - 650,
+          ),
+        ),
+      y:
+        restored?.y ??
+        Math.max(
+          0,
+          Math.min(
+            WORLD_HEIGHT - 850,
+            (s.buildings[0]?.pos.y ?? WORLD_CENTER.y) - 425,
+          ),
+        ),
     })),
     [filter, setFilter] = useState("Alle"),
     [labels, setLabels] = useState(true),
@@ -82,7 +107,7 @@ export const MapView = memo(function MapView({
   const [pixelWidth, setPixelWidth] = useState(800),
     [pixelHeight, setPixelHeight] = useState(400);
   const [aspect, setAspect] = useState(1300 / 850);
-  const previousAspect = useRef(1300 / 850);
+  const previousAspect = useRef<number | null>(restored ? null : 1300 / 850);
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => {
       if (entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return;
@@ -93,7 +118,7 @@ export const MapView = memo(function MapView({
       const old = previousAspect.current;
       previousAspect.current = next;
       setAspect(next);
-      if (zoom !== overview)
+      if (zoom !== overview && old !== null)
         setOffset((p) => ({
           ...p,
           y: Math.max(
@@ -130,17 +155,104 @@ export const MapView = memo(function MapView({
       clamp(
         {
           x: point.x - ((point.x - offset.x) * zoom) / next,
-          y: point.y - ((point.y - offset.y) * zoom) / next,
+          y:
+            point.y -
+            ((point.y - offset.y) / viewHeight(zoom)) * viewHeight(next),
         },
         next,
       ),
     );
     setZoom(next);
   };
-  const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(
-    null,
-  );
-  const moved = useRef(false);
+  const drag = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    ox: number;
+    oy: number;
+    units: number;
+    moved: boolean;
+    target: Element;
+  } | null>(null);
+  const suppressClick = useRef(false);
+  const frame = useRef(0);
+  const [dragging, setDragging] = useState(false);
+  const [sensitivity, setSensitivity] = useState(restored?.sensitivity ?? 1);
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        cameraKey,
+        JSON.stringify({
+          world: s.world,
+          seed: s.worldSeed,
+          x: offset.x,
+          y: offset.y,
+          zoom,
+          sensitivity,
+        }),
+      );
+    } catch {
+      /* Private storage may be disabled. */
+    }
+  }, [cameraKey, s.world, s.worldSeed, offset.x, offset.y, zoom, sensitivity]);
+  const cancelGesture = () => {
+    const active = drag.current;
+    drag.current = null;
+    if (active) suppressClick.current = true;
+    cancelAnimationFrame(frame.current);
+    setDragging(false);
+    if (active && svg.current?.hasPointerCapture(active.id))
+      svg.current.releasePointerCapture(active.id);
+  };
+  useEffect(() => {
+    const cancel = () => cancelGesture();
+    const visibility = () => {
+      if (document.hidden) cancel();
+    };
+    window.addEventListener("blur", cancel);
+    window.addEventListener("pointerup", cancel);
+    document.addEventListener("visibilitychange", visibility);
+    const dialogs = new MutationObserver(() => {
+      if (
+        drag.current &&
+        document.querySelector('[role="dialog"],dialog[open]')
+      )
+        cancel();
+    });
+    dialogs.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener("blur", cancel);
+      window.removeEventListener("pointerup", cancel);
+      document.removeEventListener("visibilitychange", visibility);
+      dialogs.disconnect();
+      cancelAnimationFrame(frame.current);
+      drag.current = null;
+    };
+  }, []);
+  const wheelAction = useRef<(e: WheelEvent) => void>(() => {});
+  wheelAction.current = (e) => {
+    if (e.ctrlKey || e.metaKey || drag.current) return;
+    e.preventDefault();
+    const element = svg.current;
+    const matrix = element?.getScreenCTM();
+    if (!element || !matrix) return;
+    const p = element.createSVGPoint();
+    p.x = e.clientX;
+    p.y = e.clientY;
+    const delta = wheelPixels(e.deltaY, e.deltaMode, pixelHeight);
+    setFollowing(false);
+    resize(
+      zoom *
+        Math.exp(-Math.max(-240, Math.min(240, delta)) * 0.002 * sensitivity),
+      p.matrixTransform(matrix.inverse()),
+    );
+  };
+  useEffect(() => {
+    const element = svg.current;
+    const wheel = (e: WheelEvent) => wheelAction.current(e);
+    element?.addEventListener("wheel", wheel, { passive: false });
+    return () => element?.removeEventListener("wheel", wheel);
+  }, []);
   const center = (p: Point, z = zoom) => {
     setZoom(z);
     setOffset(clamp({ x: p.x - 650 / z, y: p.y - viewHeight(z) / 2 }, z));
@@ -154,9 +266,7 @@ export const MapView = memo(function MapView({
   useEffect(() => {
     if (following && vehicle) center(vehiclePosition(vehicle, s.time));
   }, [following, vehicle?.id, s.time]);
-  useEffect(() => {
-    if (selectionPosition) center(selectionPosition);
-  }, [selected, !!selectionPosition]);
+
   const results = search.trim()
     ? [
         ...s.buildings.map((b) => ({ id: b.id, name: b.name, pos: b.pos })),
@@ -197,7 +307,7 @@ export const MapView = memo(function MapView({
   return (
     <div className="map-wrap">
       <div className="map-toolbar">
-        <strong>Region Falkenried · 100 × 100 km</strong>
+        <strong>Region {WORLD_NAME} · 100 × 100 km</strong>
         {readonly && (
           <span role="status">
             Verbindung fehlt · letzter bestätigter Stand
@@ -325,7 +435,7 @@ export const MapView = memo(function MapView({
         </button>
         <button
           onClick={() => {
-            const p = s.buildings[0]?.pos ?? { x: 650, y: 425 };
+            const p = s.buildings[0]?.pos ?? WORLD_CENTER;
             setZoom(1);
             setOffset(clamp({ x: p.x - 650, y: p.y - viewHeight(1) / 2 }, 1));
           }}
@@ -366,13 +476,21 @@ export const MapView = memo(function MapView({
       </div>
       <svg
         ref={svg}
-        className={"map " + (placing ? "placing" : "")}
+        className={
+          "map " + (placing ? "placing " : "") + (dragging ? "dragging" : "")
+        }
         viewBox={`${offset.x} ${offset.y} ${1300 / zoom} ${viewHeight(zoom)}`}
         role="img"
-        aria-label="Interaktive Karte von Falkenried"
+        aria-label={`Interaktive Karte von ${WORLD_NAME}`}
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return;
+          if (
+            e.target !== e.currentTarget ||
+            e.ctrlKey ||
+            e.metaKey ||
+            e.altKey
+          )
+            return;
           setFollowing(false);
           const directions: Record<string, Point> = {
             ArrowLeft: { x: -60, y: 0 },
@@ -399,69 +517,103 @@ export const MapView = memo(function MapView({
             resize(1);
           }
         }}
-        onWheel={(e) => {
-          const p = e.currentTarget.createSVGPoint();
-          p.x = e.clientX;
-          p.y = e.clientY;
-          const at = p.matrixTransform(
-            e.currentTarget.getScreenCTM()!.inverse(),
-          );
-          resize(zoom + (e.deltaY < 0 ? 0.2 : -0.2), at);
-        }}
-        onPointerCancel={() => {
-          drag.current = null;
-        }}
-        onPointerDown={(e) => {
-          if ((e.target as Element).closest("[role=button]")) return;
-          const p = e.currentTarget.createSVGPoint();
-          p.x = e.clientX;
-          p.y = e.clientY;
-          const at = p.matrixTransform(
-            e.currentTarget.getScreenCTM()!.inverse(),
-          );
-          drag.current = {
-            x: at.x,
-            y: at.y,
-            ox: offset.x,
-            oy: offset.y,
-          };
-          moved.current = false;
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerMove={(e) => {
-          if (drag.current) {
-            const p = e.currentTarget.createSVGPoint();
-            p.x = e.clientX;
-            p.y = e.clientY;
-            const at = p.matrixTransform(
-              e.currentTarget.getScreenCTM()!.inverse(),
-            );
-            const dx = at.x - drag.current.x,
-              dy = at.y - drag.current.y;
-            if (Math.abs(dx) + Math.abs(dy) > 3) {
-              moved.current = true;
-              setFollowing(false);
-            }
-            setOffset(clamp({ x: offset.x - dx, y: offset.y - dy }, zoom));
+        onDragStart={(e) => e.preventDefault()}
+        onClickCapture={(e) => {
+          if (suppressClick.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            suppressClick.current = false;
           }
         }}
+        onPointerCancel={cancelGesture}
+        onLostPointerCapture={() => {
+          if (drag.current) cancelGesture();
+        }}
+        onPointerDown={(e) => {
+          if (e.button !== 0 || !e.isPrimary) return;
+          e.preventDefault();
+          cancelGesture();
+          suppressClick.current = false;
+          e.currentTarget.focus({ preventScroll: true });
+          drag.current = {
+            id: e.pointerId,
+            x: e.clientX,
+            y: e.clientY,
+            ox: offset.x,
+            oy: offset.y,
+            units: unitsPerPixel,
+            moved: false,
+            target: e.target as Element,
+          };
+        }}
+        onPointerMove={(e) => {
+          const active = drag.current;
+          if (!active || active.id !== e.pointerId) return;
+          if (!(e.buttons & 1)) {
+            cancelGesture();
+            return;
+          }
+          const dx = e.clientX - active.x,
+            dy = e.clientY - active.y;
+          if (!active.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+          if (!active.moved) {
+            active.moved = true;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            setDragging(true);
+            setFollowing(false);
+          }
+          cancelAnimationFrame(frame.current);
+          frame.current = requestAnimationFrame(() => {
+            if (drag.current === active)
+              setOffset(
+                clamp(
+                  {
+                    x: active.ox - dx * active.units,
+                    y: active.oy - dy * active.units,
+                  },
+                  zoom,
+                ),
+              );
+          });
+        }}
         onPointerUp={(e) => {
+          const active = drag.current;
+          if (!active || active.id !== e.pointerId) return;
+          cancelAnimationFrame(frame.current);
+          if (active.moved) {
+            setOffset(
+              clamp(
+                {
+                  x: active.ox - (e.clientX - active.x) * active.units,
+                  y: active.oy - (e.clientY - active.y) * active.units,
+                },
+                zoom,
+              ),
+            );
+          }
           drag.current = null;
+          setDragging(false);
+          suppressClick.current = active.moved;
+          if (e.currentTarget.hasPointerCapture(e.pointerId))
+            e.currentTarget.releasePointerCapture(e.pointerId);
           if (
             placing &&
-            !moved.current &&
-            !(e.target as Element).closest("[role=button]")
+            !active.moved &&
+            !active.target.closest('[role="button"]')
           ) {
             const p = e.currentTarget.createSVGPoint();
             p.x = e.clientX;
             p.y = e.clientY;
-            const pos = p.matrixTransform(
-              e.currentTarget.getScreenCTM()!.inverse(),
-            );
-            setCandidate({
-              x: Math.max(0, Math.min(WORLD_WIDTH, pos.x)),
-              y: Math.max(0, Math.min(WORLD_HEIGHT, pos.y)),
-            });
+            const matrix = e.currentTarget.getScreenCTM();
+            if (!matrix) return;
+            const pos = p.matrixTransform(matrix.inverse());
+            if (
+              pos.x >= 0 &&
+              pos.y >= 0 &&
+              pos.x <= WORLD_WIDTH &&
+              pos.y <= WORLD_HEIGHT
+            )
+              setCandidate({ x: pos.x, y: pos.y });
           }
         }}
       >
@@ -726,6 +878,26 @@ export const MapView = memo(function MapView({
               )),
           )}
       </svg>
+      <details className="map-control-help">
+        <summary>Kartensteuerung</summary>
+        <p>
+          Ziehen: Karte verschieben · Klick: auswählen · Mausrad: Zoom zum
+          Zeiger. Pfeiltasten und +/− bei fokussierter Karte. Strg+Mausrad
+          vergrößert den Browser. Ziehen beendet das Fahrzeugfolgen.
+        </p>
+        <label>
+          Zoomempfindlichkeit{" "}
+          <input
+            aria-label="Zoomempfindlichkeit"
+            type="range"
+            min="0.3"
+            max="2"
+            step="0.1"
+            value={sensitivity}
+            onChange={(e) => setSensitivity(Number(e.target.value))}
+          />
+        </label>
+      </details>
       <div className="map-zoom" aria-label="Zoomsteuerung">
         <button aria-label="Vergrößern" onClick={() => resize(zoom + 0.25)}>
           +

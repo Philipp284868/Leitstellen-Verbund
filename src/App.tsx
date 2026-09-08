@@ -104,6 +104,14 @@ function GameApp() {
       const editing =
         e.target instanceof Element &&
         !!e.target.closest("input,textarea,select,[contenteditable=true]");
+      if (e.key === "Escape" && !editing) {
+        e.preventDefault();
+        if (modal) setModal("");
+        else if (placing) setPlacing("");
+        else setSelected("");
+        return;
+      }
+      if (modal) return;
       const action = shortcutFor(e, layout.keys, editing);
       if (!action) return;
       e.preventDefault();
@@ -128,7 +136,7 @@ function GameApp() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [s, screen, selected, layout.keys]);
+  }, [s, screen, selected, layout.keys, modal, placing]);
   const tutorial = [
     "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
     "Öffne deine Wache, warte die Bauzeit ab und kaufe zwei TSF-W.",
