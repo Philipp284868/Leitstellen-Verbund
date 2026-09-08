@@ -31,7 +31,8 @@ Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration
 - [AMP-Betrieb, Sicherung und Wiederherstellung](docs/AMP.md)
 - [Notruf/AAO/FMS](docs/PHASE-1.md), [Dynamik](docs/PHASE-2.md), [Organisationen und Nachbarhilfe](docs/PHASE-3.md), [Großlagen](docs/PHASE-4.md), [Auswertung](docs/PHASE-5.md)
 - [Level, Freischaltungen und Straßenfahrzeiten](docs/PROGRESSION-KARTE.md)
-- [Umstellungsnachweis und offene Einrichtungsschritte](docs/PC-MULTIPLAYER-UMSTELLUNG.md)
+- [Abnahme, Bildschirmaufnahmen und offene Einrichtungsschritte](docs/ABNAHME-PC-MULTIPLAYER.md)
+- [Bestandsaufnahme und Umstellungsverlauf](docs/PC-MULTIPLAYER-UMSTELLUNG.md)
 - [Roadmap/Auftrag](https://github.com/Philipp284868/Leitstellen-Verbund/issues/19) · [Fehler melden](https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose) · [Community](https://github.com/Philipp284868/Leitstellen-Verbund/discussions) · [Releases](https://github.com/Philipp284868/Leitstellen-Verbund/releases)
 
 Frühere Versionsdokumente beschreiben den damaligen Stand. Aussagen über Einzelspieler, Mobile oder dev in historischen Migrationsberichten sind keine aktuellen Produktvorgaben. Die Wiki ist aktiviert, benötigt derzeit noch ihre erste Seite zur Initialisierung; bis dahin gelten die Repository-Anleitungen.

@@ -18,3 +18,5 @@ Das `linux-runtime.tar.gz` enthält gebauten Client und Server sowie Produktions
 Vor Updates Sicherung prüfen und den bisherigen Server sauber stoppen. Keine Datenbank und keine Zugangsdaten sind enthalten. Keine automatische Rückübernahme alter Einzelspielerökonomie. Wiki-Erstveröffentlichung und GitHub Project benötigen noch den im Repository dokumentierten zusätzlichen Zugriff; integrierte Hilfe und Issues sind bereits nutzbar.
 
 Das Hauptmenü und HUD folgen den Referenzlayouts. Die bestehende bedienbare Spielkarte ist weiterhin eine gezeichnete Karte, keine fotorealistische Satellitenaufnahme.
+
+Zugehörige Aufgaben: [Gesamtauftrag #19](https://github.com/Philipp284868/Leitstellen-Verbund/issues/19), [PC-Multiplayer #20](https://github.com/Philipp284868/Leitstellen-Verbund/issues/20), [Tests/CI #21](https://github.com/Philipp284868/Leitstellen-Verbund/issues/21), [Projektplattform #22](https://github.com/Philipp284868/Leitstellen-Verbund/issues/22). Der Release-Workflow verknüpft den eindeutigen Tag mit dem geprüften Paketcommit.

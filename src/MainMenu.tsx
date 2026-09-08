@@ -218,8 +218,8 @@ export function MainMenu({
             <p>
               {news?.summary ?? "Veröffentlichte Meldungen auf GitHub ansehen."}
             </p>
-            <span className="news-dots">
-              ● <i>● ●</i>
+            <span className="news-dots" aria-hidden="true">
+              ●
             </span>
           </button>
         </section>

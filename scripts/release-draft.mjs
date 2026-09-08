@@ -110,4 +110,7 @@ for (const name of (await readdir(".tools/releases")).sort()) {
       `Artefakt-Upload ${name}: ${response.status}. Entwurf bleibt unveröffentlicht.`,
     );
 }
+// A lightweight, immutable source tag is created only after every draft asset uploaded.
+// The workflows have no tag-triggered deployment or stable publication.
+await api("/git/refs", "POST", { ref: `refs/tags/${tag}`, sha });
 console.log(`Release-Entwurf mit geprüften Artefakten: ${release.html_url}`);

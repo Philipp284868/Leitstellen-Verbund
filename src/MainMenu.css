@@ -637,6 +637,18 @@
   }
   .news-visual {
     height: 42px;
+    padding: 6px 12px;
+    gap: 12px;
+  }
+  .news-visual > svg {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  .news-visual span {
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: 1px;
   }
   .menu-lower {
     padding: 8px 0;

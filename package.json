@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run && node --test tests/hard-reset.node.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/browser-tests.mjs",
     "lab": "node scripts/lab.mjs",
     "start": "node dist/server/index.js",
     "test:quick": "node scripts/tests.mjs quick",

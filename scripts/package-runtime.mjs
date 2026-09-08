@@ -65,6 +65,7 @@ try {
     "node_modules/.pnpm-workspace-state-v1.json",
   ])
     await rm(join(stage, file), { force: true });
+  await cp("docs/RUNTIME-PAKET.md", join(stage, "README.md"));
   const files = [];
   async function inventory(folder, prefix = "") {
     for (const name of (await readdir(folder)).sort()) {
