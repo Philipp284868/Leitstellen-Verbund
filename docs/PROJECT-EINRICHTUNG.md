@@ -1,12 +1,20 @@
-# GitHub Project: vorbereitet, noch nicht angelegt
+# GitHub Project: eingerichtet
 
-Am 08.09.2026 verweigert die authentifizierte GitHub-GraphQL-API ProjectsV2 mit INSUFFICIENT_SCOPES. Vorhanden sind repo, workflow und gist. Lesen benötigt read:project, Anlegen/Ändern project. Die verfügbare Browsersitzung ist nicht angemeldet. Repository-Administration allein erteilt keinen ProjectsV2-Zugriff. Es wurde keine Berechtigung ungefragt erweitert und kein Board als fertig dargestellt.
+Am 08.09.2026 wurde [Leitstellen-Verbund – Entwicklung](https://github.com/users/Philipp284868/projects/1) über die angemeldete Browsersitzung des Inhabers eingerichtet. Das Projekt ist mit dem Repository verknüpft; Leitstellen-Verbund ist auch das Standardrepository für neue Issues aus dem Projekt. Die private Standardsichtbarkeit wurde beibehalten. Der Inhaber und ausdrücklich berechtigte Personen können das Board öffnen; die Repository-Issues bleiben unabhängig davon öffentlich erreichbar.
 
-Nach Freigabe soll ein einzelnes Project „Leitstellen-Verbund – Entwicklung“ die tatsächlichen Issues bündeln. Statusfeld: Backlog, Bereit, In Arbeit, Review, Blockiert, Erledigt. Ansichten: Board nach Status sowie Tabelle nach Bereich/Priorität. Die sechs bereits angelegten Labels type:feature, type:maintenance, area:ui, area:server, area:ci und priority:normal werden weiterverwendet.
+## Status und Ansichten
 
-- #19: Gesamtauftrag und verbliebene Einrichtung; Status anhand offener Unteraufgaben.
-- #20: PC-Multiplayer und Desktopoberfläche; nach finaler Abnahme Erledigt.
-- #21: Teststufen, CI und gemessene Beschleunigung; nach finaler Abnahme Erledigt.
-- #22: GitHub-Einrichtung und Release; wegen Wiki/Projects-Zugriff Blockiert.
+- Statusreihenfolge: Backlog, Bereit, In Arbeit, Review, Blockiert, Erledigt. Jede Option hat eine kurze Erklärung; Blockiert ist rot markiert.
+- [Board nach Status](https://github.com/users/Philipp284868/projects/1/views/1): Aufgaben in Statusspalten.
+- [Bereich und Priorität](https://github.com/users/Philipp284868/projects/1/views/2): Tabelle mit Labels und dauerhaft gespeichertem seitlichen Label-Filter. Die vorhandenen Labels `area:ui`, `area:server`, `area:ci`, `priority:normal`, `type:feature` und `type:maintenance` werden direkt aus den Issues verwendet. Es gibt keine zweite, unabhängig gepflegte Bereichs- oder Prioritätsangabe.
+- Die vorhandene GitHub-Automatik übernimmt abgeschlossene Issues nach Erledigt. Das wurde beim Hinzufügen der bereits geschlossenen Issues #20, #21 und #26 tatsächlich beobachtet.
 
-Keine erfundenen Verantwortlichen, Termine oder Reviewfreigaben. Issues sind die einzige Aufgabenquelle; das Project zeigt diese an und erzeugt keine parallele Aufgabenliste. Diese Datei beschreibt die noch ausstehende Konfiguration, kein vorhandenes Online-Project.
+## Verknüpfte Aufgaben
+
+Die tatsächlichen Repository-Issues #19 (Gesamtauftrag), #20 (PC-Multiplayer/Oberfläche), #21 (Tests/CI), #22 (GitHub-Plattform) und #26 (Rivermere/Kartensteuerung) sind einzeln verknüpft. Es wurden keine Platzhalteraufgaben, erfundenen Verantwortlichen, Termine oder Reviewfreigaben angelegt. Issues bleiben die einzige Aufgabenquelle.
+
+## Prüfung und früheres Zugriffshindernis
+
+Die Projektansichten, fünf Issue-Verknüpfungen, Statusreihenfolge, gespeicherten Einstellungen und der Eintrag in der Repository-Projektliste wurden im Browser kontrolliert. Die Tabellenansicht verwendet die vorhandenen Labels als Filter statt einer Gruppierung, die GitHub für Labels in Tabellen nicht anbietet.
+
+Der frühere GraphQL-Fehler `INSUFFICIENT_SCOPES` ist kein offener Einrichtungsblocker mehr: Die Einrichtung erfolgte über die autorisierte Browsersitzung. API-Scopes wurden nicht erweitert. Eine spätere Verwaltung über GraphQL benötigt weiterhin die passenden Projects-Berechtigungen. Die Einrichtung veröffentlicht keinen stabilen Release und installiert keinen Produktionsserver.

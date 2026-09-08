@@ -28,6 +28,7 @@ Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration
 
 ## Projekt und Hilfe
 
+- [Entwicklungsboard](https://github.com/users/Philipp284868/projects/1) (privat, für berechtigte Personen) · [Status, Ansichten und Aufgabenpflege](docs/PROJECT-EINRICHTUNG.md)
 - [AMP-Betrieb, Sicherung und Wiederherstellung](docs/AMP.md)
 - [Notruf/AAO/FMS](docs/PHASE-1.md), [Dynamik](docs/PHASE-2.md), [Organisationen und Nachbarhilfe](docs/PHASE-3.md), [Großlagen](docs/PHASE-4.md), [Auswertung](docs/PHASE-5.md)
 - [Level, Freischaltungen und Straßenfahrzeiten](docs/PROGRESSION-KARTE.md)
