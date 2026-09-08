@@ -1,3 +1,4 @@
+import { openPanel, showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -44,15 +45,14 @@ for (const manual of [false, true])
       await page.getByLabel("Passwort", { exact: true }).fill(password);
       await page.getByRole("button", { name: "Anmelden", exact: true }).click();
       await page
-        .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+        .getByRole("button", { name: "Weiterspielen", exact: true })
         .click();
-      if (manual)
-        await page.getByRole("button", { name: /Einsätze \(/ }).click();
+      if (manual) await showIncidents(page);
       await expect(
         page.locator('svg.map [aria-label="Flächenbrand"]'),
       ).toHaveCount(0);
       if (!manual) {
-        await page.getByRole("button", { name: "AAO", exact: true }).click();
+        await openPanel(page, "AAO");
         await page
           .getByLabel("AAO-Name", { exact: true })
           .fill("Erstangriff HLF");
@@ -99,7 +99,7 @@ for (const manual of [false, true])
         await app.listen();
         await page.reload();
         await page
-          .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+          .getByRole("button", { name: "Weiterspielen", exact: true })
           .click();
         await page.locator(".mission-card").first().click();
         expect(
@@ -188,11 +188,9 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "FMS / Funkstatus", exact: true })
-    .click();
+  await openPanel(page, "FMS");
   const vehicle = page.locator(".fms-vehicle").first();
   await vehicle
     .getByLabel("FMS korrigieren", { exact: true })
@@ -226,16 +224,14 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .toBe("station");
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
   await expect(page.locator(".dispatch-list input").first()).toBeDisabled();
   await expect(page.locator(".dispatch-list")).toContainText("FMS 6");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page
-    .getByRole("button", { name: "FMS / Funkstatus", exact: true })
-    .click();
+  await openPanel(page, "FMS");
   await vehicle
     .getByLabel("FMS korrigieren", { exact: true })
     .selectOption("2");
@@ -265,9 +261,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
   expect(s.vehicles[0].depart - s.time).toBeLessThanOrEqual(30);
   app.game.step(31);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page
-    .getByRole("button", { name: "FMS / Funkstatus", exact: true })
-    .click();
+  await openPanel(page, "FMS");
   await expect(
     vehicle.getByLabel("FMS korrigieren", { exact: true }),
   ).toContainText("Feuerwehr auf Anfahrt");

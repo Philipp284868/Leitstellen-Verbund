@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { interviewUI, joinDesk } from "./desk-helpers";
 import { test, expect, type Page, type Browser } from "@playwright/test";
@@ -47,9 +48,9 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: false })
+    .getByRole("button", { name: "Weiterspielen", exact: false })
     .click();
-  await expect(page.locator(".money")).toContainText("250.000");
+  await expect(page.locator(".hud-budget")).toContainText("250.000");
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
   );
@@ -68,14 +69,12 @@ async function enter(page: Page, username: string) {
     await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   }
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: false })
+    .getByRole("button", { name: "Weiterspielen", exact: false })
     .click();
 }
 async function resources(page: Page) {
-  await page
-    .locator(".bottom-panel")
-    .getByRole("button", { name: "Wache bauen" })
-    .click();
+  await openPanel(page, "Wachen");
+  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
     .locator(".shop-card")
     .filter({
@@ -90,9 +89,9 @@ async function resources(page: Page) {
   await page
     .getByRole("button", { name: "Bau bestätigen", exact: true })
     .click();
-  await expect(page.locator(".station-strip .station-card")).toHaveCount(1);
+  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
   app.game.step(30); // Advance the test server clock, never a player-controlled speed.
-  await page.locator(".station-strip .station-card").first().click();
+  await page.locator("svg.map [data-own-station]").first().click();
   await page.getByRole("button", { name: "18.000 Cr", exact: true }).click();
   await page
     .getByRole("button", { name: "6 einstellen", exact: false })
@@ -138,8 +137,8 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   ).toHaveCount(0);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await resources(a);
-  await expect(b.locator(".money")).toContainText("250.000");
-  await expect(b.locator(".station-strip .station-card")).toHaveCount(0);
+  await expect(b.locator(".hud-budget")).toContainText("250.000");
+  await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
   await a.locator(".dispatch-list input").first().check();
@@ -183,10 +182,10 @@ test("Freie Registrierung, getrennte Spielerkonten, Solo-Einsatz, Belohnung, Rü
   );
   await expect(a.getByText("Vollständig einsatzbereit")).toBeVisible();
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  const money = await a.locator(".money strong").innerText();
+  const money = await a.locator(".hud-budget strong").innerText();
   await enter(a, ua);
-  await expect(a.locator(".money strong")).toHaveText(money);
-  await expect(a.locator(".station-strip .station-card")).toHaveCount(1);
+  await expect(a.locator(".hud-budget strong")).toHaveText(money);
+  await expect(a.locator("svg.map [data-own-station]")).toHaveCount(1);
   await ca.close();
   await cb.close();
 });
@@ -253,11 +252,11 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  const aMoney = await a.locator(".money strong").innerText(),
+  const aMoney = await a.locator(".hud-budget strong").innerText(),
     c = await browser.newContext(),
     p = await c.newPage();
   await enter(p, ub);
-  const bMoney = await p.locator(".money strong").innerText();
+  const bMoney = await p.locator(".hud-budget strong").innerText();
   expect(bMoney).not.toBe("173.400 Cr");
   await c.close();
   await ca.close();
@@ -268,7 +267,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   const restart = await browser.newContext(),
     rp = await restart.newPage();
   await enter(rp, ua);
-  await expect(rp.locator(".money strong")).toHaveText(aMoney);
+  await expect(rp.locator(".hud-budget strong")).toHaveText(aMoney);
   await restart.close();
   await app.close();
   const restore = spawnSync(
@@ -291,8 +290,8 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   const restored = await browser.newContext(),
     page = await restored.newPage();
   await enter(page, ub);
-  await expect(page.locator(".money strong")).toHaveText(bMoney);
-  await expect(page.locator(".station-strip .station-card")).toHaveCount(1);
+  await expect(page.locator(".hud-budget strong")).toHaveText(bMoney);
+  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
   await restored.close();
 });
 test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht bestätigt", async ({
@@ -302,7 +301,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   const username = await register(page, "Tabs"),
     second = await context.newPage();
   await enter(second, username);
-  await page.getByRole("button", { name: "Fortschritt", exact: true }).click();
+  await openPanel(page, "Fortschritt");
   await page
     .getByRole("button", {
       name: "Bereitschaftsdienst übernehmen",
@@ -314,17 +313,17 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
     .toBe(true);
   app.game.step(125);
   await expect
-    .poll(() => second.locator(".money strong").innerText())
+    .poll(() => second.locator(".hud-budget strong").innerText())
     .not.toBe("250.000 Cr");
   await second.close();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  const before = await page.locator(".money strong").innerText();
+  const before = await page.locator(".hud-budget strong").innerText();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.locator(".banner")).toContainText(
     "Serververbindung unterbrochen",
   );
-  await page.getByRole("button", { name: "Fortschritt", exact: true }).click();
+  await openPanel(page, "Fortschritt");
   await page
     .getByRole("button", {
       name: "Bereitschaftsdienst übernehmen",
@@ -332,7 +331,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
     })
     .click();
   await expect(page.getByRole("alert")).toContainText("Keine Serververbindung");
-  expect(await page.locator(".money strong").innerText()).toBe(before);
+  expect(await page.locator(".hud-budget strong").innerText()).toBe(before);
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
   await expect(page.locator(".banner")).toHaveCount(0);
@@ -341,7 +340,7 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
   page,
 }) => {
   await register(page, "Sicherung");
-  await page.getByRole("button", { name: "Sicherungen", exact: true }).click();
+  await openPanel(page, "Sicherungen");
   const pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Spielstand exportieren", exact: true })
@@ -356,7 +355,7 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
   await expect(
     page.getByRole("button", { name: "Geprüften Spielstand übernehmen" }),
   ).toHaveCount(0);
-  await expect(page.locator(".money")).toContainText("250.000");
+  await expect(page.locator(".hud-budget")).toContainText("250.000");
   await page.getByLabel("Spielstanddatei importieren").setInputFiles({
     name: "kaputt.json",
     mimeType: "application/json",
@@ -369,8 +368,8 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
 }) => {
   const { ca, cb, a, b, ua, ub } = await pair(browser);
   await joinDesk(a, b, ub);
-  await a.getByRole("button", { name: "Freunde", exact: true }).click();
-  await b.getByRole("button", { name: "Freunde", exact: true }).click();
+  await openPanel(a, "Freunde");
+  await openPanel(b, "Freunde");
   await a.getByLabel("Chatnachricht").fill("<b>Nur Text</b>");
   await a.getByRole("button", { name: "Senden", exact: true }).click();
   await expect(b.locator(".chat-log")).toContainText("<b>Nur Text</b>");
@@ -381,7 +380,7 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
     .getByRole("button", { name: "Alle Sitzungen abmelden", exact: true })
     .click();
   await expect(a.getByLabel("Benutzername", { exact: true })).toBeVisible();
-  await expect(a.locator(".money")).toHaveCount(0);
+  await expect(a.locator(".hud-budget")).toHaveCount(0);
   await enter(a, ua);
   await expect(a.locator(".chat-log")).toHaveCount(0);
   await ca.close();

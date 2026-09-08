@@ -1,3 +1,4 @@
+import { openPanel, showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -45,7 +46,7 @@ async function enter(page: Page, username = "north") {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
 }
 test("FF-Wache und Personal konfigurieren, Reserve freigeben und individuelle Ausrückbereitschaft verfolgen", async ({
@@ -123,8 +124,8 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
   try {
     await enter(page);
     await enter(south, "south");
-    await page.getByRole("button", { name: "Freunde", exact: true }).click();
-    await south.getByRole("button", { name: "Freunde", exact: true }).click();
+    await openPanel(page, "Freunde");
+    await openPanel(south, "Freunde");
     await page.getByText("Neue Unterstützungsanfrage", { exact: true }).click();
     await page
       .getByLabel("Nachbarleitstelle", { exact: true })
@@ -179,7 +180,7 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
     await app.listen();
     await page.reload();
     await page
-      .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+      .getByRole("button", { name: "Weiterspielen", exact: true })
       .click();
     app.game.step(120);
     await page.locator(".mission-card").first().click();
@@ -207,7 +208,7 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
         .archive.some((m) => m.id === id),
     ).toBe(true);
     await page.getByRole("button", { name: "Schließen", exact: true }).click();
-    await page.getByRole("button", { name: "Freunde", exact: true }).click();
+    await openPanel(page, "Freunde");
     await page.getByLabel("Abgeschlossene Anfragen anzeigen").check();
     await expect(page.locator(".aid-card")).toContainText("Abgeschlossen");
     expect(errors).toEqual([]);
@@ -227,7 +228,7 @@ test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbi
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await enter(page);
-  await page.getByRole("button", { name: /Einsätze \(/ }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel("Organisationsaufträge")).toContainText(
     "Sichtung und Versorgung",
@@ -253,9 +254,9 @@ test("mobile Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbi
     .toBe("alarmed");
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
-  await page.getByRole("button", { name: /Einsätze \(/ }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(
     "public",

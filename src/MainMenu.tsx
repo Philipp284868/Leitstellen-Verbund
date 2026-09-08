@@ -1,255 +1,281 @@
-import { SoundButton } from "./Sound";
 import {
   Radio,
-  ArrowUpRight,
-  TowerControl,
-  Truck,
+  Play,
+  FilePlus2,
   Users,
-  ChartNoAxesCombined,
+  MapPinned,
   Settings,
-  HelpCircle,
-  Download,
+  Power,
   ChevronRight,
-  Activity,
+  Shield,
+  Truck,
+  Siren,
+  Wallet,
+  BookOpen,
+  Globe,
+  LifeBuoy,
+  Clock,
+  Building2,
+  Newspaper,
 } from "lucide-react";
+import { BrandMark } from "./BrandMark";
+import { SoundButton } from "./Sound";
 import type { Save } from "./model";
-import { level } from "./model";
+import { progress } from "./progression";
 import { credits } from "./ui";
 import { useGame, switchMode } from "./store";
 import { modeName } from "./mode";
+import { readiness } from "./engine";
+import { RegionScene } from "./RegionScene";
 import { version } from "../package.json";
 import "./MainMenu.css";
-
 export function MainMenu({
   save: s,
   readonly,
   onPlay,
   onOpen,
+  onMultiplayer,
 }: {
   save: Save;
   readonly: boolean;
   onPlay: () => void;
+  onMultiplayer: () => void;
   onOpen: (panel: string) => void;
 }) {
   const { mode } = useGame();
-  const shortcuts = [
+  const xp = progress(s.xp);
+  const actions = [
     {
-      id: "stations",
-      icon: TowerControl,
-      name: "Wachen",
-      text: "Standorte verwalten und ausbauen",
-      count: s.buildings.length,
+      name: "Weiterspielen",
+      text: `${modeName(mode)} · letzten bestätigten Stand öffnen`,
+      icon: Play,
+      action: onPlay,
+      primary: true,
     },
     {
-      id: "fleet",
-      icon: Truck,
-      name: "Fuhrpark",
-      text: "Fahrzeuge und Besatzungen organisieren",
-      count: s.vehicles.length,
+      name: "Neues Spiel",
+      text: "Deine eigene Leitstelle aufbauen",
+      icon: FilePlus2,
+      action: () => onOpen("new"),
     },
     {
-      id: "friends",
+      name: "Mehrspieler",
+      text: "Gemeinsam für eine sichere Region",
       icon: Users,
-      name: "Mit Freunden spielen",
-      text: "Kräfte teilen. Gemeinsam helfen.",
-      count: null,
+      action: () => (mode === "multi" ? onOpen("friends") : onMultiplayer()),
     },
     {
-      id: "progress",
-      icon: ChartNoAxesCombined,
-      name: "Fortschritt",
-      text: "Deine Erfolge und nächsten Ziele",
-      count: `Stufe ${level(s)}`,
+      name: "Szenario",
+      text: "Einsatzarten, Anforderungen & Herausforderungen",
+      icon: MapPinned,
+      action: () => onOpen("scenarios"),
+    },
+    {
+      name: "Einstellungen",
+      text: "Audio, Darstellung, Steuerung & Konto",
+      icon: Settings,
+      action: () => onOpen("settings"),
+    },
+    {
+      name: "Beenden",
+      text: "Sitzung sicher verlassen",
+      icon: Power,
+      action: () => onOpen("exit"),
     },
   ];
   return (
     <main className="command-menu">
-      <header className="menu-header">
-        <div className="menu-brand">
-          <Radio size={28} />
-          <span>
-            LEITSTELLEN<strong>VERBUND</strong>
+      <RegionScene save={s} />
+      <div className="menu-vignette" />
+      <header className="menu-brand">
+        <BrandMark />
+        <div>
+          <h1>LEITSTELLEN-VERBUND</h1>
+          <p>
+            <i />
+            EINSATZLEITUNG IN ECHTZEIT
+          </p>
+        </div>
+      </header>
+      <p className="menu-claim">
+        SCHNELLER REAGIEREN.
+        <br />
+        SICHERER LEBEN.
+      </p>
+      <nav className="menu-actions" aria-label="Hauptmenü">
+        {actions.map(({ name, text, icon: Icon, action, primary }) => (
+          <button
+            className={primary ? "menu-action primary" : "menu-action"}
+            key={name}
+            aria-label={name}
+            onClick={action}
+          >
+            <Icon />
+            <span>
+              <strong>{name}</strong>
+              <small>{text}</small>
+            </span>
+            <ChevronRight className="action-chevron" />
+          </button>
+        ))}
+      </nav>
+      <aside className="menu-intel" aria-label="Deine Leitstelle im Überblick">
+        <button
+          className="menu-panel menu-profile"
+          onClick={() => onOpen("progress")}
+        >
+          <span className="profile-crest">
+            <Shield />
           </span>
+          <span>
+            <small>Leitstellenleiter</small>
+            <strong>{s.player.name}</strong>
+            <span className="profile-xp">
+              <span>Stufe {xp.level}</span>
+              <span>
+                {xp.current.toLocaleString("de-DE")} /{" "}
+                {xp.required.toLocaleString("de-DE")} EP
+              </span>
+            </span>
+            <progress value={xp.current} max={xp.required} />
+          </span>
+        </button>
+        <section className="menu-panel">
+          <h2>
+            Letzter Spielstand <ChevronRight size={16} />
+          </h2>
+          <button className="last-save" onClick={onPlay}>
+            <div className="save-preview">
+              <RegionScene save={s} miniature />
+            </div>
+            <div>
+              <strong>{s.player.station}</strong>
+              <small>Region Falkenried</small>
+              <span>
+                <Clock size={14} />
+                Stand{" "}
+                {new Date(s.time * 1000).toLocaleString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              <span>
+                <Siren size={14} />
+                {s.missions.length} aktive Einsätze
+              </span>
+              <span>{modeName(mode)} · Server-Spielstand</span>
+            </div>
+          </button>
+        </section>
+        <section className="menu-panel">
+          <h2>Meine Leitstelle</h2>
+          <div className="station-identity">
+            <Building2 />
+            <div>
+              <strong>{s.player.station}</strong>
+              <small>Falkenried · {modeName(mode)}</small>
+            </div>
+          </div>
+          <dl className="menu-stats">
+            {[
+              [Siren, "Aktive Einsätze", s.missions.length],
+              [
+                Truck,
+                "Verfügbare Fahrzeuge",
+                s.vehicles.filter((v) => !readiness(s, v)).length,
+              ],
+              [Users, "Einsatzkräfte gesamt", s.people.length],
+              [Wallet, "Budget", credits(s.money)],
+            ].map(([Icon, label, value]) => {
+              const Symbol = Icon as typeof Siren;
+              return (
+                <div key={String(label)}>
+                  <dt>
+                    <Symbol />
+                    {String(label)}
+                  </dt>
+                  <dd>{String(value)}</dd>
+                </div>
+              );
+            })}
+          </dl>
+        </section>
+        <section className="menu-panel menu-news">
+          <h2>
+            Neuigkeiten{" "}
+            <button onClick={() => onOpen("news")}>Alle anzeigen</button>
+          </h2>
+          <div className="news-visual">
+            <Radio />
+            <span>
+              DEINE REGION.
+              <br />
+              DEINE ENTSCHEIDUNGEN.
+            </span>
+          </div>
+          <button className="news-copy" onClick={() => onOpen("news")}>
+            <strong>Version {version} · Die neue Leitstelle</strong>
+            <p>
+              Mehr Karte. Klare Einsatzführung. Alle Informationen dort, wo du
+              sie brauchst.
+            </p>
+            <span className="news-dots">
+              ● <i>● ●</i>
+            </span>
+          </button>
+        </section>
+      </aside>
+      <div className="menu-lower">
+        <p>
+          MENSCHEN · TECHNOLOGIE · SICHERHEIT
+          <br />
+          FÜR EINE STARKE REGION
+        </p>
+        <div className="menu-worlds" aria-label="Spielmodus">
+          {(["single", "multi"] as const).map((value) => (
+            <button
+              key={value}
+              aria-pressed={mode === value}
+              onClick={() => void switchMode(value)}
+            >
+              {modeName(value)}
+            </button>
+          ))}
         </div>
         <span
           className={`menu-connection ${readonly ? "is-offline" : ""}`}
           role="status"
         >
           <i />
-          {readonly ? "Verbindung unterbrochen" : "Mit Server verbunden"}
+          {readonly
+            ? "Verbindung unterbrochen · letzter bestätigter Stand"
+            : "Mit Server verbunden"}
         </span>
-        <SoundButton />
-        <button onClick={() => onOpen("settings")}>
-          <Settings size={18} />
-          <span>Konto & Einstellungen</span>
-        </button>
-      </header>
-      <div className="menu-content">
-        <section className="mode-choice" aria-label="Spielmodus">
-          <div>
-            <span className="menu-kicker">DEINE SPIELWELTEN</span>
-            <p>
-              Eigene Wachen, eigenes Guthaben und eigener Fortschritt je Modus.
-            </p>
-          </div>
-          <div className="mode-buttons">
-            {(["single", "multi"] as const).map((value) => (
-              <button
-                key={value}
-                aria-pressed={mode === value}
-                onClick={() => void switchMode(value)}
-              >
-                {modeName(value)}
-              </button>
-            ))}
-          </div>
-        </section>
-        <section className="menu-hero" aria-labelledby="menu-title">
-          <div className="menu-hero-copy">
-            <span className="menu-kicker">
-              REGION FALKENRIED / DEINE LEITSTELLE
-            </span>
-            <h1 id="menu-title">
-              Deine nächste
-              <br />
-              <em>Schicht beginnt.</em>
-            </h1>
-            <p>
-              Willkommen zurück, {s.player.name}.<br />
-              Eine ganze Region zählt auf deine Entscheidungen.
-            </p>
-            <button className="primary menu-play" onClick={onPlay}>
-              Leitstelle öffnen <ChevronRight size={22} />
-            </button>
-            <small>
-              {readonly
-                ? "Du kannst deine Übersicht öffnen. Spielaktionen sind bis zur Verbindung gesperrt."
-                : "Disponieren, ausbauen und gemeinsam Einsätze meistern."}
-            </small>
-          </div>
-          <div className="menu-region" aria-hidden="true">
-            <svg viewBox="0 0 480 330" fill="none">
-              <defs>
-                <pattern
-                  id="menu-grid"
-                  width="32"
-                  height="32"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path d="M32 0H0V32" stroke="currentColor" opacity=".12" />
-                </pattern>
-              </defs>
-              <rect width="480" height="330" fill="url(#menu-grid)" />
-              <path
-                d="M320 -20C240 90 405 120 295 205S280 310 200 360"
-                stroke="#459eac"
-                strokeWidth="38"
-                opacity=".24"
-              />
-              <g stroke="currentColor" opacity=".35" strokeWidth="2">
-                <path d="M-20 110L140 110 200 175 480 175M80 0V230L180 330M0 270L180 220 240 60 480 60M170 0L220 110H480M390 0V330M0 45L160 45 300 300H480" />
-              </g>
-              <path
-                d="M80 110H140L200 175H390V240"
-                stroke="#f09b76"
-                strokeWidth="3"
-                strokeDasharray="7 6"
-              />
-              <g fill="#f09b76">
-                <circle cx="80" cy="110" r="7" />
-                <circle cx="200" cy="175" r="7" />
-                <circle cx="390" cy="240" r="7" />
-              </g>
-              <circle cx="200" cy="175" r="24" stroke="#f09b76" opacity=".5" />
-              <circle cx="200" cy="175" r="48" stroke="#f09b76" opacity=".2" />
-            </svg>
-            <span className="menu-map-label">
-              <Radio size={16} /> FALKENRIED
-            </span>
-            <span className="menu-map-caption">GEMEINSAM IN BEREITSCHAFT</span>
-          </div>
-        </section>
-        <section
-          className="menu-overview"
-          aria-label="Deine Leitstelle im Überblick"
-        >
-          <div className="menu-station">
-            <span className="menu-kicker">DEIN STANDORT</span>
-            <h2>{s.player.station}</h2>
-            <span>Leitstellenstufe {level(s)}</span>
-          </div>
-          <div>
-            <span>Verfügbare Credits</span>
-            <strong>{credits(s.money)}</strong>
-          </div>
-          <div>
-            <span>Offene Einsätze</span>
-            <strong>{s.missions.length.toLocaleString("de-DE")}</strong>
-          </div>
-          <div>
-            <span>Fahrzeuge an Wache</span>
-            <strong>
-              {s.vehicles.filter((v) => v.status === "ready").length}
-              <small> / {s.vehicles.length}</small>
-            </strong>
-          </div>
-        </section>
-        <section aria-labelledby="menu-manage-title">
-          <div className="menu-section-heading">
-            <h2 id="menu-manage-title">Deine Leitstelle im Griff.</h2>
-            <span>VERWALTUNG & VERBUND</span>
-          </div>
-          <nav className="menu-shortcuts" aria-label="Hauptmenü">
-            {shortcuts.map(({ id, icon: Icon, name, text, count }) => (
-              <button key={id} onClick={() => onOpen(id)}>
-                <div className="menu-shortcut-top">
-                  <Icon size={25} />
-                  {count !== null && <span>{count}</span>}
-                  <ArrowUpRight size={18} />
-                </div>
-                <h3>{name}</h3>
-                <p>{text}</p>
-              </button>
-            ))}
-          </nav>
-        </section>
-        <section className="menu-bottom">
-          <div className="menu-tip">
-            <Activity size={24} />
-            <div>
-              <h3>
-                {s.buildings.length
-                  ? "Jeder Einsatz zählt."
-                  : "Alles beginnt mit deiner ersten Wache."}
-              </h3>
-              <p>
-                {s.buildings.length
-                  ? `${s.completed} Einsätze abgeschlossen. Entdecke deine nächsten Ausbauziele.`
-                  : "Baue eine Feuerwache, kaufe Fahrzeuge und stelle deine erste Mannschaft zusammen."}
-              </p>
-            </div>
-            <button
-              onClick={() => onOpen(s.buildings.length ? "progress" : "build")}
-            >
-              {s.buildings.length ? "Ziele ansehen" : "Wache bauen"}
-              <ChevronRight size={17} />
-            </button>
-          </div>
-          <nav className="menu-utilities" aria-label="Hilfe und Sicherungen">
-            <button onClick={() => onOpen("help")}>
-              <HelpCircle size={19} />
-              Spielanleitung
-            </button>
-            <button onClick={() => onOpen("backups")}>
-              <Download size={19} />
-              Spielstände & Sicherungen
-            </button>
-          </nav>
-        </section>
       </div>
       <footer className="menu-footer">
-        <span>FALKENRIED · GEMEINSAM DISPONIEREN</span>
         <span>Version {version}</span>
+        <span className="footer-project">
+          Eine Echtzeit-Simulation · Leitstellen-Verbund
+        </span>
+        <nav>
+          <SoundButton />
+          {[
+            ["credits", BookOpen, "Credits"],
+            ["privacy", Shield, "Datenschutz"],
+            ["support", LifeBuoy, "Support"],
+            ["language", Globe, "Deutsch"],
+          ].map(([id, Icon, text]) => {
+            const Symbol = Icon as typeof Newspaper;
+            return (
+              <button key={String(id)} onClick={() => onOpen(String(id))}>
+                <Symbol />
+                {String(text)}
+              </button>
+            );
+          })}
+        </nav>
       </footer>
     </main>
   );

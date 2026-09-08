@@ -1,3 +1,4 @@
+import { openPanel, showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
@@ -70,7 +71,7 @@ async function login(page: Page, username: string) {
 }
 async function play(page: Page) {
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
@@ -89,12 +90,10 @@ test("Modi trennen Guthaben und Wachen, mehrere Tabs und Reload behalten ihre ei
     page.getByRole("button", { name: "Einzelspieler", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await play(page);
-  await expect(page.locator(".money")).toContainText("250.000");
-  await expect(page.locator(".station-strip .station-card")).toHaveCount(0);
-  await page
-    .locator(".bottom-panel")
-    .getByRole("button", { name: "Wache bauen" })
-    .click();
+  await expect(page.locator(".hud-budget")).toContainText("250.000");
+  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(0);
+  await openPanel(page, "Wachen");
+  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
     .locator(".shop-card")
     .filter({
@@ -109,17 +108,17 @@ test("Modi trennen Guthaben und Wachen, mehrere Tabs und Reload behalten ihre ei
   await page
     .getByRole("button", { name: "Bau bestätigen", exact: true })
     .click();
-  await expect(page.locator(".money")).toContainText("195.000");
+  await expect(page.locator(".hud-budget")).toContainText("195.000");
   expect(app.db.all().get(id)!.money).toBe(multi.money);
   const second = await context.newPage();
   await second.goto(origin);
   await play(second);
   await expect(second.locator(".hud-mode")).toHaveText("Multiplayer");
-  await expect(second.locator(".station-strip .station-card")).toHaveCount(1);
+  await expect(second.locator("svg.map [data-own-station]")).toHaveCount(1);
   await page.reload();
   await play(page);
   await expect(page.locator(".hud-mode")).toHaveText("Einzelspieler");
-  await expect(page.locator(".money")).toContainText("195.000");
+  await expect(page.locator(".hud-budget")).toContainText("195.000");
   await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
   await page.getByRole("button", { name: "Multiplayer", exact: true }).click();
   await play(page);
@@ -160,10 +159,13 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
   await account(page);
   await play(page);
   const mapArea = await page.locator("svg.map").boundingBox();
+  await page.getByRole("button", { name: "Layer", exact: true }).click();
   const toolsArea = await page.locator(".map-layers").boundingBox();
   const legendArea = await page.locator(".map-legend").boundingBox();
-  expect(mapArea!.y).toBeGreaterThanOrEqual(toolsArea!.y + toolsArea!.height);
-  expect(legendArea!.y).toBeGreaterThanOrEqual(mapArea!.y + mapArea!.height);
+  expect(toolsArea!.y).toBeGreaterThanOrEqual(mapArea!.y);
+  expect(legendArea!.y + legendArea!.height).toBeLessThanOrEqual(
+    mapArea!.y + mapArea!.height,
+  );
   await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
   await expect(page.locator(".map-legend")).toContainText("125 %");
   await page
@@ -219,7 +221,7 @@ test("HUD und Karte bleiben mobil, im hellen Modus und per Tastatur bedienbar", 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: /^Einsätze \(/ }).click();
+  await showIncidents(page);
   await expect(page.locator(".mission-sidebar")).toBeVisible();
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect(page.locator("svg.map")).toBeVisible();
@@ -232,7 +234,8 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren auf De
   const { id } = await account(page, true);
   await play(page);
   await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
-  await expect(page.locator(".radio-bar")).toContainText("Echtzeit");
+  await expect(page.locator(".hud-time-mode")).toContainText("Echtzeit");
+  await page.getByRole("button", { name: "Layer", exact: true }).click();
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();

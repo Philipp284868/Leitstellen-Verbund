@@ -1,3 +1,4 @@
+import { showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -40,9 +41,9 @@ async function enter(page: Page, mobile = false) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
-  if (mobile) await page.getByRole("button", { name: /Einsätze \(/ }).click();
+  if (mobile) await showIncidents(page);
   await page.locator(".mission-card").first().click();
 }
 test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik und Abschluss", async ({
@@ -73,6 +74,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   breakVehicle(saved, saved.vehicles[0], "engine");
   app.db.save(owner, saved);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("button", { name: "Layer", exact: true }).click();
   await expect(page.locator(".fault-card")).toContainText("Motorschaden");
   await page
     .getByRole("button", { name: "Reparatur beauftragen", exact: true })
@@ -85,7 +87,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   await app.listen();
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
   await expect(page.locator(".fault-card")).toContainText("Reparatur läuft");
   saved = app.db.all().get(owner)!;
@@ -216,9 +218,9 @@ test("mobile Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: true })
+    .getByRole("button", { name: "Weiterspielen", exact: true })
     .click();
-  await page.getByRole("button", { name: /Einsätze \(/ }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel(/^Versorgung Patient/)).toHaveValue("oxygen");
   for (

@@ -1,0 +1,1186 @@
+.app.command-hud.in-game {
+  height: 100dvh;
+  overflow: hidden;
+}
+.hud-shell {
+  height: 100dvh;
+  position: relative;
+  --left-width: var(--desk-width, 320px);
+  --right-width: clamp(310px, 21vw, 365px);
+}
+.app.command-hud .topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 58px;
+  min-height: 58px;
+  z-index: 20;
+  display: flex;
+  gap: 0;
+  padding: 0;
+  background: #07141def;
+  border-bottom: 1px solid var(--hud-border);
+  box-shadow: 0 2px 15px #0005;
+  backdrop-filter: blur(15px);
+}
+.topbar > .hud-identity,
+.topbar > .hud-clock,
+.topbar > .hud-weather,
+.topbar > .hud-counter,
+.topbar > .hud-budget,
+.topbar > .hud-time-mode {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 8px 25px;
+  border: 0;
+  border-right: 1px solid var(--hud-border);
+  border-radius: 0;
+  background: none;
+  white-space: nowrap;
+}
+.topbar .hud-identity {
+  flex: 0 1 390px;
+  text-align: left;
+}
+.hud-identity > svg {
+  width: 32px;
+  height: 32px;
+}
+.topbar strong,
+.topbar small {
+  display: block;
+}
+.topbar strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.topbar small {
+  font-size: 11px;
+  color: var(--hud-muted);
+  margin-top: 2px;
+}
+.topbar .hud-clock {
+  display: block;
+  min-width: 137px;
+}
+.hud-clock strong {
+  font-size: 19px;
+}
+.hud-counter > svg {
+  color: #f26960;
+}
+.hud-budget > svg {
+  color: #65b78b;
+}
+.hud-weather > svg {
+  color: #adbdcb;
+}
+.hud-time-mode {
+  font-size: 11px;
+  color: var(--hud-muted);
+}
+.hud-time-mode svg {
+  width: 18px;
+}
+.hud-time-mode b {
+  color: var(--hud-text);
+  padding-left: 10px;
+}
+.hud-claim {
+  margin: auto 20px auto auto;
+  font-size: 10px;
+  text-align: right;
+  color: var(--hud-muted);
+  line-height: 1.5;
+}
+.app.command-hud .map-column {
+  position: absolute;
+  inset: 58px 0 66px;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  z-index: 0;
+  padding: 0;
+}
+.app.command-hud .map-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: #465348;
+}
+.app.command-hud svg.map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  flex: none;
+  background: none;
+}
+.app.command-hud .map-toolbar,
+.app.command-hud .map-search,
+.app.command-hud .map-layers,
+.app.command-hud .operations {
+  display: none;
+}
+.app.command-hud [data-map-tools="true"] .map-toolbar,
+.app.command-hud [data-map-tools="true"] .map-search,
+.app.command-hud [data-map-tools="true"] .map-layers,
+.app.command-hud [data-map-tools="true"] .operations {
+  display: flex;
+  position: absolute;
+  left: calc(var(--left-width) + 30px);
+  top: 14px;
+  width: 410px;
+  max-width: calc(100% - var(--left-width) - 50px);
+  z-index: 8;
+  background: #091923f5;
+  border: 1px solid var(--hud-border);
+  border-radius: 5px;
+  padding: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  box-shadow: var(--hud-shadow);
+}
+.app.command-hud [data-map-tools="true"] .map-search {
+  top: 108px;
+}
+.app.command-hud [data-map-tools="true"] .map-layers {
+  top: 223px;
+}
+.app.command-hud [data-map-tools="true"] .operations {
+  top: 330px;
+  max-height: 240px;
+  overflow: auto;
+  display: block;
+}
+.app.command-hud .map-toolbar strong {
+  width: 100%;
+}
+.app.command-hud .map-toolbar button,
+.app.command-hud .map-layers button {
+  font-size: 11px;
+  padding: 7px;
+}
+.app.command-hud .map-search input {
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+}
+.app.command-hud .map-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #091923;
+  z-index: 10;
+}
+.app.command-hud .map-zoom {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  background: none;
+  padding: 0;
+}
+.app.command-hud [data-detail-open="true"] .map-zoom {
+  right: calc(var(--right-width) + 30px);
+}
+.app.command-hud .map-zoom button {
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+}
+.app.command-hud .map-scale {
+  position: absolute;
+  bottom: 22px;
+  left: 22px;
+  background: #0b1b23aa;
+  z-index: 4;
+  padding: 8px;
+  border-radius: 4px;
+}
+.app.command-hud .map-legend {
+  position: absolute;
+  bottom: 66px;
+  left: 22px;
+  z-index: 4;
+  background: #0b1b23aa;
+  border: 0;
+  font-size: 10px;
+  padding: 6px;
+}
+.app.command-hud .map-vehicle-detail {
+  position: absolute;
+  right: 15px;
+  top: 16px;
+  width: var(--right-width);
+  max-height: calc(100% - 80px);
+  overflow: auto;
+  z-index: 7;
+  background: #081722f2;
+  border: 1px solid var(--hud-border);
+}
+.app.command-hud .placement-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  width: 600px;
+  z-index: 12;
+  background: #142833f5;
+}
+.app.command-hud .workspace {
+  display: block;
+  position: static;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+}
+.hud-left-controls {
+  position: absolute;
+  top: 71px;
+  left: 14px;
+  width: var(--left-width);
+  z-index: 16;
+}
+.hud-left-controls > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  text-align: left;
+  border-radius: 5px 5px 0 0;
+  background: #091923ed;
+  font-weight: 600;
+}
+.hud-left-controls > button > span {
+  flex: 1;
+}
+.app.command-hud .mission-sidebar {
+  position: absolute;
+  top: 111px;
+  left: 14px;
+  right: auto;
+  bottom: auto;
+  width: var(--left-width);
+  max-height: calc(100dvh - 225px);
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  z-index: 15;
+  background: #081722ed;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--hud-border);
+  border-top: 0;
+  border-radius: 0 0 5px 5px;
+  box-shadow: var(--hud-shadow);
+}
+.app.command-hud [data-list-open="false"] .mission-sidebar {
+  display: none;
+}
+.app.command-hud .mission-sidebar > .panel-heading,
+.app.command-hud .sidebar-summary,
+.app.command-hud .dispatch-pace {
+  display: none;
+}
+.app.command-hud .mission-sidebar .org-filters {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  order: 0;
+  flex-wrap: wrap;
+}
+.org-filters button {
+  font-size: 10px;
+  padding: 5px 7px;
+  min-height: 25px;
+}
+.org-filters button[aria-pressed="true"] {
+  background: linear-gradient(#345d7b, #244f72);
+  border-color: #5684a4;
+}
+.app.command-hud .mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px 7px;
+  order: 1;
+  overflow: visible;
+  flex: none;
+}
+.app.command-hud .mission-card {
+  position: relative;
+  min-height: 78px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 11px 10px;
+  border-radius: 3px;
+  background: #0a1822ba;
+  border: 1px solid #49606b33;
+  border-left: 3px solid #5a6d78;
+  text-align: left;
+}
+.app.command-hud .mission-card.selected,
+.app.command-hud .mission-card.active {
+  background: linear-gradient(100deg, #183b53, #132838);
+  border-color: #4a7390;
+  border-left-color: #ef5d4c;
+}
+.mission-card .mission-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 33px;
+  height: 35px;
+  border-radius: 3px;
+  background: #ac342c;
+  color: white;
+}
+.mission-icon.ems {
+  background: #087e4a;
+}
+.mission-icon.police {
+  background: #24628e;
+}
+.mission-icon.thw {
+  background: #716240;
+}
+.mission-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.app.command-hud .mission-card h3 {
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0 0 5px;
+}
+.app.command-hud .mission-card p {
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 3px 0;
+  color: #b0bfc8;
+}
+.app.command-hud .mission-card small {
+  font-size: 9px;
+}
+.app.command-hud .mission-card time {
+  font-size: 10px;
+  color: #bdcbd2;
+}
+.app.command-hud .mission-card .status {
+  font-size: 9px;
+  padding: 3px 5px;
+  border-radius: 3px;
+}
+.app.command-hud .mission-card progress {
+  display: none;
+}
+.app.command-hud .queue-slot,
+.app.command-hud .mission-filters {
+  order: 2;
+  margin: 0;
+  padding: 9px;
+  border: 0;
+  border-top: 1px solid var(--hud-border);
+  border-radius: 0;
+  background: none;
+  font-size: 11px;
+}
+.app.command-hud .mission-filters {
+  order: 3;
+}
+.queue-slot > summary,
+.mission-filters > summary {
+  cursor: pointer;
+  color: var(--hud-muted);
+  font-size: 11px;
+}
+.queue-slot > summary b {
+  float: right;
+  color: var(--hud-text);
+}
+.app.command-hud .queue-slot .desk-queue {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+}
+.app.command-hud .shared-inbox,
+.app.command-hud .archive-link {
+  order: 4;
+  margin: 0;
+  padding: 10px;
+  border: 0;
+  border-top: 1px solid var(--hud-border);
+  border-radius: 0;
+  background: none;
+  font-size: 10px;
+}
+.app.command-hud .empty {
+  padding: 16px;
+  min-height: 0;
+}
+.app.command-hud .empty h3 {
+  font-size: 14px;
+}
+.app.command-hud .empty p {
+  font-size: 11px;
+}
+.app.command-hud[data-sidebar="right"] .mission-sidebar,
+.app.command-hud[data-sidebar="right"] .hud-left-controls {
+  left: auto;
+  right: 14px;
+}
+.app.command-hud[data-sidebar="right"] .incident-dock {
+  right: auto;
+  left: 14px;
+}
+.incident-dock {
+  position: absolute;
+  right: 14px;
+  top: 71px;
+  bottom: 112px;
+  width: var(--right-width);
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hud-border);
+  border-radius: 5px;
+  background: #081722ed;
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(14px);
+}
+.dock-heading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 16px 12px 12px;
+}
+.dock-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.dock-heading strong {
+  display: block;
+  font-size: 14px;
+}
+.dock-heading small {
+  display: block;
+  font-size: 10px;
+  color: var(--hud-muted);
+  margin-top: 6px;
+}
+.dock-heading > button {
+  border: 0;
+  background: none;
+  padding: 5px;
+  align-self: flex-start;
+}
+.dock-symbol {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(#b34032, #641f1d);
+  color: #fff;
+  width: 38px;
+  height: 40px;
+  border-radius: 3px;
+  flex: none;
+}
+.dock-tabs {
+  display: flex;
+  padding: 0 9px 8px;
+  border-bottom: 1px solid var(--hud-border);
+  gap: 1px;
+}
+.dock-tabs button {
+  flex: 1;
+  padding: 8px 2px;
+  font-size: 11px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-radius: 3px 3px 0 0;
+}
+.dock-tabs button[aria-pressed="true"] {
+  border-bottom-color: #c4d6e1;
+  background: linear-gradient(#2b4356, #172d3d);
+}
+.dock-content {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #506879 transparent;
+}
+.dock-content > fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.app.command-hud .incident-dock .incident-desk {
+  display: block;
+  padding: 0;
+}
+.incident-dock h2 {
+  font-size: 17px;
+  margin: 0 0 10px;
+}
+.incident-dock h3 {
+  font-size: 13px;
+}
+.incident-dock p,
+.incident-dock li {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.incident-dock small {
+  font-size: 10px;
+}
+.incident-dock section {
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--hud-border);
+  margin: 0 0 12px;
+  border-radius: 0;
+  background: none;
+  scroll-margin-top: 0;
+}
+.incident-dock button,
+.incident-dock select,
+.incident-dock input {
+  font-size: 11px;
+  max-width: 100%;
+}
+.incident-dock label {
+  font-size: 11px;
+}
+.incident-dock .question-grid,
+.incident-dock .desk-form,
+.incident-dock .inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.incident-dock .question-grid button {
+  flex: 1 1 45%;
+  padding: 8px;
+}
+.incident-dock .dispatch-list {
+  max-height: 245px;
+  overflow: auto;
+}
+.incident-dock .dispatch-list label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 7px;
+}
+.incident-dock input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.incident-dock .dynamics-panel,
+.incident-dock .major-panel,
+.incident-dock .org-panel {
+  padding: 8px;
+  background: #20344066;
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+}
+.incident-dock .phase-grid,
+.incident-dock .stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+.incident-dock .history {
+  font-size: 10px;
+}
+.incident-dock table {
+  font-size: 10px;
+  display: block;
+  overflow: auto;
+}
+.app.command-hud .hud-feed {
+  position: absolute;
+  bottom: 79px;
+  right: calc(var(--right-width) + 30px);
+  width: 290px;
+  min-height: 0;
+  z-index: 10;
+  display: flex;
+  gap: 9px;
+  padding: 10px;
+  background: #081722ed;
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 10px;
+}
+.hud-feed > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--hud-muted);
+}
+.hud-feed p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.app.command-hud .tutorial {
+  top: auto;
+  right: auto;
+  height: auto;
+  position: absolute;
+  bottom: 78px;
+  left: 22px;
+  width: 260px;
+  z-index: 18;
+  background: #0a1b26ed;
+  padding: 9px;
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  font-size: 11px;
+}
+.tutorial summary {
+  cursor: pointer;
+}
+.app.command-hud .hud-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 66px;
+  z-index: 30;
+  background: #07141df2;
+  border-top: 1px solid var(--hud-border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 16px;
+  backdrop-filter: blur(15px);
+}
+.hud-bottom nav,
+.hud-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-bottom button {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 9px 12px;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.hud-bottom svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.hud-resources button {
+  background: none;
+  border-color: transparent;
+}
+.hud-resources button[aria-pressed="true"] {
+  background: linear-gradient(#204566, #16324a);
+  border-bottom-color: #6b9abd;
+}
+.hud-dispatch {
+  margin-left: auto;
+}
+.hud-dispatch .primary {
+  min-width: 132px;
+}
+.hud-tools {
+  margin-left: auto;
+}
+.hud-search-toggle {
+  width: 195px;
+  color: var(--hud-muted);
+}
+.hud-search-toggle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-tools > button:not(.hud-search-toggle) {
+  padding: 8px;
+  width: 36px;
+}
+@media (max-width: 1500px) {
+  .topbar .hud-identity {
+    flex-basis: 300px;
+  }
+  .topbar > .hud-clock,
+  .topbar > .hud-weather,
+  .topbar > .hud-counter,
+  .topbar > .hud-budget,
+  .topbar > .hud-time-mode {
+    padding: 8px 17px;
+  }
+  .hud-claim {
+    display: none;
+  }
+  .hud-bottom {
+    gap: 8px;
+  }
+  .hud-bottom button {
+    padding: 8px;
+    font-size: 10px;
+    gap: 6px;
+  }
+  .hud-bottom nav {
+    gap: 4px;
+  }
+  .hud-search-toggle {
+    width: 170px;
+  }
+  .app.command-hud [data-map-tools="true"] .map-toolbar,
+  .app.command-hud [data-map-tools="true"] .map-search,
+  .app.command-hud [data-map-tools="true"] .map-layers,
+  .app.command-hud [data-map-tools="true"] .operations {
+    width: 360px;
+  }
+  .hud-shell {
+    --right-width: 315px;
+  }
+  .incident-dock {
+    bottom: 94px;
+  }
+  .dock-heading {
+    padding: 12px;
+  }
+  .dock-content {
+    padding: 10px;
+  }
+  .app.command-hud .hud-feed {
+    bottom: 77px;
+  }
+  .app.command-hud .mission-card {
+    min-height: 72px;
+  }
+}
+@media (max-width: 1100px) {
+  .topbar > .hud-weather,
+  .topbar > .hud-time-mode {
+    display: none;
+  }
+  .hud-resources button span {
+    display: none;
+  }
+  .hud-search-toggle {
+    width: 40px;
+  }
+  .hud-search-toggle span {
+    display: none;
+  }
+  .hud-dispatch .primary {
+    min-width: 100px;
+  }
+  .hud-shell {
+    --left-width: 285px;
+    --right-width: 310px;
+  }
+  .hud-feed {
+    display: none !important;
+  }
+}
+@media (max-width: 700px) {
+  .app.command-hud .topbar {
+    height: 56px;
+    min-height: 56px;
+  }
+  .topbar > .hud-clock,
+  .topbar > .hud-counter {
+    display: none;
+  }
+  .topbar .hud-identity {
+    flex: 1;
+    padding: 8px 12px;
+  }
+  .topbar strong {
+    font-size: 12px;
+  }
+  .topbar small {
+    font-size: 9px;
+  }
+  .topbar > .hud-budget {
+    padding: 8px 12px;
+  }
+  .hud-budget svg {
+    display: none;
+  }
+  .app.command-hud .map-column {
+    inset: 56px 0 102px;
+  }
+  .app.command-hud .hud-bottom {
+    height: 102px;
+    padding: 6px 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px;
+  }
+  .hud-resources {
+    grid-column: 1/-1;
+    justify-content: space-around;
+  }
+  .hud-resources button span {
+    display: inline;
+  }
+  .hud-resources button {
+    height: 36px;
+    font-size: 9px;
+    gap: 5px;
+  }
+  .hud-bottom svg {
+    width: 15px;
+    height: 15px;
+  }
+  .hud-dispatch {
+    margin: 0;
+  }
+  .hud-tools {
+    margin: 0;
+  }
+  .hud-dispatch button {
+    height: 40px;
+    padding: 7px;
+    font-size: 9px;
+  }
+  .hud-dispatch .primary {
+    min-width: 84px;
+  }
+  .hud-tools .hud-search-toggle,
+  .hud-tools > button[aria-label="Kartenauswahl zentrieren"] {
+    display: none;
+  }
+  .hud-shell {
+    --left-width: 310px;
+  }
+  .hud-left-controls {
+    top: 64px;
+    left: 8px;
+    width: 170px;
+  }
+  .hud-left-controls > button {
+    min-height: 33px;
+    font-size: 11px;
+  }
+  .app.command-hud .mission-sidebar {
+    top: 97px;
+    left: 8px;
+    width: 310px;
+    max-width: calc(100% - 16px);
+    max-height: calc(100dvh - 260px);
+  }
+  .incident-dock {
+    top: 105px;
+    bottom: 116px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
+  .app.command-hud [data-detail-open="true"] .mission-sidebar,
+  .app.command-hud [data-detail-open="true"] .tutorial,
+  .app.command-hud [data-map-tools="true"] .mission-sidebar {
+    display: none;
+  }
+  .app.command-hud [data-map-tools="true"] .map-toolbar,
+  .app.command-hud [data-map-tools="true"] .map-search,
+  .app.command-hud [data-map-tools="true"] .map-layers,
+  .app.command-hud [data-map-tools="true"] .operations {
+    left: 8px;
+    max-width: calc(100% - 16px);
+    width: 380px;
+    top: 54px;
+  }
+  .app.command-hud [data-map-tools="true"] .map-search {
+    top: 146px;
+  }
+  .app.command-hud [data-map-tools="true"] .map-layers {
+    top: 260px;
+  }
+  .app.command-hud [data-map-tools="true"] .operations {
+    top: 365px;
+    max-height: 150px;
+  }
+  .app.command-hud .tutorial {
+    top: auto;
+    right: auto;
+    height: auto;
+    bottom: 112px;
+    font-size: 10px;
+    left: 8px;
+    width: 210px;
+  }
+  .app.command-hud .map-zoom,
+  .app.command-hud [data-detail-open="true"] .map-zoom {
+    right: 8px;
+    bottom: 12px;
+  }
+  .app.command-hud .map-scale {
+    left: 8px;
+    bottom: 10px;
+  }
+  .app.command-hud .map-legend {
+    display: none;
+  }
+}
+
+.app.command-hud .map-wrap {
+}
+.app.command-hud .mission-card .mission-number {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#ba3c32, #7d2422);
+  color: white;
+  flex: 0 0 32px;
+  height: 35px;
+  border: 1px solid #e4766466;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.mission-number svg {
+  width: 23px;
+  height: 23px;
+}
+.app.command-hud .mission-card .mission-number[data-org="Rettungsdienst"] {
+  background: #167748;
+}
+.app.command-hud .mission-card .mission-number[data-org="Polizei"] {
+  background: #246690;
+}
+.app.command-hud .mission-card .eyebrow {
+  font-size: 8px;
+  letter-spacing: 0.7px;
+}
+.org-filters b {
+  margin-left: 5px;
+}
+.app.command-hud .mission-card > div {
+  flex: 1;
+  min-width: 0;
+}
+.app.command-hud .mission-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5px;
+}
+.app.command-hud .mission-card .status.waiting {
+  background: #744b1788;
+  color: #efd6a4;
+}
+.hud-management {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.app.command-hud .status {
+  background: #23495e;
+  color: #d8e8ef;
+}
+
+.app.command-hud .map-zoom {
+  top: auto;
+}
+.app.command-hud .map-scale {
+  right: auto;
+  width: auto;
+}
+.app.command-hud .mission-card {
+  height: auto;
+  min-height: 78px;
+}
+.app.command-hud .topbar,
+.app.command-hud .hud-bottom,
+.app.command-hud .mission-sidebar {
+  font-weight: 400;
+}
+.app.command-hud .incident-dock button {
+  font-weight: 400;
+}
+.app.command-hud .incident-dock h3 {
+  margin-bottom: 8px;
+}
+.app.command-hud .incident-dock .eyebrow {
+  letter-spacing: 0.6px;
+  font-size: 10px;
+}
+.app.command-hud .map-legend {
+  max-width: calc(100% - 440px);
+}
+
+.app.command-hud[data-compact="true"] .mission-card {
+  padding: 7px 9px;
+  min-height: 66px;
+}
+.app.command-hud[data-queue-bottom="false"] .queue-slot {
+  order: -1;
+}
+.app.command-hud.light .map-terrain {
+  filter: brightness(1.15) saturate(0.9);
+}
+@media (max-width: 700px) {
+  .app.command-hud[data-sidebar="right"] .mission-sidebar {
+    left: auto;
+    right: 8px;
+  }
+  .app.command-hud[data-sidebar="right"] .incident-dock {
+    left: 8px;
+    right: 8px;
+  }
+  .hud-tools .sound-toggle {
+    display: none;
+  }
+  .app.command-hud .map-wrap > .map.map {
+    min-height: 0;
+  }
+}
+
+.incident-dock .closed-calls {
+  margin: 15px 0;
+  border-top: 1px solid var(--hud-border);
+  border-bottom: 1px solid var(--hud-border);
+  padding: 10px 0;
+}
+.closed-calls summary {
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--hud-muted);
+}
+.app.command-hud .mission-card {
+  box-shadow: none;
+}
+.app.command-hud .mission-card.selected {
+  box-shadow: inset 3px 0 #e85b4a;
+}
+.app.command-hud .hud-feed {
+  right: calc(var(--right-width) + 140px);
+}
+
+.app.command-hud .placement-hint {
+  top: auto;
+  height: auto;
+  min-height: 0;
+  right: auto;
+  align-items: center;
+}
+.app.command-hud .hud-identity {
+  justify-content: flex-start;
+}
+.incident-dock .call-conversation {
+  padding: 10px !important;
+}
+
+.dock-symbol[data-org="Polizei"] {
+  background: linear-gradient(#2e7095, #17445e);
+}
+.dock-symbol[data-org="Rettungsdienst"] {
+  background: linear-gradient(#2d8466, #14553d);
+}
+.dock-symbol[data-org="Unbekannt"] {
+  background: #294558;
+}
+
+.app.command-hud .mission-sidebar > .operations-overview {
+  order: -2;
+  padding: 10px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--hud-border);
+  border-radius: 0;
+  background: #3b291f80;
+  font-size: 11px;
+  max-height: 160px;
+  overflow: auto;
+}
+.app.command-hud .mission-sidebar > .operations-overview strong {
+  font-size: 11px;
+}
+.app.command-hud .mission-sidebar > .operations-overview button {
+  font-size: 10px;
+  padding: 7px;
+}
+@media print {
+  .app.command-hud.in-game,
+  .app.command-hud > .hud-shell {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+  .app.command-hud .hud-shell > :not(.incident-dock) {
+    display: none !important;
+  }
+  .app.command-hud .incident-dock,
+  .app.command-hud .dock-content {
+    position: static !important;
+    width: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+    backdrop-filter: none !important;
+  }
+  .app.command-hud .incident-dock * {
+    color: black !important;
+    background: white !important;
+  }
+  .app.command-hud .dock-heading,
+  .app.command-hud .dock-tabs,
+  .app.command-hud .report-actions,
+  .app.command-hud .replay {
+    display: none !important;
+  }
+  .app.command-hud .incident-history ol {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+.hud-fault-badge {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  background: #a8512c;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+}
+
+.app.command-hud [data-map-tools="true"] .map-search {
+  z-index: 12;
+}
+.app.command-hud .map-search-results {
+  max-height: 240px;
+  overflow: auto;
+}

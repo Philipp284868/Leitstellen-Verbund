@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { joinDesk } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
@@ -56,7 +57,7 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Leitstelle öffnen", exact: false })
+    .getByRole("button", { name: "Weiterspielen", exact: false })
     .click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
@@ -93,10 +94,8 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     const legacy = await fetch(origin + "/socket.io/?EIO=4&transport=polling");
     expect(legacy.status).toBe(403);
     await expect(a.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
-    await a
-      .locator(".bottom-panel")
-      .getByRole("button", { name: "Wache bauen" })
-      .click();
+    await openPanel(a, "Wachen");
+    await a.getByRole("button", { name: "Wache bauen", exact: true }).click();
     await a
       .locator(".shop-card")
       .filter({
@@ -111,10 +110,10 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await a
       .getByRole("button", { name: "Bau bestätigen", exact: true })
       .click();
-    await expect(a.locator(".station-strip .station-card")).toHaveCount(1);
-    await expect(a.locator(".money")).toContainText("195.000");
-    await expect(b.locator(".station-strip .station-card")).toHaveCount(0);
-    await expect(b.locator(".money")).toContainText("250.000");
+    await expect(a.locator("svg.map [data-own-station]")).toHaveCount(1);
+    await expect(a.locator(".hud-budget")).toContainText("195.000");
+    await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
+    await expect(b.locator(".hud-budget")).toContainText("250.000");
 
     const target = String(
       app.db.sql
@@ -122,8 +121,8 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
         .get("httpben-%")!.username,
     );
     await joinDesk(a, b, target);
-    await a.getByRole("button", { name: "Freunde", exact: true }).click();
-    await b.getByRole("button", { name: "Freunde", exact: true }).click();
+    await openPanel(a, "Freunde");
+    await openPanel(b, "Freunde");
     await a.getByLabel("Chatnachricht").fill("HTTP-Verbindung erfolgreich");
     await a.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(b.locator(".chat-log")).toContainText(
@@ -134,7 +133,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
     await expect(a.locator(".banner")).toBeVisible();
-    await a.getByRole("button", { name: "Fortschritt", exact: true }).click();
+    await openPanel(a, "Fortschritt");
     await a
       .getByRole("button", {
         name: "Bereitschaftsdienst übernehmen",
@@ -153,7 +152,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await expect(a.locator(".radio-bar")).toContainText(
       "Mit Spielserver verbunden",
     );
-    await expect(a.locator(".radio-bar")).toContainText("Echtzeit");
+    await expect(a.locator(".hud-time-mode")).toContainText("Echtzeit");
     await expect
       .poll(
         () =>

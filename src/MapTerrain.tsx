@@ -1,6 +1,6 @@
 import { SpatialIndex } from "./spatial";
 import { towns, WORLD_WIDTH, WORLD_HEIGHT, WORLD_SEED } from "./region";
-import { memo } from "react";
+import { memo, useId } from "react";
 import {
   roads,
   overpasses,
@@ -47,57 +47,67 @@ const houses: {
 const houseIndex = new SpatialIndex<(typeof houses)[number]>();
 for (const road of roads) {
   for (let i = 1; i < road.points.length - 1; i++) {
-    const p = road.points[i],
-      prev = road.points[i - 1],
-      next = road.points[i + 1];
-    const urban =
-      distance(p, { x: 540, y: 400 }) < 260 ||
-      distance(p, { x: 190, y: 235 }) < 95 ||
-      distance(p, { x: 175, y: 650 }) < 85 ||
-      distance(p, { x: 828, y: 630 }) < 100 ||
-      distance(p, { x: 855, y: 285 }) < 130;
-    if (road.kind === "country" && (!urban || random() < 0.55)) continue;
-    const angle = Math.atan2(next.y - prev.y, next.x - prev.x);
-    for (const side of [-1, 1]) {
-      if (random() < 0.22) continue;
-      const setback = 17 + random() * 7;
-      const x = p.x - Math.sin(angle) * setback * side,
-        y = p.y + Math.cos(angle) * setback * side;
-      const industry = x > 815 && x < 945 && y > 270 && y < 377;
-      const width = industry ? 16 + random() * 7 : 7 + random() * 6,
-        height = industry ? 12 + random() * 7 : 6 + random() * 5;
-      if (
-        x < 15 ||
-        (x < 1300 && y < 850 && x > 980) ||
-        x > WORLD_WIDTH - 15 ||
-        y < 15 ||
-        y > WORLD_HEIGHT - 15 ||
-        nearRoad({ x, y }, Math.hypot(width, height) / 2 + 6) ||
-        houseIndex
-          .query(x - 50, y - 50, 100, 100)
-          .some(
-            (h) =>
-              distance(h, { x, y }) <
-              (Math.hypot(h.width, h.height) + Math.hypot(width, height)) / 2 +
-                2,
-          )
-      )
-        continue;
-      const house = {
-        x,
-        y,
-        angle: (angle * 180) / Math.PI,
-        width,
-        height,
-        tone: Math.floor(random() * 3),
-      };
-      houses.push(house);
-      houseIndex.add(house);
+    for (const fraction of [0.2, 0.5, 0.8]) {
+      const p = {
+          x:
+            road.points[i - 1].x +
+            (road.points[i].x - road.points[i - 1].x) * fraction,
+          y:
+            road.points[i - 1].y +
+            (road.points[i].y - road.points[i - 1].y) * fraction,
+        },
+        prev = road.points[i - 1],
+        next = road.points[i + 1];
+      const urban =
+        distance(p, { x: 540, y: 400 }) < 260 ||
+        distance(p, { x: 190, y: 235 }) < 95 ||
+        distance(p, { x: 175, y: 650 }) < 85 ||
+        distance(p, { x: 828, y: 630 }) < 100 ||
+        distance(p, { x: 855, y: 285 }) < 130;
+      if (road.kind === "country" && (!urban || random() < 0.55)) continue;
+      const angle = Math.atan2(next.y - prev.y, next.x - prev.x);
+      for (const side of [-1, 1]) {
+        if (random() < 0.22) continue;
+        const setback = 9 + random() * 6;
+        const x = p.x - Math.sin(angle) * setback * side,
+          y = p.y + Math.cos(angle) * setback * side;
+        const industry = x > 815 && x < 945 && y > 270 && y < 377;
+        const width = industry ? 11 + random() * 5 : 3 + random() * 3,
+          height = industry ? 7 + random() * 5 : 3 + random() * 2;
+        if (
+          x < 15 ||
+          (x < 1300 && y < 850 && x > 980) ||
+          x > WORLD_WIDTH - 15 ||
+          y < 15 ||
+          y > WORLD_HEIGHT - 15 ||
+          nearRoad({ x, y }, Math.hypot(width, height) / 2 + 3) ||
+          houseIndex
+            .query(x - 50, y - 50, 100, 100)
+            .some(
+              (h) =>
+                distance(h, { x, y }) <
+                (Math.hypot(h.width, h.height) + Math.hypot(width, height)) /
+                  2 +
+                  2,
+            )
+        )
+          continue;
+        const house = {
+          x,
+          y,
+          angle: (angle * 180) / Math.PI,
+          width,
+          height,
+          tone: Math.floor(random() * 3),
+        };
+        houses.push(house);
+        houseIndex.add(house);
+      }
     }
   }
 }
 const trees: { x: number; y: number; r: number }[] = [];
-for (let i = 0; i < 2200; i++) {
+for (let i = 0; i < 8200; i++) {
   const x = random() * 1300,
     y = random() * 850;
   const forest =
@@ -115,7 +125,7 @@ for (let i = 0; i < 2200; i++) {
       .query(x - 14, y - 14, 28, 28)
       .some((h) => distance(h, { x, y }) < 14)
   )
-    trees.push({ x, y, r: 3 + random() * 5 });
+    trees.push({ x, y, r: 2 + random() * 3 });
 }
 const regionalPatches: string[] = [];
 for (let i = 0; i < 1200; i++) {
@@ -157,6 +167,8 @@ export const MapTerrain = memo(function MapTerrain({
         p.y <= y + height + 64,
     ),
   );
+  const patternId = useId(),
+    textureId = useId();
   const labelBoxes: {
     left: number;
     right: number;
@@ -202,7 +214,7 @@ export const MapTerrain = memo(function MapTerrain({
     <g className="map-terrain" pointerEvents="none">
       <defs>
         <pattern
-          id="field-furrows"
+          id={patternId}
           width="8"
           height="8"
           patternUnits="userSpaceOnUse"
@@ -210,6 +222,15 @@ export const MapTerrain = memo(function MapTerrain({
         >
           <path d="M0 0V8" stroke="var(--map-field-line)" strokeWidth="1" />
         </pattern>
+        <filter id={textureId}>
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency=".35"
+            numOctaves="3"
+            seed="19"
+          />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
       </defs>
       <rect width={WORLD_WIDTH} height={WORLD_HEIGHT} fill="var(--map-land)" />
       {regionalPatches.map((p, i) => (
@@ -253,7 +274,7 @@ export const MapTerrain = memo(function MapTerrain({
             stroke="var(--map-hedge)"
             strokeWidth="3"
           />
-          <path d={d} fill="url(#field-furrows)" opacity=".6" />
+          <path d={d} fill={`url(#${patternId})`} opacity=".6" />
         </g>
       ))}
       {woods.map((d) => (
@@ -283,6 +304,15 @@ export const MapTerrain = memo(function MapTerrain({
         stroke="var(--map-shore)"
         strokeWidth="6"
       />
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        filter={`url(#${textureId})`}
+        opacity=".08"
+        style={{ mixBlendMode: "soft-light" }}
+      />
       {(zoom >= 0.7 ? trees : []).map((t, i) => (
         <g key={i}>
           <circle
@@ -307,7 +337,7 @@ export const MapTerrain = memo(function MapTerrain({
             points={r.points.map((p) => `${p.x},${p.y}`).join(" ")}
             fill="none"
             stroke="var(--map-road-edge)"
-            strokeWidth={r.kind === "main" ? 12 : r.kind === "country" ? 10 : 8}
+            strokeWidth={r.kind === "main" ? 7 : r.kind === "country" ? 6 : 4}
           />
         ))}
         {visibleRoads.map((r) => (
@@ -316,7 +346,7 @@ export const MapTerrain = memo(function MapTerrain({
             points={r.points.map((p) => `${p.x},${p.y}`).join(" ")}
             fill="none"
             stroke="var(--map-road)"
-            strokeWidth={r.kind === "main" ? 8 : r.kind === "country" ? 6 : 4.5}
+            strokeWidth={r.kind === "main" ? 5 : r.kind === "country" ? 4 : 2.5}
           />
         ))}
         {visibleRoads

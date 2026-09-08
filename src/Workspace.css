@@ -92,49 +92,6 @@
 .app[data-queue-bottom="true"] .archive-link {
   order: 4;
 }
-@media (min-width: 901px) {
-  .app.in-game .mission-sidebar {
-    overflow-y: auto;
-  }
-  .app.in-game .mission-sidebar > * {
-    flex-shrink: 0;
-  }
-  .app.in-game .mission-list {
-    flex: 1 0 auto;
-  }
-  .app.in-game .map-column {
-    overflow-y: auto;
-  }
-  .app.in-game .bottom-panel {
-    flex-shrink: 0;
-  }
-  .app.in-game .map-wrap {
-    flex: 1 0 510px;
-    grid-template-rows: auto auto minmax(220px, 1fr) auto minmax(0, 150px);
-  }
-  .app.in-game .operations {
-    min-height: 0;
-    max-height: 150px;
-    overflow-y: auto;
-  }
-  .app.in-game[data-sidebar] .workspace {
-    grid-template-columns: var(--desk-width, 320px) minmax(0, 1fr);
-  }
-  .app.in-game[data-sidebar="right"] .workspace {
-    grid-template-columns: minmax(0, 1fr) var(--desk-width, 320px);
-  }
-  .in-game[data-sidebar="right"] .mission-sidebar {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .in-game[data-sidebar="right"] .map-column {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .in-game[data-stations-top="true"] .bottom-panel {
-    order: -1;
-  }
-}
 @media (max-width: 560px) {
   .shortcut-grid {
     grid-template-columns: 1fr;

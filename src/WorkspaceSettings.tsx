@@ -60,14 +60,6 @@ export function WorkspaceSettings({
         />{" "}
         Notruf- und Funkübersicht unter der Einsatzliste
       </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={p.stationsTop}
-          onChange={(e) => change({ ...p, stationsTop: e.target.checked })}
-        />{" "}
-        Wachen oberhalb der Karte
-      </label>
       <div className="shortcut-grid">
         {Object.entries(shortcutNames).map(([id, name]) => (
           <label key={id}>

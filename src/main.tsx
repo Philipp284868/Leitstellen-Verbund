@@ -5,7 +5,9 @@ import { start, state as gameState } from "./store";
 import { BackupPanel } from "./Panels";
 import { download } from "./storage";
 import "./style.css";
-import "./Ingame.css";
+import "./HudTheme.css";
+import "./MapTheme.css";
+import "./Hud.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
