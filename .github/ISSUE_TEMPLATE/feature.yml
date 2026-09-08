@@ -1,0 +1,14 @@
+name: Funktionswunsch
+description: Verbesserung für das PC-Multiplayer-Spiel
+title: "[Idee] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem soll gelöst werden?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Gewünschtes Verhalten

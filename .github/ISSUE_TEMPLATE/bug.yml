@@ -1,0 +1,21 @@
+name: Fehler melden
+description: Reproduzierbaren Fehler im PC-Multiplayer melden
+title: "[Fehler] "
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte und erwartetes Verhalten
+      description: Keine Zugangsdaten, Spielstände oder personenbezogenen Serverlogs einfügen.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version, Desktop-Browser und Fenstergröße
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Tatsächliches Ergebnis und unkritische Bildschirmaufnahme

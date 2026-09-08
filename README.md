@@ -84,7 +84,7 @@ Die vorhandene Karte, acht Gebäudetypen, 20 Fahrzeugtypen, 40 Einsätze, Person
 
 ## In AMP aktualisieren
 
-Branch **main** für den Spielserver, **dev** für Entwicklung. Es werden keine zusätzlichen dauerhaften Branches benötigt.
+**main** ist der einzige reguläre Entwicklungsbranch. Geprüfte Teilschritte werden direkt nach main übertragen. Ein Push ist keine Produktionsfreigabe. Siehe [CONTRIBUTING](CONTRIBUTING.md).
 
 | Einstellung                | Wert                         |
 | -------------------------- | ---------------------------- |
