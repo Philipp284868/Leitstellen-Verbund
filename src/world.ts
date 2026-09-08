@@ -6,6 +6,7 @@ import {
   river,
   riverDistance,
   wet,
+  inLake,
 } from "./rivermere/geography";
 import { SpatialIndex } from "./spatial";
 import { fastestPath, type Link } from "./routing";
@@ -635,6 +636,12 @@ export function nearest(p: Point) {
 }
 export const publicHospital =
   nodes[nearest(IS_RIVERMERE ? { x: 4300, y: 4500 } : { x: 623, y: 610 })];
+const shoreNodes = IS_RIVERMERE
+  ? nodes.filter((p) => {
+      const d = riverDistance(p);
+      return d >= 55 && d <= 75 && !inLake(p);
+    })
+  : [];
 export const docks = IS_RIVERMERE
   ? [
       ...[
@@ -642,10 +649,7 @@ export const docks = IS_RIVERMERE
         { x: 4100, y: 4000 },
         { x: 5000, y: 5000 },
       ].map((target) => {
-        const candidates = nodes.filter(
-          (p) => !wet(p) && riverDistance(p) >= 55 && riverDistance(p) <= 75,
-        );
-        return candidates.reduce((a, b) =>
+        return shoreNodes.reduce((a, b) =>
           distance(a, target) < distance(b, target) ? a : b,
         );
       }),
