@@ -5,7 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: process.env.LV_DEV_BACKEND
     ? {
+        watch: {
+          ignored: [
+            "**/playwright-report/**",
+            "**/test-results/**",
+            "**/.tools/**",
+          ],
+        },
         proxy: {
+          "/project-news.json": { target: process.env.LV_DEV_BACKEND },
           "/api": { target: process.env.LV_DEV_BACKEND },
           "/socket.io": { target: process.env.LV_DEV_BACKEND, ws: true },
         },

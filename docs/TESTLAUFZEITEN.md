@@ -50,3 +50,10 @@ Die Datenbankwerte beschreiben kleine Testwelten, keine Obergrenze für große P
 Warmer Quick-Check nach Korrektur: 5,866 s, darin Typecheck 4,092 s und 18 reine Tests 1,775 s. Projektbudgets als Optimierungsziele: warmes Quick-Feedback ≤10 s, vollständige lokale Desktopabläufe ≤180 s auf diesem PC, kalte vollständige CI möglichst ≤8 min ohne Warteschlange. Runnerlast und Browserupdates können Werte verändern; Budgetüberschreitungen rechtfertigen keine schwächeren Assertions.
 
 CI-Linux verwendet aktuell Node 24.20.0 und ist mit den Windowszeiten nicht direkt vergleichbar. Im ersten neuen CI-Aufbau: 174 Vitest-Fälle 33,63 s, 16 Node-Fälle 2,507 s; beide Verpackungen ergaben dieselbe SHA256, anschließend bestand der echte Runtime-Neustarttest. Browserdownload-Caches waren in diesem ersten Lauf kalt. Ein warmer CI-Cachelauf wurde nicht als eigener Vergleich gemessen. Die Browserkorrektur und der finale main-Stand werden anhand der jeweiligen tatsächlichen Actions-Ausführung freigegeben.
+
+
+## Nachgewiesene vollständige CI nach Lastisolierung
+
+Commit 01ebfc3, [Actions 34216504365](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34216504365): vollständiger Lauf erfolgreich, 174 Vitest-, 16 Node- und 76 Browserfälle. Chromium 242,420 s, Firefox 240,568 s (je 37 parallele Fälle plus ein isolierter Lastfall). Lauf von 10:38:18 bis 10:44:47 UTC einschließlich Bereitstellung/Artefakten: 6 min 29 s. Beide Browsercaches waren nachweislich kalt. Die Browserzweige laufen gleichzeitig, ihre Zeiten werden nicht zur verstrichenen Gesamtdauer addiert. Die unveränderte <10-s-Interaktionsgrenze bestand in beiden isolierten Lastfällen. CodeQL 34216504535 ebenfalls erfolgreich. Gegenüber der alten Browserphase mit 12 min ist das schneller; der belastbare Vergleich bei exakt gleichem Umfang bleibt die obige lokale 38/38-Messung.
+
+Anschließend wurde der Windows-Entwicklungsstart durch einen IPC-basierten sauberen Backend-Neustart ergänzt. Ein zusätzlicher echter Prozess-/Persistenztest erhöht die Vitest-Anzahl auf 175; dessen endgültiger main-Lauf wird separat geprüft. Der Produktionsclient bleibt bytegleich (index-BM6b3BF-.js).

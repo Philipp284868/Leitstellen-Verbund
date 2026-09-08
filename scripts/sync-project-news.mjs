@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { parseProjectNews } from "../src/project-news.ts";
 const fallback = JSON.parse(
   await readFile(
-    new URL("../public/project-news.json", import.meta.url),
+    new URL("../src/project-news-fallback.json", import.meta.url),
     "utf8",
   ),
 );

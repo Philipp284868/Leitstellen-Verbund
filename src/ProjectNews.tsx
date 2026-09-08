@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import fallback from "../public/project-news.json";
+import fallback from "./project-news-fallback.json";
 import { parseProjectNews, type ProjectNews } from "./project-news";
 let request: Promise<ProjectNews[]> | undefined;
 export function useProjectNews() {
