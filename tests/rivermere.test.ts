@@ -69,10 +69,27 @@ describe("Rivermere als eigenständige Serverwelt", () => {
   it("verwendet auch für Bootsfahrten den dargestellten Fluss statt gerader Landquerung", () => {
     for (const a of f.docks)
       for (const b of f.docks) {
-        expect(f.riverDistance(a)).toBeLessThan(20);
-        for (const p of f.route(a, b, "water"))
-          expect(f.riverDistance(p)).toBeLessThan(20.001);
+        expect(f.wet(a)).toBe(false);
+        expect(f.riverDistance(a)).toBeLessThanOrEqual(75);
+        const path = f.route(a, b, "water");
+        for (const p of path.slice(1, -1))
+          expect(f.riverDistance(p)).toBeLessThan(0.001);
+        expect(f.distance(path[0], path[1])).toBeLessThanOrEqual(75);
       }
+  });
+  it("verhindert neue Wachen im Fluss und lässt markierte Uferbauplätze zu", () => {
+    const s = f.phaseFixture("11111111-2222-4333-8444-555555555555");
+    s.money = 10000000;
+    s.xp = 10000000;
+    s.buildings = [];
+    const bridge = f.nodes.find((p) => f.wet(p));
+    expect(bridge).toBeDefined();
+    expect(f.buildReason(s, "fire", bridge)).toMatch(/an Land/);
+    for (const dock of f.docks) {
+      expect(f.isLandSite(dock)).toBe(true);
+      expect(f.buildReason(s, "fire", dock)).toBe("");
+      expect(f.buildReason(s, "water", dock)).toBe("");
+    }
   });
   it("lässt sich deterministisch erneut erzeugen und lehnt fremde Spielstände ab", async () => {
     const outfile = resolve(`.tools/rivermere-repeat-${process.pid}.mjs`);
@@ -109,3 +126,78 @@ describe("Rivermere als eigenständige Serverwelt", () => {
     expect(readFileSync(file)).toEqual(before);
   });
 });
+
+it("erhält die neue Welt und laufende Anfahrt beim echten Serverneustart", async () => {
+  const compiled = (await import(
+    pathToFileURL(resolve("dist/worlds/rivermere/dist/server/index.js")).href
+  )) as { startServer: typeof import("../server/index").startServer };
+  const config = {
+    host: "127.0.0.1",
+    port: 0,
+    publicUrl: "http://127.0.0.1:0",
+    dataDir: mkdtempSync(resolve(tmpdir(), "lv-rm-restart-")),
+    secure: false,
+    trustedProxies: [],
+  };
+  let app = compiled.startServer(config);
+  try {
+    await app.listen();
+    const owner = await app.auth.create(
+      "restart",
+      "Restart-password-123!",
+      "Leitung",
+      "Rivermere",
+    );
+    const helper = await app.auth.create(
+      "isolated",
+      "Restart-password-123!",
+      "Nachbar",
+      "Nachbar",
+    );
+    const s = f.phaseFixture(owner);
+    s.missions = [];
+    s.environment = undefined;
+    s.missionWait = 99999;
+    const target = f.nodes[f.nearest(f.settlements[1])];
+    s.buildings[0].pos = target;
+    f.beginTrip(s, s.vehicles[0], target, "return");
+    app.db.save(owner, s);
+    expect(JSON.stringify(app.game.view(helper, new Set()))).not.toContain(
+      s.buildings[0].id,
+    );
+    expect(() =>
+      app.game.command(helper, {
+        id: crypto.randomUUID(),
+        action: {
+          type: "rename",
+          id: s.buildings[0].id,
+          name: "Fremder Zugriff",
+        },
+      }),
+    ).toThrow();
+    const command = {
+      id: crypto.randomUUID(),
+      action: {
+        type: "rename",
+        id: s.buildings[0].id,
+        name: "Rivermere Hauptwache",
+      },
+    };
+    app.game.command(owner, command);
+    const revision = app.db.all().get(owner)!.revision;
+    app.game.command(owner, command);
+    expect(app.db.all().get(owner)!.revision).toBe(revision);
+    const before = app.db.all().get(owner)!;
+    await app.close();
+    app = compiled.startServer(config);
+    await app.listen();
+    const after = app.db.all().get(owner)!;
+    expect(after.world).toBe("rivermere-1");
+    expect(after.worldSeed).toBe(57180908);
+    expect(after.buildings).toEqual(before.buildings);
+    expect(after.vehicles[0].path).toEqual(before.vehicles[0].path);
+    expect(after.vehicles[0].status).toBe("return");
+  } finally {
+    await app.close();
+  }
+}, 20000);

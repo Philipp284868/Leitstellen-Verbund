@@ -5,6 +5,7 @@ import {
   quarters,
   river,
   riverDistance,
+  wet,
 } from "./rivermere/geography";
 import { SpatialIndex } from "./spatial";
 import { fastestPath, type Link } from "./routing";
@@ -641,7 +642,9 @@ export const docks = IS_RIVERMERE
         { x: 4100, y: 4000 },
         { x: 5000, y: 5000 },
       ].map((target) => {
-        const candidates = nodes.filter((p) => riverDistance(p) < 20);
+        const candidates = nodes.filter(
+          (p) => !wet(p) && riverDistance(p) >= 55 && riverDistance(p) <= 75,
+        );
         return candidates.reduce((a, b) =>
           distance(a, target) < distance(b, target) ? a : b,
         );
@@ -653,6 +656,8 @@ export const docks = IS_RIVERMERE
       { x: 1020, y: 763 },
     ];
 export const isWaterSite = (p: Point) => docks.some((d) => distance(d, p) < 22);
+/** Legacy sites retain their coordinates; new construction must stay on land. */
+export const isLandSite = (p: Point) => !IS_RIVERMERE || !wet(p);
 export const districtAt = (p: Point) =>
   districts.reduce((a, b) => (distance(a, p) < distance(b, p) ? a : b)).name;
 export type RoadSection = {

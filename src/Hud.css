@@ -534,6 +534,15 @@
   padding: 0;
   margin: 0;
   min-width: 0;
+  width: 100%;
+}
+.incident-dock [data-hud-section="arrival"] p {
+  margin: 8px 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.incident-dock [data-hud-section="arrival"] p b {
+  display: block;
 }
 .app.command-hud .incident-dock .incident-desk {
   display: block;

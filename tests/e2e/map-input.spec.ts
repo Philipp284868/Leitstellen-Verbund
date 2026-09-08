@@ -194,6 +194,32 @@ test("Abbruch, HUD-Grenzen, Bauvorschau und erneutes Öffnen bleiben sicher", as
   await map.dispatchEvent("pointercancel", { pointerId: 1 });
   await page.mouse.up();
   await expect(map).not.toHaveClass(/dragging/);
+  await page.mouse.move(900, 500);
+  await page.mouse.down();
+  await page.mouse.move(960, 540, { steps: 8 });
+  await expect(map).toHaveClass(/dragging/);
+  await map.evaluate((element: SVGSVGElement) =>
+    element.releasePointerCapture(1),
+  );
+  await page.mouse.move(970, 550);
+  await expect(map).not.toHaveClass(/dragging/);
+  await page.mouse.up();
+  await page.mouse.move(900, 500);
+  await page.mouse.down();
+  await page.mouse.move(960, 540, { steps: 8 });
+  await expect(map).toHaveClass(/dragging/);
+  // Headless tabs do not reliably change OS visibility. Exercise the browser
+  // notification explicitly; this is not a claim of a physical Alt-Tab test.
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+    Reflect.deleteProperty(document, "hidden");
+  });
+  await expect(map).not.toHaveClass(/dragging/);
+  await page.mouse.up();
   const second = await context.newPage();
   await second.goto(origin);
   await second.getByRole("button", { name: "Spielen", exact: true }).click();

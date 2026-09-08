@@ -217,3 +217,10 @@ svg.map.dragging * {
 .hud-shell .map-search-results {
   overscroll-behavior: contain;
 }
+/* Expensive decoration yields during direct manipulation; panel contents remain readable. */
+.hud-shell:has(svg.map.dragging) .topbar,
+.hud-shell:has(svg.map.dragging) .mission-sidebar,
+.hud-shell:has(svg.map.dragging) .incident-dock,
+.hud-shell:has(svg.map.dragging) .hud-bottom {
+  backdrop-filter: none;
+}

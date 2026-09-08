@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { EnvironmentPanel } from "./Dynamics";
 import type { Save } from "./model";
 import { readiness } from "./engine";
 import { duration, kilometers, travelling, trip } from "./travel";
 import { statuses } from "./ui";
 
-export function Operations({ s }: { s: Save }) {
+export const Operations = memo(function Operations({ s }: { s: Save }) {
   const active = s.vehicles
     .filter(travelling)
     .map((v) => ({ v, ...trip(v, s.time) }))
@@ -84,4 +85,4 @@ export function Operations({ s }: { s: Save }) {
       )}
     </section>
   );
-}
+});

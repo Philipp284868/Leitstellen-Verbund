@@ -1,0 +1,21 @@
+{
+  "browser": "Edge",
+  "version": "152.0.4191.66",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "world": "rivermere-1",
+  "nodes": 13504,
+  "roads": 3576,
+  "sections": 14772,
+  "buildings": 100,
+  "vehicles": 500,
+  "incidents": 40,
+  "dragMs": 4380.5581999999995,
+  "frames": 228,
+  "medianFrameMs": 18.100000000000364,
+  "p95FrameMs": 36.20000000000073,
+  "framesOver33ms": 12,
+  "svgElements": 4316
+}

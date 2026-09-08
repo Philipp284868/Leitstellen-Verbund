@@ -7,6 +7,7 @@ import {
   nodes,
   nearest,
   isWaterSite,
+  isLandSite,
   distance,
   type Point,
 } from "./world";
@@ -26,6 +27,8 @@ export function buildReason(s: Save, kind: string, pos?: Point) {
     )
       return "Bauplatz außerhalb des Spielgebiets.";
     const site = nodes[nearest(pos)];
+    if (!isLandSite(site))
+      return "Bauplatz muss an Land liegen, nicht auf einer Brücke oder im Wasser.";
     if (distance(site, pos) > 25)
       return "Bauplatz benötigt eine Straßenanbindung (höchstens 300 m).";
     if (s.buildings.some((b) => distance(b.pos, site) < 20))

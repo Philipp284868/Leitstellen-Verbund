@@ -20,7 +20,7 @@ import { Operations } from "./Operations";
 import { roadNames } from "./simulation/weather";
 import { nodes } from "./world";
 import { MapTerrain } from "./MapTerrain";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   WORLD_WIDTH,
   WORLD_HEIGHT,
@@ -291,16 +291,47 @@ export const MapView = memo(function MapView({
         )
         .slice(0, 8)
     : [];
-  const visibleVehicles = s.vehicles.filter(
-    (v) =>
-      (org === "Alle" || bt(vt(v.type).home).org === org) &&
-      (status === "Alle" ||
-        (status === "Bereit"
-          ? v.status === "ready"
-          : status === "Unterwegs"
-            ? ["travel", "return", "transport"].includes(v.status)
-            : v.status === "scene")),
+  const visibleVehicles = useMemo(
+    () =>
+      s.vehicles.filter(
+        (v) =>
+          (org === "Alle" || bt(vt(v.type).home).org === org) &&
+          (status === "Alle" ||
+            (status === "Bereit"
+              ? v.status === "ready"
+              : status === "Unterwegs"
+                ? ["travel", "return", "transport"].includes(v.status)
+                : v.status === "scene")),
+      ),
+    [s.vehicles, org, status],
   );
+  const chunkSize = 128 * unitsPerPixel;
+  const chunkX = Math.floor(offset.x / chunkSize) * chunkSize,
+    chunkY = Math.floor(offset.y / chunkSize) * chunkSize;
+  const drawVehicles = useMemo(
+    () =>
+      visibleVehicles.filter((v) => {
+        if (v.id === selected || v.mission === selected) return true;
+        const p = vehiclePosition(v, s.time);
+        return (
+          p.x >= chunkX - chunkSize &&
+          p.y >= chunkY - chunkSize &&
+          p.x <= chunkX + 1300 / zoom + chunkSize * 2 &&
+          p.y <= chunkY + viewHeight(zoom) + chunkSize * 2
+        );
+      }),
+    [
+      visibleVehicles,
+      selected,
+      s.time,
+      chunkX,
+      chunkY,
+      chunkSize,
+      zoom,
+      aspect,
+    ],
+  );
+  const expandGroup = useCallback((p: Point) => center(p, 1), [aspect]);
   const scaleMeters =
     zoom < 0.3 ? 20000 : zoom < 0.8 ? 5000 : zoom < 2 ? 2000 : 500;
 
@@ -620,10 +651,10 @@ export const MapView = memo(function MapView({
         <MapTerrain
           labels={labels}
           zoom={zoom}
-          x={offset.x}
-          y={offset.y}
-          width={1300 / zoom}
-          height={viewHeight(zoom)}
+          x={chunkX - chunkSize * 0.25}
+          y={chunkY - chunkSize * 0.25}
+          width={1300 / zoom + chunkSize * 1.5}
+          height={viewHeight(zoom) + chunkSize * 1.5}
           unitsPerPixel={
             1 /
             Math.min(pixelWidth / (1300 / zoom), pixelHeight / viewHeight(zoom))
@@ -835,12 +866,12 @@ export const MapView = memo(function MapView({
           )}
         {(filter === "Alle" || filter === "Fahrzeuge") && (
           <VehicleMarkers
-            vehicles={visibleVehicles}
+            vehicles={drawVehicles}
             time={s.time}
             routes={routes}
             selected={selected}
             onSelect={onSelect}
-            onExpand={(p) => center(p, 1)}
+            onExpand={expandGroup}
             zoom={zoom}
             unitsPerPixel={unitsPerPixel}
           />

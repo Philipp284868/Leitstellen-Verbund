@@ -12,6 +12,7 @@ import {
   extent,
   randomSequence,
   wet,
+  riverDistance,
   polygonsToPath,
 } from "./geography";
 const random = randomSequence();
@@ -27,18 +28,23 @@ type Footprint = {
 const houses = new SpatialIndex<Footprint>();
 export const footprints: Footprint[] = [];
 for (const [ri, road] of (IS_RIVERMERE ? roads : []).entries()) {
-  if (road.kind === "country") continue;
+  const ruralRoad = road.kind === "country";
   for (let i = 1; i < road.points.length; i++) {
     const a = road.points[i - 1],
       b = road.points[i],
       len = distance(a, b),
       angle = Math.atan2(b.y - a.y, b.x - a.x);
-    for (let d = 12; d < len; d += 12 + random() * 8)
+    for (
+      let d = ruralRoad ? 90 : 12;
+      d < len;
+      d += ruralRoad ? 180 + random() * 220 : 12 + random() * 8
+    )
       for (const side of [-1, 1]) {
         const x = a.x + ((b.x - a.x) * d) / len - Math.sin(angle) * side * 10,
           y = a.y + ((b.y - a.y) * d) / len + Math.cos(angle) * side * 10;
         if (
           wet({ x, y }) ||
+          riverDistance({ x, y }) < 55 ||
           projectRoad({ x, y }).distance < 7 ||
           houses
             .query(x - 12, y - 12, 24, 24)
@@ -87,7 +93,8 @@ const forests = [
   { name: "Grey Peak", x: 500, y: 7600, rx: 700, ry: 600 },
   { name: "Sunridge Hills", x: 7900, y: 6200, rx: 600, ry: 650 },
 ];
-const forestShapes = forests.map((f) => ({
+const forestShapes = forests.map((f, index) => ({
+  index,
   ...f,
   path: polygonsToPath(
     Array.from({ length: 60 }, (_, i) => {
@@ -101,7 +108,7 @@ const forestShapes = forests.map((f) => ({
     true,
   ),
 }));
-const groves = Array.from({ length: 4 }, () => "");
+const groves = forests.map(() => Array.from({ length: 4 }, () => ""));
 if (IS_RIVERMERE)
   for (let i = 0; i < 9000; i++) {
     const f = forests[i % forests.length],
@@ -114,7 +121,7 @@ if (IS_RIVERMERE)
     )
       continue;
     const r = 5 + random() * 13;
-    groves[i % 4] +=
+    groves[i % forests.length][i % 4] +=
       `M${x - r},${y}a${r},${r} 0 1,0 ${r * 2},0a${r},${r} 0 1,0 ${-r * 2},0 `;
   }
 const renderRoads = roads.map((r, i) => ({
@@ -152,11 +159,23 @@ export const Terrain = memo(function Terrain({
       r.minY <= y + height &&
       (zoom > 0.3 || r.kind !== "lane"),
   );
+  const visibleForests = forestShapes.filter(
+    (f) =>
+      f.x + f.rx * 1.3 >= x &&
+      f.x - f.rx * 1.3 <= x + width &&
+      f.y + f.ry * 1.3 >= y &&
+      f.y - f.ry * 1.3 <= y + height,
+  );
   const names = [...settlements, ...(zoom > 0.3 ? quarters : [])].filter(
     (t) => t.x >= x && t.y >= y && t.x <= x + width && t.y <= y + height,
   );
   return (
-    <g className="map-terrain" pointerEvents="none" data-world="rivermere-1">
+    <g
+      className="map-terrain"
+      pointerEvents="none"
+      data-world="rivermere-1"
+      clipPath={`url(#${clip})`}
+    >
       <defs>
         <clipPath id={clip}>
           <rect width={extent} height={extent} />
@@ -182,7 +201,7 @@ export const Terrain = memo(function Terrain({
             strokeWidth="2"
           />
         ))}
-      {forestShapes.map((f) => (
+      {visibleForests.map((f) => (
         <path
           key={f.name}
           d={f.path}
@@ -191,14 +210,16 @@ export const Terrain = memo(function Terrain({
           strokeWidth="18"
         />
       ))}
-      {groves.map((d, i) => (
-        <path
-          key={`groves-${i}`}
-          d={d}
-          fill={["#203e2d", "#35543a", "#496442", "#2c4934"][i]}
-        />
-      ))}
-      {settlements.map((t) => (
+      {visibleForests.flatMap((f) =>
+        groves[f.index].map((d, i) => (
+          <path
+            key={`groves-${f.index}-${i}`}
+            d={d}
+            fill={["#203e2d", "#35543a", "#496442", "#2c4934"][i]}
+          />
+        )),
+      )}
+      {settlements.map((t, ti) => (
         <path
           key={t.id}
           d={polygonsToPath(
@@ -206,7 +227,9 @@ export const Terrain = memo(function Terrain({
               const a = (i * Math.PI) / 24,
                 r =
                   t.size *
-                  (0.95 + 0.09 * Math.sin(a * 5) + 0.07 * Math.cos(a * 3));
+                  (0.95 +
+                    0.09 * Math.sin(a * 5 + ti) +
+                    0.07 * Math.cos(a * 3 + ti * 0.7));
               return {
                 x: t.x + Math.cos(a) * r,
                 y: t.y + Math.sin(a) * r * 0.87,
