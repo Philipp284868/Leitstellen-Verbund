@@ -1,0 +1,55 @@
+name: Release-Entwurf
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Vollständiger bereits erfolgreich geprüfter main-Commit
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: release-draft
+  cancel-in-progress: false
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_SHA: ${{ inputs.commit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: main
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Exakten geprüften main-Stand vor jedem Build bestätigen
+        run: node scripts/release-draft.mjs --verify-only
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Produktionspaket mit versionierten Projektmeldungen bauen
+        run: node scripts/amp-setup.mjs
+        env:
+          LV_OFFLINE_NEWS: "1"
+          NODE_ENV: production
+      - name: Paket reproduzieren und echte Installation prüfen
+        run: |
+          node scripts/package-runtime.mjs
+          cp .tools/releases/SHA256SUMS /tmp/first-runtime-sha
+          node scripts/package-runtime.mjs
+          cmp /tmp/first-runtime-sha .tools/releases/SHA256SUMS
+          node scripts/runtime-smoke.mjs .tools/releases/leitstellen-verbund-*-linux-runtime.tar.gz
+      - name: Nur einen Entwurf mit Artefakten anlegen
+        run: node scripts/release-draft.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: release-runtime
+          path: .tools/releases/
+          include-hidden-files: true
+          retention-days: 14

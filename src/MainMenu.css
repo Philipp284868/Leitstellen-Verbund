@@ -642,3 +642,17 @@
     padding: 8px 0;
   }
 }
+
+/* Keep the news preview within the desktop composition; the dialog has full text. */
+.news-copy strong,
+.news-copy p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+@media (max-height: 850px) {
+  .news-copy strong {
+    -webkit-line-clamp: 1;
+  }
+}

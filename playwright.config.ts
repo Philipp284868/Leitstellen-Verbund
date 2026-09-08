@@ -4,8 +4,19 @@ export default defineConfig({
   timeout: 200000,
   expect: { timeout: 20000 },
   fullyParallel: false,
-  workers: 1,
-  reporter: [["list"], ["html", { open: "never" }]],
+  workers: 2,
+  reporter: [
+    ["list"],
+    ["html", { open: "never" }],
+    [
+      "json",
+      {
+        outputFile:
+          process.env.PLAYWRIGHT_JSON_OUTPUT_FILE ||
+          ".tools/test-runs/browser.json",
+      },
+    ],
+  ],
   use: { trace: "retain-on-failure", screenshot: "only-on-failure" },
   projects: [
     {

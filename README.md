@@ -22,7 +22,9 @@ SQLite-Schema 11 und historische Migrationen bleiben erhalten; kein Datenreset. 
 
 Installation und Build: `node scripts/amp-setup.mjs`. Entwicklungsansicht mit Hot Reload: `npm run dev` (Node.js 24). Sie verwendet localhost:5173, einen Backend-Port 4010 und ausschließlich das separate Verzeichnis `../leitstellen-verbund-development-data`. Dort ein normales Testkonto anlegen. Produktionsdaten werden nicht verwendet. `DEV_PORT` und `DEV_API_PORT` können freie lokale Ports auswählen. Clientänderungen erscheinen über Vite-Hot-Reload; Serveränderungen nach erneutem `node scripts/build-server.mjs`.
 
-Bisherige Prüfungen: `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`. Browser vorher mit Playwright installieren; unter Windows kann `PW_EDGE=1` das vorhandene Edge verwenden. Schnellere Teststufen werden in [Aufgabe #21](https://github.com/Philipp284868/Leitstellen-Verbund/issues/21) umgesetzt.
+Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration`, `npm run test:e2e` und `npm run test:full`. Der vollständige Linux-Lauf bleibt für die Freigabe verpflichtend. Browser vorher mit Playwright installieren; unter Windows kann `PW_EDGE=1` das vorhandene Edge verwenden. [Testumfang und Laufzeiten](docs/TESTLAUFZEITEN.md).
+
+[Fertiges Linux-Serverpaket und kontrollierter Release-Entwurf](docs/RUNTIME-PAKET.md). Ein Entwurf wird ausschließlich manuell aus einem erfolgreich geprüften main-Commit erzeugt; kein Push installiert einen Produktionsserver.
 
 ## Projekt und Hilfe
 

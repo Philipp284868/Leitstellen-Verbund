@@ -168,12 +168,18 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
   // A delayed confirmation must not undo a just-clicked controlled checkbox.
+  let releaseResponse!: () => void;
+  const responseGate = new Promise<void>((done) => {
+    releaseResponse = done;
+  });
   await page.route("**/api/action", async (route) => {
-    await new Promise((done) => setTimeout(done, 350));
+    await responseGate;
     await route.continue();
   });
   await page.getByLabel("Heller Modus", { exact: true }).check();
   await expect(page.getByLabel("Heller Modus", { exact: true })).toBeChecked();
+  await expect(page.getByLabel("Heller Modus", { exact: true })).toBeDisabled();
+  releaseResponse();
   await expect(page.getByLabel("Heller Modus", { exact: true })).toBeEnabled();
   await page.unroute("**/api/action");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();

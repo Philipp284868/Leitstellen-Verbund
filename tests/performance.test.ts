@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fresh, uid, validate } from "../src/model";
 import { tick } from "../src/engine";
 import { nodes } from "../src/world";
@@ -64,8 +64,9 @@ it("prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze", () => {
   const validated = performance.now();
   tick(s, s.time + 32);
   const after = performance.now();
+  mkdirSync(".tools/test-runs", { recursive: true });
   writeFileSync(
-    "docs/PERFORMANCE.json",
+    ".tools/test-runs/performance.json",
     JSON.stringify(
       {
         date: new Date().toISOString(),

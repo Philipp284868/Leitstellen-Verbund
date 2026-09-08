@@ -16,6 +16,7 @@ import {
   Building2,
   Newspaper,
 } from "lucide-react";
+import { useProjectNews } from "./ProjectNews";
 import { BrandMark } from "./BrandMark";
 import { SoundButton } from "./Sound";
 import type { Save } from "./model";
@@ -40,6 +41,7 @@ export function MainMenu({
 }) {
   const { mode } = useGame();
   const xp = progress(s.xp);
+  const news = useProjectNews()[0];
   const actions = [
     {
       name: "Spielen",
@@ -212,10 +214,9 @@ export function MainMenu({
             </span>
           </div>
           <button className="news-copy" onClick={() => onOpen("news")}>
-            <strong>Version {version} · Die neue Leitstelle</strong>
+            <strong>{news?.title ?? "Projektinformationen"}</strong>
             <p>
-              Mehr Karte. Klare Einsatzführung. Alle Informationen dort, wo du
-              sie brauchst.
+              {news?.summary ?? "Veröffentlichte Meldungen auf GitHub ansehen."}
             </p>
             <span className="news-dots">
               ● <i>● ●</i>

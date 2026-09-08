@@ -1,3 +1,4 @@
+import { ProjectNewsPanel } from "./ProjectNews";
 import { useState } from "react";
 import { missions, bt, capabilities } from "./catalog";
 import type { Save } from "./model";
@@ -5,7 +6,6 @@ import { logout, emit } from "./store";
 import { missionXp, progress } from "./progression";
 import { credits } from "./ui";
 import { IncidentIcon } from "./HudIcons";
-import { version } from "../package.json";
 
 export function MenuPanels({
   panel,
@@ -144,25 +144,7 @@ export function MenuPanels({
         )}
       </section>
     );
-  if (panel === "news")
-    return (
-      <section className="menu-flow">
-        <span className="eyebrow">VERSION {version}</span>
-        <h3>Die Karte im Mittelpunkt</h3>
-        <p>
-          Neues Hauptmenü, kompakte Statusleiste, Einsatzliste und angedockte
-          Disposition. Fahrzeuge, Funk, Personal und Gebäude sind über die
-          untere Aktionsleiste erreichbar.
-        </p>
-        <h3>Fortschritt und Fahrten</h3>
-        <p>
-          Die bestehende 100 × 100 km große Region, Stufen über 100,
-          Straßenlimits und realistische Fahrtprofile bleiben vollständig
-          integriert.
-        </p>
-        <button onClick={() => onOpen("help")}>Spielanleitung öffnen</button>
-      </section>
-    );
+  if (panel === "news") return <ProjectNewsPanel />;
   if (panel === "credits")
     return (
       <section className="menu-flow">

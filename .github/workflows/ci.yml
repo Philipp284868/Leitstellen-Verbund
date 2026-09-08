@@ -1,42 +1,107 @@
 name: Prüfung
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
 concurrency:
   group: check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-permissions:
-  contents: read
 jobs:
-  check:
+  build-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24
           package-manager-cache: false
-      - name: AMP-Setup ohne vorhandene Projektabhängigkeiten
+      - name: Kaltes AMP-Setup und Produktionsbuild
         run: node scripts/amp-setup.mjs
         env:
           NODE_ENV: production
-      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs typecheck
       - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs lint
-      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test
-      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps chromium firefox
-      - name: Virtuelles Audiogerät für echte Browser-Audioausgabe
+      - name: Vollständige Logik-, Sicherheits-, Migrations- und Betriebstests
+        run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:ci
+      - name: Produktionsabhängigkeiten auf bekannte hohe Risiken prüfen
+        run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:security
+      - name: Startfähiges Linux-Paket und reproduzierbare Verpackung
+        run: |
+          node scripts/package-runtime.mjs
+          cp .tools/releases/SHA256SUMS /tmp/first-runtime-sha
+          node scripts/package-runtime.mjs
+          cmp /tmp/first-runtime-sha .tools/releases/SHA256SUMS
+          node scripts/runtime-smoke.mjs .tools/releases/leitstellen-verbund-*-linux-runtime.tar.gz
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: linux-runtime-candidate
+          path: .tools/releases/
+          include-hidden-files: true
+          retention-days: 14
+      - name: Build und Testwerkzeuge für denselben Commit bündeln
+        run: tar -czf /tmp/verified-build.tgz dist node_modules .tools/pnpm-11.19.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: verified-build
+          path: /tmp/verified-build.tgz
+          retention-days: 2
+      - name: Testumfang und Laufzeit
+        if: always()
+        run: node scripts/ci-summary.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: logic-test-metrics
+          path: .tools/test-runs/
+          include-hidden-files: true
+          retention-days: 14
+  browser:
+    needs: build-test
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: verified-build
+          path: /tmp/verified-build
+      - run: tar -xzf /tmp/verified-build/verified-build.tgz
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/ms-playwright
+          key: browsers-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Desktop-Browser und Systemabhängigkeiten
+        run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps ${{ matrix.browser }}
+      - name: Echtes virtuelles Audiogerät
         run: |
           sudo apt-get install --no-install-recommends -y pulseaudio pulseaudio-utils
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=ci_audio
           pactl set-default-sink ci_audio
-          pactl info
-      - run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e
-      - uses: actions/upload-artifact@v4
+      - name: Vollständige Desktop-Abläufe, zwei isolierte Worker
+        run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e --project=${{ matrix.browser }}
+      - name: Testumfang und Laufzeit
+        if: always()
+        run: node scripts/ci-summary.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: amp-browser-testbericht
-          path: playwright-report/
+          name: browser-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+            .tools/test-runs/
+            .tools/screenshots/
+          include-hidden-files: true
           retention-days: 14

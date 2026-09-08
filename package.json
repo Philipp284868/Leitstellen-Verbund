@@ -12,7 +12,13 @@
     "test": "vitest run && node --test tests/hard-reset.node.mjs",
     "test:e2e": "playwright test",
     "lab": "node scripts/lab.mjs",
-    "start": "node dist/server/index.js"
+    "start": "node dist/server/index.js",
+    "test:quick": "node scripts/tests.mjs quick",
+    "test:unit": "node scripts/tests.mjs unit",
+    "test:integration": "node scripts/tests.mjs integration",
+    "test:full": "node scripts/tests.mjs full",
+    "test:ci": "node scripts/tests.mjs ci",
+    "test:security": "node .tools/pnpm-11.19.0/bin/pnpm.cjs audit --prod --audit-level=high"
   },
   "dependencies": {
     "dexie": "4.3.0",

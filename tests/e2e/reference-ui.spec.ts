@@ -81,6 +81,28 @@ test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelde
     page.getByRole("button", { name: "Anmelden", exact: true }),
   ).toBeVisible();
 });
+test("Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt", async ({
+  page,
+}) => {
+  await page.route("**/project-news.json", (route) => route.abort("failed"));
+  await page.goto(origin);
+  await page.getByLabel("Benutzername", { exact: true }).fill("reference");
+  await page
+    .getByLabel("Passwort", { exact: true })
+    .fill("Reference-password-123!");
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await page.getByRole("button", { name: "Neuigkeiten", exact: true }).click();
+  await expect(
+    page.getByRole("link", { name: "Original auf GitHub" }),
+  ).toHaveAttribute(
+    "href",
+    "https://github.com/Philipp284868/Leitstellen-Verbund/discussions/23",
+  );
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await expect(page.locator("svg.map")).toBeVisible();
+  await expect(page.locator(".mission-card").first()).toBeVisible();
+});
 for (const size of [
   { width: 1920, height: 1080 },
   { width: 2560, height: 1440 },
@@ -120,7 +142,11 @@ for (const size of [
           height: document.documentElement.scrollHeight,
         })),
       ).toEqual({ width: size.width, height: size.height });
-    const folder = resolve("docs/screenshots/2.14");
+    const folder = resolve(
+      process.env.UPDATE_SCREENSHOTS === "1"
+        ? "docs/screenshots/2.14"
+        : ".tools/screenshots/2.14",
+    );
     await mkdir(folder, { recursive: true });
     if (info.project.name === "chromium")
       await page.screenshot({

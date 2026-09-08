@@ -277,6 +277,7 @@ export function startServer(
         !(
           relative === "index.html" ||
           relative === "icon.svg" ||
+          relative === "project-news.json" ||
           relative === "manifest.webmanifest" ||
           relative === "sw.js" ||
           /^assets\/[a-zA-Z0-9_.-]+$/.test(relative)
@@ -286,6 +287,7 @@ export function startServer(
       relative = resolve(clientDir, relative);
       const content = await readFile(relative);
       const types: Record<string, string> = {
+        ".json": "application/json",
         ".html": "text/html; charset=utf-8",
         ".js": "text/javascript; charset=utf-8",
         ".css": "text/css; charset=utf-8",
