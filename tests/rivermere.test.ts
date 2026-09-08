@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { Database } from "../server/database";
 import type * as Fixture from "./rivermere-fixture";
-let f: typeof Fixture;
+let f: typeof Fixture, repeated: typeof Fixture;
 beforeAll(async () => {
   mkdirSync(".tools", { recursive: true });
   const outfile = resolve(`.tools/rivermere-unit-${process.pid}.mjs`);
@@ -21,6 +21,21 @@ beforeAll(async () => {
     define: { __LV_WORLD__: JSON.stringify("rivermere-1") },
   });
   f = await import(pathToFileURL(outfile).href);
+}, 20000);
+// Rebuilding and generating the whole region is fixture setup, not a small
+// five-second assertion. Run it once with the same bounded setup allowance.
+beforeAll(async () => {
+  const outfile = resolve(`.tools/rivermere-repeat-${process.pid}.mjs`);
+  await build({
+    entryPoints: ["tests/rivermere-fixture.ts"],
+    outfile,
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    packages: "external",
+    define: { __LV_WORLD__: JSON.stringify("rivermere-1") },
+  });
+  repeated = await import(pathToFileURL(outfile).href);
 }, 20000);
 describe("Rivermere als eigenständige Serverwelt", () => {
   it("hat metrische 100 km, zentrale Großstadt und dieselben sichtbaren Routenabschnitte", () => {
@@ -91,22 +106,11 @@ describe("Rivermere als eigenständige Serverwelt", () => {
       expect(f.buildReason(s, "water", dock)).toBe("");
     }
   });
-  it("lässt sich deterministisch erneut erzeugen und lehnt fremde Spielstände ab", async () => {
-    const outfile = resolve(`.tools/rivermere-repeat-${process.pid}.mjs`);
-    await build({
-      entryPoints: ["tests/rivermere-fixture.ts"],
-      outfile,
-      bundle: true,
-      platform: "node",
-      format: "esm",
-      packages: "external",
-      define: { __LV_WORLD__: JSON.stringify("rivermere-1") },
-    });
-    const other = (await import(pathToFileURL(outfile).href)) as typeof Fixture;
+  it("lässt sich deterministisch erneut erzeugen und lehnt fremde Spielstände ab", () => {
     const hash = (v: unknown) =>
       createHash("sha256").update(JSON.stringify(v)).digest("hex");
-    expect(hash(other.nodes)).toBe(hash(f.nodes));
-    expect(hash(other.roadSections)).toBe(hash(f.roadSections));
+    expect(hash(repeated.nodes)).toBe(hash(f.nodes));
+    expect(hash(repeated.roadSections)).toBe(hash(f.roadSections));
     const s = f.phaseFixture("11111111-2222-4333-8444-555555555555");
     expect(f.validate(structuredClone(s)).world).toBe("rivermere-1");
     expect(() => f.validate({ ...s, world: "falkenried-2" })).toThrow();

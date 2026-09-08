@@ -29,16 +29,18 @@ const houses = new SpatialIndex<Footprint>();
 export const footprints: Footprint[] = [];
 for (const [ri, road] of (IS_RIVERMERE ? roads : []).entries()) {
   const ruralRoad = road.kind === "country";
+  let nextHouse = ruralRoad ? 90 : 5;
   for (let i = 1; i < road.points.length; i++) {
     const a = road.points[i - 1],
       b = road.points[i],
       len = distance(a, b),
       angle = Math.atan2(b.y - a.y, b.x - a.x);
     for (
-      let d = ruralRoad ? 90 : 12;
-      d < len;
-      d += ruralRoad ? 180 + random() * 220 : 12 + random() * 8
-    )
+      ;
+      nextHouse < len;
+      nextHouse += ruralRoad ? 180 + random() * 220 : 12 + random() * 8
+    ) {
+      const d = nextHouse;
       for (const side of [-1, 1]) {
         const x = a.x + ((b.x - a.x) * d) / len - Math.sin(angle) * side * 10,
           y = a.y + ((b.y - a.y) * d) / len + Math.cos(angle) * side * 10;
@@ -63,6 +65,8 @@ for (const [ri, road] of (IS_RIVERMERE ? roads : []).entries()) {
         houses.add(h);
         footprints.push(h);
       }
+    }
+    nextHouse -= len;
   }
 }
 const overviewBlocks = Array.from({ length: 4 }, (_, tone) =>
@@ -313,6 +317,7 @@ export const Terrain = memo(function Terrain({
           .map((h) => (
             <rect
               key={h.id}
+              data-footprint={h.id}
               transform={`translate(${h.x},${h.y}) rotate(${h.angle})`}
               x={-h.width / 2}
               y={-h.height / 2}

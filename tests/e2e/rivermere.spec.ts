@@ -108,6 +108,8 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
       .getByRole("button", { name, exact: true })
       .click();
     await page.getByRole("button", { name: "Layer", exact: true }).click();
+    if (file === "village")
+      expect(await map.locator("[data-footprint]").count()).toBeGreaterThan(40);
     await shot(file);
     await page.getByRole("button", { name: "Layer", exact: true }).click();
   }
