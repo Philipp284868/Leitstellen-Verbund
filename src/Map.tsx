@@ -25,7 +25,15 @@ import { Operations } from "./Operations";
 import { roadNames } from "./simulation/weather";
 import { nodes } from "./world";
 import { MapTerrain } from "./MapTerrain";
-import { memo, useEffect, useRef, useState, useMemo, useCallback } from "react";
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   WORLD_WIDTH,
   WORLD_HEIGHT,
@@ -118,17 +126,16 @@ export const MapView = memo(function MapView({
     [pixelHeight, setPixelHeight] = useState(400);
   const [aspect, setAspect] = useState(1300 / 850);
   const previousAspect = useRef<number | null>(restored ? null : 1300 / 850);
-  useEffect(() => {
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return;
-      setPixelWidth(entry.contentRect.width);
-      setPixelHeight(entry.contentRect.height);
-      const next =
-        entry.contentRect.width / Math.max(1, entry.contentRect.height);
+  useLayoutEffect(() => {
+    const measure = ({ width, height }: { width: number; height: number }) => {
+      if (width <= 0 || height <= 0) return;
+      setPixelWidth(width);
+      setPixelHeight(height);
+      const next = width / height;
       const old = previousAspect.current;
       previousAspect.current = next;
       setAspect(next);
-      if (zoom !== overview && old !== null)
+      if (zoom !== overview && old !== null && old !== next)
         setOffset((p) => ({
           ...p,
           y: Math.max(
@@ -139,8 +146,16 @@ export const MapView = memo(function MapView({
             ),
           ),
         }));
-    });
-    if (svg.current) observer.observe(svg.current);
+    };
+    const observer = new ResizeObserver(([entry]) =>
+      measure(entry.contentRect),
+    );
+    if (svg.current) {
+      // The first usable frame must already use the real viewport. Waiting for
+      // the initial observer callback can otherwise move the camera mid-click.
+      measure(svg.current.getBoundingClientRect());
+      observer.observe(svg.current);
+    }
     return () => observer.disconnect();
   }, [zoom]);
   const viewHeight = (z: number) =>
