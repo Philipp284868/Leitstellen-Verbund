@@ -1,4 +1,6 @@
-# Deutschlandwelt ab Version 2.16
+# Deutschland-Neuinstallation ab Version 2.17
+
+**Für eine neue Deutschland-Instanz die [Einrichtung mit einem Setup-Befehl](AMP-NEUINSTALLATION.md) verwenden:** App Setup Commands `node scripts/install-germany.mjs`, App Name `scripts/start-germany.mjs`. Das lädt auch die vollständigen Geodaten aus GitHub herunter und erstellt `.env.germany` mit getrennten Datenpfaden. Die folgende ältere Feldliste gilt für bestehende Rivermere-Installationen.
 
 Für eine neue Deutschland-Instanz gilt die [Deutschland-Anleitung](DEUTSCHLAND.md): fertig vorbereitete echte Geodaten, getrenntes `DATA_DIR`, eigenes `GEODATA_DIR` und App Name `scripts/start-germany.mjs`. Das reguläre Setup baut beide Programme. Die folgenden bisherigen `dist/server/…`-Pfade bleiben für vorhandene Rivermere-Installationen bestehen. Ein Update wechselt die Welt nicht automatisch.
 

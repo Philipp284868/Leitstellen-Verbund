@@ -44,6 +44,7 @@ try {
     ".env.example",
     "docs/LIZENZEN.md",
     "docs/AMP.md",
+    "docs/AMP-NEUINSTALLATION.md",
     "docs/RUNTIME-PAKET.md",
     "docs/DEUTSCHLAND.md",
     "docs/DEUTSCHLAND-DATEN.md",

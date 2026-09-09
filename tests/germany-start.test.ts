@@ -39,6 +39,7 @@ function environment(extra: Record<string, string> = {}) {
     GEODATA_DIR: geo,
     LV_FIXTURE_ROOT: app,
     LV_FIXTURE_LOG: resolve(base, "events"),
+    LV_FIXTURE_ENV: resolve(base, "game-environment.json"),
     ...extra,
   };
 }
@@ -135,8 +136,9 @@ beforeEach(async () => {
   await writeFile(
     resolve(app, "dist/germany/server/index.js"),
     `
-    import {appendFileSync} from 'node:fs';
+    import {appendFileSync, writeFileSync} from 'node:fs';
     const log = (value) => appendFileSync(process.env.LV_FIXTURE_LOG, value+'\\n');
+    writeFileSync(process.env.LV_FIXTURE_ENV, JSON.stringify({DATA_DIR:process.env.DATA_DIR,GEODATA_DIR:process.env.GEODATA_DIR,GRAPHHOPPER_URL:process.env.GRAPHHOPPER_URL}));
     log('game-started '+process.pid);
     if(process.env.LV_FIXTURE_EXIT) process.exit(Number(process.env.LV_FIXTURE_EXIT));
     setInterval(()=>{},1000);
@@ -186,6 +188,72 @@ afterEach(async () => {
 });
 
 describe("Deutschland-Start und Bestandsschutz", () => {
+  it("verwendet die eigenen Deutschland-Daten und den eigenen Router aus .env.germany", async () => {
+    const legacy = resolve(base, "legacy");
+    await mkdir(legacy);
+    await writeFile(
+      resolve(legacy, "save.sqlite"),
+      "bestehender Rivermere-Spielstand",
+    );
+    const oldConfig = `DATA_DIR="${legacy}"\nGEODATA_DIR="${legacy}"\nGRAPHHOPPER_URL=http://127.0.0.1:1\n`;
+    await writeFile(resolve(app, ".env"), oldConfig);
+    const germanyConfig = `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\nGRAPHHOPPER_URL=http://127.0.0.1:8989\n`;
+    await writeFile(resolve(app, ".env.germany"), germanyConfig);
+    const run = launch({
+      DATA_DIR: legacy,
+      GEODATA_DIR: legacy,
+      GRAPHHOPPER_URL: "http://127.0.0.1:2",
+    });
+    await event("game-started");
+    run.child.send({ type: "shutdown" });
+    const result = await run.ended;
+    expect(result.code, result.output).toBe(0);
+    expect(
+      JSON.parse(
+        await readFile(resolve(base, "game-environment.json"), "utf8"),
+      ),
+    ).toEqual({
+      DATA_DIR: data,
+      GEODATA_DIR: geo,
+      GRAPHHOPPER_URL: "http://127.0.0.1:8989",
+    });
+    expect(await events()).not.toContain("router-started");
+    expect(await readFile(resolve(app, ".env"), "utf8")).toBe(oldConfig);
+    expect(await readFile(resolve(app, ".env.germany"), "utf8")).toBe(
+      germanyConfig,
+    );
+    expect(await readFile(resolve(legacy, "save.sqlite"), "utf8")).toBe(
+      "bestehender Rivermere-Spielstand",
+    );
+  });
+
+  it("übernimmt keinen alten GRAPHHOPPER_URL-Wert, wenn .env.germany den verwalteten Router nutzt", async () => {
+    const router = `http://127.0.0.1:${await port()}`;
+    await writeFile(
+      resolve(app, ".env.germany"),
+      `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\n`,
+    );
+    await writeFile(
+      resolve(app, ".env"),
+      "GRAPHHOPPER_URL=http://127.0.0.1:1\n",
+    );
+    const run = launch({
+      LV_FIXTURE_ROUTER: router,
+      GRAPHHOPPER_URL: "http://127.0.0.1:2",
+    });
+    await event("game-started");
+    run.child.send({ type: "shutdown" });
+    const result = await run.ended;
+    expect(result.code, result.output).toBe(0);
+    expect(await events()).toContain("router-started");
+    expect(await events()).toContain("router-stopped");
+    expect(
+      JSON.parse(
+        await readFile(resolve(base, "game-environment.json"), "utf8"),
+      ),
+    ).toEqual({ DATA_DIR: data, GEODATA_DIR: geo, GRAPHHOPPER_URL: router });
+  });
+
   it("startet bei unvollständigen Daten oder fehlendem Spielbuild keinen schweren Routingprozess", async () => {
     await writeFile(
       resolve(geo, "manifest.json"),

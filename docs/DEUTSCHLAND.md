@@ -1,14 +1,16 @@
-# Deutschland als Serverwelt · Version 2.16
+# Deutschland als Serverwelt · Version 2.17
 
 Die Deutschlandwelt verbindet eine lokal ausgelieferte Vektorkarte mit einem lokalen Straßenrouter und einem räumlichen Orts-/Adressindex. Alle drei verwenden denselben vollständigen Deutschland-Auszug von OpenStreetMap. Kartenbewegung und Zoom sind lokal; Simulation, Baugenehmigung, Fahrweg, Fahrzeiten, Krankenhaussuche und Berechtigungen bleiben auf dem Spielserver. Das Spiel bleibt PC-Multiplayer und Echtzeit 1×.
 
 ## Anwendung bauen und bewusst auf Deutschland wechseln
 
+**Empfohlene Neuinstallation:** `node scripts/install-germany.mjs` erledigt Build, Download des fertigen Deutschlandpakets und Installation der passenden Java-/Routingwerkzeuge. [Alle AMP-Felder und der vollständige Ablauf](AMP-NEUINSTALLATION.md). Die neue Konfiguration liegt in `.env.germany`; bestehende `.env` und andere Welten bleiben erhalten. Ohne `.env.germany` bleibt die bisherige ausdrücklich gesetzte Konfiguration nutzbar.
+
 `node scripts/amp-setup.mjs` installiert die gesperrten Projektabhängigkeiten und baut beide getrennten Serverprogramme. Der bestehende Startpfad `dist/server/index.js` bleibt für vorhandene Rivermere-Installationen erhalten. Der Deutschland-Server liegt unter `dist/germany/server/index.js`, sein Client unter `dist/germany/client/`. `npm run build:germany` baut gezielt diesen Teil. Es gibt im Spiel keinen Kartenumschalter, der eine laufende Welt neu deutet.
 
 Deutschland wird durch `node scripts/start-germany.mjs` gestartet. Dieser Einstieg startet den eigenen GraphHopper-Prozess, wartet auf dessen Bereitschaft und startet danach den Spielserver. Ist `GRAPHHOPPER_URL` ausdrücklich gesetzt, wird stattdessen der bereits vom Betreiber gestartete lokale Dienst verwendet. Ein belegter Standardport wird nicht übernommen oder beendet. Die Simulation startet erst mit einem vollständigen, passenden Geodatenpaket. Fehlende Geodaten lösen eine konkrete Fehlermeldung aus.
 
-Ein einmaliger Geodatenaufbau ist erforderlich; er gehört nicht in AMP-Pre-start. [Quellen, Größen, Werkzeuge und Pipeline](DEUTSCHLAND-DATEN.md), [Routing und Datenvertrag](DEUTSCHLAND-ROUTING.md) sowie [Copernicus-Höhenmodell](DEUTSCHLAND-HOEHEN.md) beschreiben die Vorbereitung. Das Programmarchiv enthält keine mehreren Gigabyte großen Geodaten und keine fremden Spielstände.
+Der automatische Installer lädt die fertigen Geodaten einmalig aus dem festgelegten GitHub-Datenrelease. Das gehört nicht in AMP-Pre-start. Für einen eigenen Wiederaufbau beschreiben [Quellen, Größen, Werkzeuge und Pipeline](DEUTSCHLAND-DATEN.md), [Routing und Datenvertrag](DEUTSCHLAND-ROUTING.md) sowie [Copernicus-Höhenmodell](DEUTSCHLAND-HOEHEN.md) die Vorbereitung. Das kleine Programmarchiv enthält keine mehreren Gigabyte großen Geodaten und keine fremden Spielstände.
 
 Das fertige Manifest bindet Quellen und Artefakte über SHA-256-Prüfsummen. Zusätzlich vergleicht der Spielserver beim Start die Laufzeitidentität des erreichbaren Routers: Version, Import- und Quelldatum, räumliche Ausdehnung, Profile, Höhenkonfiguration und codierte Straßenmerkmale müssen zum freigegebenen Import passen. Ein alter oder abweichender Dienst auf demselben Port wird zurückgewiesen. GraphHopper veröffentlicht selbst keinen PBF-Dateihash; die Quellenbindung entsteht deshalb durch die kontrollierte Importpipeline und deren Prüfung des lokalen Graphbestands, ergänzt um diesen Laufzeitvergleich.
 
@@ -27,15 +29,15 @@ Port, Domain und Proxy-Adresse sind Beispiele und müssen den tatsächlich zugew
 
 AMP für die bewusst neu angelegte Deutschlandwelt:
 
-| Feld                       | Wert                         |
-| -------------------------- | ---------------------------- |
-| Node.js                    | 24                           |
-| npm Install Type           | None                         |
-| Run App Setup Commands     | aktiviert                    |
-| App Setup Commands         | `node scripts/amp-setup.mjs` |
-| App Name                   | `scripts/start-germany.mjs`  |
-| App Installation Location  | leer                         |
-| Run App Pre-start Commands | deaktiviert                  |
+| Feld                       | Wert                               |
+| -------------------------- | ---------------------------------- |
+| Node.js                    | 24                                 |
+| npm Install Type           | None                               |
+| Run App Setup Commands     | aktiviert                          |
+| App Setup Commands         | `node scripts/install-germany.mjs` |
+| App Name                   | `scripts/start-germany.mjs`        |
+| App Installation Location  | leer                               |
+| Run App Pre-start Commands | deaktiviert                        |
 
 Das vorbereitete Paket enthält eine portable Java-Laufzeit und den importierten Router. Keine globale Administratorinstallation ist erforderlich. Der Launcher beendet seine eigenen Kinder beim regulären Stopp; ein gesondert verwalteter Router bleibt in der Verantwortung seines Dienstmanagers. Der Anwendungspfad `dist/germany/server/index.js` ist für Betreiber geeignet, die GraphHopper bewusst separat starten.
 

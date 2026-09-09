@@ -5,6 +5,7 @@ import { loadEnvFile } from "node:process";
 import { setTimeout as pause } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { createConnection } from "node:net";
+import { parseEnv } from "node:util";
 
 const script = fileURLToPath(import.meta.url);
 const inside = (parent, child) => {
@@ -47,11 +48,25 @@ export async function runGermany({
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw Error("Node.js 24 erforderlich.");
   programRoot = realpathSync(programRoot);
-  const env = resolve(programRoot, ".env");
-  if (existsSync(env)) loadEnvFile(env);
+  const germanyEnv = resolve(programRoot, ".env.germany");
+  const env = existsSync(germanyEnv)
+    ? germanyEnv
+    : resolve(programRoot, ".env");
+  if (existsSync(env)) {
+    loadEnvFile(env);
+    if (env === germanyEnv) {
+      const settings = parseEnv(readFileSync(germanyEnv, "utf8"));
+      // AMP may still inherit paths belonging to the old world. The explicitly
+      // separated Germany configuration owns these three values exclusively.
+      for (const key of ["DATA_DIR", "GEODATA_DIR", "GRAPHHOPPER_URL"]) {
+        if (settings[key]) process.env[key] = settings[key];
+        else delete process.env[key];
+      }
+    }
+  }
   if (!process.env.DATA_DIR || !process.env.GEODATA_DIR)
     throw Error(
-      "Deutschland benötigt DATA_DIR und GEODATA_DIR. Bestehende Rivermere-Daten bleiben unverändert.",
+      "Deutschland benötigt eigene Datenpfade. AMP-Setup-Befehl: node scripts/install-germany.mjs. Bestehende Daten bleiben unverändert.",
     );
   const data = canonical(resolve(programRoot, process.env.DATA_DIR));
   const geo = canonical(resolve(programRoot, process.env.GEODATA_DIR));
@@ -69,7 +84,7 @@ export async function runGermany({
   const manifestFile = resolve(geo, "manifest.json");
   if (!existsSync(manifestFile))
     throw Error(
-      "Fertiges Deutschland-Datenpaket fehlt. Datenpipeline zuerst vollständig ausführen.",
+      "Fertiges Deutschland-Datenpaket fehlt. Einrichtung ausführen: node scripts/install-germany.mjs.",
     );
   if (!inside(geo, realpathSync(manifestFile)))
     throw Error("Geodatenmanifest liegt außerhalb seines Datenpakets.");

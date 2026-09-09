@@ -1,8 +1,9 @@
 import { IS_GERMANY, IS_RIVERMERE, WORLD_NAME } from "../src/world-choice";
-import { existsSync, realpathSync, mkdirSync } from "node:fs";
+import { existsSync, realpathSync, mkdirSync, readFileSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 import { resolve, relative, isAbsolute, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseEnv } from "node:util";
 
 export const root = resolve(
   fileURLToPath(new URL(IS_GERMANY ? "../../../" : "../../", import.meta.url)),
@@ -18,8 +19,25 @@ export interface Config {
   routerUrl?: string;
 }
 export function config(): Config {
-  const env = resolve(root, ".env");
-  if (existsSync(env)) loadEnvFile(env);
+  const germanyEnv = resolve(root, ".env.germany");
+  const env =
+    IS_GERMANY && existsSync(germanyEnv) ? germanyEnv : resolve(root, ".env");
+  if (existsSync(env)) {
+    loadEnvFile(env);
+    if (IS_GERMANY && env === germanyEnv) {
+      const settings = parseEnv(readFileSync(germanyEnv, "utf8"));
+      // The CLI and a directly started Germany binary must select the same
+      // world as the launcher, even if AMP still exports legacy data paths.
+      for (const key of ["DATA_DIR", "GEODATA_DIR"] as const) {
+        if (settings[key]) process.env[key] = settings[key];
+        else delete process.env[key];
+      }
+      // An omitted URL preserves the managed routing address already set by
+      // start-germany.mjs in its server child's environment.
+      if (settings.GRAPHHOPPER_URL)
+        process.env.GRAPHHOPPER_URL = settings.GRAPHHOPPER_URL;
+    }
+  }
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw Error("Node.js 24 erforderlich.");
   const host = process.env.HOST || "127.0.0.1";

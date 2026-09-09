@@ -1,5 +1,7 @@
 # Serverbetrieb und Bestandsschutz
 
+**Deutschland komplett installieren:** In AMP Node.js 24, Git-Branch `main`, npm Install Type `None`, Setup `node scripts/install-germany.mjs` und App Name `scripts/start-germany.mjs` verwenden. Das fertige Deutschlandpaket wird automatisch aus GitHub geladen und vollständig geprüft. `.env.germany` erhält neue getrennte Datenpfade; ein eigener Import oder manueller Geodatentransfer ist nicht mehr erforderlich. [Schrittweise AMP-Anleitung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/AMP-NEUINSTALLATION.md). Rund 8 GB Download, 15,6 GB entpackt; mindestens 25 GB freien Speicher für die Installation vorsehen.
+
 Node.js 24 liefert Website, API, Socket.IO und Simulation auf einem Port. SQLite benötigt eine dauerhafte DATA_DIR außerhalb des Programmverzeichnisses. Eine Instanz pro Datenverzeichnis. PORT muss zur AMP-Zuweisung passen; HTTPS wird über einen korrekt konfigurierten Reverse Proxy betrieben. Die vollständige Feldliste und .env-Anleitung stehen unter docs/AMP.md im Hauptrepository.
 
 Die neue [[Deutschland]]-Instanz benötigt zusätzlich ein vollständiges `GEODATA_DIR` und einen lokalen GraphHopper-Router. Einstieg `scripts/start-germany.mjs`, CLI `dist/germany/server/cli.js`. Die bisherigen `dist/server`-Pfade unten gelten für Rivermere. Ein Weltwechsel benötigt einen getrennten Spielordner und eine bewusste Betreiberentscheidung; kein Git-Update setzt Kartenobjekte um.

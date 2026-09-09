@@ -12,6 +12,8 @@ Ziehen verschiebt, das Mausrad zoomt zum Zeiger. Bei Kartenfokus bewegen Pfeilta
 
 ## Weltwechsel und Berechtigungen
 
+Ab Version 2.17 erledigt **`node scripts/install-germany.mjs`** die komplette Einrichtung über GitHub: Programm bauen, rund 8 GB fertige Geodaten herunterladen und prüfen, Routingwerkzeuge installieren. Mindestens 25 GB freien Speicher vorsehen. AMP App Name bleibt **`scripts/start-germany.mjs`**. Der Installer erstellt `.env.germany` mit eigenen externen Datenordnern und erhält vorhandene Einstellungen und Spielstände. Nur echte Portzuordnung und Browseradresse müssen zur eigenen AMP-Instanz passen. [Vollständige Neuinstallationsanleitung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/AMP-NEUINSTALLATION.md).
+
 Rivermere-Koordinaten lassen sich nicht verlustfrei nach Deutschland verschieben. Deshalb erhält Deutschland einen eigenen Spielordner und eine eigene Welt-/Datensatzkennung. Bestehende Konten, Wachen, Geld und laufende Vorgänge werden nicht automatisch übertragen. Der alte Server kann mit seinem bisherigen Einstieg und unveränderten Daten weiterbetrieben werden. Eine normale Programmaktualisierung schaltet keine private Instanz um.
 
 Der Deutschland-Einstieg ist `node scripts/start-germany.mjs`. Er benötigt ein vorbereitetes externes `GEODATA_DIR` und ein separates `DATA_DIR`. Der Build erzeugt `dist/germany/server` und `dist/germany/client`; der Launcher kann den passenden lokalen Router mitstarten. Geodaten werden einmalig vorbereitet, nicht bei jedem Start importiert. Die [vollständige Betreiberanleitung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/DEUTSCHLAND.md) enthält AMP-Felder, Quellen, Sicherungen und Grenzen.

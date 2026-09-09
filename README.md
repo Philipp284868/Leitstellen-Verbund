@@ -2,7 +2,11 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.16.0 · Deutschland als reale Serverwelt
+## Version 2.17.0 · Deutschland komplett aus GitHub installieren
+
+**Neue AMP-Instanz:** Setup-Befehl `node scripts/install-germany.mjs`, App Name `scripts/start-germany.mjs`, Node.js 24, Git-Branch `main`. Die Einrichtung baut das Spiel, lädt das vollständige Deutschlandpaket automatisch aus einem festgelegten GitHub-Release und installiert die passenden Routingwerkzeuge. Kein manueller Geodatentransfer und kein eigener OSM-Import erforderlich. Rund **8 GB Download**, **15,6 GB fertige Geodaten**; mindestens **25 GB freien Speicher** für Einrichtung und Werkzeuge vorsehen. [Vollständige AMP-Neuinstallation](docs/AMP-NEUINSTALLATION.md).
+
+Die neue `.env.germany` erhält eigene externe Spiel- und Geodatenpfade. Bestehende `.env` und frühere Spielstände bleiben erhalten. Netzwerkwerte werden übernommen; bei einer vollständig frischen AMP-Instanz müssen die tatsächliche Portzuweisung und Browseradresse noch eingetragen werden. Unterbrochene Downloads lassen sich fortsetzen, vollständige Dateien werden anhand ihrer Prüfsummen wiederverwendet.
 
 Die neue Deutschlandwelt verwendet vollständige, lokal aufbereitete OpenStreetMap-Daten für Vektorkarte, Orts-/Adresssuche und Straßenrouting. Fahrzeuge fahren auf der gespeicherten realen Straßengeometrie; Entfernungen, Abschnittslimits und ETA gehören zum selben Modell. Copernicus-Höhendaten ergänzen die Landschaft. Keine kostenpflichtige Karten-API, kein externes Pflichtkonto und kein öffentlicher Demo-Router. [Deutschland einrichten und spielen](docs/DEUTSCHLAND.md) · [Geodaten und Lizenzen](docs/DEUTSCHLAND-DATEN.md) · [Routing](docs/DEUTSCHLAND-ROUTING.md).
 
@@ -32,6 +36,7 @@ Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration
 
 - [Entwicklungsboard](https://github.com/users/Philipp284868/projects/1) (privat, für berechtigte Personen) · [Status, Ansichten und Aufgabenpflege](docs/PROJECT-EINRICHTUNG.md)
 - [AMP-Betrieb, Sicherung und Wiederherstellung](docs/AMP.md)
+- [Neue Deutschland-Instanz vollständig aus GitHub installieren](docs/AMP-NEUINSTALLATION.md)
 - [Deutschland: Start, Spielintegration und kontrollierter Weltwechsel](docs/DEUTSCHLAND.md)
 - [Deutschland: tatsächliche Daten- und Spielprüfungen](docs/DEUTSCHLAND-TESTBERICHT.md)
 - [Notruf/AAO/FMS](docs/PHASE-1.md), [Dynamik](docs/PHASE-2.md), [Organisationen und Nachbarhilfe](docs/PHASE-3.md), [Großlagen](docs/PHASE-4.md), [Auswertung](docs/PHASE-5.md)
@@ -43,4 +48,4 @@ Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration
 
 Frühere Versionsdokumente beschreiben den damaligen Stand. Aussagen über Einzelspieler, Mobile oder dev in historischen Migrationsberichten sind keine aktuellen Produktvorgaben. Die [deutsche Wiki](https://github.com/Philipp284868/Leitstellen-Verbund/wiki) ist veröffentlicht und enthält Einstieg, Bedienung, Einsatzablauf, Rivermere und Serverbetrieb. Ihre verbindlichen Quellen liegen unter `docs/wiki`; das [Veröffentlichungsverfahren](docs/WIKI-VEROEFFENTLICHUNG.md) schützt vorhandene Inhalte.
 
-Der Build liefert den Deutschland-Server in `dist/germany/` und den bisherigen Rivermere-Server als bestandsgeschützten Einstieg. `node scripts/start-germany.mjs` startet die bewusst eingerichtete Deutschlandwelt einschließlich lokalem Router. `npm start` und `dist/server/index.js` bleiben für Bestandsinstallationen erhalten. Ein normales Programmupdate installiert keine großen Geodaten, schaltet keinen privaten Server um und setzt keinen Spielstand zurück.
+Der Build liefert den Deutschland-Server in `dist/germany/` und den bisherigen Rivermere-Server als bestandsgeschützten Einstieg. `node scripts/start-germany.mjs` startet die eingerichtete Deutschlandwelt einschließlich lokalem Router. `npm start` und `dist/server/index.js` bleiben für Bestandsinstallationen erhalten. Der ausdrücklich gewählte neue Setup-Befehl installiert die Geodaten; ein Git-Push schaltet keinen privaten Server um und setzt keinen Spielstand zurück.
