@@ -196,11 +196,18 @@ function SupportPanel({ onOpen }: { onOpen: (panel: string) => void }) {
       </label>
       <ActionButton
         action={async () => {
+          setMessage("");
           if (!navigator.clipboard)
             throw Error(
               "Kopieren ist hier nicht verfügbar. Markiere die Angaben im Textfeld und kopiere sie mit Strg+C.",
             );
-          await navigator.clipboard.writeText(info);
+          try {
+            await navigator.clipboard.writeText(info);
+          } catch {
+            throw Error(
+              "Die Angaben konnten nicht in die Zwischenablage kopiert werden. Markiere die Angaben im Textfeld und kopiere sie mit Strg+C.",
+            );
+          }
           setMessage("Technische Angaben kopiert.");
         }}
       >

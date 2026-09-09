@@ -1,5 +1,11 @@
 # GitHub Project: eingerichtet
 
+## Aktualisierung 2.21 am 09.09.2026
+
+Die angemeldete Browsersitzung konnte das vorhandene private Board tatsächlich öffnen. Kurzbeschreibung und README wurden auf die Qualitätsüberarbeitung 2.21 ergänzt und nach erfolgreichem Speichern sichtbar nachgelesen: Tutorial, Menüs, Audio, automatische Besetzung, Euro-Wirtschaft sowie Links zu Menümatrix, Abnahme, Aufnahmen und aktuellen Actions. Die bisherige Aufgabenpflege blieb erhalten; dieselben fünf verknüpften Issues stehen weiterhin unter Erledigt. Statusdefinitionen, Sichtbarkeit und Berechtigungen wurden nicht verändert.
+
+Der erneute API-Leseversuch wurde mit `INSUFFICIENT_SCOPES` wegen fehlendem `read:project` zurückgewiesen. Das verhinderte die erfolgreiche Aktualisierung über die bereits autorisierte Browsersitzung nicht. Es wurden weder Tokens noch Scopes geändert.
+
 Am 08.09.2026 wurde [Leitstellen-Verbund – Entwicklung](https://github.com/users/Philipp284868/projects/1) über die angemeldete Browsersitzung des Inhabers eingerichtet. Das Projekt ist mit dem Repository verknüpft; Leitstellen-Verbund ist auch das Standardrepository für neue Issues aus dem Projekt. Die private Standardsichtbarkeit wurde beibehalten. Der Inhaber und ausdrücklich berechtigte Personen können das Board öffnen; die Repository-Issues bleiben unabhängig davon öffentlich erreichbar.
 
 ## Status und Ansichten
