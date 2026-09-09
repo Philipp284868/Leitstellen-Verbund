@@ -218,7 +218,11 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
   browser,
 }, info) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  app.db.save(owner, majorFixture(owner, "cellar"));
+  const established = majorFixture(owner, "cellar");
+  // An established dispatch may handle several reports. The first three
+  // completed incidents intentionally keep a new player at one open case.
+  established.completed = 30;
+  app.db.save(owner, established);
   const context = await browser.newContext(),
     other = await context.newPage();
   try {

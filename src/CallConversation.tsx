@@ -4,11 +4,7 @@ import { useGame, command } from "./store";
 import { useCommandForm } from "./use-command-form";
 import { duration } from "./travel";
 import { Disclosure } from "./ui";
-import {
-  questionLabels,
-  questionsFor,
-  type Question,
-} from "./simulation/calls";
+import { availableQuestions, questionsFor } from "./simulation/calls";
 export function CallConversation({
   s,
   m,
@@ -145,32 +141,25 @@ export function CallConversation({
         {call.state === "active" && own && (
           <>
             <div className="question-grid">
-              {(Object.keys(questionLabels) as Question[])
-                .filter(
-                  (q) =>
-                    ["address", "report", "calm"].includes(q) ||
-                    call.asked.includes("report"),
-                )
-                .map((q) => (
-                  <button
-                    key={q}
-                    disabled={call.asked.includes(q) || waiting > 0}
-                    onClick={() =>
-                      void run(() =>
-                        command({
-                          type: "call",
-                          mission: m.id,
-                          call: call.id,
-                          op: "ask",
-                          question: q,
-                        }),
-                      )
-                    }
-                  >
-                    {call.asked.includes(q) ? "✓ " : ""}
-                    {questionsFor(m)[q]}
-                  </button>
-                ))}
+              {availableQuestions(m, call).map((q) => (
+                <button
+                  key={q}
+                  disabled={waiting > 0}
+                  onClick={() =>
+                    void run(() =>
+                      command({
+                        type: "call",
+                        mission: m.id,
+                        call: call.id,
+                        op: "ask",
+                        question: q,
+                      }),
+                    )
+                  }
+                >
+                  {questionsFor(m)[q]}
+                </button>
+              ))}
             </div>
             {waiting > 0 && (
               <small>

@@ -139,6 +139,9 @@ export function ReportPanel({ m }: { m: Mission }) {
       <span className="eyebrow">ABSCHLUSS & AUSWERTUNG</span>
       <h2>{mt(m.template).name}</h2>
       <p>Einsatz {m.id}</p>
+      {m.location?.state === "technical-closure" && (
+        <p className="report-note">{m.location.reason}</p>
+      )}
       <div className="resource-summary" aria-label="Einsatzkurzbilanz">
         <div>
           <small>Vergütung</small>
@@ -165,7 +168,9 @@ export function ReportPanel({ m }: { m: Mission }) {
           ? `${issues.length} dokumentierte Engpass- oder Betriebshinweise stehen in der Dispositionsauswertung.`
           : "Im erfassten Verlauf sind keine Engpasshinweise verzeichnet."}
       </p>
-      {r.quality && <QualityReport quality={r.quality} />}
+      {r.quality && m.location?.state !== "technical-closure" && (
+        <QualityReport quality={r.quality} />
+      )}
       {r.partial && (
         <p className="report-note">
           Teilweise historische Erfassung. Nicht aufgezeichnete Zeiten und
@@ -490,6 +495,11 @@ export function ArchivePanel({
             <article className="archive-item" key={m.id}>
               <div>
                 <strong>{mt(m.template).name}</strong>
+                {m.location?.state === "technical-closure" && (
+                  <small>
+                    Technisch aufgehoben · ohne Vergütung und Wertung
+                  </small>
+                )}
                 <small>
                   {duration(m.completed - m.created)} · {m.id.slice(-12)}
                 </small>

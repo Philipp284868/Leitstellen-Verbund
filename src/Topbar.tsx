@@ -22,6 +22,13 @@ import { progress } from "./progression";
 import { credits } from "./ui";
 import { weatherNames } from "./simulation/weather";
 import { WORLD_NAME } from "./world-choice";
+import { useNetwork } from "./network";
+import { WorldSituationView, PublicAlarmList } from "./WorldSituationView";
+import {
+  situationNames,
+  situationPhaseNames,
+} from "./simulation/world-situation";
+import "./WorldSituation.css";
 
 export function Topbar({
   s,
@@ -57,6 +64,7 @@ export function Topbar({
   panel: (id: string) => void;
 }) {
   const [menu, setMenu] = useState("");
+  const { alarms } = useNetwork();
   const root = useRef<HTMLElement>(null);
   const faults = s.vehicles.filter(
     (v) => v.fault && v.fault.state !== "repaired",
@@ -265,6 +273,28 @@ export function Topbar({
         </button>
       </nav>
       <div className="topbar-status">
+        <div className="topbar-world-status">
+          {popup(
+            "world-situation",
+            `Lage: ${s.worldSituation ? situationNames[s.worldSituation.profile] : "wird geladen"}${s.worldSituation && !["quiet", "normal"].includes(s.worldSituation.profile) ? ` · ${situationPhaseNames[s.worldSituation.phase]}` : ""}`,
+            null,
+            <>
+              <WorldSituationView s={s} />
+              <button onClick={() => setMenu("")}>Anzeige schließen</button>
+            </>,
+          )}
+          {popup(
+            "public-alarms",
+            `Katastrophenalarm: ${alarms.length === 0 ? "keiner" : alarms.length === 1 ? alarms[0].name : `${alarms.length} Leitstellen`}`,
+            null,
+            <>
+              <PublicAlarmList alarms={alarms} />
+              <button onClick={() => action(() => panel("civil"))}>
+                Eigene Bereitschaft verwalten
+              </button>
+            </>,
+          )}
+        </div>
         {(faults > 0 || readonly) &&
           popup(
             "warnings",

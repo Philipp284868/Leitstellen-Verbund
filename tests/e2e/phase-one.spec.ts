@@ -134,6 +134,11 @@ for (const manual of [false, true])
         .locator("input")
         .check();
       await page
+        .getByText("Fahrzeuge filtern, Priorität und Alarmierungsart", {
+          exact: true,
+        })
+        .click();
+      await page
         .getByLabel("Alarmierungsart", { exact: true })
         .selectOption("siren");
       await page

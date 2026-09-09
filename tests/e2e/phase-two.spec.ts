@@ -58,6 +58,11 @@ test("dynamischer Brand, echte Fahrzeugpanne, automatische Behebung über Neusta
   await expect(page.getByLabel("Dynamische Einsatzlage")).toHaveCount(0);
   await interviewUI(page, app);
   await page
+    .getByText("Fahrzeuge filtern, Priorität und Alarmierungsart", {
+      exact: true,
+    })
+    .click();
+  await page
     .getByLabel("Anfahrtsart", { exact: true })
     .selectOption("emergency");
   await page.locator(".dispatch-list input").first().check();

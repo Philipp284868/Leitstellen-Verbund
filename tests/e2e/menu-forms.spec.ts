@@ -258,18 +258,15 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
   page,
 }) => {
   await page.getByRole("button", { name: /^Notrufe \(/ }).click();
-  await page
-    .getByRole("button", {
-      name: "Einsatz und Disposition öffnen",
-      exact: true,
-    })
-    .click();
   await interviewUI(page, app);
   const selected = page.locator(".dispatch-list input").first();
   await selected.check();
-  await page.getByRole("button", { name: "Wachen", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Schließen", exact: true })
+    .click();
   await expect(
-    page.getByRole("alertdialog", { name: "Ungespeicherte Disposition" }),
+    page.getByRole("alertdialog", { name: "Ungespeicherte Änderungen" }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Weiter bearbeiten", exact: true })
@@ -292,7 +289,7 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
   await page
     .getByRole("button", { name: "Alarmieren (1)", exact: true })
     .click();
-  await expect(page.locator(".incident-desk > [role=alert]")).toContainText(
+  await expect(page.locator(".dispatch-area > [role=alert]")).toContainText(
     "Testkonflikt",
   );
   await expect(selected).toBeChecked();
@@ -305,10 +302,10 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
     .toBe("alarmed");
   await expect(selected).not.toBeChecked();
   await page
-    .locator(".incident-dock")
+    .getByRole("dialog")
     .getByRole("button", { name: "Schließen", exact: true })
     .click();
-  await expect(page.locator(".incident-dock")).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(
     app.db
       .all()

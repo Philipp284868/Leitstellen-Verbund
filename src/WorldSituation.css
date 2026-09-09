@@ -1,0 +1,57 @@
+.topbar-world-status {
+  display: grid;
+  gap: 0;
+  width: 195px;
+}
+.topbar .topbar-world-status .topbar-group > button {
+  font-size: 11px;
+  min-height: 24px;
+  padding: 3px 6px;
+  width: 100%;
+  justify-content: space-between;
+}
+.topbar-world-status .topbar-group > button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-world-status .topbar-popup {
+  width: 320px;
+  max-height: min(600px, calc(100dvh - 100px));
+  overflow: auto;
+}
+.world-situation-view,
+.public-alarm-list {
+  padding: 8px;
+  font-size: 13px;
+}
+.world-situation-view h3,
+.public-alarm-list h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.world-situation-view li {
+  padding: 3px 0;
+  color: var(--hud-muted);
+}
+.world-situation-view li[aria-current="step"] {
+  font-weight: 700;
+  color: var(--hud-text);
+}
+.public-alarm-list article {
+  border-top: 1px solid var(--hud-border);
+  padding-top: 10px;
+}
+@media (max-width: 1500px) {
+  .topbar-navigation > button > span {
+    display: none;
+  }
+  .topbar-world-status {
+    width: 172px;
+  }
+  .app.command-hud .topbar {
+    gap: 5px;
+  }
+  .topbar-status {
+    gap: 4px;
+  }
+}

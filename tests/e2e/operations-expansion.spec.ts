@@ -9,6 +9,11 @@ import { listenBrowserServer } from "./server-helper";
 import { enterGame, openPanel } from "./ui-navigation";
 import { phaseFixture } from "../phase-fixture";
 import { organizationFixture } from "../phase-three-fixture";
+import { writeWorldSituation } from "../../server/world-situation";
+import {
+  createSituation,
+  advanceSituation,
+} from "../../src/simulation/world-situation";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -45,6 +50,126 @@ test.beforeEach(async () => {
 test.afterEach(async () => {
   await app.close();
 });
+
+test("Garagen zeigen physische Anwesenheit und behalten ihren Klappzustand über Updates und Wiederverbindung", async ({
+  page,
+}, info) => {
+  await login(page);
+  await openPanel(page, "Wachen");
+  const garage = page.locator(".station-garage").first();
+  await garage.locator("summary").click();
+  await expect(garage).toHaveAttribute("open", "");
+  const saved = app.db.all().get(owner)!;
+  const vehicle = saved.vehicles[0];
+  await expect(
+    garage.getByRole("button", { name: new RegExp(vehicle.name) }),
+  ).toBeVisible();
+  app.game.step(5, Date.now(), { generation: false });
+  await expect(garage).toHaveAttribute("open", "");
+  await page.screenshot({ path: info.outputPath("garage-aufgeklappt.png") });
+  await page.reload();
+  await enterGame(page);
+  await openPanel(page, "Wachen");
+  await expect(garage).toHaveAttribute("open", "");
+  await garage.locator("summary").click();
+  app.game.step(5, Date.now(), { generation: false });
+  await expect(garage).not.toHaveAttribute("open", "");
+});
+
+test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Alarmstellen nach späterem Login", async ({
+  page,
+  browser,
+}, info) => {
+  await app.auth.create("worldguest", password, "Gast", "ILS West");
+  const second = await browser.newContext({
+    viewport: { width: 1366, height: 768 },
+  });
+  try {
+    const other = await second.newPage();
+    await login(page);
+    await login(other, "worldguest");
+    const save = app.db.all().get(owner)!;
+    const state = advanceSituation(
+      createSituation(save.time, 123, "storm", {
+        kind: "circle",
+        name: "Nordkreis",
+        ...save.buildings[0].pos,
+        radius: 300,
+      }),
+      2000,
+    );
+    writeWorldSituation(app.db.sql, state);
+    app.game.step(0, Date.now(), { generation: false });
+    for (const p of [page, other])
+      await expect(
+        p.getByRole("button", {
+          name: "Lage: Sturm · Hauptphase",
+          exact: true,
+        }),
+      ).toBeVisible();
+    await other
+      .getByRole("button", { name: "Lage: Sturm · Hauptphase", exact: true })
+      .click();
+    await expect(other.locator(".world-situation-view")).toContainText(
+      "Nordkreis",
+    );
+    await expect(other.locator(".world-situation-view")).toContainText(
+      "außerhalb",
+    );
+    await other.screenshot({
+      path: info.outputPath("gemeinsame-regionale-lage.png"),
+    });
+    await other
+      .getByRole("button", { name: "Anzeige schließen", exact: true })
+      .click();
+    app.game.command(owner, {
+      id: crypto.randomUUID(),
+      action: {
+        type: "civil-readiness",
+        op: "mobilize",
+        homes: [save.buildings[0].id],
+        reason: "Sturmbedingte Bereitschaft",
+      },
+    });
+    const name = save.player.station;
+    await expect(
+      other.getByRole("button", {
+        name: `Katastrophenalarm: ${name}`,
+        exact: true,
+      }),
+    ).toBeVisible();
+    await other
+      .getByRole("button", { name: `Katastrophenalarm: ${name}`, exact: true })
+      .click();
+    await expect(other.locator(".public-alarm-list")).toContainText(name);
+    expect(
+      app.game.view(
+        app.db.sql
+          .prepare("SELECT id FROM users WHERE username='worldguest'")
+          .get()!.id as string,
+        new Set(),
+      ).network.friends,
+    ).toHaveLength(0);
+    await other.screenshot({
+      path: info.outputPath("oeffentliche-alarmuebersicht.png"),
+    });
+    await other.reload();
+    await enterGame(other);
+    await expect(
+      other.getByRole("button", {
+        name: `Katastrophenalarm: ${name}`,
+        exact: true,
+      }),
+    ).toBeVisible();
+    await other.setViewportSize({ width: 1100, height: 700 });
+    const fits = await other
+      .locator(".topbar")
+      .evaluate((e) => e.scrollWidth <= e.clientWidth + 1);
+    expect(fits).toBe(true);
+  } finally {
+    await second.close();
+  }
+});
 async function login(page: Page, username = "alpha") {
   await page.goto(config.publicUrl);
   await page.getByLabel("Benutzername", { exact: true }).fill(username);
@@ -63,6 +188,84 @@ async function openOperations(page: Page, name: string) {
   await page.getByRole("button", { name: "Funk", exact: true }).click();
   await page.getByRole("button", { name, exact: true }).click();
 }
+
+test("gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Bereiche auf dem Desktop", async ({
+  page,
+}, info) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await login(page);
+  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  const desk = page.getByRole("region", {
+    name: "Notrufarbeitsplatz",
+    exact: true,
+  });
+  await expect(desk.getByText("Flächenbrand", { exact: true })).toHaveCount(0);
+  await desk
+    .getByRole("button", { name: "Notruf annehmen", exact: true })
+    .click();
+  await desk
+    .getByRole("button", { name: "Wo genau ist der Notfall?", exact: true })
+    .click();
+  app.game.step(5);
+  await desk
+    .getByRole("button", { name: "Was ist passiert?", exact: true })
+    .click();
+  await desk
+    .getByLabel("Dispositionspriorität", { exact: true })
+    .selectOption("DRINGEND");
+  await expect
+    .poll(() => app.db.all().get(owner)!.missions[0].control!.priority)
+    .toBe("DRINGEND");
+  await desk.locator(".dispatch-list input").first().check();
+  await desk
+    .getByRole("button", { name: "Alarmieren (1)", exact: true })
+    .click();
+  await expect(
+    desk.getByRole("button", { name: "Gespräch beenden", exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() => app.db.all().get(owner)!.vehicles[0].status)
+    .toBe("alarmed");
+  expect(app.db.all().get(owner)!.missions[0].control!.priority).toBe(
+    "DRINGEND",
+  );
+  app.game.step(5);
+  await desk
+    .getByRole("button", {
+      name: "Wie erreichen die Einsatzkräfte den Ort?",
+      exact: true,
+    })
+    .click();
+  await expect(desk.locator(".radio-message")).toHaveCount(3);
+  for (const width of [1920, 1366]) {
+    await page.setViewportSize({ width, height: width === 1920 ? 1080 : 768 });
+    const layout = await desk.locator(".call-grid").evaluate((el) => ({
+      scroll: el.scrollWidth,
+      width: el.clientWidth,
+      cols: getComputedStyle(el).gridTemplateColumns.split(" ").length,
+    }));
+    expect(layout.scroll).toBeLessThanOrEqual(layout.width + 1);
+    expect(layout.cols).toBeGreaterThanOrEqual(3);
+    const alarmBox = await desk
+      .getByRole("button", { name: /^Alarmieren \(/ })
+      .boundingBox();
+    expect(alarmBox).not.toBeNull();
+    expect(alarmBox!.y).toBeGreaterThan(0);
+    expect(alarmBox!.y + alarmBox!.height).toBeLessThan(
+      (width === 1920 ? 1080 : 768) - 20,
+    );
+    await page.screenshot({
+      path: info.outputPath(`notruf-disposition-${width}.png`),
+    });
+  }
+  await page.reload();
+  await enterGame(page);
+  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await expect(desk.locator(".radio-message")).toHaveCount(3);
+  await expect(
+    desk.getByRole("button", { name: "Gespräch beenden", exact: true }),
+  ).toBeVisible();
+});
 
 test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, alarmieren und persistent abschließen", async ({
   page,

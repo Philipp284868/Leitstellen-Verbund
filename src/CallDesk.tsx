@@ -6,21 +6,26 @@ import { missionPresentation } from "./mission-presentation";
 import { priorityRank, visiblePriority } from "./simulation/priority";
 import { duration } from "./travel";
 import "./RadioDesk.css";
+import "./CallDesk.css";
+import { DispatchPanel } from "./DispatchPanel";
+import { IncidentData } from "./IncidentData";
+import { IncidentOperations } from "./IncidentOperations";
+import { requestDialogTransition } from "./dialog-state";
 
 export function CallDesk({
   s,
-  onOpen,
+  focusMission,
 }: {
   s: Save;
-  onOpen: (id: string) => void;
+  focusMission?: string;
 }) {
   const { user, readonly, workspace } = useGame();
   const [selected, setSelected] = useState("");
   const [filter, setFilter] = useState("open");
   const [query, setQuery] = useState("");
-  const rows = s.missions.flatMap((m) =>
-    (m.control?.calls ?? []).map((c) => ({ m, c })),
-  );
+  const rows = s.missions
+    .filter((m) => !focusMission || m.id === focusMission)
+    .flatMap((m) => (m.control?.calls ?? []).map((c) => ({ m, c })));
   const callback = (row: (typeof rows)[number]) =>
     row.c.callback &&
     (row.c.state === "dropped" ||
@@ -50,11 +55,16 @@ export function CallDesk({
         a.c.id.localeCompare(b.c.id),
     );
   const current = rows.find((row) => row.c.id === selected) ?? filtered[0];
+  const mission = current?.m ?? s.missions.find((m) => m.id === focusMission);
   return (
-    <section className="radio-workspace" aria-label="Notrufarbeitsplatz">
+    <section
+      className="radio-workspace call-workspace incident-desk"
+      aria-label="Notrufarbeitsplatz"
+      data-hud-section="details"
+    >
       <p>
-        Wartende Gespräche, eigene Bearbeitung und offene Rückrufe. Angaben
-        bleiben bei Übergabe, Wiederverbindung und Serverneustart erhalten.
+        Notruf und Disposition · Gespräch fortsetzen und passende Kräfte
+        frühzeitig alarmieren.
       </p>
       {readonly && (
         <p role="status">
@@ -67,8 +77,11 @@ export function CallDesk({
           <input
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
-              setSelected("");
+              const value = e.target.value;
+              requestDialogTransition(() => {
+                setQuery(value);
+                setSelected("");
+              });
             }}
           />
         </label>
@@ -77,8 +90,11 @@ export function CallDesk({
           <select
             value={filter}
             onChange={(e) => {
-              setFilter(e.target.value);
-              setSelected("");
+              const value = e.target.value;
+              requestDialogTransition(() => {
+                setFilter(value);
+                setSelected("");
+              });
             }}
           >
             <option value="open">Offene Gespräche</option>
@@ -92,15 +108,20 @@ export function CallDesk({
           {rows.filter(callback).length} Rückrufe
         </p>
       </div>
-      <div className="radio-columns">
-        <div className="radio-list" role="region" aria-label="Notrufliste">
+      <div className="call-grid">
+        <div
+          className="radio-list call-list"
+          role="region"
+          aria-label="Notrufliste"
+        >
+          <h3>Wartende Anrufe</h3>
           {filtered.length === 0 && <p>Keine passenden Gespräche.</p>}
           {filtered.map(({ m, c }) => (
             <button
               className="radio-row"
               key={c.id}
               aria-pressed={current?.c.id === c.id}
-              onClick={() => setSelected(c.id)}
+              onClick={() => requestDialogTransition(() => setSelected(c.id))}
             >
               <strong>{missionPresentation(m).name}</strong>
               <span>
@@ -114,6 +135,13 @@ export function CallDesk({
                       : "Beendet"}
               </span>
               <small>
+                Eingang{" "}
+                {new Date(c.created * 1000).toLocaleTimeString("de-DE", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                · {m.control!.locationKnown ? "Ort bestimmt" : "Ort offen"}
+                <br />
                 {c.caller} · seit {duration(s.time - c.created)}
                 {c.state === "active"
                   ? ` · ${workspace?.members.find((u) => u.id === c.actor)?.name ?? "Disponent"}`
@@ -123,7 +151,7 @@ export function CallDesk({
           ))}
         </div>
         {current && (
-          <div className="radio-conversation">
+          <div className="radio-conversation call-active">
             <CallConversation
               key={current.m.id}
               s={s}
@@ -131,28 +159,16 @@ export function CallDesk({
               callId={current.c.id}
               onSelect={setSelected}
             />
-            <h3>Erfasste Angaben</h3>
-            {!current.m.control?.facts.length && (
-              <p>Noch keine Angaben erfragt.</p>
-            )}
-            {current.m.control?.facts.map((fact, i) => (
-              <p className="radio-message" key={i}>
-                {fact.text}
-                <br />
-                <small>
-                  {fact.confidence} ·{" "}
-                  {fact.source === current.c.id
-                    ? "Dieses Gespräch"
-                    : "Weitere Quelle"}
-                </small>
-              </p>
-            ))}
-            <button onClick={() => onOpen(current.m.id)}>
-              Einsatz und Disposition öffnen
-            </button>
           </div>
         )}
+        {mission && (
+          <>
+            <IncidentData s={s} m={mission} callId={current?.c.id} />
+            <DispatchPanel key={mission.id} s={s} m={mission} />
+          </>
+        )}
       </div>
+      {mission && <IncidentOperations s={s} m={mission} />}
     </section>
   );
 }

@@ -344,8 +344,10 @@ function GameApp() {
             ) : (
               <>
                 <p>
-                  Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
-                  Geldjournal.
+                  {s.archive.find((m) => m.id === selected)?.location?.state ===
+                  "technical-closure"
+                    ? "Dieser Einsatz wurde wegen eines technischen Ortsfehlers ohne Vergütung und Wertung aufgehoben."
+                    : "Dieser Einsatz ist abgeschlossen. Die Belohnung steht im Geldjournal."}
                 </p>
                 {s.archive
                   .filter((m) => m.id === selected)
@@ -490,7 +492,7 @@ function GameApp() {
             )}
             {s && (
               <>
-                {modal === "calls" && <CallDesk s={s} onOpen={open} />}
+                {modal === "calls" && <CallDesk s={s} />}
                 {modal === "civil" && (
                   <CivilProtectionDesk
                     s={s}
@@ -608,8 +610,10 @@ function GameApp() {
                   !s.missions.some((m) => m.id === selected) && (
                     <>
                       <p>
-                        Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
-                        Geldjournal.
+                        {s.archive.find((m) => m.id === selected)?.location
+                          ?.state === "technical-closure"
+                          ? "Dieser Einsatz wurde wegen eines technischen Ortsfehlers ohne Vergütung und Wertung aufgehoben."
+                          : "Dieser Einsatz ist abgeschlossen. Die Belohnung steht im Geldjournal."}
                       </p>
                       {s.archive
                         .filter((m) => m.id === selected)
