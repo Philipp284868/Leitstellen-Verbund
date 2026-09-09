@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
 import { listenBrowserServer } from "./server-helper";
-import { openPanel, showIncidents } from "./ui-navigation";
+import { enterGame, openPanel, showIncidents } from "./ui-navigation";
 import { activeMissionsFixture, historyFixture } from "../history-fixture";
 import { priorities } from "../../src/simulation/priority";
 
@@ -46,7 +46,7 @@ test("73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft 
   await page.getByLabel("Benutzername", { exact: true }).fill("archive-test");
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await enterGame(page);
   await showIncidents(page);
   const pagination = page.getByRole("navigation", { name: "Einsatzseiten" });
   await expect(pagination).toContainText("1/3 · 73 Einsätze");
@@ -130,7 +130,7 @@ test("73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft 
   app = compiled.startServer(config);
   await app.listen();
   await page.reload();
-  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await enterGame(page);
   await page.keyboard.press("h");
   await expect(page.locator(".archive-console")).toContainText(
     "137 passende Berichte",

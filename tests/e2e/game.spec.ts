@@ -146,9 +146,19 @@ function advanceSimulation(finished: () => boolean) {
     // Faults must recover through their persisted automatic timeline.
     app.game.step(30);
   }
+  expect(finished(), "Server simulation must reach its requested state").toBe(
+    true,
+  );
 }
 function advanceToFirstCall(username: string) {
   const owner = ownerOf(username);
+  const save = app.db.all().get(owner)!;
+  expect(save.missions).toHaveLength(0);
+  // Fixed draw: a paper-container fire that this real purchased TSF-W can handle.
+  // UUID-based seeds could instead choose a fuel fire needing defensive tactics.
+  // Keep the real pacing, generator, interview, hazards and journeys active.
+  save.seed = 5;
+  app.db.save(owner, save);
   // The normal first call intentionally takes several simulation minutes.
   // Advance only the test server, in regular slices; never bypass the generator.
   for (
@@ -158,6 +168,9 @@ function advanceToFirstCall(username: string) {
   )
     app.game.step(30);
   expect(app.db.all().get(owner)!.missions).toHaveLength(1);
+  expect(app.db.all().get(owner)!.missions[0].template).toBe(
+    "case-papiercontainerbrand-reported",
+  );
 }
 async function pair(browser: Browser) {
   const ca = await browser.newContext(),

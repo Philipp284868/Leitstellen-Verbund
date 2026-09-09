@@ -1,4 +1,13 @@
 import { expect, type Page } from "@playwright/test";
+export async function enterGame(page: Page) {
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  // A hidden app shell may already have attributes while its lazy HUD suspends.
+  // Keyboard input has no locator auto-wait: require the actual visible UI.
+  await expect(
+    page.getByRole("navigation", { name: "Spielbereiche" }),
+  ).toBeVisible();
+}
+
 export async function openPanel(page: Page, name: string) {
   const modal = page.getByRole("dialog");
   if (await modal.isVisible()) {
