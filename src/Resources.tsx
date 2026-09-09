@@ -1,3 +1,4 @@
+import { CivilStationSettings } from "./CivilProtection";
 import { VehicleIcon, BuildingIcon } from "./map-icons";
 import { buildReason, purchaseReason } from "./purchase";
 import {
@@ -229,6 +230,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
             </p>
           )}
           <StationSettings key={`${b.id}-station`} s={s} b={b} />
+          <CivilStationSettings key={`${b.id}-civil`} s={s} b={b} />
           <HospitalSettings key={`${b.id}-hospital`} s={s} b={b} />
           {b.type === "hospital" && (
             <p className="banner">

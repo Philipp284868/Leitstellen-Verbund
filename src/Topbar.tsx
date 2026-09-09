@@ -186,7 +186,7 @@ export function Topbar({
         <button
           className={callCount ? "needs-attention topbar-icon" : "topbar-icon"}
           aria-label={`Notrufe (${callCount})`}
-          title="Nächsten Notruf öffnen"
+          title="Notrufarbeitsplatz öffnen"
           onClick={() => action(onCall)}
         >
           <Phone />
@@ -226,6 +226,12 @@ export function Topbar({
             </button>
             <button onClick={() => action(() => panel("fms"))}>
               FMS & Alarmierungsprofile
+            </button>
+            <button onClick={() => action(() => panel("situation"))}>
+              Gemeinsame Einsatzlagen
+            </button>
+            <button onClick={() => action(() => panel("civil"))}>
+              Katastrophenbereitschaft & KatS-Wachen
             </button>
           </>,
           radioCount + aidCount,

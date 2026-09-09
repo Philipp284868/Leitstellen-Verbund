@@ -197,18 +197,7 @@ export function GameHud({
           setLayers(false);
           setListOpen(!listOpen);
         }}
-        onCall={() => {
-          const m = s.missions.find((m) =>
-            m.control?.calls.some((c) =>
-              ["ringing", "active", "dropped"].includes(c.state),
-            ),
-          );
-          if (m) choose(m.id);
-          else {
-            setLayers(false);
-            setListOpen(true);
-          }
-        }}
+        onCall={() => setModal("calls")}
         onRadio={() => setModal("radio")}
         onLayers={() => {
           setLayers(!layers);

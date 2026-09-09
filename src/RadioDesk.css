@@ -1,6 +1,20 @@
 .app.command-hud .modal:has(.radio-workspace) {
   width: min(1120px, calc(100vw - 48px));
 }
+.radio-workspace fieldset {
+  min-width: 0;
+}
+.radio-workspace > fieldset > .radio-conversation {
+  margin: 12px 0;
+}
+.radio-workspace textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+}
+.radio-workspace .radio-conversation label {
+  display: block;
+}
 .radio-filters {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr;
@@ -72,6 +86,9 @@
   --hud-text: #192d3b;
   --hud-muted: #425e70;
   --hud-border: #abc3d1;
+  --hud-raised: #e5eef4;
+  --panel: #f7fbff;
+  --line: #abc3d1;
   background: #f4f7f9;
   color: var(--hud-text);
 }
@@ -81,7 +98,7 @@
 .app.command-hud.light .modal:has(.radio-workspace) .eyebrow {
   color: var(--hud-muted);
 }
-.app.command-hud.light .radio-workspace :is(input, select, button),
+.app.command-hud.light .radio-workspace :is(input, select, textarea, button),
 .app.command-hud.light .modal:has(.radio-workspace) > header button {
   background: #e4edf3;
   color: var(--hud-text);

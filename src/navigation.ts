@@ -1,6 +1,21 @@
 /** The same catalog drives quick navigation and the documented reachable-view audit. */
 export const navigation = [
   {
+    id: "calls",
+    title: "Notrufarbeitsplatz",
+    words: "Gespräch Rückruf Annahme Übergabe Warteschlange",
+  },
+  {
+    id: "situation",
+    title: "Gemeinsame Einsatzlagen",
+    words: "Lagebuch Notizen Nachbarn Hilfe Großlagen Flächenlagen",
+  },
+  {
+    id: "civil",
+    title: "Katastrophenbereitschaft und KatS-Wachen",
+    words: "Mobilisierung Bereitschaft Katastrophenschutz Standort",
+  },
+  {
     id: "radio",
     title: "Funkarbeitsplatz",
     words: "Sprechwünsche Lagemeldung Rückfrage Nachforderung Kanal Übernahme",

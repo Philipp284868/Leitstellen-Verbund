@@ -5,6 +5,9 @@ import {
   tutorialInteraction,
 } from "./Tutorial";
 import { RadioDesk } from "./RadioDesk";
+import { CallDesk } from "./CallDesk";
+import { CivilProtectionDesk } from "./CivilProtection";
+import { SituationDesk } from "./SituationDesk";
 const Progression = lazy(() =>
   import("./ProgressionPanel").then((m) => ({ default: m.Progression })),
 );
@@ -168,13 +171,11 @@ function GameApp() {
         setFilter("all");
         setModal("");
         setListOpen(true);
-      } else if (action === "call" || action === "alarm") {
+      } else if (action === "call") {
+        setModal("calls");
+      } else if (action === "alarm") {
         const mission =
-          action === "call"
-            ? s.missions.find((m) =>
-                m.control?.calls.some((c) => c.state === "ringing"),
-              )
-            : (s.missions.find((m) => m.id === selected) ?? s.missions[0]);
+          s.missions.find((m) => m.id === selected) ?? s.missions[0];
         if (mission) {
           setSelected(mission.id);
           setModal("mission");
@@ -405,6 +406,9 @@ function GameApp() {
                 friends: "Leitstellenverbund und Disponenten",
                 aaos: "Alarm- und Ausrückeordnung",
                 radio: "Funkarbeitsplatz",
+                calls: "Notrufarbeitsplatz",
+                situation: "Gemeinsame Einsatzlagen",
+                civil: "Katastrophenbereitschaft und KatS-Wachen",
                 fms: "FMS und Alarmierungsprofile",
                 backups: "Spielstände und Sicherungen",
                 progress: "Fortschritt und Erfolge",
@@ -484,6 +488,17 @@ function GameApp() {
             )}
             {s && (
               <>
+                {modal === "calls" && <CallDesk s={s} onOpen={open} />}
+                {modal === "civil" && (
+                  <CivilProtectionDesk
+                    s={s}
+                    onOpen={open}
+                    onBuild={() => setModal("build")}
+                  />
+                )}
+                {modal === "situation" && (
+                  <SituationDesk s={s} onOpen={open} onPanel={setModal} />
+                )}
                 {modal === "radio" && (
                   <RadioDesk
                     s={s}

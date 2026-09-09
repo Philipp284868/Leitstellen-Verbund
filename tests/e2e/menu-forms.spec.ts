@@ -258,6 +258,12 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
   page,
 }) => {
   await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Einsatz und Disposition öffnen",
+      exact: true,
+    })
+    .click();
   await interviewUI(page, app);
   const selected = page.locator(".dispatch-list input").first();
   await selected.check();

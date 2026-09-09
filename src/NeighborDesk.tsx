@@ -8,7 +8,7 @@ import { requestStates, taskNames } from "./simulation/organizations-schema";
 import { readiness } from "./engine";
 import { duration } from "./travel";
 import "./Organizations.css";
-function RequestCard({ r }: { r: AidView }) {
+export function RequestCard({ r }: { r: AidView }) {
   const { save: s } = useGame(),
     [selected, setSelected] = useState<string[]>([]),
     [text, setText] = useState("");
