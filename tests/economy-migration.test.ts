@@ -192,16 +192,14 @@ describe("Offline Euro-/Personal-Datenbankmigration 14", () => {
     raw
       .prepare("INSERT INTO users VALUES(?,?,?,?,?)")
       .run("bad", "bad", "unused", "player", 1);
-    raw
-      .prepare("INSERT INTO saves VALUES(?,?)")
-      .run(
-        "bad",
-        JSON.stringify({
-          ...s,
-          player: { ...s.player, id: "bad" },
-          money: 1000000000001,
-        }),
-      );
+    raw.prepare("INSERT INTO saves VALUES(?,?)").run(
+      "bad",
+      JSON.stringify({
+        ...s,
+        player: { ...s.player, id: "bad" },
+        money: 1000000000001,
+      }),
+    );
     const before = raw.prepare("SELECT data FROM saves ORDER BY user_id").all();
     raw.close();
     expect(() => new Database(dir)).toThrow("Alt-Creditbetrag");

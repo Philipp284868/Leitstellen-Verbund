@@ -17,7 +17,10 @@ async function availablePort(host: string) {
   return address.port;
 }
 
-export async function listenBrowserServer(start: typeof startServer, c: Config) {
+export async function listenBrowserServer(
+  start: typeof startServer,
+  c: Config,
+) {
   for (let attempt = 0; attempt < 5; attempt++) {
     c.port = await availablePort(c.host);
     c.publicUrl = `http://${c.host}:${c.port}`;
@@ -29,7 +32,10 @@ export async function listenBrowserServer(start: typeof startServer, c: Config) 
       await app.close();
       // Another process can acquire the port between probing and binding.
       // Retry only this startup race, never a test or application failure.
-      if ((error as NodeJS.ErrnoException).code !== "EADDRINUSE" || attempt === 4)
+      if (
+        (error as NodeJS.ErrnoException).code !== "EADDRINUSE" ||
+        attempt === 4
+      )
         throw error;
     }
   }

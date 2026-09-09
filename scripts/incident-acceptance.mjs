@@ -278,12 +278,10 @@ try {
     .filter({ hasText: "TLF" });
   await returningRow.scrollIntoViewIfNeeded();
   await expect(returningRow).toContainText("0 s Ausrücken");
-  const taskProgress = page
-    .locator(".incident-dock")
-    .getByRole("progressbar", {
-      name: "Erledigte Einsatzaufgaben · 2/3",
-      exact: true,
-    });
+  const taskProgress = page.locator(".incident-dock").getByRole("progressbar", {
+    name: "Erledigte Einsatzaufgaben · 2/3",
+    exact: true,
+  });
   await expect(taskProgress).toHaveAttribute("value", "2");
   await expect(taskProgress).toHaveAttribute("max", "3");
   await expect(

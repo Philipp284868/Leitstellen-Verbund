@@ -44,18 +44,16 @@ function insert(db: Database, id: string, buildings: unknown[] = []) {
       "INSERT INTO users(id,username,password,role,created) VALUES(?,?,?,'player',0)",
     )
     .run(id, id, "unused-password");
-  db.sql
-    .prepare("INSERT INTO saves(user_id,data) VALUES(?,?)")
-    .run(
-      id,
-      JSON.stringify({
-        player: { id, name: `Name ${id}`, station: `Desk ${id}` },
-        money: 999999,
-        vehicles: [{ id: "secret-vehicle" }],
-        missions: [{ id: "secret-incident" }],
-        buildings,
-      }),
-    );
+  db.sql.prepare("INSERT INTO saves(user_id,data) VALUES(?,?)").run(
+    id,
+    JSON.stringify({
+      player: { id, name: `Name ${id}`, station: `Desk ${id}` },
+      money: 999999,
+      vehicles: [{ id: "secret-vehicle" }],
+      missions: [{ id: "secret-incident" }],
+      buildings,
+    }),
+  );
 }
 describe("Öffentliche Spielerpräsenz", () => {
   it("dedupliziert Tabs und beendet Präsenz erst nach dem letzten Socket", () => {

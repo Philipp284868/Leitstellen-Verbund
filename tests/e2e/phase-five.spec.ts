@@ -265,13 +265,11 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
     buffer: wav,
   });
   await expect(
-    page
-      .locator("details.sound-profiles")
-      .filter({
-        has: page.getByText("Signalregler und eigene Soundprofile", {
-          exact: true,
-        }),
+    page.locator("details.sound-profiles").filter({
+      has: page.getByText("Signalregler und eigene Soundprofile", {
+        exact: true,
       }),
+    }),
   ).toContainText("eigene Datei lokal geprüft und zugeordnet");
   await expect(page.locator(".settings-actions")).toContainText(
     "Ungespeicherte Vorschau",
@@ -316,13 +314,11 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
   await expect(
-    page
-      .locator("details.sound-profiles")
-      .filter({
-        has: page.getByText("Signalregler und eigene Soundprofile", {
-          exact: true,
-        }),
+    page.locator("details.sound-profiles").filter({
+      has: page.getByText("Signalregler und eigene Soundprofile", {
+        exact: true,
       }),
+    }),
   ).toContainText("mein-funk.wav");
   await expect(
     page.getByRole("slider", { name: "Funklautstärke" }),
@@ -331,23 +327,19 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
     .getByRole("button", { name: "Datei für Funk löschen", exact: true })
     .click();
   await expect(
-    page
-      .locator("details.sound-profiles")
-      .filter({
-        has: page.getByText("Signalregler und eigene Soundprofile", {
-          exact: true,
-        }),
+    page.locator("details.sound-profiles").filter({
+      has: page.getByText("Signalregler und eigene Soundprofile", {
+        exact: true,
       }),
+    }),
   ).toContainText("Originalsignal ausgewählt");
   await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
   await expect(
-    page
-      .locator("details.sound-profiles")
-      .filter({
-        has: page.getByText("Signalregler und eigene Soundprofile", {
-          exact: true,
-        }),
+    page.locator("details.sound-profiles").filter({
+      has: page.getByText("Signalregler und eigene Soundprofile", {
+        exact: true,
       }),
+    }),
   ).not.toContainText("mein-funk.wav");
   await page.getByLabel("Datei für Funk", { exact: true }).setInputFiles({
     name: "fake.wav",
@@ -355,12 +347,10 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
     buffer: Buffer.from("not audio"),
   });
   await expect(
-    page
-      .locator("details.sound-profiles")
-      .filter({
-        has: page.getByText("Signalregler und eigene Soundprofile", {
-          exact: true,
-        }),
+    page.locator("details.sound-profiles").filter({
+      has: page.getByText("Signalregler und eigene Soundprofile", {
+        exact: true,
       }),
+    }),
   ).toContainText("Bitte eine gültige WAV-");
 });

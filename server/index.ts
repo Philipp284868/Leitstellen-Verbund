@@ -301,7 +301,11 @@ export function startServer(
         if (path === "/api/tutorial" && req.method === "POST") {
           auth.limit(`tutorial:${session.user_id}`, 30, 1000);
           const input = await body(req);
-          tutorial.assertContext(session.user_id, req.headers["x-play-context"], req.headers["x-training-session"]);
+          tutorial.assertContext(
+            session.user_id,
+            req.headers["x-play-context"],
+            req.headers["x-training-session"],
+          );
           tutorial.control(
             session.user_id,
             input,
@@ -381,7 +385,11 @@ export function startServer(
           const input = await body(req),
             activeTraining = tutorial.active(session.user_id);
           const practiceSession = req.headers["x-training-session"];
-          tutorial.assertContext(session.user_id, req.headers["x-play-context"], practiceSession);
+          tutorial.assertContext(
+            session.user_id,
+            req.headers["x-play-context"],
+            practiceSession,
+          );
           if (activeTraining)
             tutorial.command(
               session.user_id,

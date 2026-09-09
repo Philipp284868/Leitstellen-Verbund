@@ -120,7 +120,13 @@ describe("öffentliche Notrufdarstellung", () => {
     expect(html).not.toContain("<progress");
   });
   it("ein bestätigter Fehlalarm ohne Branddynamik fordert keine erneute Erkundung", () => {
-    const m = {template:"bma-false",control:{briefed:true},dynamics:{active:true,patients:[]}} as unknown as Mission;
-    expect(renderToStaticMarkup(createElement(FireLiveStatus,{m,reduced:true}))).toBe("");
+    const m = {
+      template: "bma-false",
+      control: { briefed: true },
+      dynamics: { active: true, patients: [] },
+    } as unknown as Mission;
+    expect(
+      renderToStaticMarkup(createElement(FireLiveStatus, { m, reduced: true })),
+    ).toBe("");
   });
 });

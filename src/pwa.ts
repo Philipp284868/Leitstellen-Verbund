@@ -1,1 +1,3 @@
-export async function updateApplication() { location.reload(); }
+export async function updateApplication() {
+  location.reload();
+}

@@ -50,9 +50,14 @@ createRoot(document.getElementById("root")!).render(
   </Boundary>,
 );
 // Retire only this application's old offline worker. Never remove local save databases.
-if ('serviceWorker' in navigator) {
-  void navigator.serviceWorker.getRegistrations().then(async registrations => {
-    for (const registration of registrations) if (new URL(registration.scope).pathname === '/') await registration.unregister();
-    for (const key of await caches.keys()) if (key.startsWith('leitstellen-verbund-')) await caches.delete(key);
-  });
+if ("serviceWorker" in navigator) {
+  void navigator.serviceWorker
+    .getRegistrations()
+    .then(async (registrations) => {
+      for (const registration of registrations)
+        if (new URL(registration.scope).pathname === "/")
+          await registration.unregister();
+      for (const key of await caches.keys())
+        if (key.startsWith("leitstellen-verbund-")) await caches.delete(key);
+    });
 }

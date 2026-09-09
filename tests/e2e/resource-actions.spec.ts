@@ -236,11 +236,9 @@ test("Gebäudeausbau und technische Erweiterung warten den Bau ab und erlauben d
     page.getByRole("button", { name: "Ausbau bestätigen", exact: true }),
   ).toBeDisabled();
   const technical = extensions.find((e) => e.id === "technical")!;
-  const extension = page
-    .locator(".shop-card")
-    .filter({
-      has: page.getByRole("heading", { name: technical.name, exact: true }),
-    });
+  const extension = page.locator(".shop-card").filter({
+    has: page.getByRole("heading", { name: technical.name, exact: true }),
+  });
   await expect(
     extension.getByRole("button", { name: "Erweiterung bauen", exact: true }),
   ).toBeDisabled();

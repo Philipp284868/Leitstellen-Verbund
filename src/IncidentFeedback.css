@@ -194,10 +194,30 @@
   width: 12px;
   height: 12px;
 }
-.incident-legend { display: flex; flex-wrap: wrap; gap: 9px 14px; margin: 10px 0; }
-.incident-legend > span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
-.incident-legend i { display:grid;place-items:center; width:24px; height:24px; border-radius:50%; color:#fff; }
-.incident-legend svg { width:16px; height:16px; }
+.incident-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 14px;
+  margin: 10px 0;
+}
+.incident-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.incident-legend i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+}
+.incident-legend svg {
+  width: 16px;
+  height: 16px;
+}
 .germany-marker.mission:has(> b) {
   gap: 3px;
   width: auto;
