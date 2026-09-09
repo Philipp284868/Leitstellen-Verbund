@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from "vitest/config";
-import app from "./vite.config";
+import app from "./vite.config.ts";
 
 // Keep historical save/migration regression coverage separate from the app build.
 // Rivermere's runtime is tested through rivermere.test.ts and every browser suite.

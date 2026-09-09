@@ -1,60 +1,88 @@
-import { readdirSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
-const stage = process.argv[2];
-const files = readdirSync("tests", { recursive: true })
-  .filter((f) => f.endsWith(".test.ts"))
-  .map((f) => "tests/" + f.replaceAll("\\", "/"));
-const unitNames = new Set([
+import { testGroups } from "./test-groups.mjs";
+const stage = process.argv[2],
+  groups = testGroups(),
+  files = groups.all;
+const pnpm = [".tools/pnpm-11.19.0/bin/pnpm.cjs"];
+const quickNames = new Set([
   "audio",
   "ids",
   "storage",
   "performance",
   "project-news",
+  "economy",
+  "fleet-view",
+  "device-preferences",
+  "building-staffing",
+  "build-tools",
 ]);
-const unit = files.filter((f) =>
-  unitNames.has(f.split("/").at(-1).replace(".test.ts", "")),
-);
-const integration = files.filter((f) => !unit.includes(f));
-const pnpm = [".tools/pnpm-11.19.0/bin/pnpm.cjs"];
-const vitest = (list) => [
-  ...pnpm,
-  "exec",
-  "vitest",
-  "run",
-  ...(stage === "ci" ? ["--maxWorkers=2"] : []),
-  ...list,
-];
-// Generate and compare the complete additional world without competing with
-// transactional transport/restore fixtures on a small CI runner.
-const regional = files.filter((f) => f.endsWith("/rivermere.test.ts"));
-const jobs = {
-  quick: [[...pnpm, "typecheck"], vitest(unit)],
-  unit: [vitest(unit)],
-  integration: [vitest(integration), ["--test", "tests/hard-reset.node.mjs"]],
-  ci: [
-    vitest(files.filter((f) => !regional.includes(f))),
-    vitest(regional),
-    ["--test", "tests/hard-reset.node.mjs"],
+const vitest = (list, label) => ({
+  args: [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--maxWorkers=2",
+    "--reporter=default",
+    "--reporter=json",
+    `--outputFile=.tools/test-runs/${stage}-${label}.json`,
+    ...list,
   ],
+  env: {
+    LV_TEST_LEGACY: list.every((f) => groups.unit.includes(f)) ? "0" : "1",
+  },
+});
+const regional = files.filter((f) => f.endsWith("/rivermere.test.ts"));
+const logic = [
+  vitest(
+    files.filter((f) => !regional.includes(f)),
+    "logic",
+  ),
+  vitest(regional, "region"),
+  { args: ["--test", "tests/hard-reset.node.mjs"] },
+];
+const commands = {
+  quick: [
+    vitest(
+      files.filter((f) =>
+        quickNames.has(f.split("/").at(-1).replace(".test.ts", "")),
+      ),
+      "quick",
+    ),
+  ],
+  unit: [vitest(groups.unit, "unit")],
+  integration: [
+    vitest(
+      groups.integration.filter((f) => !regional.includes(f)),
+      "integration",
+    ),
+    vitest(regional, "region"),
+    { args: ["--test", "tests/hard-reset.node.mjs"] },
+  ],
+  ci: logic,
   full: [
-    [...pnpm, "build"],
-    [...pnpm, "lint"],
-    vitest(files),
-    ["--test", "tests/hard-reset.node.mjs"],
-    [...pnpm, "test:e2e"],
+    { args: ["scripts/build.mjs"] },
+    { args: [...pnpm, "check:project"] },
+    { args: [...pnpm, "lint"] },
+    ...logic,
+    { args: [...pnpm, "test:security"] },
+    { args: [...pnpm, "test:e2e"] },
   ],
 }[stage];
-if (!jobs)
+if (!commands)
   throw Error("Teststufe fehlt: quick, unit, integration, ci oder full");
 const start = performance.now(),
   results = [];
+mkdirSync(".tools/test-runs", { recursive: true });
 try {
-  for (const args of jobs) {
+  // Complete the remaining independent groups after a failure, retaining failure status.
+  // Full E2E cannot run against a failed build/check, so stop that delivery pipeline.
+  for (const { args, env } of commands) {
     const before = performance.now();
     const code = await new Promise((done, reject) => {
       const child = spawn(process.execPath, args, {
         stdio: "inherit",
         windowsHide: true,
+        env: { ...process.env, ...env },
       });
       child.once("error", reject);
       child.once("exit", done);
@@ -66,7 +94,7 @@ try {
     });
     if (code !== 0) {
       process.exitCode = code || 1;
-      break;
+      if (stage === "full") break;
     }
   }
 } finally {
@@ -74,13 +102,21 @@ try {
     stage,
     platform: process.platform,
     node: process.version,
+    groups: { unit: groups.unit, integration: groups.integration },
     durationMs: Math.round(performance.now() - start),
     results,
   };
-  mkdirSync(".tools/test-runs", { recursive: true });
   writeFileSync(
     `.tools/test-runs/${stage}.json`,
     JSON.stringify(report, null, 2),
   );
-  console.log(JSON.stringify(report));
+  console.log(
+    JSON.stringify({
+      ...report,
+      groups: {
+        unit: groups.unit.length,
+        integration: groups.integration.length,
+      },
+    }),
+  );
 }

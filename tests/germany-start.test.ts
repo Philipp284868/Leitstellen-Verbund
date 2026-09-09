@@ -397,10 +397,16 @@ describe("Deutschland-Start und Bestandsschutz", () => {
       resolve(buildApp, "dist"),
       process.platform === "win32" ? "junction" : "dir",
     );
-    await cp(
-      resolve("scripts/build.mjs"),
-      resolve(buildApp, "scripts/build.mjs"),
-    );
+    // The production entry now shares its pipeline and path checks. Copy the
+    // actual dependency set so this still reaches the guard before any build.
+    for (const name of [
+      "build.mjs",
+      "build-pipeline.mjs",
+      "build-cache.mjs",
+      "build-paths.mjs",
+      "clean.mjs",
+    ])
+      await cp(resolve("scripts", name), resolve(buildApp, "scripts", name));
     const result = spawnSync(process.execPath, ["scripts/build.mjs"], {
       cwd: buildApp,
       encoding: "utf8",

@@ -1,34 +1,45 @@
 import { spawn, fork } from "node:child_process";
-import { watch } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { context } from "esbuild";
+import { serverBuildOptions } from "./server-build-options.mjs";
 const frontend = Number(process.env.DEV_PORT || 5173),
   backend = Number(process.env.DEV_API_PORT || 4010);
+const world = process.env.LV_BUILD_WORLD || "germany-1";
+if (!["germany-1", "rivermere-1"].includes(world))
+  throw Error("Unbekannte Entwicklungswelt.");
+if (
+  world === "germany-1" &&
+  (!process.env.GEODATA_DIR || !process.env.GRAPHHOPPER_URL)
+)
+  throw Error(
+    "Deutschland-Entwicklung benötigt GEODATA_DIR und GRAPHHOPPER_URL mit vorhandenen lokalen Daten. Kein Import beim Entwicklungsstart. Für Kompatibilitätstests: LV_BUILD_WORLD=rivermere-1.",
+  );
+// A dedicated development variable avoids accidentally opening a production DATA_DIR.
+const dataDir = resolve(
+  process.env.DEV_DATA_DIR ||
+    `../leitstellen-verbund-${world}-development-data`,
+);
+mkdirSync(dataDir, { recursive: true });
+const outdir = resolve(".tools/dev", world);
 const env = {
   ...process.env,
   NODE_ENV: "development",
+  LV_BUILD_WORLD: world,
   HOST: "127.0.0.1",
   PORT: String(backend),
   PUBLIC_URL: `http://127.0.0.1:${frontend}`,
-  DATA_DIR: resolve("../leitstellen-verbund-rivermere-development-data"),
+  DATA_DIR: dataDir,
   ALLOW_HTTP: "true",
   TRUSTED_PROXIES: "",
   LV_DEV_BACKEND: `http://127.0.0.1:${backend}`,
+  LV_DEV_MODULE: resolve(outdir, "dev-entry.js"),
 };
-await new Promise((done, reject) => {
-  const build = spawn(process.execPath, ["scripts/build-server.mjs"], {
-    stdio: "inherit",
-    env,
-    windowsHide: true,
-  });
-  build.once("error", reject);
-  build.once("exit", (code) =>
-    code === 0 ? done() : reject(Error("Serverbuild fehlgeschlagen")),
-  );
-});
 let worker,
   exited,
+  compiler,
+  vite,
   closing = false,
-  debounce,
   queue = Promise.resolve();
 async function startBackend() {
   worker = fork(resolve("scripts/dev-server.mjs"), [], {
@@ -46,11 +57,12 @@ async function startBackend() {
     ),
     exited.then(() => {
       throw Error(
-        "Entwicklungsserver startet nicht; Sperre und Ausgabe prüfen.",
+        "Entwicklungsserver startet nicht; Ausgabe und Datenpfad prüfen.",
       );
     }),
   ]);
   console.log("Lokaler Multiplayer-Server bereit.");
+  process.send?.({ type: "backend-ready", pid: worker.pid });
 }
 async function stopBackend() {
   if (!worker || worker.exitCode !== null) return;
@@ -58,61 +70,91 @@ async function stopBackend() {
   const code = await exited;
   if (code !== 0) throw Error("Entwicklungsserver wurde nicht sauber beendet.");
 }
-await startBackend();
-const vite = spawn(
-  process.execPath,
-  [
-    "node_modules/vite/bin/vite.js",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    String(frontend),
-    "--strictPort",
-  ],
-  { env, stdio: "inherit", windowsHide: true },
-);
-const watcher = watch(resolve("dist/server"), (_event, file) => {
-  if (file !== "index.js" || closing) return;
-  clearTimeout(debounce);
-  debounce = setTimeout(() => {
-    queue = queue
-      .then(async () => {
-        if (closing) return;
-        await stopBackend();
-        if (!closing) await startBackend();
-      })
-      .catch((error) => {
-        console.error(error);
-        void stop(1);
-      });
-  }, 150);
-});
 async function stop(code = 0) {
   if (closing) return;
   closing = true;
-  clearTimeout(debounce);
-  watcher.close();
   try {
+    await compiler?.dispose();
+    await queue;
     await stopBackend();
   } catch (error) {
     console.error(error);
     code = 1;
   }
-  if (vite.exitCode === null) vite.kill("SIGTERM");
+  if (vite && vite.exitCode === null) {
+    const done = new Promise((resolve) => vite.once("exit", resolve));
+    vite.kill("SIGTERM");
+    await done;
+  }
   process.exitCode = code;
+  if (process.connected) process.disconnect();
 }
 process.on("SIGINT", () => void stop());
 process.on("SIGTERM", () => void stop());
+process.on("disconnect", () => void stop());
 process.on("message", (m) => {
   if (m === "stop") void stop();
 });
-vite.once("error", (error) => {
+try {
+  const options = serverBuildOptions(world, outdir);
+  let previousOutput;
+  compiler = await context({
+    ...options,
+    entryPoints: ["server/dev-entry.ts"],
+    plugins: [
+      ...options.plugins,
+      {
+        name: "restart-after-success",
+        setup(build) {
+          build.onEnd((result) => {
+            if (result.errors.length || closing) return;
+            const output = readFileSync(resolve(outdir, "dev-entry.js"));
+            if (!previousOutput) {
+              previousOutput = output;
+              return;
+            }
+            if (previousOutput.equals(output)) return;
+            previousOutput = output;
+            queue = queue.then(async () => {
+              if (closing) return;
+              await stopBackend();
+              if (!closing) await startBackend();
+            });
+            void queue.catch((error) => {
+              console.error(error);
+              void stop(1);
+            });
+          });
+        },
+      },
+    ],
+  });
+  await compiler.rebuild();
+  await startBackend();
+  await compiler.watch();
+  vite = spawn(
+    process.execPath,
+    [
+      "node_modules/vite/bin/vite.js",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(frontend),
+      "--strictPort",
+    ],
+    { env, stdio: "inherit", windowsHide: true },
+  );
+  vite.once("error", (error) => {
+    console.error(error);
+    void stop(1);
+  });
+  vite.once("exit", (code) => {
+    if (!closing) void stop(code || 0);
+  });
+  console.log(
+    `Entwicklungsansicht: http://127.0.0.1:${frontend} (${world}; isolierte lokale Daten)`,
+  );
+} catch (error) {
   console.error(error);
-  void stop(1);
-});
-vite.once("exit", (code) => {
-  if (!closing) void stop(code || 0);
-});
-console.log(
-  `Entwicklungsansicht: http://127.0.0.1:${frontend} (isolierte lokale Daten)`,
-);
+  await stop(1);
+}

@@ -33,6 +33,9 @@ export default defineConfig({
             "**/playwright-report/**",
             "**/test-results/**",
             "**/.tools/**",
+            "**/dist/**",
+            "**/docs/**",
+            "**/*.log",
           ],
         },
         proxy: {
@@ -47,7 +50,16 @@ export default defineConfig({
     outDir: germany ? "dist/germany/client" : "dist/client",
     rolldownOptions: {
       output: {
-        codeSplitting: { groups: [{ name: "vendor", test: /node_modules/ }] },
+        codeSplitting: {
+          groups: [
+            {
+              name: "maplibre",
+              test: /node_modules.*maplibre-gl/,
+              priority: 20,
+            },
+            { name: "vendor", test: /node_modules/, priority: 10 },
+          ],
+        },
       },
     },
   },

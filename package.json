@@ -11,9 +11,9 @@
     "install:germany": "node scripts/install-germany.mjs",
     "geodata": "node scripts/geodata/pipeline.mjs",
     "preview": "node dist/server/index.js",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run && node --test tests/hard-reset.node.mjs",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile .tools/cache/types.tsbuildinfo",
+    "lint": "eslint . --cache --cache-location .tools/cache/eslint",
+    "test": "node scripts/tests.mjs ci",
     "test:e2e": "node scripts/browser-tests.mjs",
     "lab": "node scripts/lab.mjs",
     "start": "node dist/server/index.js",
@@ -22,7 +22,13 @@
     "test:integration": "node scripts/tests.mjs integration",
     "test:full": "node scripts/tests.mjs full",
     "test:ci": "node scripts/tests.mjs ci",
-    "test:security": "node .tools/pnpm-11.19.0/bin/pnpm.cjs audit --prod --audit-level=high"
+    "test:security": "node .tools/pnpm-11.19.0/bin/pnpm.cjs audit --prod --audit-level=high",
+    "build:fast": "node scripts/build.mjs --incremental",
+    "check:project": "node scripts/check-project.mjs && node scripts/check-format.mjs",
+    "check:quick": "node .tools/pnpm-11.19.0/bin/pnpm.cjs check:project && node .tools/pnpm-11.19.0/bin/pnpm.cjs lint && node .tools/pnpm-11.19.0/bin/pnpm.cjs typecheck",
+    "clean": "node scripts/clean.mjs",
+    "bench:dev": "node scripts/bench-dev.mjs",
+    "format:check": "node scripts/check-format.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "3.0.0",

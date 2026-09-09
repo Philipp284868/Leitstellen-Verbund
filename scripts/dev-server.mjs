@@ -1,13 +1,36 @@
 // Development worker: IPC provides a graceful restart on Windows as well as Linux.
-import { startServer } from "../dist/server/index.js";
-const app = startServer({
+import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+const runtime = await import(
+  pathToFileURL(resolve(process.env.LV_DEV_MODULE || "dist/server/index.js"))
+    .href
+);
+const config = {
   host: "127.0.0.1",
   port: Number(process.env.PORT),
   publicUrl: process.env.PUBLIC_URL,
   dataDir: process.env.DATA_DIR,
   secure: false,
   trustedProxies: [],
-});
+  ...(process.env.LV_BUILD_WORLD === "germany-1"
+    ? {
+        geodataDir: process.env.GEODATA_DIR,
+        routerUrl: process.env.GRAPHHOPPER_URL,
+      }
+    : {}),
+};
+const geography = config.geodataDir
+  ? await runtime.prepareGeography(config)
+  : undefined;
+const app = runtime.startServer(
+  config,
+  resolve(
+    process.env.LV_BUILD_WORLD === "germany-1"
+      ? "dist/germany/client"
+      : "dist/client",
+  ),
+  geography,
+);
 let closing;
 const stop = () =>
   (closing ??= (async () => {
