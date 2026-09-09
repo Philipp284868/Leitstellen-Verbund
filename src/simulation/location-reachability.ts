@@ -174,8 +174,10 @@ export function verifyIncidentLocation(
   if (
     !requireRange &&
     byProfile.length > 0 &&
-    permanentFailures ===
-      Math.min(byProfile.length, LOCATION_POLICY.maximumProfiles)
+    // A bounded search is not proof that every station is disconnected.
+    // Preserve an old case if additional profiles have not been evaluated.
+    byProfile.length <= LOCATION_POLICY.maximumProfiles &&
+    permanentFailures === byProfile.length
   )
     throw new GermanyRoutingError(
       "Kein zulässiger Straßenweg vom vorhandenen eigenen Straßennetz zum ursprünglichen Einsatzort.",

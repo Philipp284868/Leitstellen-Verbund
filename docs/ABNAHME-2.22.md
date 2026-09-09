@@ -61,6 +61,8 @@ Geprüft werden außerdem falsche Eigentümer, fehlende Fähigkeiten, der unzul�
 
 Originalort, nachgewiesener Zugang, Datensatz, Straßen-/Objektreferenz, Fahrzeugprofile und Prüfergebnis bleiben gespeichert. Reparaturen erfolgen nur in enger Nähe der ursprünglichen Lage. Die begrenzte Prüfwarteschlange rotiert bei vorübergehenden Fehlern, statt alle weiteren Altfälle zu blockieren. Ohne zulässiges eigenes Straßenprofil bleibt die Prüfung ausdrücklich wartend. Strukturell ungültige JSON-Spielstände werden weiterhin abgelehnt und nicht durch einen Datenreset ersetzt.
 
+Bei mehr als 64 vorhandenen Profilen darf eine begrenzte erfolglose Suche nicht als Beweis vollständiger Unerreichbarkeit gewertet werden. Der Altfall bleibt in diesem Fall erhalten und wartend. Zwei zusätzliche Grenzfälle mit 64 beziehungsweise 65 Profilen sind zusammen mit den Germany-Simulationsprüfungen in einem Lauf mit 25 erfolgreichen Tests nachgewiesen.
+
 ## Migrationen und Datenerhalt
 
 | Datenbankschema | Änderung                                                                          |

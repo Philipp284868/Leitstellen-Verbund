@@ -20,10 +20,37 @@ import { publicSave } from "../src/simulation/incidents";
 import { validate } from "../src/model";
 import { tick } from "../src/engine";
 import { attachDynamics } from "../src/simulation/dynamics";
+import { GermanyRoutingError } from "../src/germany/errors";
 afterEach(() => {
   vi.restoreAllMocks();
   clearReachabilityCache();
 });
+
+it.each([64, 65])(
+  "eine begrenzte Bestandsprüfung darf nur bei vollständig geprüften %i Profilen Unrettbarkeit feststellen",
+  (count) => {
+    const s = phaseFixture("owner", "bin"),
+      home = s.buildings[0],
+      unit = s.vehicles[0];
+    s.buildings = Array.from({ length: count }, (_, i) => ({
+      ...structuredClone(home),
+      id: `home-${i}`,
+    }));
+    s.vehicles = s.buildings.map((b, i) => ({
+      ...structuredClone(unit),
+      id: `unit-${i}`,
+      home: b.id,
+    }));
+    const route = vi.spyOn(traffic, "routePlan").mockImplementation(() => {
+      throw new GermanyRoutingError("Getrenntes Straßennetz", "no-route");
+    });
+    const check = () =>
+      verifyIncidentLocation(s, mt("bin"), s.missions[0].pos, false);
+    if (count === 64) expect(check).toThrow("Kein zulässiger Straßenweg");
+    else expect(check()).toBeUndefined();
+    expect(route).toHaveBeenCalledTimes(64);
+  },
+);
 
 it.each([899, 900, 901])(
   "prüft %i Straßenfahrsekunden ohne ETA-Abschneiden oder Katastrophenbonus",
