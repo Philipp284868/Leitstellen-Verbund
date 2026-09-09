@@ -1,6 +1,7 @@
 import type { TutorialView, TrainingView } from "../server/tutorial";
 import { useSyncExternalStore } from "react";
 import { io, type Socket } from "socket.io-client";
+import { ensureSocketConnection } from "./socket-connection";
 import type { Save } from "./model";
 import type { ServerAction } from "../server/actions";
 import type { Action } from "./engine";
@@ -248,8 +249,8 @@ export async function refresh() {
     });
     socket.on("notice", notice);
   }
-  // The retry button must reconnect an existing disconnected socket too.
-  if (!socket.connected) socket.connect();
+  // Retry may overlap a browser online event or an automatic reconnection.
+  ensureSocketConnection(socket);
 }
 export async function login(
   data: {
@@ -329,7 +330,7 @@ if (typeof window !== "undefined") {
     });
     socket?.disconnect();
   });
-  window.addEventListener("online", () => socket?.connect());
+  window.addEventListener("online", () => ensureSocketConnection(socket));
 }
 
 export async function tutorialControl(data: unknown) {

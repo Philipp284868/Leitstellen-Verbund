@@ -3,6 +3,7 @@ import { fresh } from "../src/model";
 
 const sockets = vi.hoisted(() => ({
   all: [] as {
+    active: boolean;
     connected: boolean;
     handlers: Map<string, (...args: unknown[]) => void>;
     on: (name: string, callback: (...args: unknown[]) => void) => unknown;
@@ -27,6 +28,7 @@ vi.mock("react", () => ({
 vi.mock("socket.io-client", () => ({
   io: () => {
     const socket = {
+      active: false,
       connected: false,
       handlers: new Map<string, (...args: unknown[]) => void>(),
       on(name: string, callback: (...args: unknown[]) => void) {
@@ -34,11 +36,13 @@ vi.mock("socket.io-client", () => ({
         return this;
       },
       connect() {
+        this.active = true;
         this.connected = true;
         this.handlers.get("connect")?.();
         return this;
       },
       disconnect() {
+        this.active = false;
         this.connected = false;
         this.handlers.get("disconnect")?.("io client disconnect");
         return this;

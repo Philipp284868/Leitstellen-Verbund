@@ -379,8 +379,22 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await expect(page.locator(".hud-budget strong")).toHaveText(
     formatMoney(before),
   );
+  // A real online event and a retry can arrive while the transport is already
+  // open but the namespace handshake has not yet been acknowledged.
+  const handshake: { count: number; resume?: () => void } = { count: 0 };
+  app.io.use((_socket, next) => {
+    handshake.count++;
+    if (handshake.count === 1) handshake.resume = next;
+    else next();
+  });
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect.poll(() => Boolean(handshake.resume)).toBe(true);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("online"));
+    window.dispatchEvent(new Event("online"));
+  });
+  handshake.resume!();
   await expect(page.locator(".banner")).toHaveCount(0);
   await page
     .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
@@ -388,6 +402,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await expect
     .poll(() => app.db.all().get(owner)!.vehicles[0].favorite)
     .toBe(true);
+  expect(handshake.count).toBe(1);
 });
 test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden Guthabens", async ({
   page,
