@@ -32,12 +32,17 @@ const vitest = (list, label) => ({
   },
 });
 const regional = files.filter((f) => f.endsWith("/rivermere.test.ts"));
+// CLI replay starts five real processes and generates full legacy worlds. Keep
+// its existing time budget independent of a competing CPU-heavy test worker.
+const laboratory = files.filter((f) => f.endsWith("/phase-five.test.ts"));
+const isolated = [...regional, ...laboratory];
 const logic = [
   vitest(
-    files.filter((f) => !regional.includes(f)),
+    files.filter((f) => !isolated.includes(f)),
     "logic",
   ),
   vitest(regional, "region"),
+  vitest(laboratory, "laboratory"),
   { args: ["--test", "tests/hard-reset.node.mjs"] },
 ];
 const commands = {
@@ -52,10 +57,11 @@ const commands = {
   unit: [vitest(groups.unit, "unit")],
   integration: [
     vitest(
-      groups.integration.filter((f) => !regional.includes(f)),
+      groups.integration.filter((f) => !isolated.includes(f)),
       "integration",
     ),
     vitest(regional, "region"),
+    vitest(laboratory, "laboratory"),
     { args: ["--test", "tests/hard-reset.node.mjs"] },
   ],
   ci: logic,

@@ -14,7 +14,7 @@ Vite bleibt bei UI-Änderungen aktiv. Esbuild überwacht die tatsächlichen Serv
 
 | Befehl               | Umfang                                                                                                                             |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `check:quick`        | Importgrenzen, aktive Links, Testgruppenvollständigkeit, Whitespace, ESLint, vollständige inkrementelle Typprüfung                 |
+| `check:quick`        | Importgrenzen, aktive Links, Testgruppenvollständigkeit, Whitespace, Prettier, ESLint, vollständige inkrementelle Typprüfung        |
 | `test:quick`         | Kurze Regressionen für Geld, Besatzung, Fuhrpark, Präferenzen, Audio, IDs, Speicher und Werkzeugschutz; keine vollständige Abnahme |
 | `test:unit`          | Alle nach tatsächlichen Laufzeitimporten ermittelten Unit-Dateien                                                                  |
 | `test:integration`   | Server, SQLite, Netz-/Prozessprüfungen, Migrations- und Weltkompatibilität                                                         |

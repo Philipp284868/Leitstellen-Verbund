@@ -132,6 +132,14 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: browsers-${{ runner.os }}-${{ runner.arch }}-${{ matrix.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Ubuntu-Systempakete ohne unbenötigte Drittanbieterquellen
+        # Playwright supplies its own browsers. A broken preinstalled Chrome
+        # repository must not block Ubuntu libraries; signature/hash checks stay on.
+        run: |
+          test -f /etc/apt/sources.list.d/ubuntu.sources
+          sudo install -d /etc/apt/lv-sources
+          sudo cp /etc/apt/sources.list.d/ubuntu.sources /etc/apt/lv-sources/ubuntu.sources
+          printf 'Dir::Etc::sourcelist "-";\nDir::Etc::sourceparts "/etc/apt/lv-sources";\n' | sudo tee /etc/apt/apt.conf.d/99-lv-sources
       - name: Desktop-Browser und Systemabhängigkeiten
         run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps ${{ matrix.browser }}
       - name: Echtes virtuelles Audiogerät
