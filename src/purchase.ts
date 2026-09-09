@@ -1,3 +1,4 @@
+import { vehicleHomeAllowed } from "./catalog";
 import type { Save } from "./model";
 import { stationCapacity } from "./simulation/staffing";
 import { progress } from "./progression";
@@ -47,7 +48,7 @@ export function purchaseReason(s: Save, kind: string, home: string) {
     b = s.buildings.find((b) => b.id === home);
   if (progress(s.xp).level < t.level)
     return `Freischaltung ab Stufe ${t.level}.`;
-  if (!b || b.type !== t.home)
+  if (!b || !vehicleHomeAllowed(t, b.type))
     return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;
   if (b.ready > s.time) return "Wache befindet sich im Bau.";
   if (

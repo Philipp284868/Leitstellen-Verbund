@@ -1,6 +1,6 @@
 import { civilProtectionTick } from "./civil-protection";
 import { turnoutReady } from "./staffing";
-import { stationProfile, crewSummaries, personDuty } from "./staffing";
+import { isVolunteerStation, crewSummaries, personDuty } from "./staffing";
 import { vehicleAvailability } from "./availability";
 import { urgentPriority } from "./priority";
 import { openForceLabels } from "./force-plan";
@@ -291,7 +291,7 @@ export function publicSave(source: Save): Save {
       crews.get(s.vehicles[i].id),
     );
   const volunteerHomes = new Set(
-    s.buildings.filter((b) => stationProfile(b).kind === "ff").map((b) => b.id),
+    s.buildings.filter((b) => isVolunteerStation(b)).map((b) => b.id),
   );
   for (const p of s.people) {
     if (volunteerHomes.has(p.home)) delete p.duty;

@@ -13,7 +13,7 @@ import { alarm, propose } from "../src/simulation/dispatch";
 import { validate } from "../src/model";
 import { commandSchema } from "../server/actions";
 
-it("KatS-Vorbereitung sperrt freie Disposition und AAO bis zum gespeicherten Termin, ohne Personal oder Geld zu erzeugen", () => {
+it("KatS-Bereitschaft lässt reguläre Alarmierung zu und beschleunigt professionelle Wachen nicht", () => {
   const s = organizationFixture("owner"),
     b = s.buildings[0],
     v = s.vehicles[0],
@@ -25,16 +25,17 @@ it("KatS-Vorbereitung sperrt freie Disposition und AAO bis zum gespeicherten Ter
     { type: "civil-station", home: b.id, enabled: true, preparation: 60 },
     "owner",
   );
-  expect(readiness(s, v)).toContain("nicht mobilisiert");
-  expect(() => alarm(s, m, [v.id], "owner")).toThrow("nicht mobilisiert");
+  expect(readiness(s, v)).toBe("");
+
   const aao = {
     ...s.desk.aaos[0],
     types: ["hlf"],
+    org: "Alle" as const,
     skills: {},
     maxDistance: 1000,
   };
   propose(s, m, aao, "owner");
-  expect(m.control!.proposal!.vehicles).toEqual([]);
+  expect(m.control!.proposal!.vehicles).toContain(v.id);
   civilProtectionCommand(
     s,
     { type: "civil-readiness", homes: [b.id], op: "mobilize" },
@@ -47,10 +48,7 @@ it("KatS-Vorbereitung sperrt freie Disposition und AAO bis zum gespeicherten Ter
     "owner",
   );
   expect(b.civilProtection!.readyAt).toBe(readyAt);
-  s.time = readyAt - 1;
-  civilProtectionTick(s);
-  expect(readiness(s, v)).toContain("noch 1 Sekunden");
-  s.time++;
+  s.time = readyAt;
   civilProtectionTick(s);
   civilProtectionTick(s);
   expect(b.civilProtection!.state).toBe("ready");
@@ -69,7 +67,7 @@ it("KatS-Vorbereitung sperrt freie Disposition und AAO bis zum gespeicherten Ter
       { type: "civil-readiness", homes: [b.id], op: "stand-down" },
       "owner",
     ),
-  ).toThrow("zurück");
+  ).toThrow("Mindestlaufzeit");
   expect(() =>
     civilProtectionCommand(
       s,
@@ -92,10 +90,10 @@ it("Wachen werden gemeinsam validiert; Bereitschaft umgeht weder FMS 6 noch echt
   expect(() =>
     civilProtectionCommand(
       s,
-      { type: "civil-readiness", homes: [first.id, second.id], op: "mobilize" },
+      { type: "civil-readiness", homes: [first.id, "foreign"], op: "mobilize" },
       "owner",
     ),
-  ).toThrow("ausgewiesene");
+  ).toThrow("Eigene");
   expect(s).toEqual(before);
   expect(() =>
     civilProtectionCommand(
@@ -156,7 +154,7 @@ it("Bereitschaftsverlauf bleibt bei regulärer Rückumstellung erhalten und alte
     { type: "civil-readiness", homes: [home], op: "mobilize" },
     "owner",
   );
-  s.time += 60;
+  s.time += 600;
   civilProtectionTick(s);
   civilProtectionCommand(
     s,

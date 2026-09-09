@@ -20,6 +20,7 @@ import { acquireLock } from "./lock";
 import { prepareGeography } from "./germany/runtime";
 import { exportHistory } from "./history";
 import { publicSave } from "../src/simulation/incidents";
+import { planReadinessMigration } from "./readiness-migration";
 import { planEconomyMigration } from "./economy-migration";
 import { migrateEconomy } from "../src/economy/migration";
 import { migrateBuildingStaffing } from "../src/simulation/building-staffing";
@@ -111,6 +112,7 @@ try {
             targetVersion: DATABASE_VERSION,
             saves: result,
             economy: planEconomyMigration(db).summary,
+            readiness: planReadinessMigration(db).summary,
           },
           null,
           2,

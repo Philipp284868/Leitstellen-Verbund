@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { Database } from "../server/database";
+import { Database, DATABASE_VERSION } from "../server/database";
 import { planEconomyMigration } from "../server/economy-migration";
 import { phaseFixture } from "./phase-fixture";
 import { recall } from "../src/engine";
@@ -71,7 +71,7 @@ it("migriert den echten DB13-Bestand mit Rückfahrt, Verletzung und bezahltem Au
     migrated = migratedDb.all().get(original.player.id)!;
   expect(
     migratedDb.sql.prepare("PRAGMA user_version").get()!.user_version,
-  ).toBe(14);
+  ).toBe(DATABASE_VERSION);
   expect(migrated.staffing?.version).toBe(1);
   expect(migrated.buildings[0].organization).toBeUndefined();
   expect(stationProfile(migrated.buildings[0]).kind).toBe("bf");

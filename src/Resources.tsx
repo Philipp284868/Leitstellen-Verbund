@@ -1,3 +1,5 @@
+import { vehicleHomeAllowed } from "./catalog";
+import { StationGarage } from "./StationGarage";
 import { CivilStationSettings } from "./CivilProtection";
 import { VehicleIcon, BuildingIcon } from "./map-icons";
 import { buildReason, purchaseReason } from "./purchase";
@@ -125,7 +127,15 @@ export function BuildingShop({
     </section>
   );
 }
-export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
+export function BuildingPanel({
+  s,
+  b,
+  onOpenVehicle,
+}: {
+  s: Save;
+  b: Building;
+  onOpenVehicle: (id: string) => void;
+}) {
   const { readonly } = useGame();
   const [tab, setTab] = useState("overview"),
     [query, setQuery] = useState(""),
@@ -137,7 +147,7 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
     automatic = buildingStaffingStatus(s, b);
   const available = vehicles.filter(
     (v) =>
-      v.home === b.type &&
+      vehicleHomeAllowed(v, b.type) &&
       `${v.name} ${Object.keys(v.skills)
         .map((k) => capabilities[k])
         .join(" ")}`
@@ -241,37 +251,13 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
               {b.hospital?.capacity ?? 20 * b.level} Betten belegt
             </p>
           )}
-          <h3>Stationierte Fahrzeuge</h3>
-          {fleet.length ? (
-            <div className="vehicle-shop">
-              {fleet.map((v) => (
-                <article key={v.id}>
-                  <VehicleIcon type={v.type} />
-                  <div>
-                    <b>{v.name}</b>
-                    <small>
-                      {statuses[v.status]} ·{" "}
-                      {v.availability?.reason || "Automatisch besetzt"}
-                    </small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>Noch kein Fahrzeug stationiert</h3>
-              <p>
-                Nach Abschluss der Bauarbeiten kannst du passende Fahrzeuge
-                beschaffen.
-              </p>
-              <button
-                onClick={() =>
-                  requestDialogTransition(() => setTab("vehicles"))
-                }
-              >
-                Fahrzeugkatalog öffnen
-              </button>
-            </div>
+          <StationGarage s={s} b={b} onOpen={onOpenVehicle} />
+          {!fleet.length && (
+            <button
+              onClick={() => requestDialogTransition(() => setTab("vehicles"))}
+            >
+              Fahrzeugkatalog öffnen
+            </button>
           )}
         </>
       )}

@@ -1,84 +1,67 @@
 import { useState } from "react";
 import type { Save, Building } from "./model";
-import { bt } from "./catalog";
 import { command, useGame } from "./store";
 import { useCommandForm } from "./use-command-form";
 import {
   civilReadinessReason,
   civilStationTypes,
+  readinessRecommendation,
 } from "./simulation/civil-protection";
 import { fleetReadiness } from "./fleet-view";
-import { duration } from "./travel";
 import "./RadioDesk.css";
 
 export function CivilStationSettings({ s, b }: { s: Save; b: Building }) {
-  const { readonly } = useGame();
-  const [minutes, setMinutes] = useState<number | null>(null);
-  const preparation =
-    minutes === null ? (b.civilProtection?.preparation ?? 600) : minutes * 60;
-  const form = useCommandForm(
-    minutes !== null && preparation !== b.civilProtection?.preparation,
-    () => setMinutes(null),
-  );
+  const { readonly, workspace } = useGame();
+  const form = useCommandForm(false, () => {});
   if (!civilStationTypes.includes(b.type)) return null;
   const c = b.civilProtection;
-  const configure = async (enabled: boolean) => {
-    if (
-      await form.run(() =>
-        command({ type: "civil-station", home: b.id, enabled, preparation }),
-      )
-    )
-      setMinutes(null);
-  };
   return (
     <section aria-label={`KatS-Einrichtung ${b.name}`}>
-      <h3>KatS-Wache</h3>
+      <h3>Katastrophenbereitschaft</h3>
       <p>
-        Feuerwehr, Rettungsdienst und THW behalten ihre Fahrzeuge, Stellplätze
-        und Besatzung. Eine KatS-Wache muss vor der Alarmierung mobilisiert
-        werden.
+        Auch ohne Katastrophenalarm regulär alarmierbar. Bereitschaft sammelt
+        vorhandene freiwillige Kräfte vorab an der Wache; erst nach ihrer
+        Anreise entfällt das erneute Sammeln.
       </p>
+      {b.readinessCore && (
+        <p>
+          {b.readinessCore.count} hauptamtliche Kräfte bilden den ständigen
+          Bereitschaftskern. Gebundene oder verletzte Kräfte stehen nicht
+          doppelt zur Verfügung.
+        </p>
+      )}
+      <p>{civilReadinessReason(s, b)}</p>
       {form.error && (
         <p role="alert" className="error">
           {form.error}
         </p>
       )}
-      <fieldset
-        className="command-fields"
+      <button
         disabled={
           readonly ||
           form.busy ||
+          workspace?.canManage === false ||
           b.ready > s.time ||
           (!!c && c.state !== "inactive")
         }
+        onClick={() =>
+          void form.run(() =>
+            command({
+              type: "civil-station",
+              home: b.id,
+              enabled: !c?.enabled,
+              preparation: 600,
+            }),
+          )
+        }
       >
-        <label>
-          Vorbereitungszeit in Minuten
-          <input
-            type="number"
-            min="1"
-            max="30"
-            step="1"
-            value={preparation / 60}
-            onChange={(e) => setMinutes(Number(e.target.value))}
-          />
-        </label>
-        <button onClick={() => void configure(true)}>
-          {c?.enabled ? "Vorbereitungszeit speichern" : "Als KatS-Wache führen"}
-        </button>
-        {c?.enabled && (
-          <button onClick={() => void configure(false)}>
-            Als reguläre Wache führen
-          </button>
-        )}
-      </fieldset>
-      {c && c.state !== "inactive" && (
-        <p>Zum Ändern zuerst die Bereitschaft beenden.</p>
-      )}
+        {c?.enabled
+          ? "Vorauswahl für Bereitschaft aufheben"
+          : "Für Bereitschaft vormerken"}
+      </button>
     </section>
   );
 }
-
 export function CivilProtectionDesk({
   s,
   onOpen,
@@ -90,27 +73,48 @@ export function CivilProtectionDesk({
 }) {
   const { readonly, workspace } = useGame();
   const [selected, setSelected] = useState<string[]>([]);
-  const form = useCommandForm(selected.length > 0, () => setSelected([]));
-  const ready = fleetReadiness(s);
+  const [reason, setReason] = useState("");
+  const form = useCommandForm(selected.length > 0 || !!reason, () => {
+    setSelected([]);
+    setReason("");
+  });
+  const ready = fleetReadiness(s),
+    recommendation = readinessRecommendation(s);
   const stations = s.buildings.filter((b) =>
     civilStationTypes.includes(b.type),
   );
   const operation = async (op: "mobilize" | "stand-down") => {
     if (
       await form.run(() =>
-        command({ type: "civil-readiness", homes: selected, op }),
+        command({
+          type: "civil-readiness",
+          homes: selected,
+          op,
+          reason: reason.trim() || undefined,
+        }),
       )
-    )
+    ) {
       setSelected([]);
+      setReason("");
+    }
   };
   return (
     <section className="radio-workspace" aria-label="Katastrophenbereitschaft">
       <p>
-        KatS-Wachen auswählen und gemeinsam mobilisieren. Die Vorbereitung läuft
-        auf dem Server weiter. Danach bleiben Fahrzeugzustand, Besatzung und
-        reguläre Ausrückzeit maßgeblich.
+        Die Leitstellenleitung kann Kräfte unabhängig vom Wetter vorab sammeln.
+        Nach zehn Minuten kann die Bereitschaft beendet werden; die freie
+        Reserve kehrt gestaffelt zurück. Laufende Einsätze bleiben besetzt.
+      </p>
+      <p role="status">
+        {recommendation.recommended ? "Empfehlung: Bereitschaft prüfen. " : ""}
+        {recommendation.reason}
       </p>
       <button onClick={onBuild}>Neuen Standort bauen</button>
+      {workspace?.canManage === false && (
+        <p>
+          Nur die Leitstellenleitung darf Bereitschaft anordnen und beenden.
+        </p>
+      )}
       {readonly && (
         <p role="status">
           Verbindung unterbrochen. Bereitschaftsaktionen sind gesperrt.
@@ -121,7 +125,19 @@ export function CivilProtectionDesk({
           {form.error}
         </p>
       )}
-      <fieldset className="command-fields" disabled={readonly || form.busy}>
+      <fieldset
+        className="command-fields"
+        disabled={readonly || form.busy || workspace?.canManage === false}
+      >
+        <label>
+          Anlass der Bereitschaft
+          <input
+            value={reason}
+            maxLength={300}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Erhöhtes Einsatzaufkommen"
+          />
+        </label>
         <div className="action-grid">
           <button
             disabled={!selected.length}
@@ -136,92 +152,78 @@ export function CivilProtectionDesk({
             Bereitschaft beenden
           </button>
         </div>
-        {stations
-          .filter((b) => b.civilProtection?.enabled)
-          .map((b) => {
-            const c = b.civilProtection!;
-            const fleet = s.vehicles.filter((v) => v.home === b.id);
-            const reason = civilReadinessReason(s, b);
-            return (
-              <article className="radio-conversation" key={b.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(b.id)}
-                    onChange={(e) =>
-                      setSelected(
-                        e.target.checked
-                          ? [...selected, b.id]
-                          : selected.filter((id) => id !== b.id),
-                      )
-                    }
-                  />
-                  {b.name}
-                </label>
-                <p>
-                  {reason || "Vorbereitung abgeschlossen"} ·{" "}
-                  {fleet.filter((v) => !ready(v)).length}/{fleet.length}{" "}
-                  Fahrzeuge alarmierbar
-                </p>
-                {c.state === "mobilizing" && (
-                  <progress
-                    max={c.preparation}
-                    value={Math.max(0, c.preparation - (c.readyAt - s.time))}
-                    aria-label={`Vorbereitung ${b.name}`}
-                  />
-                )}
-                <ul>
-                  {fleet.map((v) => (
-                    <li key={v.id}>
-                      {v.name}: {ready(v) || "Alarmierbar"}
+        {stations.map((b) => {
+          const c = b.civilProtection,
+            fleet = s.vehicles.filter((v) => v.home === b.id);
+          return (
+            <article className="radio-conversation" key={b.id}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(b.id)}
+                  disabled={b.ready > s.time}
+                  onChange={(e) =>
+                    setSelected(
+                      e.target.checked
+                        ? [...selected, b.id]
+                        : selected.filter((id) => id !== b.id),
+                    )
+                  }
+                />
+                {b.name}
+              </label>
+              <p>
+                {civilReadinessReason(s, b)} ·{" "}
+                {fleet.filter((v) => !ready(v)).length}/{fleet.length} Fahrzeuge
+                alarmierbar
+              </p>
+              {c?.state === "mobilizing" && (
+                <progress
+                  aria-label={`Vorbereitung ${b.name}`}
+                  max={Math.max(
+                    1,
+                    c.staging?.filter((a) => a.available).length ?? 0,
+                  )}
+                  value={
+                    c.staging?.filter((a) => a.available && a.at <= s.time)
+                      .length ?? 0
+                  }
+                />
+              )}
+              {c?.reason && <p>Anlass: {c.reason}</p>}
+              <ul>
+                {fleet.map((v) => (
+                  <li key={v.id}>
+                    {v.name}: {ready(v) || "Alarmierbar"}
+                  </li>
+                ))}
+              </ul>
+              <details>
+                <summary>
+                  Bereitschaftsverlauf · {c?.history.length ?? 0} Einträge
+                </summary>
+                <ol>
+                  {[...(c?.history ?? [])].reverse().map((e, i) => (
+                    <li key={i}>
+                      {new Date(e.at * 1000).toLocaleString("de-DE")} ·{" "}
+                      {workspace?.members.find((u) => u.id === e.actor)?.name ??
+                        e.actor}{" "}
+                      · {e.text}
                     </li>
                   ))}
-                </ul>
-                <details>
-                  <summary>
-                    Bereitschaftsverlauf · {c.history.length} Einträge
-                  </summary>
-                  <ol>
-                    {[...c.history].reverse().map((e, i) => (
-                      <li key={i}>
-                        {new Date(e.at * 1000).toLocaleString("de-DE")} ·{" "}
-                        {workspace?.members.find((u) => u.id === e.actor)
-                          ?.name ?? e.actor}{" "}
-                        · {e.text}
-                      </li>
-                    ))}
-                  </ol>
-                </details>
-                <button onClick={() => onOpen(b.id)}>
-                  Wachendetails öffnen
-                </button>
-              </article>
-            );
-          })}
+                </ol>
+              </details>
+              <button onClick={() => onOpen(b.id)}>Wachendetails öffnen</button>
+            </article>
+          );
+        })}
       </fieldset>
-      {!stations.some((b) => b.civilProtection?.enabled) && (
+      {!stations.length && (
         <p>
-          Noch keine KatS-Wache eingerichtet. Einen vorhandenen Standort unten
-          auswählen oder einen neuen Standort bauen.
+          Noch kein geeigneter Standort gebaut. Katastrophenschutzwachen stehen
+          ab Stufe 8 zur Verfügung.
         </p>
       )}
-      <h3>Standorte einrichten</h3>
-      {stations.map((b) => (
-        <details key={b.id}>
-          <summary>
-            {b.name} · {bt(b.type).org}
-            {b.civilProtection?.enabled
-              ? ` · KatS · ${duration(b.civilProtection.preparation)} Vorbereitung`
-              : ""}
-          </summary>
-          <CivilStationSettings s={s} b={b} />
-        </details>
-      ))}
-      <p>
-        Die letzten 200 Bereitschaftseinträge je Standort bleiben gespeichert.
-        Das Beenden ist erst nach Rückkehr und Nachbereitung aller Fahrzeuge
-        möglich.
-      </p>
     </section>
   );
 }

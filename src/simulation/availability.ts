@@ -1,4 +1,3 @@
-import { civilReadinessReason } from "./civil-protection";
 import type { Save, Vehicle } from "../model";
 import { vt } from "../catalog";
 import { crewSummary } from "./staffing";
@@ -68,11 +67,7 @@ export function vehicleAvailability(
     const home = s.buildings.find((b) => b.id === v.home);
     if (!home || (v.status !== "return" && home.ready > s.time))
       result.reason = "Wache befindet sich im Bau.";
-    else if (civilReadinessReason(s, home)) {
-      result.reason = civilReadinessReason(s, home);
-      if (home.civilProtection?.state === "mobilizing")
-        result.until = home.civilProtection.readyAt;
-    } else if (crew.eligible < crew.required)
+    else if (crew.eligible < crew.required)
       result.reason = `Besatzung fehlt: ${crew.required - crew.eligible} geeignete Kräfte benötigt.`;
     else {
       result.state = v.status === "return" ? "RETURNING" : "AVAILABLE";

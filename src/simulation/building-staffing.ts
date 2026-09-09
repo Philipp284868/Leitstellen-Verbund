@@ -1,3 +1,4 @@
+import { vehicleHomeAllowed } from "../catalog";
 import { z } from "zod";
 import type { Building, Save, Vehicle } from "../model";
 import { extensions, vehicles, vt } from "../catalog";
@@ -6,10 +7,11 @@ import {
   crewSummary,
   personAvailable,
   stationCapacity,
-  stationProfile,
+  isVolunteerStation,
 } from "./staffing";
 import { simId } from "./events";
 import { injuryReason } from "./responder-recovery";
+import { reconcileReadinessCore } from "./readiness-core";
 
 export const staffingModelSchema = z
   .object({
@@ -37,7 +39,7 @@ function boundVehicle(v: Vehicle) {
 export function buildingStaffingPlan(s: Save, b: Building) {
   const rank = progress(s.xp).level;
   const allowed = vehicles.filter((v) => {
-    if (v.home !== b.type || v.level > rank) return false;
+    if (!vehicleHomeAllowed(v, b.type) || v.level > rank) return false;
     const extension = extensions.find((e) => e.types.includes(v.id));
     return !extension || b.extensions.some((id) => id === extension.id);
   });
@@ -159,14 +161,15 @@ export function reconcileBuildingStaffing(s: Save): StaffingChange {
       usableCount++;
       change.added++;
     }
-    const volunteer = stationProfile(b).kind === "ff";
+    reconcileReadinessCore(s, b);
+    const volunteer = isVolunteerStation(b);
     // FF crews are called from their station pool by planTurnout; professional
     // crews receive a stable standby assignment, avoiding a manual assign action.
     for (const p of pool) {
       if (bound.has(p.id) || !p.vehicle) continue;
       const v = vehicleIndex.get(p.vehicle);
       if (
-        volunteer ||
+        (volunteer && b.type !== "thw") ||
         !v ||
         personAvailable(s, p) ||
         (vt(v.type).training && !p.skills.includes(vt(v.type).training))

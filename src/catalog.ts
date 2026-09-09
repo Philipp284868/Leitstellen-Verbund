@@ -65,6 +65,15 @@ export interface BuildingType {
 }
 export const buildings: BuildingType[] = [
   {
+    id: "kats",
+    name: "Katastrophenschutzwache",
+    org: "Rettungsdienst",
+    price: 52000,
+    slots: 4,
+    people: 24,
+    level: 3,
+  },
+  {
     id: "fire",
     name: "Feuerwache",
     org: "Feuerwehr",
@@ -151,6 +160,15 @@ export interface VehicleType {
   capacity: number;
   level: number;
   mode: "road" | "air" | "water";
+}
+/** Historical rescue-service locations remain legal; the KatS station reuses
+ * the existing equipment identities instead of duplicating the catalogue. */
+export function vehicleHomeAllowed(type: VehicleType, home: string) {
+  return (
+    type.home === home ||
+    (home === "kats" &&
+      ["gwsan", "ktwb", "segbetreuung", "segrtw"].includes(type.id))
+  );
 }
 const v = (
   id: string,
@@ -424,7 +442,7 @@ export const vehicles: VehicleType[] = [
   ),
   v(
     "ktwb",
-    "KTW-B – zwei Transportplätze",
+    "NKTW / KTW Typ B – zwei Transportplätze",
     "ems",
     23000,
     2,

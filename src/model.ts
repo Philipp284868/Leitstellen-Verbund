@@ -1,4 +1,6 @@
+import { vehicleHomeAllowed } from "./catalog";
 import { civilProtectionSchema } from "./simulation/civil-protection-schema";
+import { readinessCoreSchema } from "./simulation/readiness-core";
 import { validateCivilProtection } from "./simulation/civil-protection";
 import {
   centsSchema,
@@ -74,6 +76,7 @@ export const buildingSchema = z
     ready: num,
     organization: stationSchema.optional(),
     civilProtection: civilProtectionSchema.optional(),
+    readinessCore: readinessCoreSchema.optional(),
     hospital: hospitalSchema.optional(),
     extensions: z
       .array(z.enum(["technical", "hazmat", "air", "doctor"]))
@@ -87,6 +90,7 @@ export const personSchema = z
     home: id,
     vehicle: id.nullable(),
     duty: dutySchema.optional(),
+    professional: z.boolean().optional(),
     injury: responderInjurySchema.optional(),
     skills: z.array(z.string().max(30)).max(32),
     training: z.string().max(30),
@@ -369,7 +373,7 @@ export function validate(data: unknown): Save {
   for (const v of s.vehicles) {
     const t = vt(v.type);
     const home = s.buildings.find((b) => b.id === v.home);
-    if (!home || home.type !== t.home || v.owner !== s.player.id)
+    if (!home || !vehicleHomeAllowed(t, home.type) || v.owner !== s.player.id)
       throw Error("Ungültige Fahrzeugzuordnung.");
     if (v.status === "ready" && (v.assignment || v.mission))
       throw Error("Bereites Fahrzeug mit Zuweisung.");

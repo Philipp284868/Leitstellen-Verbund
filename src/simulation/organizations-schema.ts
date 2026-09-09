@@ -12,6 +12,7 @@ export const stationKinds = {
   ems: "Rettungsdienst",
   police: "Polizei",
   thw: "THW",
+  kats: "Katastrophenschutz",
   water: "Wasserrettung",
 };
 export const stationSchema = z
@@ -25,6 +26,7 @@ export const stationSchema = z
       "ems",
       "police",
       "thw",
+      "kats",
       "water",
     ]),
     turnout: z.number().int().min(10).max(600),

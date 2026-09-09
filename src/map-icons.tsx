@@ -129,6 +129,7 @@ export const vehicleIcons = {
   boat: IS_GERMANY ? "boatTrailer" : "boat",
 } as const satisfies Record<string, MapGlyph>;
 export const buildingIcons: Record<string, MapGlyph> = {
+  kats: "emsStation",
   fire: "fireStation",
   fire_station: "fireStation",
   ems: "emsStation",

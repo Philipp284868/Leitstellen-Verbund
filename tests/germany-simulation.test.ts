@@ -714,29 +714,28 @@ it("Deutschland: KatS-Mobilisierung erhält nach Neustart echte FF-Straßenanrei
     enabled: true,
     preparation: 60,
   });
-  expect(() =>
-    command(game, { type: "dispatch", mission, vehicles: [vehicle] }),
-  ).toThrow("nicht mobilisiert");
+
   command(game, { type: "civil-readiness", homes: [home], op: "mobilize" });
   const readiness = structuredClone(current().buildings[0].civilProtection);
   db!.close();
   db = new fixture.Database(resolve(dir, "save"));
   game = new fixture.Game(db);
   expect(current().buildings[0].civilProtection).toEqual(readiness);
-  game.step(61, Date.now(), { generation: false });
+  const staged = structuredClone(
+    current().buildings[0].civilProtection!.staging!,
+  );
+  expect(staged.some((a) => a.available && a.path!.length > 1)).toBe(true);
+  game.step(Math.max(1, readiness!.readyAt - current().time + 1), Date.now(), {
+    generation: false,
+  });
   expect(current().buildings[0].civilProtection!.state).toBe("ready");
   expect(current().people.every((p) => p.vehicle === null)).toBe(true);
   command(game, { type: "dispatch", mission, vehicles: [vehicle] });
   s = current();
   const plan = structuredClone(s.vehicles[0].turnout!);
   expect(plan.arrivals).toHaveLength(6);
-  expect(new Set(plan.arrivals.map((a) => a.at)).size).toBeGreaterThan(1);
-  for (const arrival of plan.arrivals) {
-    expect(arrival.path!.length).toBeGreaterThan(1);
-    expect(arrival.motion!.length).toBeGreaterThan(0);
-    expect(arrival.path!.at(-1)!.x).toBeCloseTo(s.buildings[0].pos.x, 8);
-    expect(arrival.path!.at(-1)!.y).toBeCloseTo(s.buildings[0].pos.y, 8);
-  }
+  expect(plan.arrivals.every((a) => a.at === s.time)).toBe(true);
+  expect(s.vehicles[0].depart - s.time).toBe(30);
   expect(game.view(owner, new Set()).save.people.every((p) => !p.duty)).toBe(
     true,
   );
@@ -744,21 +743,9 @@ it("Deutschland: KatS-Mobilisierung erhält nach Neustart echte FF-Straßenanrei
   db = new fixture.Database(resolve(dir, "save"));
   game = new fixture.Game(db);
   expect(current().vehicles[0].turnout).toEqual(plan);
-  const moving = plan.arrivals.reduce((a, b) =>
-    a.at - a.depart! > b.at - b.depart! ? a : b,
-  );
-  const positionTime = moving.depart! + (moving.at - moving.depart!) / 2;
-  const markers = fixture.volunteerMarkers(current(), positionTime);
-  expect(markers.length).toBeGreaterThan(0);
-  expect(
-    markers.every((marker) => marker.name.startsWith("FF-Anfahrt zur Wache")),
-  ).toBe(true);
-  const last = Math.max(...plan.arrivals.map((a) => a.at));
-  game.step(last - current().time - 0.1);
+  const departure = current().vehicles[0].depart;
+  game.step(departure - current().time - 0.1);
   expect(current().vehicles[0].status).toBe("alarmed");
-  expect(
-    fixture.crewSummary(current(), current().vehicles[0]).present,
-  ).toBeLessThan(6);
   game.step(1);
   expect(current().vehicles[0].status).toBe("travel");
   expect(current().desk.fleet[vehicle].code).toBe(3);

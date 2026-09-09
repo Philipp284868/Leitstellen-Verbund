@@ -5,6 +5,7 @@ import { useCommandForm } from "./use-command-form";
 import { vt, bt } from "./catalog";
 import {
   stationProfile,
+  isVolunteerStation,
   crewSummary,
   stationCapacity,
   reserveWarning,
@@ -36,6 +37,7 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
   const [confirmBF, setConfirmBF] = useState(false);
   if (!bt(b.type).slots) return null;
   const ff = stationProfile(b).kind === "ff",
+    volunteer = isVolunteerStation(b),
     capacity = stationCapacity(b),
     status = buildingStaffingStatus(s, b);
   const unavailable =
@@ -62,7 +64,7 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
           Ergänzungen und Vertretung organisiert die Wache automatisch.
         </small>
         <div className="org-form">
-          {!ff && (
+          {!volunteer && (
             <label>
               Ausrück-Grundzeit in Sekunden
               <input
@@ -108,7 +110,7 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
           </label>
         </div>
         <p>
-          {ff
+          {volunteer
             ? "Die zugesagte Grundbesetzung reagiert zuverlässig auf Alarm. Freiwillige Kräfte fahren zur Wache; das Fahrzeug wartet auf die tatsächliche Ankunft."
             : "Die Wachbesatzung übernimmt bereitstehende Fahrzeuge automatisch."}
         </p>
@@ -189,8 +191,7 @@ export function PersonSettings({
 
 export function VehicleStaffing({ s, v }: { s: Save; v: Vehicle }) {
   const form = useCommandForm();
-  const ff =
-    stationProfile(s.buildings.find((b) => b.id === v.home)!).kind === "ff";
+  const ff = isVolunteerStation(s.buildings.find((b) => b.id === v.home)!);
   const crew = crewSummary(s, v),
     readiness = v.availability ?? vehicleAvailability(s, v),
     warning = reserveWarning(s, v);

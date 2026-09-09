@@ -75,7 +75,8 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
     expect((await action(1, { type: "member-accept", owner })).status).toBe(
       200,
     );
-    expect((await action(1, configure)).status).toBe(200);
+    expect((await action(1, configure)).status).toBe(400);
+    expect((await action(0, configure)).status).toBe(200);
     let snapshot = "";
     socket = io(config.publicUrl, {
       transports: ["websocket"],
@@ -130,7 +131,7 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
     ).toHaveLength(1);
     const mobilize = { type: "civil-readiness", homes: [home], op: "mobilize" };
     const both = await Promise.all([action(0, mobilize), action(1, mobilize)]);
-    expect(both.map((r) => r.status)).toEqual([200, 200]);
+    expect(both.map((r) => r.status)).toEqual([200, 400]);
     const readyAt = state().buildings[0].civilProtection!.readyAt;
     expect(state().buildings[0].civilProtection!.history).toHaveLength(2);
     expect(
@@ -141,7 +142,7 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
           vehicles: [state().vehicles[0].id],
         })
       ).status,
-    ).toBe(400);
+    ).toBe(200);
     socket.disconnect();
     await app.close();
     app = startServer(config);
@@ -182,13 +183,13 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
       id: aid,
       vehicles: [helperVehicle],
     };
-    expect((await action(2, accept)).status).toBe(400);
+    expect((await action(2, accept)).status).toBe(200);
     expect((await action(2, { ...mobilize, homes: [helperHome] })).status).toBe(
       200,
     );
     app.game.step(61, Date.now(), { generation: false });
-    expect((await action(2, accept)).status).toBe(200);
-    expect(state(helper).vehicles[0].status).toBe("alarmed");
+    expect((await action(2, accept)).status).toBe(400);
+    expect(["travel", "scene"]).toContain(state(helper).vehicles[0].status);
     const ownView = app.game.view(owner, new Set([owner, helper]));
     expect(
       ownView.network.friends.find((f) => f.id === helper)!.buildings[0]

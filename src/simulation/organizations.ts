@@ -7,6 +7,7 @@ import {
   crewRequired,
   personAvailable,
   stationProfile,
+  isVolunteerStation,
   PROFESSIONAL_FIRE,
 } from "./staffing";
 import { level } from "../model";
@@ -119,7 +120,7 @@ export function organizationCommand(
         throw Error(
           "Die Organisationsart ist festgelegt. Für Berufsfeuerwehr den freigeschalteten BF-Ausbau verwenden.",
         );
-      if (previous.kind === "ff" && a.profile.turnout !== previous.turnout)
+      if (isVolunteerStation(b) && a.profile.turnout !== previous.turnout)
         throw Error(
           "Die Anreise freiwilliger Kräfte wird durch die Simulation bestimmt.",
         );
@@ -139,7 +140,7 @@ export function organizationCommand(
   } else if (a.type === "person-duty") {
     const p = s.people.find((p) => p.id === a.person);
     if (!p) throw Error("Eigene Einsatzkraft fehlt.");
-    if (stationProfile(s.buildings.find((b) => b.id === p.home)!).kind === "ff")
+    if (isVolunteerStation(s.buildings.find((b) => b.id === p.home)!))
       throw Error(
         "Private Verfügbarkeit und Tagesabläufe freiwilliger Kräfte werden ausschließlich simuliert.",
       );

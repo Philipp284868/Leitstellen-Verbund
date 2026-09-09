@@ -28,6 +28,7 @@ import { ReconnectSummary } from "./ReconnectSummary";
 const Players = lazy(() =>
   import("./Players").then((m) => ({ default: m.Players })),
 );
+import { StationGarage, garageIndex } from "./StationGarage";
 import { BuildingIcon } from "./map-icons";
 import { usePresence } from "./network";
 import { shortcutFor } from "./workspace";
@@ -219,6 +220,7 @@ function GameApp() {
       </main>
     );
   if (!s) return <AuthScreen />;
+  const garages = modal === "stations" ? garageIndex(s) : null;
   const open = (id: string) =>
     requestDialogTransition(() => {
       if (id === "friends") {
@@ -525,20 +527,31 @@ function GameApp() {
                       Wache bauen
                     </button>
                     {s.buildings.map((b) => (
-                      <button
-                        className="station-card"
-                        key={b.id}
-                        onClick={() => open(b.id)}
-                      >
-                        <BuildingIcon type={b.type} />
-                        <div>
-                          <b>{b.name}</b>
-                          <small>
-                            {bt(b.type).name} · Stufe {b.level}
-                          </small>
-                        </div>
-                        <ChevronRight />
-                      </button>
+                      <article key={b.id}>
+                        <button
+                          className="station-card"
+                          key={b.id}
+                          onClick={() => open(b.id)}
+                        >
+                          <BuildingIcon type={b.type} />
+                          <div>
+                            <b>{b.name}</b>
+                            <small>
+                              {bt(b.type).name} · Stufe {b.level}
+                            </small>
+                          </div>
+                          <ChevronRight />
+                        </button>
+                        <StationGarage
+                          s={s}
+                          b={b}
+                          group={garages?.get(b.id)}
+                          onOpen={(id) => {
+                            setSelected(id);
+                            setModal("");
+                          }}
+                        />
+                      </article>
                     ))}
                   </>
                 )}
@@ -548,6 +561,10 @@ function GameApp() {
                       key={selected}
                       s={s}
                       b={s.buildings.find((b) => b.id === selected)!}
+                      onOpenVehicle={(id) => {
+                        setSelected(id);
+                        setModal("");
+                      }}
                     />
                   )}
                 {modal === "building" &&

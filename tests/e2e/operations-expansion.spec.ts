@@ -128,12 +128,9 @@ test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, a
     const s = app.db.all().get(owner)!,
       home = s.buildings[0],
       mission = s.missions[0].id;
-    await civil.locator("summary").filter({ hasText: home.name }).click();
-    await civil.getByLabel("Vorbereitungszeit in Minuten").fill("1");
-    await civil
-      .getByRole("button", { name: "Als KatS-Wache führen", exact: true })
-      .click();
-    await expect(civil).toContainText("KatS-Wache nicht mobilisiert");
+    await expect(civil).toContainText(
+      "Reguläre Alarmierung mit üblicher Anreise",
+    );
     await civil.getByRole("checkbox", { name: home.name, exact: true }).check();
     await civil
       .getByRole("button", {
@@ -141,7 +138,7 @@ test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, a
         exact: true,
       })
       .click();
-    await expect(civil.getByRole("progressbar")).toBeVisible();
+    await expect(civil).toContainText("Bereitschaft");
     const at = app.db.all().get(owner)!.buildings[0].civilProtection!.readyAt;
     await app.close();
     app = compiled.startServer(config);

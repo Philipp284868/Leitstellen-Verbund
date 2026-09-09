@@ -64,6 +64,7 @@ export function missionXp(t: {
 }
 export const unlockLevels: Record<string, Record<string, number>> = {
   building: {
+    kats: 8,
     fire: 1,
     ems: 4,
     police: 7,

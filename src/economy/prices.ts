@@ -5,6 +5,7 @@ export const PRICE_VERSION = 1;
 /** Deliberately compressed game prices; procurement evidence/limits are in docs/EURO-WIRTSCHAFT.md. */
 const euros = {
   building: {
+    kats: 520000,
     fire: 650000,
     ems: 450000,
     police: 420000,

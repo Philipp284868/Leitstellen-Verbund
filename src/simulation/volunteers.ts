@@ -12,6 +12,7 @@ import { motionAt, motionProfile } from "../motion";
 import { sample } from "./random";
 import { injuryReason } from "./responder-recovery";
 import type { Duty } from "./organizations-schema";
+import { stagedArrival } from "./staging";
 
 type Person = Save["people"][number];
 type Arrival = NonNullable<Vehicle["turnout"]>["arrivals"][number];
@@ -63,6 +64,8 @@ export function volunteerCalendar(time: number) {
 export function volunteerAvailability(s: Save, p: Person, duty: Duty) {
   if (injuryReason(s, p)) return false;
   if (p.training || p.ready > s.time) return false;
+  if (p.professional) return true;
+  if (stagedArrival(s, p)) return true;
   if (duty.simulationOverride && duty.simulationOverride.until > s.time)
     return duty.simulationOverride.available;
   if (s.staffing?.version === 1) return true;
@@ -109,6 +112,27 @@ export function volunteerArrival(
     reason: "Keine Rückmeldung auf den Alarm",
   };
   if (!volunteerAvailability(s, p, duty)) return failure;
+  const staged = stagedArrival(s, p);
+  if (staged)
+    return {
+      person: p.id,
+      available: staged.available,
+      depart: staged.depart,
+      path: staged.path,
+      motion: staged.motion,
+      at: Math.max(s.time, staged.at),
+      reason:
+        staged.at <= s.time
+          ? "Katastrophenbereitschaft: bereits auf der Wache"
+          : "Katastrophenbereitschaft: Anreise läuft",
+    };
+  if (p.professional)
+    return {
+      person: p.id,
+      at: s.time,
+      available: true,
+      reason: "Hauptamtlicher Bereitschaftskern auf der Wache",
+    };
   const calendar = volunteerCalendar(s.time);
   const origin = nodes[calendar.work ? duty.workNode : duty.homeNode];
   if (!origin) return failure;

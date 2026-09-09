@@ -1,9 +1,25 @@
 import { z } from "zod";
+import { turnoutSchema } from "./organizations-schema";
 
 const id = z.string().min(1).max(100);
 const time = z.number().finite().nonnegative().max(1e12);
 export const civilProtectionSchema = z
   .object({
+    version: z.literal(2).optional(),
+    started: time.optional(),
+    actor: id.optional(),
+    reason: z.string().trim().min(1).max(300).optional(),
+    minimumUntil: time.optional(),
+    cooldownUntil: time.optional(),
+    ended: time.optional(),
+    staging: z
+      .array(
+        turnoutSchema.shape.arrivals.element
+          .extend({ returnAt: time.optional() })
+          .strict(),
+      )
+      .max(1000)
+      .optional(),
     enabled: z.boolean(),
     preparation: z.number().int().min(60).max(1800),
     state: z.enum(["inactive", "mobilizing", "ready"]),
@@ -36,6 +52,7 @@ export const civilProtectionActions = [
       type: z.literal("civil-readiness"),
       homes: z.array(id).min(1).max(150),
       op: z.enum(["mobilize", "stand-down"]),
+      reason: z.string().trim().min(1).max(300).optional(),
     })
     .strict(),
 ] as const;

@@ -106,7 +106,7 @@ describe("Offline Euro-/Personal-Datenbankmigration 14", () => {
     expect(result.status, result.stderr).toBe(0);
     const output = JSON.parse(result.stdout);
     expect(output.readOnly).toBe(true);
-    expect(output.targetVersion).toBe(14);
+    expect(output.targetVersion).toBe(DATABASE_VERSION);
     expect(output.economy.saves[0].converted).toBe(true);
     expect(output.economy.totals.historyAfterCents).toBe("4321000");
     expect(readFileSync(file)).toEqual(before);
@@ -131,7 +131,9 @@ describe("Offline Euro-/Personal-Datenbankmigration 14", () => {
     read.close();
     const db = new Database(dir),
       converted = db.all().get(s.player.id)!;
-    expect(DATABASE_VERSION).toBe(14);
+    expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
+      DATABASE_VERSION,
+    );
     expect(converted.xp).toBe(5500);
     expect(converted.economy!.version).toBe(1);
     expect(converted.economy!.priceVersion).toBe(1);

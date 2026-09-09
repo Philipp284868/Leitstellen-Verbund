@@ -1,3 +1,4 @@
+import { vehicleHomeAllowed } from "./catalog";
 import { bookMoney, fundingTick, saleValue } from "./economy/ledger";
 import { ECONOMY_PRICES } from "./economy/prices";
 import { mulRatio } from "./money";
@@ -271,7 +272,7 @@ export function apply(s: Save, a: Action) {
       if (reason) throw Error(reason);
       const t = vt(a.kind),
         b = s.buildings.find((b) => b.id === a.home);
-      if (!b || b.type !== t.home || b.ready > s.time)
+      if (!b || !vehicleHomeAllowed(t, b.type) || b.ready > s.time)
         throw Error("Keine passende fertige Wache.");
       if (level(s) < t.level) throw Error(`Freischaltung ab Stufe ${t.level}.`);
       const extension = extensions.find((e) => e.types.includes(t.id));
@@ -291,7 +292,10 @@ export function apply(s: Save, a: Action) {
         owner: s.player.id,
         type: t.id,
         purchasePriceCents: t.price,
-        name: `${t.name} / ${s.vehicles.length + 1}`,
+        name:
+          b.type === "kats"
+            ? `KatS-${t.id === "ktwb" ? "NKTW" : t.id === "gwsan" ? "GW-SAN" : t.id.toUpperCase()}${String(s.vehicles.filter((v) => v.home === b.id && v.type === t.id).length + 1).padStart(2, "0")}`
+            : `${t.name} / ${s.vehicles.length + 1}`,
         home: b.id,
         favorite: false,
         status: "ready",
@@ -416,7 +420,7 @@ export function apply(s: Save, a: Action) {
         v.status !== "ready" ||
         !b ||
         b.ready > s.time ||
-        b.type !== vt(v.type).home ||
+        !vehicleHomeAllowed(vt(v.type), b.type) ||
         s.vehicles.filter((v) => v.home === b.id).length >=
           stationCapacity(b).slots
       )

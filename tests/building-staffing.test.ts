@@ -101,7 +101,11 @@ describe("automatic building staffing", () => {
     ).toBe(true);
     expect(
       fleet.every((v) =>
-        v.turnout!.arrivals.every((a) => a.path?.length && a.at > s.time),
+        v.turnout!.arrivals.every((a) =>
+          s.people.find((p) => p.id === a.person)?.professional
+            ? a.at === s.time
+            : !!a.path?.length && a.at > s.time,
+        ),
       ),
     ).toBe(true);
     expect(() => validate(s)).not.toThrow();

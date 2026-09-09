@@ -1,3 +1,5 @@
+import { vehicleHomeAllowed } from "../catalog";
+import { presentAtStation } from "./staging";
 import type { Alarm } from "./schema";
 import type { Save, Vehicle, Building } from "../model";
 import { bt, vt, BALANCE, vehicles } from "../catalog";
@@ -70,7 +72,7 @@ export function stationCapacity(b: Building) {
   const slots = bt(b.type).slots * b.level * multiplier;
   const maximumCrew = Math.max(
     0,
-    ...vehicles.filter((v) => v.home === b.type).map((v) => v.crew),
+    ...vehicles.filter((v) => vehicleHomeAllowed(v, b.type)).map((v) => v.crew),
   );
   return {
     slots,
@@ -79,6 +81,9 @@ export function stationCapacity(b: Building) {
       (slots + 1) * maximumCrew,
     ),
   };
+}
+export function isVolunteerStation(b: Building) {
+  return ["ff", "kats", "thw"].includes(stationProfile(b).kind);
 }
 function key(id: string) {
   let value = 2166136261;
@@ -122,7 +127,7 @@ export function personAvailable(s: Save, p: Person) {
   const b = s.buildings.find((b) => b.id === p.home);
   // Private FF responses are decided by the simulation after an alarm. They
   // must not be exposed as an editable roster or rerolled by readiness checks.
-  if (b && stationProfile(b).kind === "ff") return "";
+  if (b && isVolunteerStation(b)) return "";
   if (!p.duty) return "";
   const d = p.duty;
   if (d.absence !== "none" && (!d.until || d.until > s.time))
@@ -185,8 +190,7 @@ function indexedCrew(
   v: Vehicle,
   index: ReturnType<typeof rosterIndex>,
 ) {
-  const ff =
-      stationProfile(s.buildings.find((b) => b.id === v.home)!).kind === "ff",
+  const ff = isVolunteerStation(s.buildings.find((b) => b.id === v.home)!),
     type = vt(v.type);
   const pool =
     ff && v.status === "ready"
@@ -229,8 +233,7 @@ function indexedSummary(
   v: Vehicle,
   index: ReturnType<typeof rosterIndex>,
 ) {
-  const ff =
-    stationProfile(s.buildings.find((b) => b.id === v.home)!).kind === "ff";
+  const ff = isVolunteerStation(s.buildings.find((b) => b.id === v.home)!);
   const eligibleCrew = indexedCrew(s, v, index);
   const eligible = eligibleCrew.length;
   const eligibleIds = new Set(eligibleCrew.map((person) => person.id));
@@ -241,7 +244,7 @@ function indexedSummary(
             (a) => a.available && a.at <= s.time && eligibleIds.has(a.person),
           ).length
         : ff && v.status === "ready"
-          ? 0
+          ? eligibleCrew.filter((p) => presentAtStation(s, p)).length
           : eligible,
     required:
       v.status === "alarmed" && v.turnout
@@ -291,10 +294,13 @@ export function planTurnout(s: Save, v: Vehicle, fallback: number) {
     ? Math.max(10, profile.turnout * (vt(v.type).skills.command ? 0.5 : 1))
     : fallback;
   let arrivals: NonNullable<Vehicle["turnout"]>["arrivals"];
-  if (profile.kind === "ff") {
+  if (isVolunteerStation(b)) {
     // v already has its new assignment, but is still ready during planning.
     const pool = suitableCrew(s, v).sort(
-      (a, b) => a.skills.length - b.skills.length || a.id.localeCompare(b.id),
+      (a, b) =>
+        Number(presentAtStation(s, b)) - Number(presentAtStation(s, a)) ||
+        a.skills.length - b.skills.length ||
+        a.id.localeCompare(b.id),
     );
     arrivals = [];
     for (const p of pool) {
@@ -380,8 +386,7 @@ export function turnoutReady(s: Save, v: Vehicle) {
   return false;
 }
 export function releaseVolunteerCrew(s: Save, v: Vehicle) {
-  if (stationProfile(s.buildings.find((b) => b.id === v.home)!).kind !== "ff")
-    return;
+  if (!isVolunteerStation(s.buildings.find((b) => b.id === v.home)!)) return;
   for (const p of s.people) if (p.vehicle === v.id) p.vehicle = null;
   delete v.turnout;
 }
@@ -389,7 +394,11 @@ export function turnoutEstimate(s: Save, v: Vehicle, alarm?: Alarm) {
   if (v.status === "return") return 0;
   const b = s.buildings.find((b) => b.id === v.home)!,
     profile = stationProfile(b);
-  if (profile.kind === "ff") return profile.turnout + 180;
+  if (isVolunteerStation(b))
+    return suitableCrew(s, v).filter((p) => presentAtStation(s, p)).length >=
+      crewRequired(s, v)
+      ? profile.turnout
+      : profile.turnout + 180;
   const selected = alarm ?? s.desk.alarms[v.home] ?? "dme";
   return b.organization
     ? Math.max(10, profile.turnout * (vt(v.type).skills.command ? 0.5 : 1))

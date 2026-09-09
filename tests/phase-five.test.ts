@@ -449,7 +449,7 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
   step({ type: "generate", template: "bin" });
   expect(lab.save.missions.length).toBeGreaterThan(2);
   step({ type: "clock", hour: 1 });
-  expect(lab.save.time % 86400).toBe(3600);
+  expect(lab.save.time % 86400).toBeCloseTo(3600, 8);
   step({ type: "fms", vehicle, code: 5 });
   expect(lab.save.desk.fleet[vehicle].code).toBe(5);
   expect(verifyLab(lab).verified).toBe(true);

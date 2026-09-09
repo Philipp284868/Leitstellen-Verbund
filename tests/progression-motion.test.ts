@@ -1,3 +1,4 @@
+import { vehicleHomeAllowed } from "../src/catalog";
 import { SpatialIndex } from "../src/spatial";
 import { fundTestBudget } from "./money-fixture";
 import { euro } from "../src/money";
@@ -80,9 +81,9 @@ it("definiert den vollständigen Katalog, nutzbare Organisationseinstiege und se
   for (const b of buildings) {
     expect(b.level).toBe(unlockLevel("building", b.id));
     if (b.slots)
-      expect(vehicles.some((v) => v.home === b.id && v.level <= b.level)).toBe(
-        true,
-      );
+      expect(
+        vehicles.some((v) => vehicleHomeAllowed(v, b.id) && v.level <= b.level),
+      ).toBe(true);
     const s = fresh("Test", "Test", 100);
     s.xp = xpForLevel(b.level) - 1;
     if (s.xp >= 0)
