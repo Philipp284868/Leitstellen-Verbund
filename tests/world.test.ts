@@ -24,6 +24,7 @@ import {
 import { legacyNodes } from "../src/world-migration";
 import { emsProfile } from "./e2e/fixtures";
 import { mt } from "../src/catalog";
+import { expectCoopPaymentOnce } from "./coop-payment-fixture";
 
 it("verbindet sämtliche Straßen und Häfen mit kurzen, tatsächlich gezeichneten Fahrwegen", () => {
   const adjacent = nodes.map(() => [] as number[]);
@@ -152,6 +153,9 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
       const s = emsProfile(id);
       s.player.id = id;
       for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
+      // Exercise an actual funding boundary before the transport is migrated;
+      // the grant must persist separately from the later mission payout.
+      s.economy!.fundingNextAt = s.time + 1;
       db.save(id, s);
       db.save(id, structuredClone(db.all().get(id)!), "single");
     }
@@ -160,8 +164,6 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
       helper = db.all().get(b)!,
       m = owner.missions[0],
       v = helper.vehicles.find((v) => v.type === "rtw")!;
-    const startA = owner.money,
-      startB = helper.money;
     game.command(a, {
       id: crypto.randomUUID(),
       action: { type: "share", id: m.id },
@@ -216,7 +218,10 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
       JSON.parse(original).vehicles.find((x: { id: string }) => x.id === v.id)
         .depart,
     );
-    expect(migrated.money).toBe(startB);
+    // The pre-migration transport has already crossed the funding boundary.
+    // Migration must preserve the complete actual balance and funding cursor.
+    expect(migrated.money).toBe(JSON.parse(original).money);
+    expect(migrated.economy).toEqual(JSON.parse(original).economy);
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );
@@ -250,18 +255,19 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
         .get(a)!
         .archive.some((x) => x.round === m.round),
     ).toBe(true);
-    expect(db.all().get(a)!.money - startA).toBe(
+    expectCoopPaymentOnce(
+      db,
+      [owner, helper],
+      m.round,
       Math.floor(mt("sick").reward / 2),
     );
-    expect(db.all().get(b)!.money - startB).toBe(
-      Math.floor(mt("sick").reward / 2),
-    );
-    const paid = db.all().get(b)!;
     resumed.command(b, support);
     resumed.step(7200);
-    const after = db.all().get(b)!;
-    expect(after.money - paid.money).toBe(
-      after.economy!.fundingPaidCents - paid.economy!.fundingPaidCents,
+    expectCoopPaymentOnce(
+      db,
+      [owner, helper],
+      m.round,
+      Math.floor(mt("sick").reward / 2),
     );
     expect(
       db

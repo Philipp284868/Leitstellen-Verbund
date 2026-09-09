@@ -12,6 +12,7 @@ import { nodes } from "../src/world";
 import { mt } from "../src/catalog";
 import { established, emsProfile } from "./e2e/fixtures";
 import { euro } from "../src/money";
+import { expectCoopPaymentOnce } from "./coop-payment-fixture";
 const password = "Isolated-test-password-284!";
 const running: ReturnType<typeof startServer>[] = [];
 afterEach(async () => {
@@ -293,14 +294,15 @@ describe("Autoritativer Server", () => {
         if (o.owner === old) o.owner = id;
       s.missions[0].template = "sick";
       s.missions[0].pos = nodes[2];
+      // Cross a real funding boundary during the transport, independent of
+      // random vehicle delays and the wall-clock phase of this fixture.
+      s.economy!.fundingNextAt = s.time + 1;
       app.db.save(id, s);
     }
     const s = app.db.all().get(a)!,
       helper = app.db.all().get(b)!,
       mission = s.missions[0],
       vehicle = helper.vehicles.find((v) => v.type === "rtw")!;
-    const startA = s.money,
-      startB = helper.money;
     app.game.command(a, {
       id: crypto.randomUUID(),
       action: { type: "share", id: mission.id },
@@ -330,11 +332,14 @@ describe("Autoritativer Server", () => {
       i++
     )
       app.game.step(5);
-    const endA = app.db.all().get(a)!,
-      endB = app.db.all().get(b)!;
+    const endA = app.db.all().get(a)!;
     expect(endA.archive.some((m) => m.round === mission.round)).toBe(true);
-    expect(endA.money - startA).toBe(Math.floor(mt("sick").reward / 2));
-    expect(endB.money - startB).toBe(Math.floor(mt("sick").reward / 2));
+    expectCoopPaymentOnce(
+      app.db,
+      [s, helper],
+      mission.round,
+      Math.floor(mt("sick").reward / 2),
+    );
     app.game.step(7200);
     expect(
       app.db
@@ -343,9 +348,11 @@ describe("Autoritativer Server", () => {
         .vehicles.find((v) => v.id === vehicle.id)!.status,
     ).toBe("ready");
     app.game.command(b, support);
-    const after = app.db.all().get(b)!;
-    expect(after.money - endB.money).toBe(
-      after.economy!.fundingPaidCents - endB.economy!.fundingPaidCents,
+    expectCoopPaymentOnce(
+      app.db,
+      [s, helper],
+      mission.round,
+      Math.floor(mt("sick").reward / 2),
     );
   });
   it("ruft fremde Kräfte nach explizitem Kooperationsabbruch zurück und schützt Speicherfehler atomar", async () => {

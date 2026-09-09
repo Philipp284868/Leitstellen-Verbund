@@ -342,8 +342,13 @@ test("überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und S
     .poll(async () => (await stats(page)).musicDuck)
     .toBeCloseTo(1, 2);
   await page.evaluate(() => window.AudioLab.audio.scene(true));
-  await expect.poll(async () => (await stats(page)).gameGain).toBeCloseTo(1, 2);
-  expect((await stats(page)).menuGain).toBeCloseTo(0, 2);
+  // A single AudioParam read can expose the newly scheduled endpoint before
+  // both audio-thread ramps finish. Verify both channels in the same snapshot.
+  await expect(async () => {
+    const state = await stats(page);
+    expect(state.gameGain).toBeCloseTo(1, 2);
+    expect(state.menuGain).toBeCloseTo(0, 2);
+  }).toPass({ timeout: 5000 });
   await preferences(page, { music: false });
   await page.evaluate(() => {
     window.AudioLab.audio.scene(false);
