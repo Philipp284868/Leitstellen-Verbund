@@ -52,7 +52,14 @@ export const deskActions = [
       type: z.literal("radio"),
       mission: id,
       id,
-      op: z.enum(["report", "request", "question", "close"]),
+      op: z.enum([
+        "report",
+        "request",
+        "question",
+        "close",
+        "claim",
+        "release",
+      ]),
     })
     .strict(),
   z

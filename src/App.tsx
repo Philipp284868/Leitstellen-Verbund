@@ -4,6 +4,7 @@ import {
   TutorialEvents,
   tutorialInteraction,
 } from "./Tutorial";
+import { RadioDesk } from "./RadioDesk";
 const Progression = lazy(() =>
   import("./ProgressionPanel").then((m) => ({ default: m.Progression })),
 );
@@ -403,6 +404,7 @@ function GameApp() {
                 mission: "Einsatzdisposition",
                 friends: "Leitstellenverbund und Disponenten",
                 aaos: "Alarm- und Ausrückeordnung",
+                radio: "Funkarbeitsplatz",
                 fms: "FMS und Alarmierungsprofile",
                 backups: "Spielstände und Sicherungen",
                 progress: "Fortschritt und Erfolge",
@@ -482,6 +484,13 @@ function GameApp() {
             )}
             {s && (
               <>
+                {modal === "radio" && (
+                  <RadioDesk
+                    s={s}
+                    onOpen={open}
+                    onArchive={() => setModal("archive")}
+                  />
+                )}
                 {modal === "build" && (
                   <BuildingShop
                     s={s}

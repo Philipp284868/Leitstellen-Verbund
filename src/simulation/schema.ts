@@ -91,6 +91,9 @@ export const incidentSchema = z
             created: time,
             answered: time,
             questioned: z.boolean().optional(),
+            answer: text.optional(),
+            handling: z.object({ actor: id, until: time }).strict().optional(),
+            handledBy: id.optional(),
             details: text,
           })
           .strict(),

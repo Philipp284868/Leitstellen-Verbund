@@ -12,6 +12,7 @@ import { record, simId } from "./events";
 import { syncFms, setFms, operativeCode } from "./fms";
 import { callsTick } from "./calls";
 import type { Incident } from "./schema";
+import { assertRadioHandler, reserveRadio } from "./radio";
 export function legacyIncident(s: Save, m: Mission) {
   if (m.control) return;
   m.control = {
@@ -168,7 +169,7 @@ export function radioAction(
   s: Save,
   m: Mission,
   id: string,
-  op: "report" | "request" | "question" | "close",
+  op: "report" | "request" | "question" | "close" | "claim" | "release",
   actor: string,
   remote: Skills = {},
 ) {
@@ -176,6 +177,9 @@ export function radioAction(
     r = c?.radio.find((r) => r.id === id);
   if (!c || !r) throw Error("Sprechwunsch fehlt.");
   if (r.state === "handled") return;
+  if (op === "claim" || op === "release")
+    return reserveRadio(s, m, r, actor, op === "release");
+  assertRadioHandler(s, r, actor);
   if (!c.briefed && r.reason === "arrival") {
     if (op !== "report")
       throw Error("Bitte zuerst die erste Lagemeldung aufnehmen.");
@@ -214,17 +218,11 @@ export function radioAction(
     const skills = capacity(s, m.id);
     for (const [k, n] of Object.entries(remote))
       skills[k] = (skills[k] || 0) + n;
-    record(
-      s,
-      m,
-      "RADIO_ANSWER",
-      `Rückfrage beantwortet: ${
-        openForceLabels(Object.fromEntries(missing(m, skills))).join(", ") ||
-        "Kräfte vor Ort ausreichend"
-      }.`,
-      actor,
-      r.vehicle,
-    );
+    r.answer = `Rückfrage beantwortet: ${
+      openForceLabels(Object.fromEntries(missing(m, skills))).join(", ") ||
+      "Kräfte vor Ort ausreichend"
+    }.`;
+    record(s, m, "RADIO_ANSWER", r.answer, actor, r.vehicle);
     return;
   }
   if (op === "request")
@@ -238,6 +236,8 @@ export function radioAction(
     );
   r.state = "handled";
   r.answered = s.time;
+  r.handledBy = actor;
+  delete r.handling;
   record(
     s,
     m,
@@ -267,6 +267,7 @@ export function afterStep(s: Save) {
         if (r.state === "open") {
           r.state = "handled";
           r.answered = s.time;
+          delete r.handling;
         }
       record(
         s,
@@ -379,6 +380,8 @@ export function publicSave(source: Save): Save {
 }
 import { REPORTED_IDS, reportId } from "./call-observations";
 const PRE_RECON_EVENTS = new Set([
+  "RADIO_CLAIMED",
+  "RADIO_RELEASED",
   "MISSION_CREATED",
   "CALL_RECEIVED",
   "CALL_ACCEPTED",

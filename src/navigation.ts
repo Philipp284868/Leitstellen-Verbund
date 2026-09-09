@@ -1,6 +1,11 @@
 /** The same catalog drives quick navigation and the documented reachable-view audit. */
 export const navigation = [
   {
+    id: "radio",
+    title: "Funkarbeitsplatz",
+    words: "Sprechwünsche Lagemeldung Rückfrage Nachforderung Kanal Übernahme",
+  },
+  {
     id: "stations",
     title: "Wachen verwalten",
     words: "Gebäude Standorte Organisation Krankenhaus",

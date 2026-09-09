@@ -42,6 +42,7 @@ import {
 import { missionStatus } from "./simulation/mission-status";
 import { statuses, Disclosure, ConfirmAction } from "./ui";
 import "./Desk.css";
+import { RadioRequestActions } from "./RadioRequest";
 const stages = {
   incoming: "Notruf eingegangen",
   interview: "Gespräch läuft",
@@ -535,70 +536,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                         .name}
                   </b>
                   <p>{r.details}</p>
-                  <div className="inline">
-                    {r.reason === "arrival" && (
-                      <button
-                        className="primary"
-                        onClick={() =>
-                          void form.run(() =>
-                            command({
-                              type: "radio",
-                              mission: m.id,
-                              id: r.id,
-                              op: "report",
-                            }),
-                          )
-                        }
-                      >
-                        Lagemeldung aufnehmen
-                      </button>
-                    )}
-                    <button
-                      disabled={r.reason === "arrival" && !c.briefed}
-                      onClick={() =>
-                        void form.run(() =>
-                          command({
-                            type: "radio",
-                            mission: m.id,
-                            id: r.id,
-                            op: "question",
-                          }),
-                        )
-                      }
-                    >
-                      Rückfrage zur Lage
-                    </button>
-                    <button
-                      disabled={r.reason === "arrival" && !c.briefed}
-                      onClick={() =>
-                        void form.run(() =>
-                          command({
-                            type: "radio",
-                            mission: m.id,
-                            id: r.id,
-                            op: "request",
-                          }),
-                        )
-                      }
-                    >
-                      Nachforderung bearbeiten
-                    </button>
-                    <button
-                      disabled={r.reason === "arrival" && !c.briefed}
-                      onClick={() =>
-                        void form.run(() =>
-                          command({
-                            type: "radio",
-                            mission: m.id,
-                            id: r.id,
-                            op: "close",
-                          }),
-                        )
-                      }
-                    >
-                      Sprechwunsch erledigen
-                    </button>
-                  </div>
+                  <RadioRequestActions s={s} m={m} r={r} />
                 </article>
               ))}
           </section>

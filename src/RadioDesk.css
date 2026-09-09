@@ -1,0 +1,90 @@
+.app.command-hud .modal:has(.radio-workspace) {
+  width: min(1120px, calc(100vw - 48px));
+}
+.radio-filters {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.radio-filters label {
+  display: grid;
+  gap: 6px;
+}
+.radio-columns {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.9fr) minmax(290px, 1.2fr);
+  gap: 18px;
+  align-items: start;
+}
+.radio-list {
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.radio-row {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  text-align: left;
+  justify-content: stretch;
+  margin-bottom: 8px;
+  border-left: 3px solid #52748b;
+}
+.light .radio-conversation {
+  background: #eef4f7;
+  color: #182d3b;
+}
+.light .radio-message,
+.light .radio-answer,
+.light .radio-row[aria-pressed="true"] {
+  background: #dcecf5;
+  color: #182d3b;
+}
+.light .radio-assignment,
+.light .radio-row small {
+  color: #254b64;
+}
+.radio-row[aria-pressed="true"] {
+  background: #17394d;
+  border-color: #75bfe9;
+}
+.radio-row[data-priority="NOTFALL"],
+.radio-row[data-priority="KRITISCH"] {
+  border-left-color: #fb7765;
+}
+.radio-row small {
+  color: #c1d0d9;
+}
+.radio-conversation {
+  border: 1px solid #344b5c;
+  background: #0d1d29;
+  padding: 18px;
+  border-radius: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.radio-conversation h3 {
+  margin: 8px 0;
+}
+.radio-message,
+.radio-answer {
+  padding: 12px;
+  background: #182d3b;
+  border-left: 3px solid #75bfe9;
+}
+.radio-assignment {
+  color: #afd5ec;
+}
+.radio-request-actions fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  margin: 10px 0 16px;
+}
+@media (max-width: 1200px) {
+  .radio-columns {
+    grid-template-columns: minmax(220px, 0.9fr) minmax(270px, 1.1fr);
+    gap: 12px;
+  }
+}

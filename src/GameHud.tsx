@@ -209,15 +209,7 @@ export function GameHud({
             setListOpen(true);
           }
         }}
-        onRadio={() => {
-          const m = s.missions.find((m) =>
-            m.control?.radio.some((r) => r.state === "open"),
-          );
-          if (m) {
-            choose(m.id);
-            requestAnimationFrame(() => focusSection("radio"));
-          } else setModal("fms");
-        }}
+        onRadio={() => setModal("radio")}
         onLayers={() => {
           setLayers(!layers);
           setListOpen(false);
