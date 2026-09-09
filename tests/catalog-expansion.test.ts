@@ -38,6 +38,7 @@ import { record } from "../src/simulation/events";
 import { nodes } from "../src/world";
 import { publicSave } from "../src/simulation/incidents";
 import { breakVehicle } from "../src/simulation/faults";
+import { phaseFixture } from "./phase-fixture";
 
 function incident(t: Template, seed = 100) {
   const s = fresh("Audit", "Katalogprüfung", Date.UTC(2026, 5, 15, 12) / 1000);
@@ -292,7 +293,13 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
   });
   it("erzeugt kausale Folgeeinsätze auch bei bereits über 60 offenen Einsätzen", () => {
     const { s, m } = incident(find("Baum auf Straße"));
+    // This case tests pacing with a developed fleet; missing equipment is covered separately.
+    const fleet = phaseFixture("catalog-followup");
+    s.xp = fleet.xp;
+    s.vehicles = fleet.vehicles;
     m.dynamics!.pending = { template: "crash", due: s.time };
+    s.vehicles.push({ ...s.vehicles[0], id: "ambulance", type: "rtw" });
+    s.vehicles.push({ ...s.vehicles[0], id: "patrol", type: "fustw" });
     s.missionWait = 0;
     for (let n = 0; n < 70; n++)
       s.missions.push({

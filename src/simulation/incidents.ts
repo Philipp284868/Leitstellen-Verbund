@@ -1,5 +1,5 @@
 import { turnoutReady } from "./staffing";
-import { stationProfile, crewSummaries } from "./staffing";
+import { stationProfile, crewSummaries, personDuty } from "./staffing";
 import { vehicleAvailability } from "./availability";
 import { urgentPriority } from "./priority";
 import { openForceLabels } from "./force-plan";
@@ -177,6 +177,8 @@ export function radioAction(
   if (!c || !r) throw Error("Sprechwunsch fehlt.");
   if (r.state === "handled") return;
   if (!c.briefed && r.reason === "arrival") {
+    if (op !== "report")
+      throw Error("Bitte zuerst die erste Lagemeldung aufnehmen.");
     c.briefed = true;
     if (m.dynamics?.active && m.dynamics.level > 1)
       c.priority = m.dynamics.level >= 3 ? "NOTFALL" : "DRINGEND";
@@ -288,7 +290,13 @@ export function publicSave(source: Save): Save {
   const volunteerHomes = new Set(
     s.buildings.filter((b) => stationProfile(b).kind === "ff").map((b) => b.id),
   );
-  for (const p of s.people) if (volunteerHomes.has(p.home)) delete p.duty;
+  for (const p of s.people) {
+    if (volunteerHomes.has(p.home)) delete p.duty;
+    // Historical regular rosters may predate duty profiles. Resolve their
+    // defaults here, where the authoritative geographical provider exists.
+    // Clients must never invent OSM node IDs or reconstruct the route graph.
+    else if (!p.duty) p.duty = personDuty(source, p);
+  }
   s.seed = 0;
   s.operations.cooldown = 0;
   if (

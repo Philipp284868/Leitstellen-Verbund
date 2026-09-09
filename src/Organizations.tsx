@@ -4,7 +4,6 @@ import { act } from "./store";
 import { vt, bt } from "./catalog";
 import {
   stationProfile,
-  personDuty,
   personAvailable,
   absenceNames,
   roleNames,
@@ -153,6 +152,13 @@ export function PersonSettings({
         </p>
       </div>
     );
+  if (!person.duty)
+    return (
+      <p className="person-profile-unavailable">
+        Das Personalprofil ist in diesem Serverstand noch nicht verfügbar. Eine
+        erneute Verbindung lädt den aktuellen Stand.
+      </p>
+    );
   return <RegularPersonSettings s={s} person={person} />;
 }
 function RegularPersonSettings({
@@ -162,7 +168,7 @@ function RegularPersonSettings({
   s: Save;
   person: Save["people"][number];
 }) {
-  const initial = personDuty(s, person);
+  const initial = person.duty!;
   const [duty, setDuty] = useState<Duty>({
       ...initial,
       absence:
@@ -180,9 +186,8 @@ function RegularPersonSettings({
   return (
     <details className="person-settings">
       <summary>
-        {personDuty(s, person).name} ·{" "}
-        {personAvailable(s, person) || "Verfügbar"} ·{" "}
-        {personDuty(s, person).load} Alarmierungen
+        {person.duty!.name} · {personAvailable(s, person) || "Verfügbar"} ·{" "}
+        {person.duty!.load} Alarmierungen
       </summary>
       <fieldset disabled={busy}>
         <div className="org-form">

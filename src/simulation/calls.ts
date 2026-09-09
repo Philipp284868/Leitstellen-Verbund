@@ -365,7 +365,7 @@ export function callAction(
   }
   let answer = c.secret[question];
   if (question === "report") {
-    c.reportedTemplate = c.secret.report;
+    if (!c.briefed) c.reportedTemplate = c.secret.report;
     answer = mt(c.secret.report).name;
   }
   if (question === "address") c.locationKnown = true;

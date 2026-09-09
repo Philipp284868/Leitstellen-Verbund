@@ -3,8 +3,54 @@ import { publicHospital, distance, type Point } from "../world";
 import { routePlan } from "./traffic";
 import { specialties } from "./organizations-schema";
 import { transportCandidates } from "./patients";
+import {
+  publicHospitalProfile,
+  type HospitalOption,
+} from "./hospital-profiles";
 export function hospitalOptions(
   s: Save,
+  origin: Point,
+  seats: number,
+  m?: Mission,
+  vehicle?: Vehicle,
+) {
+  const publicOptions = IS_GERMANY
+    ? germanyProvider().hospitals(origin, 20).map(publicHospitalProfile)
+    : [
+        {
+          id: "public",
+          name: "Regionalklinik",
+          pos: publicHospital,
+          capacity: 100,
+          open: true,
+          specialties: Object.keys(specialties),
+        },
+      ];
+  return assessHospitals(
+    s,
+    [
+      ...publicOptions,
+      ...s.buildings
+        .filter((b) => b.type === "hospital" && b.ready <= s.time)
+        .map((b) => ({
+          id: b.id,
+          name: b.name,
+          pos: b.pos,
+          capacity: b.hospital?.capacity ?? 20 * b.level,
+          open: b.hospital?.open ?? true,
+          specialties: b.hospital?.specialties ?? Object.keys(specialties),
+        })),
+    ],
+    origin,
+    seats,
+    m,
+    vehicle,
+  );
+}
+
+export function assessHospitals(
+  s: Save,
+  options: HospitalOption[],
   origin: Point,
   seats: number,
   m?: Mission,
@@ -16,47 +62,17 @@ export function hospitalOptions(
   const needs = new Set<keyof typeof specialties>(["general"]);
   for (const p of patients) {
     if (p.age < 18) needs.add("pediatric");
-    if (p.condition === "critical" || p.condition === "cpr" || p.cprCycles)
+    if (
+      p.condition === "critical" ||
+      p.condition === "cpr" ||
+      p.cprCycles ||
+      m?.dynamics?.scenario?.patient.intensive
+    )
       needs.add("intensive");
-    if (/brand|feuer|rauch/i.test(p.injury)) needs.add("burns");
+    if (/brand|feuer|rauch|verbrennung/i.test(p.injury)) needs.add("burns");
     if (/unfall|verletzung|sturz/i.test(p.injury)) needs.add("trauma");
   }
-  const publicOptions = IS_GERMANY
-    ? germanyProvider()
-        .hospitals(origin, 5)
-        .map((h) => ({
-          id: `public:${h.id}`,
-          name: h.name,
-          pos: { x: h.x, y: h.y },
-          osmLocation: h.osmLocation,
-          capacity: 100,
-          open: true,
-          // Capacity and treatment are game rules; OSM identifies the real hospital location.
-          specialties: Object.keys(specialties),
-        }))
-    : [
-        {
-          id: "public",
-          name: "Regionalklinik",
-          pos: publicHospital,
-          capacity: 100,
-          open: true,
-          specialties: Object.keys(specialties),
-        },
-      ];
-  return [
-    ...publicOptions,
-    ...s.buildings
-      .filter((b) => b.type === "hospital" && b.ready <= s.time)
-      .map((b) => ({
-        id: b.id,
-        name: b.name,
-        pos: b.pos,
-        capacity: b.hospital?.capacity ?? 20 * b.level,
-        open: b.hospital?.open ?? true,
-        specialties: b.hospital?.specialties ?? Object.keys(specialties),
-      })),
-  ]
+  return options
     .map((h) => {
       const occupied = s.beds.filter((b) => b.home === h.id).length;
       const reserved = s.vehicles

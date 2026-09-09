@@ -2,6 +2,7 @@ import {
   planTurnout,
   turnoutEstimate,
   checkReserveSelection,
+  crewAllocator,
 } from "./staffing";
 import { reportUnit, telemetry } from "./reports";
 import { effectiveSkills } from "./major-resources";
@@ -50,10 +51,11 @@ export function propose(
     .filter((x) => Number.isFinite(x.eta))
     .sort((a, b) => a.eta - b.eta || a.v.id.localeCompare(b.v.id));
   const chosen: string[] = [],
-    deficit: string[] = [];
+    deficit: string[] = [],
+    allocateCrew = crewAllocator(s);
   for (const type of aao.types) {
     const match = candidates.find(
-      (x) => x.v.type === type && !chosen.includes(x.v.id),
+      (x) => x.v.type === type && !chosen.includes(x.v.id) && allocateCrew(x.v),
     );
     if (match) chosen.push(match.v.id);
     else deficit.push(`Fehlt: ${vt(type).name}`);
@@ -111,6 +113,12 @@ export function alarm(
   });
   checkReserveSelection(s, vehicles);
   if (!vehicles.length) throw Error("Mindestens ein Fahrzeug auswählen.");
+  const allocateCrew = crewAllocator(s);
+  for (const v of vehicles)
+    if (!allocateCrew(v))
+      throw Error(
+        `${v.name}: Geeignete Besatzung bereits für ein anderes ausgewähltes Fahrzeug benötigt.`,
+      );
   const proposal = m.control?.proposal;
   if (
     proposal &&

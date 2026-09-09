@@ -1,4 +1,5 @@
 import { buildReason, purchaseReason } from "./purchase";
+import { canGenerate } from "./simulation/feasibility";
 import { dispatchReason } from "./simulation/availability";
 import {
   queuePostIncident,
@@ -500,13 +501,7 @@ export function apply(s: Save, a: Action) {
 }
 export function generate(s: Save) {
   const available = capacity(s);
-  const candidates = missions.filter(
-    (m) =>
-      m.level <= level(s) &&
-      Object.entries(m.requirements).every(
-        ([k, n]) => (available[k] || 0) >= n,
-      ),
-  );
+  const candidates = missions.filter((m) => canGenerate(s, m, available));
   if (!candidates.length) return;
   const previousSeed = s.seed;
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
@@ -577,13 +572,16 @@ function tickState(
   const end = s.time + delta;
   while (s.time < end - 1e-8) {
     let next = Math.min(end, Math.floor(s.time + 1 + 1e-8));
-    for (const v of s.vehicles)
+    for (const v of s.vehicles) {
+      if (v.status === "alarmed" && v.depart > s.time + 1e-8)
+        next = Math.min(next, v.depart);
       if (
         ["travel", "transport", "return"].includes(v.status) &&
         !v.journey?.blockedUntil &&
         v.arrive > s.time + 1e-8
       )
         next = Math.min(next, v.arrive);
+    }
     const dt = next - s.time;
     s.time = next;
     updateWeather(s);
@@ -701,6 +699,9 @@ function tickState(
           remaining -= seats;
         }
         if (m.phase !== "transport") continue;
+        // Transport can outlast the first stabilization. Re-check the current
+        // scene, follow-up care and mandatory tasks before any final reward.
+        if (!dynamicsComplete(m, s.time)) continue;
         if (
           m.transports
             .filter((t) => t.status === "delivered")

@@ -191,6 +191,23 @@ function indexedCrew(
 export function suitableCrew(s: Save, v: Vehicle) {
   return indexedCrew(s, v, rosterIndex(s));
 }
+/** Dry-run station-pool allocation; it neither calls volunteers nor changes bindings. */
+export function crewAllocator(s: Save) {
+  const index = rosterIndex(s),
+    reserved = new Set<string>();
+  return (v: Vehicle) => {
+    const required = crewRequired(s, v);
+    const crew = indexedCrew(s, v, index)
+      .filter((p) => !reserved.has(p.id))
+      .sort(
+        (a, b) => a.skills.length - b.skills.length || a.id.localeCompare(b.id),
+      )
+      .slice(0, required);
+    if (crew.length < required) return false;
+    crew.forEach((p) => reserved.add(p.id));
+    return true;
+  };
+}
 function indexedSummary(
   s: Save,
   v: Vehicle,

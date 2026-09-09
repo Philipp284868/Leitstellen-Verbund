@@ -18,6 +18,11 @@ import { attachIncident } from "./calls";
 import { DYNAMICS, sample } from "./random";
 import { updateWeather, weatherNames } from "./weather";
 import { injureResponder, syncResponderRecovery } from "./responder-recovery";
+import {
+  canGenerate,
+  capabilitiesUnlocked,
+  fleetCapabilities,
+} from "./feasibility";
 export function attachDynamics(s: Save, m: Mission, active = true) {
   if (m.dynamics) return;
   updateWeather(s);
@@ -244,7 +249,13 @@ function escalate(s: Save, m: Mission, skills: Skills) {
     if (
       d.scenario &&
       /Fassade|Treppenraum|Obergeschoss/.test(nextArea.name) &&
-      !d.events.includes("persons-trapped")
+      !d.events.includes("persons-trapped") &&
+      capabilitiesUnlocked(s, {
+        rescue: 1,
+        ladder: 1,
+        medical: 2,
+        transport: 1,
+      })
     ) {
       d.events.push("persons-trapped");
       d.extra.rescue = Math.max(d.extra.rescue || 0, 1);
@@ -286,7 +297,11 @@ function escalate(s: Save, m: Mission, skills: Skills) {
             (!r.assignment || r.assignment === v.assignment),
         ),
     );
-    if (level(s) >= 2 && d.patients.length < 30 && (responder || !d.scenario)) {
+    if (
+      capabilitiesUnlocked(s, { medical: 2, transport: 1, doctor: 1 }) &&
+      d.patients.length < 30 &&
+      (responder || !d.scenario)
+    ) {
       const patient = newPatient(s, m, "Verletzung einer Einsatzkraft", true);
       patient.health = 30;
       patient.condition = "critical";
@@ -456,19 +471,24 @@ export function dynamicsTick(
             "Gefahren beherrscht und Patienten transportfähig. Nachkontrolle läuft.",
           );
       }
-    } else if (d.hazards.every((h) => h.value < 40) && !critical) {
-      if (d.level > 1) {
-        d.level = 1;
-        d.extra = {};
-        if (m.control) m.control.priority = critical ? "NOTFALL" : "NORMAL";
-        announce(
-          s,
-          m,
-          "MISSION_DOWNGRADED",
-          "Lage stabilisiert; Alarmstufe zurückgenommen. Kräfte können bedarfsgerecht zurückgenommen werden.",
-        );
+    } else {
+      // A previous all-clear is invalid as soon as a new hazard or an unstable
+      // patient appears. The next stabilization starts a fresh observation period.
+      d.aftermath = 0;
+      if (d.hazards.every((h) => h.value < 40) && !critical) {
+        if (d.level > 1) {
+          d.level = 1;
+          d.extra = {};
+          if (m.control) m.control.priority = critical ? "NOTFALL" : "NORMAL";
+          announce(
+            s,
+            m,
+            "MISSION_DOWNGRADED",
+            "Lage stabilisiert; Alarmstufe zurückgenommen. Kräfte können bedarfsgerecht zurückgenommen werden.",
+          );
+        }
+        d.state = "stabilizing";
       }
-      d.state = "stabilizing";
     }
     d.last = t;
   }
@@ -488,11 +508,13 @@ export function dynamicsComplete(m: Mission, time: number) {
 export function followupsTick(s: Save) {
   // Time pacing is independent of the count of open incidents; no catch-up burst.
   if (s.missionWait > 0) return;
+  const available = fleetCapabilities(s);
   const parent = [...s.missions, ...s.archive].find(
     (m) =>
       m.dynamics?.pending &&
       m.dynamics.pending.due <= s.time &&
-      m.dynamics.children.length < DYNAMICS.followups,
+      m.dynamics.children.length < DYNAMICS.followups &&
+      canGenerate(s, mt(m.dynamics.pending.template), available),
   );
   if (!parent?.dynamics?.pending) return;
   const d = parent.dynamics,

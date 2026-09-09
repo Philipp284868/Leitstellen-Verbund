@@ -7,6 +7,7 @@ import { newPatient } from "./patients";
 import { request } from "./incidents";
 import { sectionNames, majorNames, type SectionKind } from "./major-schema";
 import { placement, effectiveSkills, sectionSkills } from "./major-resources";
+import { canGenerate } from "./feasibility";
 
 export function majorKind(m: Mission): keyof typeof majorNames | undefined {
   const scenario = m.dynamics?.scenario ?? mt(m.template).profile;
@@ -295,6 +296,8 @@ export function campaignTick(
       ? ["cellar", "supply", "tree", "crash"]
       : ["tree", "supply", "cellar", "debris"];
   const index = 4 - c.remaining;
+  // Keep the persisted campaign step pending until its real equipment is available.
+  if (!canGenerate(s, mt(candidates[index]))) return false;
   const near = (IS_GERMANY ? querySites(first.pos, 200) : nodes).filter(
     (n) => distance(n, first.pos) < 200 && distance(n, first.pos) > 15,
   );
