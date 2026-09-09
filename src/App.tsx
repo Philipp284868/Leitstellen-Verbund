@@ -44,7 +44,7 @@ import { bt } from "./catalog";
 import { level } from "./model";
 import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
 import { BackupPanel, ProgressPanel, Help } from "./Panels";
-import { Modal } from "./ui";
+import { ActionButton, Modal } from "./ui";
 import { download } from "./storage";
 export function App() {
   return (
@@ -221,13 +221,9 @@ function GameApp() {
       {error && (
         <div className="global-error" role="alert">
           <strong>{error}</strong>
-          <button
-            onClick={() =>
-              void retryStorage().catch((e) => emit({ error: String(e) }))
-            }
-          >
+          <ActionButton action={retryStorage}>
             Server erneut verbinden
-          </button>
+          </ActionButton>
           <button onClick={() => setModal("backups")}>Wiederherstellung</button>
           <button
             onClick={() =>
@@ -257,6 +253,11 @@ function GameApp() {
         <div className="banner">
           Serververbindung unterbrochen. Aktionen sind gesperrt; deine
           Leitstelle wird auf dem Server weiter simuliert.
+          {!error && (
+            <ActionButton action={retryStorage}>
+              Server erneut verbinden
+            </ActionButton>
+          )}
         </div>
       )}
       {screen === "start" ? (
