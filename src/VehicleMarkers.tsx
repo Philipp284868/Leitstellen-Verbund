@@ -1,4 +1,4 @@
-import { Truck } from "lucide-react";
+import { VehicleIcon, organizationColors } from "./map-icons";
 import { vt, bt } from "./catalog";
 import { tripLabel } from "./travel";
 import { memo, useEffect, useRef } from "react";
@@ -111,16 +111,33 @@ export const VehicleMarkers = memo(function VehicleMarkers({
                   height="26"
                   rx="5"
                   fill={
-                    v.fault && v.fault.state !== "repaired"
-                      ? "#b97a2b"
-                      : bt(vt(v.type).home).org === "Feuerwehr"
-                        ? "#9d3c31"
-                        : "#285c7e"
+                    organizationColors[bt(vt(v.type).home).org] ?? "#52616b"
                   }
                   stroke={v.id === selected ? "#fff" : "#c4d5dd"}
                   strokeWidth="2"
                 />
-                <Truck x={-10} y={-10} width={20} height={20} color="white" />
+                <VehicleIcon
+                  type={v.type}
+                  x={-10}
+                  y={-10}
+                  width={20}
+                  height={20}
+                  color="white"
+                />
+                {v.fault && v.fault.state !== "repaired" && (
+                  <g>
+                    <circle cx="12" cy="-12" r="7" fill="#d08a32" />
+                    <text
+                      x="12"
+                      y="-8"
+                      textAnchor="middle"
+                      fill="#151a20"
+                      fontSize="11"
+                    >
+                      !
+                    </text>
+                  </g>
+                )}
                 {(v.id === selected || v.mission === selected) && (
                   <g>
                     <rect

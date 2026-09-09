@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from "react";
+import { useEffect, type ReactNode, type RefObject } from "react";
 import { X } from "lucide-react";
 import type { Mission } from "./model";
 import { mt } from "./catalog";
@@ -23,6 +23,13 @@ export function IncidentDock({
   readonly: boolean;
   children: ReactNode;
 }) {
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    dockRef.current?.focus({ preventScroll: true });
+    return () => {
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
+    };
+  }, [dockRef]);
   const known =
     mission && (!mission.control || mission.control.reportedTemplate);
   const title = known ? mt(mission.template).name : "Einsatzdisposition";
@@ -30,7 +37,7 @@ export function IncidentDock({
   const location =
     mission && (!mission.control || mission.control.locationKnown)
       ? IS_GERMANY
-        ? mission.control?.secret?.address ||
+        ? mission.control?.facts.find((f) => f.key === "address")?.text ||
           "Einsatzort auf der Deutschlandkarte"
         : districtAt(mission.pos)
       : "Ort und Meldebild aufnehmen";
@@ -38,9 +45,11 @@ export function IncidentDock({
     <aside
       className="incident-dock"
       ref={dockRef}
+      tabIndex={-1}
       aria-label="Einsatzdisposition"
       onKeyDown={(e) => {
         if (e.key === "Escape") {
+          e.preventDefault();
           e.stopPropagation();
           onClose();
         }
@@ -62,13 +71,16 @@ export function IncidentDock({
         {[
           ["details", "Details"],
           ["vehicles", "Fahrzeuge"],
-          ["radio", "FMS"],
+          ["radio", "Funk"],
           ["arrival", "Anfahrt"],
+          ["history", "Protokoll"],
         ].map(([id, label]) => (
           <button
             key={id}
             disabled={
-              id !== "details" && (!mission || mission.phase === "done")
+              id !== "details" &&
+              id !== "history" &&
+              (!mission || mission.phase === "done")
             }
             aria-pressed={tab === id}
             onClick={() => onSection(id)}

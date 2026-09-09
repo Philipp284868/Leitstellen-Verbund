@@ -1,4 +1,4 @@
-import { showIncidents } from "./ui-navigation";
+import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { interviewUI } from "./desk-helpers";
 import { test, expect, type Page } from "@playwright/test";
@@ -71,7 +71,7 @@ async function login(page: Page, username: string) {
 }
 async function play(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator(".radio-bar")).toContainText(
+  await expect(page.locator(".hud-notice")).toContainText(
     "Mit Spielserver verbunden",
   );
 }
@@ -90,7 +90,10 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
   await second.goto(origin);
   await play(second);
   for (const p of [page, second]) {
-    await expect(p.locator(".hud-mode")).toHaveText("Multiplayer");
+    await expect(p.locator(".hud-identity")).toContainText("Verbunden");
+    await expect(
+      p.getByRole("button", { name: "Einzelspieler", exact: true }),
+    ).toHaveCount(0);
     await expect(p.locator("svg.map [data-own-station]")).toHaveCount(
       before.buildings.length,
     );
@@ -113,7 +116,7 @@ test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat
   await play(b);
   await expect(b.locator('svg.map [aria-label*="von Alex"]')).toHaveCount(0);
   expect(app.game.view(first.id, new Set()).network.friends).toEqual([]);
-  await b.locator(".shared-inbox").click();
+  await openPanel(b, "Freunde");
   await expect(b.getByLabel("Eigenes Fahrzeug anbieten")).toHaveCount(0);
   await expect(
     b.getByText("Neue Einsätze werden nicht automatisch", { exact: false }),
@@ -130,7 +133,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await account(page);
   await play(page);
   const mapArea = await page.locator("svg.map").boundingBox();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   const toolsArea = await page.locator(".map-layers").boundingBox();
   const legendArea = await page.locator(".map-legend").boundingBox();
   expect(toolsArea!.y).toBeGreaterThanOrEqual(mapArea!.y);
@@ -211,8 +214,8 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
   const { id } = await account(page, true);
   await play(page);
   await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
-  await expect(page.locator(".hud-time-mode")).toContainText("Echtzeit");
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await expect(page.locator(".hud-clock")).toHaveAttribute("title", /Echtzeit/);
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();
@@ -235,6 +238,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
     fullPage: true,
   });
   await page.getByRole("button", { name: "Meine Wachen", exact: true }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
   await expect(page.locator(".dispatch-list")).toContainText("km · ca.");
@@ -256,8 +260,10 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
     app.db.all().get(id)!.vehicles[0].arrive - app.db.all().get(id)!.time,
   ).toBeCloseTo(eta - 2, 0);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await showMapTools(page);
   await expect(page.locator(".operations")).toContainText("bis Ziel");
   await expect(page.locator(".operations")).toContainText("Gesamtstrecke");
+  await page.locator(".operations").scrollIntoViewIfNeeded();
   const desktopOps = await page.locator(".operations").boundingBox();
   const desktopWrap = await page.locator(".map-wrap").boundingBox();
   expect(desktopOps!.y + desktopOps!.height).toBeLessThanOrEqual(
@@ -269,6 +275,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
   });
   await page.setViewportSize({ width: 1366, height: 768 });
   await expect(page.locator(".operations")).toBeVisible();
+  await page.locator(".operations").scrollIntoViewIfNeeded();
   const operationsBox = await page.locator(".operations").boundingBox();
   const wrapBox = await page.locator(".map-wrap").boundingBox();
   expect(operationsBox!.y + operationsBox!.height).toBeLessThanOrEqual(

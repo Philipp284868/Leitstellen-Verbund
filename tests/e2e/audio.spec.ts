@@ -99,7 +99,7 @@ async function login(page: Page, ready = false) {
 }
 async function play(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator(".radio-bar")).toContainText(
+  await expect(page.locator(".hud-notice")).toContainText(
     "Mit Spielserver verbunden",
   );
 }
@@ -117,6 +117,9 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
     .poll(async () => (await levels(page)).rms)
     .toBeGreaterThan(0.0001);
   await page
+    .getByRole("button", { name: "Einstellungen", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Ton stummschalten", exact: true })
     .click();
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
@@ -124,9 +127,6 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
     .getByRole("button", { name: "Ton einschalten", exact: true })
     .click();
   await expect.poll(async () => (await levels(page)).state).toBe("running");
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
   await page.getByRole("slider", { name: "Musiklautstärke" }).focus();
   await page.keyboard.press("Home");
   await page

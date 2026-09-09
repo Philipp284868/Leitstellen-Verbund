@@ -1,4 +1,4 @@
-import { openPanel } from "./ui-navigation";
+import { openPanel, showIncidents } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { interviewUI, joinDesk } from "./desk-helpers";
 import { test, expect, type Page, type Browser } from "@playwright/test";
@@ -51,7 +51,7 @@ async function register(page: Page, label: string) {
     .click();
   await page.getByRole("button", { name: "Spielen", exact: false }).click();
   await expect(page.locator(".hud-budget")).toContainText("250.000");
-  await expect(page.locator(".radio-bar")).toContainText(
+  await expect(page.locator(".hud-notice")).toContainText(
     "Mit Spielserver verbunden",
   );
   expect(
@@ -114,6 +114,7 @@ async function resources(page: Page, username: string) {
   app.game.step(30); // Advance the test server clock, never a player-controlled speed.
   await page.locator("svg.map [data-own-station]").first().click();
   await page.getByRole("button", { name: "18.000 Cr", exact: true }).click();
+  await page.getByText("Besatzung & Ausbildung", { exact: true }).click();
   await page
     .getByRole("button", { name: "6 einstellen", exact: false })
     .click();
@@ -168,6 +169,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   await resources(a, ua);
   await expect(b.locator(".hud-budget")).toContainText("250.000");
   await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
+  await showIncidents(a);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
   await a.locator(".dispatch-list input").first().check();
@@ -225,8 +227,10 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   await resources(a, ua);
   await resources(b, ub);
   await joinDesk(a, b, ub);
+  await showIncidents(a);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
+  await showIncidents(b);
   await b.locator(".mission-card").first().click();
   await b.locator(".dispatch-list input").first().check();
   await b.getByRole("button", { name: "Alarmieren (1)", exact: true }).click();

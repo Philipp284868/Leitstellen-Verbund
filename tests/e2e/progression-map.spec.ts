@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { showMapTools } from "./ui-navigation";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -65,7 +66,7 @@ test(
         .fill("Rivermere-password-123!");
       await page.getByRole("button", { name: "Anmelden", exact: true }).click();
       await page.getByRole("button", { name: "Spielen", exact: true }).click();
-      await page.getByRole("button", { name: "Layer", exact: true }).click();
+      await page.getByRole("button", { name: "Karte", exact: true }).click();
       await expect(
         page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
       ).toBeVisible();
@@ -73,10 +74,10 @@ test(
       const before = Date.now();
       if (
         (await page
-          .getByRole("button", { name: "Layer", exact: true })
-          .getAttribute("aria-pressed")) !== "true"
+          .getByRole("button", { name: "Karte", exact: true })
+          .getAttribute("aria-expanded")) !== "true"
       )
-        await page.getByRole("button", { name: "Layer", exact: true }).click();
+        await page.getByRole("button", { name: "Karte", exact: true }).click();
       await page
         .getByRole("button", { name: "Gesamte Region", exact: true })
         .click();
@@ -133,16 +134,16 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect(
     page.getByText("Region Rivermere · 100 × 100 km", { exact: true }),
   ).toBeVisible();
   if (
     (await page
-      .getByRole("button", { name: "Layer", exact: true })
-      .getAttribute("aria-pressed")) !== "true"
+      .getByRole("button", { name: "Karte", exact: true })
+      .getAttribute("aria-expanded")) !== "true"
   )
-    await page.getByRole("button", { name: "Layer", exact: true }).click();
+    await page.getByRole("button", { name: "Karte", exact: true }).click();
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();
@@ -172,6 +173,10 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     .click();
   await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
     "km/h aktuell",
+  );
+  await showMapTools(page);
+  await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
+    vehicleName,
   );
   await page
     .getByRole("button", { name: "Fahrzeug folgen", exact: true })
@@ -226,7 +231,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     fullPage: true,
   });
   await page.setViewportSize({ width: 1366, height: 768 });
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await showMapTools(page);
   const beforeZoom = await page.locator("svg.map").getAttribute("viewBox");
   await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
   await expect(page.locator("svg.map")).not.toHaveAttribute(

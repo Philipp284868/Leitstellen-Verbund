@@ -1,6 +1,6 @@
 import { ProjectNewsPanel } from "./ProjectNews";
 import { useState } from "react";
-import { missions, bt, capabilities } from "./catalog";
+import { missions, capabilities } from "./catalog";
 import type { Save } from "./model";
 import { logout, emit } from "./store";
 import { missionXp, progress } from "./progression";
@@ -12,13 +12,11 @@ export function MenuPanels({
   s,
   onOpen,
   onPlay,
-  onSelect,
 }: {
   panel: string;
   s: Save;
   onOpen: (panel: string) => void;
   onPlay: () => void;
-  onSelect: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [scenario, setScenario] = useState(missions[0].id);
@@ -114,44 +112,14 @@ export function MenuPanels({
         </div>
       </section>
     );
-  if (panel === "personnel")
-    return (
-      <section>
-        <p>
-          {s.people.length} Einsatzkräfte ·{" "}
-          {s.people.filter((p) => p.vehicle).length} Fahrzeugen zugewiesen ·{" "}
-          {s.people.filter((p) => p.training).length} in Ausbildung
-        </p>
-        {s.buildings
-          .filter((b) => bt(b.type).people > 0)
-          .map((b) => (
-            <button
-              className="station-card"
-              key={b.id}
-              onClick={() => onSelect(b.id)}
-            >
-              <span>
-                <strong>{b.name}</strong>
-                <small>
-                  {s.people.filter((p) => p.home === b.id).length} Personen ·
-                  Personal, Ausbildung und Dienstbereitschaft verwalten
-                </small>
-              </span>
-            </button>
-          ))}
-        {!s.buildings.length && (
-          <button onClick={() => onOpen("build")}>Erste Wache planen</button>
-        )}
-      </section>
-    );
   if (panel === "news") return <ProjectNewsPanel />;
   if (panel === "credits")
     return (
       <section className="menu-flow">
         <h3>Leitstellen-Verbund</h3>
         <p>
-          Eine browserbasierte Echtzeit-Leitstellensimulation. Fiktive Region
-          Falkenried; Karte und Spielgrafiken werden aus der Spielwelt erzeugt.
+          Eine Echtzeit-Leitstellensimulation auf der Deutschlandkarte.
+          Geografische Grunddaten und simulierte Betriebsdaten sind getrennt.
         </p>
         <p>
           Oberfläche: React. Icons: Lucide. Echtzeitverbindung: Socket.IO.

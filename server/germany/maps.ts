@@ -4,6 +4,7 @@ import { resolve, relative, isAbsolute, sep } from "node:path";
 import type { ServerResponse } from "node:http";
 import { z } from "zod";
 import { BOUNDS, project } from "../../src/germany/projection";
+import { indexedPoiTile, poiTileBounds, createPoiIndex } from "./poi-index";
 
 const manifestSchema = z
   .object({
@@ -32,9 +33,14 @@ export class GermanyMaps {
   readonly manifest: z.infer<typeof manifestSchema>;
   readonly index: DatabaseSync;
   readonly tiles: DatabaseSync;
+  private readonly poiIndex?: DatabaseSync;
   readonly dem?: { manifest: z.infer<typeof demSchema>; db: DatabaseSync };
   private readonly cache = new Map<string, Buffer>();
   private cacheBytes = 0;
+  private readonly poiCache = new Map<
+    string,
+    ReturnType<typeof indexedPoiTile>
+  >();
   private readonly searches = new Map<
     string,
     {
@@ -81,6 +87,7 @@ export class GermanyMaps {
         throw Error(
           "Kartenkacheln, Ortsindex und Manifest stammen nicht aus demselben Datenbestand.",
         );
+      this.poiIndex = createPoiIndex(this.index);
       if (existsSync(resolve(root, "dem-manifest.json"))) {
         const manifest = demSchema.parse(
           JSON.parse(readFileSync(child("dem-manifest.json"), "utf8")),
@@ -110,17 +117,20 @@ export class GermanyMaps {
         }
       }
     } catch (error) {
+      this.poiIndex?.close();
       this.tiles.close();
       this.index.close();
       throw error;
     }
   }
   close() {
+    this.poiIndex?.close();
     this.index.close();
     this.tiles.close();
     this.dem?.db.close();
     this.cache.clear();
     this.searches.clear();
+    this.poiCache.clear();
   }
   publicManifest() {
     return {
@@ -285,6 +295,46 @@ export class GermanyMaps {
     }
     if (path === "/geo/node") {
       json(this.node(Number(url.searchParams.get("id"))));
+      return true;
+    }
+    const poi = /^\/geo\/pois\/(\d{1,2})\/(\d{1,5})\/(\d{1,5})\.json$/.exec(
+      path,
+    );
+    if (poi) {
+      try {
+        poiTileBounds(Number(poi[1]), Number(poi[2]), Number(poi[3]));
+      } catch {
+        res.statusCode = 400;
+        json({ error: "Ungültige POI-Kachel." });
+        return true;
+      }
+      if (
+        url.searchParams.has("dataset") &&
+        url.searchParams.get("dataset") !== this.manifest.dataset
+      ) {
+        res.statusCode = 409;
+        json({ error: "Kartenstand hat sich geändert. Ansicht neu laden." });
+        return true;
+      }
+      const key = poi.slice(1).join("/");
+      let points = this.poiCache.get(key);
+      if (!points) {
+        points = indexedPoiTile(
+          this.poiIndex!,
+          Number(poi[1]),
+          Number(poi[2]),
+          Number(poi[3]),
+        );
+        if (this.poiCache.size >= 96)
+          this.poiCache.delete(this.poiCache.keys().next().value!);
+        this.poiCache.set(key, points);
+      }
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      json({
+        dataset: this.manifest.dataset,
+        snapshot: this.manifest.snapshot,
+        points,
+      });
       return true;
     }
     const tile =

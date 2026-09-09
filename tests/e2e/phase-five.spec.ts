@@ -95,7 +95,7 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   });
   await page.emulateMedia({ media: "print" });
   await expect(panel).toBeVisible();
-  await expect(page.locator(".navrail")).toBeHidden();
+  await expect(page.locator(".topbar")).toBeHidden();
   await expect(panel.locator("dd").first()).toHaveCSS("color", "rgb(0, 0, 0)");
   expect(
     await page
@@ -156,6 +156,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     .getByLabel("Taste: Archiv und Statistik", { exact: true })
     .fill("z");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await showIncidents(page);
   const side = await page.locator(".mission-sidebar").boundingBox(),
     map = await page.locator(".map-column").boundingBox();
   expect(side!.x).toBeGreaterThan(map!.x);

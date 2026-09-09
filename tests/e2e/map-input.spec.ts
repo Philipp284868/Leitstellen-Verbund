@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { showIncidents } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -108,7 +109,7 @@ test("Markerdrag, Folgeklick, Mausrad und Eingabefokus sind getrennt", async ({
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   const selectedView = await map.getAttribute("viewBox");
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   const search = page.getByLabel("Karte durchsuchen");
   await search.fill("Old Town");
   await search.press("Control+a");
@@ -140,6 +141,7 @@ test("Markerdrag, Folgeklick, Mausrad und Eingabefokus sind getrennt", async ({
   expect(afterAnchor.x).toBeCloseTo(anchor.x, 1);
   expect(afterAnchor.y).toBeCloseTo(anchor.y, 1);
   const afterWheel = await map.getAttribute("viewBox");
+  await showIncidents(page);
   await page.locator(".mission-list").hover();
   await page.mouse.wheel(0, 800);
   await expect(map).toHaveAttribute("viewBox", afterWheel!);

@@ -290,6 +290,13 @@ export function germanyStyle(manifest: GeoManifest): StyleSpecification {
       },
       // The feature layers below make local tile labels available to the canvas
       // overlay. System fonts avoid external glyph requests and font accounts.
+      ...["poi", "aerodrome_label"].map((sourceLayer) => ({
+        id: `facilities-${sourceLayer}`,
+        type: "circle" as const,
+        source: "germany",
+        "source-layer": sourceLayer,
+        paint: { "circle-radius": 0, "circle-opacity": 0 },
+      })),
       ...["place", "water_name", "mountain_peak"].map((sourceLayer) => ({
         id: `labels-${sourceLayer}`,
         type: "circle" as const,

@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import { listenBrowserServer } from "./server-helper";
-import { openPanel } from "./ui-navigation";
+import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
 import type * as Fixture from "../rivermere-fixture";
 test.use({ actionTimeout: 15000 });
 const fixturePath = resolve(`.tools/rivermere-fixture-${process.pid}.mjs`);
@@ -79,7 +79,7 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   const map = page.locator("svg.map");
   await expect(map.locator('[data-world="rivermere-1"]')).toBeVisible();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   const folder = resolve(
     process.env.UPDATE_SCREENSHOTS
       ? "docs/screenshots/rivermere"
@@ -93,9 +93,9 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
   await page
     .getByRole("button", { name: "Gesamte Region", exact: true })
     .click();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   await shot("region");
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   const search = page.getByLabel("Karte durchsuchen");
   for (const [name, file] of [
     ["Rivermere", "city"],
@@ -107,18 +107,18 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
       .locator(".map-search-results")
       .getByRole("button", { name, exact: true })
       .click();
-    await page.getByRole("button", { name: "Layer", exact: true }).click();
+    await page.getByRole("button", { name: "Karte", exact: true }).click();
     if (file === "village")
       expect(await map.locator("[data-footprint]").count()).toBeGreaterThan(40);
     await shot(file);
-    await page.getByRole("button", { name: "Layer", exact: true }).click();
+    await page.getByRole("button", { name: "Karte", exact: true }).click();
   }
   await search.fill("Rivermere");
   await page
     .locator(".map-search-results")
     .getByRole("button", { name: "Rivermere", exact: true })
     .click();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   const before = await map.getAttribute("viewBox");
   await page.mouse.move(950, 500);
   await page.mouse.down();
@@ -127,6 +127,7 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
   await expect(map).not.toHaveAttribute("viewBox", before!);
   expect(await page.evaluate(() => getSelection()?.toString())).toBe("");
   const changed = await map.getAttribute("viewBox");
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(map).toHaveAttribute("viewBox", changed!);
   await page
@@ -145,9 +146,10 @@ test("Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung", 
         ).length,
     )
     .toBe(2);
-  await page
-    .getByRole("button", { name: "Kartenauswahl zentrieren", exact: true })
-    .click();
+  await showMapTools(page);
+  await page.locator("[data-center-selection]").click();
+  await showIncidents(page);
+  await page.locator(".mission-card").first().click();
   await shot("incident-route");
   const arrival = page.locator('[data-hud-section="arrival"]');
   expect(

@@ -3,6 +3,9 @@ import { GameHud } from "./GameHud";
 import { MenuPanels } from "./MenuPanels";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { ReconnectSummary } from "./ReconnectSummary";
+import { Players } from "./Players";
+import { BuildingIcon } from "./map-icons";
+import { usePresence } from "./network";
 import {
   parseWorkspace,
   shortcutFor,
@@ -30,7 +33,7 @@ const ArchivePanel = lazy(() =>
 const ReportPanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ReportPanel })),
 );
-import { Radio, TowerControl, ChevronRight } from "lucide-react";
+import { Radio, ChevronRight } from "lucide-react";
 import { useGame, emit, retryStorage, change } from "./store";
 import { bt } from "./catalog";
 import { level } from "./model";
@@ -56,7 +59,8 @@ export function App() {
   );
 }
 function GameApp() {
-  const { save: s, mode, loading, readonly, error, notice, user } = useGame();
+  const { save: s, loading, readonly, error, notice, user } = useGame();
+  const presence = usePresence();
   const priorProgress = useRef<{ generation: string; level: number } | null>(
     null,
   );
@@ -77,6 +81,7 @@ function GameApp() {
     [placing, setPlacing] = useState(""),
     [light, setLight] = useState<boolean | null>(null),
     [reduced, setReduced] = useState<boolean | null>(null);
+  const [listOpen, setListOpen] = useState(false);
   useEffect(() => {
     audio.scene(screen === "game");
   }, [screen]);
@@ -105,10 +110,13 @@ function GameApp() {
         e.target instanceof Element &&
         !!e.target.closest("input,textarea,select,[contenteditable=true]");
       if (e.key === "Escape" && !editing) {
+        if (!modal && !placing && !selected) return;
         e.preventDefault();
-        if (modal) setModal("");
-        else if (placing) setPlacing("");
-        else setSelected("");
+        if (modal) {
+          setModal("");
+          setSelected("");
+        } else if (placing) setPlacing("");
+        else if (selected) setSelected("");
         return;
       }
       if (modal) return;
@@ -118,9 +126,11 @@ function GameApp() {
       if (action === "police" || action === "ems") {
         setFilter(action === "police" ? "Polizei" : "Rettungsdienst");
         setModal("");
+        setListOpen(true);
       } else if (action === "missions") {
         setFilter("all");
         setModal("");
+        setListOpen(true);
       } else if (action === "call" || action === "alarm") {
         const mission =
           action === "call"
@@ -239,7 +249,6 @@ function GameApp() {
       ) : (
         <GameHud
           s={s}
-          mode={mode}
           selected={selected}
           open={open}
           setModal={setModal}
@@ -249,7 +258,11 @@ function GameApp() {
           notice={notice}
           onMenu={() => setScreen("start")}
           showDetail={modal === "mission"}
-          onCloseDetail={() => setModal("")}
+          onCloseDetailKeepSelection={() => setModal("")}
+          onCloseDetail={() => {
+            setModal("");
+            setSelected("");
+          }}
           search={search}
           setSearch={setSearch}
           filter={filter}
@@ -258,6 +271,9 @@ function GameApp() {
           setSort={setSort}
           userId={user?.id}
           tutorial={tutorial[s.tutorial]}
+          listOpen={listOpen}
+          setListOpen={setListOpen}
+          activePanel={modal}
           detail={
             s.missions.find((m) => m.id === selected) ? (
               s.missions.find((m) => m.id === selected)!.control ? (
@@ -307,7 +323,7 @@ function GameApp() {
                 privacy: "Datenschutz im Spiel",
                 support: "Support",
                 language: "Sprache",
-                personnel: "Personalübersicht",
+                players: "Spieler dieser Serverwelt",
                 build: "Wache bauen",
                 stations: "Wachen verwalten",
                 building: "Wachendetails",
@@ -324,7 +340,10 @@ function GameApp() {
               } as Record<string, string>
             )[modal]
           }
-          onClose={() => setModal("")}
+          onClose={() => {
+            setModal("");
+            setSelected("");
+          }}
         >
           <MenuPanels
             panel={modal}
@@ -334,7 +353,6 @@ function GameApp() {
               setScreen("game");
               setModal("");
             }}
-            onSelect={open}
           />
           {modal === "help" && (
             <>
@@ -451,7 +469,7 @@ function GameApp() {
                       key={b.id}
                       onClick={() => open(b.id)}
                     >
-                      <TowerControl />
+                      <BuildingIcon type={b.type} />
                       <div>
                         <b>{b.name}</b>
                         <small>
@@ -516,6 +534,23 @@ function GameApp() {
                   </>
                 )}
               {modal === "friends" && <TeamPanel />}
+              {modal === "players" && (
+                <Players
+                  players={presence.players}
+                  ownUserId={user?.id ?? ""}
+                  ownDeskId={s.player.id}
+                  connected={presence.connected}
+                  ready={presence.ready}
+                  onJump={(point) => {
+                    setModal("");
+                    setListOpen(false);
+                    setSelected("");
+                    window.dispatchEvent(
+                      new CustomEvent("lv:map-focus", { detail: { point } }),
+                    );
+                  }}
+                />
+              )}
               {modal === "aaos" && <AAOPanel s={s} />}
               {modal === "fms" && <FMSPanel s={s} />}
               {modal === "progress" && (

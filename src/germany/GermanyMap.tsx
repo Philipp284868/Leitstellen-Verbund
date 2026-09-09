@@ -6,6 +6,17 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "../MapTools.css";
 import "./GermanyMap.css";
 import { Crosshair, LocateFixed, Navigation, Search, X } from "lucide-react";
+import {
+  VehicleIcon,
+  BuildingIcon,
+  MapIcon,
+  organizationColors,
+} from "../map-icons";
+import { groupPresence, type PublicPlayer } from "../presence";
+import { groupGameMarkers, type MarkerData } from "./game-markers";
+import { clusterPresence } from "./map-presence";
+import { attachPoiLayer } from "./poi-layer";
+import { poiCategories, type PoiCategory, type MapPoi } from "./poi-data";
 import { IncidentIcon } from "../HudIcons";
 import { bt, mt, vt } from "../catalog";
 import { vehiclePosition } from "../vehicle-position";
@@ -17,7 +28,7 @@ import { DRAG_THRESHOLD, wheelPixels } from "../map-camera";
 import type { Save } from "../model";
 import type { Friend } from "../network";
 import type { Point } from "../world";
-import { project, unproject, WORLD_CENTER } from "./projection";
+import { project, unproject, WORLD_CENTER, inBounds } from "./projection";
 import {
   germanyStyle,
   loadGeoManifest,
@@ -36,16 +47,6 @@ type SearchResult = {
   lat: number;
 };
 type Site = { point: Point; reason: string | null };
-type MarkerData = {
-  id: string;
-  name: string;
-  pos: Point;
-  kind: "station" | "mission" | "vehicle" | "volunteer";
-  target?: string;
-  org: string;
-  friend?: boolean;
-  count?: number;
-};
 export type GermanyMapProps = {
   s: Save;
   selected: string;
@@ -53,8 +54,12 @@ export type GermanyMapProps = {
   placing: string;
   onPlace: (point: Point) => void;
   friends: Friend[];
+  presence?: readonly PublicPlayer[];
+  ownDeskId?: string;
   readonly?: boolean;
   onCancelPlace?: () => void;
+  onInspect?: () => void;
+  inspectionsHidden?: boolean;
 };
 
 export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
@@ -65,14 +70,20 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     placing,
     onPlace,
     friends,
+    presence = [],
+    ownDeskId,
     readonly = false,
     onCancelPlace,
+    onInspect,
+    inspectionsHidden = false,
   } = props;
   const { mode } = useGame(),
     modeRef = useRef(mode);
   modeRef.current = mode;
   const viewport = useRef<HTMLDivElement>(null),
     labelCanvas = useRef<HTMLCanvasElement>(null),
+    poiCanvas = useRef<HTMLCanvasElement>(null),
+    poiLayer = useRef<ReturnType<typeof attachPoiLayer> | null>(null),
     mapRef = useRef<GLMap | null>(null);
   const latest = useRef(props);
   latest.current = props;
@@ -92,6 +103,67 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     [routes, setRoutes] = useState(true),
     [showFriends, setShowFriends] = useState(true),
     [following, setFollowing] = useState(false);
+  const [pois, setPois] = useState(true),
+    [poiFilter, setPoiFilter] = useState<ReadonlySet<PoiCategory>>(
+      () => new Set(Object.keys(poiCategories) as PoiCategory[]),
+    ),
+    [poiSelection, setPoiSelection] = useState<MapPoi | null>(null),
+    [poiGroup, setPoiGroup] = useState<MapPoi[]>([]),
+    [poiError, setPoiError] = useState(""),
+    [showPlayers, setShowPlayers] = useState(true),
+    [presenceSelection, setPresenceSelection] = useState<string[]>([]),
+    [objectGroup, setObjectGroup] = useState<MarkerData[]>([]);
+  const poiOptions = useRef({
+    enabled: pois,
+    categories: poiFilter,
+    buildings: s.buildings,
+    selected: poiSelection?.id,
+  });
+  poiOptions.current = {
+    enabled: pois,
+    categories: poiFilter,
+    buildings: s.buildings,
+    selected: poiSelection?.id,
+  };
+  const presenceDesks = useMemo(() => groupPresence(presence), [presence]);
+  const selectedPresence = presenceDesks.filter((d) =>
+    presenceSelection.includes(d.id),
+  );
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        (!poiSelection &&
+          !poiGroup.length &&
+          !selectedPresence.length &&
+          !objectGroup.length) ||
+        document.querySelector('[aria-modal="true"]')
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      setPoiSelection(null);
+      setPoiGroup([]);
+      setPresenceSelection([]);
+      setObjectGroup([]);
+      mapRef.current?.getCanvas().focus({ preventScroll: true });
+    };
+    window.addEventListener("keydown", close, true);
+    return () => window.removeEventListener("keydown", close, true);
+  }, [
+    poiSelection,
+    poiGroup.length,
+    selectedPresence.length,
+    objectGroup.length,
+  ]);
+  useEffect(() => {
+    if (inspectionsHidden) {
+      setPoiSelection(null);
+      setPoiGroup([]);
+      setPresenceSelection([]);
+      setObjectGroup([]);
+    }
+  }, [inspectionsHidden]);
   const labelsRef = useRef(labels);
   labelsRef.current = labels;
   const [candidate, setCandidate] = useState<Site | null>(null),
@@ -212,6 +284,14 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           canvas,
           () => labelsRef.current,
         );
+        if (poiCanvas.current)
+          poiLayer.current = attachPoiLayer(
+            gl,
+            poiCanvas.current,
+            manifest.dataset ?? "",
+            () => poiOptions.current,
+            setPoiError,
+          );
         gl.on("load", () => {
           if (!disposed) {
             setReady(true);
@@ -343,8 +423,32 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           if (!gesture || gesture.id !== event.pointerId) return;
           const click = !gesture.moved && !gesture.marker;
           cancel();
-          if (!click || !latest.current.placing || latest.current.readonly)
+          if (!click) return;
+          if (!latest.current.placing) {
+            const bounds = container.getBoundingClientRect();
+            const hit = poiLayer.current?.hitTest(
+              event.clientX - bounds.left,
+              event.clientY - bounds.top,
+            );
+            setPresenceSelection([]);
+            setObjectGroup([]);
+            setPoiGroup([]);
+            if (hit) {
+              latest.current.onInspect?.();
+              if (hit.count > 1)
+                gl.easeTo({
+                  center: [hit.point.lon, hit.point.lat],
+                  zoom: Math.min(18, gl.getZoom() + 2),
+                  duration: 250,
+                });
+              if (hit.members.length > 1) {
+                setPoiSelection(null);
+                setPoiGroup(hit.members);
+              } else setPoiSelection(hit.point);
+            } else setPoiSelection(null);
             return;
+          }
+          if (latest.current.readonly) return;
           const rect = container.getBoundingClientRect(),
             ll = gl.unproject([
               event.clientX - rect.left,
@@ -480,6 +584,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         cleanup = () => {
           cancel();
           removeLabels();
+          poiLayer.current?.destroy();
+          poiLayer.current = null;
           observer.disconnect();
           dialogs.disconnect();
           cancelAnimationFrame(pending);
@@ -509,6 +615,31 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     };
   }, [attempt, cameraKey, s.world, s.worldSeed]);
 
+  const poiBuildingKey = s.buildings
+    .map((b) => `${b.id}:${b.type}:${b.name}:${b.pos.x}:${b.pos.y}`)
+    .join("|");
+  useEffect(() => {
+    poiLayer.current?.refresh();
+  }, [pois, poiBuildingKey]);
+  useEffect(() => {
+    poiLayer.current?.repaint();
+  }, [poiFilter, poiSelection?.id]);
+  useEffect(() => {
+    const focus = (event: Event) => {
+      const detail = (event as CustomEvent<{ point?: Point; zoom?: number }>)
+        .detail;
+      if (!detail?.point || !inBounds(detail.point)) return;
+      setFollowing(false);
+      center(
+        detail.point,
+        Number.isFinite(detail.zoom)
+          ? Math.max(4, Math.min(18, detail.zoom!))
+          : 14,
+      );
+    };
+    window.addEventListener("lv:map-focus", focus);
+    return () => window.removeEventListener("lv:map-focus", focus);
+  }, [center]);
   useEffect(() => {
     if (!search.trim()) {
       setFound([]);
@@ -629,6 +760,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         name: b.name,
         pos: b.pos,
         kind: "station",
+        type: b.type,
         org: bt(b.type).org,
       }),
     );
@@ -659,6 +791,16 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           name: v.name,
           pos: vehiclePosition(v, now),
           kind: "vehicle",
+          type: v.type,
+          fms: s.desk.fleet[v.id]?.code,
+          fault: !!v.fault && v.fault.state !== "repaired",
+          heading: (() => {
+            const a = vehiclePosition(v, now),
+              b = vehiclePosition(v, now + 1);
+            return Math.hypot(a.x - b.x, a.y - b.y) > 0.001
+              ? (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI
+              : undefined;
+          })(),
           org: bt(vt(v.type).home).org,
         }),
       );
@@ -681,6 +823,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             name: `${b.name} · ${f.name}`,
             pos: b.pos,
             kind: "station",
+            type: b.type,
             org: bt(b.type).org,
             friend: true,
           }),
@@ -703,34 +846,26 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             name: `${v.name} · ${f.name}`,
             pos: v.position,
             kind: "vehicle",
+            type: v.type,
+            fms: v.fms,
+            fault: !!v.fault && v.fault.state !== "repaired",
             org: bt(vt(v.type).home).org,
             friend: true,
           }),
         );
       });
-    const box = map.getContainer().getBoundingClientRect(),
-      groups = new Map<string, MarkerData & { left: number; top: number }>();
-    data.sort((a, b) => Number(b.id === selected) - Number(a.id === selected));
-    for (const item of data) {
-      const p = unproject(item.pos);
-      if (![p.lon, p.lat].every(Number.isFinite)) continue;
-      const pixel = map.project([p.lon, p.lat]);
-      if (
-        pixel.x < -30 ||
-        pixel.y < -30 ||
-        pixel.x > box.width + 30 ||
-        pixel.y > box.height + 30
-      )
-        continue;
-      const key =
-        map.getZoom() >= 14 || item.id === selected
-          ? item.id
-          : `${item.kind}:${Math.floor(pixel.x / 36)}:${Math.floor(pixel.y / 36)}`;
-      const group = groups.get(key);
-      if (group) group.count = (group.count ?? 1) + 1;
-      else groups.set(key, { ...item, left: pixel.x, top: pixel.y });
-    }
-    return [...groups.values()].slice(0, 650);
+    const box = map.getContainer().getBoundingClientRect();
+    return groupGameMarkers(
+      data,
+      (p) => {
+        const ll = unproject(p);
+        return map.project([ll.lon, ll.lat]);
+      },
+      box.width,
+      box.height,
+      map.getZoom(),
+      selected,
+    );
   }, [
     ready,
     cameraTick,
@@ -739,6 +874,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     s.missions,
     s.vehicles,
     s.time,
+    s.desk.fleet,
     now,
     selected,
     filter,
@@ -747,6 +883,24 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     friends,
     showFriends,
   ]);
+  const visibleObjects = new Map(
+    markers.flatMap((m) => m.members).map((m) => [m.id, m]),
+  );
+  const objectDetails = objectGroup.map((m) => visibleObjects.get(m.id) ?? m);
+  const presenceMarkers = useMemo(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !showPlayers) return [];
+    const box = map.getContainer().getBoundingClientRect();
+    return clusterPresence(
+      presenceDesks,
+      (p) => {
+        const ll = unproject(p);
+        return map.project([ll.lon, ll.lat]);
+      },
+      box.width,
+      box.height,
+    );
+  }, [ready, cameraTick, presenceDesks, showPlayers]);
   const candidatePixel =
     candidate && ready
       ? (() => {
@@ -771,15 +925,23 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           className="germany-labels"
           aria-hidden="true"
         />
+        <canvas ref={poiCanvas} className="germany-pois" aria-hidden="true" />
         <div className="germany-markers">
           {markers.map((m) => (
             <button
               key={m.id}
-              className={`germany-marker ${m.kind} ${m.friend ? "friend" : ""} ${m.id === selected ? "selected" : ""}`}
-              style={{ left: m.left, top: m.top }}
+              className={`germany-marker ${m.kind} ${m.friend ? "friend" : ""} ${m.coLocated ? "co-located" : ""} ${m.id === selected ? "selected" : ""}`}
+              style={{
+                left: m.left,
+                top: m.top,
+                background:
+                  m.kind === "mission"
+                    ? undefined
+                    : (organizationColors[m.org] ?? "#52616b"),
+              }}
               aria-label={
                 m.count
-                  ? `${m.count} ${m.kind === "volunteer" ? "freiwillige Kräfte auf Anreise" : m.kind === "vehicle" ? "Fahrzeuge" : m.kind === "station" ? "Wachen" : "Einsätze"} · vergrößern`
+                  ? `${m.count} ${m.kind === "volunteer" ? "freiwillige Kräfte auf Anreise" : m.kind === "vehicle" ? "Fahrzeuge" : m.kind === "station" ? "Wachen" : "Einsätze"} · Gruppe öffnen`
                   : m.name
               }
               title={m.name}
@@ -787,28 +949,66 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               data-object-id={m.id}
               onClick={() => {
                 setFollowing(false);
-                if (m.count)
-                  center(
-                    m.pos,
-                    Math.min(18, (mapRef.current?.getZoom() ?? 10) + 2),
-                  );
-                else onSelect(m.friend ? "friends" : (m.target ?? m.id));
+                setPoiSelection(null);
+                setPoiGroup([]);
+                setPresenceSelection([]);
+                if (m.count) {
+                  onInspect?.();
+                  setObjectGroup(m.members);
+                } else {
+                  setObjectGroup([]);
+                  onSelect(m.friend ? "friends" : (m.target ?? m.id));
+                }
               }}
             >
               {m.count ? (
                 <b>{m.count}</b>
               ) : m.kind === "mission" ? (
                 <IncidentIcon org={m.org} />
+              ) : m.kind === "vehicle" ? (
+                <VehicleIcon type={m.type ?? ""} />
+              ) : m.kind === "station" ? (
+                <BuildingIcon type={m.type ?? ""} />
               ) : (
-                <span>
-                  {m.kind === "volunteer"
-                    ? "●"
-                    : m.kind === "vehicle"
-                      ? "▰"
-                      : "▣"}
+                <MapIcon glyph="civilianCar" />
+              )}
+              {!m.count && m.fms !== undefined && (
+                <span className="marker-fms" title={`FMS ${m.fms}`}>
+                  {m.fms}
                 </span>
               )}
+              {!m.count && m.fault && (
+                <span className="marker-fault" title="Fahrzeugstörung">
+                  !
+                </span>
+              )}
+              {!m.count && m.heading !== undefined && (
+                <i
+                  className="marker-heading"
+                  style={{ transform: `rotate(${m.heading}deg)` }}
+                  aria-hidden="true"
+                />
+              )}
               {m.id === selected && <small>{m.name}</small>}
+            </button>
+          ))}
+          {presenceMarkers.map((m) => (
+            <button
+              key={`presence:${m.id}`}
+              className={`germany-marker presence ${m.desks.some((d) => d.id === ownDeskId) ? "own" : ""}`}
+              style={{ left: m.x, top: m.y }}
+              aria-label={`${m.count} Spieler · ${m.desks.map((d) => d.name).join(", ")}`}
+              data-testid="map-presence"
+              onClick={() => {
+                onInspect?.();
+                setObjectGroup([]);
+                setPresenceSelection(m.desks.map((d) => d.id));
+                setPoiSelection(null);
+                setPoiGroup([]);
+              }}
+            >
+              <MapIcon glyph="dispatch" />
+              <b className="presence-count">{m.count}</b>
             </button>
           ))}
         </div>
@@ -837,196 +1037,462 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           Verbindung fehlt · letzter bestätigter Spielstand
         </div>
       )}
-      <div className="map-toolbar">
-        <strong>Deutschland · reale Geografie</strong>
-        <span>Regionen, Orte und Straßen aus dem lokalen Kartensatz</span>
-      </div>
-      <div className="map-search">
-        <label>
-          <Search size={16} />
-          <input
-            aria-label="Karte durchsuchen"
-            placeholder="Ort, Adresse, Wache oder Funkrufname …"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-        {search && (
-          <button aria-label="Suche löschen" onClick={() => setSearch("")}>
-            <X size={15} />
+      <aside className="map-tool-panel" aria-label="Kartenwerkzeuge">
+        <div className="map-toolbar">
+          <strong>Deutschland · reale Geografie</strong>
+          <span>Regionen, Orte und Straßen aus dem lokalen Kartensatz</span>
+        </div>
+        <div className="map-search">
+          <label>
+            <Search size={16} />
+            <input
+              aria-label="Karte durchsuchen"
+              placeholder="Ort, Adresse, Wache oder Funkrufname …"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          {search && (
+            <button aria-label="Suche löschen" onClick={() => setSearch("")}>
+              <X size={15} />
+            </button>
+          )}
+          <select
+            aria-label="Kartenfilter"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+          >
+            {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((v) => (
+              <option key={v}>{v}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Organisation auf Karte"
+            value={org}
+            onChange={(event) => setOrg(event.target.value)}
+          >
+            {[
+              "Alle",
+              "Feuerwehr",
+              "Rettungsdienst",
+              "Polizei",
+              "THW",
+              "Wasserrettung",
+              "Infrastruktur",
+            ].map((v) => (
+              <option key={v}>{v}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Fahrzeugstatus auf Karte"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map((v) => (
+              <option key={v}>{v}</option>
+            ))}
+          </select>
+          {search && (
+            <div className="map-search-results" aria-label="Suchergebnisse">
+              {localResults.map((result) => (
+                <button
+                  key={result.id}
+                  onClick={() => {
+                    center(result.pos);
+                    onSelect(result.id);
+                    setSearch("");
+                    setFollowing(false);
+                  }}
+                >
+                  {result.name}
+                  <small>Meine Leitstelle</small>
+                </button>
+              ))}
+              {found.map((result) => (
+                <button
+                  key={result.id}
+                  onClick={() => {
+                    center(project(result), result.kind === "city" ? 11 : 14);
+                    setSearch("");
+                    setFollowing(false);
+                  }}
+                >
+                  {result.name}
+                  <small>{result.kind}</small>
+                </button>
+              ))}
+              {searching && <span role="status">Orte werden gesucht …</span>}
+              {searchError && <span role="alert">{searchError}</span>}
+              {!searching &&
+                !searchError &&
+                !found.length &&
+                !localResults.length && (
+                  <span>
+                    Keine passenden Orte oder sichtbaren Objekte gefunden.
+                  </span>
+                )}
+            </div>
+          )}
+        </div>
+        <div className="map-layers" aria-label="Kartenebenen">
+          <button
+            onClick={() => {
+              setFollowing(false);
+              overview();
+            }}
+          >
+            Ganz Deutschland
           </button>
+          <button
+            onClick={() => {
+              setFollowing(false);
+              center(s.buildings[0]?.pos ?? WORLD_CENTER);
+            }}
+          >
+            Meine Wachen
+          </button>
+          <button
+            data-center-selection
+            disabled={!selectionPosition}
+            onClick={() => selectionPosition && center(selectionPosition)}
+          >
+            <Crosshair size={15} /> Auswahl zentrieren
+          </button>
+          {selectedVehicle && (
+            <button
+              aria-pressed={following}
+              onClick={() => setFollowing(!following)}
+            >
+              <Navigation size={15} />
+              Fahrzeug folgen
+            </button>
+          )}
+          <button
+            aria-pressed={labels}
+            onClick={() => {
+              setLabels(!labels);
+              mapRef.current?.triggerRepaint();
+            }}
+          >
+            Beschriftung
+          </button>
+          <button aria-pressed={routes} onClick={() => setRoutes(!routes)}>
+            Fahrwege
+          </button>
+          {!!friends.length && (
+            <button
+              aria-pressed={showFriends}
+              onClick={() => setShowFriends(!showFriends)}
+            >
+              Verbund
+            </button>
+          )}
+        </div>
+        <details className="map-poi-filters">
+          <summary>Einrichtungen & Kartenlegende</summary>
+          <label>
+            <input
+              type="checkbox"
+              checked={pois}
+              onChange={(e) => {
+                setPois(e.target.checked);
+                setPoiSelection(null);
+                setPoiGroup([]);
+              }}
+            />{" "}
+            Geografische Einrichtungen
+          </label>
+          <div className="poi-category-grid">
+            {(Object.keys(poiCategories) as PoiCategory[]).map((key) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  checked={poiFilter.has(key)}
+                  onChange={(e) => {
+                    const next = new Set(poiFilter);
+                    if (e.target.checked) next.add(key);
+                    else next.delete(key);
+                    setPoiFilter(next);
+                    setPoiSelection(null);
+                    setPoiGroup([]);
+                  }}
+                />
+                <MapIcon glyph={poiCategories[key].glyph} size={20} />
+                {poiCategories[key].label}
+                <small>ab Zoom {poiCategories[key].minZoom}</small>
+              </label>
+            ))}
+          </div>
+          <p>
+            Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
+            Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
+            freigegebener Verbund · !: Störung. Gruppen öffnen eine Auswahl;
+            Vergrößern zeigt räumlich getrennte Standorte.
+          </p>
+          <p>
+            Einrichtungen stammen aus dem installierten
+            OpenStreetMap-Datenstand. Ihre Verfügbarkeit im Spiel folgt
+            ausschließlich den Spielregeln.
+          </p>
+          {poiError && <p role="status">{poiError}</p>}
+        </details>
+        {!!presence.length && (
+          <label className="map-presence-toggle">
+            <input
+              type="checkbox"
+              checked={showPlayers}
+              onChange={(e) => {
+                setShowPlayers(e.target.checked);
+                setPresenceSelection([]);
+              }}
+            />{" "}
+            Spielerstandorte ({presence.length})
+          </label>
         )}
-        <select
-          aria-label="Kartenfilter"
-          value={filter}
-          onChange={(event) => setFilter(event.target.value)}
+        <div className="map-zoom" aria-label="Zoomsteuerung">
+          <button
+            aria-label="Vergrößern"
+            onClick={() => mapRef.current?.zoomIn()}
+          >
+            +
+          </button>
+          <button
+            aria-label="Verkleinern"
+            onClick={() => mapRef.current?.zoomOut()}
+          >
+            −
+          </button>
+          <button
+            aria-label="Karte zentrieren"
+            onClick={() => center(s.buildings[0]?.pos ?? WORLD_CENTER)}
+          >
+            <LocateFixed size={18} />
+          </button>
+        </div>
+        <details className="map-control-help">
+          <summary>Kartensteuerung</summary>
+          <p>
+            Ziehen: Karte verschieben · Mausrad: Zoom zum Zeiger · Klick:
+            auswählen. Pfeiltasten und +/− bei fokussierter Karte, Pos1: ganz
+            Deutschland. Strg+Mausrad vergrößert den Browser. Escape bricht die
+            Bauplatzwahl ab.
+          </p>
+        </details>
+        <Operations s={s} />
+      </aside>
+      {!inspectionsHidden && !!objectDetails.length && (
+        <aside
+          className="map-place-detail map-object-group"
+          aria-label="Objekte am Kartenstandort"
         >
-          {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((v) => (
-            <option key={v}>{v}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Organisation auf Karte"
-          value={org}
-          onChange={(event) => setOrg(event.target.value)}
-        >
-          {[
-            "Alle",
-            "Feuerwehr",
-            "Rettungsdienst",
-            "Polizei",
-            "THW",
-            "Wasserrettung",
-            "Infrastruktur",
-          ].map((v) => (
-            <option key={v}>{v}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Fahrzeugstatus auf Karte"
-          value={status}
-          onChange={(event) => setStatus(event.target.value)}
-        >
-          {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map((v) => (
-            <option key={v}>{v}</option>
-          ))}
-        </select>
-        {search && (
-          <div className="map-search-results" aria-label="Suchergebnisse">
-            {localResults.map((result) => (
+          <button
+            className="map-detail-close"
+            aria-label="Objektgruppe schließen"
+            onClick={() => setObjectGroup([])}
+          >
+            <X size={18} />
+          </button>
+          <h3>{objectDetails.length} Objekte an diesem Standort</h3>
+          <p>
+            Alle Einträge bleiben einzeln auswählbar, auch an derselben Wache.
+          </p>
+          <div className="map-object-list">
+            {objectDetails.map((m) => (
               <button
-                key={result.id}
+                key={m.id}
                 onClick={() => {
-                  center(result.pos);
-                  onSelect(result.id);
-                  setSearch("");
-                  setFollowing(false);
+                  setObjectGroup([]);
+                  onSelect(m.friend ? "friends" : (m.target ?? m.id));
                 }}
               >
-                {result.name}
-                <small>Meine Leitstelle</small>
-              </button>
-            ))}
-            {found.map((result) => (
-              <button
-                key={result.id}
-                onClick={() => {
-                  center(project(result), result.kind === "city" ? 11 : 14);
-                  setSearch("");
-                  setFollowing(false);
-                }}
-              >
-                {result.name}
-                <small>{result.kind}</small>
-              </button>
-            ))}
-            {searching && <span role="status">Orte werden gesucht …</span>}
-            {searchError && <span role="alert">{searchError}</span>}
-            {!searching &&
-              !searchError &&
-              !found.length &&
-              !localResults.length && (
+                {m.kind === "vehicle" ? (
+                  <VehicleIcon type={m.type ?? ""} size={30} />
+                ) : m.kind === "station" ? (
+                  <BuildingIcon type={m.type ?? ""} size={30} />
+                ) : (
+                  <IncidentIcon org={m.org} />
+                )}
                 <span>
-                  Keine passenden Orte oder sichtbaren Objekte gefunden.
+                  <strong>{m.name}</strong>
+                  <small>
+                    {m.org}
+                    {m.fms !== undefined ? ` · FMS ${m.fms}` : ""}
+                    {m.fault ? " · Störung" : ""}
+                    {m.friend ? " · Verbund" : ""}
+                  </small>
                 </span>
-              )}
+              </button>
+            ))}
+          </div>
+        </aside>
+      )}
+      {!inspectionsHidden && !!poiGroup.length && pois && (
+        <aside
+          className="map-place-detail map-poi-group"
+          aria-label="Geografische Einrichtungen am Kartenstandort"
+        >
+          <button
+            className="map-detail-close"
+            aria-label="Einrichtungsgruppe schließen"
+            onClick={() => setPoiGroup([])}
+          >
+            <X size={18} />
+          </button>
+          <h3>
+            {poiGroup.reduce((sum, point) => sum + point.count, 0)}{" "}
+            Karteneinträge in dieser Gruppe
+          </h3>
+          <p>Einrichtung auswählen, auch bei identischen Koordinaten.</p>
+          <div className="map-object-list">
+            {poiGroup.map((point) => (
+              <button
+                key={point.id}
+                onClick={() => {
+                  setPoiGroup([]);
+                  setPoiSelection(point);
+                  if (point.count > 1)
+                    center(
+                      project(point),
+                      Math.min(18, (mapRef.current?.getZoom() ?? 12) + 2),
+                    );
+                }}
+              >
+                <MapIcon
+                  glyph={poiCategories[point.category].glyph}
+                  size={30}
+                />
+                <span>
+                  <strong>{point.name}</strong>
+                  <small>
+                    {poiCategories[point.category].singular}
+                    {point.count > 1 ? ` · ${point.count} Karteneinträge` : ""}
+                  </small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </aside>
+      )}
+      {!inspectionsHidden && poiSelection && pois && (
+        <aside
+          className="map-place-detail"
+          aria-label="Geografische Einrichtung"
+        >
+          <button
+            className="map-detail-close"
+            aria-label="Einrichtungsdetails schließen"
+            onClick={() => setPoiSelection(null)}
+          >
+            <X size={18} />
+          </button>
+          <MapIcon
+            glyph={poiCategories[poiSelection.category].glyph}
+            size={32}
+          />
+          <h3>{poiSelection.name}</h3>
+          <p>
+            {poiCategories[poiSelection.category].singular} · geografischer
+            Karteneintrag
+          </p>
+          {poiSelection.count > 1 ? (
+            <p>
+              {poiSelection.count} Karteneinträge in dieser Gruppe. Vergrößern
+              zeigt die einzelnen Standorte.
+            </p>
+          ) : (
+            <p>
+              {poiSelection.lat.toFixed(5)}° N · {poiSelection.lon.toFixed(5)}°
+              E
+            </p>
+          )}
+          <p>
+            OpenStreetMap · lokaler{" "}
+            {poiSelection.source === "index" ? "Ortsindex" : "Vektorkartensatz"}
+            . Keine Aussage über reale Besetzung, Betten oder
+            Einsatzbereitschaft.
+          </p>
+          <button
+            onClick={() =>
+              center(
+                project(poiSelection),
+                Math.min(18, (mapRef.current?.getZoom() ?? 12) + 2),
+              )
+            }
+          >
+            Standort vergrößern
+          </button>
+        </aside>
+      )}
+      {!inspectionsHidden && !!selectedPresence.length && showPlayers && (
+        <aside
+          className="map-place-detail presence-detail"
+          aria-label="Spieler am Kartenstandort"
+        >
+          <button
+            className="map-detail-close"
+            aria-label="Spielerdetails schließen"
+            onClick={() => setPresenceSelection([])}
+          >
+            <X size={18} />
+          </button>
+          <MapIcon glyph="dispatch" size={32} />
+          <h3>Leitstellen an diesem Standort</h3>
+          {selectedPresence.map((d) => (
+            <section key={d.id}>
+              <strong>
+                {d.name}
+                {d.id === ownDeskId ? " · Meine Leitstelle" : ""}
+              </strong>
+              <p>{d.location?.label}</p>
+              <ul>
+                {d.players.map((p) => (
+                  <li key={p.id}>
+                    {p.name}
+                    <span>
+                      {p.status === "online" ? "Online" : "Verbindet erneut"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => d.location && center(d.location, 16)}>
+                Auf Standort zentrieren
+              </button>
+            </section>
+          ))}
+          <p>
+            Gemeinsamer Spielstandort der Leitstelle · keine Standortfreigabe
+            deines Geräts.
+          </p>
+        </aside>
+      )}
+      {!inspectionsHidden &&
+        selectedVehicle &&
+        !objectDetails.length &&
+        !poiSelection &&
+        !poiGroup.length &&
+        !selectedPresence.length && (
+          <div
+            className="map-vehicle-detail"
+            aria-label="Ausgewähltes Fahrzeug"
+          >
+            <button
+              className="map-detail-close"
+              aria-label="Fahrzeugdetails schließen"
+              onClick={() => onInspect?.()}
+            >
+              <X size={18} />
+            </button>
+            <strong>
+              <VehicleIcon type={selectedVehicle.type} />
+              {selectedVehicle.name}
+            </strong>
+            <span>{tripLabel(selectedVehicle, s.time)}</span>
+            <span>
+              {selectedVehicle.journey?.reason ||
+                "Fahrweg nach aktuellem Straßenmodell"}
+            </span>
           </div>
         )}
-      </div>
-      <div className="map-layers" aria-label="Kartenebenen">
-        <button
-          onClick={() => {
-            setFollowing(false);
-            overview();
-          }}
-        >
-          Ganz Deutschland
-        </button>
-        <button
-          onClick={() => {
-            setFollowing(false);
-            center(s.buildings[0]?.pos ?? WORLD_CENTER);
-          }}
-        >
-          Meine Wachen
-        </button>
-        <button
-          data-center-selection
-          disabled={!selectionPosition}
-          onClick={() => selectionPosition && center(selectionPosition)}
-        >
-          <Crosshair size={15} /> Auswahl zentrieren
-        </button>
-        {selectedVehicle && (
-          <button
-            aria-pressed={following}
-            onClick={() => setFollowing(!following)}
-          >
-            <Navigation size={15} />
-            Fahrzeug folgen
-          </button>
-        )}
-        <button
-          aria-pressed={labels}
-          onClick={() => {
-            setLabels(!labels);
-            mapRef.current?.triggerRepaint();
-          }}
-        >
-          Beschriftung
-        </button>
-        <button aria-pressed={routes} onClick={() => setRoutes(!routes)}>
-          Fahrwege
-        </button>
-        {!!friends.length && (
-          <button
-            aria-pressed={showFriends}
-            onClick={() => setShowFriends(!showFriends)}
-          >
-            Verbund
-          </button>
-        )}
-      </div>
-      <div className="map-zoom" aria-label="Zoomsteuerung">
-        <button
-          aria-label="Vergrößern"
-          onClick={() => mapRef.current?.zoomIn()}
-        >
-          +
-        </button>
-        <button
-          aria-label="Verkleinern"
-          onClick={() => mapRef.current?.zoomOut()}
-        >
-          −
-        </button>
-        <button
-          aria-label="Karte zentrieren"
-          onClick={() => center(s.buildings[0]?.pos ?? WORLD_CENTER)}
-        >
-          <LocateFixed size={18} />
-        </button>
-      </div>
-      <details className="map-control-help">
-        <summary>Kartensteuerung</summary>
-        <p>
-          Ziehen: Karte verschieben · Mausrad: Zoom zum Zeiger · Klick:
-          auswählen. Pfeiltasten und +/− bei fokussierter Karte, Pos1: ganz
-          Deutschland. Strg+Mausrad vergrößert den Browser. Escape bricht die
-          Bauplatzwahl ab.
-        </p>
-      </details>
-      {selectedVehicle && (
-        <div className="map-vehicle-detail">
-          <strong>{selectedVehicle.name}</strong>
-          <span>{tripLabel(selectedVehicle, s.time)}</span>
-          <span>
-            {selectedVehicle.journey?.reason ||
-              "Fahrweg nach aktuellem Straßenmodell"}
-          </span>
-        </div>
-      )}
-      <Operations s={s} />
       {placing && (
         <div className="placement-hint germany-placement">
           <button

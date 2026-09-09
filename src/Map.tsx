@@ -1,5 +1,7 @@
 import { readCamera, DRAG_THRESHOLD, wheelPixels } from "./map-camera";
 import { WORLD_NAME, WORLD_CENTER } from "./world-choice";
+import { VehicleIcon, BuildingIcon, organizationColors } from "./map-icons";
+import type { PublicPlayer } from "./presence";
 import { IncidentIcon } from "./HudIcons";
 import { buildReason } from "./purchase";
 import { vehiclePosition, vehicleMotion } from "./vehicle-position";
@@ -44,6 +46,8 @@ export const MapView = memo(function MapView({
   friends,
   readonly = false,
   onCancelPlace,
+  onInspect,
+  inspectionsHidden = false,
 }: {
   s: Save;
   selected: string;
@@ -51,8 +55,12 @@ export const MapView = memo(function MapView({
   placing: string;
   onPlace: (p: Point) => void;
   friends: Friend[];
+  presence?: readonly PublicPlayer[];
+  ownDeskId?: string;
   readonly?: boolean;
   onCancelPlace?: () => void;
+  onInspect?: () => void;
+  inspectionsHidden?: boolean;
 }) {
   const overview = 1300 / WORLD_WIDTH;
   const cameraKey = `lv-camera-v1:${s.world}:${s.player.id}`;
@@ -338,174 +346,230 @@ export const MapView = memo(function MapView({
 
   return (
     <div className="map-wrap">
-      <div className="map-toolbar">
-        <strong>Region {WORLD_NAME} · 100 × 100 km</strong>
-        {readonly && (
-          <span role="status">
-            Verbindung fehlt · letzter bestätigter Stand
-          </span>
-        )}
-        <select
-          aria-label="Stadtviertel anzeigen"
-          defaultValue=""
-          onChange={(e) => {
-            const d = districts.find((d) => d.name === e.target.value);
-            if (d) {
-              const town = towns.find((t) => t.name === d.name);
-              const z = town ? 1 : 2;
-              setZoom(z);
-              setOffset(
-                clamp(
-                  {
-                    x: d.x - 650 / z,
-                    y: d.y - (town ? 110 * town.size : 0) - viewHeight(z) / 2,
-                  },
-                  z,
-                ),
-              );
-            }
-          }}
-        >
-          <option value="" disabled>
-            Stadtviertel …
-          </option>
-          {districts.map((d) => (
-            <option key={d.name}>{d.name}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Kartenfilter"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-      </div>
-      <div className="map-search">
-        <label>
-          <Search size={16} />
-          <input
-            aria-label="Karte durchsuchen"
-            placeholder="Einsatz, Funkrufname, Wache oder Ort …"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-        <select
-          aria-label="Organisation auf Karte"
-          value={org}
-          onChange={(e) => setOrg(e.target.value)}
-        >
-          {[
-            "Alle",
-            "Feuerwehr",
-            "Rettungsdienst",
-            "Polizei",
-            "THW",
-            "Wasserrettung",
-            "Infrastruktur",
-          ].map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Fahrzeugstatus auf Karte"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-        {(filter !== "Alle" ||
-          org !== "Alle" ||
-          status !== "Alle" ||
-          search) && (
-          <button
-            onClick={() => {
-              setFilter("Alle");
-              setOrg("Alle");
-              setStatus("Alle");
-              setSearch("");
+      <aside className="map-tool-panel" aria-label="Kartenwerkzeuge">
+        <div className="map-toolbar">
+          <strong>Region {WORLD_NAME} · 100 × 100 km</strong>
+          {readonly && (
+            <span role="status">
+              Verbindung fehlt · letzter bestätigter Stand
+            </span>
+          )}
+          <select
+            aria-label="Stadtviertel anzeigen"
+            defaultValue=""
+            onChange={(e) => {
+              const d = districts.find((d) => d.name === e.target.value);
+              if (d) {
+                const town = towns.find((t) => t.name === d.name);
+                const z = town ? 1 : 2;
+                setZoom(z);
+                setOffset(
+                  clamp(
+                    {
+                      x: d.x - 650 / z,
+                      y: d.y - (town ? 110 * town.size : 0) - viewHeight(z) / 2,
+                    },
+                    z,
+                  ),
+                );
+              }
             }}
           >
-            Filter zurücksetzen <X size={14} />
+            <option value="" disabled>
+              Stadtviertel …
+            </option>
+            {districts.map((d) => (
+              <option key={d.name}>{d.name}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Kartenfilter"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </div>
+        <div className="map-search">
+          <label>
+            <Search size={16} />
+            <input
+              aria-label="Karte durchsuchen"
+              placeholder="Einsatz, Funkrufname, Wache oder Ort …"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <select
+            aria-label="Organisation auf Karte"
+            value={org}
+            onChange={(e) => setOrg(e.target.value)}
+          >
+            {[
+              "Alle",
+              "Feuerwehr",
+              "Rettungsdienst",
+              "Polizei",
+              "THW",
+              "Wasserrettung",
+              "Infrastruktur",
+            ].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Fahrzeugstatus auf Karte"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+          {(filter !== "Alle" ||
+            org !== "Alle" ||
+            status !== "Alle" ||
+            search) && (
+            <button
+              onClick={() => {
+                setFilter("Alle");
+                setOrg("Alle");
+                setStatus("Alle");
+                setSearch("");
+              }}
+            >
+              Filter zurücksetzen <X size={14} />
+            </button>
+          )}
+          {search && (
+            <div className="map-search-results">
+              {results.length ? (
+                results.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      if (!r.id.startsWith("place:")) onSelect(r.id);
+                      center(r.pos, 1);
+                      setSearch("");
+                      setFollowing(false);
+                    }}
+                  >
+                    {r.name}
+                  </button>
+                ))
+              ) : (
+                <span>Keine sichtbaren Objekte gefunden.</span>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="map-layers" aria-label="Kartenebenen">
+          <button
+            onClick={() => {
+              setZoom(overview);
+              setOffset({ x: 0, y: 0 });
+            }}
+          >
+            Gesamte Region
           </button>
-        )}
-        {search && (
-          <div className="map-search-results">
-            {results.length ? (
-              results.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => {
-                    if (!r.id.startsWith("place:")) onSelect(r.id);
-                    center(r.pos, 1);
-                    setSearch("");
-                    setFollowing(false);
-                  }}
-                >
-                  {r.name}
-                </button>
-              ))
-            ) : (
-              <span>Keine sichtbaren Objekte gefunden.</span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="map-layers" aria-label="Kartenebenen">
-        <button
-          onClick={() => {
-            setZoom(overview);
-            setOffset({ x: 0, y: 0 });
-          }}
-        >
-          Gesamte Region
-        </button>
-        <button
-          onClick={() => {
-            const p = s.buildings[0]?.pos ?? WORLD_CENTER;
-            setZoom(1);
-            setOffset(clamp({ x: p.x - 650, y: p.y - viewHeight(1) / 2 }, 1));
-          }}
-        >
-          Meine Wachen
-        </button>
+          <button
+            onClick={() => {
+              const p = s.buildings[0]?.pos ?? WORLD_CENTER;
+              setZoom(1);
+              setOffset(clamp({ x: p.x - 650, y: p.y - viewHeight(1) / 2 }, 1));
+            }}
+          >
+            Meine Wachen
+          </button>
 
-        <button
-          data-center-selection
-          disabled={!selectionPosition}
-          onClick={() => selectionPosition && center(selectionPosition)}
-        >
-          <Crosshair size={15} /> Auswahl zentrieren
-        </button>
-        {vehicle && (
           <button
-            aria-pressed={following}
-            onClick={() => setFollowing(!following)}
+            data-center-selection
+            disabled={!selectionPosition}
+            onClick={() => selectionPosition && center(selectionPosition)}
           >
-            <Navigation size={15} />{" "}
-            {following ? "Folgen aktiv" : "Fahrzeug folgen"}
+            <Crosshair size={15} /> Auswahl zentrieren
           </button>
-        )}
-        <button aria-pressed={labels} onClick={() => setLabels(!labels)}>
-          Beschriftung
-        </button>
-        <button aria-pressed={routes} onClick={() => setRoutes(!routes)}>
-          Fahrwege
-        </button>
-        {friends.length > 0 && (
+          {vehicle && (
+            <button
+              aria-pressed={following}
+              onClick={() => setFollowing(!following)}
+            >
+              <Navigation size={15} />{" "}
+              {following ? "Folgen aktiv" : "Fahrzeug folgen"}
+            </button>
+          )}
+          <button aria-pressed={labels} onClick={() => setLabels(!labels)}>
+            Beschriftung
+          </button>
+          <button aria-pressed={routes} onClick={() => setRoutes(!routes)}>
+            Fahrwege
+          </button>
+          {friends.length > 0 && (
+            <button
+              aria-pressed={showFriends}
+              onClick={() => setShowFriends(!showFriends)}
+            >
+              Verbund
+            </button>
+          )}
+        </div>
+        <details className="map-control-help">
+          <summary>Kartensteuerung</summary>
+          <p>
+            Ziehen: Karte verschieben · Klick: auswählen · Mausrad: Zoom zum
+            Zeiger. Pfeiltasten und +/− bei fokussierter Karte. Strg+Mausrad
+            vergrößert den Browser. Ziehen beendet das Fahrzeugfolgen.
+          </p>
+          <label>
+            Zoomempfindlichkeit{" "}
+            <input
+              aria-label="Zoomempfindlichkeit"
+              type="range"
+              min="0.3"
+              max="2"
+              step="0.1"
+              value={sensitivity}
+              onChange={(e) => setSensitivity(Number(e.target.value))}
+            />
+          </label>
+        </details>
+        <div className="map-zoom" aria-label="Zoomsteuerung">
+          <button aria-label="Vergrößern" onClick={() => resize(zoom + 0.25)}>
+            +
+          </button>
+          <button aria-label="Verkleinern" onClick={() => resize(zoom - 0.25)}>
+            −
+          </button>
           <button
-            aria-pressed={showFriends}
-            onClick={() => setShowFriends(!showFriends)}
+            aria-label="Karte zentrieren"
+            onClick={() => {
+              setZoom(1);
+              setOffset({ x: 0, y: 0 });
+            }}
           >
-            Verbund
+            <LocateFixed size={18} />
           </button>
-        )}
-      </div>
+        </div>
+        <div className="map-legend">
+          <span>
+            <BuildingIcon type="fire" size={18} /> Eigene Wache
+          </span>
+          {friends.length > 0 && <span>◌ Verbund</span>}
+          <span>! Einsatz</span>
+          <span>＋ Klinikum</span>
+          <span>Fiktive Region · Tempolimits nach Weltregeln</span>
+          <span>
+            {Math.round(zoom * 100)} % · Ausschnitt{" "}
+            {(15.6 / zoom).toLocaleString("de-DE", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            km breit
+          </span>
+        </div>
+        <Operations s={s} />
+      </aside>
       <svg
         ref={svg}
         className={
@@ -737,25 +801,18 @@ export const MapView = memo(function MapView({
                   width="30"
                   height="30"
                   rx="7"
-                  fill={bt(b.type).org === "Feuerwehr" ? "#e77658" : "#63afc9"}
+                  fill={organizationColors[bt(b.type).org] ?? "#52616b"}
                   stroke={selected === b.id ? "#fff" : "#15242b"}
                   strokeWidth="3"
                 />
-                <text
-                  textAnchor="middle"
-                  y="6"
-                  fontWeight="800"
-                  fontSize="18"
-                  fill="#101c26"
-                >
-                  {b.type === "fire"
-                    ? "F"
-                    : b.type === "police"
-                      ? "P"
-                      : b.type === "thw"
-                        ? "T"
-                        : "R"}
-                </text>
+                <BuildingIcon
+                  type={b.type}
+                  x={-11}
+                  y={-11}
+                  width={22}
+                  height={22}
+                  color="white"
+                />
                 <title>{b.name} · Eigene Wache</title>
               </g>
             ))}
@@ -781,9 +838,17 @@ export const MapView = memo(function MapView({
                   width="20"
                   height="20"
                   rx="4"
-                  fill={playerColor(f.id)}
+                  fill={organizationColors[bt(b.type).org] ?? "#52616b"}
                   stroke="#e7d7ff"
                   strokeDasharray="3 2"
+                />
+                <BuildingIcon
+                  type={b.type}
+                  x={-8}
+                  y={-8}
+                  width={16}
+                  height={16}
+                  color="white"
                 />
                 <title>
                   {b.name} · {f.name} · {f.status}
@@ -922,63 +987,60 @@ export const MapView = memo(function MapView({
                       strokeDasharray="3 6"
                     />
                   )}
-                  <rect
-                    x={v.position.x + 3}
-                    y={v.position.y - 9}
-                    width="16"
-                    height="11"
-                    rx="3"
-                    fill="#c9b4e8"
+                  <g
+                    transform={`translate(${v.position.x},${v.position.y}) scale(${unitsPerPixel})`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${v.name} von ${f.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect("friends");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") onSelect("friends");
+                    }}
                   >
+                    <rect
+                      x="-13"
+                      y="-13"
+                      width="26"
+                      height="26"
+                      rx="5"
+                      fill={
+                        organizationColors[bt(vt(v.type).home).org] ?? "#52616b"
+                      }
+                      stroke="#e7d7ff"
+                      strokeDasharray="3 2"
+                    />
+                    <VehicleIcon
+                      type={v.type}
+                      x={-10}
+                      y={-10}
+                      width={20}
+                      height={20}
+                      color="white"
+                    />
                     <title>
                       {v.name} · {f.name} · {tripLabel(v, v.arrive - v.eta)} ·{" "}
                       {f.status}
                     </title>
-                  </rect>
+                  </g>
                 </g>
               )),
           )}
       </svg>
-      <details className="map-control-help">
-        <summary>Kartensteuerung</summary>
-        <p>
-          Ziehen: Karte verschieben · Klick: auswählen · Mausrad: Zoom zum
-          Zeiger. Pfeiltasten und +/− bei fokussierter Karte. Strg+Mausrad
-          vergrößert den Browser. Ziehen beendet das Fahrzeugfolgen.
-        </p>
-        <label>
-          Zoomempfindlichkeit{" "}
-          <input
-            aria-label="Zoomempfindlichkeit"
-            type="range"
-            min="0.3"
-            max="2"
-            step="0.1"
-            value={sensitivity}
-            onChange={(e) => setSensitivity(Number(e.target.value))}
-          />
-        </label>
-      </details>
-      <div className="map-zoom" aria-label="Zoomsteuerung">
-        <button aria-label="Vergrößern" onClick={() => resize(zoom + 0.25)}>
-          +
-        </button>
-        <button aria-label="Verkleinern" onClick={() => resize(zoom - 0.25)}>
-          −
-        </button>
-        <button
-          aria-label="Karte zentrieren"
-          onClick={() => {
-            setZoom(1);
-            setOffset({ x: 0, y: 0 });
-          }}
-        >
-          <LocateFixed size={18} />
-        </button>
-      </div>
-      {vehicle && (
+      {vehicle && !inspectionsHidden && (
         <div className="map-vehicle-detail" aria-label="Ausgewähltes Fahrzeug">
-          <strong>{vehicle.name}</strong>
+          <button
+            aria-label="Fahrzeugdetails schließen"
+            onClick={() => onInspect?.()}
+          >
+            <X size={16} />
+          </button>
+          <strong>
+            <VehicleIcon type={vehicle.type} />
+            {vehicle.name}
+          </strong>
           <span>
             {bt(vt(vehicle.type).home).org} · FMS{" "}
             {s.desk.fleet[vehicle.id]?.code ?? "–"}
@@ -1010,18 +1072,6 @@ export const MapView = memo(function MapView({
           </span>
         </div>
       )}
-      <div className="map-legend">
-        <span>▣ Eigene Wache</span>
-        {friends.length > 0 && <span>◌ Verbund</span>}
-        <span>! Einsatz</span>
-        <span>＋ Klinikum</span>
-        <span>Fiktive Region · Tempolimits nach Weltregeln</span>
-        <span>
-          {Math.round(zoom * 100)} % · Ausschnitt{" "}
-          {(15.6 / zoom).toLocaleString("de-DE", { maximumFractionDigits: 1 })}{" "}
-          km breit
-        </span>
-      </div>
       <div className="map-scale" aria-label="Kartenmaßstab">
         <span
           className="map-scale-line"
@@ -1036,7 +1086,6 @@ export const MapView = memo(function MapView({
         />
         <span>{scaleMeters / 1000} km</span>
       </div>
-      <Operations s={s} />
       {placing && (
         <div className="placement-hint">
           <button

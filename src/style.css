@@ -383,17 +383,6 @@ progress::-moz-progress-bar {
 .mission-card progress {
   height: 3px;
 }
-.archive-link {
-  justify-content: space-between;
-  background: #152230;
-  border: 0;
-  border-radius: 0;
-  padding: 18px 20px;
-  font-size: 12px;
-}
-.archive-link span {
-  color: #8fa6b8;
-}
 .map-column {
   min-width: 0;
   display: flex;
@@ -481,18 +470,6 @@ progress::-moz-progress-bar {
   border-radius: 8px;
   font-weight: 700;
   white-space: nowrap;
-}
-.bottom-panel {
-  background: #111d29;
-  border-top: 1px solid #30414b;
-  min-height: 166px;
-}
-.bottom-panel .panel-heading {
-  padding: 15px 20px;
-}
-.bottom-panel .primary {
-  font-size: 12px;
-  padding: 8px 12px;
 }
 .station-strip {
   display: flex;
@@ -933,7 +910,6 @@ li {
 .light .topbar,
 .light .navrail,
 .light .mission-sidebar,
-.light .bottom-panel,
 .light .radio-bar,
 .light .modal {
   background: #f0f5f8;

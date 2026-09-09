@@ -69,6 +69,7 @@ for (const manual of [false, true])
           .getByRole("button", { name: "Schließen", exact: true })
           .click();
       }
+      await showIncidents(page);
       await page.locator(".mission-card").first().click();
       await interviewUI(page, app);
       if (!manual) {
@@ -99,6 +100,7 @@ for (const manual of [false, true])
         await page
           .getByRole("button", { name: "Spielen", exact: true })
           .click();
+        await showIncidents(page);
         await page.locator(".mission-card").first().click();
         expect(
           app.db
@@ -117,7 +119,7 @@ for (const manual of [false, true])
       await page
         .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
         .click();
-      await expect(page.locator(".incident-desk h2")).toHaveText(
+      await expect(page.locator(".dock-heading strong")).toHaveText(
         "Flächenbrand",
       );
       await expect(page.locator(".radio-queue")).toContainText(
@@ -164,7 +166,7 @@ for (const manual of [false, true])
       await page
         .getByRole("button", { name: "Schließen", exact: true })
         .click();
-      await page.getByRole("button", { name: /Einsatzarchiv/ }).click();
+      await openPanel(page, "Archiv");
       await page
         .getByRole("button", { name: "Verlauf ansehen", exact: true })
         .first()
@@ -222,6 +224,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .toBe("station");
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
   await expect(page.locator(".dispatch-list input").first()).toBeDisabled();
@@ -244,6 +247,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     )
     .toBe(2);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await page.locator(".dispatch-list input").first().check();
   await page

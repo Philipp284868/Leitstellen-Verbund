@@ -44,12 +44,29 @@ test.beforeAll(async () => {
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self'; connect-src 'self'",
       );
       res.end(
-        '<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#122532;color:white;font:14px system-ui}header{padding:12px;display:flex;gap:20px}.germany-map{height:850px!important}.map-toolbar,.map-search,.map-layers{position:relative;z-index:6;margin-left:20px;max-width:420px}.map-layers{display:flex;flex-wrap:wrap}.map-zoom{position:absolute;right:15px;top:80px}.operations{display:none}</style></head><body><div id="root"></div><script type="module" src="/tests/fixtures/germany-map-controls.tsx"></script></body></html>',
+        '<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#122532;color:white;font:14px system-ui}header{padding:12px;display:flex;gap:20px}.germany-map{height:850px!important}.map-toolbar,.map-search,.map-layers{position:relative;z-index:6;margin-left:20px;max-width:420px}.map-layers{display:flex;flex-wrap:wrap}.map-tool-panel{position:absolute;z-index:6;top:12px;left:12px;width:380px;max-height:calc(100% - 24px);overflow:auto;background:#142c37}.map-tool-panel .map-zoom{position:static;display:flex;gap:10px}.map-tool-panel .map-control-help{position:static;max-width:100%}.map-tool-panel .map-search,.map-tool-panel .map-toolbar,.map-tool-panel .map-layers{margin:0;position:relative}.operations{display:none}</style></head><body><div id="root"></div><script type="module" src="/tests/fixtures/germany-map-controls.tsx"></script></body></html>',
       );
       return;
     }
     if (url.pathname === "/geo/manifest")
       return json({ bounds: [5.5, 47.1, 15.6, 55.2], minzoom: 0, maxzoom: 14 });
+    if (url.pathname.startsWith("/geo/pois/"))
+      return json({
+        dataset: "",
+        snapshot: "fixture",
+        points: [
+          {
+            id: "index:fixture-hospital",
+            category: "hospital",
+            name: "Klinik aus POI-Testdaten",
+            lon: 13.407,
+            lat: 52.52,
+            count: 1,
+            source: "index",
+            kind: "hospital",
+          },
+        ],
+      });
     if (url.pathname.startsWith("/geo/tiles/")) {
       requests.push(url.pathname);
       res.statusCode = 204;
@@ -211,4 +228,241 @@ test("Deutschland-Bauvorschau: kein Kauf nach Drag und Spielmodus bei Serverprü
   await expect(page.getByRole("button", { name: "Bau abbrechen" })).toHaveCount(
     0,
   );
+});
+
+test("Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Filter und Kamerasprung", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.setViewportSize({ width: 1600, height: 1080 });
+  await page.goto(`${origin}/__controls?presence=1`);
+  const marker = page.getByTestId("map-presence");
+  await expect(marker).toHaveCount(1);
+  await expect(marker).toHaveAttribute("aria-label", /3 Spieler/);
+  await marker.click();
+  const popup = page.getByRole("complementary", {
+    name: "Spieler am Kartenstandort",
+  });
+  await expect(popup.getByText("Anna", { exact: false })).toBeVisible();
+  await expect(popup.getByText("Ben", { exact: false })).toBeVisible();
+  await expect(popup.getByText("Clara", { exact: false })).toBeVisible();
+  await expect(
+    popup.getByText("Verbindet erneut", { exact: true }),
+  ).toBeVisible();
+  await expect(popup.getByText("Ohne Standort", { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByTestId("inspection-count")).toHaveText("1");
+  await page.keyboard.press("Escape");
+  await expect(popup).toHaveCount(0);
+  const poiResponse = page.waitForResponse((r) =>
+    r.url().includes("/geo/pois/"),
+  );
+  await page.evaluate(
+    (point) =>
+      window.dispatchEvent(
+        new CustomEvent("lv:map-focus", { detail: { point, zoom: 15 } }),
+      ),
+    project({ lon: 13.407, lat: 52.52 }),
+  );
+  await expect
+    .poll(
+      async () =>
+        JSON.parse(
+          (await page
+            .getByTestId("germany-map-viewport")
+            .getAttribute("data-camera"))!,
+        ).zoom,
+    )
+    .toBeCloseTo(15, 1);
+  // Wait for the asynchronous viewport POI request, then click the geographic center.
+  await poiResponse;
+  const view = await page.getByTestId("germany-map-viewport").boundingBox();
+  await page.mouse.click(view!.x + view!.width / 2, view!.y + view!.height / 2);
+  const detail = page.getByRole("complementary", {
+    name: "Geografische Einrichtung",
+  });
+  await expect(
+    detail.getByRole("heading", { name: "Klinik aus POI-Testdaten" }),
+  ).toBeVisible();
+  await expect(detail).toContainText("geografischer Karteneintrag");
+  await expect(page.getByTestId("inspection-count")).toHaveText("2");
+  await page.keyboard.press("Escape");
+  await expect(detail).toHaveCount(0);
+  await page.mouse.click(view!.x + view!.width / 2, view!.y + view!.height / 2);
+  await expect(detail).toBeVisible();
+  await page
+    .getByText("Einrichtungen & Kartenlegende", { exact: true })
+    .click();
+  await page
+    .getByLabel("Geografische Einrichtungen", { exact: true })
+    .uncheck();
+  await expect(detail).toHaveCount(0);
+  await expect(
+    page.getByRole("complementary", { name: "Kartenwerkzeuge" }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .getByRole("complementary", { name: "Kartenwerkzeuge" })
+      .getByLabel("Zoomsteuerung"),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("Fahrzeuge mit identischen Koordinaten bleiben am Detailzoom einzeln erreichbar und verdecken die Wache nicht", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.setViewportSize({ width: 1600, height: 1080 });
+  await page.goto(`${origin}/__controls?fleet=1`);
+  await expect(page.getByTestId("map-vehicle")).toHaveCount(1);
+  await page.evaluate(
+    (point) =>
+      window.dispatchEvent(
+        new CustomEvent("lv:map-focus", { detail: { point, zoom: 18 } }),
+      ),
+    project({ lon: 13.405, lat: 52.52 }),
+  );
+  await expect
+    .poll(
+      async () =>
+        JSON.parse(
+          (await page
+            .getByTestId("germany-map-viewport")
+            .getAttribute("data-camera"))!,
+        ).zoom,
+    )
+    .toBeCloseTo(18, 1);
+  const group = page.getByTestId("map-vehicle");
+  await expect(group).toHaveAttribute("aria-label", /3 Fahrzeuge/);
+  await page.getByTestId("map-station").click();
+  await expect(page.getByTestId("selection")).toHaveText("station-fixture");
+  await group.click();
+  const details = page.getByRole("complementary", {
+    name: "Objekte am Kartenstandort",
+  });
+  await expect(page.getByTestId("inspection-count")).toHaveText("1");
+  await page.keyboard.press("Escape");
+  await expect(details).toHaveCount(0);
+  await group.click();
+  await expect(details.locator('[data-map-glyph="engine"]')).toHaveCount(1);
+  await expect(details.locator('[data-map-glyph="ladder"]')).toHaveCount(1);
+  await expect(details.locator('[data-map-glyph="ambulance"]')).toHaveCount(1);
+  await details.getByRole("button", { name: /Funkrufname DLK/ }).click();
+  await expect(page.getByTestId("selection")).toHaveText("vehicle-1");
+  await expect(
+    page.locator('.map-vehicle-detail [data-map-glyph="ladder"]'),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Testarbeitsansicht umschalten" })
+    .click();
+  await expect(
+    page.getByLabel("Ausgewähltes Fahrzeug", { exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Testarbeitsansicht umschalten" })
+    .click();
+  await expect(
+    page.getByLabel("Ausgewähltes Fahrzeug", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Fahrzeugdetails schließen", { exact: true }).click();
+  await expect(
+    page.getByLabel("Ausgewähltes Fahrzeug", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByTestId("selection")).toHaveText("");
+  expect(errors).toEqual([]);
+});
+
+test("drei Einrichtungen an derselben Koordinate bleiben auch bei Zoom 18 vollständig auswählbar", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.setViewportSize({ width: 1600, height: 1080 });
+  await page.route("**/geo/pois/**", (route) =>
+    route.fulfill({
+      json: {
+        dataset: "",
+        snapshot: "fixture",
+        points: ["A", "B", "C"].map((letter) => ({
+          id: `index:coincident-${letter}`,
+          category: "hospital",
+          name: `Klinik ${letter} am gemeinsamen Teststandort`,
+          lon: 13.407,
+          lat: 52.52,
+          count: 1,
+          source: "index",
+          kind: "hospital",
+        })),
+      },
+    }),
+  );
+  await page.goto(`${origin}/__controls`);
+  await expect(page.getByText("Deutschlandkarte wird geladen …")).toHaveCount(
+    0,
+  );
+  await page.evaluate(
+    (point) =>
+      window.dispatchEvent(
+        new CustomEvent("lv:map-focus", { detail: { point, zoom: 18 } }),
+      ),
+    project({ lon: 13.407, lat: 52.52 }),
+  );
+  const viewport = page.getByTestId("germany-map-viewport");
+  await expect
+    .poll(
+      async () =>
+        JSON.parse((await viewport.getAttribute("data-camera"))!).zoom,
+    )
+    .toBeCloseTo(18, 1);
+  // The marker canvas is asynchronous; wait for its center hit area to be painted.
+  await expect
+    .poll(() =>
+      page.locator("canvas.germany-pois").evaluate((element) => {
+        const canvas = element as HTMLCanvasElement;
+        return canvas
+          .getContext("2d")!
+          .getImageData(
+            Math.floor(canvas.width / 2),
+            Math.floor(canvas.height / 2),
+            1,
+            1,
+          ).data[3];
+      }),
+    )
+    .toBeGreaterThan(0);
+  const box = (await viewport.boundingBox())!,
+    group = page.getByRole("complementary", {
+      name: "Geografische Einrichtungen am Kartenstandort",
+      exact: true,
+    }),
+    detail = page.getByRole("complementary", {
+      name: "Geografische Einrichtung",
+      exact: true,
+    });
+  for (const letter of ["A", "B", "C"]) {
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(group.locator(".map-object-list button")).toHaveCount(3);
+    await group
+      .getByRole("button", { name: new RegExp(`Klinik ${letter} `) })
+      .click();
+    await expect(group).toHaveCount(0);
+    await expect(
+      detail.getByRole("heading", {
+        name: `Klinik ${letter} am gemeinsamen Teststandort`,
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(group).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(group).toHaveCount(0);
+  await expect(detail).toHaveCount(0);
+  await expect(
+    page.getByLabel("Interaktive Karte von Deutschland", { exact: true }),
+  ).toBeFocused();
+  expect(errors).toEqual([]);
 });

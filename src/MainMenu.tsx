@@ -165,7 +165,7 @@ export function MainMenu({
                 <Siren size={14} />
                 {s.missions.length} aktive Einsätze
               </span>
-              <span>{modeName(mode)} · Autoritativer Server</span>
+              <span>{modeName(mode)}</span>
             </div>
           </button>
         </section>
@@ -188,7 +188,6 @@ export function MainMenu({
                 "Verfügbare Fahrzeuge",
                 s.vehicles.filter((v) => !available(v)).length,
               ],
-              [Users, "Einsatzkräfte gesamt", s.people.length],
               [Wallet, "Budget", credits(s.money)],
             ].map(([Icon, label, value]) => {
               const Symbol = Icon as typeof Siren;

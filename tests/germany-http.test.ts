@@ -9,6 +9,7 @@ import {
 } from "vitest";
 import { build } from "esbuild";
 import { DatabaseSync } from "node:sqlite";
+import { createHash } from "node:crypto";
 import {
   mkdirSync,
   mkdtempSync,
@@ -31,6 +32,11 @@ import type { Config } from "../server/config";
 import type { ServerAction } from "../server/actions";
 import type { Mission, Save } from "../src/model";
 import { unproject } from "../src/germany/projection";
+import {
+  PresenceDecoder,
+  type PublicPlayer,
+  type PresenceFrame,
+} from "../src/presence";
 import {
   encodeTile,
   rectangle,
@@ -327,6 +333,29 @@ function connect(session: Session, delta: boolean) {
   socket.connect();
   return { socket, next };
 }
+function presenceClient(session: Session) {
+  const socket = io(c.publicUrl, {
+    autoConnect: false,
+    reconnection: false,
+    transports: ["websocket"],
+    extraHeaders: { Origin: c.publicUrl, Cookie: session.cookie },
+    auth: { csrf: session.csrf, mode: "multi", routeSnapshots: 1 },
+  });
+  sockets.push(socket);
+  const decoder = new PresenceDecoder("germany-1"),
+    frames: PresenceFrame[] = [],
+    snapshots: unknown[] = [];
+  let players: PublicPlayer[] = [];
+  socket.on("presence", (frame: PresenceFrame) => {
+    frames.push(frame);
+    const result = decoder.decode(frame);
+    if (result) players = result.players;
+  });
+  socket.on("snapshot", (frame: unknown) => snapshots.push(frame));
+  socket.on("connect", () => decoder.reset());
+  socket.connect();
+  return { socket, frames, snapshots, players: () => players };
+}
 async function routerMode(mode: string) {
   await new Promise<void>((done) => {
     child.once("message", () => done());
@@ -383,6 +412,210 @@ function waterGeneration() {
   throw Error("No eligible catalog water profile in the fixture fleet.");
 }
 describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)", () => {
+  it("liefert alte reguläre Wachenprofile vollständig aus dem Serverindex und hält FF-Tagesabläufe privat", async () => {
+    const s = app!.db.all().get(user.id)!;
+    s.buildings[0].organization!.kind = "bf";
+    for (const p of s.people) delete p.duty;
+    app!.db.save(user.id, s);
+    const response = await request("/api/me", user);
+    expect(response.status).toBe(200);
+    const view = (await response.json()).save as Save;
+    expect(view.people).toHaveLength(9);
+    for (const p of view.people) {
+      expect(p.duty?.shift).toBe("24h");
+      expect(p.duty!.homeNode).toBeGreaterThanOrEqual(15000000000);
+      expect(p.duty!.workNode).toBeGreaterThanOrEqual(15000000000);
+    }
+    expect(
+      app!.db
+        .all()
+        .get(user.id)!
+        .people.every((p) => !p.duty),
+    ).toBe(true);
+    s.buildings[0].organization!.kind = "ff";
+    app!.db.save(user.id, s);
+    const ff = (await (await request("/api/me", user)).json()).save as Save;
+    expect(ff.people.every((p) => !p.duty)).toBe(true);
+  });
+  it("trennt POI-Kacheln vom Suchbudget und begrenzt sie pro Konto statt pro gemeinsamem NAT", async () => {
+    const path = `/geo/pois/${tile.z}/${tile.x}/${tile.y}.json?dataset=${dataset}`;
+    for (let i = 0; i < 125; i++)
+      expect((await request(path, user)).status).toBe(200);
+    expect((await request("/geo/search?q=Berlin", user)).status).toBe(200);
+    const key = (value: string) =>
+      createHash("sha256").update(value).digest("hex");
+    app!.db.sql
+      .prepare("UPDATE limits SET count=120 WHERE key=?")
+      .run(key("geo:127.0.0.1"));
+    expect((await request("/geo/search?q=Berlin", user)).status).toBe(429);
+    expect((await request(path, user)).status).toBe(200);
+    app!.db.sql
+      .prepare("UPDATE limits SET count=1199 WHERE key=?")
+      .run(key(`geo-poi:user:${user.id}`));
+    expect((await request(path, user)).status).toBe(200);
+    expect((await request(path, user)).status).toBe(429);
+    expect((await request(path, other)).status).toBe(200);
+    expect((await request(path)).status).toBe(200);
+    app!.db.sql
+      .prepare("UPDATE limits SET count=1200 WHERE key=?")
+      .run(key("geo-poi:ip:127.0.0.1"));
+    expect((await request(path)).status).toBe(429);
+    expect((await request(path, other)).status).toBe(200);
+    expect((await request("/geo/pois/99/0/0.json", other)).status).toBe(400);
+    expect((await request(path, other, {})).status).toBe(405);
+  });
+  it("bereinigt abgelaufene Präsenz auch bei pausierter Simulation", async () => {
+    const a = presenceClient(user),
+      b = presenceClient(other);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(2));
+    const fault = vi.spyOn(app!.game, "step").mockImplementation(() => {
+      throw Error("Isolierter Test-Speicherfehler");
+    });
+    const logging = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await vi.waitFor(
+        async () => expect((await request("/api/health")).status).toBe(503),
+        { timeout: 3000 },
+      );
+      app!.db.sql
+        .prepare("UPDATE sessions SET expires=0 WHERE user_id=?")
+        .run(other.id);
+      await vi.waitFor(() => expect(a.players()).toHaveLength(1), {
+        timeout: 3000,
+      });
+      expect(b.socket.connected).toBe(false);
+      expect(a.socket.connected).toBe(true);
+    } finally {
+      fault.mockRestore();
+      logging.mockRestore();
+    }
+  });
+  it("zeigt die komplette authentifizierte Serverpräsenz unabhängig von privaten Snapshots und dedupliziert Tabs", async () => {
+    const a = presenceClient(user);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(1));
+    const b = presenceClient(other);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(2));
+    await vi.waitFor(() => expect(b.players()).toHaveLength(2));
+    const own = a.players().find((p) => p.id === user.id)!,
+      foreign = a.players().find((p) => p.id === other.id)!;
+    expect(own.location).toMatchObject({
+      ...f.project({ lon: 13.4, lat: 52.52 }),
+      source: "station",
+    });
+    expect(foreign).toEqual({
+      id: other.id,
+      name: "Fremde",
+      deskId: other.id,
+      deskName: "Leitstelle B",
+      status: "online",
+      location: null,
+    });
+    expect(JSON.stringify(a.frames)).not.toMatch(
+      /password|csrf|hash|vehicles|missions|money|buildings|127\.0\.0\.1/,
+    );
+    expect(
+      (await (await request("/api/me", other)).json()).network.friends,
+    ).toEqual([]);
+    expect(JSON.stringify(a.snapshots)).not.toContain("lv-presence-1");
+    const count = a.frames.length,
+      extra = presenceClient(user);
+    await vi.waitFor(() => expect(extra.players()).toHaveLength(2));
+    expect(a.frames).toHaveLength(count);
+    extra.socket.disconnect();
+    await new Promise((done) => setTimeout(done, 1100));
+    expect(a.frames).toHaveLength(count);
+    expect(a.players().find((p) => p.id === user.id)!.status).toBe("online");
+    b.socket.disconnect();
+    await vi.waitFor(() =>
+      expect(a.players().find((p) => p.id === other.id)!.status).toBe(
+        "reconnecting",
+      ),
+    );
+    b.socket.connect();
+    await vi.waitFor(() =>
+      expect(a.players().find((p) => p.id === other.id)!.status).toBe("online"),
+    );
+    await vi.waitFor(() => expect(b.players()).toHaveLength(2));
+    const logout = await request("/api/logout", other, {});
+    expect(logout.status).toBe(200);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(1));
+    expect(b.socket.connected).toBe(false);
+    const foreignAction = await request("/api/action", user, {
+      id: crypto.randomUUID(),
+      action: { type: "rename", id: other.id, name: "illegal" },
+    });
+    expect(foreignAction.status).toBe(400);
+  });
+  it("aktualisiert echte Leitstellenzuordnungen sofort, zeigt Mitgliedernamen und widerruft ungültige Sitzungen", async () => {
+    const a = presenceClient(user),
+      b = presenceClient(other);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(2));
+    expect(
+      (
+        await request("/api/action", user, {
+          id: crypto.randomUUID(),
+          action: { type: "member-invite", username: "germany-other" },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await request("/api/action", other, {
+          id: crypto.randomUUID(),
+          action: { type: "member-accept", owner: user.id },
+        })
+      ).status,
+    ).toBe(200);
+    await vi.waitFor(() =>
+      expect(a.players().find((p) => p.id === other.id)!.deskId).toBe(user.id),
+    );
+    expect(a.players().find((p) => p.id === other.id)).toMatchObject({
+      name: "Fremde",
+      deskName: "Leitstelle A",
+      location: a.players().find((p) => p.id === user.id)!.location,
+    });
+    expect(
+      (
+        await request("/api/action", user, {
+          id: crypto.randomUUID(),
+          action: { type: "member-remove", user: other.id },
+        })
+      ).status,
+    ).toBe(200);
+    await vi.waitFor(() =>
+      expect(a.players().find((p) => p.id === other.id)!.deskId).toBe(other.id),
+    );
+    expect(a.players().find((p) => p.id === other.id)!.location).toBeNull();
+    app!.db.sql
+      .prepare("UPDATE sessions SET expires=0 WHERE user_id=?")
+      .run(other.id);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(1), {
+      timeout: 3000,
+    });
+    expect(b.socket.connected).toBe(false);
+    expect((await request("/api/me", other)).status).toBe(401);
+  });
+  it("sendet ohne Authentifizierung keine Präsenz und erlaubt kein Setzen fremder Anwesenheit", async () => {
+    const a = presenceClient(user);
+    await vi.waitFor(() => expect(a.players()).toHaveLength(1));
+    const unauth = presenceClient({ ...other, cookie: "", csrf: "" });
+    const refused = new Promise<void>((done) =>
+      unauth.socket.once("connect_error", () => done()),
+    );
+    await refused;
+    expect(unauth.frames).toEqual([]);
+    const before = a.frames.length;
+    a.socket.emit("presence", {
+      id: other.id,
+      name: "Gefälscht",
+      location: { x: 0, y: 0 },
+    });
+    a.socket.emit("presence:set", { id: other.id, name: "Gefälscht" });
+    a.socket.emit("presence:sync");
+    await vi.waitFor(() => expect(a.frames.length).toBeGreaterThan(before));
+    expect(a.players().map((p) => p.id)).toEqual([user.id]);
+    expect(a.frames.at(-1)!.full).toBe(true);
+  });
   it("verzögert automatische Wassereinsätze bei Routingausfall, hält Health und Fortschritt aktiv und versucht erneut", async () => {
     const { seed, template, save: before } = waterGeneration();
     await routerMode("unavailable");
@@ -561,7 +794,8 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
       await request(`/api/geo/hospitals?${location()}&vehicle=${vehicle}`, user)
     ).json();
     expect(hospitals.options[0].id).toBe("public:way:11");
-    expect(hospitals.options[0].name).toBe("Testklinik");
+    expect(hospitals.options[0].name).toMatch(/^Testklinik · Spielprofil:/);
+    expect(hospitals.options[0].profileSource).toBe("simulation-v1");
     expect((await request("/api/geo/site?x=Infinity&y=1", user)).status).toBe(
       400,
     );

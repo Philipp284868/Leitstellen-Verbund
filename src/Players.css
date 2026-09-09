@@ -1,0 +1,201 @@
+.presence-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  color: var(--text, #e8f0f7);
+}
+.presence-panel .presence-heading,
+.presence-panel .presence-desk-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.presence-panel .presence-heading h2,
+.presence-panel .presence-desk h3 {
+  margin: 0;
+}
+.presence-panel .presence-heading h2 {
+  font-size: 18px;
+}
+.presence-panel .presence-heading p,
+.presence-panel .presence-explainer,
+.presence-panel .presence-results {
+  margin: 3px 0 0;
+  color: var(--muted, #a7bacb);
+  font-size: 12px;
+}
+.presence-panel .presence-explainer {
+  line-height: 1.5;
+}
+.presence-panel .presence-connection {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #b78243;
+  background: #5c431f30;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.presence-panel .presence-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.presence-panel .presence-tools .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.presence-panel .presence-tools label {
+  margin: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 200px;
+  background: #09151f;
+  border: 1px solid #344957;
+  border-radius: 6px;
+  padding: 0 8px;
+}
+.presence-panel .presence-tools label input {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding: 10px 0;
+  color: inherit;
+}
+.presence-panel .presence-tools select {
+  height: 38px;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  color: inherit;
+  background: #142431;
+  border: 1px solid #344957;
+  border-radius: 6px;
+  padding: 7px;
+}
+.presence-panel .presence-groups {
+  display: grid;
+  gap: 10px;
+}
+.presence-panel .presence-desk {
+  border: 1px solid #324857;
+  border-radius: 7px;
+  padding: 12px;
+  background: #0d1b26;
+}
+.presence-panel .presence-own-desk {
+  border-color: #5a9ed0;
+  box-shadow: inset 3px 0 #5a9ed0;
+}
+.presence-panel .presence-desk-heading {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.presence-panel .presence-desk h3 {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.presence-panel .presence-desk small,
+.presence-panel .presence-member-count {
+  font-size: 11px;
+  color: #a5bdd0;
+}
+.presence-panel .presence-member-count {
+  white-space: nowrap;
+}
+.presence-panel .presence-desk ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  display: grid;
+  gap: 9px;
+}
+.presence-panel .presence-desk li {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 13px;
+}
+.presence-panel .presence-desk li > span:nth-child(2) {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.presence-panel .presence-desk li small {
+  display: inline;
+}
+.presence-panel .presence-dot {
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #889ba9;
+}
+.presence-panel .presence-online {
+  background: #62cc99;
+}
+.presence-panel .presence-reconnecting {
+  background: #efb962;
+}
+.presence-panel .presence-status {
+  margin-left: auto;
+  color: #aac0d0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.presence-panel .presence-jump {
+  justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  background: #1b3548;
+  border: 1px solid #3b5c71;
+  border-radius: 5px;
+  color: #edf6fc;
+  text-align: left;
+}
+.presence-panel .presence-jump:hover {
+  background: #274b64;
+}
+.presence-panel .presence-jump small {
+  display: block;
+  margin-top: 2px;
+}
+.presence-panel .presence-no-location {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #b8c6d0;
+  margin: 0;
+}
+.presence-panel .presence-stale .presence-desk {
+  border-style: dashed;
+}
+.presence-panel .presence-empty {
+  text-align: center;
+  color: #acbecd;
+  padding: 20px 0;
+}
+.presence-panel .presence-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.presence-panel .presence-pagination button {
+  padding: 7px 12px;
+}

@@ -56,10 +56,8 @@ async function register(page: Page, label: string) {
   await page
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: false })
-    .click();
-  await expect(page.locator(".radio-bar")).toContainText(
+  await page.getByRole("button", { name: "Spielen", exact: false }).click();
+  await expect(page.locator(".hud-notice")).toContainText(
     "Mit Spielserver verbunden",
   );
   await expect(page.locator(".banner")).toHaveCount(0);
@@ -149,10 +147,10 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       .getByRole("button", { name: "Server erneut verbinden", exact: true })
       .click();
     await expect(a.locator(".banner")).toHaveCount(0);
-    await expect(a.locator(".radio-bar")).toContainText(
+    await expect(a.locator(".hud-notice")).toContainText(
       "Mit Spielserver verbunden",
     );
-    await expect(a.locator(".hud-time-mode")).toContainText("Echtzeit");
+    await expect(a.locator(".hud-clock")).toHaveAttribute("title", /Echtzeit/);
     await expect
       .poll(
         () =>

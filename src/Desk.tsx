@@ -1,3 +1,4 @@
+import { VehicleIcon } from "./map-icons";
 import { NeighborDesk } from "./NeighborDesk";
 import { ForceNeeds, ReserveOverview } from "./ForceNeeds";
 import { requirements } from "./simulation/hazards";
@@ -34,7 +35,7 @@ import {
   visiblePriority,
 } from "./simulation/priority";
 import { missionStatus } from "./simulation/mission-status";
-import { statuses } from "./ui";
+import { statuses, Disclosure } from "./ui";
 import "./Desk.css";
 const stages = {
   incoming: "Notruf eingegangen",
@@ -177,7 +178,11 @@ export function History({ s, m }: { s: Save; m: Mission }) {
       .includes(query.toLocaleLowerCase("de")),
   );
   return (
-    <details className="incident-history" open={m.phase === "done"}>
+    <details
+      className="incident-history"
+      data-hud-section="history"
+      open={m.phase === "done"}
+    >
       <summary>
         Einsatzhistorie · {m.control?.events.length ?? 0} Einträge
       </summary>
@@ -254,12 +259,14 @@ function Calls({ s, m }: { s: Save; m: Mission }) {
           call.duration + (call.state === "active" ? s.time - call.started : 0),
         )}
       </p>
-      <div className="call-properties">
-        <span>Stress {call.stress}%</span>
-        <span>Informationsqualität {call.quality}%</span>
-        <span>Glaubwürdigkeit {call.credibility}%</span>
-        <span>Rückruf {call.callback ? "möglich" : "nicht möglich"}</span>
-      </div>
+      <Disclosure title="Gesprächsdetails">
+        <div className="call-properties">
+          <span>Stress {call.stress}%</span>
+          <span>Informationsqualität {call.quality}%</span>
+          <span>Glaubwürdigkeit {call.credibility}%</span>
+          <span>Rückruf {call.callback ? "möglich" : "nicht möglich"}</span>
+        </div>
+      </Disclosure>
       {call.state === "ringing" && (
         <button
           className="primary"
@@ -402,7 +409,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
         {visiblePriority(c.priority)} · {stages[c.stage]} · Einsatz{" "}
         {m.id.slice(-8)}
       </span>
-      <h2>{mt(m.template).name}</h2>
+
       <p>
         Seit {duration(Math.max(0, s.time - m.created))} offen ·{" "}
         <strong data-processing={processing.code}>{processing.label}</strong>
@@ -454,8 +461,8 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           <Calls s={s} m={m} />
         </details>
       )}
-      <section>
-        <h3>Bekannte Informationen</h3>
+      <details className="known-information" open={!c.briefed}>
+        <summary>Bekannte Informationen</summary>
         {!c.facts.length && (
           <p>
             Noch keine Angaben erfragt. Ort und Meldebild reichen für eine erste
@@ -469,7 +476,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
             </li>
           ))}
         </ul>
-      </section>
+      </details>
       <DynamicsPanel s={s} m={m} />
       {c.radio.some((r) => r.state === "open") && (
         <section className="radio-queue" data-hud-section="radio">
@@ -502,6 +509,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     </button>
                   )}
                   <button
+                    disabled={r.reason === "arrival" && !c.briefed}
                     onClick={() =>
                       void act({
                         type: "radio",
@@ -514,6 +522,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     Rückfrage zur Lage
                   </button>
                   <button
+                    disabled={r.reason === "arrival" && !c.briefed}
                     onClick={() =>
                       void act({
                         type: "radio",
@@ -526,6 +535,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     Nachforderung bearbeiten
                   </button>
                   <button
+                    disabled={r.reason === "arrival" && !c.briefed}
                     onClick={() =>
                       void act({
                         type: "radio",
@@ -561,8 +571,8 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           </label>
           <p>
             {c.briefed
-              ? "Bedarf nach Erkundung"
-              : "Vorläufiger Bedarf aus dem Meldebild; Erkundung kann weitere Kräfte ergeben."}
+              ? "Bestätigter Bedarf"
+              : "Vermuteter Bedarf · Erkundung steht aus."}
           </p>
           <ForceNeeds
             required={Object.fromEntries(
@@ -698,7 +708,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                   />
                   <span>
                     <b>
-                      {v.name} · FMS{" "}
+                      <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
                       {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
                     </b>
                     <small>
@@ -719,13 +729,6 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                         </>
                       )}
                     </small>
-                    {v.availability && (
-                      <small>
-                        Besatzung {v.availability.crewPresent}/
-                        {v.availability.crewCapacity} · zum Ausrücken{" "}
-                        {v.availability.crewRequired} erforderlich
-                      </small>
-                    )}
                     <small>{reserveWarning(s, v)}</small>
                   </span>
                 </label>
@@ -763,7 +766,8 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           .map((v) => (
             <p key={v.id}>
               <b>
-                {v.name} · FMS {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
+                <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
+                {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
               </b>{" "}
               · {statuses[v.status]} ·{" "}
               {v.status === "alarmed"

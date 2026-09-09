@@ -3,7 +3,14 @@ import { io, type Socket } from "socket.io-client";
 import type { Save } from "./model";
 import type { ServerAction } from "../server/actions";
 import type { Action } from "./engine";
-import { setNetwork, resetNetwork, receiveChat } from "./network";
+import {
+  setNetwork,
+  resetNetwork,
+  receiveChat,
+  resetPresence,
+  presenceConnection,
+  receivePresence,
+} from "./network";
 import type { GameMode } from "./mode";
 import { createId } from "./ids";
 import { IS_GERMANY } from "./world-choice";
@@ -63,6 +70,7 @@ function clear() {
   previous?.disconnect();
   csrf = "";
   resetNetwork();
+  resetPresence();
   emit({
     save: null,
     workspace: undefined,
@@ -140,14 +148,16 @@ export async function refresh() {
         cb({ csrf, mode, ...(IS_GERMANY ? { routeSnapshots: 1 } : {}) }),
       withCredentials: true,
     });
-    socket.on("connect", () =>
+    socket.on("connect", () => {
+      presenceConnection(true);
       emit({
         readonly: false,
         error: "",
         notice: "Mit Spielserver verbunden.",
-      }),
-    );
+      });
+    });
     socket.on("disconnect", (reason) => {
+      presenceConnection(false);
       routeDecoder.reset();
       emit({
         readonly: true,
@@ -158,6 +168,7 @@ export async function refresh() {
       if (reason === "io server disconnect") clear();
     });
     socket.on("connect_error", () => {
+      presenceConnection(false);
       emit({
         readonly: true,
         notice: "Server nicht erreichbar oder Sitzung abgelaufen.",
@@ -188,6 +199,9 @@ export async function refresh() {
       },
     );
     socket.on("chat", receiveChat);
+    socket.on("presence", (frame: unknown) => {
+      if (!receivePresence(frame)) socket?.emit("presence:sync");
+    });
     socket.on("notice", notice);
   }
   // The retry button must reconnect an existing disconnected socket too.

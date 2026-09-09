@@ -59,7 +59,7 @@
 }
 .reconnect-summary {
   position: fixed;
-  bottom: 52px;
+  top: 78px;
   right: 18px;
   z-index: 45;
   width: min(420px, calc(100vw - 36px));
@@ -79,18 +79,9 @@
 .app[data-compact="true"] .mission-card h3 {
   font-size: 14px;
 }
-.app[data-compact="true"] .mission-card progress,
-.app[data-compact="true"] .mission-card p {
-  display: none;
-}
+
 .app[data-queue-bottom="true"] .queue-slot {
   order: 2;
-}
-.app[data-queue-bottom="true"] .shared-inbox {
-  order: 3;
-}
-.app[data-queue-bottom="true"] .archive-link {
-  order: 4;
 }
 @media (max-width: 560px) {
   .shortcut-grid {

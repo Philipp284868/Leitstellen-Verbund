@@ -1,4 +1,4 @@
-import { showIncidents } from "./ui-navigation";
+import { showIncidents, showMapTools } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
@@ -40,10 +40,9 @@ async function enter(page: Page, compact = false) {
   await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   if (compact) await showIncidents(page);
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
 }
 test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik und Abschluss", async ({
@@ -74,7 +73,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   breakVehicle(saved, saved.vehicles[0], "engine");
   app.db.save(owner, saved);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Layer", exact: true }).click();
+  await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect(page.locator(".fault-card")).toContainText("Motorschaden");
   await page
     .getByRole("button", { name: "Reparatur beauftragen", exact: true })
@@ -86,14 +85,14 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   app = compiled.startServer(config);
   await app.listen();
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showMapTools(page);
   await expect(page.locator(".fault-card")).toContainText("Reparatur läuft");
   saved = app.db.all().get(owner)!;
   app.game.step(saved.vehicles[0].fault!.repairAt - saved.time + 1);
   saved = app.db.all().get(owner)!;
   app.game.step(Math.max(0, saved.vehicles[0].arrive - saved.time) + 1);
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await page
     .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
@@ -217,9 +216,8 @@ test("Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und Kranke
     fullPage: true,
   });
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showIncidents(page);
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel(/^Versorgung Patient/)).toHaveValue("oxygen");

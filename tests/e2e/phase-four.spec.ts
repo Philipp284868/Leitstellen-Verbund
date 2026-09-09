@@ -54,6 +54,7 @@ test("Großbrand ausrufen, frei alarmieren, Abschnitte und Leitung zuweisen und 
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await enter(page);
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await page
     .getByRole("button", { name: "Großbrand ausrufen", exact: true })
@@ -134,6 +135,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   const s = majorFixture(owner, "crash");
   app.db.save(owner, s);
   await enter(page);
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await page
     .getByRole("button", { name: "MANV ausrufen", exact: true })
@@ -198,6 +200,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   await app.listen();
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(
     page.getByRole("button", { name: "Neue Transporte anhalten" }),
@@ -221,6 +224,7 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
   try {
     await enter(other, "south");
     await enter(page);
+    await showIncidents(page);
     await showIncidents(page);
     await page.locator(".mission-card").first().click();
     await page

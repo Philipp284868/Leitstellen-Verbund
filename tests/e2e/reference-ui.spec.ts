@@ -1,3 +1,4 @@
+import { showIncidents, showMapTools } from "./ui-navigation";
 import { test, expect } from "@playwright/test";
 import { mkdtemp, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -101,6 +102,8 @@ test("Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt", as
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(page.locator("svg.map")).toBeVisible();
+  await expect(page.locator(".mission-sidebar")).not.toBeVisible();
+  await showIncidents(page);
   await expect(page.locator(".mission-card").first()).toBeVisible();
 });
 for (const size of [
@@ -154,13 +157,16 @@ for (const size of [
         fullPage: true,
       });
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
+    await showIncidents(page);
     await page.locator(".mission-card").first().click();
     const dock = page.getByRole("complementary", {
       name: "Einsatzdisposition",
       exact: true,
     });
     await expect(dock).toBeVisible();
-    await expect(page.locator(".incident-desk")).toContainText("Flächenbrand");
+    await expect(dock.locator(".dock-heading strong")).toHaveText(
+      "Flächenbrand",
+    );
     await expect(page.locator(".scrim")).toHaveCount(0);
     await expect(
       page.locator("svg.map polyline[vector-effect=non-scaling-stroke]"),
@@ -168,10 +174,13 @@ for (const size of [
     const box = await page.locator("svg.map").boundingBox();
     expect(box!.width).toBe(size.width);
     expect(box!.height).toBeGreaterThan(size.height * 0.7);
+    expect(box!.y).toBeCloseTo(62, 0);
+    expect(box!.y + box!.height).toBeCloseTo(size.height, 0);
+    await expect(page.locator(".bottom-toolbar, .radio-bar")).toHaveCount(0);
     const sidebar = await dock.boundingBox();
     expect(sidebar!.x).toBeGreaterThanOrEqual(0);
     expect(sidebar!.x + sidebar!.width).toBeLessThanOrEqual(size.width);
-    expect(sidebar!.y + sidebar!.height).toBeLessThan(size.height - 60);
+    expect(sidebar!.y + sidebar!.height).toBeLessThanOrEqual(size.height);
     if (info.project.name === "chromium")
       await page.screenshot({ path: resolve(folder, `hud-${size.width}.png`) });
     await dock.getByRole("button", { name: "Fahrzeuge", exact: true }).click();
@@ -185,13 +194,14 @@ for (const size of [
     await page.locator('svg.map [aria-label="Flächenbrand"]').click();
     await expect(dock).toBeVisible();
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
+    await showMapTools(page);
     const before = await page.locator("svg.map").getAttribute("viewBox");
     await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
     await expect(page.locator("svg.map")).not.toHaveAttribute(
       "viewBox",
       before!,
     );
-    await page.getByRole("button", { name: "Layer", exact: true }).click();
+    await showMapTools(page);
     await expect(page.getByLabel("Karte durchsuchen")).toBeVisible();
     await page.getByLabel("Karte durchsuchen").fill("Rivermere");
     await expect(page.locator(".map-search-results")).toBeVisible();

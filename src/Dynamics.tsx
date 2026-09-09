@@ -322,7 +322,7 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
         ))}
       </div>
       {d.fire && (
-        <details open>
+        <details>
           <summary>Brandentwicklung · {d.fire.fuel}</summary>
           <p>
             Fläche {d.fire.area.toFixed(1)} m² ·{" "}

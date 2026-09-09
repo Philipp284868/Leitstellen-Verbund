@@ -27,7 +27,8 @@
 .germany-viewport .maplibregl-canvas {
   outline-offset: -3px;
 }
-.germany-labels {
+.germany-labels,
+.germany-pois {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -85,7 +86,6 @@
 .germany-marker.friend {
   border-color: #cab5ec;
   border-style: dashed;
-  background: #64557d;
 }
 .germany-marker.selected {
   outline: 2px solid #e8f8fb;
@@ -150,8 +150,7 @@
   margin-top: 8px;
 }
 .germany-offline {
-  top: auto;
-  bottom: 85px;
+  top: 76px;
 }
 .germany-map .map-search-results button {
   display: grid;
@@ -192,7 +191,8 @@
 }
 .germany-map .germany-placement {
   position: absolute;
-  bottom: 90px;
+  top: 88px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   z-index: 8;
@@ -202,22 +202,24 @@
 }
 .germany-map .map-vehicle-detail {
   position: absolute;
-  left: 16px;
-  bottom: 65px;
+  top: 12px;
+  right: 12px;
+  left: auto;
+  bottom: auto;
   z-index: 4;
-  max-width: 340px;
+  width: min(380px, calc(100% - 24px));
+  max-width: 460px;
   display: grid;
-  border-radius: 5px;
-  background: #102734ec;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid #486471;
+  border-radius: 7px;
+  background: #102734f5;
 }
-.app.command-hud .germany-map .map-vehicle-detail {
-  left: calc(var(--left-width) + 30px);
-}
-.app.command-hud .germany-map .map-zoom {
-  bottom: 35px;
-}
-.app.command-hud .germany-map .map-control-help {
-  bottom: 78px;
+.germany-map .map-vehicle-detail strong {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .app.command-hud .germany-map:has(.germany-viewport.dragging) .germany-markers {
   pointer-events: none;
@@ -243,9 +245,6 @@
   z-index: 1;
   bottom: 64px;
 }
-.app.command-hud:has(.germany-map) .hud-feed {
-  bottom: 112px;
-}
 .germany-map input,
 .germany-map textarea {
   user-select: text;
@@ -257,4 +256,216 @@
   .germany-map .maplibregl-ctrl-attrib {
     font-size: 9px;
   }
+}
+
+.germany-marker .marker-fms {
+  position: absolute;
+  right: -7px;
+  bottom: -6px;
+  border-radius: 4px;
+  background: #10212d;
+  border: 1px solid #b7cbd4;
+  font-size: 10px;
+  line-height: 14px;
+  min-width: 15px;
+  font-weight: 700;
+  color: #f1f7fa;
+}
+.germany-marker .marker-fault {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  border-radius: 50%;
+  background: #e8aa50;
+  font-size: 11px;
+  line-height: 15px;
+  width: 15px;
+  color: #14212a;
+  font-weight: 800;
+}
+.germany-marker .marker-heading {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+}
+.germany-marker .marker-heading::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  margin-top: -4px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid #f3fafb;
+}
+.germany-marker.presence {
+  width: 27px;
+  height: 27px;
+  transform: translate(14px, -42px);
+  background: #534b79;
+  border: 1px solid #b9adf3;
+  border-radius: 50%;
+  z-index: 3;
+}
+.germany-marker.presence.own {
+  outline: 2px solid #9fe0ce;
+  outline-offset: 2px;
+}
+.germany-marker.presence::after {
+  content: "";
+  position: absolute;
+  left: -13px;
+  bottom: -15px;
+  width: 18px;
+  height: 1px;
+  background: #b9adf3;
+  transform: rotate(-45deg);
+}
+.germany-marker .presence-count {
+  position: absolute;
+  right: -8px;
+  top: -6px;
+  background: #201c33;
+  border-radius: 7px;
+  padding: 1px 4px;
+  font-size: 10px;
+}
+.germany-marker.volunteer {
+  width: 23px;
+  height: 23px;
+  padding: 2px;
+}
+.map-place-detail {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: min(380px, calc(100% - 24px));
+  max-height: calc(100% - 48px);
+  overflow: auto;
+  padding: 18px;
+  z-index: 6;
+  border: 1px solid #486471;
+  border-radius: 8px;
+  background: #10212df5;
+  box-shadow: 0 12px 32px #020a1260;
+  color: #e2edef;
+  font-size: 13px;
+}
+.map-place-detail h3 {
+  margin: 10px 32px 10px 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.map-place-detail p {
+  line-height: 1.55;
+  color: #b9cbd3;
+}
+.map-place-detail .map-detail-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px;
+  min-height: 30px;
+}
+.map-place-detail section {
+  padding: 12px 0;
+  border-top: 1px solid #304958;
+}
+.map-place-detail ul {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.map-place-detail li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.map-place-detail li span {
+  color: #9ad5bc;
+  font-size: 12px;
+}
+.map-poi-filters {
+  border-top: 1px solid #304958;
+  padding-top: 12px;
+}
+.map-poi-filters summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.map-poi-filters label,
+.map-presence-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.map-poi-filters input,
+.map-presence-toggle input {
+  width: 15px;
+  height: 15px;
+}
+.map-poi-filters p {
+  color: #a9bfc9;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.poi-category-grid {
+  display: grid;
+  gap: 9px;
+  margin: 14px 0;
+}
+.poi-category-grid small {
+  margin-left: auto;
+  font-size: 11px;
+  color: #91a9b5;
+}
+
+.germany-marker.co-located {
+  transform: translate(-50%, 24px);
+}
+.germany-marker.co-located::before {
+  content: "";
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  height: 22px;
+  border-left: 1px solid #c4d8e3;
+  pointer-events: none;
+}
+.map-object-list {
+  display: grid;
+  gap: 6px;
+}
+.map-object-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  white-space: normal;
+}
+.map-object-list button > svg {
+  flex-shrink: 0;
+}
+.map-object-list button span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.map-object-list button strong {
+  overflow-wrap: anywhere;
+}
+.map-object-list button small {
+  color: #a9c0cc;
+  font-size: 11px;
+}
+
+.germany-map .map-vehicle-detail .map-detail-close {
+  justify-self: end;
+  min-height: 28px;
+  padding: 5px;
 }

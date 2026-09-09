@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
 import { listenBrowserServer } from "./server-helper";
-import { showIncidents } from "./ui-navigation";
+import { openPanel, showIncidents } from "./ui-navigation";
 import { activeMissionsFixture, historyFixture } from "../history-fixture";
 import { priorities } from "../../src/simulation/priority";
 
@@ -70,6 +70,7 @@ test("73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft 
     pagination.getByRole("button", { name: "Weiter", exact: true }),
   ).toBeDisabled();
   expect([...seen].sort()).toEqual([...priorities].sort());
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   const priority = page.getByLabel("Priorität", { exact: true });
   await expect(priority.locator("option")).toHaveText([...priorities]);
@@ -80,7 +81,7 @@ test("73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft 
   await expect(reserve).toContainText("Reserve");
   await expect(reserve.locator("input")).toBeEnabled();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: /^Einsatzarchiv / }).click();
+  await openPanel(page, "Archiv");
   const archive = page.locator(".archive-console"),
     archivePages = page.getByRole("navigation", { name: "Archivseiten" });
   await expect(archive).toContainText("137 passende Berichte");

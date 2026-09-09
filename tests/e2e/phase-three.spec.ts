@@ -82,10 +82,14 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
   const fleet = page.locator(".fleet-card").first(),
     reserve = fleet.getByLabel("Als Reserve vormerken (nur Hinweis)");
+  await fleet
+    .getByText("Besatzung & Einsatzbereitschaft", { exact: true })
+    .click();
   await reserve.click();
   await expect(reserve).toBeChecked();
   await expect(fleet).toContainText("Alarmierung bleibt möglich");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await showIncidents(page);
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
@@ -119,6 +123,10 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await page
+    .getByText("Besatzung & Einsatzbereitschaft", { exact: true })
+    .first()
+    .click();
   await expect(page.locator(".vehicle-staffing").first()).toContainText(
     "Besatzung auf dem Weg",
   );
@@ -126,6 +134,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
     app.game.view(owner, new Set()).save.people.every((p) => !p.duty),
   ).toBe(true);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await showIncidents(page);
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   current = app.db.all().get(owner)!;
@@ -257,6 +266,7 @@ test("zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte un
     await page.reload();
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
     app.game.step(120);
+    await showIncidents(page);
     await page.locator(".mission-card").first().click();
     await page
       .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
@@ -303,6 +313,7 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   page.on("pageerror", (e) => errors.push(e.message));
   await enter(page);
   await showIncidents(page);
+  await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel("Organisationsaufträge")).toContainText(
     "Sichtung und Versorgung",
@@ -328,6 +339,7 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
     .toBe("alarmed");
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showIncidents(page);
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(

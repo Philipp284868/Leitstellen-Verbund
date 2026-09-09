@@ -169,3 +169,75 @@ it.skipIf(process.platform === "win32")(
     }
   },
 );
+
+it("liefert öffentliche POI-Kacheln mit Datasetbindung, vollständigen Punkten und klarer Koordinatenablehnung", () => {
+  const db = new DatabaseSync(resolve(dir, "index.sqlite"));
+  db.exec(
+    "CREATE TABLE places(id INTEGER PRIMARY KEY,kind TEXT,name TEXT,lon REAL,lat REAL);CREATE VIRTUAL TABLE places_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);INSERT INTO places VALUES(1,'hospital','Testklinik',13.4,52.52);INSERT INTO places_rtree VALUES(1,13.4,13.4,52.52,52.52)",
+  );
+  db.close();
+  const maps = new GermanyMaps(dir),
+    path = "/geo/pois/14/8801/5373.json";
+  const response = () => ({
+    statusCode: 200,
+    body: "",
+    headers: new Map<string, unknown>(),
+    setHeader(key: string, value: unknown) {
+      this.headers.set(key, value);
+    },
+    end(body: string) {
+      this.body = body;
+    },
+  });
+  try {
+    const result = response();
+    expect(
+      maps.handle(
+        path,
+        new URL(`http://localhost${path}?dataset=${fingerprint}`),
+        result as unknown as ServerResponse,
+      ),
+    ).toBe(true);
+    expect(result.statusCode).toBe(200);
+    expect(result.headers.get("Cache-Control")).toBe("public, max-age=3600");
+    const data = JSON.parse(result.body);
+    expect(data).toMatchObject({
+      dataset: fingerprint,
+      snapshot: "2026-09-07",
+      points: [
+        {
+          id: "index:1",
+          category: "hospital",
+          name: "Testklinik",
+          lon: 13.4,
+          lat: 52.52,
+          count: 1,
+          source: "index",
+        },
+      ],
+    });
+    const cached = response();
+    maps.handle(
+      path,
+      new URL(`http://localhost${path}?dataset=${fingerprint}`),
+      cached as unknown as ServerResponse,
+    );
+    expect(cached.body).toBe(result.body);
+    const old = response();
+    maps.handle(
+      path,
+      new URL(`http://localhost${path}?dataset=${demFingerprint}`),
+      old as unknown as ServerResponse,
+    );
+    expect(old.statusCode).toBe(409);
+    const invalid = response();
+    maps.handle(
+      "/geo/pois/14/99999/1.json",
+      new URL("http://localhost/geo/pois/14/99999/1.json"),
+      invalid as unknown as ServerResponse,
+    );
+    expect(invalid.statusCode).toBe(400);
+  } finally {
+    maps.close();
+  }
+});

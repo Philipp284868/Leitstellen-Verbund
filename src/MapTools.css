@@ -149,8 +149,7 @@ svg.map *,
 .map-zoom,
 .map-legend,
 .map-scale,
-.hud-topbar,
-.hud-bottom {
+.topbar {
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -220,7 +219,6 @@ svg.map.dragging * {
 /* Expensive decoration yields during direct manipulation; panel contents remain readable. */
 .hud-shell:has(svg.map.dragging) .topbar,
 .hud-shell:has(svg.map.dragging) .mission-sidebar,
-.hud-shell:has(svg.map.dragging) .incident-dock,
-.hud-shell:has(svg.map.dragging) .hud-bottom {
+.hud-shell:has(svg.map.dragging) .incident-dock {
   backdrop-filter: none;
 }

@@ -32,6 +32,8 @@ import {
 import { parseMode } from "../src/mode";
 import { Game } from "./game";
 import { acquireLock } from "./lock";
+import { WorldPresence, readPublicPresence } from "./presence";
+import type { PublicPlayer } from "../src/presence";
 
 const loginSchema = z
   .object({ username: usernameSchema, password: passwordSchema })
@@ -67,7 +69,8 @@ export function startServer(
     throw e;
   }
   const auth = new Auth(db),
-    game = new Game(db);
+    game = new Game(db),
+    presence = new WorldPresence();
   const prior = db.sql
     .prepare("SELECT value FROM meta WHERE key=?")
     .get("lastTick");
@@ -140,7 +143,16 @@ export function startServer(
       if (path.startsWith("/geo/") && geography) {
         if (req.method !== "GET")
           return reply(res, 405, { error: "GET erforderlich." });
-        if (
+        if (path.startsWith("/geo/pois/")) {
+          // POIs load as bounded, cached tiles during panning. They must not
+          // exhaust the lower search/node budget. Authenticated users behind
+          // the same NAT receive independent budgets; public access stays open.
+          const geoSession = auth.session(req.headers.cookie);
+          const source = geoSession
+            ? `user:${geoSession.user_id}`
+            : `ip:${ip(req)}`;
+          auth.limit(`geo-poi:${source}`, 1200, 60000);
+        } else if (
           path !== "/geo/manifest" &&
           !path.startsWith("/geo/tiles/") &&
           !path.startsWith("/geo/dem/")
@@ -288,8 +300,10 @@ export function startServer(
           db.sql
             .prepare("DELETE FROM sessions WHERE user_id=?")
             .run(session.user_id);
+          presence.revokeUser(session.user_id);
           for (const socket of io.sockets.sockets.values())
             if (socket.data.user === session.user_id) socket.disconnect(true);
+          refreshPresence();
           res.setHeader("Set-Cookie", cookie("", true));
           return reply(res, 200, { ok: true });
         }
@@ -315,8 +329,10 @@ export function startServer(
               .run(session.user_id);
             db.audit(session.user_id, "password-changed");
           });
+          presence.revokeUser(session.user_id);
           for (const socket of io.sockets.sockets.values())
             if (socket.data.user === session.user_id) socket.disconnect(true);
+          refreshPresence();
           res.setHeader("Set-Cookie", cookie("", true));
           return reply(res, 200, { ok: true });
         }
@@ -328,6 +344,7 @@ export function startServer(
             });
           auth.limit(`action:${session.user_id}`, 60, 1000);
           game.command(session.user_id, await body(req), mode);
+          presenceDetailsDirty = true;
           const publishedView = publish();
           return reply(res, 200, publishedView(session.user_id, mode));
         }
@@ -475,8 +492,73 @@ export function startServer(
     headers["Cache-Control"] = "no-store";
   });
   function disconnectSession(value: string) {
+    presence.revokeSession(value);
     for (const s of io.sockets.sockets.values())
       if (s.data.session === value) s.disconnect(true);
+    refreshPresence();
+  }
+  let refreshingPresence = false;
+  let presenceDetailsDirty = true;
+  let publicPresenceCache = new Map<string, PublicPlayer>();
+  function refreshPresence(fullTarget?: Socket) {
+    if (stopping || refreshingPresence) return;
+    refreshingPresence = true;
+    try {
+      const now = Date.now(),
+        checked = new Map<string, boolean>();
+      const valid = (hash: string, user: string) => {
+        const key = `${hash}:${user}`;
+        if (!checked.has(key))
+          checked.set(
+            key,
+            !!db.sql
+              .prepare(
+                "SELECT 1 FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.hash=? AND s.user_id=? AND s.expires>? AND u.role='player'",
+              )
+              .get(hash, user, now),
+          );
+        return checked.get(key)!;
+      };
+      const actors = presence.actors(now, valid);
+      const recipients = [...io.sockets.sockets.values()].filter((socket) => {
+        if (!valid(socket.data.session, socket.data.user)) {
+          socket.disconnect(true);
+          return false;
+        }
+        return socket.data.mode === "multi";
+      });
+      // Simulation ticks change no public names/desk/station coordinates. Avoid
+      // rescanning private save JSON each second; successful commands invalidate
+      // the small public projection, and new connections fill missing entries.
+      if (
+        presenceDetailsDirty ||
+        actors.some((actor) => !publicPresenceCache.has(actor.id))
+      ) {
+        publicPresenceCache = new Map(
+          readPublicPresence(db, actors).map((player) => [player.id, player]),
+        );
+        presenceDetailsDirty = false;
+      }
+      const publicPlayers = actors.flatMap((actor) => {
+        const player = publicPresenceCache.get(actor.id);
+        return player ? [{ ...player, status: actor.status }] : [];
+      });
+      const actorIds = new Set(actors.map((actor) => actor.id));
+      for (const id of publicPresenceCache.keys())
+        if (!actorIds.has(id)) publicPresenceCache.delete(id);
+      const changed = presence.reconcile(publicPlayers);
+      if (changed)
+        for (const socket of recipients) {
+          if (socket !== fullTarget)
+            for (const frame of changed) socket.emit("presence", frame);
+        }
+      if (fullTarget && recipients.includes(fullTarget)) {
+        for (const frame of presence.snapshot())
+          fullTarget.emit("presence", frame);
+      }
+    } finally {
+      refreshingPresence = false;
+    }
   }
   io.use((socket, next) => {
     const session = auth.session(socket.request.headers.cookie);
@@ -494,6 +576,29 @@ export function startServer(
     next();
   });
   io.on("connection", (socket) => {
+    presence.connect(socket.id, socket.data.user, socket.data.session);
+    socket.on("disconnect", (reason) => {
+      presence.disconnect(
+        socket.id,
+        Date.now(),
+        reason === "server namespace disconnect",
+      );
+      refreshPresence();
+    });
+    socket.on("presence:sync", () => {
+      if (!auth.session(socket.request.headers.cookie))
+        return socket.disconnect(true);
+      try {
+        auth.limit(`presence:${socket.data.user}`, 10, 60000);
+        refreshPresence(socket);
+      } catch {
+        socket.emit(
+          "notice",
+          "Spielerliste konnte nicht erneut geladen werden.",
+        );
+      }
+    });
+    refreshPresence(socket);
     deliverSnapshot(socket, online());
     socket.on("chat", (input: unknown) => {
       try {
@@ -565,6 +670,7 @@ export function startServer(
           viewFor(socket.data.user, socket.data.mode),
         );
     }
+    refreshPresence();
     return viewFor;
   }
   let last = Date.now();
@@ -583,6 +689,17 @@ export function startServer(
       io.emit(
         "notice",
         "Server-Simulation pausiert. Serverbetreiber informieren.",
+      );
+    }
+  }, 1000);
+  // Presence/auth expiry also advances when the simulation is paused.
+  const presenceTimer = setInterval(() => {
+    if (stopping || !failed) return;
+    try {
+      refreshPresence();
+    } catch {
+      console.error(
+        "Öffentliche Spielerpräsenz konnte nicht aktualisiert werden.",
       );
     }
   }, 1000);
@@ -608,6 +725,7 @@ export function startServer(
       (closePromise ??= (async () => {
         stopping = true;
         clearInterval(timer);
+        clearInterval(presenceTimer);
         clearInterval(backupTimer);
         // Allow normal responses to drain; incomplete headers must not keep shutdown alive.
         const closed = new Promise<void>((done) => io.close(() => done()));
@@ -618,6 +736,8 @@ export function startServer(
         deadline.unref();
         http.closeIdleConnections();
         await closed;
+        presence.close();
+        publicPresenceCache.clear();
         clearTimeout(deadline);
         await Promise.allSettled([...pendingHttp]);
         await backupJob;
