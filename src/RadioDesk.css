@@ -31,20 +31,6 @@
   margin-bottom: 8px;
   border-left: 3px solid #52748b;
 }
-.light .radio-conversation {
-  background: #eef4f7;
-  color: #182d3b;
-}
-.light .radio-message,
-.light .radio-answer,
-.light .radio-row[aria-pressed="true"] {
-  background: #dcecf5;
-  color: #182d3b;
-}
-.light .radio-assignment,
-.light .radio-row small {
-  color: #254b64;
-}
 .radio-row[aria-pressed="true"] {
   background: #17394d;
   border-color: #75bfe9;
@@ -81,6 +67,44 @@
   border: 0;
   min-width: 0;
   margin: 10px 0 16px;
+}
+.app.command-hud.light .modal:has(.radio-workspace) {
+  --hud-text: #192d3b;
+  --hud-muted: #425e70;
+  --hud-border: #abc3d1;
+  background: #f4f7f9;
+  color: var(--hud-text);
+}
+.app.command-hud.light .modal:has(.radio-workspace) > header {
+  background: #e5eef4;
+}
+.app.command-hud.light .modal:has(.radio-workspace) .eyebrow {
+  color: var(--hud-muted);
+}
+.app.command-hud.light .radio-workspace :is(input, select, button),
+.app.command-hud.light .modal:has(.radio-workspace) > header button {
+  background: #e4edf3;
+  color: var(--hud-text);
+  border-color: var(--hud-border);
+}
+.app.command-hud.light .radio-workspace button:hover:not(:disabled) {
+  background: #d3e5ee;
+}
+.app.command-hud.light .radio-workspace button.primary {
+  background: #922b21;
+  color: #fff;
+  border-color: #922b21;
+}
+.app.command-hud.light .radio-conversation {
+  background: #f7fbff;
+  border-color: var(--hud-border);
+}
+.app.command-hud.light .radio-workspace :is(.radio-message, .radio-answer),
+.app.command-hud.light .radio-workspace .radio-row[aria-pressed="true"] {
+  background: #dcecf5;
+}
+.app.command-hud.light .modal:has(.radio-workspace) :focus-visible {
+  outline-color: #075c91;
 }
 @media (max-width: 1200px) {
   .radio-columns {
