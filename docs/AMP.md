@@ -106,7 +106,7 @@ Ein GitHub-Update installiert nichts selbstständig auf dem privaten AMP-Server 
 
 Das reguläre Setup installiert weiterhin dieselbe Node-24-Anwendung; es kommen keine Umgebungsvariablen oder Dienste hinzu. Schema 6 ergänzt Notrufe, Disposition, FMS, Historien und angenommene Leitstellenmitgliedschaften. Vorhandene Bestände und aktive Fahrten werden migriert; vor der Änderung wird eine konsistente Sicherung im bisherigen Dateinamensschema angelegt. Alte automatische Freigaben ohne zugeordnete fremde Fahrzeuge werden geschlossen; laufende alte Unterstützungen und Transporte bleiben erhalten. [Vollständige Migrations- und Betriebsgrenzen](PHASE-1.md).
 
-Spielerregistrierung bleibt frei. Die neuen Einladungen unter **Freunde** betreffen ausschließlich die gemeinsame Disposition eines Leitstellenbestands, keine Administratorrolle oder Serververwaltung.
+Spielerregistrierung bleibt frei. Die Einladungen unter **Funk → Verbund & Leitstellenfunk** (früher **Freunde**) betreffen ausschließlich die gemeinsame Disposition eines Leitstellenbestands, keine Administratorrolle oder Serververwaltung. **Spieler** zeigt öffentliche Anwesenheit ohne zusätzliche Einsatzrechte.
 
 ## Update 2.8 / Phase 2
 

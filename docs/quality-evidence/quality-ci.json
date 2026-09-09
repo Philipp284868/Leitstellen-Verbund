@@ -1,0 +1,57 @@
+{
+  "commit": "992659034486c5f6ba2f6962577bce9521865465",
+  "run": 34347567149,
+  "url": "https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34347567149",
+  "conclusion": "success",
+  "vitest": {
+    "passed": 1021,
+    "failed": 0,
+    "skipped": 0,
+    "files": 60
+  },
+  "node": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "browser": [
+    {
+      "name": "chromium-1",
+      "duration": 367840,
+      "expected": 32,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "name": "chromium-2",
+      "duration": 378867,
+      "expected": 28,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "name": "firefox-1",
+      "duration": 511237,
+      "expected": 32,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "name": "firefox-2",
+      "duration": 370956,
+      "expected": 28,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    }
+  ],
+  "codeql": {
+    "run": 34347567147,
+    "conclusion": "success"
+  },
+  "productionDeployed": false
+}

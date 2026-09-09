@@ -2,7 +2,11 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.18.0 · Dynamische Einsätze, freiwillige Kräfte und vollständiges Archiv
+## Version 2.19.0 · Freie Karte, Topbar, passende Symbole und Spielerpräsenz
+
+Eine einzige 62-Pixel-Leiste erschließt die Spielbereiche. Arbeitslisten und Details öffnen bei Bedarf; die untere Toolbar und globale Personalstatistik entfallen. Alle 50 Fahrzeugtypen nutzen zentrale Vektorsymbole. Reale Einrichtungen erscheinen nach Zoom und Kategorie, Mitspieler an ihrer zugeordneten Leitstelle. Öffentliche Anwesenheit überträgt keine privaten Spielstände oder Einsatzrechte. Die Simulation prüft gemeinsame Besatzungen, bestätigte Lagemeldungen, Klinikprofile und offene Abschlussbedingungen konsequenter. [Systemaudit und neue Bedienwege](docs/QUALITAET-2.19.md) · [Symbolzuordnung und Datenabdeckung](docs/QUALITAET-KARTENSYMBOLE.md) · [Präsenz und Rechte](docs/QUALITAET-PRAESENZ.md) · [Tatsächliche Prüfungen und Aufnahmen](docs/QUALITAET-TESTBERICHT.md).
+
+### Bestehender Einsatzbetrieb
 
 **653 Einsatzvorlagen, 50 Fahrzeugtypen:** Der vorhandene Ablauf ist um konkrete Lagevarianten, echte FF-Anreisen, einen späteren BF-Ausbau, getrennte Fahrzeugbereitschaft und Rettungsmittel-Nachbereitung erweitert. Es gibt keine maximale Zahl aktiver Einsätze. Prioritäten, verständliche Fahrzeuganforderungen und eine seitenweise Einsatzliste helfen bei mehreren parallelen Lagen. Eigene WAV-, MP3- und OGG-Signale bleiben im Browser und haben keine feste 2-MB-/15-Sekunden-Grenze. Das dauerhafte SQLite-Archiv enthält alle ab diesem Update gespeicherten Abschlüsse. [Bedienung, Migration und technische Grenzen](docs/EINSATZBETRIEB-2.18.md) · [Vollständige Katalogzuordnung](docs/EINSATZKATALOG.md) · [Prüfbericht](docs/EINSATZBETRIEB-TESTBERICHT.md).
 
@@ -16,9 +20,9 @@ Die neue Deutschlandwelt verwendet vollständige, lokal aufbereitete OpenStreetM
 
 Anmelden → **Spielen** → berechtigte Leitstelle betreten. Der verbundene Server wird mit seiner tatsächlichen Adresse angezeigt. **Leitstellen** öffnet gemeinsame Disponenten und ausdrückliche Nachbarhilfe. Unabhängige Leitstellen teilen neue Einsätze nicht automatisch.
 
-Das Hauptmenü folgt der freigegebenen Referenz mit Regionshintergrund, Navigation links und Profil/Leitstellenwerten rechts. Im Spiel stehen Karte, schmale Statusleiste, kompakte Einsatzliste, rechte Disposition und untere Aktionsleiste im Mittelpunkt. Zielgrößen: 1920×1080, 2560×1440, 1366×768 und Ultrawide 3440×1440. Unter 1100×650 zeigt die Anwendung einen Desktop-Hinweis. Deutschland wird als interaktive, nach Zoom gegliederte Vektorkarte dargestellt.
+Das Hauptmenü folgt der freigegebenen Referenz mit Regionshintergrund, Navigation links und Profil/Leitstellenwerten rechts. Im Spiel ist nur die 62px-Topbar dauerhaft geöffnet. Einsatzliste, Disposition und Kartenwerkzeuge erscheinen bei Bedarf; eine untere Toolbar existiert nicht mehr. Zielgrößen: 1920×1080, 2560×1440, 1366×768 und Ultrawide 3440×1440. Unter 1100×650 zeigt die Anwendung einen Desktop-Hinweis. Deutschland wird als interaktive, nach Zoom gegliederte Vektorkarte dargestellt.
 
-**Spielablauf:** Notruf aufnehmen, Informationen erfragen, AAO oder Fahrzeuge wählen, alarmieren, Ausrücken und FMS verfolgen, erste Lagemeldung bearbeiten, Kräfte nachfordern, Einsatz abschließen, Historie auswerten. Fahrzeuge, Personal, Gebäude, Ebenen, Funk und Archiv sind direkt über das HUD erreichbar.
+**Spielablauf:** Notruf aufnehmen, Informationen erfragen, AAO oder Fahrzeuge wählen, alarmieren, Ausrücken und FMS verfolgen, erste Lagemeldung bearbeiten, Kräfte nachfordern, Einsatz abschließen, Historie auswerten. Fahrzeuge, Gebäude, Karte, Funk und Spieler sind oben erreichbar; AAO und Archiv im Einsatzbereich. Die notwendige Besatzungsverwaltung liegt in Wachen- und Fahrzeugdetails.
 
 ## Bestandsschutz und Update
 

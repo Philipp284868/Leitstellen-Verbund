@@ -3,13 +3,16 @@
 - [[Home]]
 - [[Einstieg]]
 - [[Serverbeitritt]]
-- [[Berechtigungen]]
-- [[Bedienung]]
+- [[Berechtigungen und öffentliche Spielerpräsenz|Berechtigungen]]
+- [[Hauptleiste und Bedienung|Bedienung]]
 - [[Einsatzablauf]]
 - [[Fortschritt]]
 - [[Karte-und-Fahrten]]
 - [[Deutschland]]
-- [[Rivermere]]
 - [[Serverbetrieb]]
 - [[Entwicklung]]
 - [[Roadmap]]
+
+### Historische Bestandswelt
+
+- [[Rivermere – Bestand und Migration|Rivermere]]
