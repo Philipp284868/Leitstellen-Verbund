@@ -20,6 +20,9 @@ import { acquireLock } from "./lock";
 import { prepareGeography } from "./germany/runtime";
 import { exportHistory } from "./history";
 import { publicSave } from "../src/simulation/incidents";
+import { planEconomyMigration } from "./economy-migration";
+import { migrateEconomy } from "../src/economy/migration";
+import { migrateBuildingStaffing } from "../src/simulation/building-staffing";
 
 const command = process.argv[2];
 if (
@@ -103,7 +106,12 @@ try {
         }
       console.log(
         JSON.stringify(
-          { readOnly: true, targetVersion: DATABASE_VERSION, saves: result },
+          {
+            readOnly: true,
+            targetVersion: DATABASE_VERSION,
+            saves: result,
+            economy: planEconomyMigration(db).summary,
+          },
           null,
           2,
         ),
@@ -255,7 +263,8 @@ try {
           throw Error(
             "Archivierte Einzelspielerstände dürfen nicht in die Multiplayer-Wirtschaft importiert werden.",
           );
-        let s = validate(raw.save);
+        let s = migrateEconomy(validate(raw.save)).save;
+        migrateBuildingStaffing(s);
         const user = db.sql
           .prepare("SELECT id FROM users WHERE username=?")
           .get(arg("username"));

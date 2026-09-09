@@ -611,8 +611,13 @@
 
 @media (max-height: 850px) and (min-width: 901px) {
   .menu-intel {
-    padding-top: 52px;
+    padding-top: 40px;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    min-height: 0;
+    gap: 6px;
   }
+  .menu-intel .menu-tutorial-link { padding: 10px; }
   .menu-panel {
     padding: 7px 12px;
   }
@@ -653,6 +658,12 @@
   .menu-lower {
     padding: 8px 0;
   }
+}
+@media (max-height: 720px) and (min-width: 901px) {
+  .command-menu { grid-template-rows: 112px 1fr auto 48px; }
+  .app.command-hud .menu-action { height: 54px; }
+  .menu-actions { gap: 6px; }
+  .menu-intel { padding-top: 32px; }
 }
 
 /* Keep the news preview within the desktop composition; the dialog has full text. */

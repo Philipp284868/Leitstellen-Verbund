@@ -1,4 +1,6 @@
 import { SpatialIndex } from "../src/spatial";
+import { fundTestBudget } from "./money-fixture";
+import { euro } from "../src/money";
 import { createHash } from "node:crypto";
 import { it, expect } from "vitest";
 import {
@@ -447,6 +449,7 @@ it("Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigesc
       "Nord",
     );
     const s = lab.save;
+    fundTestBudget(s, 500000); // Isolate the earned level gate from the lab's pre-bought TLF.
     s.player.id = owner;
     for (const o of [...s.buildings, ...s.vehicles]) o.owner = owner;
     db.save(owner, s);
@@ -458,7 +461,7 @@ it("Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigesc
     game.command(owner, command);
     game.command(owner, command);
     expect(db.all().get(owner)!.vehicles).toHaveLength(3);
-    expect(db.all().get(owner)!.money).toBe(s.money - 30000);
+    expect(db.all().get(owner)!.money).toBe(s.money - euro(320000));
     expect(() =>
       game.command(owner, {
         id: crypto.randomUUID(),

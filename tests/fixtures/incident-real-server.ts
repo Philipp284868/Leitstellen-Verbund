@@ -16,6 +16,7 @@ import { attachIncident } from "../../src/simulation/calls";
 import { attachDynamics } from "../../src/simulation/dynamics";
 import { breakVehicle } from "../../src/simulation/faults";
 import { vehiclePosition } from "../../src/vehicle-position";
+import { fundTestBudget } from "../money-fixture";
 
 const dataDir = mkdtempSync(resolve(tmpdir(), "lv-incident-real-"));
 const config = {
@@ -55,7 +56,7 @@ s.player.id = owner;
 s.generation = "a2200000-1111-4222-8333-444444444444";
 s.seed = 124;
 s.xp = xpForLevel(30);
-s.money = 5000000;
+fundTestBudget(s, 10000000);
 s.tutorial = 6;
 s.missionWait = 100000;
 for (const [kind, lon, lat, types] of [
@@ -130,7 +131,7 @@ function scenario(
   return m.id;
 }
 const first = scenario(s, "bin", 13.412, 52.526, true);
-s.money = 842350;
+fundTestBudget(s, 842350);
 db.save(owner, validate(s));
 db.sql.prepare("INSERT INTO desk_members VALUES (?,?)").run(member, owner);
 db.close();

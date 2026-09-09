@@ -69,6 +69,9 @@
   border-radius: 12px;
   box-shadow: 0 8px 30px #0005;
 }
+.app:has(.incident-dock, .scrim) > .reconnect-summary {
+  display: none;
+}
 .reconnect-summary p {
   line-height: 1.5;
 }

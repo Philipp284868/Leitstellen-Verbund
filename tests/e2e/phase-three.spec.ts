@@ -71,9 +71,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   await enter(page);
   await page.getByRole("button", { name: "Wachen", exact: true }).click();
   await page.getByRole("dialog").locator(".station-card").first().click();
-  await page
-    .getByText("Organisation, Ausrücken und Reserve", { exact: true })
-    .click();
+  await page.locator(".org-settings > summary").click();
   await expect(page.getByRole("dialog")).toContainText("Freiwillige Feuerwehr");
   await expect(page.getByLabel("Bereitschaft auf der Wache")).toHaveCount(0);
   await expect(page.getByLabel("Wohnort", { exact: true })).toHaveCount(0);

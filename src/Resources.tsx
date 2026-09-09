@@ -2,7 +2,6 @@ import { VehicleIcon, BuildingIcon } from "./map-icons";
 import { buildReason, purchaseReason } from "./purchase";
 import {
   StationSettings,
-  PersonSettings,
   VehicleStaffing,
   HospitalSettings,
 } from "./Organizations";
@@ -18,7 +17,13 @@ import {
   extensions,
 } from "./catalog";
 import { level, type Save, type Building } from "./model";
-import { act } from "./store";
+import { command, useGame } from "./store";
+import { useCommandForm } from "./use-command-form";
+import { requestDialogTransition } from "./dialog-state";
+import { buildingStaffingStatus } from "./simulation/building-staffing";
+import { saleValue } from "./economy/ledger";
+import { unproject } from "./germany/projection";
+import { IS_GERMANY } from "./world-choice";
 import { fleetReadiness } from "./fleet-view";
 import { stationCapacity } from "./simulation/staffing";
 import {
@@ -36,246 +41,460 @@ export function BuildingShop({
   s: Save;
   onPlace: (type: string) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const matches = buildings.filter((b) =>
+    `${b.name} ${b.org}`
+      .toLocaleLowerCase("de")
+      .includes(query.toLocaleLowerCase("de")),
+  );
   return (
-    <div className="shop-grid">
-      {buildings.map((b) => (
-        <article className="shop-card" key={b.id}>
-          <span className="eyebrow">{b.org}</span>
-          <h3>
-            <BuildingIcon type={b.id} /> {b.name}
-          </h3>
-          <p>
-            {b.slots
-              ? `${b.slots} Stellplätze`
-              : b.id === "hospital"
-                ? "20 zusätzliche Behandlungsplätze"
-                : "Fachausbildungen für alle Organisationen"}
-          </p>
-          <footer>
-            <strong>{credits(b.price)}</strong>
-            <button
-              disabled={!!buildReason(s, b.id)}
-              onClick={() => onPlace(b.id)}
-            >
-              {buildReason(s, b.id) || "Platzieren"}
-            </button>
-          </footer>
-        </article>
-      ))}
-    </div>
+    <section data-tutorial="build-shop">
+      <p className="view-intro">
+        Wähle die Aufgabe deines neuen Standorts. Den genauen Bauplatz und das
+        verbleibende Budget bestätigst du anschließend auf der Karte.
+      </p>
+      <div className="resource-summary">
+        <div>
+          <small>Verfügbares Budget</small>
+          <strong>{credits(s.money)}</strong>
+        </div>
+        <div>
+          <small>Eigene Standorte</small>
+          <strong>{s.buildings.length} / 150</strong>
+        </div>
+        <div>
+          <small>Personalbereitstellung</small>
+          <strong>Automatisch</strong>
+        </div>
+      </div>
+      <label>
+        Gebäude oder Organisation suchen
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Feuerwehr, Rettung, Krankenhaus …"
+        />
+      </label>
+      <div className="shop-grid">
+        {matches.map((b) => (
+          <article className="shop-card" key={b.id}>
+            <span className="eyebrow">{b.org}</span>
+            <h3>
+              <BuildingIcon type={b.id} /> {b.name}
+            </h3>
+            <p>
+              {b.slots
+                ? `${b.slots} Stellplätze · automatische Grundbesetzung`
+                : b.id === "hospital"
+                  ? "20 Behandlungsplätze · Aufnahme und Fachabteilungen verwalten"
+                  : "Organisationsübergreifendes Ausbildungszentrum"}
+            </p>
+            <dl>
+              <dt>Kaufpreis</dt>
+              <dd>{credits(b.price)}</dd>
+              <dt>Budget nach Bau</dt>
+              <dd>{credits(s.money - b.price)}</dd>
+              <dt>Laufende Kosten</dt>
+              <dd>Keine</dd>
+              <dt>Bauzeit</dt>
+              <dd>{BALANCE.buildSeconds} Sekunden</dd>
+            </dl>
+            <footer>
+              <span>
+                {buildReason(s, b.id) || `Freigeschaltet · Stufe ${b.level}`}
+              </span>
+              <button
+                data-tutorial={`build-${b.id}`}
+                disabled={!!buildReason(s, b.id)}
+                onClick={() => onPlace(b.id)}
+              >
+                Platzieren
+              </button>
+            </footer>
+          </article>
+        ))}
+      </div>
+      {!matches.length && (
+        <div className="empty-state">
+          <h3>Kein Gebäude gefunden</h3>
+          <p>Suche nach Gebäudetyp oder Organisation.</p>
+          <button onClick={() => setQuery("")}>Filter zurücksetzen</button>
+        </div>
+      )}
+    </section>
   );
 }
 export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
-  const [name, setName] = useState(b.name),
-    [skill, setSkill] = useState("Drehleiter");
-  const crew = s.people.filter((p) => p.home === b.id),
-    fleet = s.vehicles.filter((v) => v.home === b.id);
+  const { readonly } = useGame();
+  const [tab, setTab] = useState("overview"),
+    [query, setQuery] = useState(""),
+    [compare, setCompare] = useState<string[]>([]),
+    [purchase, setPurchase] = useState("");
+  const form = useCommandForm(!!purchase, () => setPurchase(""));
+  const fleet = s.vehicles.filter((v) => v.home === b.id),
+    cap = stationCapacity(b),
+    automatic = buildingStaffingStatus(s, b);
+  const available = vehicles.filter(
+    (v) =>
+      v.home === b.type &&
+      `${v.name} ${Object.keys(v.skills)
+        .map((k) => capabilities[k])
+        .join(" ")}`
+        .toLocaleLowerCase("de")
+        .includes(query.toLocaleLowerCase("de")),
+  );
+  const requiredLevel = Math.max(bt(b.type).level, b.level * 2),
+    upgradeCost = BALANCE.upgrade * b.level;
+  const upgradeReason =
+    b.ready > s.time
+      ? "Bauarbeiten abwarten"
+      : b.level >= 10
+        ? "Maximale Ausbaustufe erreicht"
+        : level(s) < requiredLevel
+          ? `Ausbau ab Stufe ${requiredLevel}`
+          : s.money < upgradeCost
+            ? "Budget reicht für diesen Ausbau nicht aus"
+            : "";
+  const location = IS_GERMANY ? unproject(b.pos) : null;
+  const selectedPurchase = vehicles.find((v) => v.id === purchase);
   return (
-    <div className="resource-panel">
-      <span className="eyebrow">{bt(b.type).org} · Eigene Wache</span>
+    <section className="resource-panel" data-tutorial="building-details">
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
+      <span className="eyebrow">{bt(b.type).org} · Eigener Standort</span>
       <h2>
         <BuildingIcon type={b.type} /> {b.name}
       </h2>
-      <StationSettings key={`${b.id}-station`} s={s} b={b} />
-      <HospitalSettings key={`${b.id}-hospital`} s={s} b={b} />
-      {b.type === "hospital" && (
-        <p className="banner">
-          {b.hospital?.open === false
-            ? "Patientenaufnahme abgemeldet"
-            : "Patientenaufnahme geöffnet"}{" "}
-          · {s.beds.filter((x) => x.home === b.id).length} /{" "}
-          {b.hospital?.capacity ?? 20 * b.level} Betten belegt
-        </p>
-      )}
-      <div className="stat-row">
-        <span>
-          Stufe <b>{b.level}</b>
-        </span>
-        <span>
-          Stellplätze{" "}
-          <b>
-            {fleet.length}/{stationCapacity(b).slots}
-          </b>
-        </span>
-      </div>
-      {b.ready > s.time && (
-        <p className="banner">
-          Bauarbeiten: noch {Math.ceil(b.ready - s.time)} Sekunden
-        </p>
-      )}
-      <div className="inline">
-        <input
-          aria-label="Wachenname"
-          maxLength={48}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+      <p className="view-intro">
+        {location
+          ? `${location.lat.toFixed(5)}° N, ${location.lon.toFixed(5)}° E`
+          : `Kartenposition ${Math.round(b.pos.x)} / ${Math.round(b.pos.y)}`}{" "}
+        ·{" "}
+        <RenameAction
+          label="Wache"
+          name={b.name}
+          onSave={(name) => command({ type: "rename", id: b.id, name })}
         />
-        <button onClick={() => void act({ type: "rename", id: b.id, name })}>
-          Umbenennen
-        </button>
+      </p>
+      <div className="resource-summary">
+        <div>
+          <small>Betriebsstatus</small>
+          <strong>{automatic.label}</strong>
+        </div>
+        <div>
+          <small>Stellplätze</small>
+          <strong>
+            {fleet.length} / {cap.slots}
+          </strong>
+        </div>
+        <div>
+          <small>Gebäudestufe</small>
+          <strong>{b.level} / 10</strong>
+        </div>
       </div>
-      <div className="inline">
-        <button
-          disabled={
-            level(s) < Math.max(bt(b.type).level, b.level * 2) ||
-            s.money < BALANCE.upgrade * b.level ||
-            b.ready > s.time ||
-            b.level >= 10
-          }
-          onClick={() => void act({ type: "upgrade", id: b.id })}
-        >
-          Ausbauen · Stufe {Math.max(bt(b.type).level, b.level * 2)} ·{" "}
-          {credits(BALANCE.upgrade * b.level)}
-        </button>
-        <ConfirmAction
-          message="Leere Wache für 60 % des Grundpreises verkaufen?"
-          onConfirm={() => void act({ type: "sell", id: b.id })}
-        >
-          Verkaufen
-        </ConfirmAction>
+      <div className="section-tabs" role="tablist" aria-label="Wachenbereiche">
+        {[
+          ["overview", "Übersicht & Betrieb"],
+          ["vehicles", "Fahrzeuge & Vergleich"],
+          ["expansion", "Ausbau & Funktionen"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => requestDialogTransition(() => setTab(id))}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      {bt(b.type).people > 0 && (
-        <details className="resource-section">
-          <summary>Besatzung & Ausbildung</summary>
-          <p>
-            {crew.length}/{stationCapacity(b).people} Plätze belegt ·{" "}
-            {crew.filter((p) => !p.vehicle).length} frei ·{" "}
-            {crew.filter((p) => p.training).length} in Ausbildung
-          </p>
-          <div className="inline">
-            <button
-              onClick={() => void act({ type: "hire", home: b.id, count: 6 })}
-            >
-              6 einstellen · {credits(BALANCE.hire * 6)}
-            </button>
-            <button
-              onClick={() => void act({ type: "hire", home: b.id, count: 1 })}
-            >
-              1 einstellen · {credits(BALANCE.hire)}
-            </button>
-          </div>
-          <label>
-            Fachausbildung
-            <select value={skill} onChange={(e) => setSkill(e.target.value)}>
-              {[
-                "Drehleiter",
-                "Führung",
-                "Bergung",
-                "Gefahrgut",
-                "Atemschutz",
-                "Notarzt",
-                "Luftrettung",
-                "Wasserrettung",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </label>
-          <div className="people-list">
-            {crew.map((p, i) => (
-              <div className="person" key={p.id} style={{ flexWrap: "wrap" }}>
-                <span>
-                  {p.duty?.name || `Mitarbeiter ${i + 1}`}
-                  <small>
-                    {p.training
-                      ? `In Ausbildung: ${p.training} (${Math.max(0, Math.ceil(p.ready - s.time))} s)`
-                      : p.skills.join(", ") || "Grundausbildung"}{" "}
-                    · {p.vehicle ? "Zugewiesen" : "Frei"}
-                  </small>
-                </span>
-                <button
-                  disabled={
-                    !!p.training ||
-                    !s.buildings.some(
-                      (b) => b.type === "school" && b.ready <= s.time,
-                    )
-                  }
-                  onClick={() =>
-                    void act({ type: "train", person: p.id, skill })
-                  }
-                >
-                  Ausbilden
-                </button>
-                {!p.vehicle && !p.training && (
-                  <ConfirmAction
-                    message="Ohne Rückerstattung entlassen?"
-                    onConfirm={() =>
-                      void act({ type: "dismiss", person: p.id })
-                    }
-                  >
-                    Entlassen
-                  </ConfirmAction>
-                )}
-                <PersonSettings s={s} person={p} />
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
-      {bt(b.type).slots > 0 && (
+      {tab === "overview" && (
         <>
-          <h3>Wachenerweiterungen</h3>
-          {extensions
-            .filter((e) => e.home === b.type)
-            .map((e) => (
-              <div className="person" key={e.id}>
-                <span>{e.name}</span>
-                <button
-                  disabled={
-                    b.extensions.includes(
-                      e.id as (typeof b.extensions)[number],
-                    ) ||
-                    s.money < e.price ||
-                    level(s) < e.level ||
-                    b.ready > s.time
-                  }
-                  onClick={() =>
-                    void act({ type: "extension", id: b.id, kind: e.id })
-                  }
-                >
-                  {b.extensions.includes(e.id as (typeof b.extensions)[number])
-                    ? "Gebaut"
-                    : level(s) < e.level
-                      ? `Ab Stufe ${e.level}`
-                      : s.money < e.price
-                        ? "Nicht genügend Credits"
-                        : credits(e.price)}
-                </button>
-              </div>
-            ))}
-          <h3>Fahrzeuge beschaffen</h3>
-          <div className="vehicle-shop">
-            {vehicles
-              .filter((v) => v.home === b.type)
-              .map((v) => (
+          <article className="purchase-review" data-tutorial="automatic-staff">
+            <h3>Automatische Wachbesetzung</h3>
+            <p>{automatic.reason}</p>
+            <p>
+              Die Wache stellt die für ihre freigeschalteten Fahrzeuge
+              erforderliche Besatzung und Qualifikationen selbst bereit.
+              Laufende Einsätze, Verletzungen und Rückfahrten behalten ihre
+              Besatzung.
+            </p>
+          </article>
+          {b.ready > s.time && (
+            <p className="banner" role="status">
+              Bauarbeiten: noch {Math.ceil(b.ready - s.time)} Sekunden
+            </p>
+          )}
+          <StationSettings key={`${b.id}-station`} s={s} b={b} />
+          <HospitalSettings key={`${b.id}-hospital`} s={s} b={b} />
+          {b.type === "hospital" && (
+            <p className="banner">
+              {b.hospital?.open === false
+                ? "Patientenaufnahme abgemeldet"
+                : "Patientenaufnahme geöffnet"}{" "}
+              · {s.beds.filter((x) => x.home === b.id).length} /{" "}
+              {b.hospital?.capacity ?? 20 * b.level} Betten belegt
+            </p>
+          )}
+          <h3>Stationierte Fahrzeuge</h3>
+          {fleet.length ? (
+            <div className="vehicle-shop">
+              {fleet.map((v) => (
                 <article key={v.id}>
+                  <VehicleIcon type={v.type} />
                   <div>
-                    <b>
-                      <VehicleIcon type={v.id} /> {v.name}
-                    </b>
+                    <b>{v.name}</b>
                     <small>
-                      {v.crew} Personal{v.training ? ` · ${v.training}` : ""}
+                      {statuses[v.status]} ·{" "}
+                      {v.availability?.reason || "Automatisch besetzt"}
                     </small>
-                    <small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>Noch kein Fahrzeug stationiert</h3>
+              <p>
+                Nach Abschluss der Bauarbeiten kannst du passende Fahrzeuge
+                beschaffen.
+              </p>
+              <button
+                onClick={() =>
+                  requestDialogTransition(() => setTab("vehicles"))
+                }
+              >
+                Fahrzeugkatalog öffnen
+              </button>
+            </div>
+          )}
+        </>
+      )}
+      {tab === "vehicles" && (
+        <>
+          <p className="view-intro">
+            Vergleiche bis zu zwei Fahrzeuge. Der Kauf belegt einen Stellplatz;
+            die passende Besatzung wird automatisch bereitgestellt.
+          </p>
+          <label>
+            Fahrzeug oder Fähigkeit suchen
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="TSF-W, Löschwasser, Bergung …"
+            />
+          </label>
+          {compare.length > 0 && (
+            <div className="comparison-grid" aria-label="Fahrzeugvergleich">
+              {compare
+                .map((id) => vt(id))
+                .map((v) => (
+                  <article key={v.id}>
+                    <h3>
+                      <VehicleIcon type={v.id} />
+                      {v.name}
+                    </h3>
+                    <dl>
+                      <dt>Kaufpreis</dt>
+                      <dd>{credits(v.price)}</dd>
+                      <dt>Stellplätze</dt>
+                      <dd>1</dd>
+                      <dt>Freischaltung</dt>
+                      <dd>Stufe {v.level}</dd>
+                      <dt>Laufende Kosten</dt>
+                      <dd>Keine</dd>
+                    </dl>
+                    <p>
                       {Object.entries(v.skills)
                         .map(([k, n]) => `${capabilities[k]} ${n}`)
                         .join(" · ")}
-                    </small>
-                  </div>
+                    </p>
+                    <p>
+                      {purchaseReason(s, v.id, b.id) || "Jetzt beschaffbar"}
+                    </p>
+                    <button
+                      onClick={() =>
+                        setCompare(compare.filter((id) => id !== v.id))
+                      }
+                    >
+                      Aus Vergleich entfernen
+                    </button>
+                  </article>
+                ))}
+            </div>
+          )}
+          {selectedPurchase && (
+            <div
+              className="purchase-review"
+              role="region"
+              aria-label="Fahrzeugkauf bestätigen"
+            >
+              <h3>{selectedPurchase.name} beschaffen</h3>
+              <p>
+                Standort: {b.name} · ein Stellplatz · automatische Besatzung
+              </p>
+              <p>
+                Kaufpreis <b>{credits(selectedPurchase.price)}</b> ·
+                Verbleibendes Budget{" "}
+                <b>{credits(s.money - selectedPurchase.price)}</b> · Laufende
+                Kosten: keine
+              </p>
+              <div className="inline">
+                <button
+                  className="primary"
+                  disabled={
+                    readonly || form.busy || !!purchaseReason(s, purchase, b.id)
+                  }
+                  onClick={() =>
+                    void form.run(async () => {
+                      await command({
+                        type: "buy",
+                        kind: purchase,
+                        home: b.id,
+                      });
+                      setPurchase("");
+                    })
+                  }
+                >
+                  {form.busy
+                    ? "Kauf wird bestätigt …"
+                    : "Kauf verbindlich bestätigen"}
+                </button>
+                <button disabled={form.busy} onClick={() => setPurchase("")}>
+                  Abbrechen
+                </button>
+              </div>
+              {purchaseReason(s, purchase, b.id) && (
+                <p role="alert">{purchaseReason(s, purchase, b.id)}</p>
+              )}
+            </div>
+          )}
+          <div className="vehicle-shop">
+            {available.map((v) => (
+              <article key={v.id}>
+                <div>
+                  <h3>
+                    <VehicleIcon type={v.id} /> {v.name}
+                  </h3>
+                  <small>
+                    {Object.entries(v.skills)
+                      .map(([k, n]) => `${capabilities[k]} ${n}`)
+                      .join(" · ")}
+                  </small>
+                  <p>
+                    {credits(v.price)} ·{" "}
+                    {purchaseReason(s, v.id, b.id) || "Beschaffbar"}
+                  </p>
+                </div>
+                <div className="inline">
                   <button
-                    disabled={!!purchaseReason(s, v.id, b.id)}
+                    aria-pressed={compare.includes(v.id)}
+                    disabled={!compare.includes(v.id) && compare.length >= 2}
                     onClick={() =>
-                      void act({ type: "buy", kind: v.id, home: b.id })
+                      setCompare(
+                        compare.includes(v.id)
+                          ? compare.filter((id) => id !== v.id)
+                          : [...compare, v.id],
+                      )
                     }
                   >
-                    {purchaseReason(s, v.id, b.id) || credits(v.price)}
+                    Vergleichen
                   </button>
-                </article>
-              ))}
+                  <button
+                    data-tutorial={`buy-${v.id}`}
+                    disabled={
+                      readonly || form.busy || !!purchaseReason(s, v.id, b.id)
+                    }
+                    onClick={() =>
+                      requestDialogTransition(() => setPurchase(v.id))
+                    }
+                  >
+                    Kauf prüfen
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
+          {!available.length && (
+            <div className="empty-state">
+              <h3>Keine passenden Fahrzeuge</h3>
+              <button onClick={() => setQuery("")}>Suche zurücksetzen</button>
+            </div>
+          )}
         </>
       )}
-    </div>
+      {tab === "expansion" && (
+        <>
+          <h3>Gebäude ausbauen</h3>
+          <p>
+            Aktuell {cap.slots} Stellplätze. Der Ausbau erhöht die
+            Standortkapazität und passt die automatische Besetzung an. Fahrzeuge
+            auf Rückfahrt bleiben bei vorhandener Einsatzbereitschaft
+            alarmierbar.
+          </p>
+          <p>
+            {upgradeReason ||
+              `Nächste Stufe ${b.level + 1} · ${credits(upgradeCost)} · Budget danach ${credits(s.money - upgradeCost)}`}
+          </p>
+          <ConfirmAction
+            disabled={readonly || !!upgradeReason}
+            message={`Wache für ${credits(upgradeCost)} ausbauen? Bauzeit ${BALANCE.upgradeSeconds} Sekunden.`}
+            onConfirm={() => command({ type: "upgrade", id: b.id })}
+          >
+            Ausbau bestätigen
+          </ConfirmAction>
+          <h3>Funktionen & Erweiterungen</h3>
+          {extensions
+            .filter((e) => e.home === b.type)
+            .map((e) => (
+              <article className="shop-card" key={e.id}>
+                <h3>{e.name}</h3>
+                <p>{e.types.map((id) => vt(id).name).join(" · ")}</p>
+                <p>
+                  {credits(e.price)} · ab Stufe {e.level}
+                </p>
+                {b.extensions.includes(
+                  e.id as (typeof b.extensions)[number],
+                ) ? (
+                  <span className="good">Freigeschaltet</span>
+                ) : (
+                  <ConfirmAction
+                    disabled={
+                      readonly ||
+                      s.money < e.price ||
+                      level(s) < e.level ||
+                      b.ready > s.time
+                    }
+                    message={`${e.name} für ${credits(e.price)} bauen?`}
+                    onConfirm={() =>
+                      command({ type: "extension", id: b.id, kind: e.id })
+                    }
+                  >
+                    Erweiterung bauen
+                  </ConfirmAction>
+                )}
+              </article>
+            ))}
+          <h3>Standort verkaufen</h3>
+          <p>
+            Ein Verkauf ist erst ohne Fahrzeuge, Patienten sowie gebundene oder
+            verletzte Kräfte möglich. Erlös:{" "}
+            {credits(saleValue(b.purchasePriceCents ?? bt(b.type).price))}. Der
+            historische Kaufpreis bleibt die Berechnungsgrundlage.
+          </p>
+          <ConfirmAction
+            disabled={readonly}
+            message={`Standort für ${credits(saleValue(b.purchasePriceCents ?? bt(b.type).price))} verkaufen?`}
+            onConfirm={() => command({ type: "sell", id: b.id })}
+          >
+            Standort verkaufen
+          </ConfirmAction>
+        </>
+      )}
+    </section>
   );
 }
 export function Fleet({
@@ -288,6 +507,7 @@ export function Fleet({
   const [filter, setFilter] = useState(""),
     [favorite, setFavorite] = useState(false),
     [page, setPage] = useState(0);
+  const form = useCommandForm();
   const ready = fleetReadiness(s);
   const matches = s.vehicles.filter(
     (v) =>
@@ -300,142 +520,165 @@ export function Fleet({
   const currentPage = Math.min(page, pages - 1);
   return (
     <div>
-      <div className="inline">
-        <input
-          placeholder="Fahrzeug suchen …"
-          aria-label="Fahrzeug suchen"
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setPage(0);
-          }}
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={favorite}
-            onChange={(e) => {
-              setFavorite(e.target.checked);
-              setPage(0);
-            }}
-          />{" "}
-          Favoriten
-        </label>
-      </div>
-      <div className="vehicle-shop">
-        {matches.slice(currentPage * 50, (currentPage + 1) * 50).map((v) => (
-          <article className="fleet-card" key={v.id}>
-            {onSelect && (
-              <button onClick={() => onSelect(v.id)}>
-                Auf Karte auswählen
-              </button>
-            )}
-            <div className="inline">
-              <button
-                aria-label={`Favorit ${v.name}`}
-                onClick={() => void act({ type: "favorite", id: v.id })}
-              >
-                {v.favorite ? "★" : "☆"}
-              </button>
-              <div>
-                <b>
-                  <VehicleIcon type={v.type} /> {v.name}
-                </b>
-                <small>
-                  {s.buildings.find((b) => b.id === v.home)?.name} ·{" "}
-                  {statuses[v.status]} · FMS{" "}
-                  {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
-                </small>
-                <small className={ready(v) ? "warning" : "good"}>
-                  {v.availability?.reason ||
-                    ready(v) ||
-                    "Vollständig einsatzbereit"}
-                </small>
-                {v.status !== "ready" && <small>{tripLabel(v, s.time)}</small>}
-              </div>
-            </div>
-            <div className="inline">
-              <button
-                onClick={() => void act({ type: "assign", vehicle: v.id })}
-              >
-                Besetzen
-              </button>
-              <button
-                onClick={() => void act({ type: "unassign", vehicle: v.id })}
-              >
-                Besatzung lösen
-              </button>
-              <RenameAction
-                name={v.name}
-                onSave={(name) => void act({ type: "rename", id: v.id, name })}
-              />
-              {v.status !== "ready" ? (
-                <button onClick={() => void act({ type: "recall", id: v.id })}>
-                  Rückruf
-                </button>
-              ) : (
-                <>
-                  <select
-                    aria-label={`Versetzen ${v.name}`}
-                    value={v.home}
-                    onChange={(e) =>
-                      void act({
-                        type: "move",
-                        id: v.id,
-                        home: e.target.value,
-                      })
-                    }
-                  >
-                    {s.buildings
-                      .filter((b) => b.type === vt(v.type).home)
-                      .map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))}
-                  </select>
-                  <ConfirmAction
-                    message={`${v.name} für ${credits(Math.floor(vt(v.type).price * 0.6))} verkaufen? Besatzung bleibt erhalten.`}
-                    onConfirm={() => void act({ type: "sell", id: v.id })}
-                  >
-                    Verkaufen
-                  </ConfirmAction>
-                </>
-              )}
-            </div>
-            <Disclosure title="Besatzung & Einsatzbereitschaft">
-              <VehicleStaffing s={s} v={v} />
-            </Disclosure>
-          </article>
-        ))}
-      </div>
-      {pages > 1 && (
-        <nav className="list-pagination" aria-label="Fahrzeugseiten">
-          <button
-            disabled={!currentPage}
-            onClick={() => setPage(currentPage - 1)}
-          >
-            Zurück
-          </button>
-          <span>
-            {currentPage + 1}/{pages} · {matches.length} Fahrzeuge
-          </span>
-          <button
-            disabled={currentPage + 1 >= pages}
-            onClick={() => setPage(currentPage + 1)}
-          >
-            Weiter
-          </button>
-        </nav>
-      )}
-      {!!s.vehicles.length && !matches.length && (
-        <p className="empty">Keine Fahrzeuge für diesen Filter.</p>
-      )}
-      {!s.vehicles.length && (
-        <p className="empty">
-          Deine ersten Fahrzeuge kaufst du in einer fertig gebauten Wache.
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
         </p>
       )}
+      <fieldset className="command-fields" disabled={form.busy}>
+        <div className="inline">
+          <input
+            placeholder="Fahrzeug suchen …"
+            aria-label="Fahrzeug suchen"
+            value={filter}
+            onChange={(e) => {
+              const value = e.target.value;
+              requestDialogTransition(() => {
+                setFilter(value);
+                setPage(0);
+              });
+            }}
+          />
+          <label>
+            <input
+              type="checkbox"
+              checked={favorite}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                requestDialogTransition(() => {
+                  setFavorite(checked);
+                  setPage(0);
+                });
+              }}
+            />{" "}
+            Favoriten
+          </label>
+        </div>
+        <div className="vehicle-shop">
+          {matches.slice(currentPage * 50, (currentPage + 1) * 50).map((v) => (
+            <article className="fleet-card" key={v.id}>
+              {onSelect && (
+                <button
+                  onClick={() => requestDialogTransition(() => onSelect(v.id))}
+                >
+                  Auf Karte auswählen
+                </button>
+              )}
+              <div className="inline">
+                <button
+                  aria-label={`Favorit ${v.name}`}
+                  onClick={() =>
+                    requestDialogTransition(() => {
+                      void form.run(() =>
+                        command({ type: "favorite", id: v.id }),
+                      );
+                    })
+                  }
+                >
+                  {v.favorite ? "★" : "☆"}
+                </button>
+                <div>
+                  <b>
+                    <VehicleIcon type={v.type} /> {v.name}
+                  </b>
+                  <small>
+                    {s.buildings.find((b) => b.id === v.home)?.name} ·{" "}
+                    {statuses[v.status]} · FMS{" "}
+                    {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
+                  </small>
+                  <small className={ready(v) ? "warning" : "good"}>
+                    {v.availability?.reason ||
+                      ready(v) ||
+                      "Vollständig einsatzbereit"}
+                  </small>
+                  {v.status !== "ready" && (
+                    <small>{tripLabel(v, s.time)}</small>
+                  )}
+                </div>
+              </div>
+              <div className="inline">
+                <RenameAction
+                  name={v.name}
+                  onSave={(name) => command({ type: "rename", id: v.id, name })}
+                />
+                {v.status !== "ready" ? (
+                  <button
+                    onClick={() =>
+                      void form.run(() => command({ type: "recall", id: v.id }))
+                    }
+                  >
+                    Rückruf
+                  </button>
+                ) : (
+                  <>
+                    <select
+                      aria-label={`Versetzen ${v.name}`}
+                      value={v.home}
+                      onChange={(e) =>
+                        void form.run(() =>
+                          command({
+                            type: "move",
+                            id: v.id,
+                            home: e.target.value,
+                          }),
+                        )
+                      }
+                    >
+                      {s.buildings
+                        .filter((b) => b.type === vt(v.type).home)
+                        .map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                    </select>
+                    <ConfirmAction
+                      message={`${v.name} für ${credits(saleValue(v.purchasePriceCents ?? vt(v.type).price))} verkaufen? Besatzung bleibt erhalten.`}
+                      onConfirm={() => command({ type: "sell", id: v.id })}
+                    >
+                      Verkaufen
+                    </ConfirmAction>
+                  </>
+                )}
+              </div>
+              <Disclosure title="Besatzung & Einsatzbereitschaft">
+                <VehicleStaffing s={s} v={v} />
+              </Disclosure>
+            </article>
+          ))}
+        </div>
+        {pages > 1 && (
+          <nav className="list-pagination" aria-label="Fahrzeugseiten">
+            <button
+              disabled={!currentPage}
+              onClick={() =>
+                requestDialogTransition(() => setPage(currentPage - 1))
+              }
+            >
+              Zurück
+            </button>
+            <span>
+              {currentPage + 1}/{pages} · {matches.length} Fahrzeuge
+            </span>
+            <button
+              disabled={currentPage + 1 >= pages}
+              onClick={() =>
+                requestDialogTransition(() => setPage(currentPage + 1))
+              }
+            >
+              Weiter
+            </button>
+          </nav>
+        )}
+        {!!s.vehicles.length && !matches.length && (
+          <p className="empty">Keine Fahrzeuge für diesen Filter.</p>
+        )}
+        {!s.vehicles.length && (
+          <p className="empty">
+            Deine ersten Fahrzeuge kaufst du in einer fertig gebauten Wache.
+          </p>
+        )}
+      </fieldset>
     </div>
   );
 }

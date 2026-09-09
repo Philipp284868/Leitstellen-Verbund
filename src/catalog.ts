@@ -2,6 +2,7 @@ import { WORLD_NAME, IS_GERMANY } from "./world-choice";
 import { unlockLevel } from "./progression";
 import { incidentVariants } from "./catalog/incident-variants";
 import type { IncidentProfile } from "./catalog/incident-profile";
+import { catalogPrice, ECONOMY_PRICES, missionPayment } from "./economy/prices";
 export type Org =
   | "Feuerwehr"
   | "Rettungsdienst"
@@ -11,12 +12,12 @@ export type Org =
   | "Infrastruktur";
 export type Skills = Record<string, number>;
 export const BALANCE = {
-  start: 250000,
-  hire: 600,
-  training: 1800,
+  start: ECONOMY_PRICES.start,
+  hire: ECONOMY_PRICES.hire,
+  training: ECONOMY_PRICES.training,
   trainingSeconds: 180,
   buildSeconds: 25,
-  upgrade: 18000,
+  upgrade: ECONOMY_PRICES.upgrade,
   upgradeSeconds: 60,
   offlineMax: 14400,
   missionInterval: 120,
@@ -166,7 +167,7 @@ const v = (
   id,
   name,
   home,
-  price,
+  price: catalogPrice("vehicle", id, price),
   crew,
   skills,
   level: unlockLevel("vehicle", id) || level,
@@ -929,8 +930,18 @@ export const extensions = [
     types: ["nef"],
   },
 ];
-for (const b of buildings) b.level = unlockLevel("building", b.id);
-for (const e of extensions) e.level = unlockLevel("extension", e.id);
+for (const b of buildings) {
+  b.level = unlockLevel("building", b.id);
+  b.price = catalogPrice("building", b.id, b.price);
+}
+for (const e of extensions) {
+  e.level = unlockLevel("extension", e.id);
+  e.price = catalogPrice("extension", e.id, e.price);
+}
+export const legacyMissionRewards = new Map(
+  missions.map((t) => [t.id, t.reward]),
+);
+for (const t of missions) t.reward = missionPayment(t);
 export const vt = (id: string) => {
   const x = vehicles.find((v) => v.id === id);
   if (!x) throw Error("Unbekannter Fahrzeugtyp");

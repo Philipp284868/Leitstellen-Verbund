@@ -6,6 +6,54 @@
   max-height: 300px;
   overflow: auto;
 }
+.command-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+.command-fields[disabled] {
+  cursor: progress;
+}
+.aao-editor > .command-fields > .inline:first-of-type {
+  max-height: 160px;
+  overflow: auto;
+  padding-block: 6px;
+}
+.aao-editor .requirement-editor {
+  padding: 12px;
+  background: var(--hud-raised);
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+}
+.aao-editor .command-fields > .inline:last-child,
+.fms-panel .command-fields > .inline {
+  margin-block: 18px;
+  padding-block: 12px;
+  border-top: 1px solid var(--hud-border);
+}
+.fms-panel .alarm-profile-row {
+  padding-block: 12px;
+  border-top: 1px solid var(--hud-border);
+}
+.incident-desk > .command-fields > section > progress {
+  width: 100%;
+}
+.incident-dock > .draft-confirm {
+  margin: 12px;
+}
+.incident-dock > .draft-confirm button {
+  min-height: 40px;
+}
+.aid-card > .command-fields > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+.command-fields > .error {
+  margin-block: 12px;
+}
 .desk-queue small {
   display: block;
   line-height: 1.5;

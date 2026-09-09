@@ -1,3 +1,4 @@
+import { sumCents } from "../money";
 import type { Save, Mission, Vehicle } from "../model";
 import { mt, vt } from "../catalog";
 import { vehicleMotion } from "../vehicle-position";
@@ -244,7 +245,7 @@ export function finalizeReport(s: Save, m: Mission) {
   t.major += Number(r.major);
   t.delivered += r.patients.delivered;
   t.dead += r.patients.dead;
-  t.credits += r.credits ?? 0;
+  t.credits = sumCents([t.credits, r.credits ?? 0]);
   t.xp += r.xp ?? 0;
   for (const k of timingKeys) {
     const value = r.timings[k];

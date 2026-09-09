@@ -1,4 +1,4 @@
-/** At most one custom recording is streamed. No decoded recording is retained in RAM. */
+/** One independently managed playback voice. The controller may mix several voices. */
 export class StreamedSignal {
   private current: {
     player: HTMLAudioElement;

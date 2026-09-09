@@ -1,3 +1,4 @@
+import { centsSchema } from "../economy/schema";
 import { z } from "zod";
 const n = z.number().finite().nonnegative().max(1e12);
 const label = z.string().max(100);
@@ -28,7 +29,7 @@ export const telemetrySchema = z
     partial: z.boolean(),
     meters: n,
     units: z.array(unit),
-    credits: n.nullable().default(null),
+    credits: centsSchema.nullable().default(null),
     xp: n.nullable().default(null),
     aaos: z
       .array(
@@ -51,7 +52,7 @@ export const reportSchema = z
     patients: z.object({ total: n, delivered: n, dead: n }).strict(),
     units: z.array(unit),
     meters: n,
-    credits: n.nullable(),
+    credits: centsSchema.nullable(),
     xp: n.nullable(),
     aaos: telemetrySchema.shape.aaos,
     quality: z
@@ -82,7 +83,7 @@ export const statisticsSchema = z
     major: n,
     delivered: n,
     dead: n,
-    credits: n,
+    credits: centsSchema,
     xp: n,
     meters: n,
     timings: z.record(

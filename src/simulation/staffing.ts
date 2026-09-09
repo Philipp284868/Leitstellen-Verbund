@@ -1,6 +1,7 @@
 import type { Alarm } from "./schema";
 import type { Save, Vehicle, Building } from "../model";
-import { bt, vt, BALANCE } from "../catalog";
+import { bt, vt, BALANCE, vehicles } from "../catalog";
+import { ECONOMY_PRICES } from "../economy/prices";
 import { nodes, nearest, distance } from "../world";
 import { setFms } from "./fms";
 import { record } from "./events";
@@ -28,7 +29,7 @@ export const roleNames = {
 };
 export const PROFESSIONAL_FIRE = {
   level: 6,
-  price: 240000,
+  price: ECONOMY_PRICES.professionalFire,
   seconds: BALANCE.upgradeSeconds * 3,
 } as const;
 type Person = Save["people"][number];
@@ -66,9 +67,17 @@ export function newStationProfile(type: string): Station | undefined {
 export function stationCapacity(b: Building) {
   const multiplier =
     b.type === "fire" && stationProfile(b).kind === "bf" ? 2 : 1;
+  const slots = bt(b.type).slots * b.level * multiplier;
+  const maximumCrew = Math.max(
+    0,
+    ...vehicles.filter((v) => v.home === b.type).map((v) => v.crew),
+  );
   return {
-    slots: bt(b.type).slots * b.level * multiplier,
-    people: bt(b.type).people * b.level * multiplier,
+    slots,
+    people: Math.max(
+      bt(b.type).people * b.level * multiplier,
+      (slots + 1) * maximumCrew,
+    ),
   };
 }
 function key(id: string) {
@@ -107,6 +116,9 @@ export function personAvailable(s: Save, p: Person) {
   const injury = injuryReason(s, p);
   if (injury) return injury;
   if (p.training || p.ready > s.time) return "In Ausbildung";
+  // Operational cover is supplied with the building; ordinary shifts and leave
+  // no longer randomly disable its promised baseline. Real injuries stay above.
+  if (s.staffing?.version === 1) return "";
   const b = s.buildings.find((b) => b.id === p.home);
   // Private FF responses are decided by the simulation after an alarm. They
   // must not be exposed as an editable roster or rerolled by readiness checks.

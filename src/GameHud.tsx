@@ -1,3 +1,4 @@
+import { requestDialogTransition } from "./dialog-state";
 import { WORLD_NAME, IS_GERMANY } from "./world-choice";
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import { Radio, X } from "lucide-react";
@@ -7,7 +8,7 @@ import { useNetwork, usePresence } from "./network";
 import { missionPresentation, missionProgress } from "./mission-presentation";
 import { districtAt } from "./world";
 
-import { act } from "./store";
+import { command, emit } from "./store";
 import { MapView } from "./Map";
 import { OperationsOverview } from "./Major";
 import { DeskQueue } from "./Desk";
@@ -41,7 +42,6 @@ type Props = {
   sort: string;
   setSort: (value: string) => void;
   userId?: string;
-  tutorial: string;
   listOpen: boolean;
   setListOpen: (value: boolean) => void;
   activePanel: string;
@@ -67,7 +67,6 @@ export function GameHud({
   sort,
   setSort,
   userId,
-  tutorial,
   listOpen,
   setListOpen,
   activePanel,
@@ -76,6 +75,8 @@ export function GameHud({
     user = { id: userId };
   const presence = usePresence();
   const [layers, setLayers] = useState(false);
+  const [buildingBusy, setBuildingBusy] = useState(false);
+  const buildingLock = useRef(false);
   const working = !!activePanel && activePanel !== "mission";
   useEffect(() => {
     if (working) {
@@ -150,11 +151,12 @@ export function GameHud({
       dock.current?.querySelector<HTMLElement>(".incident-desk")
     )?.scrollIntoView({ block: "start", behavior: "instant" });
   };
-  const choose = (id: string) => {
-    setLayers(false);
-    open(id);
-    setTab("details");
-  };
+  const choose = (id: string) =>
+    requestDialogTransition(() => {
+      setLayers(false);
+      open(id);
+      setTab("details");
+    });
   return (
     <div
       className="hud-shell"
@@ -246,11 +248,19 @@ export function GameHud({
             onCloseDetail();
           }}
           placing={placing}
-          readonly={readonly}
+          readonly={readonly || buildingBusy}
           onCancelPlace={() => setPlacing("")}
           onPlace={(pos) => {
-            void act({ type: "build", kind: placing, pos });
-            setPlacing("");
+            if (buildingLock.current) return;
+            buildingLock.current = true;
+            setBuildingBusy(true);
+            void command({ type: "build", kind: placing, pos })
+              .then(() => setPlacing(""))
+              .catch((error) => emit({ error: String(error) }))
+              .finally(() => {
+                buildingLock.current = false;
+                setBuildingBusy(false);
+              });
           }}
           friends={net.friends}
           presence={presence.ready ? presence.players : []}
@@ -273,19 +283,6 @@ export function GameHud({
             <button onClick={() => setModal("archive")}>Archiv</button>
           </div>
           <OperationsOverview s={s} open={open} />
-          {s.tutorial < 6 && (
-            <details className="onboarding-help">
-              <summary>Erste Schritte</summary>
-              <p>{tutorial}</p>
-              <button
-                onClick={() =>
-                  setModal(s.tutorial === 0 ? "build" : "stations")
-                }
-              >
-                Wache öffnen
-              </button>
-            </details>
-          )}
           <details className="queue-slot">
             <summary>
               Notrufe & Sprechwünsche <span>{pendingRadio}</span>

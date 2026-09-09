@@ -14,7 +14,9 @@ export const timeLabels = {
 export function reportDocument(m: Mission) {
   return {
     format: "leitstellen-einsatzbericht",
-    version: 1,
+    version: 2,
+    currency: "EUR",
+    moneyUnit: "cent",
     mission: m.id,
     title: mt(m.template).name,
     created: m.created,
@@ -45,7 +47,7 @@ export function reportsCSV(missions: Mission[]) {
       "Patienten übergeben",
       "Verstorben",
       "Eigene erfasste km",
-      "Credits",
+      "Vergütung (EUR-Cent)",
       "XP",
       "Erfassung",
     ],

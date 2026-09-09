@@ -1,0 +1,365 @@
+.modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+  width: min(1080px, 92vw);
+}
+.modal > header {
+  flex: none;
+  padding: 20px 24px !important;
+  margin: 0 !important;
+  background: #091821;
+  border-bottom: 1px solid var(--hud-border, #3c546377);
+}
+.modal > header h2 {
+  margin: 3px 0 0;
+  font-size: 1.45em;
+}
+.modal-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  min-height: 0;
+}
+.modal-body > p:first-child {
+  margin-top: 0;
+}
+.view-intro {
+  color: var(--hud-muted, #a6bac8);
+  max-width: 85ch;
+  line-height: 1.65;
+}
+.section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  background: #07141c;
+  border: 1px solid #3c546377;
+  border-radius: 9px;
+  margin: 20px 0;
+}
+.section-tabs button {
+  flex: 1;
+  border-color: transparent;
+  padding: 11px 16px;
+}
+.section-tabs button[aria-selected="true"] {
+  background: #234660;
+  border-color: #527d99;
+  box-shadow: inset 0 -2px #72bbec;
+}
+.settings-content {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+.settings-content h3 {
+  margin: 24px 0 12px;
+}
+.setting-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 4px;
+  margin: 0 !important;
+  border-bottom: 1px solid #3c546340;
+}
+.setting-row strong {
+  display: block;
+  font-weight: 550;
+}
+.setting-row small {
+  display: block;
+  color: #a6bac8;
+  margin-top: 5px;
+  max-width: 65ch;
+}
+.setting-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: #73b9e9;
+}
+.setting-row select {
+  min-width: 120px;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid #3c546377;
+}
+.settings-actions > span {
+  margin-right: auto;
+  color: #a6bac8;
+  font-size: 12px;
+}
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.draft-confirm {
+  padding: 24px;
+  margin: 16px;
+  border: 1px solid #dd9d55;
+  background: #26251f;
+  border-radius: 8px;
+}
+.draft-confirm h3 {
+  margin: 0;
+}
+.command-hud {
+  font-size: calc(13px * var(--ui-scale, 1));
+}
+.command-hud input,
+.command-hud select,
+.command-hud textarea,
+.command-hud button {
+  font-size: inherit;
+}
+.command-hud .modal {
+  font-size: calc(13px * var(--ui-scale, 1));
+}
+.resource-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.resource-summary > div {
+  padding: 16px;
+  background: #102633;
+  border: 1px solid #3c546377;
+  border-radius: 8px;
+}
+.resource-summary small {
+  display: block;
+  color: #a6bac8;
+  margin-bottom: 6px;
+}
+.resource-summary strong {
+  font-size: 1.25em;
+}
+.empty-state {
+  padding: 30px;
+  margin: 16px 0;
+  border: 1px dashed #506a7d;
+  border-radius: 8px;
+  text-align: center;
+}
+.empty-state p {
+  color: #a6bac8;
+}
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.comparison-grid article {
+  padding: 18px;
+  border: 1px solid #3c546377;
+  background: #102633;
+  border-radius: 8px;
+}
+.comparison-grid dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.comparison-grid dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.comparison-grid dt {
+  color: #a6bac8;
+}
+.purchase-review {
+  padding: 18px;
+  border: 1px solid #6697b6;
+  border-radius: 8px;
+  background: #132c3c;
+  margin: 18px 0;
+}
+.light .modal > header,
+.light .section-tabs {
+  background: #e8eef2;
+}
+.light .resource-summary > div,
+.light .comparison-grid article,
+.light .purchase-review {
+  background: #eef4f7;
+}
+
+/* A workstation dialog keeps navigation and commit actions outside its one
+   scrolling panel. Other dialogs retain their own content sizing. */
+.app.command-hud .modal:has(.settings-view) {
+  width: min(1080px, calc(100vw - 40px));
+  height: min(880px, calc(100dvh - 40px));
+  max-height: calc(100dvh - 40px);
+  font-size: calc(13px * var(--ui-scale, 1));
+}
+.modal:has(.settings-view) > .modal-body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.settings-view {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.settings-view > .view-intro {
+  flex: none;
+  margin: 12px 20px 8px !important;
+  max-width: none;
+  font-size: 0.94em;
+}
+.settings-view > .section-tabs {
+  flex: none;
+  margin: 0 20px 10px;
+}
+.settings-view > .settings-content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0 20px 20px;
+  scroll-padding-block: 16px;
+}
+.settings-view > .settings-content > h3:first-child {
+  margin-top: 10px;
+}
+.settings-view > .settings-actions {
+  flex: none;
+  margin: 0;
+  padding: 12px 20px;
+  background: #0b1925;
+  box-shadow: 0 -5px 15px #0002;
+}
+.settings-view > :is(.error, .good) {
+  flex: none;
+  max-height: 4.5em;
+  overflow: auto;
+  margin: 6px 20px !important;
+}
+.app.command-hud
+  .modal:has(.settings-view)
+  :is(button, input, select, textarea) {
+  font-size: inherit;
+}
+.settings-view .settings-actions button,
+.settings-view .section-tabs button {
+  min-height: 40px;
+}
+.settings-view .setting-row select {
+  max-width: 45%;
+  flex: none;
+}
+.settings-view .setting-row small {
+  color: var(--hud-muted);
+}
+.settings-view .sound-editor {
+  padding: 0;
+}
+.app.command-hud.light .modal:has(.settings-view) {
+  --hud-text: #193348;
+  --hud-muted: #445e70;
+  --hud-panel: #f3f7fa;
+  --hud-border: #91a7b8;
+  background: #f3f7fa;
+  color: var(--hud-text);
+}
+.app.command-hud.light .modal:has(.settings-view) > header,
+.app.command-hud.light .settings-view > .settings-actions,
+.app.command-hud.light .settings-view > .section-tabs {
+  background: #e5edf3;
+}
+.app.command-hud.light .settings-view :is(button, input, select, textarea) {
+  color: #193348;
+  background: #fff;
+  border-color: #829caf;
+}
+.app.command-hud.light .modal:has(.settings-view) > header button,
+.app.command-hud.light .modal:has(.settings-view) .draft-confirm button {
+  color: #193348;
+  background: #fff;
+  border-color: #829caf;
+}
+.app.command-hud.light .modal:has(.settings-view) .eyebrow {
+  color: var(--hud-muted);
+}
+.app.command-hud.light .settings-view button:hover:not(:disabled) {
+  background: #d4e6f2;
+  border-color: #376f95;
+}
+.app.command-hud.light
+  .settings-view
+  .section-tabs
+  button[aria-selected="true"],
+.app.command-hud.light .settings-view button.primary {
+  color: #fff;
+  background: #235473;
+  border-color: #17405d;
+  box-shadow: none;
+}
+.app.command-hud.light
+  .settings-view
+  .section-tabs
+  button[aria-selected="true"] {
+  box-shadow: inset 0 -3px #0e334c;
+}
+.app.command-hud.light .settings-view .settings-actions > span {
+  color: var(--hud-muted);
+}
+.app.command-hud.light .settings-view :is(.good, [role="status"]) {
+  color: #17613e !important;
+}
+.app.command-hud.light .settings-view :is(.error, .sound-error) {
+  color: #9c251e !important;
+}
+.app.command-hud.light .modal:has(.settings-view) :focus-visible {
+  outline-color: #14537c;
+}
+.app.command-hud.light .modal:has(.settings-view) .draft-confirm {
+  background: #fff2d7;
+  border-color: #96631d;
+}
+@media (max-width: 700px) {
+  .settings-view > .view-intro {
+    font-size: 0.86em;
+    margin-inline: 12px !important;
+  }
+  .settings-view > .section-tabs {
+    margin-inline: 12px;
+  }
+  .settings-view > .settings-content {
+    padding-inline: 12px;
+  }
+  .settings-view > .settings-actions {
+    padding: 10px 12px;
+  }
+  .settings-view .settings-actions > span {
+    flex-basis: 100%;
+  }
+  .settings-view .section-tabs button {
+    flex-basis: 40%;
+    padding: 8px;
+  }
+  .settings-view .action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

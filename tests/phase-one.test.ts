@@ -88,7 +88,7 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
     const before = s.money;
     tick(s, tlf.arrive + 70, {}, false, false);
     expect(s.archive.find((x) => x.id === m.id)?.control?.stage).toBe("closed");
-    expect(s.money - before).toBe(14000);
+    expect(s.money - before).toBe(675000);
     const done = s.archive[0];
     expect(done.control!.events.map((e) => e.type)).toEqual(
       expect.arrayContaining([

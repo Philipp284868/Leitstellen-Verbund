@@ -1,7 +1,8 @@
 import { OrganizationTasks } from "./Organizations";
 import { MajorPanel } from "./Major";
 import type { Save, Mission } from "./model";
-import { act } from "./store";
+import { command } from "./store";
+import { useCommandForm } from "./use-command-form";
 import { duration, kilometers } from "./travel";
 import { length, nodes } from "./world";
 import { IS_GERMANY } from "./world-choice";
@@ -90,10 +91,16 @@ export function EnvironmentPanel({ s }: { s: Save }) {
   );
 }
 function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
+  const form = useCommandForm();
   const editable =
     m.phase !== "done" && p.condition !== "dead" && p.transport !== "delivered";
   return (
     <article className={`patient-card condition-${p.condition}`}>
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
       <header>
         <strong>
           Patient {p.id.slice(-6)} · {p.age} Jahre · {p.sex}
@@ -151,20 +158,22 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
         {Math.round(p.treatment)}%
       </label>
       {editable && (
-        <div className="desk-form">
+        <fieldset disabled={form.busy} className="command-fields desk-form">
           <label>
             Versorgungsschwerpunkt
             <select
               aria-label={`Versorgung Patient ${p.id.slice(-6)}`}
               value={p.care}
               onChange={(e) =>
-                void act({
-                  type: "patient-care",
-                  mission: m.id,
-                  patient: p.id,
-                  care: e.target.value as Patient["care"],
-                  priority: p.priority,
-                })
+                void form.run(() =>
+                  command({
+                    type: "patient-care",
+                    mission: m.id,
+                    patient: p.id,
+                    care: e.target.value as Patient["care"],
+                    priority: p.priority,
+                  }),
+                )
               }
             >
               {Object.entries(careNames).map(([id, name]) => (
@@ -177,20 +186,22 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
           <button
             aria-pressed={p.priority === "urgent"}
             onClick={() =>
-              void act({
-                type: "patient-care",
-                mission: m.id,
-                patient: p.id,
-                care: p.care,
-                priority: p.priority === "urgent" ? "normal" : "urgent",
-              })
+              void form.run(() =>
+                command({
+                  type: "patient-care",
+                  mission: m.id,
+                  patient: p.id,
+                  care: p.care,
+                  priority: p.priority === "urgent" ? "normal" : "urgent",
+                }),
+              )
             }
           >
             {p.priority === "urgent"
               ? "Priorisiert versorgen ✓"
               : "Versorgung priorisieren"}
           </button>
-        </div>
+        </fieldset>
       )}
       {p.cprCycles > 0 && <p>Reanimationszyklen: {p.cprCycles}</p>}
       <details>
@@ -207,6 +218,7 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
   );
 }
 export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
+  const form = useCommandForm();
   const d = m.dynamics;
   if (!d?.active || !m.control?.briefed) return null;
   const roster = [
@@ -214,6 +226,11 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
   ];
   return (
     <section className="dynamics-panel" aria-label="Dynamische Einsatzlage">
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
       <OrganizationTasks s={s} m={m} />
       <MajorPanel s={s} m={m} />
       <div className={`dynamics-heading state-${d.state}`}>
@@ -272,13 +289,16 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
           Taktik
           <select
             aria-label="Einsatztaktik"
+            disabled={form.busy}
             value={d.tactic}
             onChange={(e) =>
-              void act({
-                type: "tactic",
-                mission: m.id,
-                tactic: e.target.value as keyof typeof tactics,
-              })
+              void form.run(() =>
+                command({
+                  type: "tactic",
+                  mission: m.id,
+                  tactic: e.target.value as keyof typeof tactics,
+                }),
+              )
             }
           >
             {Object.entries(tactics).map(([id, name]) => (

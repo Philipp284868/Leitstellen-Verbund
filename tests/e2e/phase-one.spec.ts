@@ -208,6 +208,9 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     )
     .toBe(6);
   await page
+    .getByRole("tab", { name: "Statusdefinitionen", exact: true })
+    .click();
+  await page
     .getByLabel("Profil für Organisation", { exact: true })
     .selectOption("Feuerwehr");
   await page.getByLabel("FMS 3", { exact: true }).fill("Feuerwehr auf Anfahrt");
@@ -216,9 +219,16 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .poll(() => app.db.all().get(owner)!.desk.definitions.Feuerwehr?.[3])
     .toBe("Feuerwehr auf Anfahrt");
   await page
+    .getByRole("tab", { name: "Alarmierungsprofile", exact: true })
+    .click();
+  await page
     .getByRole("dialog")
     .getByLabel("Feuerwache 1", { exact: false })
     .selectOption("station");
+  await page
+    .getByRole("button", { name: "Alarmierungsprofil übernehmen", exact: true })
+    .first()
+    .click();
   await expect
     .poll(() => Object.values(app.db.all().get(owner)!.desk.alarms)[0])
     .toBe("station");

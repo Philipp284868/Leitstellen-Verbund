@@ -1,3 +1,4 @@
+import { requestDialogTransition } from "./dialog-state";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Radio,
@@ -62,10 +63,11 @@ export function Topbar({
   ).length;
   const xp = progress(s.xp);
   const date = new Date(s.time * 1000);
-  const action = (fn: () => void) => {
-    setMenu("");
-    fn();
-  };
+  const action = (fn: () => void) =>
+    requestDialogTransition(() => {
+      setMenu("");
+      fn();
+    });
   useEffect(() => {
     if (!menu) return;
     const owner = root.current;
@@ -191,6 +193,7 @@ export function Topbar({
           {count(callCount)}
         </button>
         <button
+          data-tutorial="fleet"
           aria-label="Fuhrpark"
           title="Fahrzeuge und Einsatzbereitschaft"
           onClick={() => action(() => panel("fleet"))}
@@ -199,6 +202,7 @@ export function Topbar({
           <span>Fahrzeuge</span>
         </button>
         <button
+          data-tutorial="stations"
           aria-label="Wachen"
           title="Gebäude, Bau und Ausbau"
           onClick={() => action(() => panel("stations"))}
@@ -216,6 +220,9 @@ export function Topbar({
             </button>
             <button onClick={() => action(() => panel("friends"))}>
               Verbund & Leitstellenfunk {count(aidCount)}
+            </button>
+            <button onClick={() => action(() => panel("aaos"))}>
+              AAO verwalten
             </button>
             <button onClick={() => action(() => panel("fms"))}>
               FMS & Alarmierungsprofile
@@ -243,8 +250,9 @@ export function Topbar({
         </button>
         <button
           className="topbar-icon"
+          data-tutorial="search"
           aria-label="Kartensuche"
-          title="Ort, Adresse oder Fahrzeug suchen"
+          title="Ort, Adresse, Objekt, Menü oder Einstellung suchen"
           onClick={() => action(onSearch)}
         >
           <Search />
@@ -285,12 +293,19 @@ export function Topbar({
             })}
           </time>
         </span>
-        <span className="hud-budget" title="Verfügbares Budget">
+        <button
+          data-tutorial="budget"
+          className="hud-budget"
+          title="Verfügbares Budget · Geldjournal öffnen"
+          aria-label="Budget und Geldjournal"
+          onClick={() => action(() => panel("archive"))}
+        >
           <Wallet />
           <strong>{credits(s.money)}</strong>
-        </span>
+        </button>
         <button
           className="hud-profile"
+          data-tutorial="progress"
           aria-label="Fortschritt"
           title={`Stufe ${xp.level} · ${xp.current}/${xp.required} XP`}
           onClick={() => action(() => panel("progress"))}
@@ -301,6 +316,7 @@ export function Topbar({
         </button>
         <button
           className="topbar-icon"
+          data-tutorial="settings-open"
           aria-label="Einstellungen"
           title="Einstellungen und Hilfe"
           onClick={() => action(() => panel("settings"))}

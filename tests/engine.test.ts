@@ -14,6 +14,7 @@ import { buildings, vehicles, missions, mt, BALANCE } from "../src/catalog";
 import { nodes, route, length, along, docks } from "../src/world";
 import { exportText, parseImport } from "../src/storage";
 import { commandSchema } from "../server/actions";
+import { euro } from "../src/money";
 function setup() {
   const s = fresh("Anna", "Leitstelle Nord", 1000);
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
@@ -53,7 +54,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     const s = setup();
     apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
     apply(s, { type: "hire", home: s.buildings[0].id, count: 6 });
-    expect(s.money).toBe(151800);
+    expect(s.money).toBe(euro(390000));
     expect(s.journal.reduce((n, j) => n + j.amount, BALANCE.start)).toBe(
       s.money,
     );
@@ -105,6 +106,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   });
   it("bearbeitet einen Solo-Einsatz, bucht genau einmal und kehrt zurück", () => {
     const s = setup();
+    s.economy!.fundingNextAt = 1e12; // Isolate mission rewards from recurring funding.
     generate(s);
     const m = s.missions[0];
     const before = s.money;
@@ -143,7 +145,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   it("behandelt Patienten, fährt zum eigenen Krankenhaus und gibt Betten frei", () => {
     const s = setup();
     s.xp = xpForLevel(12);
-    money(s, 200000, "Testkapital");
+    money(s, euro(2500000), "Testkapital für Klinik und Rettungsdienst");
     apply(s, { type: "build", kind: "ems", pos: nodes[3] });
     apply(s, { type: "build", kind: "hospital", pos: nodes[6] });
     tick(s, s.time + 30);
@@ -156,6 +158,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     generate(s);
     const m = s.missions[0];
     m.template = "sick";
+    m.paymentCents = mt("sick").reward;
     m.pos = nodes[6];
     apply(s, { type: "dispatch", mission: m.id, vehicles: [v.id] });
     const before = s.money;

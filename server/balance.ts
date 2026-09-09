@@ -1,5 +1,6 @@
 import { createLab, runLab, verifyLab, type LabAction } from "./lab";
 import { missions, vehicles } from "../src/catalog";
+import { economyBalanceAudit } from "../src/economy/balancing";
 
 /** Reproducible playable smoke scenarios, using the same dispatch and simulation as the server. */
 export function balanceAudit(seeds = [124, 2026, 73]) {
@@ -73,6 +74,9 @@ export function balanceAudit(seeds = [124, 2026, 73]) {
     version: 1,
     seeds,
     activeLimit: null,
+    currency: "EUR",
+    unit: "cent",
+    economy: economyBalanceAudit(),
     scenarios,
     catalog: {
       missions: missions.length,

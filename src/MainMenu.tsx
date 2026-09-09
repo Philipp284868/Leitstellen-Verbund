@@ -40,7 +40,7 @@ export function MainMenu({
   onPlay: () => void;
   onOpen: (panel: string) => void;
 }) {
-  const { mode } = useGame();
+  const { mode, tutorial } = useGame();
   const available = fleetReadiness(s);
   const xp = progress(s.xp);
   const news = useProjectNews()[0];
@@ -120,6 +120,17 @@ export function MainMenu({
         ))}
       </nav>
       <aside className="menu-intel" aria-label="Deine Leitstelle im Überblick">
+        <button
+          className="menu-tutorial-link"
+          onClick={() => onOpen("tutorial")}
+        >
+          <BookOpen size={16} />{" "}
+          {tutorial?.progress.state === "complete"
+            ? "Tutorial wiederholen / üben"
+            : tutorial?.progress.state === "new"
+              ? "Neu hier? Interaktives Tutorial"
+              : "Tutorial fortsetzen"}
+        </button>
         <button
           className="menu-panel menu-profile"
           onClick={() => onOpen("progress")}
@@ -254,7 +265,7 @@ export function MainMenu({
         <nav>
           <SoundButton />
           {[
-            ["credits", BookOpen, "Credits"],
+            ["credits", BookOpen, "Mitwirkende"],
             ["privacy", Shield, "Datenschutz"],
             ["support", LifeBuoy, "Support"],
             ["language", Globe, "Deutsch"],

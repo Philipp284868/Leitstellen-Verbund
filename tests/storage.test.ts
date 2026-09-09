@@ -18,7 +18,7 @@ it("lässt einen gültigen Stand bei abgelehnener Speicherung unverändert", asy
   const broken = structuredClone(s);
   broken.money = -1;
   await expect(persist(broken)).rejects.toThrow();
-  expect((await read())?.data.money).toBe(250000);
+  expect((await read())?.data.money).toBe(140000000);
 });
 it("verwendet Schema 2 beim Anlegen einer neuen Datenbank", async () => {
   await db.open();

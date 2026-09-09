@@ -65,6 +65,7 @@ export function volunteerAvailability(s: Save, p: Person, duty: Duty) {
   if (p.training || p.ready > s.time) return false;
   if (duty.simulationOverride && duty.simulationOverride.until > s.time)
     return duty.simulationOverride.available;
+  if (s.staffing?.version === 1) return true;
   const seed = volunteerSeed(s),
     calendar = volunteerCalendar(s.time),
     bucket = Math.floor(s.time / 1800);

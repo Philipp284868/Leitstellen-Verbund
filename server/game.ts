@@ -1,3 +1,4 @@
+import { mulRatio } from "../src/money";
 import { vehiclePosition } from "../src/vehicle-position";
 import { qualityFactor } from "../src/simulation/reports";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
@@ -308,7 +309,7 @@ export class Game {
           mission: m.id,
           round: m.round,
           vehicle: v.id,
-          maxReward: mt(m.template).reward,
+          maxReward: m.paymentCents ?? mt(m.template).reward,
           status: "active",
         });
         beginTrip(s, v, m.pos, "travel");
@@ -474,10 +475,10 @@ export class Game {
           for (const helperId of m.contributors) {
             const helper = saves.get(helperId);
             if (!helper) throw Error("Beteiligtes Konto fehlt.");
-            const amount = Math.floor(
-                (mt(m.template).reward * qualityFactor(m)) /
-                  2 /
-                  m.contributors.length,
+            const amount = mulRatio(
+                m.paymentCents ?? mt(m.template).reward,
+                Math.round(qualityFactor(m) * 400),
+                800 * m.contributors.length,
               ),
               receipt = `coop:${m.round}:${helperId}`;
             const inserted = this.db.sql
@@ -537,6 +538,7 @@ export class Game {
             const m = {
               id: simId(s),
               template,
+              paymentCents: mt(template).reward,
               pos,
               progress: 0,
               phase: "offered" as const,

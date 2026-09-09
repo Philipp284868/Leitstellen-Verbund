@@ -1,3 +1,5 @@
+import { bookMoney } from "../src/economy/ledger";
+import { euro } from "../src/money";
 import { xpForLevel } from "../src/progression";
 import { fresh, type Save } from "../src/model";
 import { apply, generate, tick } from "../src/engine";
@@ -8,6 +10,9 @@ export function phaseFixture(owner: string, template = "field"): Save {
   s.player.id = owner;
   s.generation = "11111111-2222-4333-8444-555555555555";
   s.seed = 124;
+  bookMoney(s, euro(100000000) - s.money, "Entwickler-Testbudget");
+  // Mission suites isolate payouts; recurring financing has dedicated economy-server tests.
+  s.economy!.fundingNextAt = 1e12;
   s.xp = xpForLevel(30);
   s.tutorial = 6;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });

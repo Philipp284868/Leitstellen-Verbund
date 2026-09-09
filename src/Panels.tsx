@@ -1,6 +1,6 @@
 import { ApproachText } from "./germany/GeoQueries";
-import { useState } from "react";
-import { mt, capabilities, vt } from "./catalog";
+import { useState, useRef } from "react";
+import { mt, capabilities } from "./catalog";
 import {
   type Save,
   type Mission,
@@ -8,7 +8,7 @@ import {
   achievementProgress,
   level,
 } from "./model";
-import { act, change, emit, api, useGame } from "./store";
+import { command, api, useGame } from "./store";
 import { readiness, capacity, missing } from "./engine";
 import { useNetwork, chat, share, stopSharing } from "./network";
 import {
@@ -20,19 +20,54 @@ import {
   persist,
   type RecordSave,
 } from "./storage";
-import { credits, statuses, playerColor } from "./ui";
+import {
+  credits,
+  statuses,
+  playerColor,
+  ActionButton,
+  ConfirmAction,
+} from "./ui";
 import { SharedMission } from "./SharedMission";
+import { useDialogDirty } from "./dialog-state";
+import { missionPresentation, missionProgress } from "./mission-presentation";
+import { effectiveSkills } from "./simulation/major-resources";
 export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
-  const { mode } = useGame();
+  const { mode, readonly } = useGame();
   const [selected, setSelected] = useState<string[]>([]);
+  const [templateOpen, setTemplateOpen] = useState(false),
+    [templateName, setTemplateName] = useState(""),
+    [busy, setBusy] = useState(false),
+    lock = useRef(false);
+  useDialogDirty(
+    selected.length > 0 || templateName.trim().length > 0,
+    () => {
+      setSelected([]);
+      setTemplateName("");
+      setTemplateOpen(false);
+    },
+    busy,
+  );
+  const perform = async (operation: () => Promise<void>) => {
+    if (lock.current) throw Error("Bitte die laufende Aktion abwarten.");
+    lock.current = true;
+    setBusy(true);
+    try {
+      await operation();
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const presentation = missionPresentation(m),
+    work = missionProgress(m);
   const net = useNetwork(),
-    t = mt(m.template),
+    t = mt(presentation.id),
     skills = capacity(s, m.id);
   for (const f of net.support.filter(
     (f) =>
       f.mission === m.id && f.round === m.round && f.vehicle.status === "scene",
   )) {
-    for (const [k, n] of Object.entries(vt(f.vehicle.type).skills))
+    for (const [k, n] of Object.entries(effectiveSkills(m, f.vehicle)))
       skills[k] = (skills[k] || 0) + n;
   }
   const needed = missing(m, skills);
@@ -45,23 +80,38 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
       <p>{t.description}</p>
       <div className="stat-row">
         <span>
-          Belohnung <b>{credits(t.reward)}</b>
+          Grundvergütung{" "}
+          <b>
+            {presentation.confirmed
+              ? credits(m.paymentCents ?? t.reward)
+              : "Nach Lagemeldung"}
+          </b>
         </span>
         <span>
-          Patienten <b>{t.patients}</b>
+          Patienten{" "}
+          <b>{presentation.confirmed ? t.patients : "Noch nicht bestätigt"}</b>
         </span>
         <span>
-          Stufe <b>{t.level}</b>
+          Lage{" "}
+          <b>
+            {presentation.confirmed
+              ? "Bestätigt"
+              : presentation.known
+                ? "Telefonisch gemeldet"
+                : "Ungeklärt"}
+          </b>
         </span>
       </div>
-      <progress value={m.progress} max={t.seconds} />
+      {work && (
+        <progress value={work.value} max={work.max} aria-label={work.label} />
+      )}
       <p>
         {m.phase === "transport"
           ? "Patienten werden zum Klinikum gebracht"
           : needed.length
             ? "Wartet auf passende Kräfte am Einsatzort"
             : "Einsatz wird abgearbeitet"}{" "}
-        · {Math.floor((m.progress / t.seconds) * 100)} %
+        {work && ` · ${Math.floor((work.value / work.max) * 100)} %`}
       </p>
       <h3>Benötigte Fähigkeiten</h3>
       <div className="requirements">
@@ -77,6 +127,9 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
         ))}
       </div>
       <h3>Bestätigte Unterstützung</h3>
+      {!net.support.some((f) => f.mission === m.id && f.round === m.round) && (
+        <p>Es sind keine Unterstützungskräfte für diesen Einsatz bestätigt.</p>
+      )}
       {net.support
         .filter((f) => f.mission === m.id && f.round === m.round)
         .map((f) => (
@@ -95,6 +148,7 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
         {s.templates.map((a, i) => (
           <button
             key={i}
+            disabled={busy || readonly}
             onClick={() => {
               const available = s.vehicles.filter((v) => !readiness(s, v)),
                 ids: string[] = [];
@@ -121,7 +175,7 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
             >
               <input
                 type="checkbox"
-                disabled={!!reason}
+                disabled={!!reason || busy || readonly}
                 checked={selected.includes(v.id)}
                 onChange={(e) =>
                   setSelected((a) =>
@@ -148,71 +202,141 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
         })}
       </div>
       <div className="inline">
-        <button
+        <ActionButton
           className="primary"
-          disabled={!selected.length}
-          onClick={() => {
-            void act({ type: "dispatch", mission: m.id, vehicles: selected });
-            setSelected([]);
-          }}
+          disabled={!selected.length || busy || readonly}
+          action={() =>
+            perform(async () => {
+              await command({
+                type: "dispatch",
+                mission: m.id,
+                vehicles: selected,
+              });
+              setSelected([]);
+            })
+          }
         >
           Alarmieren ({selected.length})
-        </button>
+        </ActionButton>
         <button
-          disabled={!selected.length}
-          onClick={() => {
-            const name = prompt("Name der Alarmierungsvorlage");
-            if (name)
-              void change((s) => {
-                s.templates.push({
-                  name,
-                  types: selected.map(
-                    (id) => vt(s.vehicles.find((v) => v.id === id)!.type).id,
-                  ),
-                });
-              }).catch(() => {});
-          }}
+          disabled={
+            !selected.length || busy || readonly || s.templates.length >= 12
+          }
+          onClick={() => setTemplateOpen(true)}
         >
           Vorlage speichern
         </button>
         {mode === "multi" && (
-          <button
-            onClick={() =>
-              void share(m.id).catch((e) => emit({ error: String(e) }))
-            }
+          <ActionButton
+            disabled={busy || readonly || m.shared}
+            action={() => perform(() => share(m.id))}
           >
             {m.shared ? "Freigegeben" : "Mit Freunden teilen"}
-          </button>
+          </ActionButton>
         )}
         {m.shared && (
-          <button
-            onClick={() => {
-              if (
-                confirm(
-                  "Kooperationsrunde beenden? Unbestätigte fremde Beiträge entfallen. Eigene Kräfte bleiben zugeordnet.",
-                )
-              )
-                void stopSharing(m.id).catch((e) => emit({ error: String(e) }));
-            }}
+          <ConfirmAction
+            disabled={busy || readonly}
+            message="Kooperation beenden? Der Server prüft, ob bestätigte Unterstützung und Patientenbindungen sicher beendet werden können. Eigene Kräfte bleiben zugeordnet."
+            onConfirm={() => perform(() => stopSharing(m.id))}
           >
             Kooperation beenden
-          </button>
+          </ConfirmAction>
         )}
       </div>
+      {!s.vehicles.length && (
+        <p className="empty-state">
+          Noch keine Fahrzeuge vorhanden. Baue eine Wache und kaufe ein
+          passendes Einstiegsfahrzeug.
+        </p>
+      )}
+      {templateOpen && (
+        <form
+          className="shop-card"
+          aria-label="Alarmierungsvorlage speichern"
+          onSubmit={(e) => e.preventDefault()}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!busy) {
+                setTemplateOpen(false);
+                setTemplateName("");
+              }
+            }
+          }}
+        >
+          <label>
+            Name der Alarmierungsvorlage
+            <input
+              value={templateName}
+              maxLength={48}
+              disabled={busy}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
+          </label>
+          <p>
+            {selected.length} ausgewählte Fahrzeuge · maximal zwölf Vorlagen
+          </p>
+          <div className="inline">
+            <ActionButton
+              disabled={
+                readonly ||
+                busy ||
+                !templateName.trim() ||
+                !selected.length ||
+                selected.length > 30 ||
+                s.templates.length >= 12
+              }
+              action={() =>
+                perform(async () => {
+                  const types = selected.map(
+                    (id) => s.vehicles.find((v) => v.id === id)?.type,
+                  );
+                  if (types.some((type) => !type))
+                    throw Error(
+                      "Ein ausgewähltes Fahrzeug ist nicht mehr vorhanden. Auswahl prüfen.",
+                    );
+                  await command({
+                    type: "template",
+                    name: templateName.trim(),
+                    types: types as string[],
+                  });
+                  setTemplateName("");
+                  setTemplateOpen(false);
+                })
+              }
+            >
+              Vorlage übernehmen
+            </ActionButton>
+            <button
+              disabled={busy}
+              onClick={() => {
+                setTemplateName("");
+                setTemplateOpen(false);
+              }}
+            >
+              Abbrechen
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
 export function Friends({ s }: { s: Save }) {
   const net = useNetwork(),
-    [text, setText] = useState("");
+    [text, setText] = useState(""),
+    [error, setError] = useState("");
+  const { readonly } = useGame();
+  useDialogDirty(!!text.trim(), () => setText(""));
   return (
     <section>
       <p>
-        Alle Konten auf diesem Server sind automatisch verbunden. Ein
-        geschlossener Browser beendet keinen Einsatz. Neue Einsätze werden nicht
-        mehr automatisch freigegeben. Diese Ansicht dient alten Unterstützungen,
-        wenn ein Fahrzeug unterstützt. Bestehende private Einsätze kannst du
-        einzeln freigeben.
+        Sichtbare Verbundpartner und ausdrücklich freigegebene Einsätze. Private
+        Wachen, Fahrzeuge und Einsätze anderer Leitstellen bleiben geschützt.
+        Gemeinsame Disposition erfolgt nach Einladung in dieselbe Leitstelle;
+        Hilfe von Nachbarn benötigt eine zugesagte Unterstützungsanfrage.
       </p>
       {net.friends.map((f) => (
         <article className="friend" key={f.id}>
@@ -222,9 +346,9 @@ export function Friends({ s }: { s: Save }) {
       ))}
       {!net.friends.length && (
         <p>
-          Noch keine weiteren Konten. Teile die Spieladresse mit deinen
-          Freunden. Jeder kann dort ohne Einladung ein eigenes Spielerkonto
-          erstellen.
+          Keine Verbundpartner in dieser Ansicht. Die öffentliche Spielerpräsenz
+          findest du über „Spieler“, Disponenten und Unterstützungsanfragen über
+          „Leitstellen“.
         </p>
       )}
       {net.friends.flatMap((f) =>
@@ -240,6 +364,7 @@ export function Friends({ s }: { s: Save }) {
       )}
       <h3>Verbundfunk</h3>
       <div className="chat-log">
+        {!net.chat.length && <p>Noch keine Nachrichten in dieser Sitzung.</p>}
         {net.chat.map((c, i) => (
           <p key={i}>
             <b>{c.name}</b> {c.text}
@@ -252,8 +377,9 @@ export function Friends({ s }: { s: Save }) {
           try {
             chat(text);
             setText("");
+            setError("");
           } catch (e) {
-            emit({ error: String(e) });
+            setError(String(e));
           }
         }}
       >
@@ -265,8 +391,13 @@ export function Friends({ s }: { s: Save }) {
             onChange={(e) => setText(e.target.value)}
           />
         </label>
-        <button disabled={!text.trim()}>Senden</button>
+        <button disabled={!text.trim() || readonly}>Senden</button>
       </form>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
       <small>
         Textchat, höchstens zwei Nachrichten pro Sekunde. Keine dauerhafte
         Chatspeicherung.
@@ -278,75 +409,117 @@ export function BackupPanel({ s }: { s: Save | null }) {
   const [preview, setPreview] = useState<Save | null>(null),
     [backupDate, setBackupDate] = useState(0),
     [rows, setRows] = useState<RecordSave[]>([]),
-    [error, setError] = useState("");
+    [loaded, setLoaded] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState("");
+  const budget = (save: Save) =>
+    save.economy
+      ? credits(save.money)
+      : "Euro-Prüfung bei Wiederherstellung erforderlich";
   return (
-    <div>
-      <p>
-        Der verbindliche Spielstand liegt auf dem Server. Exportdateien und
-        freiwillige lokale Kopien bleiben möglich. Alte Dateien können nur vom
-        Serverbetreiber nach Sicherung und Serverstopp übernommen werden, nicht
-        von einem privilegierten Spielkonto.
+    <section>
+      <p className="view-intro">
+        Der verbindliche Spielstand liegt auf dem Server. Export und freiwillige
+        lokale Kopien sichern deinen bestätigten Stand. Diese Ansicht kann eine
+        Datei prüfen; sie importiert keinen Besitz. Eine tatsächliche
+        Wiederherstellung ist eine gesicherte Wartungsaufgabe des
+        Serverbetreibers außerhalb der Spielkonten.
       </p>
-      <button
-        disabled={!s}
-        onClick={() =>
-          s &&
-          void api("export")
-            .then((data) =>
-              download(
-                "leitstellen-verbund-spielstand.json",
-                JSON.stringify(data, null, 2),
+      <div className="action-grid">
+        <ActionButton
+          disabled={!s}
+          action={async () => {
+            const data = await api("export");
+            download(
+              "leitstellen-verbund-spielstand.json",
+              JSON.stringify(data, null, 2),
+            );
+            setMessage("Spielstanddatei zum Download bereitgestellt.");
+          }}
+        >
+          Spielstand exportieren
+        </ActionButton>
+        <ActionButton
+          action={async () => {
+            const data = await api("archive-export");
+            download(
+              "einzelspieler-archiv.json",
+              JSON.stringify(data, null, 2),
+            );
+            setMessage("Archivdatei zum Download bereitgestellt.");
+          }}
+        >
+          Alten Einzelspielerstand als Archiv exportieren
+        </ActionButton>
+        <ActionButton
+          action={async () => {
+            const row = await read();
+            if (!row) throw Error("Keine alte Browserkopie vorhanden.");
+            download(
+              "browser-archiv.json",
+              JSON.stringify(
+                {
+                  format: "leitstellen-verbund-archive",
+                  version: 1,
+                  source: "browser-archive",
+                  exportedAt: Date.now(),
+                  save: row.data,
+                },
+                null,
+                2,
               ),
-            )
-            .catch((e) => setError(String(e)))
-        }
-      >
-        Spielstand exportieren
-      </button>
-      <button
-        onClick={() =>
-          void api("archive-export")
-            .then((data) =>
-              download(
-                "einzelspieler-archiv.json",
-                JSON.stringify(data, null, 2),
-              ),
-            )
-            .catch((e) => setError(String(e)))
-        }
-      >
-        Alten Einzelspielerstand als Archiv exportieren
-      </button>
+            );
+            setMessage(
+              "Vorhandene Browserkopie als unverändertes Archiv bereitgestellt.",
+            );
+          }}
+        >
+          Vorhandene Browserkopie als Archiv exportieren
+        </ActionButton>
+      </div>
       <p>
-        Archive bleiben unverändert auf dem Server. Sie können nicht gespielt
-        oder in die Multiplayer-Wirtschaft importiert werden.
+        Alte Einzelspielerarchive bleiben unverändert. Sie können weder gespielt
+        noch in die Multiplayer-Wirtschaft importiert werden.
       </p>
+      <h3>Datei prüfen</h3>
       <label>
         Spielstanddatei importieren
         <input
           aria-label="Spielstanddatei importieren"
           type="file"
           accept=".json,application/json"
+          disabled={busy}
           onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setBusy(true);
+            setError("");
             try {
-              const file = e.target.files?.[0];
-              if (!file) return;
               if (file.size > 8 * 1024 * 1024)
-                throw Error("Datei größer als 8 MB");
+                throw Error("Datei größer als 8 MB.");
               const incoming = inspectImport(await file.text());
               setPreview(incoming.save);
               setBackupDate(incoming.exportedAt);
-              setError("");
-            } catch (err) {
+            } catch (reason) {
               setPreview(null);
-              setError(String(err));
+              setError(String(reason));
+            } finally {
+              setBusy(false);
             }
           }}
         />
       </label>
+      {busy && <p role="status">Datei wird lokal geprüft …</p>}
       {error && (
         <p role="alert" className="error">
           {error}
+        </p>
+      )}
+      {message && (
+        <p role="status" className="good">
+          {message}
         </p>
       )}
       {preview && (
@@ -355,87 +528,79 @@ export function BackupPanel({ s }: { s: Save | null }) {
           <p>Sicherungsdatum: {new Date(backupDate).toLocaleString("de-DE")}</p>
           <p>
             {preview.player.station} · Stufe {level(preview)} ·{" "}
-            {credits(preview.money)} · {preview.buildings.length} Wachen ·{" "}
+            {budget(preview)} · {preview.buildings.length} Wachen ·{" "}
             {preview.vehicles.length} Fahrzeuge
           </p>
           <p>
-            Validierte Vorschau. Diese Datei verändert keinen Serverbesitz.
-            Übergebe sie bei Bedarf dem Serverbetreiber; nur er kann sie nach
-            Sicherung und Serverstopp ausdrücklich übernehmen.
+            Validierte Vorschau. Diese Datei verändert keinen Serverbesitz. Der
+            Betreiber muss Weltkompatibilität, Geldmigration und
+            Wiederherstellung prüfen.
           </p>
-          <button
-            onClick={() =>
-              download("gepruefte-sicherung.json", exportText(preview))
-            }
-          >
-            Geprüfte Datei exportieren
-          </button>
+          <div className="inline">
+            <button
+              onClick={() =>
+                download("gepruefte-sicherung.json", exportText(preview))
+              }
+            >
+              Geprüfte Datei exportieren
+            </button>
+            <button onClick={() => setPreview(null)}>Vorschau schließen</button>
+          </div>
         </article>
       )}
-      <button
-        onClick={() =>
-          void read()
-            .then((row) => {
-              if (!row) throw Error("Keine alte Browserkopie vorhanden.");
-              download(
-                "browser-archiv.json",
-                JSON.stringify(
-                  {
-                    format: "leitstellen-verbund-archive",
-                    version: 1,
-                    source: "browser-archive",
-                    exportedAt: Date.now(),
-                    save: row.data,
-                  },
-                  null,
-                  2,
-                ),
-              );
-            })
-            .catch((e) => setError(String(e)))
-        }
-      >
-        Vorhandene Browserkopie als Archiv exportieren
-      </button>
       <h3>Freiwillige lokale Sicherungen dieses Kontos</h3>
       <p>
-        Auf gemeinsam genutzten Geräten besser nur eine Datei exportieren.
-        Lokale Kopien bleiben nach Abmeldung auf diesem Gerät erhalten.
+        Auf gemeinsam genutzten Geräten ist ein Dateiexport vorzuziehen. Lokale
+        Kopien bleiben nach der Abmeldung auf diesem Gerät erhalten.
       </p>
-      <button
-        disabled={!s}
-        onClick={() =>
-          s &&
-          void persist(s, true)
-            .then(() => setError("Lokale Kopie gespeichert."))
-            .catch((e) => setError(String(e)))
-        }
-      >
-        Lokale Kopie anlegen
-      </button>
-      <button
-        onClick={() =>
-          void backups()
-            .then((rows) =>
-              setRows(
-                rows.filter(
-                  (r) =>
-                    r.data.player.id === s?.player.id &&
-                    r.data.generation === s?.generation,
-                ),
+      <div className="inline">
+        <ActionButton
+          disabled={!s}
+          action={async () => {
+            if (!s) throw Error("Bitte anmelden.");
+            await persist(s, true);
+            setMessage("Lokale Kopie gespeichert.");
+            setRows(
+              (await backups()).filter(
+                (r) =>
+                  r.data.player.id === s.player.id &&
+                  r.data.generation === s.generation,
               ),
-            )
-            .catch((e) => setError(String(e)))
-        }
-      >
-        Sicherungen anzeigen
-      </button>
+            );
+            setLoaded(true);
+          }}
+        >
+          Lokale Kopie anlegen
+        </ActionButton>
+        <ActionButton
+          disabled={!s}
+          action={async () => {
+            const list = await backups();
+            setRows(
+              list.filter(
+                (r) =>
+                  r.data.player.id === s?.player.id &&
+                  r.data.generation === s?.generation,
+              ),
+            );
+            setLoaded(true);
+          }}
+        >
+          Sicherungen anzeigen
+        </ActionButton>
+      </div>
+      {loaded && !rows.length && (
+        <p className="empty-state">
+          Keine lokalen Sicherungen für dieses Konto und diese Spielwelt
+          vorhanden.
+        </p>
+      )}
       {rows.map((r) => (
         <article className="person" key={r.id}>
           <span>
             {new Date(r.at).toLocaleString("de-DE")}
             <small>
-              {r.data.player.name} · {credits(r.data.money)}
+              {r.data.player.name} · {budget(r.data)}
             </small>
           </span>
           <button
@@ -448,26 +613,40 @@ export function BackupPanel({ s }: { s: Save | null }) {
           </button>
         </article>
       ))}
-    </div>
+    </section>
   );
 }
 export function ProgressPanel({ s }: { s: Save }) {
   return (
     <div>
-      <h3>Öffentlicher Bereitschaftsdienst</h3>
+      <h3>Finanzierung deiner Leitstelle</h3>
       <p>
-        Jederzeit ohne Wache oder Fahrzeug möglich: 120 Spielsekunden
-        Funkbereitschaft übernehmen und 1.500 Credits verdienen. Keine Kosten,
-        keine parallelen Dienste.
+        Grundfinanzierung wird automatisch alle 15 Minuten Serverzeit gebucht:
+        30.000,00 € bis zu einer Liquiditätsgrenze von 2.500.000,00 €.
+        Zusätzlich vergütet der Server abgeschlossene Einsätze. Es gibt keine
+        laufenden Betriebskosten und keine manuell anzufordernden
+        Bereitschaftsprämien.
       </p>
-      <button
-        disabled={s.reliefActive}
-        onClick={() => void act({ type: "relief" })}
-      >
-        {s.reliefActive
-          ? "Bereitschaftsdienst läuft …"
-          : "Bereitschaftsdienst übernehmen"}
-      </button>
+      <div className="resource-summary">
+        <div>
+          <small>Aktuelles Budget</small>
+          <strong>{credits(s.money)}</strong>
+        </div>
+        <div>
+          <small>Grundfinanzierung bisher</small>
+          <strong>{credits(s.economy?.fundingPaidCents ?? 0)}</strong>
+        </div>
+        <div>
+          <small>Nächster Finanzierungszeitpunkt</small>
+          <strong>
+            {s.economy
+              ? new Date(s.economy.fundingNextAt * 1000).toLocaleTimeString(
+                  "de-DE",
+                )
+              : "Nach Migration"}
+          </strong>
+        </div>
+      </div>
       <h3>Ausbauziele</h3>
       {[
         {
@@ -545,11 +724,14 @@ export function Help() {
       <h3>Die erste Schicht</h3>
       <ol>
         <li>
-          Eine Feuerwache auf einer Straßenkreuzung bauen. Bauzeit abwarten.
+          Eine Feuerwache an einem erreichbaren Straßenstandort bauen. Bauzeit
+          abwarten; die passende Besetzung wird bei Inbetriebnahme automatisch
+          bereitgestellt.
         </li>
         <li>
-          Zwei TSF-W kaufen. Je Fahrzeug sechs Mitarbeiter einstellen und im
-          Fuhrpark „Besetzen“ wählen.
+          Ein geeignetes Einstiegsfahrzeug wie das TSF kaufen. Preis,
+          Fähigkeiten und Stellplatzbedarf vor dem Kauf prüfen. Kein separates
+          Einstellen, Besetzen oder Ausbilden ist zum Ausrücken erforderlich.
         </li>
         <li>
           Notruf annehmen, Ort und Meldebild erfragen. Mit AAO oder freier
@@ -560,42 +742,46 @@ export function Help() {
           die erste Lagemeldung aufnehmen und fehlende Kräfte nachfordern.
         </li>
         <li>
-          Nach Abschluss werden Credits einmalig gebucht und Fahrzeuge kehren
-          zurück.
+          Nach Abschluss wird die Euro-Vergütung einmalig gebucht und Fahrzeuge
+          kehren zurück.
         </li>
       </ol>
-      <h3>Ausbauen und ausbilden</h3>
+      <h3>Ausbauen und Fähigkeiten erweitern</h3>
       <p>
         Die gemeinsame Fortschrittsansicht zeigt alle aktuellen Freischaltungen.
-        Neue Organisationen erhalten gleichzeitig ein Einstiegsfahrzeug. XP gibt
-        es für abgeschlossene Einsätze; Zeit, zusätzliche Fahrzeuge und
-        wiederholte Meldungen erhöhen die Belohnung nicht.
+        Eine freigeschaltete Organisation bietet ein passendes Einstiegsfahrzeug
+        zum Kauf; Freischaltung schenkt weder Fahrzeuge noch Wachen. Die
+        Personal- und Ausbildungskapazität gehört zum Betrieb und Ausbau des
+        Gebäudes. XP gibt es für abgeschlossene Einsätze; Zeit, zusätzliche
+        Fahrzeuge und wiederholte Meldungen erhöhen die Belohnung nicht.
       </p>
       <h3>Patienten und Wasserrettung</h3>
       <p>
         Patienten werden nach der Versorgung mit einem Transportfahrzeug zum
         öffentlichen Klinikum gebracht. Behandelte Patienten geben Plätze wieder
-        frei. Boote starten ausschließlich an Wasserzugängen und bewegen sich
-        auf dem Wasserweg. Straßenfahrzeuge und Luftrettung folgen ihren eigenen
-        Bewegungsregeln.
+        frei. Auf der Deutschlandkarte erreichen Bootsgespanne einen geprüften
+        Uferzugang über echte Straßen. Eine frei befahrbare Wasserroute wird
+        derzeit nicht simuliert. Hubschrauber nutzen ihre eigene Luftfahrtlogik.
       </p>
       <h3>Serverzeit und Verbindung</h3>
       <p>
-        Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln mit
-        90–210 echten Sekunden Abstand ein; höchstens zwei eigene offene
-        Einsätze je Welt. Der Server simuliert deine Leitstelle auch bei
+        Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln ein. Eine
+        kleine Leitstelle beginnt mit einem Grundintervall von 300–480 Sekunden;
+        offene Gespräche, unerledigte Einsätze und gebundene Fahrzeuge drosseln
+        den Nachschub zusätzlich. Eine ausgebaute Leitstelle kann mehr parallele
+        Aufgaben erhalten. Der Server simuliert deine Leitstelle auch bei
         geschlossenem Browser. Ohne Serververbindung können keine Aktionen
         bestätigt werden. Nach Serverstillstand werden höchstens vier Stunden
         nachberechnet.
       </p>
       <h3>Freunde und Belohnungen</h3>
       <p>
-        Unter Freunde können bestehende Benutzer als Disponenten derselben
+        Unter Leitstellen können bestehende Benutzer als Disponenten derselben
         Leitstelle eingeladen werden. Nach Annahme arbeiten sie am gemeinsamen
         Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht. Unter
-        Freunde gezielte Unterstützungsanfragen an Nachbarleitstellen stellen;
-        erst eine ausdrückliche Zusage alarmiert fremde Kräfte. Laufende alte
-        Unterstützungen werden weitergeführt.
+        Leitstellen gezielte Unterstützungsanfragen an Nachbarleitstellen
+        stellen; erst eine ausdrückliche Zusage alarmiert fremde Kräfte.
+        Laufende alte Unterstützungen werden weitergeführt.
       </p>
       <h3>Speichern und Wiederherstellen</h3>
       <p>
@@ -613,6 +799,17 @@ export function Help() {
         anklicken oder mit Tab und Enter auswählen. Einsatzliste und
         Kartenwerkzeuge lassen sich einklappen. Menüs lassen sich mit Escape
         schließen.
+      </p>
+      <h3>Dein Arbeitsplatz und Audio</h3>
+      <p>
+        Alle dauerhaften Zugänge liegen in der oberen Leiste. Ansichten öffnen
+        nur bei Bedarf; nach dem Schließen bleibt die Karte frei. Hauptmenü und
+        Spiel verwenden dieselben Einstellungen. Lautstärke, Darstellung und
+        Bedienung werden zuerst als Vorschau geändert und mit „Übernehmen“ lokal
+        gespeichert. „Verwerfen“ stellt die vorherigen Werte wieder her. Audio
+        startet erst nach Interaktion; Musik, Umgebung, Telefon, Funk und
+        Alarmierung besitzen eigene Regler. Ein Audioproblem stoppt keine
+        Serveraktion.
       </p>
     </div>
   );

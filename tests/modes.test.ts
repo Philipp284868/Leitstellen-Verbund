@@ -10,6 +10,8 @@ import { Game } from "../server/game";
 import { established } from "./e2e/fixtures";
 import { nodes } from "../src/world";
 import { type Save } from "../src/model";
+import { euro } from "../src/money";
+import { fundTestBudget } from "./money-fixture";
 const pass = "Separate-game-worlds-123!";
 const command = (action: unknown) => ({ id: crypto.randomUUID(), action });
 function owned(s: Save, id: string) {
@@ -53,7 +55,7 @@ it("weist entfernte Modi ab und erhält das inaktive Archiv bytegleich nach Neus
     game.command(a, cmd);
     game.command(a, cmd);
     expect(db.all().get(a)!.buildings).toHaveLength(1);
-    expect(db.all().get(a)!.money).toBe(195000);
+    expect(db.all().get(a)!.money).toBe(euro(750000));
     expect(game.view(b, new Set()).network.friends).toEqual([]);
     game.step(10);
     expect(
@@ -85,6 +87,7 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
   try {
     const expected = JSON.parse(String(original));
     expected.environment = environmentAt(expected.time);
+    expected.staffing = { version: 1, migratedAt: expected.time };
     expect(
       JSON.parse(
         String(
@@ -210,7 +213,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
       ).toBe(400);
     expect(app.db.all("single").size).toBe(0);
     const archived = owned(established("Archiv"), user);
-    archived.money = 195000;
+    fundTestBudget(archived, 195000);
     app.db.save(user, archived, "single");
     const archive = await (await request("archive-export", "multi")).json();
     expect(archive.source).toBe("retired-single-player");
@@ -230,7 +233,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
       ).status,
     ).toBe(404);
     const multi = await (await request("export", "multi")).json();
-    expect(multi.save.money).toBe(250000);
+    expect(multi.save.money).toBe(euro(1400000));
     const single = io(origin, {
       autoConnect: false,
       transports: ["websocket"],
@@ -293,7 +296,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   expect(exported.status, exported.stderr).toBe(0);
   expect(JSON.parse(await readFile(archiveFile, "utf8"))).toMatchObject({
     source: "retired-single-player",
-    save: { money: 195000 },
+    save: { money: euro(195000) },
   });
   const result = spawnSync(
     process.execPath,
@@ -320,8 +323,8 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   expect(result.status, result.stderr).toBe(0);
   const restored = new Database(dir);
   try {
-    expect(restored.all("single").get(user)!.money).toBe(195000);
-    expect(restored.all().get(user)!.money).toBe(250000);
+    expect(restored.all("single").get(user)!.money).toBe(euro(195000));
+    expect(restored.all().get(user)!.money).toBe(euro(1400000));
     expect(restored.sql.prepare("SELECT * FROM sessions").all()).toHaveLength(
       0,
     );

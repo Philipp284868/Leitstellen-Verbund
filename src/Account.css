@@ -1,0 +1,142 @@
+.auth-screen {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(450px, 1fr) 430px;
+  gap: 8vw;
+  align-items: center;
+  padding: clamp(30px, 5vw, 90px);
+  background:
+    radial-gradient(ellipse at 5% 15%, #234858 0, transparent 45%),
+    linear-gradient(130deg, #06131d, #10232d 60%, #080f16);
+  color: #edf2f5;
+}
+.auth-mark {
+  width: 90px;
+  height: 90px;
+  margin-bottom: 24px;
+}
+.auth-brand h1 {
+  font-size: clamp(36px, 4vw, 66px);
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  margin: 20px 0;
+}
+.auth-brand h1 em {
+  font-style: normal;
+  color: #f15d49;
+}
+.auth-brand > p {
+  font-size: 17px;
+  color: #bdd0db;
+  max-width: 55ch;
+  line-height: 1.6;
+}
+.auth-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 60px;
+}
+.auth-principles article {
+  border-top: 2px solid #497f99;
+  padding-top: 15px;
+}
+.auth-principles p {
+  color: #9fb8c7;
+  line-height: 1.6;
+}
+.auth-card {
+  background: #0a1923ed;
+  border: 1px solid #3b5a6e;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 24px 70px #0006;
+}
+.auth-card h2 {
+  font-size: 24px;
+  margin: 10px 0 20px;
+}
+.auth-connection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  background: #132c37;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.auth-connection > span {
+  color: #a6d5bc;
+}
+.auth-connection strong {
+  font-size: 12px;
+  word-break: break-all;
+}
+.auth-connection button {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 5px 8px;
+}
+.auth-card .start-actions {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  gap: 15px;
+}
+.auth-card label {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  font-size: 13px;
+}
+.auth-card input {
+  width: 100%;
+}
+.auth-card small {
+  display: block;
+  color: #9fb8c7;
+  line-height: 1.55;
+  margin-top: 16px;
+}
+.account-fields {
+  border: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.account-fields label {
+  display: grid;
+  gap: 6px;
+}
+.account-fields label:first-child,
+.account-fields > button,
+.account-fields > p {
+  grid-column: 1/-1;
+}
+.async-action {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.async-action > .error {
+  width: 100%;
+}
+@media (max-height: 800px) {
+  .auth-screen {
+    padding: 28px 5vw;
+  }
+  .auth-principles {
+    margin-top: 30px;
+  }
+  .auth-card {
+    padding: 22px;
+  }
+  .auth-mark {
+    width: 65px;
+    height: 65px;
+    margin-bottom: 12px;
+  }
+}

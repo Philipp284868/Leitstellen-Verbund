@@ -41,8 +41,17 @@
 }
 .org-form input[type="checkbox"],
 .neighbor-desk input[type="checkbox"],
-.org-settings input[type="checkbox"] {
-  width: auto;
+.org-settings input[type="checkbox"],
+.vehicle-staffing input[type="checkbox"] {
+  width: 18px;
+  min-width: 18px;
+  flex: 0 0 18px;
+  margin-inline: 0;
+}
+.neighbor-desk label:has(input[type="checkbox"]),
+.vehicle-staffing label:has(input[type="checkbox"]) {
+  justify-content: flex-start;
+  gap: 8px;
 }
 .neighbor-desk textarea {
   min-height: 85px;

@@ -178,7 +178,7 @@ export function aidCommand(
         mission: m.id,
         round: m.round,
         vehicle: v.id,
-        maxReward: mt(m.template).reward,
+        maxReward: m.paymentCents ?? mt(m.template).reward,
         status: "active",
       });
     }

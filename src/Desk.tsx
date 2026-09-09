@@ -16,7 +16,9 @@ import { capacity } from "./engine";
 import { fleetReadiness } from "./fleet-view";
 import { reserveWarning } from "./simulation/staffing";
 import { chat, useNetwork } from "./network";
-import { act, useGame } from "./store";
+import { command, useGame } from "./store";
+import { useCommandForm } from "./use-command-form";
+import { requestDialogTransition } from "./dialog-state";
 import { createId } from "./ids";
 import { duration, tripLabel } from "./travel";
 import { ApproachText } from "./germany/GeoQueries";
@@ -38,7 +40,7 @@ import {
   visiblePriority,
 } from "./simulation/priority";
 import { missionStatus } from "./simulation/mission-status";
-import { statuses, Disclosure } from "./ui";
+import { statuses, Disclosure, ConfirmAction } from "./ui";
 import "./Desk.css";
 const stages = {
   incoming: "Notruf eingegangen",
@@ -231,142 +233,165 @@ function Calls({ s, m }: { s: Save; m: Mission }) {
   const [selected, setSelected] = useState(
     c.calls.find((c) => c.state !== "ended")?.id ?? c.calls[0]?.id,
   );
+  const form = useCommandForm();
   const call = c.calls.find((x) => x.id === selected);
   if (!call) return null;
   const own = call.actor === user?.id;
   const waiting = Math.max(0, call.nextAnswer - s.time);
   return (
-    <section className="call-conversation" aria-label="Notrufgespräch">
-      <h3>Notrufgespräch</h3>
-      <div className="inline">
-        {c.calls.map((x, i) => (
-          <button
-            key={x.id}
-            aria-pressed={selected === x.id}
-            onClick={() => setSelected(x.id)}
-          >
-            Anruf {i + 1} ·{" "}
-            {x.state === "ringing"
-              ? "wartet"
-              : x.state === "active"
-                ? "aktiv"
-                : x.state === "dropped"
-                  ? "abgebrochen"
-                  : "beendet"}
-          </button>
-        ))}
-      </div>
-      <p>
-        {call.caller} · {call.noise} · Gesprächsdauer{" "}
-        {duration(
-          call.duration + (call.state === "active" ? s.time - call.started : 0),
-        )}
-      </p>
-      <Disclosure title="Gesprächsdetails">
-        <div className="call-properties">
-          <span>Stress {call.stress}%</span>
-          <span>Informationsqualität {call.quality}%</span>
-          <span>Glaubwürdigkeit {call.credibility}%</span>
-          <span>Rückruf {call.callback ? "möglich" : "nicht möglich"}</span>
-        </div>
-      </Disclosure>
-      {call.state === "ringing" && (
-        <button
-          className="primary"
-          onClick={() =>
-            void act({
-              type: "call",
-              mission: m.id,
-              call: call.id,
-              op: "accept",
-            })
-          }
-        >
-          Notruf annehmen
-        </button>
-      )}
-      {(call.state === "dropped" ||
-        (call.state === "ended" &&
-          (!c.locationKnown || !c.reportedTemplate))) &&
-        call.callback && (
-          <button
-            onClick={() =>
-              void act({
-                type: "call",
-                mission: m.id,
-                call: call.id,
-                op: "callback",
-              })
-            }
-          >
-            Anrufer zurückrufen
-          </button>
-        )}
-      {call.state === "active" && !own && (
-        <p>
-          Ein anderer Disponent bearbeitet das Gespräch.{" "}
-          <button
-            disabled={s.time - Math.max(call.started, call.nextAnswer) < 60}
-            onClick={() =>
-              void act({
-                type: "call",
-                mission: m.id,
-                call: call.id,
-                op: "accept",
-              })
-            }
-          >
-            Nach 60 Sekunden ohne Bearbeitung übernehmen
-          </button>
+    <section
+      className="call-conversation"
+      aria-label="Notrufgespräch"
+      data-tutorial="call"
+    >
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
         </p>
       )}
-      {call.state === "active" && own && (
-        <>
-          <div className="question-grid">
-            {(Object.keys(questionLabels) as Question[])
-              .filter(
-                (q) =>
-                  ["address", "report", "calm"].includes(q) ||
-                  call.asked.includes("report"),
-              )
-              .map((q) => (
-                <button
-                  key={q}
-                  disabled={call.asked.includes(q) || waiting > 0}
-                  onClick={() =>
-                    void act({
-                      type: "call",
-                      mission: m.id,
-                      call: call.id,
-                      op: "ask",
-                      question: q,
-                    })
-                  }
-                >
-                  {call.asked.includes(q) ? "✓ " : ""}
-                  {questionsFor(m)[q]}
-                </button>
-              ))}
-          </div>
-          {waiting > 0 && (
-            <small>
-              Antwort aufnehmen · nächste Frage in {duration(waiting)}
-            </small>
+      <fieldset className="command-fields" disabled={form.busy}>
+        <h3>Notrufgespräch</h3>
+        <div className="inline">
+          {c.calls.map((x, i) => (
+            <button
+              key={x.id}
+              aria-pressed={selected === x.id}
+              onClick={() => setSelected(x.id)}
+            >
+              Anruf {i + 1} ·{" "}
+              {x.state === "ringing"
+                ? "wartet"
+                : x.state === "active"
+                  ? "aktiv"
+                  : x.state === "dropped"
+                    ? "abgebrochen"
+                    : "beendet"}
+            </button>
+          ))}
+        </div>
+        <p>
+          {call.caller} · {call.noise} · Gesprächsdauer{" "}
+          {duration(
+            call.duration +
+              (call.state === "active" ? s.time - call.started : 0),
           )}
+        </p>
+        <Disclosure title="Gesprächsdetails">
+          <div className="call-properties">
+            <span>Stress {call.stress}%</span>
+            <span>Informationsqualität {call.quality}%</span>
+            <span>Glaubwürdigkeit {call.credibility}%</span>
+            <span>Rückruf {call.callback ? "möglich" : "nicht möglich"}</span>
+          </div>
+        </Disclosure>
+        {call.state === "ringing" && (
           <button
+            className="primary"
             onClick={() =>
-              void act({
-                type: "call",
-                mission: m.id,
-                call: call.id,
-                op: "end",
-              })
+              void form.run(() =>
+                command({
+                  type: "call",
+                  mission: m.id,
+                  call: call.id,
+                  op: "accept",
+                }),
+              )
             }
           >
-            Gespräch beenden
+            Notruf annehmen
           </button>
-        </>
-      )}
+        )}
+        {(call.state === "dropped" ||
+          (call.state === "ended" &&
+            (!c.locationKnown || !c.reportedTemplate))) &&
+          call.callback && (
+            <button
+              onClick={() =>
+                void form.run(() =>
+                  command({
+                    type: "call",
+                    mission: m.id,
+                    call: call.id,
+                    op: "callback",
+                  }),
+                )
+              }
+            >
+              Anrufer zurückrufen
+            </button>
+          )}
+        {call.state === "active" && !own && (
+          <p>
+            Ein anderer Disponent bearbeitet das Gespräch.{" "}
+            <button
+              disabled={s.time - Math.max(call.started, call.nextAnswer) < 60}
+              onClick={() =>
+                void form.run(() =>
+                  command({
+                    type: "call",
+                    mission: m.id,
+                    call: call.id,
+                    op: "accept",
+                  }),
+                )
+              }
+            >
+              Nach 60 Sekunden ohne Bearbeitung übernehmen
+            </button>
+          </p>
+        )}
+        {call.state === "active" && own && (
+          <>
+            <div className="question-grid">
+              {(Object.keys(questionLabels) as Question[])
+                .filter(
+                  (q) =>
+                    ["address", "report", "calm"].includes(q) ||
+                    call.asked.includes("report"),
+                )
+                .map((q) => (
+                  <button
+                    key={q}
+                    disabled={call.asked.includes(q) || waiting > 0}
+                    onClick={() =>
+                      void form.run(() =>
+                        command({
+                          type: "call",
+                          mission: m.id,
+                          call: call.id,
+                          op: "ask",
+                          question: q,
+                        }),
+                      )
+                    }
+                  >
+                    {call.asked.includes(q) ? "✓ " : ""}
+                    {questionsFor(m)[q]}
+                  </button>
+                ))}
+            </div>
+            {waiting > 0 && (
+              <small>
+                Antwort aufnehmen · nächste Frage in {duration(waiting)}
+              </small>
+            )}
+            <button
+              onClick={() =>
+                void form.run(() =>
+                  command({
+                    type: "call",
+                    mission: m.id,
+                    call: call.id,
+                    op: "end",
+                  }),
+                )
+              }
+            >
+              Gespräch beenden
+            </button>
+          </>
+        )}
+      </fieldset>
     </section>
   );
 }
@@ -385,6 +410,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
     [travel, setTravel] = useState<TravelMode>("priority"),
     [home, setHome] = useState(""),
     [org, setOrg] = useState("Alle");
+  const form = useCommandForm(selected.length > 0, () => setSelected([]));
   const proposal = c.proposal;
   useEffect(() => {
     if (proposal) setSelected(proposal.vehicles);
@@ -409,383 +435,408 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   const processing = missionStatus(s, m, net.support);
   return (
     <div className="incident-desk" data-hud-section="details">
-      <span className="eyebrow">
-        {visiblePriority(c.priority)} · {stages[c.stage]} · Einsatz{" "}
-        {m.id.slice(-8)}
-      </span>
-
-      <p>
-        Seit {duration(Math.max(0, s.time - m.created))} offen ·{" "}
-        <strong data-processing={processing.code}>{processing.label}</strong>
-      </p>
-      <p className={processing.attention ? "warning" : "muted"}>
-        {processing.detail}
-      </p>
-      {!c.briefed && (
-        <p className="warning">
-          Offene Informationen:{" "}
-          {[
-            !c.locationKnown && "genauer Einsatzort",
-            !c.reportedTemplate && "Meldebild",
-            !c.facts.some((f) => f.key === "people") && "betroffene Personen",
-            !c.facts.some((f) => f.key === "hazard") && "erkennbare Gefahren",
-            "erste Lagemeldung",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
         </p>
       )}
-      {c.locationKnown && (
-        <label>
-          Dispositionspriorität
-          <select
-            aria-label="Dispositionspriorität"
-            value={visiblePriority(c.priority)}
-            onChange={(e) =>
-              void act({
-                type: "mission-priority",
-                mission: m.id,
-                priority: e.target.value as Priority,
-              })
-            }
-          >
-            {priorities.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      {c.calls.some((call) => call.state !== "ended") ? (
-        <Calls s={s} m={m} />
-      ) : (
-        <details className="closed-calls">
-          <summary>Abgeschlossene Notrufgespräche ({c.calls.length})</summary>
-          <Calls s={s} m={m} />
-        </details>
-      )}
-      <details className="known-information" open={!c.briefed}>
-        <summary>Bekannte Informationen</summary>
-        {!c.facts.length && (
-          <p>
-            Noch keine Angaben erfragt. Ort und Meldebild reichen für eine erste
-            Disposition.
+      <fieldset className="command-fields" disabled={form.busy}>
+        <span className="eyebrow">
+          {visiblePriority(c.priority)} · {stages[c.stage]} · Einsatz{" "}
+          {m.id.slice(-8)}
+        </span>
+
+        <p>
+          Seit {duration(Math.max(0, s.time - m.created))} offen ·{" "}
+          <strong data-processing={processing.code}>{processing.label}</strong>
+        </p>
+        <p className={processing.attention ? "warning" : "muted"}>
+          {processing.detail}
+        </p>
+        {!c.briefed && (
+          <p className="warning">
+            Offene Informationen:{" "}
+            {[
+              !c.locationKnown && "genauer Einsatzort",
+              !c.reportedTemplate && "Meldebild",
+              !c.facts.some((f) => f.key === "people") && "betroffene Personen",
+              !c.facts.some((f) => f.key === "hazard") && "erkennbare Gefahren",
+              "erste Lagemeldung",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         )}
-        <ul className="known-facts">
-          {c.facts.map((f, i) => (
-            <li key={i}>
-              <b>{f.confidence}</b> · {f.text}
-            </li>
-          ))}
-        </ul>
-      </details>
-      <FireLiveStatus m={m} reduced={s.settings.reduced} />
-      <DynamicsPanel s={s} m={m} />
-      {c.radio.some((r) => r.state === "open") && (
-        <section className="radio-queue" data-hud-section="radio">
-          <h3>Sprechwünsche und Lagemeldungen</h3>
-          {c.radio
-            .filter((r) => r.state === "open")
-            .map((r) => (
-              <article key={r.id}>
-                <b>
-                  {visiblePriority(r.priority)} ·{" "}
-                  {s.vehicles.find((v) => v.id === r.vehicle)?.name ||
-                    support.find((f) => f.vehicle.id === r.vehicle)?.vehicle
-                      .name}
-                </b>
-                <p>{r.details}</p>
-                <div className="inline">
-                  {r.reason === "arrival" && (
-                    <button
-                      className="primary"
-                      onClick={() =>
-                        void act({
-                          type: "radio",
-                          mission: m.id,
-                          id: r.id,
-                          op: "report",
-                        })
-                      }
-                    >
-                      Lagemeldung aufnehmen
-                    </button>
-                  )}
-                  <button
-                    disabled={r.reason === "arrival" && !c.briefed}
-                    onClick={() =>
-                      void act({
-                        type: "radio",
-                        mission: m.id,
-                        id: r.id,
-                        op: "question",
-                      })
-                    }
-                  >
-                    Rückfrage zur Lage
-                  </button>
-                  <button
-                    disabled={r.reason === "arrival" && !c.briefed}
-                    onClick={() =>
-                      void act({
-                        type: "radio",
-                        mission: m.id,
-                        id: r.id,
-                        op: "request",
-                      })
-                    }
-                  >
-                    Nachforderung bearbeiten
-                  </button>
-                  <button
-                    disabled={r.reason === "arrival" && !c.briefed}
-                    onClick={() =>
-                      void act({
-                        type: "radio",
-                        mission: m.id,
-                        id: r.id,
-                        op: "close",
-                      })
-                    }
-                  >
-                    Sprechwunsch erledigen
-                  </button>
-                </div>
-              </article>
-            ))}
-        </section>
-      )}
-      {c.locationKnown && c.reportedTemplate && m.phase !== "done" && (
-        <section data-hud-section="vehicles">
-          <h3>Kräfte alarmieren / nachfordern</h3>
+        {c.locationKnown && (
           <label>
-            Anfahrtsart
+            Dispositionspriorität
             <select
-              aria-label="Anfahrtsart"
-              value={travel}
-              onChange={(e) => setTravel(e.target.value as TravelMode)}
+              aria-label="Dispositionspriorität"
+              value={visiblePriority(c.priority)}
+              onChange={(e) =>
+                void form.run(() =>
+                  command({
+                    type: "mission-priority",
+                    mission: m.id,
+                    priority: e.target.value as Priority,
+                  }),
+                )
+              }
             >
-              {Object.entries(travelNames).map(([id, name]) => (
-                <option value={id} key={id}>
-                  {name}
+              {priorities.map((p) => (
+                <option key={p} value={p}>
+                  {p}
                 </option>
               ))}
             </select>
           </label>
-          <p>
-            {c.briefed
-              ? "Bestätigter Bedarf"
-              : "Vermuteter Bedarf · Erkundung steht aus."}
-          </p>
-          <ForceNeeds
-            required={Object.fromEntries(
-              Object.entries(requirements(m))
-                .map(([key, n]) => [
-                  key,
-                  Math.max(n, selectedAAO?.skills[key] ?? 0),
-                ])
-                .concat(
-                  Object.entries(selectedAAO?.skills ?? {}).filter(
-                    ([key]) => !requirements(m)[key],
-                  ),
-                ),
-            )}
-            available={skills}
-          />
-          <ReserveOverview s={s} selected={chosen} />
-          <div className="desk-form">
-            <label>
-              AAO auswählen
-              <select
-                aria-label="AAO auswählen"
-                value={aao}
-                onChange={(e) => {
-                  setAao(e.target.value);
-                  const a = s.desk.aaos.find((a) => a.id === e.target.value);
-                  if (a) {
-                    setPriority(a.priority);
-                    setAlarm(a.alarm);
-                  }
-                }}
-              >
-                <option value="">Freie Disposition</option>
-                {s.desk.aaos.map((a) => (
-                  <option value={a.id} key={a.id}>
-                    {a.keyword} · {a.name} · Stufe {a.level}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              disabled={!aao}
-              onClick={() =>
-                void act({ type: "aao-propose", mission: m.id, aao })
-              }
-            >
-              AAO-Vorschlag berechnen
-            </button>
-          </div>
-          {proposal && (
+        )}
+        {c.calls.some((call) => call.state !== "ended") ? (
+          <Calls s={s} m={m} />
+        ) : (
+          <details className="closed-calls">
+            <summary>Abgeschlossene Notrufgespräche ({c.calls.length})</summary>
+            <Calls s={s} m={m} />
+          </details>
+        )}
+        <details className="known-information" open={!c.briefed}>
+          <summary>Bekannte Informationen</summary>
+          {!c.facts.length && (
             <p>
-              {proposal.vehicles.length} Fahrzeuge vorgeschlagen ·{" "}
-              {proposal.missing.join(" · ") || "AAO vollständig verfügbar"}.
-              Auswahl vor der Alarmierung prüfen.
+              Noch keine Angaben erfragt. Ort und Meldebild reichen für eine
+              erste Disposition.
             </p>
           )}
-          <div className="desk-form">
+          <ul className="known-facts">
+            {c.facts.map((f, i) => (
+              <li key={i}>
+                <b>{f.confidence}</b> · {f.text}
+              </li>
+            ))}
+          </ul>
+        </details>
+        <FireLiveStatus m={m} reduced={s.settings.reduced} />
+        <DynamicsPanel s={s} m={m} />
+        {c.radio.some((r) => r.state === "open") && (
+          <section
+            className="radio-queue"
+            data-hud-section="radio"
+            data-tutorial="radio"
+          >
+            <h3>Sprechwünsche und Lagemeldungen</h3>
+            {c.radio
+              .filter((r) => r.state === "open")
+              .map((r) => (
+                <article key={r.id}>
+                  <b>
+                    {visiblePriority(r.priority)} ·{" "}
+                    {s.vehicles.find((v) => v.id === r.vehicle)?.name ||
+                      support.find((f) => f.vehicle.id === r.vehicle)?.vehicle
+                        .name}
+                  </b>
+                  <p>{r.details}</p>
+                  <div className="inline">
+                    {r.reason === "arrival" && (
+                      <button
+                        className="primary"
+                        onClick={() =>
+                          void form.run(() =>
+                            command({
+                              type: "radio",
+                              mission: m.id,
+                              id: r.id,
+                              op: "report",
+                            }),
+                          )
+                        }
+                      >
+                        Lagemeldung aufnehmen
+                      </button>
+                    )}
+                    <button
+                      disabled={r.reason === "arrival" && !c.briefed}
+                      onClick={() =>
+                        void form.run(() =>
+                          command({
+                            type: "radio",
+                            mission: m.id,
+                            id: r.id,
+                            op: "question",
+                          }),
+                        )
+                      }
+                    >
+                      Rückfrage zur Lage
+                    </button>
+                    <button
+                      disabled={r.reason === "arrival" && !c.briefed}
+                      onClick={() =>
+                        void form.run(() =>
+                          command({
+                            type: "radio",
+                            mission: m.id,
+                            id: r.id,
+                            op: "request",
+                          }),
+                        )
+                      }
+                    >
+                      Nachforderung bearbeiten
+                    </button>
+                    <button
+                      disabled={r.reason === "arrival" && !c.briefed}
+                      onClick={() =>
+                        void form.run(() =>
+                          command({
+                            type: "radio",
+                            mission: m.id,
+                            id: r.id,
+                            op: "close",
+                          }),
+                        )
+                      }
+                    >
+                      Sprechwunsch erledigen
+                    </button>
+                  </div>
+                </article>
+              ))}
+          </section>
+        )}
+        {c.locationKnown && c.reportedTemplate && m.phase !== "done" && (
+          <section data-hud-section="vehicles" data-tutorial="dispatch">
+            <h3>Kräfte alarmieren / nachfordern</h3>
             <label>
-              Wache
+              Anfahrtsart
               <select
-                aria-label="Wache"
-                value={home}
-                onChange={(e) => setHome(e.target.value)}
+                aria-label="Anfahrtsart"
+                value={travel}
+                onChange={(e) => setTravel(e.target.value as TravelMode)}
               >
-                <option value="">Alle Wachen</option>
-                {s.buildings.map((b) => (
-                  <option value={b.id} key={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Organisation
-              <select
-                aria-label="Organisation"
-                value={org}
-                onChange={(e) => setOrg(e.target.value)}
-              >
-                {orgs.map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Priorität
-              <select
-                aria-label="Priorität"
-                value={visiblePriority(priority)}
-                onChange={(e) => setPriority(e.target.value as Priority)}
-              >
-                {priorities.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Alarmierungsart
-              <select
-                aria-label="Alarmierungsart"
-                value={alarm}
-                onChange={(e) => setAlarm(e.target.value as Alarm | "")}
-              >
-                <option value="">Profil der jeweiligen Wache</option>
-                {Object.entries(alarmNames).map(([id, name]) => (
-                  <option key={id} value={id}>
+                {Object.entries(travelNames).map(([id, name]) => (
+                  <option value={id} key={id}>
                     {name}
                   </option>
                 ))}
               </select>
             </label>
-          </div>
-          <div className="dispatch-list">
-            {s.vehicles
-              .filter(
-                (v) =>
-                  (!home || v.home === home) &&
-                  (org === "Alle" || bt(vt(v.type).home).org === org),
-              )
-              .map((v) => (
-                <label key={v.id}>
-                  <input
-                    type="checkbox"
-                    disabled={!!ready(v)}
-                    checked={selectedReady.includes(v.id)}
-                    onChange={(e) =>
-                      setSelected((ids) =>
-                        e.target.checked
-                          ? [...ids, v.id]
-                          : ids.filter((id) => id !== v.id),
-                      )
-                    }
-                  />
-                  <span>
-                    <b>
-                      <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
-                      {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
-                    </b>
-                    <small>
-                      {ready(v) || (
-                        <>
-                          <span>
-                            {v.availability?.dispatchable === false
-                              ? "FF alarmierbar · "
-                              : "Einsatzbereit · "}
-                          </span>
-                          <ApproachText
-                            s={s}
-                            vehicle={v}
-                            target={m.pos}
-                            mode={travel}
-                            alarm={alarm || undefined}
-                          />
-                        </>
-                      )}
-                    </small>
-                    <small>{reserveWarning(s, v)}</small>
-                  </span>
-                </label>
-              ))}
-          </div>
-          <button
-            className="primary"
-            disabled={!selectedReady.length}
-            onClick={() => {
-              void act({
-                type: "dispatch",
-                travel,
-                mission: m.id,
-                vehicles: selectedReady,
-                priority,
-                alarm: alarm || undefined,
-              });
-              setSelected([]);
-            }}
-          >
-            Alarmieren ({selectedReady.length})
-          </button>
-        </section>
-      )}
-      <section data-hud-section="arrival">
-        <h3>Eingesetzte Fahrzeuge</h3>
-        {support.map((f) => (
-          <p key={f.assignment}>
-            <b>{f.vehicle.name} · Nachbarleitstelle</b> ·{" "}
-            {statuses[f.vehicle.status]} · {tripLabel(f.vehicle, s.time)}
-          </p>
-        ))}
-        <IncidentUnits
-          key={m.id}
-          s={s}
-          m={m}
-          remoteUnits={support.map((f) => f.vehicle)}
-        />
-        {progress ? (
-          <>
-            <progress
-              value={progress.value}
-              max={progress.max}
-              aria-label={progress.label}
+            <p>
+              {c.briefed
+                ? "Bestätigter Bedarf"
+                : "Vermuteter Bedarf · Erkundung steht aus."}
+            </p>
+            <ForceNeeds
+              required={Object.fromEntries(
+                Object.entries(requirements(m))
+                  .map(([key, n]) => [
+                    key,
+                    Math.max(n, selectedAAO?.skills[key] ?? 0),
+                  ])
+                  .concat(
+                    Object.entries(selectedAAO?.skills ?? {}).filter(
+                      ([key]) => !requirements(m)[key],
+                    ),
+                  ),
+              )}
+              available={skills}
             />
-            <small>{progress.label}</small>
-          </>
-        ) : (
-          <small>Weitere Angaben nach der ersten Erkundung</small>
+            <ReserveOverview s={s} selected={chosen} />
+            <div className="desk-form">
+              <label>
+                AAO auswählen
+                <select
+                  aria-label="AAO auswählen"
+                  value={aao}
+                  onChange={(e) => {
+                    setAao(e.target.value);
+                    const a = s.desk.aaos.find((a) => a.id === e.target.value);
+                    if (a) {
+                      setPriority(a.priority);
+                      setAlarm(a.alarm);
+                    }
+                  }}
+                >
+                  <option value="">Freie Disposition</option>
+                  {s.desk.aaos.map((a) => (
+                    <option value={a.id} key={a.id}>
+                      {a.keyword} · {a.name} · Stufe {a.level}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                disabled={!aao}
+                onClick={() =>
+                  void form.run(() =>
+                    command({ type: "aao-propose", mission: m.id, aao }),
+                  )
+                }
+              >
+                AAO-Vorschlag berechnen
+              </button>
+            </div>
+            {proposal && (
+              <p>
+                {proposal.vehicles.length} Fahrzeuge vorgeschlagen ·{" "}
+                {proposal.missing.join(" · ") || "AAO vollständig verfügbar"}.
+                Auswahl vor der Alarmierung prüfen.
+              </p>
+            )}
+            <div className="desk-form">
+              <label>
+                Wache
+                <select
+                  aria-label="Wache"
+                  value={home}
+                  onChange={(e) => setHome(e.target.value)}
+                >
+                  <option value="">Alle Wachen</option>
+                  {s.buildings.map((b) => (
+                    <option value={b.id} key={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Organisation
+                <select
+                  aria-label="Organisation"
+                  value={org}
+                  onChange={(e) => setOrg(e.target.value)}
+                >
+                  {orgs.map((o) => (
+                    <option key={o}>{o}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Priorität
+                <select
+                  aria-label="Priorität"
+                  value={visiblePriority(priority)}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                >
+                  {priorities.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Alarmierungsart
+                <select
+                  aria-label="Alarmierungsart"
+                  value={alarm}
+                  onChange={(e) => setAlarm(e.target.value as Alarm | "")}
+                >
+                  <option value="">Profil der jeweiligen Wache</option>
+                  {Object.entries(alarmNames).map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="dispatch-list">
+              {s.vehicles
+                .filter(
+                  (v) =>
+                    (!home || v.home === home) &&
+                    (org === "Alle" || bt(vt(v.type).home).org === org),
+                )
+                .map((v) => (
+                  <label key={v.id}>
+                    <input
+                      type="checkbox"
+                      disabled={!!ready(v)}
+                      checked={selectedReady.includes(v.id)}
+                      onChange={(e) =>
+                        setSelected((ids) =>
+                          e.target.checked
+                            ? [...ids, v.id]
+                            : ids.filter((id) => id !== v.id),
+                        )
+                      }
+                    />
+                    <span>
+                      <b>
+                        <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
+                        {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
+                      </b>
+                      <small>
+                        {ready(v) || (
+                          <>
+                            <span>
+                              {v.availability?.dispatchable === false
+                                ? "FF alarmierbar · "
+                                : "Einsatzbereit · "}
+                            </span>
+                            <ApproachText
+                              s={s}
+                              vehicle={v}
+                              target={m.pos}
+                              mode={travel}
+                              alarm={alarm || undefined}
+                            />
+                          </>
+                        )}
+                      </small>
+                      <small>{reserveWarning(s, v)}</small>
+                    </span>
+                  </label>
+                ))}
+            </div>
+            <button
+              className="primary"
+              disabled={!selectedReady.length}
+              onClick={() => {
+                void form.run(async () => {
+                  await command({
+                    type: "dispatch",
+                    travel,
+                    mission: m.id,
+                    vehicles: selectedReady,
+                    priority,
+                    alarm: alarm || undefined,
+                  });
+                  setSelected([]);
+                });
+              }}
+            >
+              Alarmieren ({selectedReady.length})
+            </button>
+          </section>
         )}
-      </section>
-      <History s={s} m={m} />
+        <section data-hud-section="arrival">
+          <h3>Eingesetzte Fahrzeuge</h3>
+          {support.map((f) => (
+            <p key={f.assignment}>
+              <b>{f.vehicle.name} · Nachbarleitstelle</b> ·{" "}
+              {statuses[f.vehicle.status]} · {tripLabel(f.vehicle, s.time)}
+            </p>
+          ))}
+          <IncidentUnits
+            key={m.id}
+            s={s}
+            m={m}
+            remoteUnits={support.map((f) => f.vehicle)}
+          />
+          {progress ? (
+            <>
+              <progress
+                value={progress.value}
+                max={progress.max}
+                aria-label={progress.label}
+              />
+              <small>{progress.label}</small>
+            </>
+          ) : (
+            <small>Weitere Angaben nach der ersten Erkundung</small>
+          )}
+        </section>
+        <History s={s} m={m} />
+      </fieldset>
     </div>
   );
 }
@@ -802,204 +853,263 @@ const newAAO = (): AAO => ({
 });
 export function AAOPanel({ s }: { s: Save }) {
   const [a, setA] = useState<AAO>(newAAO);
+  const [baseline, setBaseline] = useState(a);
+  const dirty = JSON.stringify(a) !== JSON.stringify(baseline);
+  const restore = () => setA(structuredClone(baseline));
+  const form = useCommandForm(dirty, restore);
+  const load = (value: AAO) =>
+    requestDialogTransition(() => {
+      setA(structuredClone(value));
+      setBaseline(structuredClone(value));
+    });
   return (
     <div className="aao-editor">
-      <p>
-        Eine AAO erstellt einen verfügbaren Fahrzeugvorschlag. Alarmiert wird
-        erst nach deiner Bestätigung.
-      </p>
-      <div className="inline">
-        <button onClick={() => setA(newAAO())}>Neue AAO</button>
-        {s.desk.aaos.map((x) => (
-          <button key={x.id} onClick={() => setA(structuredClone(x))}>
-            {x.name}
-          </button>
-        ))}
-      </div>
-      <div className="desk-form">
-        <label>
-          AAO-Name
-          <input
-            value={a.name}
-            maxLength={60}
-            onChange={(e) => setA({ ...a, name: e.target.value })}
-          />
-        </label>
-        <label>
-          Einsatzstichwort
-          <input
-            value={a.keyword}
-            maxLength={60}
-            onChange={(e) => setA({ ...a, keyword: e.target.value })}
-          />
-        </label>
-        <label>
-          Alarmstufe
-          <input
-            type="number"
-            min={1}
-            max={5}
-            value={a.level}
-            onChange={(e) => setA({ ...a, level: Number(e.target.value) })}
-          />
-        </label>
-        <label>
-          AAO-Organisation
-          <select
-            aria-label="AAO-Organisation"
-            value={a.org}
-            onChange={(e) => setA({ ...a, org: e.target.value as AAO["org"] })}
-          >
-            {orgs.map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          AAO-Priorität
-          <select
-            aria-label="AAO-Priorität"
-            value={visiblePriority(a.priority)}
-            onChange={(e) =>
-              setA({ ...a, priority: e.target.value as Priority })
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
+      <fieldset className="command-fields" disabled={form.busy}>
+        <p>
+          Eine AAO erstellt einen verfügbaren Fahrzeugvorschlag. Alarmiert wird
+          erst nach deiner Bestätigung.
+        </p>
+        <div className="inline">
+          <button onClick={() => load(newAAO())}>Neue AAO</button>
+          {s.desk.aaos.map((x) => (
+            <button
+              key={x.id}
+              aria-pressed={a.id === x.id}
+              onClick={() => load(x)}
+            >
+              {x.name}
+            </button>
+          ))}
+        </div>
+        <div className="desk-form">
+          <label>
+            AAO-Name
+            <input
+              value={a.name}
+              maxLength={60}
+              onChange={(e) => setA({ ...a, name: e.target.value })}
+            />
+          </label>
+          <label>
+            Einsatzstichwort
+            <input
+              value={a.keyword}
+              maxLength={60}
+              onChange={(e) => setA({ ...a, keyword: e.target.value })}
+            />
+          </label>
+          <label>
+            Alarmstufe
+            <input
+              type="number"
+              min={1}
+              max={5}
+              value={a.level}
+              onChange={(e) => setA({ ...a, level: Number(e.target.value) })}
+            />
+          </label>
+          <label>
+            AAO-Organisation
+            <select
+              aria-label="AAO-Organisation"
+              value={a.org}
+              onChange={(e) =>
+                setA({ ...a, org: e.target.value as AAO["org"] })
+              }
+            >
+              {orgs.map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            AAO-Priorität
+            <select
+              aria-label="AAO-Priorität"
+              value={visiblePriority(a.priority)}
+              onChange={(e) =>
+                setA({ ...a, priority: e.target.value as Priority })
+              }
+            >
+              {priorities.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            AAO-Alarmierungsart
+            <select
+              aria-label="AAO-Alarmierungsart"
+              value={a.alarm}
+              onChange={(e) => setA({ ...a, alarm: e.target.value as Alarm })}
+            >
+              {Object.entries(alarmNames).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <h3>Fahrzeuganforderungen</h3>
+        <div className="requirement-editor">
+          {vehicles.map((v) => (
+            <label key={v.id}>
+              {v.name}
+              <input
+                aria-label={`Anzahl ${v.name}`}
+                type="number"
+                min={0}
+                max={8}
+                value={a.types.filter((t) => t === v.id).length}
+                onChange={(e) =>
+                  setA({
+                    ...a,
+                    types: [
+                      ...a.types.filter((t) => t !== v.id),
+                      ...Array(
+                        Math.max(0, Math.min(8, Number(e.target.value) || 0)),
+                      ).fill(v.id),
+                    ],
+                  })
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <h3>Zusätzliche Fähigkeiten / Sondermittel</h3>
+        <div className="requirement-editor">
+          {Object.entries(capabilities).map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={a.skills[key] || 0}
+                onChange={(e) => {
+                  const skills = { ...a.skills },
+                    n = Math.max(0, Number(e.target.value) || 0);
+                  if (n) skills[key] = n;
+                  else delete skills[key];
+                  setA({ ...a, skills });
+                }}
+              />
+            </label>
+          ))}
+        </div>
+        <div className="inline">
+          <button
+            className="primary"
+            disabled={
+              (!a.types.length &&
+                !Object.values(a.skills).some((n) => n > 0)) ||
+              a.types.length > 30 ||
+              !a.name.trim() ||
+              !a.keyword.trim()
+            }
+            onClick={() =>
+              void form.run(async () => {
+                await command({ type: "aao-save", aao: a });
+                setBaseline(structuredClone(a));
+              })
             }
           >
-            {priorities.map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          AAO-Alarmierungsart
-          <select
-            aria-label="AAO-Alarmierungsart"
-            value={a.alarm}
-            onChange={(e) => setA({ ...a, alarm: e.target.value as Alarm })}
+            AAO speichern
+          </button>
+          <button disabled={!dirty} onClick={restore}>
+            Änderungen verwerfen
+          </button>
+          <button onClick={() => setA({ ...newAAO(), id: a.id, name: a.name })}>
+            AAO auf Standard zurücksetzen
+          </button>
+          <ConfirmAction
+            disabled={!s.desk.aaos.some((x) => x.id === a.id)}
+            message={`AAO „${a.name}“ dauerhaft löschen?`}
+            onConfirm={async () => {
+              await command({ type: "aao-delete", id: a.id });
+              const next = newAAO();
+              setA(next);
+              setBaseline(next);
+            }}
           >
-            {Object.entries(alarmNames).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <h3>Fahrzeuganforderungen</h3>
-      <div className="requirement-editor">
-        {vehicles.map((v) => (
-          <label key={v.id}>
-            {v.name}
-            <input
-              aria-label={`Anzahl ${v.name}`}
-              type="number"
-              min={0}
-              max={8}
-              value={a.types.filter((t) => t === v.id).length}
-              onChange={(e) =>
-                setA({
-                  ...a,
-                  types: [
-                    ...a.types.filter((t) => t !== v.id),
-                    ...Array(
-                      Math.max(0, Math.min(8, Number(e.target.value) || 0)),
-                    ).fill(v.id),
-                  ],
-                })
-              }
-            />
-          </label>
-        ))}
-      </div>
-      <h3>Zusätzliche Fähigkeiten / Sondermittel</h3>
-      <div className="requirement-editor">
-        {Object.entries(capabilities).map(([key, label]) => (
-          <label key={key}>
-            {label}
-            <input
-              type="number"
-              min={0}
-              max={50}
-              value={a.skills[key] || 0}
-              onChange={(e) => {
-                const skills = { ...a.skills },
-                  n = Math.max(0, Number(e.target.value) || 0);
-                if (n) skills[key] = n;
-                else delete skills[key];
-                setA({ ...a, skills });
-              }}
-            />
-          </label>
-        ))}
-      </div>
-      <div className="inline">
-        <button
-          className="primary"
-          disabled={
-            (!a.types.length && !Object.values(a.skills).some((n) => n > 0)) ||
-            a.types.length > 30 ||
-            !a.name.trim() ||
-            !a.keyword.trim()
-          }
-          onClick={() => void act({ type: "aao-save", aao: a })}
-        >
-          AAO speichern
-        </button>
-        <button
-          disabled={!s.desk.aaos.some((x) => x.id === a.id)}
-          onClick={() => {
-            void act({ type: "aao-delete", id: a.id });
-            setA(newAAO());
-          }}
-        >
-          AAO löschen
-        </button>
-      </div>
+            AAO löschen
+          </ConfirmAction>
+        </div>
+      </fieldset>
     </div>
   );
 }
 function FmsVehicle({ s, id }: { s: Save; id: string }) {
   const v = s.vehicles.find((v) => v.id === id)!,
     f = s.desk.fleet[id];
-  const [code, setCode] = useState(f?.code ?? operativeCode(v)),
+  const liveCode = f?.code ?? operativeCode(v);
+  const [draftCode, setCode] = useState<number | null>(null),
     [reason, setReason] = useState("");
+  const reset = () => {
+    setCode(null);
+    setReason("");
+  };
+  const form = useCommandForm(draftCode !== null || !!reason, reset);
+  const code = draftCode ?? liveCode;
   return (
     <article className="fms-vehicle">
       <b>
-        {v.name} · FMS {f?.code ?? operativeCode(v)}
+        {v.name} · FMS {liveCode}
       </b>
       <p>
         Letzter Wechsel vor {duration(s.time - (f?.changed ?? s.time))}.
         Fahrzeugbindung: {statuses[v.status]} · Kanal{" "}
         {f?.channel ?? bt(vt(v.type).home).org}
       </p>
-      <label>
-        FMS korrigieren
-        <select
-          aria-label="FMS korrigieren"
-          value={code}
-          onChange={(e) => setCode(Number(e.target.value))}
+      <fieldset className="command-fields desk-form" disabled={form.busy}>
+        <label>
+          FMS korrigieren
+          <select
+            aria-label="FMS korrigieren"
+            value={code}
+            onChange={(e) => setCode(Number(e.target.value))}
+          >
+            {fmsDefaults.map((_, i) => (
+              <option value={i} key={i}>
+                {i} · {fmsName(s, v, i)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Begründung
+          <input
+            value={reason}
+            maxLength={180}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </label>
+        <button
+          disabled={reason.trim().length < 3}
+          onClick={() =>
+            void form.run(async () => {
+              await command({ type: "fms", vehicle: id, code, reason });
+              reset();
+            })
+          }
         >
-          {fmsDefaults.map((_, i) => (
-            <option value={i} key={i}>
-              {i} · {fmsName(s, v, i)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Begründung
-        <input
-          value={reason}
-          maxLength={180}
-          onChange={(e) => setReason(e.target.value)}
-        />
-      </label>
-      <button
-        disabled={reason.trim().length < 3}
-        onClick={() => void act({ type: "fms", vehicle: id, code, reason })}
-      >
-        Statuskorrektur bestätigen
-      </button>
+          Statuskorrektur bestätigen
+        </button>
+        <button disabled={draftCode === null && !reason} onClick={reset}>
+          Änderungen verwerfen
+        </button>
+      </fieldset>
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
       <details>
         <summary>Statushistorie</summary>
         {f?.history.map((e) => (
@@ -1011,81 +1121,236 @@ function FmsVehicle({ s, id }: { s: Save; id: string }) {
     </article>
   );
 }
-export function FMSPanel({ s }: { s: Save }) {
-  const [org, setOrg] = useState<(typeof orgs)[number]>("Alle"),
-    [labels, setLabels] = useState(s.desk.definitions.Alle ?? fmsDefaults);
+function AlarmProfile({ s, id }: { s: Save; id: string }) {
+  const live = s.desk.alarms[id] ?? "dme",
+    [draft, setDraft] = useState<Alarm | null>(null);
+  const form = useCommandForm(draft !== null && draft !== live, () =>
+    setDraft(null),
+  );
   return (
-    <>
-      <p>
-        Spiel-Defaultprofil, keine allgemeingültige reale Norm. Manuelle
-        Funkstatuskorrekturen verändern weder Fahrweg noch Auftrag. FMS 6 sperrt
-        neue Alarmierungen.
-      </p>
-      {s.vehicles.map((v) => (
-        <FmsVehicle key={v.id} s={s} id={v.id} />
-      ))}
-      <h3>Statusdefinitionen</h3>
-      <label>
-        Profil für Organisation
-        <select
-          aria-label="Profil für Organisation"
-          value={org}
-          onChange={(e) => {
-            const o = e.target.value as typeof org;
-            setOrg(o);
-            setLabels(
-              s.desk.definitions[o] ?? s.desk.definitions.Alle ?? fmsDefaults,
-            );
-          }}
-        >
-          {orgs.map((o) => (
-            <option key={o}>{o}</option>
-          ))}
-        </select>
-      </label>
-      <div className="desk-form">
-        {labels.map((label, i) => (
-          <label key={i}>
-            FMS {i}
-            <input
-              value={label}
-              maxLength={100}
-              onChange={(e) =>
-                setLabels(labels.map((l, j) => (i === j ? e.target.value : l)))
-              }
-            />
-          </label>
-        ))}
-      </div>
-      <button
-        disabled={labels.some((l) => !l.trim())}
-        onClick={() => void act({ type: "fms-definitions", org, labels })}
-      >
-        FMS-Profil speichern
-      </button>
-      <h3>Alarmierungsprofil je Wache</h3>
-      {s.buildings.map((b) => (
-        <label key={b.id}>
-          {b.name}
+    <div className="alarm-profile-row">
+      <fieldset disabled={form.busy} className="command-fields desk-form">
+        <label>
+          {s.buildings.find((b) => b.id === id)?.name}
           <select
-            value={s.desk.alarms[b.id] ?? "dme"}
-            onChange={(e) =>
-              void act({
-                type: "alarm-profile",
-                home: b.id,
-                profile: e.target.value as Alarm,
-              })
-            }
+            value={draft ?? live}
+            onChange={(e) => setDraft(e.target.value as Alarm)}
           >
-            {Object.entries(alarmNames).map(([id, label]) => (
-              <option value={id} key={id}>
+            {Object.entries(alarmNames).map(([value, label]) => (
+              <option value={value} key={value}>
                 {label}
               </option>
             ))}
           </select>
         </label>
-      ))}
-    </>
+        <button
+          disabled={draft === null || draft === live}
+          onClick={() =>
+            void form.run(async () => {
+              await command({
+                type: "alarm-profile",
+                home: id,
+                profile: draft!,
+              });
+              setDraft(null);
+            })
+          }
+        >
+          Alarmierungsprofil übernehmen
+        </button>
+        <button disabled={draft === null} onClick={() => setDraft(null)}>
+          Verwerfen
+        </button>
+      </fieldset>
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
+    </div>
+  );
+}
+export function FMSPanel({ s }: { s: Save }) {
+  const [tab, setTab] = useState("fleet");
+  const [org, setOrg] = useState<(typeof orgs)[number]>("Alle"),
+    [draft, setDraft] = useState<string[] | null>(null);
+  const [query, setQuery] = useState(""),
+    [page, setPage] = useState(0);
+  const saved =
+      s.desk.definitions[org] ?? s.desk.definitions.Alle ?? fmsDefaults,
+    labels = draft ?? saved;
+  const dirty =
+    draft !== null && JSON.stringify(draft) !== JSON.stringify(saved);
+  const form = useCommandForm(dirty, () => setDraft(null));
+  const filtered = s.vehicles.filter((v) =>
+    v.name.toLocaleLowerCase("de").includes(query.toLocaleLowerCase("de")),
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / 12)),
+    current = Math.min(page, pages - 1);
+  return (
+    <div className="fms-panel">
+      <p>
+        Spiel-Defaultprofil, keine allgemeingültige reale Norm. Manuelle
+        Funkstatuskorrekturen verändern weder Fahrweg noch Auftrag. FMS 6 sperrt
+        neue Alarmierungen.
+      </p>
+      <nav className="section-tabs" role="tablist" aria-label="FMS-Bereiche">
+        {[
+          ["fleet", "Fahrzeugstatus"],
+          ["definitions", "Statusdefinitionen"],
+          ["alarms", "Alarmierungsprofile"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            role="tab"
+            id={`fms-tab-${id}`}
+            aria-controls={`fms-panel-${id}`}
+            aria-selected={tab === id}
+            onClick={() => requestDialogTransition(() => setTab(id))}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      {tab === "fleet" && (
+        <section
+          role="tabpanel"
+          id="fms-panel-fleet"
+          aria-labelledby="fms-tab-fleet"
+        >
+          <h3>Fahrzeugstatus und Historie</h3>
+          <label>
+            Fahrzeug suchen
+            <input
+              value={query}
+              onChange={(e) => {
+                const value = e.target.value;
+                requestDialogTransition(() => {
+                  setQuery(value);
+                  setPage(0);
+                });
+              }}
+            />
+          </label>
+          {!filtered.length && (
+            <p className="empty">Keine passenden Fahrzeuge.</p>
+          )}
+          {filtered.slice(current * 12, current * 12 + 12).map((v) => (
+            <FmsVehicle key={v.id} s={s} id={v.id} />
+          ))}
+          {pages > 1 && (
+            <nav className="inline" aria-label="FMS-Fahrzeugseiten">
+              <button
+                disabled={!current}
+                onClick={() =>
+                  requestDialogTransition(() => setPage(current - 1))
+                }
+              >
+                Zurück
+              </button>
+              <span>
+                Seite {current + 1} / {pages}
+              </span>
+              <button
+                disabled={current === pages - 1}
+                onClick={() =>
+                  requestDialogTransition(() => setPage(current + 1))
+                }
+              >
+                Weiter
+              </button>
+            </nav>
+          )}
+        </section>
+      )}
+      {tab === "definitions" && (
+        <section
+          role="tabpanel"
+          id="fms-panel-definitions"
+          aria-labelledby="fms-tab-definitions"
+        >
+          <h3>Statusdefinitionen</h3>
+          <fieldset className="command-fields" disabled={form.busy}>
+            <label>
+              Profil für Organisation
+              <select
+                aria-label="Profil für Organisation"
+                value={org}
+                onChange={(e) => {
+                  const next = e.target.value as typeof org;
+                  requestDialogTransition(() => {
+                    setOrg(next);
+                    setDraft(null);
+                  });
+                }}
+              >
+                {orgs.map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
+            </label>
+            <div className="desk-form">
+              {labels.map((label, i) => (
+                <label key={i}>
+                  FMS {i}
+                  <input
+                    value={label}
+                    maxLength={100}
+                    onChange={(e) =>
+                      setDraft(
+                        labels.map((l, j) => (i === j ? e.target.value : l)),
+                      )
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="inline">
+              <button
+                disabled={labels.some((l) => !l.trim()) || !dirty}
+                onClick={() =>
+                  void form.run(async () => {
+                    await command({ type: "fms-definitions", org, labels });
+                    setDraft(null);
+                  })
+                }
+              >
+                FMS-Profil speichern
+              </button>
+              <button disabled={!dirty} onClick={() => setDraft(null)}>
+                Änderungen verwerfen
+              </button>
+              <button onClick={() => setDraft([...fmsDefaults])}>
+                FMS-Standard wiederherstellen
+              </button>
+            </div>
+          </fieldset>
+          {form.error && (
+            <p className="error" role="alert">
+              {form.error}
+            </p>
+          )}
+          <small>
+            Wiederherstellen lädt den Standard als Entwurf. Erst Speichern
+            übernimmt ihn für die Leitstelle.
+          </small>
+        </section>
+      )}
+      {tab === "alarms" && (
+        <section
+          role="tabpanel"
+          id="fms-panel-alarms"
+          aria-labelledby="fms-tab-alarms"
+        >
+          <h3>Alarmierungsprofil je Wache</h3>
+          {s.buildings
+            .filter((b) => !["hospital", "school"].includes(b.type))
+            .map((b) => (
+              <AlarmProfile key={b.id} s={s} id={b.id} />
+            ))}
+        </section>
+      )}
+    </div>
   );
 }
 export function TeamPanel() {
@@ -1093,99 +1358,128 @@ export function TeamPanel() {
     [username, setUsername] = useState(""),
     [text, setText] = useState("");
   const net = useNetwork();
+  const form = useCommandForm(!!username || !!text, () => {
+    setUsername("");
+    setText("");
+  });
   return (
     <>
       <NeighborDesk />
-      <h3>Disponenten derselben Leitstelle</h3>
-      <p>
-        Mitglieder arbeiten nach Annahme einer Einladung am selben Bestand und
-        dürfen die Spielaktionen dieser Leitstelle ausführen. Das bisherige
-        eigene Multiplayer-Vermögen wird nicht gelöscht.
-      </p>
-      {workspace?.members.map((m) => (
-        <p key={m.id}>
-          {m.name}{" "}
-          {m.id === workspace.owner ? (
-            "· Inhaber"
-          ) : (
-            <button
-              onClick={() => void act({ type: "member-remove", user: m.id })}
-              disabled={!workspace.canManage && m.id !== user?.id}
-            >
-              {m.id === user?.id
-                ? "Leitstelle verlassen"
-                : "Mitglied entfernen"}
-            </button>
-          )}
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
         </p>
-      ))}
-      {workspace?.canManage && (
-        <div className="desk-form">
-          <label>
-            Bestehenden Benutzernamen einladen
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </label>
-          <button
-            disabled={username.trim().length < 3}
-            onClick={() => void act({ type: "member-invite", username })}
-          >
-            Disponenten einladen
-          </button>
-        </div>
       )}
-      {workspace?.outgoing.map((i) => (
-        <p key={i.id}>
-          Einladung versendet an {i.name}{" "}
-          <button
-            onClick={() => void act({ type: "member-remove", user: i.id })}
-          >
-            Einladung zurückziehen
-          </button>
+      <fieldset className="command-fields" disabled={form.busy}>
+        <h3>Disponenten derselben Leitstelle</h3>
+        <p>
+          Mitglieder arbeiten nach Annahme einer Einladung am selben Bestand und
+          dürfen die Spielaktionen dieser Leitstelle ausführen. Das bisherige
+          eigene Multiplayer-Vermögen wird nicht gelöscht.
         </p>
-      ))}
-      <h3>Einladungen an dich</h3>
-      {!workspace?.invitations.length && <p>Keine offenen Einladungen.</p>}
-      {workspace?.invitations.map((i) => (
-        <p key={i.owner}>
-          {i.name}
-          <button
-            onClick={() => void act({ type: "member-accept", owner: i.owner })}
-          >
-            Einladung annehmen
-          </button>
-        </p>
-      ))}
-      <h3>Leitstellenfunk</h3>
-      <div className="chat-log" aria-live="polite">
-        {net.chat.map((m, i) => (
-          <p key={i}>
-            <b>{m.name}</b>: {m.text}
+        {workspace?.members.map((m) => (
+          <p key={m.id}>
+            {m.name}{" "}
+            {m.id === workspace.owner ? (
+              "· Inhaber"
+            ) : (
+              <button
+                onClick={() =>
+                  void form.run(() =>
+                    command({ type: "member-remove", user: m.id }),
+                  )
+                }
+                disabled={!workspace.canManage && m.id !== user?.id}
+              >
+                {m.id === user?.id
+                  ? "Leitstelle verlassen"
+                  : "Mitglied entfernen"}
+              </button>
+            )}
           </p>
         ))}
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          chat(text);
-          setText("");
-        }}
-      >
-        <label>
-          Chatnachricht
-          <input
-            value={text}
-            maxLength={500}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </label>
-        <button disabled={!text.trim()}>Senden</button>
-      </form>
-      <small>
-        Nur Disponenten derselben Leitstelle. Keine dauerhafte Chatspeicherung.
-      </small>
+        {workspace?.canManage && (
+          <div className="desk-form">
+            <label>
+              Bestehenden Benutzernamen einladen
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </label>
+            <button
+              disabled={username.trim().length < 3}
+              onClick={() =>
+                void form.run(async () => {
+                  await command({ type: "member-invite", username });
+                  setUsername("");
+                })
+              }
+            >
+              Disponenten einladen
+            </button>
+          </div>
+        )}
+        {workspace?.outgoing.map((i) => (
+          <p key={i.id}>
+            Einladung versendet an {i.name}{" "}
+            <button
+              onClick={() =>
+                void form.run(() =>
+                  command({ type: "member-remove", user: i.id }),
+                )
+              }
+            >
+              Einladung zurückziehen
+            </button>
+          </p>
+        ))}
+        <h3>Einladungen an dich</h3>
+        {!workspace?.invitations.length && <p>Keine offenen Einladungen.</p>}
+        {workspace?.invitations.map((i) => (
+          <p key={i.owner}>
+            {i.name}
+            <button
+              onClick={() =>
+                void form.run(() =>
+                  command({ type: "member-accept", owner: i.owner }),
+                )
+              }
+            >
+              Einladung annehmen
+            </button>
+          </p>
+        ))}
+        <h3>Leitstellenfunk</h3>
+        <div className="chat-log" aria-live="polite">
+          {net.chat.map((m, i) => (
+            <p key={i}>
+              <b>{m.name}</b>: {m.text}
+            </p>
+          ))}
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            chat(text);
+            setText("");
+          }}
+        >
+          <label>
+            Chatnachricht
+            <input
+              value={text}
+              maxLength={500}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </label>
+          <button disabled={!text.trim()}>Senden</button>
+        </form>
+        <small>
+          Nur Disponenten derselben Leitstelle. Keine dauerhafte
+          Chatspeicherung.
+        </small>
+      </fieldset>
     </>
   );
 }

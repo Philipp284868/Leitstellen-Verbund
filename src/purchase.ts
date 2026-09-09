@@ -17,7 +17,7 @@ export function buildReason(s: Save, kind: string, pos?: Point) {
   const t = bt(kind);
   if (progress(s.xp).level < t.level)
     return `Freischaltung ab Stufe ${t.level}.`;
-  if (s.money < t.price) return "Nicht genügend Credits.";
+  if (s.money < t.price) return "Budget reicht für diesen Kauf nicht aus.";
   if (pos) {
     if (
       !Number.isFinite(pos.x) ||
@@ -57,6 +57,6 @@ export function purchaseReason(s: Save, kind: string, home: string) {
   const e = extensions.find((e) => e.types.includes(kind));
   if (e && !b.extensions.includes(e.id as (typeof b.extensions)[number]))
     return `Benötigte Wachenerweiterung: ${e.name}.`;
-  if (s.money < t.price) return "Nicht genügend Credits.";
+  if (s.money < t.price) return "Budget reicht für diesen Kauf nicht aus.";
   return "";
 }

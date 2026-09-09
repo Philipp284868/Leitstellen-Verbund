@@ -55,12 +55,12 @@ it("vollständiger Ablauf erzeugt unveränderliche Berichte, echte Zeiten, Buchu
   expect(r.timings.turnout).toBeGreaterThan(0);
   expect(r.timings.travel).toBeGreaterThan(0);
   expect(r.timings.total).toBe(m.completed - m.created);
-  expect(r.credits).toBe(6500);
+  expect(r.credits).toBe(625000);
   expect(r.xp).toBeGreaterThan(0);
   expect(r.meters).toBeGreaterThan(0);
   expect(r.units.reduce((a, u) => a + u.meters, 0)).toBeCloseTo(r.meters, 8);
   expect(s.statistics.completed).toBe(1);
-  expect(s.statistics.credits).toBe(6500);
+  expect(s.statistics.credits).toBe(625000);
   const frozen = structuredClone(r),
     prior = structuredClone(s.statistics);
   finalizeReport(s, m);

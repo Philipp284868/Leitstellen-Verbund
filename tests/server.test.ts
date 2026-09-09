@@ -11,6 +11,7 @@ import { Game } from "../server/game";
 import { nodes } from "../src/world";
 import { mt } from "../src/catalog";
 import { established, emsProfile } from "./e2e/fixtures";
+import { euro } from "../src/money";
 const password = "Isolated-test-password-284!";
 const running: ReturnType<typeof startServer>[] = [];
 afterEach(async () => {
@@ -126,7 +127,7 @@ describe("Autoritativer Server", () => {
     const cookie = registered.headers.get("set-cookie")!.split(";")[0];
     const me = await (await request("me", undefined, cookie)).json();
     expect(me.user.role).toBe("player");
-    expect(me.save.money).toBe(250000);
+    expect(me.save.money).toBe(euro(1400000));
     expect((await request("register", data)).status).toBe(409);
     for (let i = 0; i < 10; i++)
       await request("login", { username: "wronguser", password });
@@ -180,7 +181,7 @@ describe("Autoritativer Server", () => {
         (await request("action", { id, action }, a.cookie, a.csrf)).status,
       ).toBe(200);
     const current = await (await request("me", undefined, a.cookie)).json();
-    expect(current.save.money).toBe(195000);
+    expect(current.save.money).toBe(euro(750000));
     expect(current.save.buildings).toHaveLength(1);
     expect(
       (
@@ -211,7 +212,7 @@ describe("Autoritativer Server", () => {
     ).toBe(400);
     expect(
       (await (await request("me", undefined, b.cookie)).json()).save.money,
-    ).toBe(250000);
+    ).toBe(euro(1400000));
   });
   it("nutzt echte authentifizierte Socket.IO-Verbindungen und widerruft offene Kanäle", async () => {
     const { app, origin, login, request } = await server(),
@@ -258,10 +259,13 @@ describe("Autoritativer Server", () => {
     let db = new Database(dir);
     const id = await new Auth(db).create("anna", password, "Anna", "Nord"),
       game = new Game(db);
-    const command = { id: crypto.randomUUID(), action: { type: "relief" } };
+    const command = {
+      id: crypto.randomUUID(),
+      action: { type: "build", kind: "fire", pos: nodes[0] },
+    };
     game.command(id, command);
-    game.step(125);
-    expect(db.all().get(id)!.money).toBe(251500);
+    game.step(900);
+    expect(db.all().get(id)!.money).toBe(euro(780000));
     const file = await db.backup();
     expect((await readFile(file)).subarray(0, 15).toString()).toBe(
       "SQLite format 3",
@@ -270,7 +274,7 @@ describe("Autoritativer Server", () => {
     db = new Database(dir);
     new Game(db).command(id, command);
     new Game(db).step(125);
-    expect(db.all().get(id)!.money).toBe(251500);
+    expect(db.all().get(id)!.money).toBe(euro(780000));
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );
@@ -339,7 +343,10 @@ describe("Autoritativer Server", () => {
         .vehicles.find((v) => v.id === vehicle.id)!.status,
     ).toBe("ready");
     app.game.command(b, support);
-    expect(app.db.all().get(b)!.money).toBe(endB.money);
+    const after = app.db.all().get(b)!;
+    expect(after.money - endB.money).toBe(
+      after.economy!.fundingPaidCents - endB.economy!.fundingPaidCents,
+    );
   });
   it("ruft fremde Kräfte nach explizitem Kooperationsabbruch zurück und schützt Speicherfehler atomar", async () => {
     const { app, a, b } = await server();

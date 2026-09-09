@@ -1,6 +1,9 @@
 import { openPanel } from "./ui-navigation";
 import { listenBrowserServer } from "./server-helper";
 import { joinDesk } from "./desk-helpers";
+import { ECONOMY_PRICES } from "../../src/economy/prices";
+import { bt } from "../../src/catalog";
+import { formatMoney } from "../../src/money";
 import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { networkInterfaces, tmpdir } from "node:os";
@@ -44,6 +47,9 @@ async function register(page: Page, label: string) {
   await page.goto(origin);
   expect(await page.evaluate(() => window.isSecureContext)).toBe(false);
   expect(await page.evaluate(() => typeof crypto.randomUUID)).toBe("undefined");
+  await expect(
+    page.getByRole("button", { name: "Neues Konto erstellen", exact: true }),
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "Neues Konto erstellen", exact: true })
     .click();
@@ -109,9 +115,13 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       .getByRole("button", { name: "Bau bestätigen", exact: true })
       .click();
     await expect(a.locator("svg.map [data-own-station]")).toHaveCount(1);
-    await expect(a.locator(".hud-budget")).toContainText("195.000");
+    await expect(a.locator(".hud-budget strong")).toHaveText(
+      formatMoney(ECONOMY_PRICES.start - bt("fire").price),
+    );
     await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
-    await expect(b.locator(".hud-budget")).toContainText("250.000");
+    await expect(b.locator(".hud-budget strong")).toHaveText(
+      formatMoney(ECONOMY_PRICES.start),
+    );
 
     const target = String(
       app.db.sql
@@ -131,14 +141,21 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
     await expect(a.locator(".banner")).toBeVisible();
-    await openPanel(a, "Fortschritt");
+    await openPanel(a, "Wachen");
+    await a.locator(".station-card").click();
+    const ownerState = () =>
+      [...app.db.all().values()].find(
+        (save) => save.player.name === "HttpAnna",
+      )!;
+    const originalName = ownerState().buildings[0].name;
+    await a.getByRole("button", { name: "Name", exact: true }).click();
     await a
-      .getByRole("button", {
-        name: "Bereitschaftsdienst übernehmen",
-        exact: false,
-      })
-      .click();
+      .getByLabel("Neuer Wachenname", { exact: true })
+      .fill("Offlineänderung");
+    await a.getByRole("button", { name: "Speichern", exact: true }).click();
     await expect(a.getByRole("alert")).toContainText("Keine Serververbindung");
+    expect(ownerState().buildings[0].name).toBe(originalName);
+    await a.getByRole("button", { name: "Abbrechen", exact: true }).click();
     await a
       .getByRole("button", { name: "Schließen", exact: true })
       .last()

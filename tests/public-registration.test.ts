@@ -104,7 +104,7 @@ it("startet ohne automatisch angelegtes Konto; auch der erste Registrierte wird 
     await fetch(origin + "/api/me", { headers: { cookie } })
   ).json();
   expect(me.user.role).toBe("player");
-  expect(me.save.money).toBe(250000);
+  expect(me.save.money).toBe(140000000);
   expect(
     app.db.sql
       .prepare("SELECT role FROM users")

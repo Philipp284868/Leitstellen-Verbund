@@ -1,3 +1,4 @@
+import type { TutorialView, TrainingView } from "../server/tutorial";
 import { useSyncExternalStore } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { Save } from "./model";
@@ -19,6 +20,9 @@ import {
   type RouteSnapshotFrame,
 } from "./germany/snapshot";
 export interface Snapshot {
+  playContext: number;
+  tutorial?: TutorialView;
+  training?: TrainingView;
   mode: GameMode;
   workspace?: {
     outgoing: { id: string; name: string }[];
@@ -35,6 +39,7 @@ export interface Snapshot {
   user: { id: string; username: string; role: string } | null;
 }
 let snapshot: Snapshot = {
+  playContext: 0,
   mode: "multi",
   save: null,
   loading: true,
@@ -47,6 +52,19 @@ let csrf = "",
   socket: Socket | null = null,
   started = false;
 const listeners = new Set<() => void>();
+let clientEpoch = 0;
+type RequestContext = {
+  mode: GameMode;
+  session: string | null;
+  revision: number;
+  epoch: number;
+};
+const requestContext = (): RequestContext => ({
+  mode: snapshot.mode,
+  session: snapshot.training?.session ?? null,
+  revision: snapshot.playContext,
+  epoch: clientEpoch,
+});
 export function emit(p: Partial<Snapshot>) {
   snapshot = { ...snapshot, ...p };
   listeners.forEach((f) => f());
@@ -64,6 +82,7 @@ export function notice(text: string) {
   emit({ notice: text });
 }
 function clear() {
+  clientEpoch++;
   const previous = socket;
   socket = null;
   previous?.removeAllListeners();
@@ -72,20 +91,30 @@ function clear() {
   resetNetwork();
   resetPresence();
   emit({
+    playContext: 0,
     save: null,
+    tutorial: undefined,
+    training: null,
     workspace: undefined,
     user: null,
     readonly: true,
     loading: false,
   });
 }
-export async function api(path: string, data?: unknown, mode = snapshot.mode) {
+export async function api(
+  path: string,
+  data?: unknown,
+  mode = snapshot.mode,
+  context = requestContext(),
+) {
   const r = await fetch(`/api/${path}`, {
     method: data === undefined ? "GET" : "POST",
     credentials: "same-origin",
     cache: "no-store",
     headers: {
       "X-Game-Mode": mode,
+      "X-Play-Context": String(context.revision),
+      ...(context.session ? { "X-Training-Session": context.session } : {}),
       ...(data === undefined
         ? {}
         : { "Content-Type": "application/json", "X-CSRF-Token": csrf }),
@@ -94,18 +123,23 @@ export async function api(path: string, data?: unknown, mode = snapshot.mode) {
   });
   const result = await r.json();
   if (!r.ok) {
-    if (r.status === 401 && path !== "login") clear();
+    if (r.status === 401 && path !== "login" && context.epoch === clientEpoch)
+      clear();
     throw Error(result.error || "Serveranfrage fehlgeschlagen.");
   }
   return result;
 }
 function accept(data: {
+  playContext?: number;
+  tutorial?: TutorialView;
+  training?: TrainingView;
   workspace?: Snapshot["workspace"];
   mode: GameMode;
   save: Save;
   network: Parameters<typeof setNetwork>[0];
 }) {
   if (data.mode !== snapshot.mode) return;
+  if ((data.playContext ?? 0) < snapshot.playContext) return;
   if (
     !snapshot.user ||
     data.save.player.id !== (data.workspace?.owner ?? snapshot.user.id)
@@ -117,23 +151,33 @@ function accept(data: {
     data.save.revision >= snapshot.save.revision
   ) {
     if (snapshot.workspace?.owner !== data.workspace?.owner) resetNetwork();
-    emit({ save: data.save, workspace: data.workspace });
+    emit({
+      playContext: data.playContext ?? 0,
+      save: data.save,
+      workspace: data.workspace,
+      tutorial: data.tutorial,
+      training: data.training,
+    });
     setNetwork(data.network);
   }
 }
 export async function refresh() {
-  const mode = snapshot.mode;
-  const data = await api("me", undefined, mode);
-  if (mode !== snapshot.mode) return;
+  const context = requestContext(),
+    mode = context.mode;
+  const data = await api("me", undefined, mode, context);
+  if (
+    context.epoch !== clientEpoch ||
+    mode !== snapshot.mode ||
+    (data.playContext ?? 0) < snapshot.playContext
+  )
+    return;
   csrf = data.csrf;
   emit({
     user: data.user,
-    save: data.save,
-    workspace: data.workspace,
     loading: false,
     error: "",
   });
-  setNetwork(data.network);
+  accept(data);
   if (!socket) {
     const routeDecoder = new RouteSnapshotDecoder<
       Parameters<typeof accept>[0]
@@ -228,14 +272,20 @@ export async function command(action: ServerAction | Action) {
   if (snapshot.readonly || !socket?.connected)
     throw Error("Keine Serververbindung. Aktion wurde nicht ausgeführt.");
   const id = createId(),
-    mode = snapshot.mode;
+    context = requestContext(),
+    mode = context.mode;
   let result;
   try {
-    result = await api("action", { id, action }, mode);
+    result = await api("action", { id, action }, mode, context);
   } catch (e) {
     if (!(e instanceof TypeError)) throw e;
-    result = await api("action", { id, action }, mode);
+    if (context.epoch !== clientEpoch)
+      throw Error(
+        "Konto wurde gewechselt. Die alte Aktion wird nicht wiederholt.",
+      );
+    result = await api("action", { id, action }, mode, context);
   }
+  if (context.epoch !== clientEpoch) return;
   accept(result);
   if (mode === snapshot.mode) emit({ error: "" });
 }
@@ -280,4 +330,31 @@ if (typeof window !== "undefined") {
     socket?.disconnect();
   });
   window.addEventListener("online", () => socket?.connect());
+}
+
+export async function tutorialControl(data: unknown) {
+  const context = requestContext();
+  const result = await api("tutorial", data, context.mode, context);
+  if (context.epoch === clientEpoch) accept(result);
+}
+export async function trainingControl(data: {
+  op: "start" | "stop" | "scenario";
+  reset?: boolean;
+  kind?: "technical" | "fire";
+  session?: string;
+}) {
+  const context = requestContext(),
+    input = { ...data, id: createId() };
+  let result;
+  try {
+    result = await api("training", input, context.mode, context);
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    if (context.epoch !== clientEpoch)
+      throw Error(
+        "Konto wurde gewechselt. Die Übungsanfrage wird nicht wiederholt.",
+      );
+    result = await api("training", input, context.mode, context);
+  }
+  if (context.epoch === clientEpoch) accept(result);
 }

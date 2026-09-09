@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
+import { fundTestBudget } from "./money-fixture";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -101,7 +102,8 @@ function createGame() {
   const save = fixture.fresh("Disponent", "Berlin", 1000);
   save.player.id = owner;
   save.seed = 124;
-  save.money = 2000000;
+  fundTestBudget(save, 4000000); // Routing scenarios need both the initial fire fleet and a rescue station.
+  save.economy!.fundingNextAt = 1e12; // Isolate routing/reward assertions from recurring funding.
   save.xp = fixture.xpForLevel(30);
   save.missionWait = 100000;
   db.save(owner, save);

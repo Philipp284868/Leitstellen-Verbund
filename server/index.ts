@@ -1,3 +1,5 @@
+import { TutorialService } from "./tutorial";
+import { mt } from "../src/catalog";
 import { deskOwner } from "./workspaces";
 import { historyPage, exportHistory } from "./history";
 import type { Save } from "../src/model";
@@ -71,6 +73,12 @@ export function startServer(
   const auth = new Auth(db),
     game = new Game(db),
     presence = new WorldPresence();
+  const tutorial = new TutorialService(db);
+  const viewForActor = (
+    user: string,
+    peers: Set<string>,
+    mode: ReturnType<typeof parseMode>,
+  ) => tutorial.decorate(user, game.view(user, peers, mode));
   const prior = db.sql
     .prepare("SELECT value FROM meta WHERE key=?")
     .get("lastTick");
@@ -221,7 +229,7 @@ export function startServer(
             p = { x: Number(params.get("x")), y: Number(params.get("y")) };
           if (!params.has("x") || !params.has("y") || !inBounds(p))
             return reply(res, 400, { error: "Ungültiger Kartenstandort." });
-          const s = game.view(session.user_id, online(), mode).save;
+          const s = viewForActor(session.user_id, online(), mode).save;
           if (path === "/api/geo/site") {
             const kind = params.get("type") || "fire",
               anchor = germanyProvider().nearest(p);
@@ -287,8 +295,35 @@ export function startServer(
               role: session.role,
             },
             csrf: session.csrf,
-            ...game.view(session.user_id, online(), mode),
+            ...viewForActor(session.user_id, online(), mode),
           });
+        }
+        if (path === "/api/tutorial" && req.method === "POST") {
+          auth.limit(`tutorial:${session.user_id}`, 30, 1000);
+          const input = await body(req);
+          tutorial.assertContext(session.user_id, req.headers["x-play-context"], req.headers["x-training-session"]);
+          tutorial.control(
+            session.user_id,
+            input,
+            viewForActor(session.user_id, online(), mode).save,
+          );
+          return reply(res, 200, publish()(session.user_id, mode));
+        }
+        if (path === "/api/training" && req.method === "POST") {
+          auth.limit(`training:${session.user_id}`, 10, 1000);
+          if (failed)
+            throw Error(
+              "Übung ist wegen eines Serverfehlers momentan gesperrt.",
+            );
+          tutorial.trainingControl(
+            session.user_id,
+            await body(req),
+            game.view(session.user_id, online(), mode).save,
+            req.headers["x-play-context"],
+            req.headers["x-training-session"],
+          );
+          presenceDetailsDirty = true;
+          return reply(res, 200, publish()(session.user_id, mode));
         }
         if (path === "/api/logout" && req.method === "POST") {
           db.sql.prepare("DELETE FROM sessions WHERE hash=?").run(session.hash);
@@ -343,7 +378,23 @@ export function startServer(
                 "Simulation pausiert wegen Speicherfehler. Serverbetreiber informieren.",
             });
           auth.limit(`action:${session.user_id}`, 60, 1000);
-          game.command(session.user_id, await body(req), mode);
+          const input = await body(req),
+            activeTraining = tutorial.active(session.user_id);
+          const practiceSession = req.headers["x-training-session"];
+          tutorial.assertContext(session.user_id, req.headers["x-play-context"], practiceSession);
+          if (activeTraining)
+            tutorial.command(
+              session.user_id,
+              input,
+              typeof practiceSession === "string" ? practiceSession : "",
+            );
+          else {
+            if (practiceSession)
+              throw Error(
+                "Übung bereits beendet. Diese Aktion wurde nicht auf den echten Spielstand angewendet.",
+              );
+            game.command(session.user_id, input, mode);
+          }
           presenceDetailsDirty = true;
           const publishedView = publish();
           return reply(res, 200, publishedView(session.user_id, mode));
@@ -363,6 +414,30 @@ export function startServer(
               org: params.get("org") ?? "Alle",
               major: params.get("major") === "true",
             });
+          const practice = tutorial.trainingSave(session.user_id);
+          if (practice) {
+            const needle = options.query.toLocaleLowerCase("de");
+            const missions = publicSave(practice).archive.filter(
+              (m) =>
+                (!needle ||
+                  `${m.id} ${mt(m.template).name}`
+                    .toLocaleLowerCase("de")
+                    .includes(needle)) &&
+                (options.org === "Alle" ||
+                  mt(m.template).org === options.org) &&
+                (!options.major || !!m.major),
+            );
+            const page = Math.min(
+              options.page,
+              Math.max(0, Math.ceil(missions.length / 25) - 1),
+            );
+            return reply(res, 200, {
+              total: missions.length,
+              page,
+              pageSize: 25,
+              missions: missions.slice(page * 25, (page + 1) * 25),
+            });
+          }
           return reply(
             res,
             200,
@@ -399,15 +474,18 @@ export function startServer(
           });
         }
         if (path === "/api/export" && req.method === "GET") {
-          const save = game.view(session.user_id, online(), mode).save;
-          save.archive = exportHistory(
-            db.sql,
-            deskOwner(db, session.user_id, mode),
-            mode,
-            save.archive,
-          );
+          const save = viewForActor(session.user_id, online(), mode).save;
+          if (!tutorial.active(session.user_id))
+            save.archive = exportHistory(
+              db.sql,
+              deskOwner(db, session.user_id, mode),
+              mode,
+              save.archive,
+            );
           return reply(res, 200, {
-            format: "leitstellen-verbund",
+            format: tutorial.active(session.user_id)
+              ? "leitstellen-verbund-practice"
+              : "leitstellen-verbund",
             version: 1,
             exportedAt: Date.now(),
             mode,
@@ -636,7 +714,7 @@ export function startServer(
   function deliverSnapshot(
     socket: Socket,
     peers: Set<string>,
-    view = game.view(socket.data.user, peers, socket.data.mode),
+    view = viewForActor(socket.data.user, peers, socket.data.mode),
   ) {
     if (IS_GERMANY && socket.handshake.auth.routeSnapshots === 1) {
       let encoder = encoders.get(socket);
@@ -651,12 +729,12 @@ export function startServer(
     const peers = online();
     // Reuse only within this synchronous publication. Different actors must
     // retain their own permissions/workspace even when they share a dispatch.
-    const views = new Map<string, ReturnType<typeof game.view>>();
+    const views = new Map<string, ReturnType<typeof viewForActor>>();
     const viewFor = (actor: string, mode: ReturnType<typeof parseMode>) => {
       const key = JSON.stringify([actor, mode]);
       let view = views.get(key);
       if (!view) {
-        view = game.view(actor, peers, mode);
+        view = viewForActor(actor, peers, mode);
         views.set(key, view);
       }
       return view;
@@ -679,6 +757,7 @@ export function startServer(
     const now = Date.now();
     try {
       game.step(Math.min(60, Math.max(0, (now - last) / 1000)), now);
+      tutorial.step(now);
       last = now;
       publish();
     } catch {
@@ -711,6 +790,7 @@ export function startServer(
   }, 3600000);
   let closePromise: Promise<void> | undefined;
   return {
+    tutorial,
     db,
     auth,
     game,

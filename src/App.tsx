@@ -1,21 +1,26 @@
+import {
+  TutorialHome,
+  TutorialCoach,
+  TutorialEvents,
+  tutorialInteraction,
+} from "./Tutorial";
 import { Progression } from "./ProgressionPanel";
 import { GameHud } from "./GameHud";
 import { MenuPanels } from "./MenuPanels";
-import { WorkspaceSettings } from "./WorkspaceSettings";
+import { Settings } from "./Settings";
+import { navigation } from "./navigation";
+import { useDevicePreferences } from "./device-preferences";
+import { requestDialogTransition } from "./dialog-state";
 import { ReconnectSummary } from "./ReconnectSummary";
 import { Players } from "./Players";
 import { BuildingIcon } from "./map-icons";
 import { usePresence } from "./network";
-import {
-  parseWorkspace,
-  shortcutFor,
-  type WorkspacePreferences,
-} from "./workspace";
+import { shortcutFor } from "./workspace";
 import "./Workspace.css";
 import { DynamicsPanel } from "./Dynamics";
 import { MissionPanel } from "./Panels";
 import { IncidentPanel, AAOPanel, FMSPanel, TeamPanel, History } from "./Desk";
-import { AudioSession, SoundSettings } from "./Sound";
+import { AudioSession } from "./Sound";
 import { audio } from "./audio/controller";
 import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
@@ -34,18 +39,18 @@ const ReportPanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ReportPanel })),
 );
 import { Radio, ChevronRight } from "lucide-react";
-import { useGame, emit, retryStorage, change } from "./store";
+import { useGame, emit, retryStorage } from "./store";
 import { bt } from "./catalog";
 import { level } from "./model";
 import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
 import { BackupPanel, ProgressPanel, Help } from "./Panels";
 import { Modal } from "./ui";
 import { download } from "./storage";
-import { updateApplication } from "./pwa";
 export function App() {
   return (
     <>
       <AudioSession />
+      <TutorialEvents />
       <div className="desktop-required" role="status">
         <h1>Leitstellen-Verbund für PC</h1>
         <p>
@@ -76,33 +81,36 @@ function GameApp() {
   }, [s, readonly]);
 
   const [screen, setScreen] = useState("start"),
-    [modal, setModal] = useState(""),
+    [modal, setModalRaw] = useState(""),
     [selected, setSelected] = useState(""),
-    [placing, setPlacing] = useState(""),
-    [light, setLight] = useState<boolean | null>(null),
-    [reduced, setReduced] = useState<boolean | null>(null);
+    [placing, setPlacing] = useState("");
+  const setModal = (id: string) =>
+    requestDialogTransition(() => setModalRaw(id));
+  const preferences = useDevicePreferences();
+  const layout = preferences.workspace;
   const [listOpen, setListOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<
+    "audio" | "display" | "controls" | "help"
+  >("audio");
+  useEffect(() => {
+    const navigate = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!detail || !navigation.some((item) => item.id === detail.id)) return;
+      requestDialogTransition(() => {
+        if (["audio", "display", "controls", "help"].includes(detail.tab))
+          setSettingsTab(detail.tab);
+        setModalRaw(detail.id);
+      });
+    };
+    window.addEventListener("lv:open-panel", navigate);
+    return () => window.removeEventListener("lv:open-panel", navigate);
+  }, []);
   useEffect(() => {
     audio.scene(screen === "game");
   }, [screen]);
-  const [layout, setLayout] = useState(() => {
-    try {
-      return parseWorkspace(localStorage.getItem("lv-workspace-v1"));
-    } catch {
-      return parseWorkspace(null);
-    }
-  });
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("all"),
     [sort, setSort] = useState("priority");
-  const updateLayout = (next: WorkspacePreferences) => {
-    setLayout(next);
-    try {
-      localStorage.setItem("lv-workspace-v1", JSON.stringify(next));
-    } catch {
-      /* Layout remains usable this visit. */
-    }
-  };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!s || screen !== "game" || e.defaultPrevented) return;
@@ -113,8 +121,10 @@ function GameApp() {
         if (!modal && !placing && !selected) return;
         e.preventDefault();
         if (modal) {
-          setModal("");
-          setSelected("");
+          requestDialogTransition(() => {
+            setModalRaw("");
+            setSelected("");
+          });
         } else if (placing) setPlacing("");
         else if (selected) setSelected("");
         return;
@@ -147,15 +157,18 @@ function GameApp() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [s, screen, selected, layout.keys, modal, placing]);
-  const tutorial = [
-    "Baue deine erste Feuerwache. Wähle „Wache bauen“ und einen Bauplatz auf der Karte.",
-    "Öffne deine Wache, warte die Bauzeit ab und kaufe zwei TSF-W.",
-    "Stelle pro TSF-W sechs Mitarbeiter ein. Öffne den Fuhrpark und wähle „Besetzen“.",
-    "Nimm einen Notruf an, erfrage Ort und Meldebild und alarmiere passende Fahrzeuge.",
-    "Verfolge die Anfahrt, nimm die erste Lagemeldung auf und fordere fehlende Kräfte nach.",
-    "Erste Belohnung erhalten! Baue deinen Fuhrpark aus und erreiche Stufe 2.",
-    "Tutorial abgeschlossen.",
-  ];
+  useEffect(() => {
+    if (modal === "archive") tutorialInteraction("budget");
+    if (modal === "building") tutorialInteraction("staff");
+    if (modal === "fleet") tutorialInteraction("withdraw");
+    if (modal === "friends") tutorialInteraction("cooperation");
+    if (modal === "help") tutorialInteraction("finish");
+  }, [modal]);
+  useEffect(() => {
+    setSelected("");
+    setModalRaw("");
+    setPlacing("");
+  }, [s?.generation]);
   if (loading)
     return (
       <div className="loading">
@@ -178,24 +191,31 @@ function GameApp() {
       </main>
     );
   if (!s) return <AuthScreen />;
-  const open = (id: string) => {
-    if (id === "friends") {
-      setModal("friends");
-      return;
-    }
-    setSelected(id);
-    if (s?.buildings.some((b) => b.id === id)) setModal("building");
-    else if (s?.vehicles.some((v) => v.id === id)) setModal("");
-    else setModal("mission");
-  };
+  const open = (id: string) =>
+    requestDialogTransition(() => {
+      if (id === "friends") {
+        setModalRaw("friends");
+        return;
+      }
+      setSelected(id);
+      if (s?.buildings.some((b) => b.id === id)) setModalRaw("building");
+      else if (s?.vehicles.some((v) => v.id === id)) setModalRaw("");
+      else setModalRaw("mission");
+    });
   return (
     <div
-      style={{ "--desk-width": `${layout.width}px` } as CSSProperties}
+      style={
+        {
+          "--desk-width": `${layout.width}px`,
+          "--ui-scale": preferences.scale / 100,
+          "--marker-scale": preferences.markerSize / 100,
+        } as CSSProperties
+      }
       data-sidebar={layout.side}
       data-compact={layout.compact}
       data-queue-bottom={layout.queueBottom}
       data-stations-top={layout.stationsTop}
-      className={`app command-hud ${screen === "game" ? "in-game" : ""} ${(light ?? s.settings.light) ? "light" : ""} ${(reduced ?? s.settings.reduced) ? "reduced" : ""}`}
+      className={`app command-hud ${screen === "game" ? "in-game" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
     >
       <ReconnectSummary />
       {error && (
@@ -259,10 +279,12 @@ function GameApp() {
           onMenu={() => setScreen("start")}
           showDetail={modal === "mission"}
           onCloseDetailKeepSelection={() => setModal("")}
-          onCloseDetail={() => {
-            setModal("");
-            setSelected("");
-          }}
+          onCloseDetail={() =>
+            requestDialogTransition(() => {
+              setModalRaw("");
+              setSelected("");
+            })
+          }
           search={search}
           setSearch={setSearch}
           filter={filter}
@@ -270,7 +292,6 @@ function GameApp() {
           sort={sort}
           setSort={setSort}
           userId={user?.id}
-          tutorial={tutorial[s.tutorial]}
           listOpen={listOpen}
           setListOpen={setListOpen}
           activePanel={modal}
@@ -311,6 +332,28 @@ function GameApp() {
           }
         />
       )}
+      {screen === "game" && (
+        <TutorialCoach
+          onOverview={() => setModal("tutorial")}
+          onOpen={(panel) => {
+            if (!panel) {
+              document
+                .querySelector<HTMLButtonElement>('[aria-label="Kartensuche"]')
+                ?.click();
+              return;
+            }
+            if (panel === "building") {
+              const home = s.buildings.find((b) => b.type === "fire");
+              if (home) open(home.id);
+              else setModal("stations");
+            } else if (panel === "mission") {
+              const mission = s.missions[0];
+              if (mission) open(mission.id);
+              else setModal("archive");
+            } else setModal(panel);
+          }}
+        />
+      )}
       {modal && !(screen === "game" && modal === "mission") && (
         <Modal
           title={
@@ -319,7 +362,9 @@ function GameApp() {
                 catalog: "Einsatzkatalog",
                 exit: "Spiel verlassen",
                 news: "Neuigkeiten",
-                credits: "Credits",
+                credits: "Mitwirkende",
+                account: "Konto & Sicherheit",
+                tutorial: "Interaktives Tutorial",
                 privacy: "Datenschutz im Spiel",
                 support: "Support",
                 language: "Sprache",
@@ -340,10 +385,12 @@ function GameApp() {
               } as Record<string, string>
             )[modal]
           }
-          onClose={() => {
-            setModal("");
-            setSelected("");
-          }}
+          onClose={() =>
+            requestDialogTransition(() => {
+              setModalRaw("");
+              setSelected("");
+            })
+          }
         >
           <MenuPanels
             panel={modal}
@@ -368,83 +415,34 @@ function GameApp() {
               <button onClick={() => setModal("catalog")}>
                 Einsatzkatalog
               </button>
+              <div className="action-grid">
+                <button onClick={() => setModal("tutorial")}>
+                  Interaktives Tutorial
+                </button>
+                <button onClick={() => setModal("aaos")}>AAO verwalten</button>
+                <button onClick={() => setModal("fms")}>
+                  FMS & Alarmierung
+                </button>
+                <button onClick={() => setModal("account")}>
+                  Konto & Sicherheit
+                </button>
+              </div>
               <Help />
             </>
           )}
           {modal === "backups" && <BackupPanel s={s} />}
           {modal === "settings" && (
-            <>
-              <nav
-                className="hud-management"
-                aria-label="Weitere Spielbereiche"
-              >
-                {[
-                  ["aaos", "AAO"],
-                  ["fms", "FMS"],
-                  ["friends", "Freunde"],
-                  ["progress", "Fortschritt"],
-                  ["backups", "Sicherungen"],
-                  ["help", "Hilfe"],
-                ].map(([id, label]) => (
-                  <button key={id} onClick={() => setModal(id)}>
-                    {label}
-                  </button>
-                ))}
-              </nav>
-              <WorkspaceSettings value={layout} change={updateLayout} />
-              <SoundSettings />
-              <Account />
-              <label>
-                <input
-                  type="checkbox"
-                  checked={light ?? s.settings.light}
-                  disabled={readonly || light !== null || reduced !== null}
-                  onChange={(e) => {
-                    const value = e.target.checked;
-                    setLight(value);
-                    if (s)
-                      void change((s) => {
-                        s.settings.light = value;
-                      })
-                        .catch(() => {})
-                        .finally(() => setLight(null));
-                  }}
-                />{" "}
-                Heller Modus
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={reduced ?? s.settings.reduced}
-                  disabled={readonly || light !== null || reduced !== null}
-                  onChange={(e) => {
-                    const value = e.target.checked;
-                    setReduced(value);
-                    if (s)
-                      void change((s) => {
-                        s.settings.reduced = value;
-                      })
-                        .catch(() => {})
-                        .finally(() => setReduced(null));
-                  }}
-                />{" "}
-                Reduzierte Bewegung
-              </label>
-              <p>
-                Kein Ton erforderlich. Alle Funkmeldungen werden als Text
-                angezeigt. Alle Konten verbinden sich automatisch mit diesem
-                Server.
-              </p>
-              <button
-                onClick={() => {
-                  void updateApplication().catch((e) =>
-                    emit({ error: String(e) }),
-                  );
-                }}
-              >
-                Auf App-Update prüfen
-              </button>
-            </>
+            <Settings onOpen={setModal} initialTab={settingsTab} />
+          )}
+          {modal === "account" && <Account />}
+          {modal === "tutorial" && (
+            <TutorialHome
+              onEnter={() => {
+                setModalRaw("");
+                setSelected("");
+                setScreen("game");
+              }}
+            />
           )}
           {s && (
             <>
@@ -488,6 +486,19 @@ function GameApp() {
                     s={s}
                     b={s.buildings.find((b) => b.id === selected)!}
                   />
+                )}
+              {modal === "building" &&
+                !s.buildings.some((b) => b.id === selected) && (
+                  <section className="empty-state">
+                    <h3>Standort nicht mehr vorhanden</h3>
+                    <p>
+                      Der Standort wurde verkauft oder gehört nicht mehr zur
+                      geöffneten Leitstelle.
+                    </p>
+                    <button onClick={() => setModal("stations")}>
+                      Wachenübersicht öffnen
+                    </button>
+                  </section>
                 )}
               {modal === "fleet" && (
                 <Fleet

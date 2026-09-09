@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { Database } from "../server/database";
+import { fundTestBudget } from "./money-fixture";
 import type * as Fixture from "./rivermere-fixture";
 let f: typeof Fixture, repeated: typeof Fixture;
 beforeAll(async () => {
@@ -117,7 +118,7 @@ describe("Rivermere als eigenständige Serverwelt", () => {
   });
   it("verhindert neue Wachen im Fluss und lässt markierte Uferbauplätze zu", () => {
     const s = f.phaseFixture("11111111-2222-4333-8444-555555555555");
-    s.money = 10000000;
+    fundTestBudget(s, 10000000);
     s.xp = 10000000;
     s.buildings = [];
     const bridge = f.nodes.find((p) => f.wet(p));

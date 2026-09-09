@@ -4,6 +4,7 @@ import { tmpdir, cpus, totalmem } from "node:os";
 import { resolve } from "node:path";
 import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 import { randomUUID } from "node:crypto";
+import { fundTestBudget } from "../money-fixture";
 import { setImmediate as yieldNode } from "node:timers/promises";
 import { Database } from "../../server/database";
 import { Auth } from "../../server/auth";
@@ -183,7 +184,7 @@ try {
   const s = fresh("Lastprüfung", "Testleitstelle Berlin", fixtureTime - 10000);
   s.player.id = owner;
   s.seed = 124;
-  s.money = 10000000000;
+  fundTestBudget(s, 10000000000);
   s.xp = xpForLevel(30);
   s.tutorial = 6;
   s.missionWait = 100000;

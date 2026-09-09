@@ -1,3 +1,5 @@
+import { ledgerBalance } from "./economy/ledger";
+import { tutorialInteraction } from "./Tutorial";
 import { useState, useEffect } from "react";
 import { api } from "./store";
 import { QualityReport } from "./QualityReport";
@@ -125,6 +127,7 @@ export function Replay({ m }: { m: Mission }) {
   );
 }
 export function ReportPanel({ m }: { m: Mission }) {
+  useEffect(() => tutorialInteraction("receipt"), [m.id]);
   const r = m.report ?? buildReport(m);
   const issues = (m.control?.events ?? []).filter((e) =>
     /DEFICIT|SHORTAGE|REINFORCEMENT|TURNOUT_FAILED|VEHICLE_BREAKDOWN|MAJOR_RESOURCE/.test(
@@ -136,6 +139,32 @@ export function ReportPanel({ m }: { m: Mission }) {
       <span className="eyebrow">ABSCHLUSS & AUSWERTUNG</span>
       <h2>{mt(m.template).name}</h2>
       <p>Einsatz {m.id}</p>
+      <div className="resource-summary" aria-label="Einsatzkurzbilanz">
+        <div>
+          <small>Vergütung</small>
+          <strong>
+            {r.credits === null ? "Nicht erfasst" : credits(r.credits)}
+          </strong>
+        </div>
+        <div>
+          <small>Erfahrung</small>
+          <strong>{r.xp ?? "Nicht erfasst"} XP</strong>
+        </div>
+        <div>
+          <small>Aufgezeichnete Fahrstrecke</small>
+          <strong>{kilometers(r.meters)}</strong>
+        </div>
+      </div>
+      <p className="view-intro">
+        {r.units.length} eigene Fahrzeuge dokumentiert. {r.requests}{" "}
+        Nachforderungen bearbeitet; {r.patients.delivered} Patienten übergeben.{" "}
+        {r.timings.total === null
+          ? "Die Gesamtdauer wurde nicht erfasst."
+          : `Gesamtdauer: ${duration(r.timings.total)}.`}{" "}
+        {issues.length
+          ? `${issues.length} dokumentierte Engpass- oder Betriebshinweise stehen in der Dispositionsauswertung.`
+          : "Im erfassten Verlauf sind keine Engpasshinweise verzeichnet."}
+      </p>
       {r.quality && <QualityReport quality={r.quality} />}
       {r.partial && (
         <p className="report-note">
@@ -193,7 +222,7 @@ export function ReportPanel({ m }: { m: Mission }) {
           Eigene Einsatzkilometer <b>{kilometers(r.meters)}</b>
         </span>
         <span>
-          Credits{" "}
+          Vergütung{" "}
           <b>{r.credits === null ? "nicht erfasst" : credits(r.credits)}</b>
         </span>
         <span>
@@ -209,7 +238,7 @@ export function ReportPanel({ m }: { m: Mission }) {
         Fahrstrecken umfassen erfasste eigene Einsatz- und Transportfahrten bis
         zum Abschluss. Rückfahrten und Nachbarhilfe zählen zur
         Gesamtfahrleistung der jeweiligen Heimatleitstelle. Anschaffungen und
-        Personal stehen separat im Geldjournal.
+        Grundfinanzierung stehen separat im Geldjournal.
       </p>
       <details>
         <summary>Eingesetzte eigene Fahrzeuge ({r.units.length})</summary>
@@ -489,9 +518,45 @@ export function ArchivePanel({
       {tab === "journal" && (
         <>
           <h2>Geldjournal</h2>
+          <div className="resource-summary">
+            <div>
+              <small>Verfügbares Budget</small>
+              <strong>{credits(s.money)}</strong>
+            </div>
+            <div>
+              <small>Aus Buchungen erklärter Saldo</small>
+              <strong>
+                {s.economy ? credits(ledgerBalance(s)) : "Historischer Stand"}
+              </strong>
+            </div>
+            <div>
+              <small>Laufende Betriebskosten</small>
+              <strong>Keine</strong>
+            </div>
+          </div>
+          <p className="view-intro">
+            Die neuesten {s.journal.length} Buchungen. Frühere Buchungen sind im
+            Eröffnungssaldo berücksichtigt. Alle Beträge sind exakt in Euro-Cent
+            gespeichert; XP werden separat geführt.
+          </p>
+          {!s.journal.length && (
+            <div className="empty-state">
+              <h3>Noch keine Buchungen</h3>
+              <p>
+                Der Startbetrag steht als Eröffnungssaldo bereit. Käufe und
+                serverseitige Vergütungen erscheinen hier automatisch.
+              </p>
+            </div>
+          )}
           {s.journal.map((j) => (
             <article className="archive-item" key={j.id}>
-              <span>{j.text}</span>
+              <span>
+                {j.text}
+                <small>
+                  {new Date(j.at * 1000).toLocaleString("de-DE")} · Beleg{" "}
+                  {j.id.slice(-12)}
+                </small>
+              </span>
               <b>{credits(j.amount)}</b>
             </article>
           ))}

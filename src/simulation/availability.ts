@@ -65,7 +65,7 @@ export function vehicleAvailability(
     result.reason = "FMS 6: Fahrzeug nicht einsatzbereit gemeldet.";
   } else {
     const home = s.buildings.find((b) => b.id === v.home);
-    if (!home || home.ready > s.time)
+    if (!home || (v.status !== "return" && home.ready > s.time))
       result.reason = "Wache befindet sich im Bau.";
     else if (crew.eligible < crew.required)
       result.reason = `Besatzung fehlt: ${crew.required - crew.eligible} geeignete Kräfte benötigt.`;

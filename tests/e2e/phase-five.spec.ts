@@ -79,7 +79,7 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
     .click();
   const file = await download,
     doc = JSON.parse(await readFile((await file.path())!, "utf8"));
-  expect(doc.report.credits).toBe(6500);
+  expect(doc.report.credits).toBe(625000);
   expect(JSON.stringify(doc)).not.toContain('"secret"');
   const csvDownload = page.waitForEvent("download");
   await page
@@ -144,9 +144,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
-  await page
-    .getByText("Arbeitsplatzlayout und Tastatur", { exact: true })
-    .click();
+  await page.getByRole("tab", { name: "Steuerung", exact: true }).click();
   await page.getByLabel("Einsatzspalte", { exact: true }).selectOption("right");
   await page
     .getByLabel("Breite der Einsatzspalte", { exact: true })
@@ -155,6 +153,12 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   await page
     .getByLabel("Taste: Archiv und Statistik", { exact: true })
     .fill("z");
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Alle Änderungen gespeichert." }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await showIncidents(page);
   const side = await page.locator(".mission-sidebar").boundingBox(),
@@ -205,7 +209,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   expect(errors).toEqual([]);
 });
 
-test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neustart zurückgesetzt", async ({
+test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach Neuladen zurückgesetzt", async ({
   page,
 }, info) => {
   await page.addInitScript(() => {
@@ -226,6 +230,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Audio", exact: true }).click();
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
@@ -259,8 +264,17 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
     mimeType: "audio/wav",
     buffer: wav,
   });
-  await expect(page.locator(".sound-profiles")).toContainText(
-    "eigene Datei im Browser gespeichert",
+  await expect(
+    page
+      .locator("details.sound-profiles")
+      .filter({
+        has: page.getByText("Signalregler und eigene Soundprofile", {
+          exact: true,
+        }),
+      }),
+  ).toContainText("eigene Datei lokal geprüft und zugeordnet");
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Ungespeicherte Vorschau",
   );
   await page.getByRole("button", { name: "Funk anhören", exact: true }).click();
   await expect
@@ -284,6 +298,10 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
   await expect(
     page.getByRole("button", { name: "Funk anhören", exact: true }),
   ).toBeDisabled();
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Gespeichert auf diesem Gerät",
+  );
   await page.screenshot({
     path: info.outputPath("phase5-soundprofile.png"),
     fullPage: true,
@@ -293,25 +311,56 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Audio", exact: true }).click();
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
-  await expect(page.locator(".sound-profiles")).toContainText("mein-funk.wav");
+  await expect(
+    page
+      .locator("details.sound-profiles")
+      .filter({
+        has: page.getByText("Signalregler und eigene Soundprofile", {
+          exact: true,
+        }),
+      }),
+  ).toContainText("mein-funk.wav");
   await expect(
     page.getByRole("slider", { name: "Funklautstärke" }),
   ).toHaveValue("0");
   await page
     .getByRole("button", { name: "Datei für Funk löschen", exact: true })
     .click();
-  await expect(page.locator(".sound-profiles")).toContainText(
-    "Originalsignal wiederhergestellt",
-  );
+  await expect(
+    page
+      .locator("details.sound-profiles")
+      .filter({
+        has: page.getByText("Signalregler und eigene Soundprofile", {
+          exact: true,
+        }),
+      }),
+  ).toContainText("Originalsignal ausgewählt");
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(
+    page
+      .locator("details.sound-profiles")
+      .filter({
+        has: page.getByText("Signalregler und eigene Soundprofile", {
+          exact: true,
+        }),
+      }),
+  ).not.toContainText("mein-funk.wav");
   await page.getByLabel("Datei für Funk", { exact: true }).setInputFiles({
     name: "fake.wav",
     mimeType: "audio/wav",
     buffer: Buffer.from("not audio"),
   });
-  await expect(page.locator(".sound-profiles")).toContainText(
-    "Bitte eine gültige WAV-",
-  );
+  await expect(
+    page
+      .locator("details.sound-profiles")
+      .filter({
+        has: page.getByText("Signalregler und eigene Soundprofile", {
+          exact: true,
+        }),
+      }),
+  ).toContainText("Bitte eine gültige WAV-");
 });

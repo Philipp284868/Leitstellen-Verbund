@@ -38,6 +38,10 @@ export async function joinDesk(owner: Page, member: Page, username: string) {
   await member
     .getByRole("button", { name: "Einladung annehmen", exact: true })
     .click();
+  // An accepted workspace change clears the previous desk's open UI. Reopen
+  // the actual collaboration view and verify the membership there.
+  await expect(member.getByRole("dialog")).toHaveCount(0);
+  await openPanel(member, "Freunde");
   await expect(
     member.getByRole("button", { name: "Leitstelle verlassen", exact: true }),
   ).toBeVisible();

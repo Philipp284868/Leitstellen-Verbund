@@ -200,6 +200,21 @@
   border: 1px solid #80a294;
   border-radius: 6px;
 }
+.app.command-hud .germany-map .germany-placement {
+  top: 72px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  white-space: normal;
+  color: var(--hud-text, #e4eef4);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.app.command-hud .germany-placement > span {
+  flex: 1 0 100%;
+  overflow-wrap: anywhere;
+}
 .germany-map .map-vehicle-detail {
   position: absolute;
   top: 12px;
@@ -468,4 +483,22 @@
   justify-self: end;
   min-height: 28px;
   padding: 5px;
+}
+
+/* Device-local marker sizing leaves projected coordinates unchanged. */
+.germany-marker {
+  width: calc(30px * var(--marker-scale, 1));
+  height: calc(30px * var(--marker-scale, 1));
+}
+.germany-marker svg {
+  width: calc(19px * var(--marker-scale, 1));
+  height: calc(19px * var(--marker-scale, 1));
+}
+.germany-marker.mission {
+  width: calc(35px * var(--marker-scale, 1));
+  height: calc(35px * var(--marker-scale, 1));
+}
+.germany-marker.volunteer {
+  width: calc(19px * var(--marker-scale, 1));
+  height: calc(19px * var(--marker-scale, 1));
 }

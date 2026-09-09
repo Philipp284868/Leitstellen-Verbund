@@ -213,3 +213,39 @@ export async function storeSound(
     db.close();
   }
 }
+
+/** Commit an editor's file assignments together. A failing write retains every old assignment. */
+export async function storeSounds(
+  changes: ReadonlyMap<CustomChannel, CustomSound | null>,
+) {
+  for (const [channel, value] of changes)
+    if (!customChannel(channel) || (value && value.channel !== channel))
+      throw Error(
+        "Prioritäts- und Notfallsignale können nicht ersetzt werden.",
+      );
+  if (!changes.size) return;
+  const db = await database();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(["signals", "info"], "readwrite");
+      tx.oncomplete = () => resolve();
+      tx.onerror = tx.onabort = () => reject(soundError(tx.error));
+      try {
+        for (const [channel, sound] of changes) {
+          if (sound) {
+            tx.objectStore("signals").put(sound);
+            tx.objectStore("info").put(metadata(sound));
+          } else {
+            tx.objectStore("signals").delete(channel);
+            tx.objectStore("info").delete(channel);
+          }
+        }
+      } catch (error) {
+        tx.abort();
+        reject(soundError(error));
+      }
+    });
+  } finally {
+    db.close();
+  }
+}

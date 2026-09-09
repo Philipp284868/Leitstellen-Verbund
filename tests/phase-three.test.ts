@@ -165,18 +165,27 @@ it("ausbleibende FF-Quittierung verhindert Ausrücken und fordert Ersatz an", ()
     ),
   ).toBe(true);
 });
-it("Schicht und Abwesenheit sperren Disposition, Reserve warnt; Umbesetzung nutzt geeignetes Personal", () => {
+it("automatische Besetzung überbrückt normale Schichten und Abwesenheit; Reserve warnt und echte Verletzung sperrt", () => {
   const s = organizationFixture("staff"),
     [from, to] = s.vehicles;
   const ambulance = addAmbulance(s),
     p = s.people.find((p) => p.vehicle === ambulance.id)!;
   p.duty = { ...personDuty(s, p), shift: "day" };
-  expect(personAvailable(s, p)).toContain("Schicht");
+  expect(personAvailable(s, p)).toBe("");
   p.duty.standby = true;
   expect(personAvailable(s, p)).toBe("");
   p.duty.absence = "vacation";
   p.duty.until = s.time + 10;
+  expect(readiness(s, ambulance)).toBe("");
+  p.injury = {
+    mission: s.missions[0].id,
+    patient: "staff-injury",
+    since: s.time,
+    state: "recovery",
+    until: s.time + 900,
+  };
   expect(readiness(s, ambulance)).toContain("Besatzung");
+  delete p.injury;
   s.time += 11;
   expect(personAvailable(s, p)).toBe("");
   organizationCommand(

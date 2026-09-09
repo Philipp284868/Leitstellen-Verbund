@@ -56,10 +56,10 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
       b = s.buildings[0];
     expect(newStationProfile("fire")?.kind).toBe("ff");
     expect(newStationProfile("school")).toBeUndefined();
-    expect(stationCapacity(b)).toEqual({ slots: 4, people: 30 });
+    expect(stationCapacity(b)).toEqual({ slots: 4, people: 45 });
     delete b.organization;
     expect(stationProfile(b).kind).toBe("bf");
-    expect(stationCapacity(b)).toEqual({ slots: 8, people: 60 });
+    expect(stationCapacity(b)).toEqual({ slots: 8, people: 81 });
   });
   it("Kalender berücksichtigt Wochenenden und nationale feste sowie bewegliche Feiertage", () => {
     expect(volunteerCalendar(Date.UTC(2026, 8, 7, 9) / 1000).work).toBe(true);
@@ -212,6 +212,9 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
     const s = ffFixture(),
       v = s.vehicles[0];
     v.type = "dlk";
+    // Deliberately malformed/legacy roster: automatic provisioning normally supplies this skill.
+    for (const p of s.people)
+      p.skills = p.skills.filter((skill) => skill !== "Drehleiter");
     force(s, true);
     expect(suitableCrew(s, v)).toHaveLength(0);
     expect(readiness(s, v)).toContain("Besatzung");
@@ -255,7 +258,8 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
   it("BF ist ein kostenpflichtiger späterer Ausbau ohne Umgehung über Profiländerungen", () => {
     const s = ffFixture(),
       b = s.buildings[0];
-    s.money = 500000;
+    const startingMoney = PROFESSIONAL_FIRE.price + 100000;
+    s.money = startingMoney;
     s.xp = 0;
     expect(() =>
       organizationCommand(
@@ -281,8 +285,8 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
       { type: "station-upgrade-bf", home: b.id },
       s.player.id,
     );
-    expect(s.money).toBe(500000 - PROFESSIONAL_FIRE.price);
-    expect(stationCapacity(b)).toEqual({ slots: 8, people: 60 });
+    expect(s.money).toBe(startingMoney - PROFESSIONAL_FIRE.price);
+    expect(stationCapacity(b)).toEqual({ slots: 8, people: 81 });
     expect(b.ready).toBe(s.time + PROFESSIONAL_FIRE.seconds);
     expect(() =>
       organizationCommand(

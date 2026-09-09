@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { audio, useSound } from "./audio/controller";
+import { audio, useSound, type SoundPreferences } from "./audio/controller";
 import { soundStorage } from "./audio/custom";
 import {
   channels,
-  mixes,
   previewCue,
   customChannel,
   type CustomChannel,
@@ -16,8 +15,14 @@ const length = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
     .toString()
     .padStart(2, "0")} min`;
-export function SoundProfiles() {
-  const { preferences: p, customSounds, playing } = useSound();
+export function SoundProfiles({
+  draft: p,
+  onChange,
+}: {
+  draft: SoundPreferences;
+  onChange: (next: SoundPreferences) => void;
+}) {
+  const { customSounds, playing, settingsPreview } = useSound();
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState("");
   const [pendingEnabled, setPendingEnabled] = useState<
@@ -46,7 +51,11 @@ export function SoundProfiles() {
     setMessage("");
     try {
       await operation();
-      setMessage(success);
+      setMessage(
+        settingsPreview
+          ? `${success} Änderung vorgemerkt; zum Speichern „Übernehmen“ wählen.`
+          : success,
+      );
     } catch (e) {
       setMessage(
         e instanceof Error
@@ -62,33 +71,6 @@ export function SoundProfiles() {
   return (
     <details className="sound-profiles">
       <summary>Signalregler und eigene Soundprofile</summary>
-      <label className="sound-volume">
-        Gesamtlautstärke
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={p.masterVolume}
-          onChange={(e) =>
-            audio.preferences({ masterVolume: Number(e.target.value) })
-          }
-        />
-        <output>{p.masterVolume} %</output>
-      </label>
-      <div className="sound-mixes">
-        {Object.entries(mixes).map(([id, mix]) => (
-          <button
-            key={id}
-            onClick={() => {
-              const { name, ...values } = mix;
-              audio.preferences(values);
-              setMessage(`Klangprofil ${name} angewendet.`);
-            }}
-          >
-            {mix.name}
-          </button>
-        ))}
-      </div>
       <p>
         Eigene WAV-, MP3- und OGG-Dateien bleiben ausschließlich in diesem
         Browser. Es gibt keine feste Dateigröße oder Spieldauer. Entscheidend
@@ -123,12 +105,29 @@ export function SoundProfiles() {
                 max="100"
                 value={p.channels[key]}
                 onChange={(e) =>
-                  audio.preferences({
+                  onChange({
+                    ...p,
                     channels: { ...p.channels, [key]: Number(e.target.value) },
                   })
                 }
               />
               <output>{p.channels[key]} %</output>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={p.channelMuted[key]}
+                onChange={(e) =>
+                  onChange({
+                    ...p,
+                    channelMuted: {
+                      ...p.channelMuted,
+                      [key]: e.currentTarget.checked,
+                    },
+                  })
+                }
+              />
+              {name} stummschalten
             </label>
             <small>
               {sound
@@ -137,14 +136,14 @@ export function SoundProfiles() {
             </small>
             <div className="sound-preview">
               <button
-                disabled={disabled || !p.channels[key]}
+                disabled={disabled || p.channelMuted[key] || !p.channels[key]}
                 onClick={() => void audio.preview(previewCue[key])}
               >
                 {name} anhören
               </button>
               {!custom && (
                 <button
-                  disabled={disabled || !p.channels[key]}
+                  disabled={disabled || p.channelMuted[key] || !p.channels[key]}
                   onClick={() => void audio.preview("emergency")}
                 >
                   Notfallton anhören
@@ -189,7 +188,7 @@ export function SoundProfiles() {
                         void run(
                           key,
                           () => audio.setCustom(key),
-                          `${name}: lokale Datei gelöscht, Originalsignal wiederhergestellt.`,
+                          `${name}: Originalsignal ausgewählt.`,
                         )
                       }
                     >
@@ -210,7 +209,7 @@ export function SoundProfiles() {
                         void run(
                           key,
                           () => audio.setCustom(key, file),
-                          `${name}: eigene Datei im Browser gespeichert.`,
+                          `${name}: eigene Datei lokal geprüft und zugeordnet.`,
                         );
                     }}
                   />
@@ -247,8 +246,9 @@ export function SoundProfiles() {
             ) : (
               <p className="sound-protected">
                 Geschützter Originalton. Eigene Dateien sind hier nicht
-                zuweisbar. Priorität und Notfall unterbrechen laufende eigene
-                Sounds.
+                zuweisbar. Priorität und Notfall unterbrechen nachrangige Funk-,
+                Umgebungs- und UI-Sounds; Telefon und Alarmierung bleiben
+                hörbar.
               </p>
             )}
           </section>

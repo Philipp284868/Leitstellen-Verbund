@@ -12,10 +12,11 @@ import { DatabaseSync, backup } from "node:sqlite";
 import { mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { validate, type Save } from "../src/model";
+import { applyEconomyMigration } from "./economy-migration";
 
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 13;
+export const DATABASE_VERSION = 14;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -305,6 +306,15 @@ export class Database {
           this.audit(
             "server-migration",
             "unbounded-missions-persistent-history-volunteer-starts-v13",
+          );
+        });
+      if (version < 14)
+        this.transaction(() => {
+          const summary = applyEconomyMigration(this.sql);
+          this.sql.exec("PRAGMA user_version=14");
+          this.audit(
+            "server-migration",
+            `euro-prices-staffing-tutorial-v14:${JSON.stringify(summary.totals)}`,
           );
         });
       if (IS_GERMANY)

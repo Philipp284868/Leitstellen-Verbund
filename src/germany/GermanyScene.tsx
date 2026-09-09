@@ -21,11 +21,13 @@ export const GermanyScene = memo(function GermanyScene({
   const container = useRef<HTMLDivElement>(null),
     labels = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState("");
+  const [ready, setReady] = useState(false);
   const home = save.buildings[0]?.pos ?? WORLD_CENTER;
   useEffect(() => {
     const host = container.current,
       canvas = labels.current;
     if (!host || !canvas) return;
+    setReady(false);
     const controller = new AbortController();
     let disposed = false,
       remove = () => {};
@@ -52,6 +54,9 @@ export const GermanyScene = memo(function GermanyScene({
             "bottom-right",
           );
         const removeLabels = attachTileLabels(map, canvas, () => !miniature);
+        map.on("idle", () => {
+          if (!disposed) setReady(true);
+        });
         const observer = new ResizeObserver(() => map.resize());
         observer.observe(host);
         map.on("error", () => {
@@ -77,6 +82,7 @@ export const GermanyScene = memo(function GermanyScene({
     <div
       className={`region-scene germany-scene ${miniature ? "miniature" : ""}`}
       data-testid="germany-menu-map"
+      data-ready={ready}
     >
       <div ref={container} className="germany-scene-map">
         <canvas ref={labels} className="germany-labels" aria-hidden="true" />

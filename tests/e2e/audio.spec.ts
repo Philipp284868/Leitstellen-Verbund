@@ -2,7 +2,7 @@ import { listenBrowserServer } from "./server-helper";
 import { established } from "./fixtures";
 import { generate } from "../../src/engine";
 import { test, expect, type Page } from "@playwright/test";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -103,6 +103,18 @@ async function play(page: Page) {
     "Mit Spielserver verbunden",
   );
 }
+async function logoutFromSettings(page: Page) {
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await page.getByRole("tab", { name: "Hinweise & Hilfe" }).click();
+  await page
+    .getByRole("button", { name: "Konto & Sicherheit", exact: true })
+    .click();
+  const account = page.getByRole("dialog", { name: "Konto & Sicherheit" });
+  await account.getByRole("button", { name: "Abmelden", exact: true }).click();
+  await account
+    .getByRole("button", { name: "Bestätigen", exact: true })
+    .click();
+}
 test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und speichert getrennte Regler", async ({
   page,
 }, info) => {
@@ -120,12 +132,12 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Ton stummschalten", exact: true })
-    .click();
+    .getByRole("checkbox", { name: "Alles stummschalten", exact: true })
+    .check();
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await page
-    .getByRole("button", { name: "Ton einschalten", exact: true })
-    .click();
+    .getByRole("checkbox", { name: "Alles stummschalten", exact: true })
+    .uncheck();
   await expect.poll(async () => (await levels(page)).state).toBe("running");
   await page.getByRole("slider", { name: "Musiklautstärke" }).focus();
   await page.keyboard.press("Home");
@@ -136,7 +148,15 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   await page
     .getByRole("checkbox", { name: "Soundeffekte", exact: true })
     .check();
-  await page.getByRole("button", { name: "Einsatzsignal anhören" }).click();
+  await page
+    .getByRole("checkbox", {
+      name: "Leitstellenumgebung stummschalten",
+      exact: true,
+    })
+    .check();
+  await page
+    .getByRole("button", { name: "Telefon anhören", exact: true })
+    .click();
   await expect
     .poll(async () => (await levels(page)).rms, { intervals: [20, 30, 40] })
     .toBeGreaterThan(0.001);
@@ -157,6 +177,10 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Gespeichert auf diesem Gerät",
+  );
   await page.reload();
   await page.locator(".command-menu").waitFor();
   await page
@@ -192,7 +216,7 @@ test("nur der aktive Tab spielt und Abmeldung beendet die Ausgabe", async ({
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
-  await page.getByRole("button", { name: "Abmelden", exact: true }).click();
+  await logoutFromSettings(page);
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await other.close();
 });
@@ -203,7 +227,7 @@ test("fehlende Audio-Unterstützung blockiert das Spiel nicht", async ({
     const NativeChannel = window.BroadcastChannel;
     window.BroadcastChannel = class extends NativeChannel {
       constructor(name: string) {
-        if (name === "lv-audio-focus-v1")
+        if (name.startsWith("lv-audio-owner-v2:"))
           throw new Error("Audio channel blocked");
         super(name);
       }
@@ -218,7 +242,7 @@ test("fehlende Audio-Unterstützung blockiert das Spiel nicht", async ({
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
-  await expect(page.locator(".sound-status")).toContainText("nicht verfügbar");
+  await expect(page.locator(".sound-status")).toContainText("nicht starten");
   await page.evaluate(() => {
     Object.defineProperty(Storage.prototype, "setItem", {
       value: () => {
@@ -227,11 +251,16 @@ test("fehlende Audio-Unterstützung blockiert das Spiel nicht", async ({
     });
   });
   await page
-    .getByRole("checkbox", { name: "Hintergrundmusik", exact: true })
-    .uncheck();
+    .getByRole("checkbox", { name: "Musik stummschalten", exact: true })
+    .check();
   await expect(
-    page.getByRole("checkbox", { name: "Hintergrundmusik", exact: true }),
-  ).not.toBeChecked();
+    page.getByRole("checkbox", { name: "Musik stummschalten", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(page.locator(".settings-view > .error")).toContainText(
+    "nicht gespeichert werden",
+  );
+  await page.getByRole("button", { name: "Verwerfen", exact: true }).click();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(page.locator("svg.map")).toBeVisible();
 });
@@ -261,6 +290,7 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
       ),
       g = new lib.SoundGraph(c);
     g.volumes(1, 1);
+    g.scene(true);
     for (let i = 0; i < 264; i++) g.beat(i, 0.05 + i * lib.BEAT, true);
     const cues: Cue[] = [
       "phone",
@@ -379,8 +409,14 @@ test("ein neuer bestätigter Servereinsatz löst ohne Bedienklick ein hörbares 
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
   await page
-    .getByRole("checkbox", { name: "Hintergrundmusik", exact: true })
-    .uncheck();
+    .getByRole("checkbox", { name: "Musik stummschalten", exact: true })
+    .check();
+  await page
+    .getByRole("checkbox", {
+      name: "Leitstellenumgebung stummschalten",
+      exact: true,
+    })
+    .check();
   await expect.poll(async () => (await levels(page)).rms).toBeLessThan(0.0001);
   const s = app.db.all().get(id)!;
   generate(s);
@@ -393,4 +429,96 @@ test("ein neuer bestätigter Servereinsatz löst ohne Bedienklick ein hörbares 
     })
     .toBeGreaterThan(0.001);
   await expect.poll(async () => (await levels(page)).rms).toBeLessThan(0.0001);
+});
+
+test("Audio-JSON-Sicherung exportiert gespeicherte Regler; Import ist eine verwerfbare, versionierte Vorschau", async ({
+  page,
+}, info) => {
+  await login(page);
+  await page
+    .getByRole("button", { name: "Einstellungen", exact: true })
+    .click();
+  await page.getByText("Audioeinstellungen sichern", { exact: true }).click();
+  const pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", {
+      name: "Gespeicherte Audioeinstellungen exportieren",
+      exact: true,
+    })
+    .click();
+  const download = await pending,
+    path = info.outputPath("audio-einstellungen.json");
+  await download.saveAs(path);
+  const saved = JSON.parse(await readFile(path, "utf8"));
+  expect(saved).toMatchObject({
+    format: "leitstellen-audio-settings",
+    version: 2,
+    preferences: { muted: false },
+  });
+  expect(saved).not.toHaveProperty("save");
+  expect(saved).not.toHaveProperty("customSounds");
+  const input = page.getByLabel("Audioeinstellungen aus JSON prüfen");
+  await input.setInputFiles({
+    name: "alt-audio.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        format: "leitstellen-audio-settings",
+        version: 1,
+        preferences: { musicVolume: 12, muted: true },
+      }),
+    ),
+  });
+  await expect(
+    page.getByRole("slider", { name: "Musiklautstärke", exact: true }),
+  ).toHaveValue("12");
+  await expect(
+    page.getByRole("checkbox", { name: "Alles stummschalten", exact: true }),
+  ).toBeChecked();
+  expect(
+    await page.evaluate(() => localStorage.getItem("lv-audio-v1")),
+  ).toBeNull();
+  await page.getByRole("button", { name: "Verwerfen", exact: true }).click();
+  await expect(
+    page.getByRole("slider", { name: "Musiklautstärke", exact: true }),
+  ).toHaveValue("35");
+  await input.setInputFiles({
+    name: "falsche-datei.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"format":"leitstellen-verbund","save":{}}'),
+  });
+  await expect(page.locator(".sound-error")).toContainText(
+    "keine unterstützte Sicherung",
+  );
+  await input.setInputFiles({
+    name: "audio.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        format: "leitstellen-audio-settings",
+        version: 2,
+        preferences: { musicVolume: 12, muted: true },
+      }),
+    ),
+  });
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Gespeichert auf diesem Gerät",
+  );
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("lv-audio-v1")!).version,
+    ),
+  ).toBe(2);
+  await page.reload();
+  await page.locator(".command-menu").waitFor();
+  await page
+    .getByRole("button", { name: "Einstellungen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("slider", { name: "Musiklautstärke", exact: true }),
+  ).toHaveValue("12");
+  await expect(
+    page.getByRole("checkbox", { name: "Alles stummschalten", exact: true }),
+  ).toBeChecked();
 });

@@ -4,6 +4,7 @@ import { GermanyMap } from "../../src/germany/GermanyMap";
 import { project } from "../../src/germany/projection";
 import type { Save } from "../../src/model";
 import { emit } from "../../src/store";
+import { ECONOMY_PRICES } from "../../src/economy/prices";
 
 // Deliberately minimal UI contract fixture. Empty map tiles are supplied by the
 // test server; this is not real-world geographical or routing acceptance.
@@ -11,6 +12,7 @@ const save = {
   world: "germany-1",
   worldSeed: 42,
   time: 1000,
+  money: ECONOMY_PRICES.start,
   completed: 0,
   treated: 0,
   player: { id: "controls-fixture", name: "Steuerungsprüfung" },

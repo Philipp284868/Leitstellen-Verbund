@@ -537,6 +537,7 @@ export function followupsTick(s: Save) {
   const child: Mission = {
     id: simId(s),
     template,
+    paymentCents: mt(template).reward,
     pos: { ...parent.pos },
     progress: 0,
     phase: "offered",

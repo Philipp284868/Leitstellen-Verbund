@@ -1,3 +1,7 @@
+import { bookMoney, fundingTick, saleValue } from "./economy/ledger";
+import { ECONOMY_PRICES } from "./economy/prices";
+import { mulRatio } from "./money";
+import { reconcileBuildingStaffing } from "./simulation/building-staffing";
 import { buildReason, purchaseReason } from "./purchase";
 import { canGenerate } from "./simulation/feasibility";
 import { dispatchReason } from "./simulation/availability";
@@ -12,9 +16,6 @@ import { selectHospital } from "./simulation/hospitals";
 import { measureTravel, telemetry, qualityFactor } from "./simulation/reports";
 import { effectiveSkills, canTransport } from "./simulation/major-resources";
 import {
-  crewRequired,
-  personAvailable,
-  stationProfile,
   stationCapacity,
   newStationProfile,
   releaseVolunteerCrew,
@@ -75,20 +76,7 @@ export type Action =
   | { type: "dispatch"; mission: string; vehicles: string[] }
   | { type: "recall"; id: string }
   | { type: "favorite"; id: string };
-export function money(s: Save, amount: number, text: string, receipt?: string) {
-  if (receipt && s.receipts.includes(receipt)) return false;
-  if (
-    !Number.isSafeInteger(amount) ||
-    s.money + amount < 0 ||
-    !Number.isSafeInteger(s.money + amount)
-  )
-    throw Error("Nicht genügend Credits oder ungültiger Betrag.");
-  s.money += amount;
-  if (receipt) s.receipts.push(receipt);
-  s.journal.unshift({ id: receipt ?? simId(s), at: s.time, amount, text });
-  s.journal = s.journal.slice(0, 2000);
-  return true;
-}
+export const money = bookMoney;
 export function readiness(s: Save, v: Vehicle) {
   return dispatchReason(s, v);
 }
@@ -218,10 +206,9 @@ export function apply(s: Save, a: Action) {
       break;
     }
     case "relief":
-      if (s.reliefActive) throw Error("Bereitschaftsdienst läuft bereits.");
-      s.reliefActive = true;
-      s.reliefReady = s.time + 120;
-      break;
+      throw Error(
+        "Grundfinanzierung wird automatisch durch den Server gebucht. Details stehen im Geldjournal.",
+      );
     case "unassign": {
       const v = s.vehicles.find((v) => v.id === a.vehicle);
       if (!v || v.status !== "ready")
@@ -268,6 +255,7 @@ export function apply(s: Save, a: Action) {
         id: simId(s),
         owner: s.player.id,
         type: t.id,
+        purchasePriceCents: t.price,
         name: `${t.name} ${s.buildings.length + 1}`,
         pos,
         level: 1,
@@ -302,6 +290,7 @@ export function apply(s: Save, a: Action) {
         id: simId(s),
         owner: s.player.id,
         type: t.id,
+        purchasePriceCents: t.price,
         name: `${t.name} / ${s.vehicles.length + 1}`,
         home: b.id,
         favorite: false,
@@ -317,63 +306,20 @@ export function apply(s: Save, a: Action) {
       break;
     }
     case "hire": {
-      const b = s.buildings.find((b) => b.id === a.home);
-      if (!b || !Number.isInteger(a.count) || a.count < 1 || a.count > 30)
-        throw Error("Ungültige Einstellung.");
       if (
-        s.people.filter((p) => p.home === b.id).length + a.count >
-        stationCapacity(b).people
+        !s.buildings.some((b) => b.id === a.home) ||
+        !Number.isInteger(a.count) ||
+        a.count < 1 ||
+        a.count > 30
       )
-        throw Error("Keine freien Personalplätze.");
-      money(s, -a.count * BALANCE.hire, "Personal eingestellt");
-      for (let i = 0; i < a.count; i++)
-        s.people.push({
-          id: simId(s),
-          home: b.id,
-          vehicle: null,
-          skills: [],
-          training: "",
-          ready: 0,
-        });
+        throw Error("Ungültige Wache oder Personalangabe.");
+      reconcileBuildingStaffing(s);
       break;
     }
     case "assign": {
-      const v = s.vehicles.find((v) => v.id === a.vehicle);
-      if (!v || v.status !== "ready")
-        throw Error("Fahrzeug muss an der Wache sein.");
-      const home = s.buildings.find((b) => b.id === v.home)!;
-      if (stationProfile(home).kind === "ff") {
-        const t = vt(v.type);
-        const pool = s.people.filter(
-          (p) =>
-            p.home === v.home &&
-            !p.training &&
-            (!t.training || p.skills.includes(t.training)),
-        );
-        if (pool.length < crewRequired(s, v))
-          throw Error(
-            "Zuerst ausreichend geeignetes Personal einstellen oder ausbilden.",
-          );
-        s.tutorial = Math.max(3, s.tutorial);
-        break;
-      }
-      const t = vt(v.type),
-        assigned = s.people.filter((p) => p.vehicle === v.id).length;
-      const candidates = s.people
-        .filter(
-          (p) =>
-            p.home === v.home &&
-            !p.vehicle &&
-            !personAvailable(s, p) &&
-            (!t.training || p.skills.includes(t.training)),
-        )
-        .slice(0, t.crew - assigned);
-      for (const p of candidates) p.vehicle = v.id;
-      if (assigned + candidates.length < crewRequired(s, v))
-        throw Error(
-          "Zuerst ausreichend geeignetes Personal einstellen oder ausbilden.",
-        );
-      s.tutorial = Math.max(3, s.tutorial);
+      if (!s.vehicles.some((v) => v.id === a.vehicle))
+        throw Error("Fahrzeug nicht gefunden.");
+      reconcileBuildingStaffing(s);
       break;
     }
     case "train": {
@@ -436,20 +382,29 @@ export function apply(s: Save, a: Action) {
           .filter((p) => p.vehicle === v.id)
           .forEach((p) => (p.vehicle = null));
         s.vehicles = s.vehicles.filter((x) => x.id !== v.id);
-        money(s, Math.floor(vt(v.type).price * 0.6), "Fahrzeugverkauf");
+        money(
+          s,
+          saleValue(v.purchasePriceCents ?? vt(v.type).price),
+          "Fahrzeugverkauf",
+        );
       } else {
         const b = s.buildings.find((b) => b.id === a.id);
         if (
           !b ||
           s.vehicles.some((v) => v.home === b.id) ||
-          s.people.some((p) => p.home === b.id) ||
+          s.people.some((p) => p.home === b.id && (p.vehicle || p.injury)) ||
           s.beds.some((x) => x.home === b.id)
         )
           throw Error(
             "Wache muss ohne Fahrzeuge, Personal und Patienten sein.",
           );
+        s.people = s.people.filter((p) => p.home !== b.id);
         s.buildings = s.buildings.filter((x) => x.id !== b.id);
-        money(s, Math.floor(bt(b.type).price * 0.6), "Gebäudeverkauf");
+        money(
+          s,
+          saleValue(b.purchasePriceCents ?? bt(b.type).price),
+          "Gebäudeverkauf",
+        );
       }
       break;
     }
@@ -514,6 +469,8 @@ export function apply(s: Save, a: Action) {
       break;
     }
   }
+  if (["build", "buy", "upgrade", "extension", "sell", "move"].includes(a.type))
+    reconcileBuildingStaffing(s);
 }
 export function generate(s: Save) {
   const available = capacity(s);
@@ -537,6 +494,7 @@ export function generate(s: Save) {
   s.missions.push({
     id: simId(s),
     template: t.id,
+    paymentCents: t.reward,
     pos,
     progress: 0,
     phase: "offered",
@@ -580,6 +538,7 @@ function tickState(
   carriers: Record<string, Skills> = {},
   remoteDynamic: Set<string> = new Set(),
   remoteUnits: Record<string, Vehicle[]> = {},
+  practice = false,
 ) {
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
@@ -597,10 +556,16 @@ function tickState(
     }
     const dt = next - s.time;
     s.time = next;
+    reconcileBuildingStaffing(s);
+    fundingTick(s, s.time, practice);
     updateWeather(s);
     beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {
-      money(s, 1500, "Öffentlicher Bereitschaftsdienst");
+      money(
+        s,
+        ECONOMY_PRICES.legacyReliefReward,
+        "Abschluss alter Bereitschaftsdienst",
+      );
       s.reliefActive = false;
     }
     for (const p of s.people)
@@ -732,8 +697,10 @@ function tickState(
         m.phase = "done";
         m.completed = s.time;
         const quality = qualityFactor(m);
-        const reward = Math.floor(
-          (t.reward * quality) / (m.contributors.length ? 2 : 1),
+        const reward = mulRatio(
+          m.paymentCents ?? t.reward,
+          Math.round(quality * 400),
+          400 * (m.contributors.length ? 2 : 1),
         );
         if (
           money(

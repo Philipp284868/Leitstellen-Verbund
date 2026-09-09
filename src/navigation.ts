@@ -1,0 +1,118 @@
+/** The same catalog drives quick navigation and the documented reachable-view audit. */
+export const navigation = [
+  {
+    id: "stations",
+    title: "Wachen verwalten",
+    words: "Gebäude Standorte Organisation Krankenhaus",
+  },
+  { id: "build", title: "Wache bauen", words: "Gebäude kaufen platzieren" },
+  {
+    id: "fleet",
+    title: "Fuhrpark",
+    words: "Fahrzeuge Einsatzbereitschaft umbenennen verkaufen versetzen",
+  },
+  {
+    id: "friends",
+    title: "Leitstellenverbund und Disponenten",
+    words: "Unterstützung Nachbarn Funk Chat Berechtigung Einladung",
+  },
+  {
+    id: "aaos",
+    title: "Alarm- und Ausrückeordnung",
+    words: "AAO Alarmierung Regeln",
+  },
+  {
+    id: "fms",
+    title: "FMS und Alarmierungsprofile",
+    words: "Funk Status 0 1 2 3 4 5 6 7 8 9 Pager Sirene",
+  },
+  {
+    id: "players",
+    title: "Spieler dieser Serverwelt",
+    words: "Leitstellen Personen online Nachbarn",
+  },
+  {
+    id: "archive",
+    title: "Einsatzarchiv und Geldjournal",
+    words:
+      "Historie Protokoll Statistik Auswertung Euro Budget Finanzen Bericht",
+  },
+  {
+    id: "progress",
+    title: "Fortschritt und Erfolge",
+    words: "XP Stufe Freischaltung Finanzierung",
+  },
+  {
+    id: "settings",
+    title: "Audio-Einstellungen",
+    words: "Musik Lautstärke Töne Funk Telefon Alarm Sound",
+    tab: "audio",
+  },
+  {
+    id: "settings",
+    title: "Anzeige und Karte",
+    words: "Symbole Marker Beschriftung Oberfläche Bewegung Zoom",
+    tab: "display",
+  },
+  {
+    id: "settings",
+    title: "Steuerung und Tastatur",
+    words: "Tasten Shortcuts Maus Arbeitsplatzlayout",
+    tab: "controls",
+  },
+  {
+    id: "settings",
+    title: "Hinweise und Hilfe",
+    words: "Tutorial Rückmeldung Hinweise",
+    tab: "help",
+  },
+  {
+    id: "account",
+    title: "Konto und Sicherheit",
+    words: "Passwort Benutzer Rolle Anmeldung Abmelden",
+  },
+  {
+    id: "tutorial",
+    title: "Interaktives Tutorial",
+    words: "Übung Lernen Anleitung Einstieg",
+  },
+  { id: "help", title: "Spielanleitung", words: "Hilfe Wiki Bedienung" },
+  {
+    id: "catalog",
+    title: "Einsatzkatalog",
+    words: "Szenarien Meldebilder Anforderungen",
+  },
+  {
+    id: "backups",
+    title: "Spielstände und Sicherungen",
+    words: "Export Import Wiederherstellung",
+  },
+  { id: "news", title: "Neuigkeiten", words: "Updates Änderungen" },
+  { id: "credits", title: "Mitwirkende", words: "Lizenzen Urheber Credits" },
+  { id: "privacy", title: "Datenschutz im Spiel", words: "Daten Privatsphäre" },
+  { id: "support", title: "Support", words: "Fehler Diagnose Hilfe GitHub" },
+  { id: "language", title: "Sprache", words: "Deutsch" },
+  { id: "exit", title: "Spiel verlassen", words: "Abmelden Sitzung beenden" },
+] as const;
+export function searchNavigation(query: string) {
+  const terms = query
+    .trim()
+    .toLocaleLowerCase("de")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!terms.length) return [];
+  return navigation
+    .filter((item) =>
+      terms.every((term) =>
+        `${item.title} ${item.words}`.toLocaleLowerCase("de").includes(term),
+      ),
+    )
+    .slice(0, 6);
+}
+export function openNavigation(item: (typeof navigation)[number]) {
+  window.dispatchEvent(
+    new CustomEvent("lv:open-panel", {
+      detail: { id: item.id, tab: "tab" in item ? item.tab : undefined },
+    }),
+  );
+}

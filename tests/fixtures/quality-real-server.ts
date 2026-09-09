@@ -11,8 +11,9 @@ import { fresh, validate } from "../../src/model";
 import { apply, tick, generate } from "../../src/engine";
 import { project } from "../../src/germany/projection";
 import { xpForLevel } from "../../src/progression";
-import { vt } from "../../src/catalog";
+import { vt, mt } from "../../src/catalog";
 import { attachIncident } from "../../src/simulation/calls";
+import { fundTestBudget } from "../money-fixture";
 mkdirSync(".tools/test-runs", { recursive: true });
 const dataDir = mkdtempSync(resolve(tmpdir(), "lv-quality-real-"));
 const config = {
@@ -49,7 +50,7 @@ for (let index = 0; index < 2; index++) {
   s.player.id = ids[index];
   s.seed = 124;
   s.xp = xpForLevel(30);
-  s.money = 5000000;
+  fundTestBudget(s, 10000000);
   s.tutorial = 6;
   s.missionWait = 100000;
   for (const [kind, lon, lat, types] of (index === 0
@@ -96,12 +97,13 @@ for (let index = 0; index < 2; index++) {
       apply(s, { type: "assign", vehicle: v.id });
     }
   }
-  s.money = index ? 630000 : 842350;
   tick(s, Date.now() / 1000, {}, false, false);
+  fundTestBudget(s, index ? 630000 : 842350);
   if (index === 0) {
     generate(s);
     const m = s.missions[0];
     m.template = "field";
+    m.paymentCents = mt("field").reward;
     const p = geography!.provider.nearest(
       project({ lon: 13.412, lat: 52.526 }),
     );
@@ -134,13 +136,37 @@ console.log(
 );
 process.on(
   "message",
-  async (message: { type: string; id?: number; seconds?: number }) => {
+  async (message: {
+    type: string;
+    id?: number;
+    seconds?: number;
+    userIndex?: number;
+  }) => {
     try {
       if (message.type === "shutdown") {
         await app.close();
         process.exit(0);
       }
       if (message.type === "advance") app.game.step(message.seconds ?? 1);
+      const userIndex = message.userIndex ?? 3;
+      if (
+        !Number.isInteger(userIndex) ||
+        userIndex < 0 ||
+        userIndex >= ids.length
+      )
+        throw Error("Unknown fixture user");
+      if (message.type === "practice-advance") {
+        const row = app.db.sql
+          .prepare("SELECT updated_at FROM training_worlds WHERE user_id=?")
+          .get(ids[userIndex]);
+        if (!row) throw Error("Start practice through the UI first");
+        app.tutorial.step(
+          Number(row.updated_at) + (message.seconds ?? 1) * 1000,
+        );
+        app.db.sql
+          .prepare("UPDATE training_worlds SET updated_at=? WHERE user_id=?")
+          .run(Date.now(), ids[userIndex]);
+      }
       if (message.type === "restart") {
         await app.close();
         geography = await prepareGeography(config);
@@ -148,6 +174,8 @@ process.on(
         await app.listen();
       }
       if (
+        message.type === "practice-save" ||
+        message.type === "practice-advance" ||
         message.type === "save" ||
         message.type === "advance" ||
         message.type === "restart"
@@ -155,7 +183,9 @@ process.on(
         process.send?.({
           type: "reply",
           id: message.id,
-          save: app.db.all().get(ids[0]),
+          save: message.type.startsWith("practice-")
+            ? app.tutorial.trainingSave(ids[userIndex])
+            : app.db.all().get(ids[0]),
         });
     } catch (error) {
       process.send?.({ type: "reply", id: message.id, error: String(error) });

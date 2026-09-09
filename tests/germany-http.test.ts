@@ -8,6 +8,7 @@ import {
   vi,
 } from "vitest";
 import { build } from "esbuild";
+import { fundTestBudget } from "./money-fixture";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import {
@@ -254,7 +255,7 @@ beforeEach(async () => {
   );
   await app!.auth.create("germany-other", password, "Fremde", "Leitstelle B");
   let s = app!.db.all().get(owner)!;
-  s.money = 2000000;
+  fundTestBudget(s, 2000000);
   s.xp = f.xpForLevel(30);
   s.missionWait = 100000;
   f.apply(s, {
@@ -364,6 +365,7 @@ async function routerMode(mode: string) {
 }
 function waterGeneration() {
   const save = app!.db.all().get(user.id)!;
+  fundTestBudget(save, 4000000); // This integration fixture equips two additional organizations.
   f.apply(save, { type: "build", kind: "water", pos: tilePoint(1550, 1000) });
   const water = save.buildings.at(-1)!.id;
   f.apply(save, { type: "build", kind: "ems", pos: tilePoint(2600, 1000) });

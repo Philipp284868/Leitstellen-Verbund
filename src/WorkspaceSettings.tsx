@@ -12,8 +12,8 @@ export function WorkspaceSettings({
   change: (p: WorkspacePreferences) => void;
 }) {
   return (
-    <details className="workspace-settings">
-      <summary>Arbeitsplatzlayout und Tastatur</summary>
+    <section className="workspace-settings">
+      <h3>Arbeitsplatzlayout und Tastatur</h3>
       <p>
         Gilt für diesen Browser. Tastenkürzel öffnen Ansichten; sie alarmieren
         keine Fahrzeuge. In Eingabefeldern bleiben die Tasten normale
@@ -72,8 +72,6 @@ export function WorkspaceSettings({
                 const key = e.target.value.toLowerCase();
                 if (!/^[a-z0-9]?$/.test(key)) return;
                 const keys = { ...p.keys };
-                for (const k of Object.keys(keys) as Shortcut[])
-                  if (key && keys[k] === key) keys[k] = "";
                 keys[id as Shortcut] = key;
                 change({ ...p, keys });
               }}
@@ -84,6 +82,6 @@ export function WorkspaceSettings({
       <button onClick={() => change(structuredClone(defaultWorkspace))}>
         Arbeitsplatz zurücksetzen
       </button>
-    </details>
+    </section>
   );
 }

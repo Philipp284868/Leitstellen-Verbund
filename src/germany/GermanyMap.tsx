@@ -1,3 +1,13 @@
+import { requestDialogTransition } from "../dialog-state";
+import { tutorialInteraction } from "../Tutorial";
+import { searchNavigation, openNavigation } from "../navigation";
+import { credits } from "../ui";
+import { emit } from "../store";
+import {
+  useDevicePreferences,
+  updateDevicePreference,
+  devicePreferences,
+} from "../device-preferences";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { Map as GLMap, GeoJSONSource } from "maplibre-gl";
@@ -105,18 +115,41 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   const [filter, setFilter] = useState("Alle"),
     [org, setOrg] = useState("Alle"),
     [status, setStatus] = useState("Alle");
-  const [labels, setLabels] = useState(true),
-    [routes, setRoutes] = useState(true),
-    [showFriends, setShowFriends] = useState(true),
-    [following, setFollowing] = useState(false);
-  const [pois, setPois] = useState(true),
-    [poiFilter, setPoiFilter] = useState<ReadonlySet<PoiCategory>>(
+  const preferences = useDevicePreferences();
+  const labels = preferences.labels,
+    routes = preferences.routes,
+    showFriends = preferences.friends,
+    following = preferences.follow,
+    pois = preferences.pois,
+    showPlayers = preferences.players;
+  const setPreference = useCallback(
+    (
+      key: "labels" | "routes" | "friends" | "follow" | "pois" | "players",
+      value: boolean,
+    ) => {
+      try {
+        updateDevicePreference(key, value);
+      } catch (error) {
+        emit({ error: String(error) });
+      }
+    },
+    [],
+  );
+  const setLabels = (value: boolean) => setPreference("labels", value);
+  const setRoutes = (value: boolean) => setPreference("routes", value);
+  const setShowFriends = (value: boolean) => setPreference("friends", value);
+  const setFollowing = useCallback(
+    (value: boolean) => setPreference("follow", value),
+    [setPreference],
+  );
+  const setPois = (value: boolean) => setPreference("pois", value);
+  const setShowPlayers = (value: boolean) => setPreference("players", value);
+  const [poiFilter, setPoiFilter] = useState<ReadonlySet<PoiCategory>>(
       () => new Set(Object.keys(poiCategories) as PoiCategory[]),
     ),
     [poiSelection, setPoiSelection] = useState<MapPoi | null>(null),
     [poiGroup, setPoiGroup] = useState<MapPoi[]>([]),
     [poiError, setPoiError] = useState(""),
-    [showPlayers, setShowPlayers] = useState(true),
     [presenceSelection, setPresenceSelection] = useState<string[]>([]),
     [objectGroup, setObjectGroup] = useState<MarkerData[]>([]);
   const poiOptions = useRef({
@@ -194,10 +227,17 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       )?.pos);
   const center = useCallback((point: Point, zoom = 13) => {
     const p = unproject(point);
-    mapRef.current?.easeTo({ center: [p.lon, p.lat], zoom, duration: 250 });
+    mapRef.current?.easeTo({
+      center: [p.lon, p.lat],
+      zoom,
+      duration: devicePreferences().reduced ? 0 : 250,
+    });
   }, []);
   const overview = () =>
-    mapRef.current?.fitBounds(GERMANY_BOUNDS, { padding: 40, duration: 300 });
+    mapRef.current?.fitBounds(GERMANY_BOUNDS, {
+      padding: 40,
+      duration: devicePreferences().reduced ? 0 : 300,
+    });
 
   useEffect(() => {
     siteRequest.current?.abort();
@@ -428,6 +468,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         const up = (event: PointerEvent) => {
           if (!gesture || gesture.id !== event.pointerId) return;
           const click = !gesture.moved && !gesture.marker;
+          if (gesture.moved) tutorialInteraction("pan");
           cancel();
           if (!click) return;
           if (!latest.current.placing) {
@@ -436,22 +477,24 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               event.clientX - bounds.left,
               event.clientY - bounds.top,
             );
-            setPresenceSelection([]);
-            setObjectGroup([]);
-            setPoiGroup([]);
-            if (hit) {
-              latest.current.onInspect?.();
-              if (hit.count > 1)
-                gl.easeTo({
-                  center: [hit.point.lon, hit.point.lat],
-                  zoom: Math.min(18, gl.getZoom() + 2),
-                  duration: 250,
-                });
-              if (hit.members.length > 1) {
-                setPoiSelection(null);
-                setPoiGroup(hit.members);
-              } else setPoiSelection(hit.point);
-            } else setPoiSelection(null);
+            requestDialogTransition(() => {
+              setPresenceSelection([]);
+              setObjectGroup([]);
+              setPoiGroup([]);
+              if (hit) {
+                latest.current.onInspect?.();
+                if (hit.count > 1)
+                  gl.easeTo({
+                    center: [hit.point.lon, hit.point.lat],
+                    zoom: Math.min(18, gl.getZoom() + 2),
+                    duration: devicePreferences().reduced ? 0 : 250,
+                  });
+                if (hit.members.length > 1) {
+                  setPoiSelection(null);
+                  setPoiGroup(hit.members);
+                } else setPoiSelection(hit.point);
+              } else setPoiSelection(null);
+            });
             return;
           }
           if (latest.current.readonly) return;
@@ -511,24 +554,27 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               event.clientY - rect.top,
             ]);
           setFollowing(false);
+          tutorialInteraction("zoom");
           gl.easeTo({
             zoom: Math.max(
               4,
               Math.min(
                 18,
                 gl.getZoom() -
-                  Math.max(
+                  (Math.max(
                     -240,
                     Math.min(
                       240,
                       wheelPixels(event.deltaY, event.deltaMode, rect.height),
                     ),
                   ) *
-                    0.004,
+                    0.004 *
+                    devicePreferences().zoomSensitivity) /
+                    100,
               ),
             ),
             around: ll,
-            duration: 90,
+            duration: devicePreferences().reduced ? 0 : 90,
           });
         };
         const keyboard = (event: KeyboardEvent) => {
@@ -549,17 +595,22 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             event.preventDefault();
             setFollowing(false);
             gl.panBy(directions[event.key], { duration: 0 });
+            tutorialInteraction("pan");
           }
           if (["+", "=", "-"].includes(event.key)) {
             event.preventDefault();
+            tutorialInteraction("zoom");
             gl.zoomTo(gl.getZoom() + (event.key === "-" ? -0.5 : 0.5), {
-              duration: 100,
+              duration: devicePreferences().reduced ? 0 : 100,
             });
           }
           if (event.key === "Home") {
             event.preventDefault();
             setFollowing(false);
-            gl.fitBounds(GERMANY_BOUNDS, { padding: 40, duration: 250 });
+            gl.fitBounds(GERMANY_BOUNDS, {
+              padding: 40,
+              duration: devicePreferences().reduced ? 0 : 250,
+            });
           }
           if (event.key === "Escape") {
             cancel();
@@ -959,19 +1010,21 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               data-category={m.category}
               data-testid={`map-${m.kind}`}
               data-object-id={m.id}
-              onClick={() => {
-                setFollowing(false);
-                setPoiSelection(null);
-                setPoiGroup([]);
-                setPresenceSelection([]);
-                if (m.count) {
-                  onInspect?.();
-                  setObjectGroup(m.members);
-                } else {
-                  setObjectGroup([]);
-                  onSelect(m.friend ? "friends" : (m.target ?? m.id));
-                }
-              }}
+              onClick={() =>
+                requestDialogTransition(() => {
+                  setFollowing(false);
+                  setPoiSelection(null);
+                  setPoiGroup([]);
+                  setPresenceSelection([]);
+                  if (m.count) {
+                    onInspect?.();
+                    setObjectGroup(m.members);
+                  } else {
+                    setObjectGroup([]);
+                    onSelect(m.friend ? "friends" : (m.target ?? m.id));
+                  }
+                })
+              }
             >
               {m.count ? (
                 <>
@@ -1077,9 +1130,13 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             <Search size={16} />
             <input
               aria-label="Karte durchsuchen"
-              placeholder="Ort, Adresse, Wache oder Funkrufname …"
+              placeholder="Ort, Fahrzeug, Menü oder Einstellung …"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                if (event.target.value.trim().length >= 2)
+                  tutorialInteraction("search");
+              }}
             />
           </label>
           {search && (
@@ -1124,6 +1181,18 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           </select>
           {search && (
             <div className="map-search-results" aria-label="Suchergebnisse">
+              {searchNavigation(search).map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => {
+                    openNavigation(item);
+                    setSearch("");
+                  }}
+                >
+                  <b>{item.title}</b>
+                  <small>Menü / Einstellungen</small>
+                </button>
+              ))}
               {localResults.map((result) => (
                 <button
                   key={result.id}
@@ -1156,7 +1225,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               {!searching &&
                 !searchError &&
                 !found.length &&
-                !localResults.length && (
+                !localResults.length &&
+                !searchNavigation(search).length && (
                   <span>
                     Keine passenden Orte oder sichtbaren Objekte gefunden.
                   </span>
@@ -1221,9 +1291,30 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         <details className="map-poi-filters">
           <summary>Einrichtungen & Kartenlegende</summary>
           <div className="incident-legend" aria-label="Einsatzkategorien">
-            {(["unknown", "fire", "medical", "technical", "police", "water", "mixed"] as const).map(category => <span key={category}><i style={{background: incidentColors[category]}}><IncidentIcon category={category} /></i>{incidentKindNames[category]}</span>)}
+            {(
+              [
+                "unknown",
+                "fire",
+                "medical",
+                "technical",
+                "police",
+                "water",
+                "mixed",
+              ] as const
+            ).map((category) => (
+              <span key={category}>
+                <i style={{ background: incidentColors[category] }}>
+                  <IncidentIcon category={category} />
+                </i>
+                {incidentKindNames[category]}
+              </span>
+            ))}
           </div>
-          <p>Grün kennzeichnet Medizin, nicht geringe Dringlichkeit. Ein gelbes ! am Einsatz zeigt NOTFALL; bei kombinierten Lagen bleiben zusätzliche Kategorien erkennbar.</p>
+          <p>
+            Grün kennzeichnet Medizin, nicht geringe Dringlichkeit. Ein gelbes !
+            am Einsatz zeigt NOTFALL; bei kombinierten Lagen bleiben zusätzliche
+            Kategorien erkennbar.
+          </p>
           <label>
             <input
               type="checkbox"
@@ -1260,8 +1351,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           <p>
             Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
             Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
-            freigegebener Verbund · ! am Fahrzeug: Störung. Gruppen öffnen eine Auswahl;
-            Vergrößern zeigt räumlich getrennte Standorte.
+            freigegebener Verbund · ! am Fahrzeug: Störung. Gruppen öffnen eine
+            Auswahl; Vergrößern zeigt räumlich getrennte Standorte.
           </p>
           <p>
             Einrichtungen stammen aus dem installierten
@@ -1546,13 +1637,12 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             <>
               <span>
                 {candidate.reason ||
-                  "Bauplatz geprüft · Bestätigung kauft den gewählten Gebäudetyp."}
+                  `Bauplatz geprüft · ${bt(placing).name}: ${credits(bt(placing).price)} · Budget danach: ${credits(s.money - bt(placing).price)} · ${bt(placing).slots} Stellplätze · automatische Besetzung · keine laufenden Kosten.`}
               </span>
               <button
                 disabled={readonly || !!candidate.reason}
                 onClick={() => {
                   if (candidate) onPlace(candidate.point);
-                  setCandidate(null);
                 }}
               >
                 Bau bestätigen

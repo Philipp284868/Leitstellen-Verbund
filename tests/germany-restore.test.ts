@@ -1,5 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
+import { fundTestBudget } from "./money-fixture";
+import { euro } from "../src/money";
 import { DatabaseSync } from "node:sqlite";
 import {
   mkdirSync,
@@ -121,10 +123,10 @@ beforeEach(async () => {
   );
   cookie = `lv_session=${auth.issue(owner).value}`;
   const save = db.all().get(owner)!;
-  save.money = 123456;
+  fundTestBudget(save, 123456);
   db.save(owner, save);
   backup = await db.backup();
-  save.money = 654321;
+  fundTestBudget(save, 654321);
   db.save(owner, save);
   db.close();
   db = undefined;
@@ -200,7 +202,7 @@ describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", 
     expect(result.output).toContain(`"user": "${owner}"`);
     expect(readFileSync(target)).toEqual(before);
     db = new f.Database(dataDir);
-    expect(db.all().get(owner)!.money).toBe(654321);
+    expect(db.all().get(owner)!.money).toBe(euro(654321));
     expect(new f.Auth(db).session(cookie)?.user_id).toBe(owner);
   }, 25000);
   it.each(["different", "missing"])(
@@ -223,7 +225,7 @@ describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", 
       expect(readdirSync(dataDir)).toEqual(entries);
       db = new f.Database(dataDir);
       expect(new f.Auth(db).session(cookie)?.user_id).toBe(owner);
-      expect(db.all().get(owner)!.money).toBe(654321);
+      expect(db.all().get(owner)!.money).toBe(euro(654321));
     },
     25000,
   );
@@ -232,7 +234,7 @@ describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", 
     expect(result.code, result.output).toBe(0);
     expect(result.output).toContain("Wiederhergestellt");
     db = new f.Database(dataDir);
-    expect(db.all().get(owner)!.money).toBe(123456);
+    expect(db.all().get(owner)!.money).toBe(euro(123456));
     expect(new f.Auth(db).session(cookie)).toBeNull();
     expect(db.sql.prepare("SELECT count(*) n FROM sessions").get()!.n).toBe(0);
     expect(

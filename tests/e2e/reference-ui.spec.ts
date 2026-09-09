@@ -209,6 +209,9 @@ for (const size of [
     await page
       .getByRole("button", { name: "Einstellungen", exact: true })
       .click();
+    await page
+      .getByRole("tab", { name: "Hinweise & Hilfe", exact: true })
+      .click();
     await expect(
       page.getByRole("button", { name: "Sicherungen", exact: true }),
     ).toBeVisible();

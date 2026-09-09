@@ -97,6 +97,6 @@ it("prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze", () => {
     }),
   );
   expect(s.vehicles).toHaveLength(300);
-  expect(s.money).toBe(250000);
+  expect(s.money).toBe(140000000);
   expect(s.missions).toHaveLength(50);
 });

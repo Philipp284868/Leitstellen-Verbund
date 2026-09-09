@@ -151,12 +151,18 @@ async function login(page: Page) {
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
   await page
-    .getByRole("checkbox", { name: "Hintergrundmusik", exact: true })
-    .uncheck();
+    .getByRole("checkbox", { name: "Musik stummschalten", exact: true })
+    .check();
+  await page
+    .getByRole("checkbox", {
+      name: "Leitstellenumgebung stummschalten",
+      exact: true,
+    })
+    .check();
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
-  await expect(page.locator(".sound-status")).toContainText("Ton ist aktiv");
+  await expect(page.locator(".sound-status")).toContainText("Audio ist aktiv");
   return { id, name, mission: mission.id };
 }
 function wav(seconds = 18) {
@@ -201,8 +207,27 @@ async function upload(
       buffer,
     });
   await expect(page.locator(".sound-profiles > p[role=status]")).toContainText(
-    "im Browser gespeichert",
+    "lokal geprüft",
   );
+  await apply(page);
+}
+async function apply(page: Page) {
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Gespeichert auf diesem Gerät",
+  );
+}
+async function logoutFromSettings(page: Page) {
+  await apply(page);
+  await page.getByRole("tab", { name: "Hinweise & Hilfe" }).click();
+  await page
+    .getByRole("button", { name: "Konto & Sicherheit", exact: true })
+    .click();
+  const account = page.getByRole("dialog", { name: "Konto & Sicherheit" });
+  await account.getByRole("button", { name: "Abmelden", exact: true }).click();
+  await account
+    .getByRole("button", { name: "Bestätigen", exact: true })
+    .click();
 }
 async function stored(page: Page) {
   return page.evaluate(async () => {
@@ -270,6 +295,7 @@ test("große lange WAV bleibt lokal, überlebt Reload und lässt sich zuweisen, 
       exact: true,
     })
     .uncheck();
+  await apply(page);
   await expect
     .poll(
       async () =>
@@ -296,8 +322,18 @@ test("große lange WAV bleibt lokal, überlebt Reload und lässt sich zuweisen, 
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
-  await expect(section(page).getByRole("checkbox")).not.toBeChecked();
-  await section(page).getByRole("checkbox").check();
+  await expect(
+    section(page).getByRole("checkbox", {
+      name: "Eigene Datei für Alarm aktiv",
+      exact: true,
+    }),
+  ).not.toBeChecked();
+  await section(page)
+    .getByRole("checkbox", {
+      name: "Eigene Datei für Alarm aktiv",
+      exact: true,
+    })
+    .check();
   await upload(page, "ersatz.wav", wav());
   await expect(section(page)).toContainText("ersatz.wav");
   await section(page)
@@ -307,6 +343,7 @@ test("große lange WAV bleibt lokal, überlebt Reload und lässt sich zuweisen, 
   await section(page)
     .getByRole("button", { name: "Datei für Alarm löschen", exact: true })
     .click();
+  await apply(page);
   await expect.poll(async () => (await meter(page)).urls).toBe(0);
   expect(
     (await stored(page)).find((s) => s.channel === "gong"),
@@ -376,15 +413,14 @@ test("Quota- und Codecfehler erhalten den alten Sound und Prioritäts-/Notfallto
     delete (navigator.storage as { estimate?: unknown }).estimate;
   });
   await page
-    .getByRole("slider", { name: "Funklautstärke", exact: true })
-    .focus();
-  await page.keyboard.press("Home");
+    .getByLabel("Vorhandenen Sound für Funk zuweisen")
+    .selectOption("gong");
   await page
     .getByRole("slider", { name: "Sprechwunschlautstärke", exact: true })
     .focus();
   await page.keyboard.press("Home");
-  await section(page)
-    .getByRole("button", { name: "Alarm anhören", exact: true })
+  await section(page, "radio")
+    .getByRole("button", { name: "Funk anhören", exact: true })
     .click();
   await expect.poll(async () => (await meter(page)).playing).toBe(1);
   const save = app.db.all().get(account.id)!,
@@ -434,11 +470,49 @@ test("Tabwechsel und Abmeldung geben lokale Wiedergabequellen frei", async ({
     .getByRole("button", { name: "Alarm anhören", exact: true })
     .click();
   await expect.poll(async () => (await meter(page)).playing).toBe(1);
-  await page
-    .getByRole("dialog", { name: "Einstellungen" })
-    .getByRole("button", { name: "Abmelden", exact: true })
-    .click();
+  await logoutFromSettings(page);
   await expect
     .poll(async () => await meter(page))
     .toMatchObject({ playing: 0, urls: 0 });
+});
+
+test("Dateizuordnungen sind echte Entwürfe: Verwerfen und Schließen bewahren die gespeicherte Originaldatei", async ({
+  page,
+}) => {
+  await login(page);
+  await upload(page, "gespeichert.wav", wav());
+  await section(page)
+    .getByRole("checkbox", {
+      name: "Eigene Datei für Alarm aktiv",
+      exact: true,
+    })
+    .uncheck();
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Ungespeicherte Vorschau",
+  );
+  expect((await stored(page))[0].enabled).toBe(true);
+  await page.getByRole("button", { name: "Verwerfen", exact: true }).click();
+  await expect(
+    section(page).getByRole("checkbox", {
+      name: "Eigene Datei für Alarm aktiv",
+      exact: true,
+    }),
+  ).toBeChecked();
+  await section(page)
+    .getByRole("button", { name: "Datei für Alarm löschen", exact: true })
+    .click();
+  await expect(section(page)).toContainText("Originalsignal");
+  expect((await stored(page))[0].name).toBe("gespeichert.wav");
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Änderungen verwerfen", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Einstellungen", exact: true })
+    .click();
+  await page
+    .getByText("Signalregler und eigene Soundprofile", { exact: true })
+    .click();
+  await expect(section(page)).toContainText("gespeichert.wav");
+  expect((await stored(page))[0].enabled).toBe(true);
 });

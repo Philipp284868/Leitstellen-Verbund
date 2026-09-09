@@ -374,8 +374,20 @@ it("Migration 8→9 bewahrt beide Spielstände und laufende Alarmierungen mit Or
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );
-    for (const mode of ["multi", "single"] as const)
-      expect(db.all(mode).get(w.owner)).toEqual(s);
+    for (const mode of ["multi", "single"] as const) {
+      const actual = db.all(mode).get(w.owner)!;
+      expect({ ...actual, people: undefined }).toEqual({
+        ...s,
+        people: undefined,
+      });
+      expect(actual.people).toHaveLength(s.people.length);
+      for (const before of s.people) {
+        const person = actual.people.find((p) => p.id === before.id)!;
+        // v14 adds building-provided qualifications; identity, binding and injuries stay exact.
+        expect({ ...person, skills: before.skills }).toEqual(before);
+        expect(person.skills).toEqual(expect.arrayContaining(before.skills));
+      }
+    }
     const file = (await readdir(w.dir)).find((x) =>
       x.startsWith("pre-migration-v2-"),
     )!;

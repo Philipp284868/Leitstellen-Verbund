@@ -1,4 +1,5 @@
 import type { Cue } from "./synth";
+import type { MixerGroup } from "./preferences";
 export const channels = {
   pager: "Pieper",
   siren: "Sirene",
@@ -22,13 +23,29 @@ export const channelFor = (cue: Cue): SoundChannel =>
         ? "pager"
         : cue === "siren"
           ? "siren"
-          : cue === "station"
+          : cue === "station" || cue === "gong"
             ? "gong"
-            : ["radio", "arrival", "return"].includes(cue)
+            : ["radio", "radioOpen", "radioAck", "arrival", "return"].includes(
+                  cue,
+                )
               ? "radio"
-              : ["phone", "mission"].includes(cue)
+              : ["phone", "mission", "callAccept", "callEnd", "busy"].includes(
+                    cue,
+                  )
                 ? "phone"
                 : "events";
+export const groupFor = (cue: Cue): MixerGroup => {
+  if (cue === "musicMenu" || cue === "musicGame") return "music";
+  if (cue === "ambience") return "ambience";
+  const channel = channelFor(cue);
+  return channel === "phone"
+    ? "phone"
+    : ["radio", "request", "priority"].includes(channel)
+      ? "radio"
+      : ["pager", "siren", "gong"].includes(channel)
+        ? "alarm"
+        : "ui";
+};
 export const previewCue: Record<SoundChannel, Cue> = {
   pager: "dme",
   siren: "siren",

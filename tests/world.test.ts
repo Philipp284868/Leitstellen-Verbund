@@ -256,10 +256,12 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
     expect(db.all().get(b)!.money - startB).toBe(
       Math.floor(mt("sick").reward / 2),
     );
+    const paid = db.all().get(b)!;
     resumed.command(b, support);
     resumed.step(7200);
-    expect(db.all().get(b)!.money - startB).toBe(
-      Math.floor(mt("sick").reward / 2),
+    const after = db.all().get(b)!;
+    expect(after.money - paid.money).toBe(
+      after.economy!.fundingPaidCents - paid.economy!.fundingPaidCents,
     );
     expect(
       db
@@ -270,7 +272,13 @@ it("migriert beide Welten samt aktivem Verbundtransport, sichert das Original un
     const target = await mkdtemp(resolve(tmpdir(), "lv-map-restore-"));
     const restored = spawnSync(
       process.execPath,
-      [".tools/legacy-tests/server/cli.js", "restore", "--file", backup, "--confirm"],
+      [
+        ".tools/legacy-tests/server/cli.js",
+        "restore",
+        "--file",
+        backup,
+        "--confirm",
+      ],
       {
         encoding: "utf8",
         env: {

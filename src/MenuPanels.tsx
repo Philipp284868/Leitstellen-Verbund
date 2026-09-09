@@ -2,10 +2,229 @@ import { ProjectNewsPanel } from "./ProjectNews";
 import { useState } from "react";
 import { missions, capabilities } from "./catalog";
 import type { Save } from "./model";
-import { logout, emit } from "./store";
+import { logout, useGame } from "./store";
 import { missionXp, progress } from "./progression";
-import { credits } from "./ui";
+import { credits, ActionButton } from "./ui";
 import { IncidentIcon } from "./HudIcons";
+import { WORLD_NAME } from "./world-choice";
+import { version } from "../package.json";
+
+export function ScenarioCatalog({
+  s,
+  onPlay,
+}: {
+  s: Save;
+  onPlay: () => void;
+}) {
+  const [query, setQuery] = useState(""),
+    [org, setOrg] = useState("Alle"),
+    [available, setAvailable] = useState(false),
+    [page, setPage] = useState(0),
+    [selected, setSelected] = useState("");
+  const currentLevel = progress(s.xp).level;
+  const filtered = missions.filter(
+    (m) =>
+      (org === "Alle" || m.org === org) &&
+      (!available || m.level <= currentLevel) &&
+      `${m.name} ${m.org} ${m.description}`
+        .toLocaleLowerCase("de")
+        .includes(query.trim().toLocaleLowerCase("de")),
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / 24)),
+    currentPage = Math.min(page, pages - 1),
+    rows = filtered.slice(currentPage * 24, currentPage * 24 + 24),
+    t = rows.find((m) => m.id === selected) ?? rows[0];
+  return (
+    <section className="scenario-catalog">
+      <p className="view-intro">
+        {missions.length} vorhandene Einsatzvorlagen. Anforderungen und
+        Grundvergütung dienen der Vorbereitung; ein unbekannter echter Notruf
+        verrät seine Vorlage nicht. Zusätzliche Lagemeldungen können den
+        Kräftebedarf verändern.
+      </p>
+      <div className="resource-summary">
+        <label>
+          Einsatzart suchen
+          <input
+            value={query}
+            maxLength={100}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
+            placeholder="Name, Organisation oder Stichwort …"
+          />
+        </label>
+        <label>
+          Organisation
+          <select
+            value={org}
+            onChange={(e) => {
+              setOrg(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option>Alle</option>
+            {[...new Set(missions.map((m) => m.org))].map((name) => (
+              <option key={name}>{name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={available}
+            onChange={(e) => {
+              setAvailable(e.target.checked);
+              setPage(0);
+            }}
+          />
+          Nur freigeschaltete Stufen
+        </label>
+      </div>
+      <p role="status">
+        {filtered.length} Treffer · Seite {currentPage + 1} von {pages}
+      </p>
+      {!rows.length ? (
+        <div className="empty-state">
+          <h3>Keine passenden Einsatzarten</h3>
+          <p>
+            Ein kürzerer Suchbegriff oder eine andere Organisation erweitert die
+            Auswahl.
+          </p>
+          <button
+            onClick={() => {
+              setQuery("");
+              setOrg("Alle");
+              setAvailable(false);
+              setPage(0);
+            }}
+          >
+            Filter zurücksetzen
+          </button>
+        </div>
+      ) : (
+        <div className="scenario-layout">
+          <nav aria-label="Szenarien">
+            {rows.map((m) => (
+              <button
+                key={m.id}
+                aria-pressed={m.id === t.id}
+                onClick={() => setSelected(m.id)}
+              >
+                <IncidentIcon org={m.org} />
+                <span>
+                  {m.name}
+                  <small>
+                    {m.org} · Stufe {m.level}
+                  </small>
+                </span>
+              </button>
+            ))}
+          </nav>
+          <article>
+            <div className="scenario-art" data-org={t.org}>
+              <IncidentIcon org={t.org} />
+            </div>
+            <h3>{t.name}</h3>
+            <p>{t.description}</p>
+            <p>
+              {t.org} ·{" "}
+              {currentLevel >= t.level
+                ? "Stufenvoraussetzung erfüllt"
+                : `Ab Stufe ${t.level}`}
+            </p>
+            <h4>Grundanforderungen</h4>
+            <ul>
+              {Object.entries(t.requirements).map(([key, n]) => (
+                <li key={key}>
+                  {capabilities[key] ?? key}: {n}
+                </li>
+              ))}
+            </ul>
+            <p>
+              Grundvergütung {credits(t.reward)} · {missionXp(t)} XP
+            </p>
+            <small>
+              Das tatsächliche Ergebnis hängt vom bestätigten Einsatzabschluss
+              ab. Hier wird kein Einsatz erzeugt und keine Belohnung gebucht.
+            </small>
+            <p>
+              <button className="primary" onClick={onPlay}>
+                Zur Leitstelle
+              </button>
+            </p>
+          </article>
+        </div>
+      )}
+      <nav className="inline" aria-label="Katalogseiten">
+        <button
+          disabled={currentPage === 0}
+          onClick={() => setPage(currentPage - 1)}
+        >
+          Vorherige Seite
+        </button>
+        <button
+          disabled={currentPage + 1 >= pages}
+          onClick={() => setPage(currentPage + 1)}
+        >
+          Nächste Seite
+        </button>
+      </nav>
+    </section>
+  );
+}
+function SupportPanel({ onOpen }: { onOpen: (panel: string) => void }) {
+  const { readonly } = useGame();
+  const [message, setMessage] = useState("");
+  const info = `Leitstellen-Verbund ${version}\nWelt: ${WORLD_NAME}\nVerbindung: ${readonly ? "unterbrochen / letzter bestätigter Stand" : "verbunden"}\nBrowser: ${navigator.userAgent}\nZeitpunkt: ${new Date().toISOString()}`;
+  return (
+    <section className="menu-flow">
+      <h3>Hilfe zur Leitstelle</h3>
+      <p>
+        Für Bedienfragen stehen Spielanleitung und Tutorial bereit. Bei einem
+        Fehler sind die letzte Aktion, die genaue Fehlermeldung und die
+        folgenden technischen Angaben hilfreich.
+      </p>
+      <div className="inline">
+        <button onClick={() => onOpen("help")}>Spielanleitung öffnen</button>
+        <button onClick={() => onOpen("tutorial")}>Tutorial öffnen</button>
+      </div>
+      <label>
+        Technische Angaben
+        <textarea readOnly value={info} rows={6} />
+      </label>
+      <ActionButton
+        action={async () => {
+          if (!navigator.clipboard)
+            throw Error(
+              "Kopieren ist hier nicht verfügbar. Markiere die Angaben im Textfeld und kopiere sie mit Strg+C.",
+            );
+          await navigator.clipboard.writeText(info);
+          setMessage("Technische Angaben kopiert.");
+        }}
+      >
+        Angaben kopieren
+      </ActionButton>
+      {message && <p role="status">{message}</p>}
+      <p>
+        <a
+          href="https://github.com/Philipp284868/Leitstellen-Verbund/issues"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Fehler im Projekt melden
+        </a>
+      </p>
+      <small>
+        Die Angaben enthalten weder Kontokennung noch Einsatzstandorte. Ergänze
+        keine Passwörter, Sitzungsdaten oder privaten Spielstände in einer
+        öffentlichen Meldung. Bei Problemen der Erreichbarkeit hilft zuerst der
+        Betreiber dieses Spielservers.
+      </small>
+    </section>
+  );
+}
 
 export function MenuPanels({
   panel,
@@ -18,10 +237,6 @@ export function MenuPanels({
   onOpen: (panel: string) => void;
   onPlay: () => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [scenario, setScenario] = useState(missions[0].id);
-  const t = missions.find((m) => m.id === scenario)!;
-  const leave = () => void logout().catch((e) => emit({ error: String(e) }));
   if (panel === "exit")
     return (
       <section className="menu-flow">
@@ -31,87 +246,15 @@ export function MenuPanels({
           Einsätze werden dort weiter simuliert, solange der Server läuft.
         </p>
         <div className="inline">
-          <button className="danger" onClick={leave}>
+          <ActionButton className="danger" action={() => logout()}>
             Abmelden und Spiel verlassen
-          </button>
+          </ActionButton>
           <button onClick={onPlay}>Zurück zum Spiel</button>
         </div>
         <small>Nach dem Abmelden kannst du diesen Browser-Tab schließen.</small>
       </section>
     );
-  if (panel === "catalog")
-    return (
-      <section className="scenario-catalog">
-        <p>
-          Der echte Einsatzkatalog dieser Region. Im laufenden Spiel entstehen
-          passende Einsätze entsprechend deinen verfügbaren Fähigkeiten. Hier
-          kannst du Anforderungen und Belohnungen vorab ansehen.
-        </p>
-        <label>
-          Einsatzart suchen
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Name oder Organisation …"
-          />
-        </label>
-        <div className="scenario-layout">
-          <nav aria-label="Szenarien">
-            {missions
-              .filter((m) =>
-                `${m.name} ${m.org}`
-                  .toLocaleLowerCase("de")
-                  .includes(query.toLocaleLowerCase("de")),
-              )
-              .map((m) => (
-                <button
-                  key={m.id}
-                  aria-pressed={m.id === scenario}
-                  onClick={() => setScenario(m.id)}
-                >
-                  <IncidentIcon org={m.org} />
-                  <span>
-                    {m.name}
-                    <small>{m.org}</small>
-                  </span>
-                </button>
-              ))}
-          </nav>
-          <article>
-            <div className="scenario-art" data-org={t.org}>
-              <IncidentIcon org={t.org} />
-            </div>
-            <h3>{t.name}</h3>
-            <p>
-              {t.org} ·{" "}
-              {progress(s.xp).level >= t.level
-                ? "Stufenvoraussetzung erfüllt"
-                : `Ab Stufe ${t.level}`}
-            </p>
-            <h4>Ursprüngliche Anforderungen</h4>
-            <ul>
-              {Object.entries(t.requirements).map(([k, n]) => (
-                <li key={k}>
-                  {capabilities[k] || k}: {n}
-                </li>
-              ))}
-            </ul>
-            <p>
-              {credits(t.reward)} · {missionXp(t)} XP bei erfolgreichem
-              Abschluss
-            </p>
-            <small>
-              Lagemeldungen können zusätzliche Anforderungen ergeben. Ein
-              eigenständiger Szenario-Spielmodus ist auf diesem Server nicht
-              vorhanden.
-            </small>
-            <button className="primary" onClick={onPlay}>
-              Zur Leitstelle
-            </button>
-          </article>
-        </div>
-      </section>
-    );
+  if (panel === "catalog") return <ScenarioCatalog s={s} onPlay={onPlay} />;
   if (panel === "news") return <ProjectNewsPanel />;
   if (panel === "credits")
     return (
@@ -126,6 +269,42 @@ export function MenuPanels({
           Weitere Komponenten und Versionen sind im Projektverzeichnis
           dokumentiert.
         </p>
+        <p>
+          Musik und Signale werden aus eigens komponierten Noten und
+          Klangerzeugern lokal im Browser erstellt. Es werden keine echten
+          Notruf- oder Funkaufnahmen verwendet. Die Deutschlandkarte verwendet
+          OpenStreetMap-Daten; Herkunft und Kartenlizenzen sind an der Karte und
+          im Projekt dokumentiert.
+        </p>
+        <ul>
+          <li>
+            <a
+              href="https://github.com/Philipp284868/Leitstellen-Verbund/graphs/contributors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Mitwirkende am Quellcode
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/LIZENZEN.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Komponenten, Datenquellen und Lizenzen
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/AUDIO.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Musik und Klangerzeuger
+            </a>
+          </li>
+        </ul>
         <a
           href="https://github.com/Philipp284868/Leitstellen-Verbund"
           target="_blank"
@@ -153,33 +332,10 @@ export function MenuPanels({
         <button onClick={() => onOpen("backups")}>
           Eigene Daten exportieren
         </button>
-        <button onClick={() => onOpen("settings")}>Konto und Sitzungen</button>
+        <button onClick={() => onOpen("account")}>Konto und Sitzungen</button>
       </section>
     );
-  if (panel === "support")
-    return (
-      <section className="menu-flow">
-        <h3>Hilfe zur Leitstelle</h3>
-        <p>
-          Bedienung, Notrufe, Alarmierung, Kooperation und Sicherungen sind in
-          der Spielanleitung erklärt.
-        </p>
-        <button onClick={() => onOpen("help")}>Spielanleitung öffnen</button>
-        <p>
-          <a
-            href="https://github.com/Philipp284868/Leitstellen-Verbund/issues"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Fehler im Projekt melden
-          </a>
-        </p>
-        <small>
-          Bitte keine Passwörter oder private Spielstanddateien öffentlich
-          teilen.
-        </small>
-      </section>
-    );
+  if (panel === "support") return <SupportPanel onOpen={onOpen} />;
   if (panel === "language")
     return (
       <section className="menu-flow">
@@ -188,6 +344,14 @@ export function MenuPanels({
           Die Oberfläche und die Einsatzmeldungen stehen derzeit auf Deutsch zur
           Verfügung.
         </p>
+        <p>
+          Datums- und Zahlenangaben verwenden deutsche Schreibweise, Geldbeträge
+          werden in Euro dargestellt. Derzeit gibt es keine weitere auswählbare
+          Übersetzung.
+        </p>
+        <button onClick={() => onOpen("settings")}>
+          Lesbarkeit und Darstellung einstellen
+        </button>
       </section>
     );
   return null;

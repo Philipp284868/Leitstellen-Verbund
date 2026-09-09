@@ -9,8 +9,8 @@ import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { personDuty } from "../../src/simulation/staffing";
-import { forceVolunteerAvailability } from "../../src/simulation/volunteers";
+import { ECONOMY_PRICES } from "../../src/economy/prices";
+import { formatMoney } from "../../src/money";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -50,7 +50,9 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page.getByRole("button", { name: "Spielen", exact: false }).click();
-  await expect(page.locator(".hud-budget")).toContainText("250.000");
+  await expect(page.locator(".hud-budget strong")).toHaveText(
+    formatMoney(ECONOMY_PRICES.start),
+  );
   await expect(page.locator(".hud-notice")).toContainText(
     "Mit Spielserver verbunden",
   );
@@ -113,35 +115,35 @@ async function resources(page: Page, username: string) {
   await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
   app.game.step(30); // Advance the test server clock, never a player-controlled speed.
   await page.locator("svg.map [data-own-station]").first().click();
-  await page.getByRole("button", { name: "18.000 Cr", exact: true }).click();
-  await page.getByText("Besatzung & Ausbildung", { exact: true }).click();
+  await expect(
+    page.getByText("Betriebsbereit", { exact: true }).first(),
+  ).toBeVisible();
   await page
-    .getByRole("button", { name: "6 einstellen", exact: false })
+    .getByRole("tab", { name: "Fahrzeuge & Vergleich", exact: true })
     .click();
+  await page.locator('[data-tutorial="buy-tsf"]').click();
+  await page
+    .getByRole("region", { name: "Fahrzeugkauf bestätigen", exact: true })
+    .getByRole("button", { name: "Kauf verbindlich bestätigen", exact: true })
+    .click();
+  const owner = ownerOf(username);
+  await expect.poll(() => app.db.all().get(owner)!.vehicles.length).toBe(1);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
-  await page.getByRole("button", { name: "Besetzen", exact: true }).click();
-  const owner = ownerOf(username),
-    s = app.db.all().get(owner)!;
+  const s = app.db.all().get(owner)!;
   expect(s.buildings[0].organization?.kind).toBe("ff");
-  // Auth/membership scenarios need responsive volunteers. Their real road paths,
-  // staggered arrival and actual crew-dependent departure are still simulated.
-  for (const p of s.people) p.duty = personDuty(s, p);
-  forceVolunteerAvailability(s, true, 14400);
-  app.db.save(owner, s);
+  expect(s.staffing?.version).toBe(1);
+  expect(s.people.length).toBeGreaterThanOrEqual(6);
+  // Real automatic FF staffing still requires actual staggered travel to the station.
+  await expect(
+    page.getByRole("button", { name: "Besetzen", exact: true }),
+  ).toHaveCount(0);
   await expectAlarmableFF(page, owner);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
 }
-function advanceWithRepairs(ownerId: string, finished: () => boolean) {
+function advanceSimulation(finished: () => boolean) {
   for (let elapsed = 0; elapsed < 7200 && !finished(); elapsed += 30) {
-    for (const v of app.db
-      .all()
-      .get(ownerId)!
-      .vehicles.filter((v) => v.fault?.state === "awaiting"))
-      app.game.command(ownerId, {
-        id: crypto.randomUUID(),
-        action: { type: "repair", vehicle: v.id },
-      });
+    // Faults must recover through their persisted automatic timeline.
     app.game.step(30);
   }
 }
@@ -179,7 +181,9 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   ).toHaveCount(0);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await resources(a, ua);
-  await expect(b.locator(".hud-budget")).toContainText("250.000");
+  await expect(b.locator(".hud-budget strong")).toHaveText(
+    formatMoney(ECONOMY_PRICES.start),
+  );
   await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
   advanceToFirstCall(ua);
   await showIncidents(a);
@@ -198,7 +202,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
     app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
   );
   const missionId = app.db.all().get(owner)!.missions[0].id;
-  advanceWithRepairs(owner, () =>
+  advanceSimulation(() =>
     app.db
       .all()
       .get(owner)!
@@ -207,7 +211,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   await a
     .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
     .click();
-  advanceWithRepairs(owner, () =>
+  advanceSimulation(() =>
     app.db
       .all()
       .get(owner)!
@@ -218,7 +222,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await a.getByRole("button", { name: "Fuhrpark", exact: true }).click();
-  advanceWithRepairs(owner, () =>
+  advanceSimulation(() =>
     app.db
       .all()
       .get(owner)!
@@ -259,8 +263,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(ua)!.id,
   );
   const missionId = app.db.all().get(ownerId)!.missions[0].id;
-  const advance = (finished: () => boolean) =>
-    advanceWithRepairs(ownerId, finished);
+  const advance = (finished: () => boolean) => advanceSimulation(finished);
   await cb.close();
   // Verify the recorded departure, not a transient status after an arbitrary
   // 61-second jump: a nearby incident can already have been reached by then.
@@ -305,7 +308,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     p = await c.newPage();
   await enter(p, ub);
   const bMoney = await p.locator(".hud-budget strong").innerText();
-  expect(bMoney).not.toBe("173.400 Cr");
+  expect(bMoney).toBe(aMoney);
   await c.close();
   await ca.close();
   const backup = await app.db.backup();
@@ -349,40 +352,42 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   const username = await register(page, "Tabs"),
     second = await context.newPage();
   await enter(second, username);
-  await openPanel(page, "Fortschritt");
-  await page
-    .getByRole("button", {
-      name: "Bereitschaftsdienst übernehmen",
-      exact: false,
-    })
-    .click();
-  await expect
-    .poll(() => [...app.db.all().values()].some((s) => s.reliefActive))
-    .toBe(true);
-  app.game.step(125);
-  await expect
-    .poll(() => second.locator(".hud-budget strong").innerText())
-    .not.toBe("250.000 Cr");
+  await resources(page, username);
+  const owner = ownerOf(username),
+    before = app.db.all().get(owner)!.money,
+    vehicle = app.db.all().get(owner)!.vehicles[0];
+  expect(before).toBeLessThan(ECONOMY_PRICES.start);
+  await expect(second.locator(".hud-budget strong")).toHaveText(
+    formatMoney(before),
+  );
+  await expect(second.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await openPanel(second, "Fuhrpark");
+  await expect(second.locator(".fleet-card")).toHaveCount(1);
   await second.close();
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  const before = await page.locator(".hud-budget strong").innerText();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.locator(".banner")).toContainText(
     "Serververbindung unterbrochen",
   );
-  await openPanel(page, "Fortschritt");
+  await openPanel(page, "Fuhrpark");
   await page
-    .getByRole("button", {
-      name: "Bereitschaftsdienst übernehmen",
-      exact: false,
-    })
+    .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText("Keine Serververbindung");
-  expect(await page.locator(".hud-budget strong").innerText()).toBe(before);
+  expect(app.db.all().get(owner)!.vehicles[0].favorite).not.toBe(true);
+  expect(app.db.all().get(owner)!.money).toBe(before);
+  await expect(page.locator(".hud-budget strong")).toHaveText(
+    formatMoney(before),
+  );
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
   await expect(page.locator(".banner")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
+    .click();
+  await expect
+    .poll(() => app.db.all().get(owner)!.vehicles[0].favorite)
+    .toBe(true);
 });
 test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden Guthabens", async ({
   page,
@@ -403,7 +408,9 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
   await expect(
     page.getByRole("button", { name: "Geprüften Spielstand übernehmen" }),
   ).toHaveCount(0);
-  await expect(page.locator(".hud-budget")).toContainText("250.000");
+  await expect(page.locator(".hud-budget strong")).toHaveText(
+    formatMoney(ECONOMY_PRICES.start),
+  );
   await page.getByLabel("Spielstanddatei importieren").setInputFiles({
     name: "kaputt.json",
     mimeType: "application/json",
@@ -424,9 +431,14 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
   await expect(b.locator(".chat-log b")).toHaveText(ua);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await a.getByRole("button", { name: "Einstellungen", exact: true }).click();
+  await a.getByRole("tab", { name: "Hinweise & Hilfe", exact: true }).click();
+  await a
+    .getByRole("button", { name: "Konto & Sicherheit", exact: true })
+    .click();
   await a
     .getByRole("button", { name: "Alle Sitzungen abmelden", exact: true })
     .click();
+  await a.getByRole("button", { name: "Bestätigen", exact: true }).click();
   await expect(a.getByLabel("Benutzername", { exact: true })).toBeVisible();
   await expect(a.locator(".hud-budget")).toHaveCount(0);
   await enter(a, ua);

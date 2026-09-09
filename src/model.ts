@@ -1,3 +1,10 @@
+import {
+  centsSchema,
+  signedCentsSchema,
+  economySchema,
+  newEconomy,
+} from "./economy/schema";
+import { staffingModelSchema } from "./simulation/building-staffing";
 import { WORLD_SEED } from "./region";
 import { responderInjurySchema } from "./simulation/responder-recovery";
 import { stationCapacity, validateStaffing } from "./simulation/staffing";
@@ -55,6 +62,7 @@ export const point = z
   .strict();
 export const buildingSchema = z
   .object({
+    purchasePriceCents: centsSchema.optional(),
     id,
     owner: id,
     type: id,
@@ -77,13 +85,14 @@ export const personSchema = z
     vehicle: id.nullable(),
     duty: dutySchema.optional(),
     injury: responderInjurySchema.optional(),
-    skills: z.array(z.string().max(30)).max(20),
+    skills: z.array(z.string().max(30)).max(32),
     training: z.string().max(30),
     ready: num,
   })
   .strict();
 export const vehicleSchema = z
   .object({
+    purchasePriceCents: centsSchema.optional(),
     odometer: num.optional(),
     turnout: turnoutSchema.optional(),
     reserve: z.boolean().optional(),
@@ -116,6 +125,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    paymentCents: centsSchema.optional(),
     tasks: missionTaskStateSchema.optional(),
     telemetry: telemetrySchema.optional(),
     report: reportSchema.optional(),
@@ -153,12 +163,14 @@ export const journalSchema = z
   .object({
     id,
     at: num,
-    amount: z.number().int().finite().min(-1e9).max(1e9),
+    amount: signedCentsSchema,
     text: z.string().max(180),
   })
   .strict();
 export const saveSchema = z
   .object({
+    economy: economySchema.optional(),
+    staffing: staffingModelSchema.optional(),
     statistics: statisticsSchema,
     operations: operationsSchema,
     aid: z.array(aidSchema).max(500).default([]),
@@ -171,7 +183,7 @@ export const saveSchema = z
     generation: id,
     revision: integer,
     player: z.object({ id, name, station: name }).strict(),
-    money: integer,
+    money: centsSchema,
     xp: integer,
     progression: z
       .object({
@@ -202,7 +214,7 @@ export const saveSchema = z
       .strict()
       .default({ light: false, reduced: false }),
     buildings: z.array(buildingSchema).max(150),
-    people: z.array(personSchema).max(6000),
+    people: z.array(personSchema).max(12000),
     vehicles: z.array(vehicleSchema).max(500),
     missions: z.array(missionSchema),
     archive: z.array(missionSchema),
@@ -223,7 +235,7 @@ export const saveSchema = z
             mission: id,
             round: id,
             vehicle: id,
-            maxReward: integer,
+            maxReward: centsSchema,
             status: z.enum(["reserved", "active", "returned", "cancelled"]),
           })
           .strict(),
@@ -265,6 +277,7 @@ export function fresh(player: string, station: string, now: number): Save {
     revision: 0,
     player: { id: uid(), name: player, station },
     money: BALANCE.start,
+    economy: newEconomy(now, BALANCE.start),
     xp: 0,
     progression: {
       version: 1,

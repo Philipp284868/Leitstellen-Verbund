@@ -177,10 +177,13 @@ test("Fahrzeugname wird inline gespeichert; Abbrechen, Escape und Verkaufsabbruc
   ).toBeFocused();
   await card.getByRole("button", { name: "Name", exact: true }).click();
   await expect(field).toHaveValue("Florian Nord 01");
-  await field.fill("Escape verwirft");
+  await field.fill("Escape schützt Entwurf");
   await page.keyboard.press("Escape");
-  await expect(field).toHaveCount(0);
+  await expect(field).toHaveValue("Escape schützt Entwurf");
   await expect(dialog).toBeVisible();
+  // A changed inline name is no longer silently discarded by Escape.
+  await card.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  await expect(field).toHaveCount(0);
   await expect(
     card.getByRole("button", { name: "Name", exact: true }),
   ).toBeFocused();

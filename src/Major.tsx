@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { Mission, Save } from "./model";
 import type { Patient } from "./simulation/dynamics-schema";
 import { useNetwork } from "./network";
-import { act, useGame } from "./store";
+import { command, useGame } from "./store";
+import { useCommandForm } from "./use-command-form";
 import { majorKind } from "./simulation/major-incidents";
 import {
   majorNames,
@@ -64,13 +65,23 @@ export function OperationsOverview({
   );
 }
 function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
-  const [category, setCategory] = useState<"I" | "II" | "III">(
-    p.triage || (p.health < 65 ? "I" : p.health < 80 ? "II" : "III"),
-  );
-  const [hospital, setHospital] = useState(p.hospital || "");
-  const [pending, setPending] = useState(false);
+  const [draft, setDraft] = useState<{
+    category: "I" | "II" | "III";
+    hospital: string;
+  } | null>(null);
+  const category =
+      draft?.category ??
+      p.triage ??
+      (p.health < 65 ? "I" : p.health < 80 ? "II" : "III"),
+    hospital = draft?.hospital ?? p.hospital ?? "";
+  const form = useCommandForm(!!draft, () => setDraft(null));
   return (
-    <fieldset className="major-triage" disabled={pending}>
+    <fieldset className="major-triage" disabled={form.busy}>
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
       <legend>
         Patient {p.id.slice(-6)} ·{" "}
         {p.triage ? `gesichtet ${p.triage}` : "ungesichtet"}
@@ -86,7 +97,9 @@ function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
         <select
           aria-label={`Sichtung ${p.id}`}
           value={category}
-          onChange={(e) => setCategory(e.target.value as typeof category)}
+          onChange={(e) =>
+            setDraft({ category: e.target.value as typeof category, hospital })
+          }
         >
           <option value="I">I · höchste Priorität</option>
           <option value="II">II · dringlich</option>
@@ -98,7 +111,7 @@ function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
         <select
           aria-label={`Klinik ${p.id}`}
           value={hospital}
-          onChange={(e) => setHospital(e.target.value)}
+          onChange={(e) => setDraft({ category, hospital: e.target.value })}
         >
           <option value="">Geeignete Klinik automatisch</option>
           <option value="public">Regionalklinik</option>
@@ -112,22 +125,23 @@ function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
         </select>
       </label>
       <button
-        onClick={async () => {
-          setPending(true);
-          try {
-            await act({
+        onClick={() =>
+          void form.run(async () => {
+            await command({
               type: "major-triage",
               mission: m.id,
               patient: p.id,
               category,
               hospital,
             });
-          } finally {
-            setPending(false);
-          }
-        }}
+            setDraft(null);
+          })
+        }
       >
         Sichtung und Ziel bestätigen
+      </button>
+      <button disabled={!draft} onClick={() => setDraft(null)}>
+        Änderungen verwerfen
       </button>
     </fieldset>
   );
@@ -135,7 +149,7 @@ function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
 export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
   const net = useNetwork();
   const { readonly } = useGame();
-  const [pending, setPending] = useState(false);
+  const form = useCommandForm();
   const disabled = readonly || m.phase === "done";
   const hospitals = useHospitalOptions(
     s,
@@ -152,6 +166,11 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
     const kind = majorKind(m);
     return kind && !disabled && ["offered", "working"].includes(m.phase) ? (
       <section className="major-panel">
+        {form.error && (
+          <p className="error" role="alert">
+            {form.error}
+          </p>
+        )}
         <strong>Erweiterte Lageführung</strong>
         <p>
           Wenn die Lage es erfordert: {majorNames[kind]} ausrufen. Zusätzliche
@@ -160,15 +179,12 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
           Bereitstellungsraum.
         </p>
         <button
-          disabled={pending}
-          onClick={async () => {
-            setPending(true);
-            try {
-              await act({ type: "major-declare", mission: m.id });
-            } finally {
-              setPending(false);
-            }
-          }}
+          disabled={form.busy}
+          onClick={() =>
+            void form.run(() =>
+              command({ type: "major-declare", mission: m.id }),
+            )
+          }
         >
           {majorNames[kind]} ausrufen
         </button>
@@ -186,6 +202,11 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
   );
   return (
     <section className="major-panel" aria-label="Großlagenführung">
+      {form.error && (
+        <p className="error" role="alert">
+          {form.error}
+        </p>
+      )}
       <header>
         <span className="eyebrow">Großlagenführung</span>
         <h3>
@@ -215,7 +236,7 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
           {Math.round(g.demand)} l/s. Ohne Nachschub sinkt die Löschleistung.
         </p>
       )}
-      <fieldset disabled={disabled} className="major-sections">
+      <fieldset disabled={disabled || form.busy} className="major-sections">
         <legend>Einsatzabschnitte</legend>
         {g.sections.map((section) => (
           <article key={section.kind} className="major-section">
@@ -236,12 +257,14 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
                 aria-label={`Leitung ${sectionNames[section.kind]}`}
                 value={section.leader?.vehicle || ""}
                 onChange={(e) =>
-                  void act({
-                    type: "major-leader",
-                    mission: m.id,
-                    section: section.kind,
-                    vehicle: e.target.value,
-                  })
+                  void form.run(() =>
+                    command({
+                      type: "major-leader",
+                      mission: m.id,
+                      section: section.kind,
+                      vehicle: e.target.value,
+                    }),
+                  )
                 }
               >
                 <option value="">Zentrale Einsatzleitung</option>
@@ -262,12 +285,14 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
                 aria-label={`Priorität ${sectionNames[section.kind]}`}
                 value={section.priority}
                 onChange={(e) =>
-                  void act({
-                    type: "major-section",
-                    mission: m.id,
-                    section: section.kind,
-                    priority: Number(e.target.value),
-                  })
+                  void form.run(() =>
+                    command({
+                      type: "major-section",
+                      mission: m.id,
+                      section: section.kind,
+                      priority: Number(e.target.value),
+                    }),
+                  )
                 }
               >
                 <option value={1}>1 · vorrangig</option>
@@ -278,12 +303,14 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
             {!section.ordered && (
               <button
                 onClick={() =>
-                  void act({
-                    type: "major-section",
-                    mission: m.id,
-                    section: section.kind,
-                    priority: section.priority,
-                  })
+                  void form.run(() =>
+                    command({
+                      type: "major-section",
+                      mission: m.id,
+                      section: section.kind,
+                      priority: section.priority,
+                    }),
+                  )
                 }
               >
                 {sectionNames[section.kind]} beauftragen
@@ -292,7 +319,7 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
           </article>
         ))}
       </fieldset>
-      <fieldset disabled={disabled}>
+      <fieldset disabled={disabled || form.busy}>
         <legend>Bereitstellungsraum und Kräftezuweisung</legend>
         {!units.length && (
           <p>
@@ -316,12 +343,14 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
               }
               value={placement(m, v)}
               onChange={(e) =>
-                void act({
-                  type: "major-assign",
-                  mission: m.id,
-                  vehicle: v.id,
-                  section: e.target.value as SectionKind,
-                })
+                void form.run(() =>
+                  command({
+                    type: "major-assign",
+                    mission: m.id,
+                    vehicle: v.id,
+                    section: e.target.value as SectionKind,
+                  }),
+                )
               }
             >
               <option value="staging">Bereitstellung / Reserve</option>
@@ -339,7 +368,7 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
         ))}
       </fieldset>
       {g.sections.some((x) => x.kind === "medical") && (
-        <fieldset disabled={disabled}>
+        <fieldset disabled={disabled || form.busy}>
           <legend>MANV · Sichtung und Klinikverteilung</legend>
           <details>
             <summary>Aufnahmekapazitäten der eigenen Leitstelle</summary>
@@ -372,11 +401,13 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
           </small>
           <button
             onClick={() =>
-              void act({
-                type: "major-transports",
-                mission: m.id,
-                enabled: !g.transports,
-              })
+              void form.run(() =>
+                command({
+                  type: "major-transports",
+                  mission: m.id,
+                  enabled: !g.transports,
+                }),
+              )
             }
           >
             {g.transports

@@ -46,7 +46,7 @@ it("öffnet ein älteres reguläres Personalprofil ohne Deutschland-Provider und
     createElement(client.PersonSettings, { s, person }),
   );
   expect(html).toContain(
-    "Personalprofil ist in diesem Serverstand noch nicht verfügbar",
+    "Besetzung und Qualifikationen werden automatisch durch die Wache bereitgestellt.",
   );
   expect(html).not.toContain("Wohnort");
   expect(html).not.toContain("Personalprofil speichern");
@@ -62,12 +62,19 @@ it("stellt FF und Besatzungsbereitschaft ohne privaten Geo-Provider dar", () => 
   const html = renderToStaticMarkup(
     createElement(client.PersonSettings, { s, person: s.people[0] }),
   );
-  expect(html).toContain("Freiwillige Einsatzkraft");
+  expect(html).toContain("Besetzung und Qualifikationen werden automatisch");
   expect(html).not.toContain("Wohnort");
   const crew = renderToStaticMarkup(
     createElement(client.VehicleStaffing, { s, v: s.vehicles[0] }),
   );
-  expect(crew).toContain("geeignete Kräfte im Wachenpool");
+  expect(crew).toContain("Betriebsbereit");
+  expect(crew).not.toContain("Kräfte im Wachenpool");
+  const station = renderToStaticMarkup(
+    createElement(client.StationSettings, { s, b: s.buildings[0] }),
+  );
+  expect(station).toContain("Betriebsbereit");
+  expect(station).not.toContain("Wohnort");
+  expect(station).not.toContain("Personal einstellen");
 });
 
 it("liefert fehlende reguläre Standardprofile serverseitig ohne den Speicherstand zu verändern oder FF-Daten freizugeben", () => {

@@ -322,8 +322,10 @@ export function publicSave(source: Save): Save {
           ?.briefed,
     );
   for (const m of [...s.missions, ...s.archive]) {
-    if (!m.control?.briefed) delete m.major;
-    else if (m.major) delete m.major.pending;
+    if (!m.control?.briefed) {
+      delete m.major;
+      delete m.paymentCents;
+    } else if (m.major) delete m.major.pending;
     if (!m.control?.briefed) delete m.organization;
     if (m.dynamics) {
       delete m.dynamics.random;

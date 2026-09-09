@@ -1,3 +1,5 @@
+import { bookMoney } from "../src/economy/ledger";
+import { euro } from "../src/money";
 import { buildReason } from "../src/purchase";
 import { phaseFixture } from "./phase-fixture";
 import { validate, type Save } from "../src/model";
@@ -25,7 +27,7 @@ export function organizationFixture(
   return s;
 }
 export function addAmbulance(s: Save) {
-  s.money += 100000;
+  bookMoney(s, euro(1000000), "Entwickler-Testbudget f�r Rettungswache");
   apply(s, {
     type: "build",
     kind: "ems",

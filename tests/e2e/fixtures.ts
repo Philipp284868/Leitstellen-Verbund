@@ -3,6 +3,7 @@ import { xpForLevel } from "../../src/progression";
 import { fresh, uid, type Save } from "../../src/model";
 import { apply, tick, generate } from "../../src/engine";
 import { nodes } from "../../src/world";
+import { mt } from "../../src/catalog";
 export function established(name: string): Save {
   const s = fresh(name, `Leitstelle ${name}`, Date.now() / 1000);
   s.speed = 1;
@@ -49,6 +50,7 @@ export function emsProfile(name: string) {
   s.missions = [];
   generate(s);
   s.missions[0].template = "sick";
+  s.missions[0].paymentCents = mt("sick").reward;
   s.missions[0].pos = nodes[2];
   return s;
 }

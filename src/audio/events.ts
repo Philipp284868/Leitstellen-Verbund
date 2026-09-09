@@ -2,6 +2,7 @@ import { level, type Save } from "../model";
 import type { GameMode } from "../mode";
 import type { Cue } from "./synth";
 import { priorityRank } from "../simulation/priority";
+export type AudioEvent = { id: string; cue: Cue; radio?: string };
 export const priorityTone = (priority: string): Cue | null =>
   priority === "NOTFALL"
     ? "emergency"
@@ -14,6 +15,88 @@ export class AudioEvents {
   private mode: GameMode = "multi";
   reset() {
     this.previous = null;
+  }
+  /** Every authorized live event gets its own ID; independent mixer groups may overlap. */
+  observeAll(save: Save | null, mode: GameMode, live: boolean): AudioEvent[] {
+    const before = this.previous,
+      beforeMode = this.mode;
+    const legacy = this.observe(save, mode, live);
+    if (
+      !before ||
+      !save ||
+      !live ||
+      mode !== beforeMode ||
+      before.player.id !== save.player.id ||
+      before.generation !== save.generation ||
+      save.revision <= before.revision
+    )
+      return [];
+    const result: AudioEvent[] = [];
+    const old = new Map(before.missions.map((m) => [m.id, m]));
+    for (const m of save.missions) {
+      const previous = old.get(m.id);
+      if (!previous && m.created < before.time) continue;
+      const known = new Set(previous?.control?.events.map((e) => e.id) ?? []);
+      for (const e of m.control?.events
+        .filter((e) => !known.has(e.id))
+        .slice(-50) ?? []) {
+        let cue: Cue | undefined;
+        if (e.alarm) cue = e.alarm;
+        else if (e.type === "CALL_RECEIVED") cue = "phone";
+        else if (e.type === "CALL_ACCEPTED") cue = "callAccept";
+        else if (e.type === "CALL_ENDED") cue = "callEnd";
+        else if (e.type === "SPEAK_REQUESTED") cue = "request";
+        else if (e.type === "SPEAK_HANDLED") cue = "radioAck";
+        else if (e.type === "AID_FMS") cue = "radioOpen";
+        if (cue)
+          result.push({
+            id: e.id,
+            cue,
+            radio: e.type === "AID_FMS" ? "support" : "dispatch",
+          });
+      }
+      const oldRadio = new Set(previous?.control?.radio.map((r) => r.id) ?? []);
+      for (const r of m.control?.radio ?? []) {
+        const cue = priorityTone(r.priority);
+        if (cue && !oldRadio.has(r.id) && r.state === "open")
+          result.push({ id: `radio:${r.id}`, cue });
+      }
+      if (
+        m.control &&
+        (!previous?.control ||
+          priorityRank(m.control.priority) >
+            priorityRank(previous.control.priority))
+      ) {
+        const cue = priorityTone(m.control.priority);
+        if (cue)
+          result.push({
+            id: `priority:${m.id}:${m.control.priority}:${save.revision}`,
+            cue,
+          });
+      }
+    }
+    if (
+      legacy &&
+      [
+        "dispatch",
+        "arrival",
+        "build",
+        "return",
+        "complete",
+        "level",
+        "mission",
+      ].includes(legacy) &&
+      !result.some((e) => e.cue === legacy) &&
+      !(
+        legacy === "mission" &&
+        !save.missions.some((m) => !old.has(m.id) && m.created >= before.time)
+      )
+    )
+      result.push({
+        id: `state:${save.generation}:${save.revision}:${legacy}`,
+        cue: legacy,
+      });
+    return result.slice(-24);
   }
   observe(save: Save | null, mode: GameMode, live: boolean): Cue | null {
     if (!live || !save) {

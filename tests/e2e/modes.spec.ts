@@ -173,21 +173,28 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
-  // A delayed confirmation must not undo a just-clicked controlled checkbox.
-  let releaseResponse!: () => void;
-  const responseGate = new Promise<void>((done) => {
-    releaseResponse = done;
-  });
-  await page.route("**/api/action", async (route) => {
-    await responseGate;
-    await route.continue();
-  });
-  await page.getByLabel("Heller Modus", { exact: true }).check();
-  await expect(page.getByLabel("Heller Modus", { exact: true })).toBeChecked();
-  await expect(page.getByLabel("Heller Modus", { exact: true })).toBeDisabled();
-  releaseResponse();
-  await expect(page.getByLabel("Heller Modus", { exact: true })).toBeEnabled();
-  await page.unroute("**/api/action");
+  // Display preferences are now a local, explicit draft. Closing must preserve
+  // the preview until the user decides, and Apply persists it on this device.
+  await page.getByRole("tab", { name: "Anzeige & Karte", exact: true }).click();
+  await page.getByLabel("Helle Oberfläche", { exact: true }).check();
+  await expect(
+    page.getByLabel("Helle Oberfläche", { exact: true }),
+  ).toBeChecked();
+  await expect(page.locator(".app")).toHaveClass(/light/);
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Weiter bearbeiten", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("Helle Oberfläche", { exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Alle Änderungen gespeichert." }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(page.locator(".app")).toHaveClass(/light/);
   await page.screenshot({
