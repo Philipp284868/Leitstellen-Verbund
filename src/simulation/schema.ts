@@ -1,14 +1,10 @@
 import { z } from "zod";
+import { priorities } from "./priority";
 const id = z.string().min(1).max(100),
   text = z.string().max(600),
   time = z.number().finite().nonnegative();
 export const alarmSchema = z.enum(["dme", "siren", "station"]);
-export const prioritySchema = z.enum([
-  "NORMAL",
-  "DRINGEND",
-  "PRIORITÄT",
-  "NOTFALL",
-]);
+export const prioritySchema = z.enum([...priorities, "PRIORITÄT"]);
 export const orgSchema = z.enum([
   "Alle",
   "Feuerwehr",
@@ -43,6 +39,7 @@ export const callSchema = z
     quality: z.number().int().min(0).max(100),
     credibility: z.number().int().min(0).max(100),
     callback: z.boolean(),
+    kind: z.enum(["initial", "additional", "recovery"]).optional(),
     asked: z.array(id).max(12),
     nextAnswer: time,
     caller: z.string().max(80),
@@ -119,6 +116,8 @@ export const incidentSchema = z
         hazard: text,
         detail: text,
         secondaryAt: time,
+        secondaryKind: z.enum(["additional", "recovery"]).optional(),
+        observations: z.array(text).max(6).optional(),
         dropAt: time,
         dropCall: z.string().default(""),
       })

@@ -43,9 +43,7 @@ async function enter(page: Page, username = "north") {
   await page.getByLabel("Benutzername", { exact: true }).fill(username);
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
 }
 function command(action: ServerAction) {
   app.game.command(owner, { id: crypto.randomUUID(), action });
@@ -199,9 +197,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   app = compiled.startServer(config);
   await app.listen();
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await page.locator(".mission-card").first().click();
   await expect(
     page.getByRole("button", { name: "Neue Transporte anhalten" }),
@@ -246,8 +242,21 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
       fullPage: true,
     });
     await page.getByRole("button", { name: "Schließen", exact: true }).click();
-    for (let i = 0; i < 10; i++) app.game.step(30);
-    await expect(page.locator(".mission-card")).toHaveCount(2);
+    // Normal calls also continue during campaigns. Wait for the actual next
+    // campaign report instead of treating the former two-mission cap as timing.
+    for (
+      let i = 0;
+      i < 30 &&
+      app.db.all().get(owner)!.operations.campaign!.missions.length < 2;
+      i++
+    )
+      app.game.step(30);
+    expect(app.db.all().get(owner)!.operations.campaign!.missions).toHaveLength(
+      2,
+    );
+    await expect
+      .poll(() => page.locator(".mission-card").count())
+      .toBeGreaterThanOrEqual(2);
     await expect(
       page.getByRole("region", { name: "Großlagenübersicht" }),
     ).toContainText("2 Meldungen bisher");
@@ -257,10 +266,14 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
     expect(app.game.view(peer, new Set()).network.requests).toHaveLength(0);
     expect(app.game.view(peer, new Set()).network.friends).toHaveLength(0);
     const first = app.db.all().get(owner)!.operations.campaign!.missions[0];
-    await page.locator(".mission-card").first().click();
+    await page
+      .locator(".mission-card")
+      .filter({ hasText: "GROSSLAGE" })
+      .first()
+      .click();
     await page
       .getByLabel("Dispositionspriorität", { exact: true })
-      .selectOption("PRIORITÄT");
+      .selectOption("HOCH");
     await expect
       .poll(
         () =>
@@ -269,7 +282,7 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
             .get(owner)!
             .missions.find((m) => m.id === first)!.control!.priority,
       )
-      .toBe("PRIORITÄT");
+      .toBe("HOCH");
   } finally {
     await context.close();
   }

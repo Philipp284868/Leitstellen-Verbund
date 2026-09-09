@@ -1,4 +1,5 @@
 import type { Save } from "./model";
+import { stationCapacity } from "./simulation/staffing";
 import { progress } from "./progression";
 import { IS_GERMANY } from "./world-choice";
 import { bt, vt, extensions } from "./catalog";
@@ -14,8 +15,6 @@ import {
 } from "./world";
 export function buildReason(s: Save, kind: string, pos?: Point) {
   const t = bt(kind);
-  if (IS_GERMANY && t.water)
-    return "Für Deutschland ist noch kein befahrbares Wasserrettungsnetz verfügbar.";
   if (progress(s.xp).level < t.level)
     return `Freischaltung ab Stufe ${t.level}.`;
   if (s.money < t.price) return "Nicht genügend Credits.";
@@ -37,7 +36,9 @@ export function buildReason(s: Save, kind: string, pos?: Point) {
     if (s.buildings.some((b) => distance(b.pos, site) < 20))
       return "Bauplatz bereits belegt.";
     if (t.water && !isWaterSite(site))
-      return "Wasserrettung benötigt einen markierten Hafenbauplatz.";
+      return IS_GERMANY
+        ? "Wasserrettung benötigt einen bestätigten Straßenstandort mit Uferzugang (höchstens 60 m zum Gewässer)."
+        : "Wasserrettung benötigt einen markierten Hafenbauplatz.";
   }
   return "";
 }
@@ -50,8 +51,7 @@ export function purchaseReason(s: Save, kind: string, home: string) {
     return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;
   if (b.ready > s.time) return "Wache befindet sich im Bau.";
   if (
-    s.vehicles.filter((v) => v.home === home).length >=
-    bt(b.type).slots * b.level
+    s.vehicles.filter((v) => v.home === home).length >= stationCapacity(b).slots
   )
     return "Keine freien Stellplätze.";
   const e = extensions.find((e) => e.types.includes(kind));

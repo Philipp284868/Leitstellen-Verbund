@@ -6,7 +6,8 @@ import {
 import { reportUnit, telemetry } from "./reports";
 import { effectiveSkills } from "./major-resources";
 import type { Save, Mission } from "../model";
-import { bt, vt, mt, capabilities } from "../catalog";
+import { bt, vt, mt } from "../catalog";
+import { openForceLabels } from "./force-plan";
 import { readiness, beginTrip } from "../engine";
 import { route } from "../world";
 import { routePlan } from "./traffic";
@@ -73,9 +74,7 @@ export function propose(
       chosen.includes(v.id) ? vt(v.type).skills : effectiveSkills(m, v),
     ))
       skills[k] = (skills[k] || 0) + n;
-  for (const [k, n] of Object.entries(required))
-    if ((skills[k] || 0) < n)
-      deficit.push(`${capabilities[k] || k}: ${n - (skills[k] || 0)} fehlen`);
+  deficit.push(...openForceLabels(required, skills));
   m.control!.proposal = {
     id: simId(s),
     aao: aao.id,
@@ -140,6 +139,7 @@ export function alarm(
     v.arrive += delay;
     v.status = "alarmed";
     if (v.journey) v.journey.nextCheck = v.depart + 60;
+    reportUnit(s, m, v);
     const event = record(
       s,
       m,
@@ -149,8 +149,23 @@ export function alarm(
       v.id,
     );
     if (event) event.alarm = selected;
+    record(
+      s,
+      m,
+      "VEHICLE_DISPATCHED",
+      `${v.name} dem Einsatz zugeordnet. Tatsächliches Ausrücken folgt nach Besatzungsbildung.`,
+      actor,
+      v.id,
+    );
     setFms(s, v, 9, actor, "Alarmierung quittiert");
   }
+  record(
+    s,
+    m,
+    "ALARM_CREATED",
+    `${vehicles.length} Fahrzeug(e) alarmiert.`,
+    actor,
+  );
   if (m.control) {
     m.control.priority = priority;
     delete m.control.proposal;

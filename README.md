@@ -2,7 +2,11 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.17.0 · Deutschland komplett aus GitHub installieren
+## Version 2.18.0 · Dynamische Einsätze, freiwillige Kräfte und vollständiges Archiv
+
+**653 Einsatzvorlagen, 50 Fahrzeugtypen:** Der vorhandene Ablauf ist um konkrete Lagevarianten, echte FF-Anreisen, einen späteren BF-Ausbau, getrennte Fahrzeugbereitschaft und Rettungsmittel-Nachbereitung erweitert. Es gibt keine maximale Zahl aktiver Einsätze. Prioritäten, verständliche Fahrzeuganforderungen und eine seitenweise Einsatzliste helfen bei mehreren parallelen Lagen. Eigene WAV-, MP3- und OGG-Signale bleiben im Browser und haben keine feste 2-MB-/15-Sekunden-Grenze. Das dauerhafte SQLite-Archiv enthält alle ab diesem Update gespeicherten Abschlüsse. [Bedienung, Migration und technische Grenzen](docs/EINSATZBETRIEB-2.18.md) · [Vollständige Katalogzuordnung](docs/EINSATZKATALOG.md) · [Prüfbericht](docs/EINSATZBETRIEB-TESTBERICHT.md).
+
+## Deutschland komplett aus GitHub installieren
 
 **Neue AMP-Instanz:** Setup-Befehl `node scripts/install-germany.mjs`, App Name `scripts/start-germany.mjs`, Node.js 24, Git-Branch `main`. Die Einrichtung baut das Spiel, lädt das vollständige Deutschlandpaket automatisch aus einem festgelegten GitHub-Release und installiert die passenden Routingwerkzeuge. Kein manueller Geodatentransfer und kein eigener OSM-Import erforderlich. Rund **8 GB Download**, **15,6 GB fertige Geodaten**; mindestens **25 GB freien Speicher** für Einrichtung und Werkzeuge vorsehen. [Vollständige AMP-Neuinstallation](docs/AMP-NEUINSTALLATION.md).
 
@@ -20,7 +24,7 @@ Das Hauptmenü folgt der freigegebenen Referenz mit Regionshintergrund, Navigati
 
 Vor einem Serverupdate stoppen und sichern. Alte Einzelspielerstände verbleiben unverändert in `solo_saves`; der Server simuliert sie nicht weiter. Alte HTTP-/Socket-Modusanforderungen werden abgewiesen. **Sicherungen → Alten Einzelspielerstand als Archiv exportieren** exportiert ausschließlich den eigenen Altbestand. Offline-Wartung: `node dist/server/cli.js archive-export --username NAME --file NEUE-DATEI.json`. Der Befehl überschreibt keine Datei. Archive können nicht in die Multiplayer-Wirtschaft importiert werden. Alte Browserkopien sind ebenfalls separat als Archiv exportierbar.
 
-SQLite-Schema 12 und historische Migrationen bleiben erhalten; kein Datenreset. Bestehende Rivermere-Installationen verwenden weiter ihren bisherigen Startpfad und ihre ursprüngliche Welt. Für Deutschland sind ausdrücklich getrennte Spiel- und Geodatenordner erforderlich. Alte Gebäude und laufende Fahrten werden nicht in reale Deutschlandkoordinaten umgedeutet. Welt- und Datensatzkennung verhindern eine versehentliche Vermischung. Bei Verbindungsverlust sind Aktionen gesperrt; es beginnt keine lokale Ersatzsimulation. Der Server läuft auch ohne geöffneten Spielerbrowser weiter.
+SQLite migriert bestandsschützend auf Schema 13 und übernimmt vorhandene Archivberichte in eine eigene Tabelle. Vorher entsteht eine Sicherung; bestehende Konten, Finanzen, Fahrzeuge und laufende Vorgänge bleiben erhalten. Historisch bereits gelöschte Berichte können nicht wiederhergestellt werden. Bestehende Rivermere-Installationen verwenden weiter ihren bisherigen Startpfad und ihre ursprüngliche Welt. Für Deutschland sind ausdrücklich getrennte Spiel- und Geodatenordner erforderlich. Alte Gebäude und laufende Fahrten werden nicht in reale Deutschlandkoordinaten umgedeutet. Welt- und Datensatzkennung verhindern eine versehentliche Vermischung. Bei Verbindungsverlust sind Aktionen gesperrt; es beginnt keine lokale Ersatzsimulation. Der Server läuft auch ohne geöffneten Spielerbrowser weiter.
 
 ## Entwicklung direkt auf main
 

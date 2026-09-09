@@ -1,5 +1,6 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../region";
 import { z } from "zod";
+import { incidentProfileSchema } from "../catalog/incident-profile";
 const time = z.number().finite().nonnegative();
 const value = z.number().finite().min(0).max(100);
 const id = z.string().min(1).max(100);
@@ -104,6 +105,7 @@ export const faultSchema = z
       "radio",
       "equipment",
       "energy",
+      "accident",
     ]),
     since: time,
     repairAt: time,
@@ -129,6 +131,11 @@ export const hazardKinds = [
   "visibility",
   "darkness",
   "technical",
+  "fuel",
+  "uncertainty",
+  "contamination",
+  "security",
+  "exposure",
 ] as const;
 export const hazardSchema = z
   .object({
@@ -209,6 +216,31 @@ export const dynamicsSchema = z
   .object({
     version: z.literal(1),
     active: z.boolean(),
+    scenario: incidentProfileSchema.optional(),
+    responders: z
+      .array(
+        z
+          .object({
+            person: id,
+            vehicle: id,
+            assignment: id.optional(),
+            state: z.enum([
+              "NORMAL",
+              "BELASTET",
+              "GEFÄHRDET",
+              "VERLETZT",
+              "SCHWER_VERLETZT",
+              "EINGESCHLOSSEN",
+              "VERMISST",
+              "BEWUSSTLOS",
+            ]),
+            since: time,
+            patient: z.string().max(100),
+          })
+          .strict(),
+      )
+      .optional(),
+    bystanderChecked: z.boolean().optional(),
     last: time,
     state: z.enum([
       "developing",
@@ -220,7 +252,7 @@ export const dynamicsSchema = z
     ]),
     level: z.number().int().min(1).max(4),
     tactic: z.enum(["standard", "defensive", "rescue"]),
-    hazards: z.array(hazardSchema).max(15),
+    hazards: z.array(hazardSchema).max(32),
     fire: fireSchema.optional(),
     patients: z.array(patientSchema).max(30),
     extra: z.record(id, z.number().int().min(0).max(20)),

@@ -3,7 +3,14 @@ import { mt, vt, type Skills } from "../catalog";
 import { nodes } from "../world";
 import { writable, record } from "./events";
 import { taskNames, type OrganizationAction } from "./organizations-schema";
-import { crewRequired, personAvailable, stationProfile } from "./staffing";
+import {
+  crewRequired,
+  personAvailable,
+  stationProfile,
+  PROFESSIONAL_FIRE,
+} from "./staffing";
+import { level } from "../model";
+import { money } from "../engine";
 export function attachOrganizations(m: Mission) {
   if (m.organization) return;
   const r = mt(m.template).requirements;
@@ -70,7 +77,30 @@ export function organizationCommand(
   a: OrganizationAction,
   actor: string,
 ) {
-  if (a.type === "station-profile" || a.type === "hospital-profile") {
+  if (a.type === "station-upgrade-bf") {
+    const b = s.buildings.find((b) => b.id === a.home);
+    if (!b || b.type !== "fire" || stationProfile(b).kind !== "ff")
+      throw Error(
+        "Eine eigene Freiwillige Feuerwehr ist Voraussetzung für den BF-Ausbau.",
+      );
+    if (level(s) < PROFESSIONAL_FIRE.level)
+      throw Error(`Berufsfeuerwehr ab Stufe ${PROFESSIONAL_FIRE.level}.`);
+    if (
+      b.ready > s.time ||
+      s.vehicles.some((v) => v.home === b.id && v.status !== "ready")
+    )
+      throw Error(
+        "BF-Ausbau erst nach Rückkehr aller Fahrzeuge und Abschluss bestehender Bauarbeiten.",
+      );
+    money(s, -PROFESSIONAL_FIRE.price, `Ausbau zur Berufsfeuerwehr: ${b.name}`);
+    b.organization = {
+      ...stationProfile(b),
+      kind: "bf",
+      turnout: 20,
+      crew: "normal",
+    };
+    b.ready = s.time + PROFESSIONAL_FIRE.seconds;
+  } else if (a.type === "station-profile" || a.type === "hospital-profile") {
     const b = s.buildings.find((b) => b.id === a.home);
     if (!b) throw Error("Eigene Wache fehlt.");
     if (a.type === "hospital-profile") {
@@ -85,6 +115,14 @@ export function organizationCommand(
       if (!allowed.includes(a.profile.kind))
         throw Error("Organisation passt nicht zur Wache.");
       const previous = stationProfile(b);
+      if (a.profile.kind !== previous.kind)
+        throw Error(
+          "Die Organisationsart ist festgelegt. Für Berufsfeuerwehr den freigeschalteten BF-Ausbau verwenden.",
+        );
+      if (previous.kind === "ff" && a.profile.turnout !== previous.turnout)
+        throw Error(
+          "Die Anreise freiwilliger Kräfte wird durch die Simulation bestimmt.",
+        );
       const changesTurnout =
         a.profile.kind !== previous.kind ||
         a.profile.turnout !== previous.turnout ||
@@ -101,6 +139,14 @@ export function organizationCommand(
   } else if (a.type === "person-duty") {
     const p = s.people.find((p) => p.id === a.person);
     if (!p) throw Error("Eigene Einsatzkraft fehlt.");
+    if (stationProfile(s.buildings.find((b) => b.id === p.home)!).kind === "ff")
+      throw Error(
+        "Private Verfügbarkeit und Tagesabläufe freiwilliger Kräfte werden ausschließlich simuliert.",
+      );
+    if (a.duty.simulationOverride)
+      throw Error(
+        "Simulationsvorgaben sind dem isolierten Entwicklungslabor vorbehalten.",
+      );
     if (
       p.vehicle &&
       s.vehicles.some((v) => v.id === p.vehicle && v.status !== "ready")
@@ -108,8 +154,14 @@ export function organizationCommand(
       throw Error("Einsatzkraft ist bereits gebunden.");
     if (!nodes[a.duty.homeNode] || !nodes[a.duty.workNode])
       throw Error("Wohn- oder Arbeitsort ungültig.");
-    if (IS_GERMANY && (!isLandSite(nodes[a.duty.homeNode]) || !isLandSite(nodes[a.duty.workNode])))
-      throw Error("Wohn- und Arbeitsorte benötigen eine zugängliche Straße an Land.");
+    if (
+      IS_GERMANY &&
+      (!isLandSite(nodes[a.duty.homeNode]) ||
+        !isLandSite(nodes[a.duty.workNode]))
+    )
+      throw Error(
+        "Wohn- und Arbeitsorte benötigen eine zugängliche Straße an Land.",
+      );
     p.duty = { ...a.duty, load: p.duty?.load || 0 };
   } else if (a.type === "vehicle-reserve") {
     const v = s.vehicles.find((v) => v.id === a.vehicle);
@@ -128,6 +180,12 @@ export function organizationCommand(
       to.status !== "ready"
     )
       throw Error("Umbesetzung benötigt zwei freie Fahrzeuge derselben Wache.");
+    if (
+      stationProfile(s.buildings.find((b) => b.id === from.home)!).kind === "ff"
+    )
+      throw Error(
+        "Freiwillige Kräfte besetzen Fahrzeuge nach Alarm automatisch aus dem Wachenpool.",
+      );
     const crew = s.people.filter(
       (p) =>
         (p.vehicle === from.id || p.vehicle === to.id) &&

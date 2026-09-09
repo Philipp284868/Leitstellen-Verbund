@@ -1,8 +1,10 @@
 import type { Mission, Save, Vehicle } from "../model";
-import { vt, type Skills } from "../catalog";
+import { vt, mt, type Skills } from "../catalog";
 import type { Patient } from "./dynamics-schema";
 import { clamp, sample } from "./random";
 import { simId, record } from "./events";
+import { syncResponderRecovery } from "./responder-recovery";
+import { responseCrewAvailable, effectiveSkills } from "./major-resources";
 export const conditionNames = {
   stable: "Stabil",
   deteriorating: "Verschlechternd",
@@ -22,27 +24,47 @@ export function newPatient(
   s: Save,
   m: Mission,
   injury = "Medizinischer Notfall",
+  responder = false,
 ): Patient {
   const n = m.dynamics?.patients.length || 0,
     seed = m.control?.secret?.seed ?? s.seed;
-  return {
+  const profile = responder
+    ? undefined
+    : (m.dynamics?.scenario ?? mt(m.template).profile)?.patient;
+  const health = profile?.health ?? 80;
+  const p: Patient = {
     id: simId(s),
-    age: 8 + Math.floor(sample(seed, "age", n) * 80),
+    age: profile
+      ? profile.ageMin +
+        Math.floor(
+          sample(seed, "age", n) * (profile.ageMax - profile.ageMin + 1),
+        )
+      : responder
+        ? 18 + Math.floor(sample(seed, "crew-age", n) * 48)
+        : 8 + Math.floor(sample(seed, "age", n) * 80),
     sex: sample(seed, "sex", n) < 0.5 ? "weiblich" : "männlich",
-    condition: "stable",
-    health: 80,
-    consciousness: "wach",
+    condition:
+      health <= 12
+        ? "cpr"
+        : health < 35
+          ? "critical"
+          : health < 65
+            ? "deteriorating"
+            : "stable",
+    health,
+    consciousness:
+      health < 35 ? "bewusstlos" : health < 65 ? "eingetrübt" : "wach",
     breathing: 18,
     pulse: 85,
     systolic: 120,
     oxygen: 97,
-    temperature: 37,
-    pain: 3,
-    bloodLoss: 0,
+    temperature: profile?.temperature ?? 37,
+    pain: profile?.initialPain ?? 3,
+    bloodLoss: profile?.bloodLoss ?? 0,
     injury,
     treatment: 0,
-    prognosis: 80,
-    priority: "normal",
+    prognosis: health,
+    priority: health < 50 ? "urgent" : "normal",
     care: "standard",
     cprCycles: 0,
     nextCpr: 0,
@@ -55,6 +77,22 @@ export function newPatient(
       },
     ],
   };
+  // Scenario values are simulation parameters, not clinical instructions.
+  if (profile) {
+    p.pulse = health <= 12 ? 0 : Math.round(80 + (100 - health) * 0.8);
+    p.breathing = p.pulse ? Math.round(16 + (100 - health) * 0.2) : 0;
+    p.systolic = p.pulse ? Math.round(70 + health * 0.6) : 0;
+    p.oxygen = p.pulse ? Math.round(70 + health * 0.28) : 0;
+    if (profile.care === "cpr") p.nextCpr = s.time + 30;
+  }
+  if (m.control)
+    record(
+      s,
+      m,
+      "PATIENT_CREATED",
+      `${p.id.slice(-6)}: Patient angelegt. Befund nach Erkundung.`,
+    );
+  return p;
 }
 function note(s: Save, m: Mission, p: Patient, text: string) {
   p.history.push({ at: s.time, text });
@@ -79,12 +117,13 @@ export function patientTick(
   for (const p of order) {
     if (p.transport === "delivered" || p.condition === "dead") continue;
     const previous = p.condition;
+    const previousHealth = p.health;
     const carrier =
       p.transport === "aboard"
         ? s.vehicles.find((v) => v.id === p.vehicle)
         : undefined;
     const transportSkills = carrier
-      ? vt(carrier.type).skills
+      ? effectiveSkills(m, carrier)
       : carriers[p.vehicle];
     const care =
       p.transport === "aboard"
@@ -97,12 +136,17 @@ export function patientTick(
         : skills.doctor || 0;
     const smoke = p.transport === "scene" ? (d.fire?.smoke || 0) / 1500 : 0;
     const protection = d.tactic === "rescue" ? 1.2 : 1;
+    const intensive =
+      d.scenario?.patient.intensive && p.transport === "aboard"
+        ? Math.min(1, transportSkills?.intensive || 0)
+        : 1;
     const bonus =
-      (p.care === "oxygen" && (smoke > 0 || p.oxygen < 94)) ||
+      intensive *
+      ((p.care === "oxygen" && (smoke > 0 || p.oxygen < 94)) ||
       (p.care === "bleeding" && p.bloodLoss > 10) ||
       (p.care === "temperature" && Math.abs(p.temperature - 37) > 1)
         ? 1.3
-        : 1;
+        : 1);
     if (p.health <= 12 || p.condition === "cpr") {
       p.condition = "cpr";
       if (!p.nextCpr) p.nextCpr = s.time + 30;
@@ -141,7 +185,7 @@ export function patientTick(
           dt *
             (care * (severe && !doctor ? 0.01 : 0.32) * bonus * protection +
               doctor * 0.12 -
-              0.025 -
+              (d.scenario?.patient.deterioration ?? 0.025) -
               smoke),
       );
       p.treatment = clamp(
@@ -167,7 +211,15 @@ export function patientTick(
     p.breathing = p.pulse ? Math.round(16 + (100 - p.health) * 0.2) : 0;
     p.systolic = p.pulse ? Math.round(70 + p.health * 0.6) : 0;
     p.oxygen = p.pulse ? Math.round(70 + p.health * 0.28) : 0;
-    p.pain = Math.min(10, Math.round((100 - p.health) / 10));
+    p.pain = Math.min(
+      10,
+      Math.round(
+        Math.max(
+          (100 - p.health) / 10,
+          (d.scenario?.patient.initialPain ?? 0) * (1 - p.treatment / 100),
+        ),
+      ),
+    );
     p.bloodLoss = clamp(
       p.bloodLoss +
         dt * (p.injury.includes("Verletzung") ? 0.01 : 0) -
@@ -190,7 +242,27 @@ export function patientTick(
       ),
     );
     p.prognosis = Math.round(p.health);
-    if (previous !== p.condition) note(s, m, p, conditionNames[p.condition]);
+    if (previous !== p.condition) {
+      note(s, m, p, conditionNames[p.condition]);
+      if (p.condition === "dead")
+        record(s, m, "PATIENT_DEAD", `${p.id.slice(-6)}: Tod dokumentiert.`);
+      else if (
+        p.health < previousHealth &&
+        ["deteriorating", "critical", "cpr"].includes(p.condition) &&
+        ["stable", "recovering", "deteriorating", "critical"].indexOf(
+          previous,
+        ) <
+          ["stable", "recovering", "deteriorating", "critical", "cpr"].indexOf(
+            p.condition,
+          )
+      )
+        record(
+          s,
+          m,
+          "PATIENT_DETERIORATION",
+          `${p.id.slice(-6)}: Zustand verschlechtert (${conditionNames[p.condition]}).`,
+        );
+    }
   }
 }
 export function patientsReady(m: Mission) {
@@ -208,6 +280,15 @@ export function patientSeats(m: Mission) {
   return m.dynamics?.active
     ? m.dynamics.patients.filter((p) => p.transport !== "none").length
     : undefined;
+}
+/** Called by both local and cooperative carrier selection before a transport is reserved. */
+export function patientTransportReason(m: Mission, v: Vehicle) {
+  if (!responseCrewAvailable(m, v))
+    return "Besatzung durch Verletzung nicht vollständig einsatzbereit.";
+  return m.dynamics?.scenario?.patient.intensive &&
+    !(vt(v.type).skills.intensive > 0)
+    ? "Intensivtransport benötigt ITW oder ITH."
+    : "";
 }
 export function transportCandidates(m: Mission) {
   return (m.dynamics?.patients || [])
@@ -241,4 +322,5 @@ export function deliverPatients(s: Save, m: Mission, v: Vehicle) {
     p.transport = "delivered";
     note(s, m, p, `Im Krankenhaus übergeben (${v.name}).`);
   }
+  syncResponderRecovery(s, m);
 }

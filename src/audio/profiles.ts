@@ -3,27 +3,38 @@ export const channels = {
   pager: "Pieper",
   siren: "Sirene",
   radio: "Funk",
+  request: "Sprechwunsch",
+  priority: "Prioritätsalarm",
   phone: "Telefon",
-  gong: "Alarmgong",
+  gong: "Alarm",
   events: "Ereignisse",
 };
 export type SoundChannel = keyof typeof channels;
+export type CustomChannel = Exclude<SoundChannel, "priority">;
+export const customChannel = (channel: string): channel is CustomChannel =>
+  Object.hasOwn(channels, channel) && channel !== "priority";
 export const channelFor = (cue: Cue): SoundChannel =>
-  cue === "dme"
-    ? "pager"
-    : cue === "siren"
-      ? "siren"
-      : cue === "station"
-        ? "gong"
-        : ["radio", "arrival", "return", "priority"].includes(cue)
-          ? "radio"
-          : ["phone", "mission"].includes(cue)
-            ? "phone"
-            : "events";
+  cue === "priority" || cue === "emergency"
+    ? "priority"
+    : cue === "request"
+      ? "request"
+      : cue === "dme"
+        ? "pager"
+        : cue === "siren"
+          ? "siren"
+          : cue === "station"
+            ? "gong"
+            : ["radio", "arrival", "return"].includes(cue)
+              ? "radio"
+              : ["phone", "mission"].includes(cue)
+                ? "phone"
+                : "events";
 export const previewCue: Record<SoundChannel, Cue> = {
   pager: "dme",
   siren: "siren",
   radio: "radio",
+  request: "request",
+  priority: "priority",
   phone: "phone",
   gong: "station",
   events: "complete",
@@ -32,6 +43,8 @@ export const defaultChannels = {
   pager: 100,
   siren: 100,
   radio: 100,
+  request: 100,
+  priority: 100,
   phone: 100,
   gong: 100,
   events: 100,
@@ -53,6 +66,8 @@ export const mixes = {
       pager: 65,
       siren: 40,
       radio: 85,
+      request: 85,
+      priority: 100,
       phone: 75,
       gong: 65,
       events: 40,
@@ -67,6 +82,8 @@ export const mixes = {
       pager: 80,
       siren: 65,
       radio: 100,
+      request: 100,
+      priority: 100,
       phone: 90,
       gong: 75,
       events: 45,

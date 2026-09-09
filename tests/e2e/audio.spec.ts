@@ -98,9 +98,7 @@ async function login(page: Page, ready = false) {
   return id;
 }
 async function play(page: Page) {
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
   );
@@ -161,7 +159,9 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   ).toBe(true);
   await page.reload();
   await page.locator(".command-menu").waitFor();
-  await page.getByRole("button", { name: "Einstellungen" }).click();
+  await page
+    .getByRole("button", { name: "Einstellungen", exact: true })
+    .click();
   await expect(
     page.getByRole("slider", { name: "Musiklautstärke" }),
   ).toHaveValue("0");
@@ -268,6 +268,8 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
       "siren",
       "station",
       "priority",
+      "emergency",
+      "request",
       "mission",
       "dispatch",
       "arrival",

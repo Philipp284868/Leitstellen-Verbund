@@ -3,14 +3,22 @@ import { vt, type Skills } from "../catalog";
 import type { SectionKind } from "./major-schema";
 export const sectionSkills: Record<SectionKind, string[]> = {
   command: ["command"],
-  fire: ["fire", "air", "hazmat"],
+  fire: ["fire", "air", "hazmat", "foam", "measure", "decon"],
   rescue: ["rescue", "ladder", "diver", "boat"],
   water: ["water", "pump"],
-  medical: ["medical", "doctor", "transport", "flight"],
+  medical: [
+    "medical",
+    "doctor",
+    "transport",
+    "flight",
+    "intensive",
+    "medicalCommand",
+    "care",
+  ],
   security: ["police", "crowd"],
-  technical: ["technical", "rescue", "pump"],
-  logistics: ["logistics", "command"],
-  evacuation: ["rescue", "police", "crowd", "logistics"],
+  technical: ["technical", "rescue", "pump", "power", "lighting"],
+  logistics: ["logistics", "command", "power", "lighting"],
+  evacuation: ["rescue", "police", "crowd", "logistics", "care"],
   staging: [],
 };
 export function placement(m: Mission, v: Vehicle): SectionKind {
@@ -20,7 +28,34 @@ export function placement(m: Mission, v: Vehicle): SectionKind {
     )?.section ?? "staging"
   );
 }
+export function responseCrewAvailable(m: Mission | undefined, v: Vehicle) {
+  if (m?.dynamics?.responders) {
+    const boarded = v.turnout
+      ? new Set(
+          v.turnout.arrivals.filter((a) => a.boarded).map((a) => a.person),
+        )
+      : undefined;
+    const crew = m.dynamics.responders.filter(
+      (r) =>
+        r.vehicle === v.id &&
+        (!r.assignment || r.assignment === v.assignment) &&
+        (!boarded || boarded.has(r.person)),
+    );
+    const lost = crew.filter(
+      (r) => !["NORMAL", "BELASTET", "GEFÄHRDET"].includes(r.state),
+    ).length;
+    if (lost) {
+      const minimum =
+        v.turnout?.minimum ?? vt(v.type).crewMinimum ?? vt(v.type).crew;
+      const aboard =
+        v.turnout?.arrivals.filter((a) => a.boarded).length || crew.length;
+      if (aboard - lost < minimum) return false;
+    }
+  }
+  return true;
+}
 export function effectiveSkills(m: Mission | undefined, v: Vehicle): Skills {
+  if (!responseCrewAvailable(m, v)) return {};
   if (!m?.major) return vt(v.type).skills;
   const section = placement(m, v);
   if (!m.major.sections.some((s) => s.kind === section && s.ordered)) return {};

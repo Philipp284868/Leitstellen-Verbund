@@ -40,9 +40,7 @@ async function enter(page: Page) {
   await page.getByLabel("Benutzername", { exact: true }).fill("reports");
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
 }
 test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht überstehen einen Serverneustart", async ({
   page,
@@ -127,9 +125,7 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   app = compiled.startServer(config);
   await app.listen();
   await page.goto(config.publicUrl);
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(page.locator(".reconnect-summary")).toContainText("1 Notrufe");
   expect(app.db.all().get(owner)!.archive[0].report).toEqual(savedReport);
   expect(errors).toEqual([]);
@@ -199,9 +195,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
     fullPage: true,
   });
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(page.locator(".app")).toHaveAttribute("data-sidebar", "right");
   await page.keyboard.press("z");
   await expect(
@@ -218,14 +212,11 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
     w.playedCustom = [];
     const Base = window.AudioContext;
     window.AudioContext = class extends Base {
-      createBufferSource() {
-        const source = super.createBufferSource(),
-          start = source.start.bind(source);
-        source.start = (...args: Parameters<typeof start>) => {
-          if (source.buffer && Math.abs(source.buffer.duration - 0.25) < 0.001)
-            w.playedCustom.push(Math.max(...source.buffer.getChannelData(0)));
-          start(...args);
-        };
+      createMediaElementSource(player: HTMLMediaElement) {
+        const source = super.createMediaElementSource(player);
+        player.addEventListener("playing", () =>
+          w.playedCustom.push(player.duration),
+        );
         return source;
       }
     };
@@ -286,7 +277,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
         -1,
       ),
     ),
-  ).toBeLessThan(0.36);
+  ).toBeCloseTo(0.25);
   await page.getByRole("slider", { name: "Funklautstärke" }).focus();
   await page.keyboard.press("Home");
   await expect(
@@ -297,9 +288,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
     fullPage: true,
   });
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await page
     .getByRole("button", { name: "Einstellungen", exact: true })
     .click();
@@ -311,7 +300,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
     page.getByRole("slider", { name: "Funklautstärke" }),
   ).toHaveValue("0");
   await page
-    .getByRole("button", { name: "Original Funk", exact: true })
+    .getByRole("button", { name: "Datei für Funk löschen", exact: true })
     .click();
   await expect(page.locator(".sound-profiles")).toContainText(
     "Originalsignal wiederhergestellt",
@@ -322,6 +311,6 @@ test("Eigene Audiodatei wird wirklich abgespielt, lokal gespeichert und nach Neu
     buffer: Buffer.from("not audio"),
   });
   await expect(page.locator(".sound-profiles")).toContainText(
-    "Bitte eine WAV-",
+    "Bitte eine gültige WAV-",
   );
 });

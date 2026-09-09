@@ -53,6 +53,17 @@ export const questionLabels = {
   calm: "Anrufer beruhigen und Angaben wiederholen",
 };
 export type Question = keyof typeof questionLabels;
+export function multipleCallers(m: Mission) {
+  const t = mt(m.template),
+    profile = m.dynamics?.scenario ?? t.profile;
+  return (
+    !!m.major ||
+    !!profile?.major ||
+    t.patients >= 5 ||
+    (!!profile?.fire && profile.severity === 3) ||
+    ["factory", "warehouse", "flood", "rail", "bus"].includes(t.id)
+  );
+}
 export function questionsFor(m: Mission): Record<Question, string> {
   const org = m.control?.reportedTemplate
     ? mt(m.control.reportedTemplate).org
@@ -82,7 +93,8 @@ export function attachIncident(s: Save, m: Mission) {
   if (m.control) return;
   const seed = s.seed,
     scenario = scenarios[m.template],
-    t = mt(m.template);
+    t = mt(m.template),
+    profile = t.profile;
   const road = IS_GERMANY
     ? null
     : roads.reduce((a, b) =>
@@ -111,24 +123,44 @@ export function attachIncident(s: Save, m: Mission) {
         ? addressAt(m.pos)
         : `${road!.name} ${1 + (seed % 89)}, ${districtAt(m.pos)}`,
       people:
+        profile?.people ??
         scenario?.people ??
         (t.patients
           ? `${t.patients} betroffene Person(en) gemeldet; Anzahl noch unbestätigt.`
           : "Keine verletzten Personen bekannt; weitere Betroffene nicht ausgeschlossen."),
       hazard:
+        profile?.observations[0] ??
         scenario?.hazard ??
         `Meldung aus dem Bereich ${t.org}; Gefahren vor Ort noch unbestätigt.`,
       detail: scenario?.detail ?? `${t.name} durch Erkundung bestätigt.`,
-      secondaryAt: seed % 4 === 0 ? s.time + 45 : 0,
+      observations: profile?.observations ?? [
+        `${t.name}: Die anrufende Person beobachtet den Einsatzort.`,
+        t.patients > 0
+          ? `Ein weiterer Anrufer meldet ${t.patients} betroffene Personen an einem zweiten Zugang.`
+          : "Ein weiterer Anrufer bestätigt den betroffenen Gebäudeteil und berichtet über die Zufahrt.",
+      ],
+      secondaryAt: multipleCallers(m) ? s.time + 45 + (seed % 91) : 0,
+      secondaryKind: "additional",
       dropAt: 0,
       dropCall: "",
     },
   };
-  newCall(s, m, false);
+  record(
+    s,
+    m,
+    "MISSION_CREATED",
+    "Ereignis angelegt; Ort und Lage werden im Notruf erfragt.",
+  );
+  newCall(s, m, "initial");
 }
-function newCall(s: Save, m: Mission, second: boolean) {
+function newCall(
+  s: Save,
+  m: Mission,
+  kind: "initial" | "additional" | "recovery",
+) {
   const c = m.control!,
-    seed = c.secret!.seed;
+    seed = c.secret!.seed,
+    second = kind !== "initial";
   if (c.calls.length >= 4) return;
   c.calls.push({
     id: simId(s),
@@ -142,9 +174,15 @@ function newCall(s: Save, m: Mission, second: boolean) {
     quality: second ? 85 : 30 + ((seed >>> 5) % 65),
     credibility: second ? 95 : 45 + ((seed >>> 9) % 50),
     callback: second || seed % 7 !== 0,
+    kind,
     asked: [],
     nextAnswer: 0,
-    caller: second ? "Weitere Person vor Ort" : "Anrufende Person",
+    caller:
+      kind === "recovery"
+        ? "Erneute Meldung mit Standortangabe"
+        : second
+          ? "Weitere Person vor Ort"
+          : "Anrufende Person",
     noise: seed % 2 ? "Verkehr und Stimmen" : "Unruhige Umgebung",
   });
   record(
@@ -152,7 +190,9 @@ function newCall(s: Save, m: Mission, second: boolean) {
     m,
     "CALL_RECEIVED",
     second
-      ? "Weiterer Notruf zum selben Ereignis eingegangen."
+      ? kind === "recovery"
+        ? "Erneute Meldung nach abgebrochener oder unvollständiger Erstmeldung."
+        : "Zusätzlicher Notruf mit neuen Beobachtungen zur Großlage eingegangen."
       : "Neuer Notruf eingegangen.",
   );
 }
@@ -162,7 +202,21 @@ export function callsTick(s: Save) {
     if (!c?.secret) continue;
     if (c.secret.secondaryAt && s.time >= c.secret.secondaryAt) {
       c.secret.secondaryAt = 0;
-      newCall(s, m, true);
+      const kind =
+        c.secret.secondaryKind ??
+        (c.calls.some(
+          (call) => ["dropped", "ended"].includes(call.state) && !call.callback,
+        ) &&
+        (!c.locationKnown || !c.reportedTemplate)
+          ? "recovery"
+          : "additional");
+      if (
+        kind === "recovery"
+          ? (!c.locationKnown || !c.reportedTemplate) &&
+            !c.calls.some((call) => ["ringing", "active"].includes(call.state))
+          : multipleCallers(m)
+      )
+        newCall(s, m, kind);
     }
     for (const call of c.calls)
       if (
@@ -178,8 +232,10 @@ export function callsTick(s: Save) {
           !call.callback &&
           (!c.locationKnown || !c.reportedTemplate) &&
           c.calls.length < 4
-        )
+        ) {
           c.secret.secondaryAt = s.time + 30;
+          c.secret.secondaryKind = "recovery";
+        }
         c.secret.dropAt = 0;
         record(
           s,
@@ -265,8 +321,10 @@ export function callAction(
       !call.callback &&
       (!c.locationKnown || !c.reportedTemplate) &&
       c.calls.length < 4
-    )
+    ) {
       c.secret.secondaryAt = s.time + 30;
+      c.secret.secondaryKind = "recovery";
+    }
     call.duration += s.time - call.started;
     call.state = "ended";
     call.ended = s.time;
@@ -315,7 +373,15 @@ export function callAction(
     answer =
       call.quality < 60
         ? "Keine weiteren sicheren Beobachtungen. Eine Erkundung ist nötig."
-        : "Die Meldung beruht auf eigener Beobachtung; Details müssen vor Ort überprüft werden.";
+        : (c.secret.observations?.[
+            call.kind === "additional"
+              ? Math.min(
+                  c.calls.indexOf(call),
+                  (c.secret.observations?.length ?? 1) - 1,
+                )
+              : 0
+          ] ??
+          "Die Meldung beruht auf eigener Beobachtung; Details müssen vor Ort überprüft werden.");
   if (question === "people" && call.credibility < 60)
     answer =
       "Anrufer ist unsicher und vermutet mehrere Personen; möglicherweise nur Hörensagen.";

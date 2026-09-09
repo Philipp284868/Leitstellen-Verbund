@@ -96,23 +96,23 @@ describe("Bereitschaftsindex unveränderlicher Client-Snapshots", () => {
     };
     s.buildings[2].ready = s.time + 100;
     const reasons = equivalent(s);
-    expect(reasons[0]).toContain("geeignete Besatzungsmitglieder fehlen");
+    expect(reasons[0]).toContain("Besatzung fehlt");
     expect(reasons[2]).toContain("FMS 6");
-    expect(reasons[3]).toContain("gebunden");
-    expect(reasons[4]).toContain("Reserve");
+    expect(reasons[3]).toContain("Auf Anfahrt");
+    expect(reasons[4]).toBe("");
     expect(reasons[5]).toContain("Fahrzeugdefekt");
-    expect(reasons[8]).toContain("Wache im Bau");
+    expect(reasons[8]).toContain("Wache befindet sich im Bau");
   });
 
-  it("berücksichtigt alle Besatzungen derselben Wache für die Gebietsreserve", () => {
+  it("sperrt trotz Reservehinweisen keine verfügbaren Fahrzeuge", () => {
     const s = roster();
     s.buildings[0].organization!.reserve = 2;
     s.vehicles[0].status = "scene";
     s.people.find((p) => p.vehicle === s.vehicles[1].id)!.duty!.absence = "ill";
     // Other-station units must not cover this station's reserve.
     const reasons = equivalent(s);
-    expect(reasons[2]).toContain("Gebietsreserve");
-    expect(reasons[3]).toContain("Gebietsreserve");
+    expect(reasons[2]).toBe("");
+    expect(reasons[3]).toBe("");
     expect(reasons[4]).toBe("");
   });
 
@@ -121,7 +121,7 @@ describe("Bereitschaftsindex unveränderlicher Client-Snapshots", () => {
     s.buildings[0].organization!.crew = "minimum";
     s.people
       .filter((p) => p.vehicle === s.vehicles[0].id)
-      .slice(0, 3)
+      .slice(0, 2)
       .forEach((p) => {
         p.duty!.absence = "vacation";
       });
@@ -133,7 +133,7 @@ describe("Bereitschaftsindex unveränderlicher Client-Snapshots", () => {
       });
     const reasons = equivalent(s);
     expect(reasons[0]).toBe("");
-    expect(reasons[4]).toContain("geeignete Besatzungsmitglieder fehlen");
+    expect(reasons[4]).toContain("Besatzung fehlt");
   });
 
   it("verwendet nach Wiederverbindung oder geändertem Snapshot einen neuen Index", () => {
@@ -141,11 +141,17 @@ describe("Bereitschaftsindex unveränderlicher Client-Snapshots", () => {
       first = fleetReadiness(before),
       after = structuredClone(before);
     expect(first(before.vehicles[0])).toBe("");
-    after.vehicles[0].reserve = true;
+    after.desk.fleet[after.vehicles[0].id] = {
+      code: 6,
+      changed: after.time,
+      operative: "ready",
+      channel: "Feuerwehr",
+      history: [],
+    };
     after.revision++;
     expect(fleetReadiness(before)).toBe(first);
     expect(fleetReadiness(after)).not.toBe(first);
-    expect(fleetReadiness(after)(after.vehicles[0])).toContain("Reserve");
+    expect(fleetReadiness(after)(after.vehicles[0])).toContain("FMS 6");
     expect(first(before.vehicles[0])).toBe("");
     const changedVehicle = { ...before.vehicles[0], status: "travel" as const };
     expect(first(changedVehicle)).toBe(readiness(before, changedVehicle));

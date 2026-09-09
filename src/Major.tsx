@@ -32,13 +32,13 @@ export function OperationsOverview({
       <strong>Großlagenführung · {ready.length} Fahrzeuge disponierbar</strong>
       <small>
         {s.vehicles.filter((v) => v.status !== "ready").length} gebunden ·{" "}
-        {s.vehicles.filter((v) => v.reserve).length} als Reserve gesperrt
+        {s.vehicles.filter((v) => v.reserve).length} als Reserve vorgesehen
       </small>
       {campaign && (
         <p>
           {majorNames[campaign.kind]} · {campaign.missions.length} Meldungen
-          bisher. Weitere Meldungen kommen einzeln; höchstens zwei Einsätze
-          gleichzeitig.
+          bisher. Weitere Meldungen entstehen zeitlich versetzt und können
+          parallel bearbeitet werden.
         </p>
       )}
       {active.map((m) => (

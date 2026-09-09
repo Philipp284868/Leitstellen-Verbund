@@ -1,5 +1,5 @@
 import { createLab, runLab, verifyLab, type LabAction } from "./lab";
-import { BALANCE, missions, vehicles } from "../src/catalog";
+import { missions, vehicles } from "../src/catalog";
 
 /** Reproducible playable smoke scenarios, using the same dispatch and simulation as the server. */
 export function balanceAudit(seeds = [124, 2026, 73]) {
@@ -72,7 +72,7 @@ export function balanceAudit(seeds = [124, 2026, 73]) {
     format: "leitstellen-balance-audit",
     version: 1,
     seeds,
-    activeLimit: BALANCE.activeMax,
+    activeLimit: null,
     scenarios,
     catalog: {
       missions: missions.length,

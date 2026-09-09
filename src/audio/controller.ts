@@ -1,11 +1,20 @@
 import { useSyncExternalStore } from "react";
 import { BEAT, SoundGraph, type Cue } from "./synth";
-import { defaultChannels, channelFor, type SoundChannel } from "./profiles";
+import {
+  defaultChannels,
+  channelFor,
+  customChannel,
+  type CustomChannel,
+  type SoundChannel,
+} from "./profiles";
+import { StreamedSignal } from "./stream";
 import {
   customSounds,
   storeSound,
-  checkSoundFile,
-  normalizeSound,
+  loadSound,
+  inspectSound,
+  soundStorage,
+  type SoundInfo,
 } from "./custom";
 export interface SoundPreferences {
   masterVolume: number;
@@ -59,7 +68,12 @@ export function parseSound(value: string | null): SoundPreferences {
 }
 type Status = "waiting" | "playing" | "paused" | "muted" | "unavailable";
 class AudioController {
-  private custom = new Map<SoundChannel, AudioBuffer>();
+  private custom = new Map<CustomChannel, SoundInfo>();
+  private stream: StreamedSignal | null = null;
+  private playingChannel: SoundChannel | null = null;
+  private playback = 0;
+  private protectedUntil = 0;
+  private refreshing: Promise<void> | null = null;
   private context: AudioContext | null = null;
   private graph: SoundGraph | null = null;
   private active = false;
@@ -77,6 +91,8 @@ class AudioController {
     preferences: SoundPreferences;
     status: Status;
     customNames: Partial<Record<SoundChannel, string>>;
+    customSounds: SoundInfo[];
+    playing: string;
   } = {
     preferences: (() => {
       try {
@@ -87,6 +103,8 @@ class AudioController {
     })(),
     status: "waiting",
     customNames: {},
+    customSounds: [],
+    playing: "",
   };
   subscribe = (f: () => void) => {
     this.listeners.add(f);
@@ -144,30 +162,8 @@ class AudioController {
         }
         this.context = new AudioContext();
         this.graph = new SoundGraph(this.context);
-        try {
-          for (const stored of await customSounds()) {
-            try {
-              checkSoundFile(stored.name, stored.data);
-              this.custom.set(
-                stored.channel,
-                normalizeSound(
-                  await this.context.decodeAudioData(stored.data.slice(0)),
-                ),
-              );
-              this.snapshot = {
-                ...this.snapshot,
-                customNames: {
-                  ...this.snapshot.customNames,
-                  [stored.channel]: stored.name,
-                },
-              };
-            } catch {
-              /* Unsupported stored files retain the original signal. */
-            }
-          }
-        } catch {
-          /* Private browsing can disable local file persistence. */
-        }
+        this.stream = new StreamedSignal(this.context, this.graph.effects);
+        void this.refreshCustom().catch(() => {});
         this.context.onstatechange = () => {
           if (this.context?.state === "running" && this.wanted())
             this.notify("playing");
@@ -207,12 +203,22 @@ class AudioController {
       p.music ? (p.musicVolume * p.masterVolume) / 10000 : 0,
       p.effects ? (p.effectsVolume * p.masterVolume) / 10000 : 0,
     );
+    if (
+      !p.effects ||
+      !p.effectsVolume ||
+      !p.masterVolume ||
+      (this.playingChannel && !p.channels[this.playingChannel])
+    )
+      this.stopCustom();
+    else if (this.playingChannel)
+      this.stream?.volume(p.channels[this.playingChannel] / 100);
     if (!c) {
       if (this.snapshot.status !== "unavailable")
         this.notify(p.muted ? "muted" : "waiting");
       return;
     }
     if (!this.wanted()) {
+      this.stopCustom();
       if (this.timer) {
         clearInterval(this.timer);
         this.timer = null;
@@ -260,6 +266,7 @@ class AudioController {
       c.state !== "running" ||
       !this.wanted() ||
       !p.effects ||
+      !p.masterVolume ||
       p.effectsVolume === 0
     )
       return;
@@ -272,44 +279,131 @@ class AudioController {
             : cue === "error"
               ? 1
               : 1.2;
+    const protectedCue = cue === "priority" || cue === "emergency";
+    if (now < this.protectedUntil && cue !== "emergency") return;
     if (now - (this.recent.get(cue) ?? -Infinity) < interval) return;
     this.recent.set(cue, now);
     const channel = channelFor(cue),
       level = p.channels[channel] / 100;
     if (!level) return;
-    const custom = this.custom.get(channel);
-    if (custom && cue !== "priority") this.graph?.sample(custom, level);
-    else this.graph?.cue(cue, undefined, level);
+    if (protectedCue) {
+      this.stopCustom();
+      this.protectedUntil = now + 1.2;
+      this.graph?.cue(cue, undefined, level);
+    } else if (customChannel(channel) && this.custom.get(channel)?.enabled) {
+      this.stopCustom();
+      const token = this.playback;
+      const fallback = () => {
+        if (token === this.playback && this.wanted()) {
+          this.stopCustom();
+          this.graph?.cue(cue, undefined, level);
+        }
+      };
+      void loadSound(channel)
+        .then(async (sound) => {
+          if (token !== this.playback || !this.wanted()) return;
+          if (!sound?.enabled) {
+            this.graph?.cue(cue, undefined, level);
+            return;
+          }
+          this.playingChannel = channel;
+          this.snapshot = { ...this.snapshot, playing: sound.name };
+          this.listeners.forEach((f) => f());
+          await this.stream?.play(
+            sound.blob,
+            level,
+            () => this.stopCustom(),
+            fallback,
+          );
+        })
+        .catch(fallback);
+    } else this.graph?.cue(cue, undefined, level);
   }
-  async setCustom(channel: SoundChannel, file?: File) {
+  async preview(cue: Cue) {
+    await this.unlock();
+    const delay = this.protectedUntil - (this.context?.currentTime ?? 0);
+    if (delay > 0 && cue !== "emergency")
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, delay * 1000 + 20),
+      );
+    // Explicit testing must work even just after a normal event of the same kind.
+    this.recent.delete(cue);
+    this.cue(cue);
+  }
+  stopCustom() {
+    this.playback++;
+    this.stream?.stop();
+    this.playingChannel = null;
+    if (this.snapshot.playing) {
+      this.snapshot = { ...this.snapshot, playing: "" };
+      this.listeners.forEach((f) => f());
+    }
+  }
+  refreshCustom() {
+    if (!this.refreshing)
+      this.refreshing = customSounds()
+        .then((sounds) => {
+          this.custom = new Map(sounds.map((sound) => [sound.channel, sound]));
+          this.snapshot = {
+            ...this.snapshot,
+            customSounds: sounds,
+            customNames: Object.fromEntries(
+              sounds.map((sound) => [sound.channel, sound.name]),
+            ),
+          };
+          this.listeners.forEach((f) => f());
+        })
+        .finally(() => {
+          this.refreshing = null;
+        });
+    return this.refreshing;
+  }
+  async setCustom(channel: CustomChannel, file?: File) {
+    if (!customChannel(channel))
+      throw Error("Prioritäts- und Notfallsignale bleiben im Original.");
     if (!file) {
       await storeSound(channel);
-      this.custom.delete(channel);
-      const names = { ...this.snapshot.customNames };
-      delete names[channel];
-      this.snapshot = { ...this.snapshot, customNames: names };
     } else {
-      if (file.size > 2 * 1024 * 1024)
-        throw Error("Audiodatei ist größer als 2 MB.");
-      const data = await file.arrayBuffer();
-      checkSoundFile(file.name, data);
-      await this.unlock();
-      if (!this.context)
-        throw Error(
-          "Audio ist nicht verfügbar. Ton einschalten und erneut versuchen.",
-        );
-      const buffer = normalizeSound(
-        await this.context.decodeAudioData(data.slice(0)),
+      const quota = await soundStorage();
+      const old = (await customSounds()).find(
+        (sound) => sound.channel === channel,
       );
-      const name = file.name.slice(0, 80);
-      await storeSound(channel, { channel, name, data });
-      this.custom.set(channel, buffer);
-      this.snapshot = {
-        ...this.snapshot,
-        customNames: { ...this.snapshot.customNames, [channel]: name },
-      };
+      if (quota && file.size > quota.free + (old?.bytes ?? 0))
+        throw Error(
+          "Für diese Datei reicht der geschätzte freie Browserspeicher nicht. Die bisherige Datei bleibt erhalten.",
+        );
+      const duration = await inspectSound(file);
+      await storeSound(channel, {
+        channel,
+        name: file.name.slice(0, 160),
+        blob: file,
+        bytes: file.size,
+        duration,
+        enabled: true,
+      });
     }
-    this.listeners.forEach((f) => f());
+    this.stopCustom();
+    await this.refreshing;
+    await this.refreshCustom();
+    this.channel?.postMessage("sounds-changed");
+  }
+  async enableCustom(channel: CustomChannel, enabled: boolean) {
+    const value = await loadSound(channel);
+    if (!value) return;
+    await storeSound(channel, { ...value, enabled });
+    this.stopCustom();
+    await this.refreshing;
+    await this.refreshCustom();
+    this.channel?.postMessage("sounds-changed");
+  }
+  async assignCustom(from: CustomChannel, to: CustomChannel) {
+    const value = await loadSound(from);
+    if (!value) throw Error("Diese lokale Datei ist nicht mehr vorhanden.");
+    await storeSound(to, { ...value, channel: to, enabled: true });
+    this.stopCustom();
+    await this.refreshing;
+    await this.refreshCustom();
+    this.channel?.postMessage("sounds-changed");
   }
   private claim() {
     if (!this.active || !this.unlocked || this.snapshot.preferences.muted)
@@ -322,6 +416,10 @@ class AudioController {
       if (typeof BroadcastChannel !== "undefined") {
         this.channel = new BroadcastChannel("lv-audio-focus-v1");
         this.channel.onmessage = (e) => {
+          if (e.data === "sounds-changed") {
+            this.stopCustom();
+            void this.refreshCustom().catch(() => {});
+          }
           if (e.data === "claim") {
             this.ownsAudio = false;
             this.sync();

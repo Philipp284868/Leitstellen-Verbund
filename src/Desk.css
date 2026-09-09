@@ -141,3 +141,45 @@
 .incident-desk .dispatch-list small {
   overflow-wrap: anywhere;
 }
+.force-needs,
+.reserve-overview {
+  padding: 12px;
+  margin-block: 12px;
+  background: #102733;
+  border: 1px solid #294754;
+  border-radius: 6px;
+}
+.force-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.force-rows > span {
+  background: #091b25;
+  border: 1px solid #32525e;
+  border-radius: 4px;
+  padding: 7px 10px;
+}
+.force-needs small,
+.reserve-overview small {
+  color: #9cb6c5;
+}
+.mission-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+}
+.priority-badge {
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #183548;
+  color: #c8dfed;
+}
+.priority-badge[data-priority="HOCH"],
+.priority-badge[data-priority="KRITISCH"],
+.priority-badge[data-priority="NOTFALL"] {
+  background: #602c29;
+  color: #ffdbce;
+}

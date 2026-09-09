@@ -1,12 +1,14 @@
 # Phase 5 – Polishing, Version 2.11.0
 
+**Historischer Phasenbericht:** Seit Version 2.18 gelten ein erweitertes [Einsatz- und Bereitschaftssystem](EINSATZBETRIEB-2.18.md), keine Obergrenze aktiver Einsätze, 653 Vorlagen und die vollständige SQLite-Historie mit Schema 13. Angaben dieses historischen Berichts zu zwei Einsätzen, 500 Archivfällen und Schema 10 beschreiben den früheren Stand. Das Labor verwendet für koordinierte Nachbarhilfe inzwischen eine ausschließlich im Speicher angelegte SQLite-Datenbank; es öffnet keine Produktionsdatenbank.
+
 Die Module 29–35 erweitern das vorhandene Spiel. Node.js 24, SQLite, Socket.IO, die große Karte, echte Fahrwege, serverseitige Entscheidungen und getrennte Spielstände bleiben die Grundlage. Unabhängige Leitstellen erhalten weiterhin nur ausdrücklich vereinbarte Nachbarhilfe.
 
 ## Musik, Signale und eigene Dateien
 
 Unter **Einstellungen → Signalregler und eigene Soundprofile** gibt es eine Gesamtlautstärke und getrennte Regler für Melder, Sirene, Funk, Telefon, Wachgong und Ereignisse. Musik und Effekte behalten ihre vorhandenen eigenen Regler. Die Profile **Standard**, **Ruhige Nachtschicht** und **Funk im Vordergrund** stellen diese Regler gemeinsam ein; anschließend lässt sich jeder Wert einzeln verändern.
 
-Je Signalkanal kann eine eigene WAV-, MP3- oder OGG-Datei verwendet werden. Grenzen: 2 MB, 15 Sekunden, höchstens zwei Audiokanäle. Formatkennung und dekodierte Audiodaten werden geprüft; Stille, ungültige Werte und zu lange Dateien werden abgelehnt. Laute Dateien werden auf einen Spitzenwert von höchstens 0,35 begrenzt, leise Dateien nicht künstlich verstärkt. **Original …** entfernt die eigene Datei wieder. Die tatsächliche Formatunterstützung hängt vom Browser ab; ein abgelehntes Format ersetzt das bestehende Signal nicht.
+Die Audioverwaltung wurde inzwischen erweitert: WAV-, MP3- und OGG-Dateien verwenden die tatsächliche Browserquota ohne feste 2-MB-/15-Sekunden-Grenze. Eigene Dateien lassen sich lokal zuweisen, aktivieren, deaktivieren, ersetzen und löschen. Sprechwunsch und Priorität haben eigene Regler; Notfall und Priorität behalten unterschiedliche Originaltöne. Die aktuelle Bedienung und technische Umsetzung stehen in [Musik und lokale Audiodateien](AUDIO.md).
 
 Dateien liegen ausschließlich in IndexedDB dieses Browsers. Es gibt keine Upload-API, externe Audio-URL oder Dateiabfrage durch den Spielserver. Regler und Layout liegen in localStorage, der Wiederverbindungsmerker in sessionStorage. Browserdaten löschen entfernt diese lokalen Einstellungen und Signale, nicht den serverseitigen Spielstand. Nur Dateien verwenden, für die die nötigen Nutzungsrechte vorliegen.
 
@@ -18,15 +20,15 @@ Neue dringende Sprechwünsche mit Priorität NOTFALL oder PRIORITÄT erhalten ei
 
 **Suchen, filtern und sortieren** durchsucht ausschließlich den freigegebenen Spielstand: Einsatzkennung, bekanntes Meldebild, bestätigte Ortsangaben, Fakten, eigene zugeordnete Fahrzeuge und bekannte Patientenkennungen. Filter: Organisation, kritisch, Großlage/MANV, offene Sprechwünsche und von mir angenommene Anrufe. Sortierung: Priorität, Alter, Entfernung zur ersten Wache, Eskalation und bekannte Patientenzahl. Noch unbekannte Orte werden bei der Entfernung nach hinten gestellt.
 
-| Standardtaste | Funktion |
-| --- | --- |
-| N | Nächsten wartenden Notruf öffnen |
-| F | FMS öffnen |
-| A | Disposition des ausgewählten/offenen Einsatzes öffnen |
-| V | Fuhrpark öffnen |
-| E | Alle Einsätze anzeigen |
-| P / R | Polizei- / Rettungsdiensteinsätze filtern |
-| H | Archiv und Statistik öffnen |
+| Standardtaste | Funktion                                              |
+| ------------- | ----------------------------------------------------- |
+| N             | Nächsten wartenden Notruf öffnen                      |
+| F             | FMS öffnen                                            |
+| A             | Disposition des ausgewählten/offenen Einsatzes öffnen |
+| V             | Fuhrpark öffnen                                       |
+| E             | Alle Einsätze anzeigen                                |
+| P / R         | Polizei- / Rettungsdiensteinsätze filtern             |
+| H             | Archiv und Statistik öffnen                           |
 
 Die Tasten sind einzeln umbelegbar oder deaktivierbar. Doppelbelegungen werden entfernt. Eingabefelder, gedrückte Strg-/Alt-/Cmd-Tasten und automatische Tastenwiederholung lösen keine Kurzbefehle aus. Ein Kurzbefehl alarmiert nie unmittelbar Fahrzeuge.
 
@@ -79,20 +81,20 @@ node scripts/lab.mjs balance --out .tools/balance-audit.json
 
 Eine Aktionsdatei enthält genau ein JSON-Objekt, beispielsweise `{"type":"generate","template":"bin"}`. Einsatz-, Fahrzeug- und Patientenkennungen stehen in der erzeugten Datei unter `save`. Jeder Schritt braucht einen neuen Ausgabepfad: Vorhandene Dateien werden niemals überschrieben. Eingaben sind auf 8 MB und Labore auf 2.000 Aktionen begrenzt. Das Labor ist kein Importwerkzeug für Produktionsspielstände.
 
-| Aktion | Felder und Wirkung |
-| --- | --- |
-| `generate` | `template`: echten Katalogfall erzeugen, maximal zwei offen |
-| `interview` | `mission`: Notruf annehmen, Ort/Meldebild erfragen und beenden |
-| `dispatch` | `mission`, `vehicles`: normale Alarmierung und Bereitschaftsprüfung |
-| `brief` | `mission`: vorhandene erste Lagemeldung bearbeiten |
-| `advance` | `seconds`: 1–14.400 Sekunden ausschließlich im Labor simulieren |
-| `clock` | `hour`: vorwärts zur nächsten angegebenen UTC-Stunde springen |
-| `weather` | `kind`: Wetterschlüssel aus `weatherKinds`, bis zum nächsten Wetterwechsel setzen |
-| `escalate` | `mission`: vorhandene dynamische Gefahren erhöhen; weitere Reaktion im normalen Tick |
-| `damage` / `repair` | `vehicle`: einsatzgebundenes Fahrzeug beschädigen / reguläre Reparatur beauftragen |
-| `fms` | `vehicle`, `code`: Status 0–9 setzen; bestehende Defektregeln bleiben wirksam |
-| `patient` | `mission`, `patient`, `health`: Gesundheit 0–100 und passenden Grundzustand setzen |
-| `crew-ready` | Laborpersonal erreichbar und ohne Abwesenheit setzen |
+| Aktion              | Felder und Wirkung                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `generate`          | `template`: echten Katalogfall erzeugen, maximal zwei offen                          |
+| `interview`         | `mission`: Notruf annehmen, Ort/Meldebild erfragen und beenden                       |
+| `dispatch`          | `mission`, `vehicles`: normale Alarmierung und Bereitschaftsprüfung                  |
+| `brief`             | `mission`: vorhandene erste Lagemeldung bearbeiten                                   |
+| `advance`           | `seconds`: 1–14.400 Sekunden ausschließlich im Labor simulieren                      |
+| `clock`             | `hour`: vorwärts zur nächsten angegebenen UTC-Stunde springen                        |
+| `weather`           | `kind`: Wetterschlüssel aus `weatherKinds`, bis zum nächsten Wetterwechsel setzen    |
+| `escalate`          | `mission`: vorhandene dynamische Gefahren erhöhen; weitere Reaktion im normalen Tick |
+| `damage` / `repair` | `vehicle`: einsatzgebundenes Fahrzeug beschädigen / reguläre Reparatur beauftragen   |
+| `fms`               | `vehicle`, `code`: Status 0–9 setzen; bestehende Defektregeln bleiben wirksam        |
+| `patient`           | `mission`, `patient`, `health`: Gesundheit 0–100 und passenden Grundzustand setzen   |
+| `crew-ready`        | Laborpersonal erreichbar und ohne Abwesenheit setzen                                 |
 
 Jede erfolgreiche Aktion speichert ihren Inhalt und eine SHA-256-Prüfsumme des validierten Zustands. `verify` erzeugt dieselbe Ausgangswelt erneut, wiederholt alle Aktionen und vergleicht jeden Zwischenzustand und den Endstand. Manipulierte Aktionen, abweichende Prüfsummen oder ein veränderter Endstand werden gemeldet. Die Wiederholung gilt für dieselbe Programmversion; spätere Änderungen der Simulationsregeln können absichtlich andere Ergebnisse liefern.
 

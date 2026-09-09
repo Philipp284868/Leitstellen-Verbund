@@ -12,6 +12,7 @@ export async function prepareGeography(c: Config) {
   try {
     const provider = await initializeGermany({
       indexPath: resolve(c.geodataDir, "index.sqlite"),
+      mapsPath: resolve(c.geodataDir, "maps.mbtiles"),
       dataset: maps.manifest.dataset,
       routerUrl: c.routerUrl,
     });

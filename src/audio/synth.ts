@@ -3,6 +3,8 @@
 export const BEAT = 60 / 78;
 export type Cue =
   | "priority"
+  | "emergency"
+  | "request"
   | "phone"
   | "dme"
   | "siren"
@@ -252,6 +254,12 @@ export class SoundGraph {
         this.tone(frequency(m), t + i * spacing, duration, volume * level, out),
       );
     switch (cue) {
+      case "emergency":
+        notes([93, 81, 93, 81, 93, 81], 0.12, 0.11, 0.2);
+        break;
+      case "request":
+        notes([81, 74, 81], 0.15, 0.13, 0.15);
+        break;
       case "priority":
         notes([86, 74, 86, 74], 0.16, 0.15, 0.19);
         break;

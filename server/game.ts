@@ -1,8 +1,8 @@
 import { vehiclePosition } from "../src/vehicle-position";
+import { qualityFactor } from "../src/simulation/reports";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
 import { addXp } from "../src/progression";
 import { stationProfile, personDuty } from "../src/simulation/staffing";
-import { BALANCE } from "../src/catalog";
 import { nextCallDelay } from "../src/simulation/balance";
 import { majorActions, type MajorAction } from "../src/simulation/major-schema";
 import { majorCommand } from "../src/simulation/major-command";
@@ -26,6 +26,7 @@ import {
   boardPatients,
   deliverPatients,
   patientSeats,
+  patientTransportReason,
   transportCandidates,
 } from "../src/simulation/patients";
 import { attachDynamics, followupsTick } from "../src/simulation/dynamics";
@@ -241,14 +242,23 @@ export class Game {
         .run(user, id, fingerprint);
     });
   }
-  step(seconds: number, now = Date.now()) {
+  step(
+    seconds: number,
+    now = Date.now(),
+    options: { generation?: boolean } = {},
+  ) {
     withAutomaticRouting(() =>
       this.db.transaction(() => {
-        this.stepMode(seconds, now, "multi");
+        this.stepMode(seconds, now, "multi", options.generation !== false);
       }),
     );
   }
-  private stepMode(seconds: number, now: number, mode: GameMode) {
+  private stepMode(
+    seconds: number,
+    now: number,
+    mode: GameMode,
+    allowGeneration = true,
+  ) {
     const saves = this.db.all(mode);
     // Each slice reconciles all participants from authoritative persisted state.
     const count = Math.max(
@@ -284,6 +294,7 @@ export class Game {
                 current[key] = (current[key] || 0) + value;
               if (
                 canTransport(m, v) &&
+                !patientTransportReason(m, v) &&
                 !m.transports.some((t) => t.assignment === v.assignment)
               ) {
                 const remaining =
@@ -361,18 +372,14 @@ export class Game {
         for (const m of s.archive.filter((m) => !before.has(m.round))) {
           this.db.sql
             .prepare("INSERT OR IGNORE INTO rewards VALUES (?,?,?)")
-            .run(
-              `owner:${m.round}:${id}`,
-              id,
-              m.contributors.length
-                ? Math.floor(mt(m.template).reward / 2)
-                : mt(m.template).reward,
-            );
+            .run(`owner:${m.round}:${id}`, id, m.telemetry?.credits ?? 0);
           for (const helperId of m.contributors) {
             const helper = saves.get(helperId);
             if (!helper) throw Error("Beteiligtes Konto fehlt.");
             const amount = Math.floor(
-                mt(m.template).reward / 2 / m.contributors.length,
+                (mt(m.template).reward * qualityFactor(m)) /
+                  2 /
+                  m.contributors.length,
               ),
               receipt = `coop:${m.round}:${helperId}`;
             const inserted = this.db.sql
@@ -380,7 +387,7 @@ export class Game {
               .run(receipt, helperId, amount);
             if (inserted.changes) {
               money(helper, amount, `Verbund: ${mt(m.template).name}`, receipt);
-              addXp(helper, 60);
+              addXp(helper, Math.floor(60 * qualityFactor(m)));
             }
           }
         }
@@ -440,12 +447,8 @@ export class Game {
           attachOrganizations(m);
           return m;
         });
-        if (!s.operations.campaign) followupsTick(s);
-        if (
-          !s.operations.campaign &&
-          s.missionWait === 0 &&
-          s.missions.length < BALANCE.activeMax
-        ) {
+        followupsTick(s);
+        if (allowGeneration && s.missionWait === 0) {
           const count = s.missions.length;
           generate(s);
           if (s.missions.length > count) {
@@ -453,7 +456,7 @@ export class Game {
             attachDynamics(s, s.missions.at(-1)!);
             attachOrganizations(s.missions.at(-1)!);
             maybeMajor(s, s.missions.at(-1)!);
-            s.missionWait = nextCallDelay(s.seed);
+            s.missionWait = nextCallDelay(s.seed, s);
           }
         }
       }

@@ -64,7 +64,7 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
     const route = structuredClone(hlf.path),
       assignment = hlf.assignment;
     setFms(s, hlf, 0, "owner", "Priorisierter Funkkontakt");
-    expect(readiness(s, hlf)).toContain("gebunden");
+    expect(readiness(s, hlf)).toContain("Auf Anfahrt");
     expect(hlf.assignment).toBe(assignment);
     expect(hlf.path).toEqual(route);
     tick(s, hlf.arrive + 1, {}, false, false);
@@ -78,13 +78,13 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
     expect(publicSave(s).missions[0].template).toBe("field");
     tick(s, s.time + 1, {}, false, false);
     const request = m.control!.radio.find((r) => r.reason === "request")!;
-    expect(request.details).toContain("Löschwasser");
+    expect(request.details).toContain("TLF");
     radioAction(s, m, request.id, "request", "owner");
     const count = m.control!.events.length;
     radioAction(s, m, request.id, "request", "owner");
     expect(m.control!.events).toHaveLength(count);
     alarm(s, m, [tlf.id], "owner", "DRINGEND", "siren");
-    expect(tlf.depart - s.time).toBe(45);
+    expect(tlf.depart - s.time).toBe(30);
     const before = s.money;
     tick(s, tlf.arrive + 70, {}, false, false);
     expect(s.archive.find((x) => x.id === m.id)?.control?.stage).toBe("closed");
@@ -115,9 +115,10 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
   expect(replay()).toEqual(replay());
 });
 it("ordnet mehrere Anrufe demselben Ereignis zu; Abbruch, Rückruf und Übernahme erhalten Angaben", () => {
-  const s = phaseFixture("owner"),
+  const s = phaseFixture("owner", "bus"),
     m = s.missions[0],
     c = m.control!.calls[0];
+  m.control!.secret!.secondaryAt = s.time + 45;
   callAction(s, m, c.id, "accept", "owner");
   callAction(s, m, c.id, "ask", "owner", "report");
   expect(() => callAction(s, m, c.id, "ask", "owner", "people")).toThrow(
@@ -179,7 +180,7 @@ it("AAO und freie Disposition respektieren Sperren, Fehlbedarf und Wachenprofile
     m.control!.events.filter((e) => e.type === "ALARM_STARTED"),
   ).toHaveLength(1);
   expect(() => alarm(s, m, [s.vehicles[1].id, v.id], "owner")).toThrow(
-    "gebunden",
+    "Alarmiert",
   );
   expect(s.vehicles[1].mission).toBeNull();
 });
@@ -279,7 +280,7 @@ it("speichert AAO, Gespräche, Fahrt und Historie über Neustart; schützt fremd
     game.command(member, dispatch);
     expect(() =>
       game.command(owner, { ...dispatch, id: crypto.randomUUID() }),
-    ).toThrow("gebunden");
+    ).toThrow("Alarmiert");
     const prior = db.all().get(owner)!;
     db.close();
     db = new Database(dir);
@@ -417,9 +418,10 @@ it("erhält den Patiententransport im neuen Ablauf mit FMS 7, 8 und einmaligem A
   expect(validate(s)).toEqual(s);
 });
 it("hält widersprüchliche Angaben verschiedener Anrufer als Widerspruch fest", () => {
-  const s = phaseFixture("owner"),
+  const s = phaseFixture("owner", "bus"),
     m = s.missions[0],
     c = m.control!.calls[0];
+  m.control!.secret!.secondaryAt = s.time + 45;
   callAction(s, m, c.id, "accept", "owner");
   callAction(s, m, c.id, "ask", "owner", "report");
   tick(s, s.time + 5, {}, false, false);

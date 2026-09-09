@@ -1,4 +1,10 @@
 import { WORLD_SEED } from "./region";
+import { responderInjurySchema } from "./simulation/responder-recovery";
+import { stationCapacity, validateStaffing } from "./simulation/staffing";
+import {
+  availabilitySchema,
+  postIncidentSchema,
+} from "./simulation/availability-schema";
 import { IS_GERMANY } from "./world-choice";
 import { migrateTravel } from "./travel-migration";
 import { progress, xpForLevel } from "./progression";
@@ -69,6 +75,7 @@ export const personSchema = z
     home: id,
     vehicle: id.nullable(),
     duty: dutySchema.optional(),
+    injury: responderInjurySchema.optional(),
     skills: z.array(z.string().max(30)).max(20),
     training: z.string().max(30),
     ready: num,
@@ -82,6 +89,8 @@ export const vehicleSchema = z
     destination: id.optional(),
     journey: journeySchema.optional(),
     fault: faultSchema.optional(),
+    postIncident: postIncidentSchema.optional(),
+    availability: availabilitySchema.optional(),
     id,
     owner: id,
     type: id,
@@ -101,7 +110,7 @@ export const vehicleSchema = z
     path: z.array(point).max(200000),
     depart: num,
     arrive: num,
-    patients: integer.max(10),
+    patients: integer.max(100),
   })
   .strict();
 export const missionSchema = z
@@ -129,7 +138,7 @@ export const missionSchema = z
             assignment: id,
             owner: id,
             vehicle: id,
-            patients: integer.min(1).max(10),
+            patients: integer.min(1).max(100),
             status: z.enum(["ordered", "delivered"]),
           })
           .strict(),
@@ -184,8 +193,8 @@ export const saveSchema = z
     buildings: z.array(buildingSchema).max(150),
     people: z.array(personSchema).max(6000),
     vehicles: z.array(vehicleSchema).max(500),
-    missions: z.array(missionSchema).max(60),
-    archive: z.array(missionSchema).max(500),
+    missions: z.array(missionSchema),
+    archive: z.array(missionSchema),
     journal: z.array(journalSchema).max(2000),
     receipts: z.array(id).max(50000),
     deliveryAcks: z.array(id).max(10000).default([]),
@@ -356,6 +365,7 @@ export function validate(data: unknown): Save {
   return mapped;
 }
 export function validateReferences(s: Save, legacy = false) {
+  validateStaffing(s);
   s.completed = Math.max(s.completed, s.archive.length);
   const assignments = s.vehicles.flatMap((v) =>
     v.assignment ? [v.assignment] : [],
@@ -372,8 +382,9 @@ export function validateReferences(s: Save, legacy = false) {
     )
       throw Error("Ungültiger Bauplatz.");
     if (
-      s.vehicles.filter((v) => v.home === b.id).length > t.slots * b.level ||
-      s.people.filter((p) => p.home === b.id).length > t.people * b.level
+      s.vehicles.filter((v) => v.home === b.id).length >
+        stationCapacity(b).slots ||
+      s.people.filter((p) => p.home === b.id).length > stationCapacity(b).people
     )
       throw Error("Wachenkapazität überschritten.");
   }

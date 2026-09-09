@@ -1,19 +1,28 @@
 import { buildReason, purchaseReason } from "./purchase";
+import { dispatchReason } from "./simulation/availability";
+import {
+  queuePostIncident,
+  startPostIncident,
+  postIncidentTick,
+} from "./simulation/post-incident";
 import { vehiclePosition } from "./vehicle-position";
 import { addXp, missionXp } from "./progression";
 import { selectHospital } from "./simulation/hospitals";
-import { measureTravel, telemetry } from "./simulation/reports";
+import { measureTravel, telemetry, qualityFactor } from "./simulation/reports";
 import { effectiveSkills, canTransport } from "./simulation/major-resources";
 import {
-  suitableCrew,
   crewRequired,
-  reserveReason,
   personAvailable,
+  stationProfile,
+  stationCapacity,
+  newStationProfile,
+  releaseVolunteerCrew,
 } from "./simulation/staffing";
 import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
 import {
   patientSeats,
+  patientTransportReason,
   transportCandidates,
   boardPatients,
   deliverPatients,
@@ -25,7 +34,7 @@ import { faultsTick } from "./simulation/faults";
 import type { TravelMode } from "./simulation/dynamics-schema";
 import { setFms } from "./simulation/fms";
 import { beforeStep, afterVehicles, afterStep } from "./simulation/incidents";
-import { simId } from "./simulation/events";
+import { simId, record } from "./simulation/events";
 import {
   BALANCE,
   bt,
@@ -39,7 +48,6 @@ import { level, type Save, type Mission, type Vehicle } from "./model";
 import {
   nodes,
   nearest,
-  docks,
   isWaterSite,
   WORLD_WIDTH,
   WORLD_HEIGHT,
@@ -78,20 +86,7 @@ export function money(s: Save, amount: number, text: string, receipt?: string) {
   return true;
 }
 export function readiness(s: Save, v: Vehicle) {
-  const t = vt(v.type),
-    b = s.buildings.find((b) => b.id === v.home);
-  if (v.fault && v.fault.state !== "repaired")
-    return "Fahrzeugdefekt: Reparatur erforderlich";
-  if (s.desk.fleet[v.id]?.code === 6) return "FMS 6: nicht einsatzbereit";
-  if (v.status !== "ready") return "Fahrzeug bereits gebunden";
-  if (!b || b.ready > s.time) return "Wache im Bau";
-  const reserve = reserveReason(s, v);
-  if (reserve) return reserve;
-  const crew = suitableCrew(s, v),
-    needed = crewRequired(s, v);
-  if (crew.length < needed)
-    return `${needed - crew.length} geeignete Besatzungsmitglieder fehlen${t.training ? " · " + t.training : ""}`;
-  return "";
+  return dispatchReason(s, v);
 }
 export function capacity(s: Save, atScene?: string): Skills {
   const total: Skills = {};
@@ -163,11 +158,24 @@ export function beginTrip(
 }
 export function recall(s: Save, v: Vehicle) {
   if (v.fault && v.fault.state !== "repaired") return;
+  queuePostIncident(s, v);
   for (const c of s.contributions.filter(
     (c) => c.assignment === v.assignment && c.status === "active",
   ))
     c.status = "returned";
   v.patients = 0;
+  const incident =
+    s.missions.find((m) => m.id === v.mission) ??
+    s.archive.find((m) => m.id === v.mission);
+  if (incident)
+    record(
+      s,
+      incident,
+      "VEHICLE_RELEASED",
+      `${v.name}: Einsatzbindung beendet; Rückfahrt zur Wache.`,
+      "server",
+      v.id,
+    );
   beginTrip(s, v, s.buildings.find((b) => b.id === v.home)!.pos, "return");
   setFms(s, v, 1, "server", "Rückfahrt zur Wache");
   v.assignment = null;
@@ -249,6 +257,7 @@ export function apply(s: Save, a: Action) {
         pos,
         level: 1,
         ready: s.time + BALANCE.buildSeconds,
+        organization: newStationProfile(t.id),
         extensions: [],
       });
       s.tutorial = Math.max(1, s.tutorial);
@@ -270,7 +279,7 @@ export function apply(s: Save, a: Action) {
         throw Error("Benötigte Wachenerweiterung: " + extension.name);
       if (
         s.vehicles.filter((v) => v.home === b.id).length >=
-        bt(b.type).slots * b.level
+        stationCapacity(b).slots
       )
         throw Error("Keine freien Stellplätze.");
       money(s, -t.price, `Kauf: ${t.name}`);
@@ -298,7 +307,7 @@ export function apply(s: Save, a: Action) {
         throw Error("Ungültige Einstellung.");
       if (
         s.people.filter((p) => p.home === b.id).length + a.count >
-        bt(b.type).people * b.level
+        stationCapacity(b).people
       )
         throw Error("Keine freien Personalplätze.");
       money(s, -a.count * BALANCE.hire, "Personal eingestellt");
@@ -317,6 +326,22 @@ export function apply(s: Save, a: Action) {
       const v = s.vehicles.find((v) => v.id === a.vehicle);
       if (!v || v.status !== "ready")
         throw Error("Fahrzeug muss an der Wache sein.");
+      const home = s.buildings.find((b) => b.id === v.home)!;
+      if (stationProfile(home).kind === "ff") {
+        const t = vt(v.type);
+        const pool = s.people.filter(
+          (p) =>
+            p.home === v.home &&
+            !p.training &&
+            (!t.training || p.skills.includes(t.training)),
+        );
+        if (pool.length < crewRequired(s, v))
+          throw Error(
+            "Zuerst ausreichend geeignetes Personal einstellen oder ausbilden.",
+          );
+        s.tutorial = Math.max(3, s.tutorial);
+        break;
+      }
       const t = vt(v.type),
         assigned = s.people.filter((p) => p.vehicle === v.id).length;
       const candidates = s.people
@@ -423,7 +448,7 @@ export function apply(s: Save, a: Action) {
         b.ready > s.time ||
         b.type !== vt(v.type).home ||
         s.vehicles.filter((v) => v.home === b.id).length >=
-          bt(b.type).slots * b.level
+          stationCapacity(b).slots
       )
         throw Error("Versetzung derzeit nicht möglich.");
       s.people
@@ -474,7 +499,6 @@ export function apply(s: Save, a: Action) {
   }
 }
 export function generate(s: Save) {
-  if (s.missions.length >= BALANCE.activeMax) return;
   const available = capacity(s);
   const candidates = missions.filter(
     (m) =>
@@ -484,43 +508,24 @@ export function generate(s: Save) {
       ),
   );
   if (!candidates.length) return;
+  const previousSeed = s.seed;
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
   const weighted = candidates.flatMap((t) =>
     Array.from({ length: weatherWeight(s, t.id) }, () => t),
   );
   const t = weighted[(s.seed >>> 16) % weighted.length];
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
-  const relevantHomes = new Set(
-    s.vehicles
-      .filter((v) =>
-        Object.keys(vt(v.type).skills).some((k) => t.requirements[k]),
-      )
-      .map((v) => v.home),
-  );
-  const bases = s.buildings.filter(
-    (b) => b.ready <= s.time && relevantHomes.has(b.id),
-  );
-  const localSites = IS_GERMANY
-    ? [
-        ...new Map(
-          bases
-            .flatMap((b) =>
-              querySites(b.pos, s.vehicles.length <= 4 ? 180 : 400),
-            )
-            .map((p) => [`${p.x},${p.y}`, p]),
-        ).values(),
-      ]
-    : nodes;
-  const sites = localSites.filter((p) =>
-    bases.some(
-      (b) => distance(b.pos, p) <= (s.vehicles.length <= 4 ? 180 : 400),
-    ),
-  );
+  const sites = generationLocations(s, t);
+  if (sites === null) {
+    // Transient routing outages delay this draw without losing simulation progress
+    // or consuming its random choice. Existing persisted timers survive restart.
+    s.seed = previousSeed;
+    s.missionWait = Math.max(s.missionWait, 60);
+    s.nextMission = s.time + 60;
+    return;
+  }
   if (!sites.length) return;
-  if (t.water && !docks.length) return;
-  const pos = t.water
-    ? docks[s.seed % docks.length]
-    : sites[s.seed % sites.length];
+  const pos = sites[s.seed % sites.length];
   s.missions.push({
     id: simId(s),
     template: t.id,
@@ -600,6 +605,7 @@ function tickState(
       return true;
     });
     for (const v of s.vehicles) {
+      postIncidentTick(s, v);
       measureTravel(s, v, s.time - dt);
       faultsTick(s, v, remoteDynamic.has(v.mission || ""));
       if (v.fault && v.fault.state !== "repaired") continue;
@@ -609,6 +615,8 @@ function tickState(
       else if (v.status === "return") {
         v.status = "ready";
         v.path = [s.buildings.find((b) => b.id === v.home)!.pos];
+        releaseVolunteerCrew(s, v);
+        startPostIncident(s, v);
       } else if (v.status === "transport") {
         const home =
           v.destination ??
@@ -672,6 +680,7 @@ function tickState(
             v.status === "scene" &&
             (!v.fault || v.fault.state === "repaired") &&
             canTransport(m, v) &&
+            !patientTransportReason(m, v) &&
             !m.transports.some((t) => t.assignment === v.assignment),
         )) {
           const seats = Math.min(
@@ -702,9 +711,10 @@ function tickState(
         if (m.dynamics) m.dynamics.state = "resolved";
         m.phase = "done";
         m.completed = s.time;
-        const reward = m.contributors.length
-          ? Math.floor(t.reward / 2)
-          : t.reward;
+        const quality = qualityFactor(m);
+        const reward = Math.floor(
+          (t.reward * quality) / (m.contributors.length ? 2 : 1),
+        );
         if (
           money(
             s,
@@ -715,7 +725,7 @@ function tickState(
         ) {
           const measured = telemetry(s, m);
           measured.credits = reward;
-          measured.xp = missionXp(t);
+          measured.xp = Math.floor(missionXp(t) * quality);
           addXp(s, measured.xp);
           s.completed++;
           s.tutorial = Math.max(5, s.tutorial);
@@ -725,12 +735,10 @@ function tickState(
       }
     }
     s.archive.unshift(...s.missions.filter((m) => m.phase === "done"));
-    s.archive = s.archive.slice(0, 500);
     s.missions = s.missions.filter((m) => m.phase !== "done");
     afterStep(s);
   }
   s.time = end;
   if (allowGeneration && !offline && s.time >= s.nextMission) generate(s);
 }
-import { IS_GERMANY } from "./world-choice";
-import { querySites } from "./germany/world";
+import { generationLocations } from "./simulation/incident-location";

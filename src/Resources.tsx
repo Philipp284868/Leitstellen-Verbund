@@ -18,7 +18,8 @@ import {
 } from "./catalog";
 import { level, type Save, type Building } from "./model";
 import { act } from "./store";
-import { readiness } from "./engine";
+import { fleetReadiness } from "./fleet-view";
+import { stationCapacity } from "./simulation/staffing";
 import { credits, statuses } from "./ui";
 export function BuildingShop({
   s,
@@ -81,13 +82,13 @@ export function BuildingPanel({ s, b }: { s: Save; b: Building }) {
         <span>
           Stellplätze{" "}
           <b>
-            {fleet.length}/{bt(b.type).slots * b.level}
+            {fleet.length}/{stationCapacity(b).slots}
           </b>
         </span>
         <span>
           Personal{" "}
           <b>
-            {crew.length}/{bt(b.type).people * b.level}
+            {crew.length}/{stationCapacity(b).people}
           </b>
         </span>
       </div>
@@ -333,11 +334,21 @@ export function Fleet({
                     {s.buildings.find((b) => b.id === v.home)?.name} ·{" "}
                     {statuses[v.status]}
                   </small>
-                  <small className={readiness(s, v) ? "warning" : "good"}>
-                    {v.status === "ready"
-                      ? readiness(s, v) || "Vollständig einsatzbereit"
-                      : tripLabel(v, s.time)}
+                  <small className={fleetReadiness(s)(v) ? "warning" : "good"}>
+                    {v.availability?.reason ||
+                      fleetReadiness(s)(v) ||
+                      "Vollständig einsatzbereit"}
                   </small>
+                  {v.availability && (
+                    <small>
+                      Besatzung: {v.availability.crewPresent}/
+                      {v.availability.crewCapacity} · Ausrücken ab{" "}
+                      {v.availability.crewRequired} Kräften
+                    </small>
+                  )}
+                  {v.status !== "ready" && (
+                    <small>{tripLabel(v, s.time)}</small>
+                  )}
                 </div>
               </div>
               <div className="inline">

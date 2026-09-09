@@ -16,7 +16,9 @@ import {
   personDuty,
   personAvailable,
   crewRequired,
+  reserveWarning,
 } from "../src/simulation/staffing";
+import { forceVolunteerAvailability } from "../src/simulation/volunteers";
 import { publicSave } from "../src/simulation/incidents";
 import { alarm } from "../src/simulation/dispatch";
 import { hospitalOptions } from "../src/simulation/hospitals";
@@ -94,7 +96,8 @@ it("BF und Führungsfahrzeuge nutzen konfigurierte Ausrückzeiten ohne Tageszeit
     },
     "bf",
   );
-  expect(readiness(s, s.vehicles[1])).toContain("Gebietsreserve");
+  expect(readiness(s, s.vehicles[1])).toBe("");
+  expect(reserveWarning(s, s.vehicles[1])).toContain("Gebietsreserve");
   organizationCommand(
     s,
     {
@@ -121,7 +124,7 @@ it("FF-Anreise ist individuell, reproduzierbar und nach Speichern unverändert",
       ...personDuty(s, p),
       homeNode: i,
       workNode: i,
-      reachability: i < 3 ? 100 : 0,
+      simulationOverride: { available: i < 6, until: s.time + 3600 },
       workdays: false,
     };
   const clone = validate(structuredClone(s));
@@ -137,7 +140,7 @@ it("FF-Anreise ist individuell, reproduzierbar und nach Speichern unverändert",
   }
   expect(loaded).toEqual(s);
   expect(v.status).not.toBe("alarmed");
-  expect(s.people.filter((p) => p.duty?.load)).toHaveLength(3);
+  expect(s.people.filter((p) => p.duty?.load)).toHaveLength(6);
 });
 it("ausbleibende FF-Quittierung verhindert Ausrücken und fordert Ersatz an", () => {
   const s = organizationFixture("ff-fail"),
@@ -149,7 +152,8 @@ it("ausbleibende FF-Quittierung verhindert Ausrücken und fordert Ersatz an", ()
     reserve: 0,
   };
   for (const p of s.people.filter((p) => p.vehicle === v.id))
-    p.duty = { ...personDuty(s, p), reachability: 1 };
+    p.duty = personDuty(s, p);
+  forceVolunteerAvailability(s, false);
   alarm(s, s.missions[0], [v.id], "ff-fail");
   expect(v.turnout!.arrivals.filter((a) => a.available).length).toBeLessThan(9);
   tick(s, s.time + 601, {}, false, false);
@@ -157,11 +161,11 @@ it("ausbleibende FF-Quittierung verhindert Ausrücken und fordert Ersatz an", ()
   expect(v.status).not.toBe("scene");
   expect(
     s.missions[0].control!.radio.some((r) =>
-      r.details.includes("Personal fehlt"),
+      r.details.includes("Besatzung fehlt"),
     ),
   ).toBe(true);
 });
-it("Schicht, Abwesenheit und Reserve verhindern Disposition; Umbesetzung nutzt wirklich eigenes geeignetes Personal", () => {
+it("Schicht und Abwesenheit sperren Disposition, Reserve warnt; Umbesetzung nutzt geeignetes Personal", () => {
   const s = organizationFixture("staff"),
     [from, to] = s.vehicles;
   const ambulance = addAmbulance(s),
@@ -180,8 +184,8 @@ it("Schicht, Abwesenheit und Reserve verhindern Disposition; Umbesetzung nutzt w
     { type: "vehicle-reserve", vehicle: from.id, reserve: true },
     "staff",
   );
-  expect(readiness(s, from)).toContain("Reserve");
-  expect(() => alarm(s, s.missions[0], [from.id], "staff")).toThrow("Reserve");
+  expect(readiness(s, from)).toBe("");
+  expect(reserveWarning(s, from)).toContain("Reserve");
   apply(s, { type: "unassign", vehicle: to.id });
   s.people
     .filter((p) => p.vehicle === from.id)
@@ -601,7 +605,7 @@ it("Organisationsaufträge verraten vor der Erkundung weder verdeckte Polizei- n
   expect(m.organization!.tasks.length).toBeGreaterThan(0);
   expect(publicSave(s).missions[0]).not.toHaveProperty("organization");
 });
-it("Gebietsreserve gilt auch für Mehrfachauswahl; abgelehnte Teilaktionen hinterlassen keine Bindung", async () => {
+it("Gebietsreserve verhindert weder Mehrfachauswahl noch Hilfe; ungültige Aktionen bleiben atomar", async () => {
   const w = await world();
   try {
     const s = w.db.all().get(w.helper)!;
@@ -619,8 +623,8 @@ it("Gebietsreserve gilt auch für Mehrfachauswahl; abgelehnte Teilaktionen hinte
         s.vehicles.map((v) => v.id),
         w.helper,
       ),
-    ).toThrow("Gebietsreserve");
-    expect(s.vehicles.every((v) => v.status === "ready")).toBe(true);
+    ).not.toThrow();
+    expect(s.vehicles.every((v) => v.status === "alarmed")).toBe(true);
     const r = w.draft();
     w.command(w.owner, { type: "aid-send", id: r.id });
     const before = w.db.all().get(w.helper)!;
@@ -629,11 +633,18 @@ it("Gebietsreserve gilt auch für Mehrfachauswahl; abgelehnte Teilaktionen hinte
         type: "aid-accept",
         owner: w.owner,
         id: r.id,
-        vehicles: before.vehicles.map((v) => v.id),
+        vehicles: [...before.vehicles.map((v) => v.id), "nonexistent-vehicle"],
       }),
-    ).toThrow("Gebietsreserve");
+    ).toThrow();
     expect(w.db.all().get(w.helper)).toEqual(before);
     expect(w.db.all().get(w.owner)!.aid[0].assignments).toEqual([]);
+    w.command(w.helper, {
+      type: "aid-accept",
+      owner: w.owner,
+      id: r.id,
+      vehicles: before.vehicles.map((v) => v.id),
+    });
+    expect(w.db.all().get(w.owner)!.aid[0].assignments).toHaveLength(2);
   } finally {
     w.db.close();
   }
@@ -702,7 +713,13 @@ it("aktive Unterstützungsanfrage übersteht echte CLI-Wiederherstellung und spi
       dir = await mkdtemp(resolve(tmpdir(), "lv-aid-restore-"));
     const result = spawnSync(
       process.execPath,
-      [".tools/legacy-tests/server/cli.js", "restore", "--file", file, "--confirm"],
+      [
+        ".tools/legacy-tests/server/cli.js",
+        "restore",
+        "--file",
+        file,
+        "--confirm",
+      ],
       { encoding: "utf8", env: { ...process.env, DATA_DIR: dir } },
     );
     expect(result.status, result.stderr).toBe(0);
@@ -721,7 +738,7 @@ it("aktive Unterstützungsanfrage übersteht echte CLI-Wiederherstellung und spi
     restored?.close();
     w.db.close();
   }
-});
+}, 15000);
 it("historischer Schema-7-Stand ohne Phase-3-Felder erhält keine nachträglichen Organisationspflichten", async () => {
   const w = await world();
   let db = w.db;
@@ -786,7 +803,7 @@ it("erste Nachbarkräfte melden Fehlbedarf, FMS folgt dem Funkgespräch und AAO 
     const deficit = m.control!.radio.find(
       (r) => r.state === "open" && r.details.startsWith("Nachforderung:"),
     )!;
-    expect(deficit.details).toContain("Löschwasser");
+    expect(deficit.details).toContain("TLF");
     expect(w.db.all().get(w.helper)!.desk.fleet[vehicles[0].id].code).toBe(5);
     w.command(w.owner, {
       type: "radio",

@@ -1,7 +1,7 @@
 import { taskSkills } from "./organizations";
 import type { Mission, Save } from "../model";
 import { mt, type Skills } from "../catalog";
-import type { Hazard } from "./dynamics-schema";
+import { hazardKinds, type Hazard } from "./dynamics-schema";
 import { record } from "./events";
 import { clamp } from "./random";
 export const hazardNames: Record<Hazard["kind"], string> = {
@@ -20,6 +20,11 @@ export const hazardNames: Record<Hazard["kind"], string> = {
   visibility: "Schlechte Sicht",
   darkness: "Dunkelheit",
   technical: "Technische Gefahren",
+  fuel: "Brennstoffausbreitung",
+  uncertainty: "Ungeklärter Gefahrstoff",
+  contamination: "Kontamination",
+  security: "Ungesicherter Einsatzbereich",
+  exposure: "Ungeschützte Betroffene",
 };
 export function hazard(
   kind: Hazard["kind"],
@@ -44,6 +49,32 @@ export function initialHazards(s: Save, m: Mission): Hazard[] {
   const t = mt(m.template),
     r = t.requirements,
     result: Hazard[] = [];
+  if (t.profile) {
+    for (const definition of t.profile.hazards) {
+      if (!hazardKinds.includes(definition.kind as Hazard["kind"]))
+        throw Error("Unbekannte Gefahr im Einsatzprofil.");
+      result.push(
+        hazard(
+          definition.kind as Hazard["kind"],
+          definition.skill,
+          definition.initial,
+          definition.growth,
+          definition.required,
+        ),
+      );
+    }
+    const skill =
+      Object.keys(r).find(
+        (k) => !["transport", "command", "medicalCommand"].includes(k),
+      ) || "medical";
+    if ((s.environment?.wind ?? 0) >= 60)
+      result.push(hazard("weather", skill, 20, 0.008));
+    if ((s.environment?.visibility ?? 15000) < 1000)
+      result.push(hazard("visibility", skill, 20, 0.005));
+    const hour = new Date(s.time * 1000).getUTCHours();
+    if (hour < 6 || hour >= 21) result.push(hazard("darkness", skill, 12, 0));
+    return result;
+  }
   if (r.fire && m.template !== "bma-false")
     result.push(
       hazard("fire", "fire", 24, 0.035, r.fire),
@@ -117,7 +148,9 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
   }
 }
 export function requirements(m: Mission): Skills {
-  const r = { ...mt(m.template).requirements };
+  const r = {
+    ...(m.dynamics?.scenario?.requirements ?? mt(m.template).requirements),
+  };
   if (m.major) r.command = Math.max(r.command || 0, 1);
   for (const task of m.organization?.tasks || [])
     if (!task.done)

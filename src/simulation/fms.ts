@@ -19,9 +19,11 @@ export const alarmNames = {
   station: "Wachalarm",
 };
 export const operativeCode = (v: Vehicle) =>
-  ({ ready: 2, alarmed: 9, travel: 3, scene: 4, transport: 7, return: 1 })[
-    v.status
-  ];
+  v.postIncident?.startedAt !== undefined
+    ? 6
+    : { ready: 2, alarmed: 9, travel: 3, scene: 4, transport: 7, return: 1 }[
+        v.status
+      ];
 export function fmsName(s: Save, v: Vehicle, code: number) {
   return (s.desk.definitions[bt(vt(v.type).home).org] ??
     s.desk.definitions.Alle ??

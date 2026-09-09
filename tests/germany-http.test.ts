@@ -29,6 +29,14 @@ import {
 import type * as Fixture from "./germany-simulation-fixture";
 import type { Config } from "../server/config";
 import type { ServerAction } from "../server/actions";
+import type { Mission, Save } from "../src/model";
+import { unproject } from "../src/germany/projection";
+import {
+  encodeTile,
+  rectangle,
+  tile,
+  tilePoint,
+} from "./helpers/geography-tile";
 
 const dataset = "d".repeat(64),
   password = "Isolated-germany-test-284!";
@@ -159,6 +167,28 @@ beforeEach(async () => {
       lat,
     );
   }
+  for (const [id, x, y] of [
+    [17000000001, 1550, 1000],
+    [17000000002, 2600, 1000],
+    [17000000003, 1550, 600],
+    [17000000004, 1550, 1450],
+  ]) {
+    const { lon, lat } = unproject(tilePoint(x, y));
+    db.prepare("INSERT INTO anchors VALUES(?,?,?,?,?,0,0,'')").run(
+      id,
+      lon,
+      lat,
+      "Uferstraße",
+      "residential",
+    );
+    db.prepare("INSERT INTO anchors_rtree VALUES(?,?,?,?,?)").run(
+      id,
+      lon,
+      lon,
+      lat,
+      lat,
+    );
+  }
   db.exec(
     "INSERT INTO places VALUES(1,'node','10','city','Berlin','Berlin',13.4,52.52,'Berlin'); INSERT INTO places_rtree VALUES(1,13.4,13.4,52.52,52.52); INSERT INTO places VALUES(2,'way','11','hospital','Testklinik','Testklinik',13.4009,52.5209,'Berlin'); INSERT INTO places_rtree VALUES(2,13.4009,13.4009,52.5209,52.5209); INSERT INTO places_fts(places_fts) VALUES('rebuild')",
   );
@@ -168,6 +198,20 @@ beforeEach(async () => {
     "CREATE TABLE tiles(zoom_level INTEGER,tile_column INTEGER,tile_row INTEGER,tile_data BLOB); CREATE TABLE metadata(name TEXT PRIMARY KEY,value TEXT)",
   );
   tiles.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
+  tiles.exec("INSERT INTO metadata VALUES('maxzoom','14')");
+  tiles.prepare("INSERT INTO tiles VALUES(?,?,?,?)").run(
+    tile.z,
+    tile.x,
+    2 ** tile.z - 1 - tile.y,
+    encodeTile([
+      {
+        layer: "water",
+        properties: { class: "lake" },
+        type: 3,
+        parts: [rectangle(500, 500, 1500, 1500)],
+      },
+    ]),
+  );
   tiles
     .prepare("INSERT INTO tiles VALUES(?,?,?,?)")
     .run(2, 2, 2, gzipSync(Buffer.from("synthetic vector transport fixture")));
@@ -283,7 +327,160 @@ function connect(session: Session, delta: boolean) {
   socket.connect();
   return { socket, next };
 }
+async function routerMode(mode: string) {
+  await new Promise<void>((done) => {
+    child.once("message", () => done());
+    child.send({ mode });
+  });
+}
+function waterGeneration() {
+  const save = app!.db.all().get(user.id)!;
+  f.apply(save, { type: "build", kind: "water", pos: tilePoint(1550, 1000) });
+  const water = save.buildings.at(-1)!.id;
+  f.apply(save, { type: "build", kind: "ems", pos: tilePoint(2600, 1000) });
+  const ems = save.buildings.at(-1)!.id;
+  f.tick(save, save.time + 30, {}, false, false);
+  f.apply(save, { type: "extension", id: ems, kind: "doctor" });
+  f.tick(
+    save,
+    Math.max(...save.buildings.map((b) => b.ready)) + 1,
+    {},
+    false,
+    false,
+  );
+  for (const [kind, home] of [
+    ["boat", water],
+    ["gww", water],
+    ["rtw", ems],
+    ["nef", ems],
+  ])
+    f.apply(save, { type: "buy", kind, home });
+  // Keep the retry inside one weather/hour weighting window. This case tests
+  // routing recovery; crossing a real-time weather boundary changes the catalog draw.
+  f.tick(save, Math.ceil(save.time / 900) * 900 + 120, {}, false, false);
+  const available = f.capacity(save);
+  const weighted = f.missions
+    .filter(
+      (m) =>
+        m.level <= 30 &&
+        Object.entries(m.requirements).every(
+          ([k, n]) => (available[k] || 0) >= n,
+        ),
+    )
+    .flatMap((m) =>
+      Array.from({ length: f.weatherWeight(save, m.id) }, () => m),
+    );
+  for (let seed = 1; seed < 100000; seed++) {
+    const next = (seed * 1664525 + 1013904223) >>> 0;
+    const selected = weighted[(next >>> 16) % weighted.length];
+    if (selected?.profile?.site !== "water") continue;
+    save.seed = seed;
+    save.missionWait = 0;
+    save.nextMission = save.time;
+    app!.db.save(user.id, save);
+    return { seed, template: selected.id, save };
+  }
+  throw Error("No eligible catalog water profile in the fixture fleet.");
+}
 describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)", () => {
+  it("verzögert automatische Wassereinsätze bei Routingausfall, hält Health und Fortschritt aktiv und versucht erneut", async () => {
+    const { seed, template, save: before } = waterGeneration();
+    await routerMode("unavailable");
+    const count = (await (await fetch(c.routerUrl + "/stats")).json()).requests;
+    expect(() => app!.game.step(1)).not.toThrow();
+    const waiting = app!.db.all().get(user.id)!;
+    expect(waiting.missions).toHaveLength(0);
+    expect(waiting.seed).toBe(seed);
+    expect(waiting.time).toBeGreaterThan(before.time);
+    expect(waiting.missionWait).toBe(60);
+    expect(waiting.nextMission).toBe(waiting.time + 60);
+    expect((await (await fetch(c.routerUrl + "/stats")).json()).requests).toBe(
+      count + 1,
+    );
+    await new Promise((done) => setTimeout(done, 1100));
+    expect((await request("/api/health")).status).toBe(200);
+    expect(app!.db.all().get(user.id)!.time).toBeGreaterThan(waiting.time);
+    expect((await (await fetch(c.routerUrl + "/stats")).json()).requests).toBe(
+      count + 1,
+    );
+    await routerMode("normal");
+    // Advance only the router circuit clock; simulation advances through its real
+    // existing persisted retry timer, without changing profile selection or seed.
+    const now = Date.now() + 61000,
+      clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    try {
+      expect(() => app!.game.step(60, now)).not.toThrow();
+    } finally {
+      clock.mockRestore();
+    }
+    const recovered: Save = app!.db.all().get(user.id)!;
+    expect(
+      recovered.missions,
+      JSON.stringify({
+        seed: recovered.seed,
+        priorSeed: seed,
+        wait: recovered.missionWait,
+        time: recovered.time,
+        priorTime: before.time,
+        environment: recovered.environment?.kind,
+        priorEnvironment: before.environment?.kind,
+        template,
+      }),
+    ).toHaveLength(1);
+    expect(recovered.missions[0].template).toBe(template);
+    expect((await request("/api/health")).status).toBe(200);
+  }, 20000);
+  it("weist ungültige Routerverträge weiterhin sichtbar zurück und rollt Game.step zurück", async () => {
+    waterGeneration();
+    await routerMode("invalid");
+    const before = app!.db.all().get(user.id)!;
+    expect(() => app!.game.step(1)).toThrow();
+    const after = app!.db.all().get(user.id)!;
+    expect(after.seed).toBe(before.seed);
+    expect(after.time).toBe(before.time);
+    expect(after.missions).toEqual(before.missions);
+  });
+  it("prüft Wasserwachen am Ufer serverseitig, bucht wiederholte Käufe nur einmal und erhält sie nach Neustart", async () => {
+    const shore = tilePoint(1550, 1000),
+      inland = tilePoint(2600, 1000);
+    const url = (p: { x: number; y: number }) =>
+      `/api/geo/site?type=water&x=${p.x}&y=${p.y}`;
+    expect((await request(url(shore))).status).toBe(401);
+    const invalid = await request(url(inland), user);
+    expect(invalid.status).toBe(200);
+    expect((await invalid.json()).reason).toMatch(/Uferzugang/);
+    const before = app!.db.all().get(user.id)!;
+    expect(
+      (
+        await request("/api/action", user, {
+          id: crypto.randomUUID(),
+          action: { type: "build", kind: "water", pos: inland },
+        })
+      ).status,
+    ).toBe(400);
+    expect(app!.db.all().get(user.id)!.money).toBe(before.money);
+    const checked = await request(url(shore), user);
+    expect(checked.status).toBe(200);
+    expect((await checked.json()).reason).toBeNull();
+    const action = {
+      id: crypto.randomUUID(),
+      action: { type: "build", kind: "water", pos: shore },
+    };
+    expect((await request("/api/action", user, action)).status).toBe(200);
+    const after = app!.db.all().get(user.id)!;
+    expect(after.buildings.filter((b) => b.type === "water")).toHaveLength(1);
+    expect(after.money).toBeLessThan(before.money);
+    expect((await request("/api/action", user, action)).status).toBe(200);
+    expect(app!.db.all().get(user.id)!.money).toBe(after.money);
+    await app!.close();
+    app = undefined;
+    await start();
+    const restored = app!.db.all().get(user.id)!;
+    expect(restored.money).toBe(after.money);
+    expect(restored.buildings.filter((b) => b.type === "water")).toEqual(
+      after.buildings.filter((b) => b.type === "water"),
+    );
+  }, 20000);
   it("teilt pro Veröffentlichung den berechtigten View desselben Kontos zwischen Tabs und HTTP", async () => {
     const a = connect(user, true),
       b = connect(user, true),
@@ -440,10 +637,21 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
   }, 20000);
   it("sendet initial vollständige Routendaten, danach Referenzen und nach Wiederverbindung erneut vollständig", async () => {
     const save = app!.db.all().get(user.id)!;
-    f.generate(save);
-    const mission = save.missions[0];
-    mission.template = "field";
-    mission.pos = f.project({ lon: 13.4009, lat: 52.5209 });
+    // This test exercises route snapshot transport, not geographic generation.
+    const mission: Mission = {
+      id: crypto.randomUUID(),
+      template: "field",
+      pos: f.project({ lon: 13.4009, lat: 52.5209 }),
+      progress: 0,
+      phase: "offered",
+      created: save.time,
+      completed: 0,
+      shared: false,
+      round: crypto.randomUUID(),
+      contributors: [],
+      transports: [],
+    };
+    save.missions.push(mission);
     f.attachIncident(save, mission);
     const call = mission.control!.calls[0].id;
     f.callAction(save, mission, call, "accept", user.id);
@@ -493,7 +701,18 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     expect(state.save.world).toBe("germany-1");
     expect(state.save.player.id).toBe(user.id);
     expect(state.save.buildings).toEqual(before.buildings);
-    expect(state.save.vehicles).toEqual(before.vehicles);
+    expect(
+      state.save.vehicles.map((v: Record<string, unknown>) => {
+        const copy = { ...v };
+        delete copy.availability;
+        return copy;
+      }),
+    ).toEqual(before.vehicles);
+    expect(
+      state.save.vehicles.every(
+        (v: { availability?: unknown }) => !!v.availability,
+      ),
+    ).toBe(true);
     expect((await request("/geo/manifest")).status).toBe(200);
     expect(
       (

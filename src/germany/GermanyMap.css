@@ -73,6 +73,15 @@
 .germany-marker.station {
   background: #36675a;
 }
+.germany-marker.volunteer {
+  width: 19px;
+  height: 19px;
+  font-size: 11px;
+  border-radius: 50%;
+  border-color: #ffe1a0;
+  background: #916317;
+  color: #fff5d7;
+}
 .germany-marker.friend {
   border-color: #cab5ec;
   border-style: dashed;

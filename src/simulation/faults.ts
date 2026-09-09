@@ -5,6 +5,8 @@ import { setFms, operativeCode } from "./fms";
 import { request } from "./incidents";
 import { record } from "./events";
 import { sample, DYNAMICS } from "./random";
+import { newPatient } from "./patients";
+import { injureResponder, injuryReason } from "./responder-recovery";
 export const faultNames = {
   engine: "Motorschaden",
   tire: "Reifenproblem",
@@ -12,6 +14,7 @@ export const faultNames = {
   radio: "Funkstörung",
   equipment: "Ausrüstungsdefekt",
   energy: "Tank-/Ladeproblem",
+  accident: "Unfall des Einsatzfahrzeugs",
 };
 export function breakVehicle(
   s: Save,
@@ -39,6 +42,63 @@ export function breakVehicle(
   v.arrive = s.time;
   const m = s.missions.find((m) => m.id === v.mission);
   if (m?.control) {
+    const person = s.people.find(
+      (p) =>
+        p.vehicle === v.id &&
+        !injuryReason(s, p) &&
+        (!v.turnout ||
+          v.turnout.arrivals.some((a) => a.person === p.id && a.boarded)),
+    );
+    // Injuries belong to this incident only when the accident happened at its scene.
+    // A vehicle immobilized en route never teleports casualties to the original address.
+    if (
+      kind === "accident" &&
+      v.status === "scene" &&
+      m.dynamics?.active &&
+      person &&
+      m.dynamics.patients.length < 30
+    ) {
+      const p = newPatient(
+        s,
+        m,
+        "Verletzung nach Unfall eines Einsatzfahrzeugs",
+        true,
+      );
+      p.health = 45;
+      p.condition = "deteriorating";
+      p.consciousness = "eingetrübt";
+      p.pulse = 124;
+      p.breathing = 27;
+      p.systolic = 97;
+      p.oxygen = 83;
+      p.priority = "urgent";
+      m.dynamics.patients.push(p);
+      m.dynamics.extra.medical = Math.max(m.dynamics.extra.medical || 0, 2);
+      m.dynamics.extra.transport = Math.max(m.dynamics.extra.transport || 0, 1);
+      m.dynamics.aftermath = 0;
+      if (person) {
+        injureResponder(s, m, person.id, p);
+        m.dynamics.responders ??= [];
+        const prior = m.dynamics.responders.find(
+          (r) =>
+            r.person === person.id &&
+            (!r.assignment || r.assignment === v.assignment),
+        );
+        if (prior) {
+          prior.state = "VERLETZT";
+          prior.patient = p.id;
+          prior.since = s.time;
+        } else
+          m.dynamics.responders.push({
+            person: person.id,
+            vehicle: v.id,
+            ...(v.assignment ? { assignment: v.assignment } : {}),
+            state: "VERLETZT",
+            since: s.time,
+            patient: p.id,
+          });
+      }
+    }
     record(
       s,
       m,
@@ -121,7 +181,13 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
     DYNAMICS.defectChance
   )
     return;
-  const kinds = Object.keys(faultNames) as (keyof typeof faultNames)[];
+  // Existing incidents retain the previous draw mapping when a catalog is upgraded.
+  const profiled = s.missions.some(
+    (m) => m.id === v.mission && m.dynamics?.scenario,
+  );
+  const kinds = (Object.keys(faultNames) as (keyof typeof faultNames)[]).filter(
+    (kind) => kind !== "accident" || profiled,
+  );
   breakVehicle(
     s,
     v,

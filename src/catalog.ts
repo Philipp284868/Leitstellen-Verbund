@@ -1,5 +1,7 @@
-import { WORLD_NAME } from "./world-choice";
+import { WORLD_NAME, IS_GERMANY } from "./world-choice";
 import { unlockLevel } from "./progression";
+import { incidentVariants } from "./catalog/incident-variants";
+import type { IncidentProfile } from "./catalog/incident-profile";
 export type Org =
   | "Feuerwehr"
   | "Rettungsdienst"
@@ -18,7 +20,6 @@ export const BALANCE = {
   upgradeSeconds: 60,
   offlineMax: 14400,
   missionInterval: 120,
-  activeMax: 2,
   callIntervalMin: 90,
   callIntervalMax: 210,
   hospitalSeconds: 90,
@@ -44,6 +45,14 @@ export const capabilities: Record<string, string> = {
   diver: "Wasserrettung",
   boat: "Rettungsboot",
   flight: "Luftrettung",
+  foam: "Schaummittelversorgung",
+  measure: "Gefahrstoffmessung",
+  decon: "Dekontamination",
+  intensive: "Intensivversorgung",
+  medicalCommand: "Rettungsdienstführung",
+  care: "Betreuung",
+  power: "Notstromversorgung",
+  lighting: "Beleuchtung",
 };
 export interface BuildingType {
   id: string;
@@ -136,6 +145,7 @@ export interface VehicleType {
   home: string;
   price: number;
   crew: number;
+  crewMinimum?: number;
   training: string;
   speed: number;
   skills: Skills;
@@ -256,16 +266,256 @@ export const vehicles: VehicleType[] = [
   ),
   v(
     "boat",
-    "Rettungsboot",
+    IS_GERMANY ? "Zugfahrzeug mit Rettungsboot (MZB)" : "Rettungsboot",
     "water",
-    18000,
-    2,
+    IS_GERMANY ? 36000 : 18000,
+    IS_GERMANY ? 4 : 2,
     { boat: 2, diver: 1 },
     3,
     "Wasserrettung",
-    "water",
+    IS_GERMANY ? "road" : "water",
+  ),
+  v("lf10", "LF 10", "fire", 24500, 9, { fire: 2, water: 1, pump: 1 }, 2),
+  v("hlf10", "HLF 10", "fire", 36500, 9, { fire: 1, rescue: 2, water: 1 }, 2),
+  v("tlf2000", "TLF 2000", "fire", 26500, 3, { fire: 1, water: 2 }, 2),
+  v("tlf3000", "TLF 3000", "fire", 31000, 3, { fire: 1, water: 3 }, 2),
+  v(
+    "elw2",
+    "ELW 2",
+    "fire",
+    84000,
+    4,
+    { command: 5, logistics: 1 },
+    3,
+    "Führung",
+  ),
+  v("kdow", "KdoW", "fire", 17000, 1, { command: 1 }, 2, "Führung"),
+  v("vrw", "VRW", "fire", 25000, 3, { rescue: 2 }, 2, "Bergung"),
+  v("gwl", "GW-L", "fire", 37000, 3, { logistics: 4, lighting: 1 }, 3),
+  v("gwmess", "GW-Mess", "fire", 42000, 3, { measure: 3 }, 3, "Gefahrgut"),
+  v(
+    "gwt",
+    "GW-T",
+    "fire",
+    38000,
+    3,
+    { technical: 2, rescue: 1, power: 1 },
+    3,
+    "Bergung",
+  ),
+  // Every AB entry is a complete road-going WLF + loaded container combination.
+  v(
+    "abruest",
+    "WLF mit AB-Rüst",
+    "fire",
+    76000,
+    2,
+    { rescue: 4, technical: 3 },
+    3,
+    "Bergung",
+  ),
+  v(
+    "abwasser",
+    "WLF mit AB-Wasser",
+    "fire",
+    69000,
+    2,
+    { water: 8, pump: 1 },
+    3,
+  ),
+  v(
+    "abschaum",
+    "WLF mit AB-Schaum",
+    "fire",
+    74000,
+    2,
+    { foam: 5, water: 2 },
+    3,
+  ),
+  v(
+    "abatem",
+    "WLF mit AB-Atemschutz",
+    "fire",
+    71000,
+    2,
+    { air: 8, logistics: 1 },
+    3,
+    "Atemschutz",
+  ),
+  v(
+    "abgefahrgut",
+    "WLF mit AB-Gefahrgut",
+    "fire",
+    85000,
+    3,
+    { hazmat: 5, measure: 1 },
+    3,
+    "Gefahrgut",
+  ),
+  v("sw", "Schlauchwagen SW 2000", "fire", 35000, 3, { water: 4, pump: 3 }, 3),
+  v(
+    "dekonp",
+    "Dekon-P",
+    "fire",
+    59000,
+    6,
+    { decon: 4, logistics: 1 },
+    3,
+    "Gefahrgut",
+  ),
+  v(
+    "grtw",
+    "GRTW",
+    "ems",
+    115000,
+    4,
+    { medical: 8, transport: 6, care: 2 },
+    3,
+    "Rettungsdienst",
+    "road",
+    6,
+  ),
+  v(
+    "naw",
+    "NAW",
+    "ems",
+    52000,
+    3,
+    { medical: 2, doctor: 1, transport: 1 },
+    3,
+    "Notarzt",
+    "road",
+    1,
+  ),
+  v(
+    "itw",
+    "ITW",
+    "ems",
+    89000,
+    3,
+    { medical: 3, doctor: 1, intensive: 1, transport: 1 },
+    3,
+    "Intensivtransport",
+    "road",
+    1,
+  ),
+  v(
+    "ith",
+    "ITH",
+    "heli",
+    170000,
+    4,
+    { medical: 3, doctor: 1, intensive: 1, transport: 1, flight: 1 },
+    4,
+    "Intensivtransport",
+    "air",
+    1,
+  ),
+  v(
+    "rtwxl",
+    "RTW – erweiterte Versorgung",
+    "ems",
+    39000,
+    3,
+    { medical: 3, transport: 1 },
+    2,
+    "Rettungsdienst",
+    "road",
+    1,
+  ),
+  v(
+    "ktwb",
+    "KTW-B – zwei Transportplätze",
+    "ems",
+    23000,
+    2,
+    { medical: 1, transport: 2 },
+    2,
+    "",
+    "road",
+    2,
+  ),
+  v(
+    "mzf",
+    "MZF Rettungsdienst",
+    "ems",
+    27000,
+    2,
+    { medical: 1, transport: 1, logistics: 2 },
+    2,
+    "",
+    "road",
+    1,
+  ),
+  v(
+    "elrd",
+    "ELRD",
+    "ems",
+    34000,
+    2,
+    { medicalCommand: 2, command: 1 },
+    3,
+    "Führung",
+  ),
+  v(
+    "orgl",
+    "OrgL Rettungsdienst",
+    "ems",
+    37000,
+    2,
+    { medicalCommand: 3, logistics: 1 },
+    3,
+    "Führung",
+  ),
+  v(
+    "lna",
+    "LNA",
+    "ems",
+    43000,
+    2,
+    { medicalCommand: 2, doctor: 2 },
+    3,
+    "Notarzt",
+  ),
+  v(
+    "segrtw",
+    "SEG-RTW",
+    "ems",
+    21500,
+    3,
+    { medical: 2, transport: 1, care: 1 },
+    2,
+    "Rettungsdienst",
+    "road",
+    1,
+  ),
+  v(
+    "gwsan",
+    "GW-San",
+    "ems",
+    58000,
+    6,
+    { medical: 6, care: 3, logistics: 1 },
+    3,
+    "Rettungsdienst",
+  ),
+  v(
+    "segbetreuung",
+    "SEG-Betreuung",
+    "ems",
+    36000,
+    6,
+    { care: 6, logistics: 3 },
+    3,
   ),
 ];
+for (const type of vehicles)
+  type.crewMinimum =
+    type.id === "tsf"
+      ? 4
+      : ["lf", "lf10", "hlf", "hlf10"].includes(type.id)
+        ? 6
+        : type.crew;
 export interface Template {
   id: string;
   name: string;
@@ -277,6 +527,7 @@ export interface Template {
   level: number;
   water: boolean;
   description: string;
+  profile?: IncidentProfile;
 }
 const m = (
   id: string,
@@ -639,6 +890,7 @@ export const missions: Template[] = [
     30,
     5000,
   ),
+  ...incidentVariants,
 ];
 export const bt = (id: string) => {
   const x = buildings.find((b) => b.id === id);

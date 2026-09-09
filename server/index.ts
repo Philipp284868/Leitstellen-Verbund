@@ -1,4 +1,7 @@
 import { deskOwner } from "./workspaces";
+import { historyPage, exportHistory } from "./history";
+import type { Save } from "../src/model";
+import { publicSave } from "../src/simulation/incidents";
 import { IS_GERMANY } from "../src/world-choice";
 import { prepareGeography, type Geography } from "./germany/runtime";
 import { germanyProvider } from "../src/germany/world";
@@ -125,7 +128,7 @@ export function startServer(
     res.setHeader("Referrer-Policy", "same-origin");
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     if (c.secure)
       res.setHeader("Strict-Transport-Security", "max-age=31536000");
@@ -328,6 +331,32 @@ export function startServer(
           const publishedView = publish();
           return reply(res, 200, publishedView(session.user_id, mode));
         }
+        if (path === "/api/history" && req.method === "GET") {
+          const params = requestUrl.searchParams;
+          const options = z
+            .object({
+              page: z.coerce.number().int().min(0).max(1000000),
+              query: z.string().max(200),
+              org: z.string().max(40),
+              major: z.boolean(),
+            })
+            .parse({
+              page: params.get("page") ?? 0,
+              query: params.get("query") ?? "",
+              org: params.get("org") ?? "Alle",
+              major: params.get("major") === "true",
+            });
+          return reply(
+            res,
+            200,
+            historyPage(
+              db.sql,
+              deskOwner(db, session.user_id, mode),
+              mode,
+              options,
+            ),
+          );
+        }
         if (path === "/api/archive-export" && req.method === "GET") {
           const row = db.sql
             .prepare("SELECT data FROM solo_saves WHERE user_id=?")
@@ -337,22 +366,37 @@ export function startServer(
               error:
                 "Kein archivierter Einzelspielerstand für dieses Konto vorhanden.",
             });
+          const archived = JSON.parse(String(row.data)) as Save;
+          archived.archive = exportHistory(
+            db.sql,
+            session.user_id,
+            "single",
+            archived.archive,
+          );
           return reply(res, 200, {
             format: "leitstellen-verbund-archive",
             version: 1,
             source: "retired-single-player",
             exportedAt: Date.now(),
-            save: JSON.parse(String(row.data)),
+            save: publicSave(archived),
           });
         }
-        if (path === "/api/export" && req.method === "GET")
+        if (path === "/api/export" && req.method === "GET") {
+          const save = game.view(session.user_id, online(), mode).save;
+          save.archive = exportHistory(
+            db.sql,
+            deskOwner(db, session.user_id, mode),
+            mode,
+            save.archive,
+          );
           return reply(res, 200, {
             format: "leitstellen-verbund",
             version: 1,
             exportedAt: Date.now(),
             mode,
-            save: game.view(session.user_id, online(), mode).save,
+            save,
           });
+        }
         return reply(res, 404, { error: "API-Endpunkt nicht verfügbar." });
       }
       if (!["GET", "HEAD"].includes(req.method || ""))

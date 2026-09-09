@@ -53,8 +53,14 @@ function fixture(): Save {
         control: {
           locationKnown: true,
           priority: "NORMAL",
-          secret: { address: "Teststraße, Berlin" },
-          facts: [],
+          facts: [
+            {
+              key: "address",
+              text: "Teststraße, Berlin",
+              source: "call",
+              confidence: "bestätigt",
+            },
+          ],
           calls: [],
           radio: [],
         },

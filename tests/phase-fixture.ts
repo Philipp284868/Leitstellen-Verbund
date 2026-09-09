@@ -11,6 +11,13 @@ export function phaseFixture(owner: string, template = "field"): Save {
   s.xp = xpForLevel(30);
   s.tutorial = 6;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  // Existing phase suites model an established professional station. Volunteer starts have their own suite.
+  s.buildings[0].organization = {
+    kind: "bf",
+    turnout: 30,
+    crew: "normal",
+    reserve: 0,
+  };
   tick(s, s.time + 30, {}, false, false);
   const home = s.buildings[0].id;
   for (const [kind, count] of [

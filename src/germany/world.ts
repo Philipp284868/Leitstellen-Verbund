@@ -26,6 +26,17 @@ export type Road = {
   points: Point[];
 };
 export type Anchor = Point & { id: number; name: string; roadClass: string };
+export type IncidentSiteKind =
+  | "street"
+  | "residential"
+  | "commercial"
+  | "industrial"
+  | "forest"
+  | "field"
+  | "rail"
+  | "public"
+  | "water"
+  | "construction";
 export type Hospital = Point & {
   id: string;
   name: string;
@@ -42,6 +53,12 @@ export interface GermanyProvider {
   node(id: number): Anchor | undefined;
   nearest(point: Point): Anchor;
   querySites(center: Point, radius: number, limit: number): Anchor[];
+  queryIncidentSites?(
+    center: Point,
+    radius: number,
+    kind: IncidentSiteKind,
+    limit: number,
+  ): Anchor[];
   projectRoad(point: Point): RoadProjection;
   sectionBetween(a: Point, b: Point): RoadSection;
   route(
@@ -56,6 +73,7 @@ export interface GermanyProvider {
   districtAt(point: Point): string;
   addressAt(point: Point): string;
   isLandSite(point: Point): boolean;
+  isWaterSite?(point: Point): boolean;
   hospitals(point: Point, limit: number): Hospital[];
   close(): void | Promise<void>;
 }
@@ -107,9 +125,24 @@ export const querySites = (
     .querySites(center, radius, limit)
     .map(({ x, y }) => ({ x, y }));
 export const districtAt = (point: Point) => germanyProvider().districtAt(point);
+export const queryIncidentSites = (
+  center: Point,
+  radius: number,
+  kind: IncidentSiteKind,
+  limit = 32,
+): Point[] => {
+  const provider = germanyProvider();
+  const sites = provider.queryIncidentSites
+    ? provider.queryIncidentSites(center, radius, kind, limit)
+    : kind === "street"
+      ? provider.querySites(center, radius, limit)
+      : [];
+  return sites.map(({ x, y }) => ({ x, y }));
+};
 export const addressAt = (point: Point) => germanyProvider().addressAt(point);
 export const isLandSite = (point: Point) => germanyProvider().isLandSite(point);
-export const isWaterSite = (_point: Point) => false;
+export const isWaterSite = (point: Point) =>
+  germanyProvider().isWaterSite?.(point) ?? false;
 export const projectRoad = (point: Point) =>
   germanyProvider().projectRoad(point);
 export const roadSectionBetween = (a: Point, b: Point) =>

@@ -95,6 +95,7 @@ beforeEach(async () => {
     "CREATE TABLE metadata(name TEXT PRIMARY KEY,value TEXT); CREATE TABLE tiles(zoom_level INTEGER,tile_column INTEGER,tile_row INTEGER,tile_data BLOB)",
   );
   tiles.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
+  tiles.exec("INSERT INTO metadata VALUES('maxzoom','14')");
   tiles.close();
   router = fork(resolve("tests/helpers/germany-router.mjs"), {
     stdio: ["ignore", "ignore", "ignore", "ipc"],

@@ -26,6 +26,27 @@ export const fuels: Record<
 };
 export function initialFire(m: Mission): Dynamics["fire"] {
   if (!mt(m.template).requirements.fire || m.template === "bma-false") return;
+  const profile = mt(m.template).profile;
+  if (profile?.fire) {
+    const source = profile.fire,
+      initial = profile.hazards.find((h) => h.kind === "fire")?.initial ?? 24;
+    return {
+      fuel: source.fuel,
+      area: source.area,
+      temperature: 20 + initial * 12,
+      smoke: 15,
+      intensity: initial,
+      spread: fuels[source.fuel].spread,
+      explosion: fuels[source.fuel].explosion * 10,
+      suppression: 0,
+      sections: source.sections.map((name, i) => ({
+        name,
+        burning: i ? 0 : initial,
+        damage: 0,
+        smoke: i ? 0 : 15,
+      })),
+    };
+  }
   const fuel =
     (
       {
@@ -74,7 +95,11 @@ export function fireTick(s: Save, m: Mission, skills: Skills, dt: number) {
   const fuel = fuels[f.fuel] || fuels.Holz;
   const water = Math.min(
     1,
-    (skills.water || 0) / Math.max(1, mt(m.template).requirements.water || 1),
+    (skills.water || 0) /
+      Math.max(
+        1,
+        (d.scenario?.requirements ?? mt(m.template).requirements).water || 1,
+      ),
   );
   f.spread =
     fuel.spread *

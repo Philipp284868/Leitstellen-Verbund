@@ -6,7 +6,7 @@ import {
 import type { Save, Mission, Vehicle } from "../model";
 import { majorTick } from "./major-incidents";
 import { majorComplete, effectiveSkills } from "./major-resources";
-import { mt, BALANCE, type Skills } from "../catalog";
+import { mt, type Skills } from "../catalog";
 import { level } from "../model";
 import { capacity } from "../engine";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
@@ -17,12 +17,20 @@ import { request } from "./incidents";
 import { attachIncident } from "./calls";
 import { DYNAMICS, sample } from "./random";
 import { updateWeather, weatherNames } from "./weather";
+import { injureResponder, syncResponderRecovery } from "./responder-recovery";
 export function attachDynamics(s: Save, m: Mission, active = true) {
   if (m.dynamics) return;
   updateWeather(s);
   m.dynamics = {
     version: 1,
     active,
+    ...(active && mt(m.template).profile
+      ? {
+          scenario: structuredClone(mt(m.template).profile),
+          responders: [],
+          bystanderChecked: false,
+        }
+      : {}),
     last: s.time,
     state: "developing",
     level: 1,
@@ -41,8 +49,127 @@ export function attachDynamics(s: Save, m: Mission, active = true) {
     weatherAtCall: weatherNames[s.environment!.kind],
   };
   if (active)
-    for (let i = 0; i < mt(m.template).patients; i++)
+    for (const h of m.dynamics.hazards)
+      record(
+        s,
+        m,
+        "HAZARD_CREATED",
+        `${hazardNames[h.kind]} angelegt; Ausprägung und Maßnahmenbedarf werden erkundet.`,
+      );
+  if (active)
+    for (
+      let i = 0;
+      i < (m.dynamics.scenario?.patientCount ?? mt(m.template).patients);
+      i++
+    )
       m.dynamics.patients.push(newPatient(s, m, mt(m.template).name));
+}
+
+/** Resolve only a small, witnessed incipient fire; response and reconnaissance remain required. */
+function bystanderTick(s: Save, m: Mission) {
+  const d = m.dynamics!;
+  if (!d.scenario?.bystander || d.bystanderChecked || s.time < m.created + 45)
+    return;
+  d.bystanderChecked = true;
+  if (
+    d.fire &&
+    d.fire.intensity < 45 &&
+    sample(d.random || 0, "bystander", 0) < 0.18
+  ) {
+    for (const h of d.hazards.filter((h) =>
+      ["fire", "smoke", "heat"].includes(h.kind),
+    )) {
+      h.value = 0;
+      h.resolved = true;
+    }
+    for (const part of d.fire.sections) part.burning = 0;
+    d.fire.intensity = 0;
+    d.fire.smoke = 0;
+    announce(
+      s,
+      m,
+      "MISSION_STABILIZED",
+      "Anwohner haben den Entstehungsbrand gelöscht. Erkundung und Nachkontrolle durch alarmierte Kräfte bleiben erforderlich.",
+    );
+  }
+}
+function responderTick(s: Save, m: Mission, skills: Skills) {
+  const d = m.dynamics!;
+  if (!d.scenario) return;
+  const sceneVehicles = new Map(
+    s.vehicles
+      .filter((v) => v.mission === m.id && v.status === "scene")
+      .map((v) => [v.id, v]),
+  );
+  const people = sceneVehicles.size
+    ? s.people.filter((p) => p.vehicle && sceneVehicles.has(p.vehicle))
+    : [];
+  d.responders ??= [];
+  const patients = new Map(d.patients.map((p) => [p.id, p]));
+  const responders = new Map(
+    d.responders.map((r) => [`${r.person}:${r.assignment ?? ""}`, r]),
+  );
+  for (const responder of d.responders.filter((r) => r.patient)) {
+    const patient = patients.get(responder.patient);
+    if (!patient) continue;
+    if (["EINGESCHLOSSEN", "VERMISST"].includes(responder.state)) {
+      if ((skills.rescue || 0) < 2) continue;
+      record(
+        s,
+        m,
+        "CREW_RESCUED",
+        "Betroffene Einsatzkraft durch zugeordnete Rettungskräfte erreicht; Rettungsdienst übernimmt.",
+        "server",
+        responder.vehicle,
+      );
+    }
+    const next =
+      patient.health <= 12
+        ? "BEWUSSTLOS"
+        : patient.health < 35
+          ? "SCHWER_VERLETZT"
+          : "VERLETZT";
+    if (responder.state !== next) {
+      responder.state = next;
+      responder.since = s.time;
+    }
+  }
+  const worst = Math.max(
+    0,
+    ...d.hazards.filter((h) => !h.resolved).map((h) => h.value),
+  );
+  for (const p of people) {
+    const assignment = sceneVehicles.get(p.vehicle!)!.assignment ?? undefined;
+    const key = `${p.id}:${assignment ?? ""}`;
+    let responder = responders.get(key);
+    if (!responder) {
+      responder = {
+        person: p.id,
+        vehicle: p.vehicle!,
+        ...(assignment ? { assignment } : {}),
+        state: "NORMAL",
+        since: s.time,
+        patient: "",
+      };
+      d.responders.push(responder);
+      responders.set(key, responder);
+    }
+    if (
+      !responder ||
+      !["NORMAL", "BELASTET", "GEFÄHRDET"].includes(responder.state)
+    )
+      continue;
+    const next =
+      worst >= 75 && d.tactic !== "defensive"
+        ? "GEFÄHRDET"
+        : worst >= 45
+          ? "BELASTET"
+          : "NORMAL";
+    if (responder.state !== next) {
+      responder.state = next;
+      responder.since = s.time;
+    }
+  }
 }
 function announce(
   s: Save,
@@ -71,11 +198,19 @@ function escalate(s: Save, m: Mission, skills: Skills) {
     d.level++;
     d.extra[danger.skill] =
       Math.max(
-        mt(m.template).requirements[danger.skill] || 1,
+        (d.scenario?.requirements ?? mt(m.template).requirements)[
+          danger.skill
+        ] || 1,
         d.extra[danger.skill] || 0,
       ) + 1;
     d.events.push(`escalation-${d.level}`);
     d.state = d.level >= 3 ? "critical" : "escalating";
+    record(
+      s,
+      m,
+      "HAZARD_ESCALATED",
+      `${hazardNames[danger.kind]}: Gefahrenbewertung auf Alarmstufe ${d.level} angehoben.`,
+    );
     if (m.control?.briefed)
       m.control.priority = d.level >= 3 ? "NOTFALL" : "DRINGEND";
     announce(
@@ -106,6 +241,26 @@ function escalate(s: Save, m: Mission, skills: Skills) {
       "FIRE_SPREAD",
       `Brandübersprung: ${nextArea.name}. Löschmaßnahmen und Wasserversorgung verstärken.`,
     );
+    if (
+      d.scenario &&
+      /Fassade|Treppenraum|Obergeschoss/.test(nextArea.name) &&
+      !d.events.includes("persons-trapped")
+    ) {
+      d.events.push("persons-trapped");
+      d.extra.rescue = Math.max(d.extra.rescue || 0, 1);
+      d.extra.ladder = Math.max(d.extra.ladder || 0, 1);
+      if (d.patients.length < 30)
+        d.patients.push(
+          newPatient(s, m, "Rauchgasexposition nach Brandausbreitung"),
+        );
+      announce(
+        s,
+        m,
+        "SECONDARY_EVENT",
+        "Rauch erreicht bewohnte Bereiche. Eine Person benötigt Hilfe; Menschenrettung und Rettungsdienst nachfordern.",
+        true,
+      );
+    }
   }
   const collapse = d.hazards.find((h) => h.kind === "collapse");
   if (
@@ -119,8 +274,40 @@ function escalate(s: Save, m: Mission, skills: Skills) {
   ) {
     d.events.push("collapse");
     d.extra.rescue = Math.max(d.extra.rescue || 0, 2);
-    if (level(s) >= 2)
-      d.patients.push(newPatient(s, m, "Verletzung einer Einsatzkraft"));
+    const responder = d.responders?.find(
+      (r) =>
+        r.state === "GEFÄHRDET" &&
+        !r.patient &&
+        s.vehicles.some(
+          (v) =>
+            v.id === r.vehicle &&
+            v.mission === m.id &&
+            v.status === "scene" &&
+            (!r.assignment || r.assignment === v.assignment),
+        ),
+    );
+    if (level(s) >= 2 && d.patients.length < 30 && (responder || !d.scenario)) {
+      const patient = newPatient(s, m, "Verletzung einer Einsatzkraft", true);
+      patient.health = 30;
+      patient.condition = "critical";
+      patient.consciousness = "bewusstlos";
+      patient.pulse = 136;
+      patient.breathing = 30;
+      patient.systolic = 88;
+      patient.oxygen = 78;
+      patient.priority = "urgent";
+      d.patients.push(patient);
+      if (responder) {
+        responder.state = d.hazards.some(
+          (h) => ["visibility", "darkness"].includes(h.kind) && !h.resolved,
+        )
+          ? "VERMISST"
+          : "EINGESCHLOSSEN";
+        responder.since = s.time;
+        responder.patient = patient.id;
+        injureResponder(s, m, responder.person, patient);
+      }
+    }
     announce(
       s,
       m,
@@ -137,6 +324,12 @@ function escalate(s: Save, m: Mission, skills: Skills) {
   ) {
     d.events.push("explosion");
     d.hazards.push(hazard("gas", "hazmat", 60));
+    record(
+      s,
+      m,
+      "HAZARD_CREATED",
+      "Explosionsfolge: zusätzliche Gasgefahr an der Einsatzstelle.",
+    );
     // Defensive isolation is an alternative until specialist resources arrive.
     announce(
       s,
@@ -151,14 +344,22 @@ function escalate(s: Save, m: Mission, skills: Skills) {
     !d.parent &&
     !d.pending &&
     !d.children.length &&
-    sample(seed, "secondary", n) < DYNAMICS.secondaryChance
+    sample(seed, "secondary", n) <
+      (d.scenario ? 0.45 : DYNAMICS.secondaryChance)
   ) {
+    const followup = d.scenario?.followups.find((f) =>
+      d.hazards.some(
+        (h) => h.kind === f.trigger && !h.resolved && h.value >= f.threshold,
+      ),
+    );
+    if (d.scenario && !followup) return;
     d.pending = {
       template:
-        level(s) >= 2 && s.vehicles.some((v) => v.type === "rtw")
+        followup?.template ??
+        (level(s) >= 2 && s.vehicles.some((v) => v.type === "rtw")
           ? "sick"
-          : "bin",
-      due: s.time + 120,
+          : "bin"),
+      due: s.time + (followup?.delay ?? 120),
     };
     d.events.push("followup-pending");
     announce(
@@ -206,9 +407,12 @@ export function dynamicsTick(
     }
     majorTick(s, m, skills, DYNAMICS.quantum, remoteUnits);
     organizationsTick(s, m, skills, DYNAMICS.quantum);
+    bystanderTick(s, m);
+    responderTick(s, m, skills);
     hazardTick(s, m, skills, DYNAMICS.quantum);
     fireTick(s, m, skills, DYNAMICS.quantum);
     patientTick(s, m, skills, DYNAMICS.quantum, carriers);
+    syncResponderRecovery(s, m);
     escalate(s, m, skills);
     const critical = d.patients.find(
       (p) => p.condition === "critical" || p.condition === "cpr",
@@ -282,8 +486,8 @@ export function dynamicsComplete(m: Mission, time: number) {
   );
 }
 export function followupsTick(s: Save) {
-  // Shared cap with the normal generator; never catch up a backlog or chain grandchildren.
-  if (s.missions.length >= BALANCE.activeMax || s.missionWait > 0) return;
+  // Time pacing is independent of the count of open incidents; no catch-up burst.
+  if (s.missionWait > 0) return;
   const parent = [...s.missions, ...s.archive].find(
     (m) =>
       m.dynamics?.pending &&

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { priorities, visiblePriority } from "./simulation/priority";
 import { useGame, act, command, emit } from "./store";
 import { useNetwork, type AidView } from "./network";
 import { vehicles, vt, mt } from "./catalog";
@@ -32,7 +33,8 @@ function RequestCard({ r }: { r: AidView }) {
       <header>
         <div>
           <span className="eyebrow">
-            {owner ? `An ${r.peerName}` : `Von ${r.ownerName}`} · {r.priority}
+            {owner ? `An ${r.peerName}` : `Von ${r.ownerName}`} ·{" "}
+            {visiblePriority(r.priority)}
           </span>
           <h4>{r.incident?.name || "Einsatz beendet"}</h4>
         </div>
@@ -288,7 +290,7 @@ export function NeighborDesk() {
                 setPriority(e.target.value as AidView["priority"])
               }
             >
-              {["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"].map((p) => (
+              {priorities.map((p) => (
                 <option key={p}>{p}</option>
               ))}
             </select>

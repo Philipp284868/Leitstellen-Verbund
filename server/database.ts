@@ -1,4 +1,5 @@
 import { WORLD } from "../src/world";
+import { HISTORY_SCHEMA, persistHistory } from "./history";
 import { WORLD_SEED } from "../src/region";
 import { IS_GERMANY, WORLD_NAME } from "../src/world-choice";
 import { germanyProvider } from "../src/germany/world";
@@ -14,7 +15,7 @@ import { validate, type Save } from "../src/model";
 
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 12;
+export const DATABASE_VERSION = 13;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -47,10 +48,13 @@ export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
 export class Database {
   sql: DatabaseSync;
   path: string;
-  constructor(public dir: string) {
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
-    this.path = resolve(dir, "game.sqlite");
-    const existed = existsSync(this.path);
+  constructor(
+    public dir: string,
+    options: { memory?: boolean } = {},
+  ) {
+    if (!options.memory) mkdirSync(dir, { recursive: true, mode: 0o700 });
+    this.path = options.memory ? ":memory:" : resolve(dir, "game.sqlite");
+    const existed = !options.memory && existsSync(this.path);
     if (existed) {
       const check = new DatabaseSync(this.path, { readOnly: true });
       try {
@@ -292,6 +296,17 @@ export class Database {
           this.sql.exec("PRAGMA user_version=12");
           this.audit("server-migration", "world-identity-v12-no-relocation");
         });
+      if (version < 13)
+        this.transaction(() => {
+          this.sql.exec(HISTORY_SCHEMA);
+          for (const mode of ["multi", "single"] as const)
+            for (const [id, s] of this.all(mode)) this.save(id, s, mode);
+          this.sql.exec("PRAGMA user_version=13");
+          this.audit(
+            "server-migration",
+            "unbounded-missions-persistent-history-volunteer-starts-v13",
+          );
+        });
       if (IS_GERMANY)
         this.sql
           .prepare(
@@ -324,13 +339,24 @@ export class Database {
         .map((r) => [String(r.user_id), validate(JSON.parse(String(r.data)))]),
     );
   }
-  save(id: string, s: Save, mode: StoredWorld = "multi") {
+  save(id: string, s: Save, mode: StoredWorld = "multi"): void {
     if (id !== s.player.id) throw Error("Kontobesitz stimmt nicht überein.");
+    if (!this.sql.isTransaction)
+      return this.transaction(() => this.save(id, s, mode));
+    const checked = validate(s);
+    // Earlier migrations can call save before v13 creates the history table.
+    if (
+      this.sql
+        .prepare("SELECT name FROM sqlite_master WHERE name='mission_history'")
+        .get()
+    )
+      persistHistory(this.sql, checked, mode);
+    for (const v of checked.vehicles) delete v.availability;
     this.sql
       .prepare(
         `INSERT INTO ${mode === "single" ? "solo_saves" : "saves"} VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data`,
       )
-      .run(id, JSON.stringify(validate(s)));
+      .run(id, JSON.stringify(checked));
   }
   audit(actor: string, event: string) {
     this.sql

@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fork, type ChildProcess } from "node:child_process";
 import type * as Fixture from "./germany-simulation-fixture";
-import type { Save } from "../src/model";
+import type { Save, Mission } from "../src/model";
 import type { ServerAction } from "../server/actions";
 
 let fixture: typeof Fixture;
@@ -123,6 +123,12 @@ function setupFleet(game: InstanceType<typeof Fixture.Game>) {
     pos: fixture.project({ lon: 13.4, lat: 52.52 }),
   });
   let save = current();
+  save.buildings[0].organization = {
+    kind: "bf",
+    turnout: 30,
+    crew: "normal",
+    reserve: 0,
+  };
   fixture.tick(save, save.time + 30, {}, false, false);
   db!.save(owner, save);
   const home = save.buildings[0].id;
@@ -136,10 +142,21 @@ function setupFleet(game: InstanceType<typeof Fixture.Game>) {
     command(game, { type: "assign", vehicle: save.vehicles.at(-1)!.id });
   }
   save = current();
-  fixture.generate(save);
-  const m = save.missions[0];
-  m.template = "field";
-  m.pos = fixture.project({ lon: 13.4029, lat: 52.5229 });
+  // A fixed scenario for lifecycle/replay checks; generation has separate MVT-backed coverage.
+  const m: Mission = {
+    id: crypto.randomUUID(),
+    template: "field",
+    pos: fixture.project({ lon: 13.4029, lat: 52.5229 }),
+    progress: 0,
+    phase: "offered",
+    created: save.time,
+    completed: 0,
+    shared: false,
+    round: crypto.randomUUID(),
+    contributors: [],
+    transports: [],
+  };
+  save.missions.push(m);
   save.seed = 124;
   fixture.attachIncident(save, m);
   db!.save(owner, save);
@@ -577,4 +594,60 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     );
     expect(readFileSync(file)).toEqual(bytes);
   }, 20000);
+});
+
+it("Deutschland: freiwillige Kräfte fahren auf gespeicherten Straßenrouten zur Wache und bilden nach Neustart dieselbe Besatzung", () => {
+  let game = createGame();
+  const mission = setupFleet(game);
+  interview(game, mission);
+  let s = current();
+  s.buildings[0].organization = fixture.newStationProfile("fire");
+  for (const [index, p] of s.people.entries()) {
+    p.vehicle = null;
+    p.duty = {
+      ...fixture.personDuty(s, p),
+      homeNode: 15000000001 + index,
+      workNode: 15000000001 + index,
+    };
+  }
+  fixture.forceVolunteerAvailability(s, true, 3600);
+  db!.save(owner, s);
+  const vehicle = s.vehicles[0].id;
+  command(game, { type: "dispatch", mission, vehicles: [vehicle] });
+  s = current();
+  const plan = structuredClone(s.vehicles[0].turnout!);
+  expect(plan.arrivals).toHaveLength(6);
+  expect(new Set(plan.arrivals.map((a) => a.at)).size).toBeGreaterThan(1);
+  for (const arrival of plan.arrivals) {
+    expect(arrival.path!.length).toBeGreaterThan(1);
+    expect(arrival.motion!.length).toBeGreaterThan(0);
+    expect(arrival.path!.at(-1)!.x).toBeCloseTo(s.buildings[0].pos.x, 8);
+    expect(arrival.path!.at(-1)!.y).toBeCloseTo(s.buildings[0].pos.y, 8);
+  }
+  expect(game.view(owner, new Set()).save.people.every((p) => !p.duty)).toBe(
+    true,
+  );
+  db!.close();
+  db = new fixture.Database(resolve(dir, "save"));
+  game = new fixture.Game(db);
+  expect(current().vehicles[0].turnout).toEqual(plan);
+  const moving = plan.arrivals.reduce((a, b) =>
+    a.at - a.depart! > b.at - b.depart! ? a : b,
+  );
+  const positionTime = moving.depart! + (moving.at - moving.depart!) / 2;
+  const markers = fixture.volunteerMarkers(current(), positionTime);
+  expect(markers.length).toBeGreaterThan(0);
+  expect(
+    markers.every((marker) => marker.name.startsWith("FF-Anfahrt zur Wache")),
+  ).toBe(true);
+  const last = Math.max(...plan.arrivals.map((a) => a.at));
+  game.step(last - current().time - 0.1);
+  expect(current().vehicles[0].status).toBe("alarmed");
+  expect(
+    fixture.crewSummary(current(), current().vehicles[0]).present,
+  ).toBeLessThan(6);
+  game.step(1);
+  expect(current().vehicles[0].status).toBe("travel");
+  expect(current().desk.fleet[vehicle].code).toBe(3);
+  expect(current().people.filter((p) => p.vehicle === vehicle)).toHaveLength(6);
 });

@@ -1,4 +1,5 @@
 import type { Save, Mission, Vehicle } from "../src/model";
+import { urgentPriority } from "../src/simulation/priority";
 import type {
   AidAction,
   AidRequest,
@@ -243,9 +244,7 @@ export function aidTick(saves: Map<string, Save>) {
           setFms(
             helper,
             v,
-            radio.some((r) => ["NOTFALL", "PRIORITÄT"].includes(r.priority))
-              ? 0
-              : 5,
+            radio.some((r) => urgentPriority(r.priority)) ? 0 : 5,
             "server",
             "Funk bei anfragender Leitstelle",
           );

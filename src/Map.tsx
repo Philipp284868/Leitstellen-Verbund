@@ -3,6 +3,7 @@ import { WORLD_NAME, WORLD_CENTER } from "./world-choice";
 import { IncidentIcon } from "./HudIcons";
 import { buildReason } from "./purchase";
 import { vehiclePosition, vehicleMotion } from "./vehicle-position";
+import { volunteerMarkers } from "./simulation/volunteers";
 import { roadSections, METERS_PER_UNIT, nearest, distance } from "./world";
 import { vt } from "./catalog";
 import {
@@ -790,6 +791,35 @@ export const MapView = memo(function MapView({
               </g>
             )),
           )}
+        {(filter === "Alle" || filter === "Fahrzeuge") &&
+          (org === "Alle" || org === "Feuerwehr") &&
+          volunteerMarkers(s)
+            .filter(
+              (a) =>
+                a.pos.x >= offset.x - chunkSize &&
+                a.pos.y >= offset.y - chunkSize &&
+                a.pos.x <= offset.x + 1300 / zoom + chunkSize &&
+                a.pos.y <= offset.y + viewHeight(zoom) + chunkSize,
+            )
+            .map((a) => (
+              <g
+                key={a.id}
+                data-testid="map-volunteer"
+                transform={`translate(${a.pos.x},${a.pos.y}) scale(${unitsPerPixel})`}
+                role="button"
+                tabIndex={0}
+                aria-label={a.name}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(a.home);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && onSelect(a.home)}
+              >
+                <circle r={7} fill="#916317" stroke="#ffe1a0" strokeWidth={2} />
+                <circle r={2} fill="#fff5d7" />
+                <title>{a.name}</title>
+              </g>
+            ))}
         {(filter === "Alle" || filter === "Einsätze") &&
           s.missions
             .filter(

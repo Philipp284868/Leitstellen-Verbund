@@ -3,6 +3,7 @@ import { IS_GERMANY } from "../world-choice";
 import { projectRoad, querySites } from "../germany/world";
 import { edges, nodes, distance } from "../world";
 import { DYNAMICS, sample } from "./random";
+import { mt } from "../catalog";
 import type { z } from "zod";
 import type { environmentSchema } from "./dynamics-schema";
 export const weatherNames = {
@@ -232,6 +233,70 @@ export function updateWeather(s: Save) {
 }
 export function weatherWeight(s: Save, template: string) {
   const kind = s.environment?.kind;
+  const profile = mt(template).profile;
+  if (profile) {
+    const date = new Date(s.time * 1000),
+      month = date.getUTCMonth(),
+      hour = date.getUTCHours(),
+      weekend = [0, 6].includes(date.getUTCDay());
+    const has = (tag: string) => profile.tags.includes(tag);
+    let weight =
+      profile.variant === "reported" ? 4 : profile.variant === "access" ? 2 : 1;
+    if (
+      ["gale", "hurricane", "storm"].includes(kind || "") &&
+      (has("storm") || profile.family === "supply")
+    )
+      weight *= 3;
+    if (
+      ["rain", "heavy-rain"].includes(kind || "") &&
+      profile.family === "flood"
+    )
+      weight *= 3;
+    if (
+      ["rain", "heavy-rain", "ice", "snow", "fog"].includes(kind || "") &&
+      profile.family === "traffic"
+    )
+      weight *= 2;
+    if (
+      kind === "heat" &&
+      (profile.family === "vegetation" ||
+        has("heat") ||
+        profile.site === "water")
+    )
+      weight *= 3;
+    if (
+      ["ice", "snow", "frost"].includes(kind || "") &&
+      (has("cold") || profile.family === "traffic")
+    )
+      weight *= 2;
+    if (
+      month >= 5 &&
+      month <= 7 &&
+      (profile.family === "vegetation" ||
+        has("heat") ||
+        profile.site === "water")
+    )
+      weight *= 2;
+    if ((month < 2 || month > 10) && (has("cold") || has("electrical")))
+      weight *= 2;
+    if (
+      ((month >= 8 && month <= 10) || (month >= 2 && month <= 4)) &&
+      has("storm")
+    )
+      weight *= 2;
+    if (profile.site === "public" && (weekend || (hour >= 17 && hour < 23)))
+      weight *= 2;
+    if (has("children") && !weekend && hour >= 7 && hour < 16) weight *= 3;
+    if (has("violence") && (hour >= 21 || hour < 5)) weight *= 2;
+    if (
+      profile.family === "traffic" &&
+      ((hour >= 7 && hour < 9) || (hour >= 16 && hour < 19))
+    )
+      weight *= 2;
+    if (profile.site === "industrial" && !weekend && hour >= 6 && hour < 18)
+      weight *= 2;
+    return weight;
+  }
   if (
     ["gale", "hurricane", "storm"].includes(kind || "") &&
     ["tree", "debris", "power"].includes(template)

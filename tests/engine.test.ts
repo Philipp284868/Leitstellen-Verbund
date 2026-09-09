@@ -24,13 +24,13 @@ function setup() {
   return s;
 }
 describe("Kataloge und Erreichbarkeit", () => {
-  it("enthält 8 Gebäude, 20 Fahrzeuge und 40 unterschiedliche Einsatzanforderungen", () => {
+  it("enthält den erweiterten Fahrzeug- und Einsatzkatalog mit unterschiedlichen Anforderungen", () => {
     expect(buildings).toHaveLength(8);
-    expect(vehicles).toHaveLength(20);
-    expect(missions).toHaveLength(41);
+    expect(vehicles).toHaveLength(50);
+    expect(missions.length).toBeGreaterThan(600);
     expect(
       new Set(missions.map((m) => JSON.stringify(m.requirements))).size,
-    ).toBe(40);
+    ).toBeGreaterThan(150);
   });
   it("referenziert gültige Wachen und erfüllbare Fähigkeiten ohne Stufenzirkel", () => {
     const all: Record<string, number> = {};
@@ -71,7 +71,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   it("prüft Personal, Ausbildung, Stellplätze und Stufen", () => {
     const s = setup();
     expect(readiness(s, s.vehicles[0])).toBe("");
-    s.people.pop();
+    s.people.splice(3); // TSF-W may turn out with four; three is insufficient.
     expect(readiness(s, s.vehicles[0])).toContain("1 geeignete");
     expect(() =>
       apply(s, { type: "buy", kind: "rtw", home: s.buildings[0].id }),
@@ -122,6 +122,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     s.xp = xpForLevel(5);
     apply(s, { type: "build", kind: "school", pos: nodes[3] });
     tick(s, s.time + 30);
+    s.people.splice(4); // Training removes one member from the minimum available crew.
     apply(s, { type: "train", person: s.people[0].id, skill: "Drehleiter" });
     expect(readiness(s, s.vehicles[0])).not.toBe("");
     tick(s, s.time + 200);

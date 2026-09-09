@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
 import { RoutingBridge } from "./bridge";
+import { GermanyIncidentGeography } from "./geography-sites";
 import { GermanyRoutingError } from "../../src/germany/errors";
 import {
   adaptGraphHopperRoute,
@@ -25,6 +26,7 @@ import {
   type RoadSection,
   type RoadProjection,
   type RoadKind,
+  type IncidentSiteKind,
 } from "../../src/germany/world";
 
 type Row = Record<string, unknown>;
@@ -43,8 +45,18 @@ function boundedCache<K, V>(cache: Map<K, V>, key: K, value: V, max: number) {
   cache.set(key, value);
   if (cache.size > max) cache.delete(cache.keys().next().value!);
 }
+function remaining(deadline: number) {
+  const budget = deadline - performance.now();
+  if (budget <= 0)
+    throw new GermanyRoutingError(
+      "Die gemeinsame Zeitgrenze für die Standortprüfung wurde erreicht; bitte erneut versuchen.",
+      "unavailable",
+    );
+  return budget;
+}
 export interface GermanyOptions {
   indexPath: string;
+  mapsPath?: string;
   dataset: string;
   routerUrl?: string;
   timeout?: number;
@@ -53,6 +65,9 @@ export class LocalGermanyProvider implements GermanyProvider {
   readonly dataset: string;
   private db: DatabaseSync;
   private bridge: RoutingBridge;
+  private geography?: GermanyIncidentGeography;
+  private incidentSitesCache = new Map<string, Anchor[]>();
+  private shoreSitesCache = new Map<number, boolean>();
   private anchorCache = new Map<number, Anchor>();
   private routeCache = new Map<string, GermanyRoute>();
   private sections = new Map<string, RoadSection>();
@@ -90,8 +105,14 @@ export class LocalGermanyProvider implements GermanyProvider {
         throw Error(
           "Geodatenkonflikt: Ortsindex und Routingmanifest gehören nicht zum selben OSM-Datenstand.",
         );
+      if (options.mapsPath)
+        this.geography = new GermanyIncidentGeography(
+          resolve(options.mapsPath),
+          this.dataset,
+        );
       this.bridge = new RoutingBridge(options.routerUrl, options.timeout);
     } catch (e) {
+      this.geography?.close();
       this.db.close();
       throw e;
     }
@@ -159,6 +180,71 @@ export class LocalGermanyProvider implements GermanyProvider {
         lat,
         limit,
       );
+  }
+  queryIncidentSites(
+    center: Point,
+    radius: number,
+    kind: IncidentSiteKind,
+    limit = 32,
+  ): Anchor[] {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 512)
+      throw Error("Einsatzstandorte benötigen ein Limit zwischen 1 und 512.");
+    if (kind === "street") return this.querySites(center, radius, limit);
+    if (!this.geography) return [];
+    const key = JSON.stringify([center.x, center.y, radius, kind, limit]),
+      cached = this.incidentSitesCache.get(key);
+    if (cached) return [...cached];
+    const result: Anchor[] = [];
+    const rows = this.nearby(
+      "anchors",
+      center,
+      radius * METERS_PER_UNIT,
+      20000,
+      "AND COALESCE(p.bridge,0)=0 AND COALESCE(p.tunnel,0)=0 AND p.road_class NOT IN ('motorway','motorway_link','trunk','trunk_link')",
+    );
+    const deadline = performance.now() + Math.min(this.bridge.timeout, 3000);
+    let routeAttempts = 0;
+    for (const row of rows) {
+      const anchor = this.anchor(row);
+      if (
+        meters(center, anchor) > radius * METERS_PER_UNIT ||
+        result.some((chosen) => meters(chosen, anchor) < 50) ||
+        !this.geography.evidence(anchor, kind)
+      )
+        continue;
+      if (kind === "water") {
+        // An OSM road beside water is not enough: it must be connected to this
+        // dispatch center by the installed car graph. Never invent a boat leg.
+        if (++routeAttempts > Math.max(32, limit * 2)) break;
+        try {
+          const route = this.fetchRoute(
+            center,
+            anchor,
+            50,
+            remaining(deadline),
+          );
+          const endpoint = route.path.at(-1);
+          if (
+            !endpoint ||
+            meters(anchor, endpoint) > 2 ||
+            !this.geography.evidence(endpoint, kind)
+          )
+            continue;
+        } catch (error) {
+          if (
+            error instanceof GermanyRoutingError &&
+            (error.code === "no-route" || error.code === "blocked")
+          )
+            continue;
+          throw error;
+        }
+      }
+      result.push(anchor);
+      if (result.length >= limit) break;
+    }
+    result.sort((a, b) => a.id - b.id);
+    boundedCache(this.incidentSitesCache, key, result, 128);
+    return [...result];
   }
   querySites(center: Point, radius: number, limit: number): Anchor[] {
     if (!Number.isInteger(limit) || limit < 1 || limit > 4096)
@@ -380,7 +466,53 @@ export class LocalGermanyProvider implements GermanyProvider {
       "Keine geprüfte Straßenanbindung für diesen Standort verfügbar.",
     );
   }
-  isLandSite(point: Point): boolean {
+  isWaterSite(point: Point): boolean {
+    const deadline = performance.now() + Math.min(this.bridge.timeout, 3000);
+    if (
+      !this.geography ||
+      !inBounds(point) ||
+      !this.geography.evidence(point, "water")
+    )
+      return false;
+    const anchor = this.nearest(point);
+    // A water station is a road-side base with shore access, not a building
+    // on a water route. Do not relocate a user-selected shore to a distant road.
+    if (
+      meters(point, anchor) > 2 ||
+      !this.isLandSite(anchor, remaining(deadline))
+    )
+      return false;
+    const cached = this.shoreSitesCache.get(anchor.id);
+    if (cached !== undefined) return cached;
+    const candidates = this.nearby("anchors", anchor, 2000, 512)
+      .map((row) => this.anchor(row))
+      .filter((p) => meters(anchor, p) >= 100 && meters(anchor, p) <= 2000)
+      .slice(0, 8);
+    for (const destination of candidates) {
+      try {
+        const route = this.fetchRoute(
+          anchor,
+          destination,
+          50,
+          remaining(deadline),
+        );
+        if (route.path.length > 1 && route.meters >= 100) {
+          boundedCache(this.shoreSitesCache, anchor.id, true, 4096);
+          return true;
+        }
+      } catch (error) {
+        if (
+          error instanceof GermanyRoutingError &&
+          (error.code === "no-route" || error.code === "blocked")
+        )
+          continue;
+        throw error;
+      }
+    }
+    boundedCache(this.shoreSitesCache, anchor.id, false, 4096);
+    return false;
+  }
+  isLandSite(point: Point, budget?: number): boolean {
     const anchor = this.nearest(point);
     if (meters(anchor, point) > 300) return false;
     const cached = this.siteCache.get(anchor.id);
@@ -397,7 +529,7 @@ export class LocalGermanyProvider implements GermanyProvider {
       return false;
     }
     // A car-profile routing query validates the actual imported graph, unlike /nearest (ALL_EDGES).
-    const result = this.fetchRoute(anchor, anchor, 50);
+    const result = this.fetchRoute(anchor, anchor, 50, budget);
     const valid = meters(anchor, result.path[0]) <= 2;
     boundedCache(this.siteCache, anchor.id, valid, 4096);
     return valid;
@@ -491,6 +623,9 @@ export class LocalGermanyProvider implements GermanyProvider {
     if (this.closed) return;
     this.closed = true;
     clearGermanyProvider(this);
+    this.geography?.close();
+    this.incidentSitesCache.clear();
+    this.shoreSitesCache.clear();
     this.db.close();
     await this.bridge.close();
   }

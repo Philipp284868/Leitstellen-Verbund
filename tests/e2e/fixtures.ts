@@ -7,6 +7,12 @@ export function established(name: string): Save {
   const s = fresh(name, `Leitstelle ${name}`, Date.now() / 1000);
   s.speed = 1;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  s.buildings[0].organization = {
+    kind: "bf",
+    turnout: 30,
+    crew: "normal",
+    reserve: 0,
+  };
   tick(s, s.time + 30);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
   apply(s, { type: "hire", home: s.buildings[0].id, count: 6 });

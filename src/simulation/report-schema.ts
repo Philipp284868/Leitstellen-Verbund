@@ -12,14 +12,22 @@ export const timingKeys = [
   "total",
 ] as const;
 const unit = z
-  .object({ id: label, name: label, type: label, meters: n })
+  .object({
+    id: label,
+    name: label,
+    type: label,
+    meters: n,
+    alarmed: n.optional(),
+    plannedSeconds: n.optional(),
+    plannedTurnout: n.optional(),
+  })
   .strict();
 export const telemetrySchema = z
   .object({
     since: n,
     partial: z.boolean(),
     meters: n,
-    units: z.array(unit).max(500),
+    units: z.array(unit),
     credits: n.nullable().default(null),
     xp: n.nullable().default(null),
     aaos: z
@@ -41,11 +49,26 @@ export const reportSchema = z
     falseAlarm: z.boolean(),
     major: z.boolean(),
     patients: z.object({ total: n, delivered: n, dead: n }).strict(),
-    units: z.array(unit).max(500),
+    units: z.array(unit),
     meters: n,
     credits: n.nullable(),
     xp: n.nullable(),
     aaos: telemetrySchema.shape.aaos,
+    quality: z
+      .object({
+        score: z.number().int().min(0).max(100),
+        grade: z.enum(["Sehr gut", "Gut", "Verbesserungsbedarf", "Kritisch"]),
+        escalations: n,
+        reserveUnits: n,
+        unitMinutes: n,
+        travelRatio: n.nullable(),
+        turnoutDelay: n.nullable(),
+        duration: n,
+        requests: n,
+        assessed: z.boolean(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const statisticsSchema = z

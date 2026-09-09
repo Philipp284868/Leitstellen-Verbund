@@ -36,6 +36,10 @@ import { MapView } from "./Map";
 import { OperationsOverview } from "./Major";
 import { DeskQueue } from "./Desk";
 import { missionList } from "./workspace";
+import { visiblePriority } from "./simulation/priority";
+import { missionStatus } from "./simulation/mission-status";
+import { duration } from "./travel";
+import { ReserveOverview } from "./ForceNeeds";
 import { SoundButton } from "./Sound";
 import { IncidentDock } from "./IncidentDock";
 import { IncidentIcon } from "./HudIcons";
@@ -91,6 +95,11 @@ export function GameHud({
   const [listOpen, setListOpen] = useState(true),
     [layers, setLayers] = useState(false);
   const [tab, setTab] = useState("details");
+  const [page, setPage] = useState(0);
+  const listedMissions = missionList(s, search, filter, sort, user?.id);
+  const pages = Math.max(1, Math.ceil(listedMissions.length / 25));
+  const currentPage = Math.min(page, pages - 1);
+  useEffect(() => setPage(0), [search, filter, sort]);
   const dock = useRef<HTMLElement>(null);
   const WeatherIcon = {
     sun: Sun,
@@ -344,67 +353,97 @@ export function GameHud({
               </button>
             ))}
           </div>
+          {!!s.vehicles.length && (
+            <details>
+              <summary>Ressourcen und Reserve</summary>
+              <ReserveOverview s={s} />
+            </details>
+          )}
           <div className="mission-list">
-            {missionList(s, search, filter, sort, user?.id).map((m) => {
-              const t = mt(m.template);
-              return (
-                <button
-                  key={m.id}
-                  className={`mission-card ${selected === m.id ? "selected" : ""}`}
-                  onClick={() => open(m.id)}
-                >
-                  <span className="mission-number" data-org={t.org}>
-                    <IncidentIcon org={t.org} />
-                  </span>
-                  <div>
-                    <span className="eyebrow">
-                      {t.org}
-                      {m.major ? " · GROSSLAGE" : ""}
-                      {m.shared ? " · VERBUND" : ""}
+            {listedMissions
+              .slice(currentPage * 25, (currentPage + 1) * 25)
+              .map((m) => {
+                const t = mt(m.template),
+                  processing = missionStatus(s, m, net.support);
+                return (
+                  <button
+                    key={m.id}
+                    className={`mission-card ${selected === m.id ? "selected" : ""}`}
+                    onClick={() => open(m.id)}
+                  >
+                    <span className="mission-number" data-org={t.org}>
+                      <IncidentIcon org={t.org} />
                     </span>
-                    <h3>
-                      {m.control && !m.control.reportedTemplate
-                        ? "Ungeklärter Notruf"
-                        : t.name}
-                    </h3>
-                    <p>
-                      {m.control && !m.control.locationKnown
-                        ? "Einsatzort noch erfragen"
-                        : IS_GERMANY
-                          ? m.control?.secret?.address ||
-                            "Einsatzort auf der Deutschlandkarte"
-                          : `${WORLD_NAME} · ${districtAt(m.pos)}`}
-                    </p>
-                    <div className="mission-meta">
-                      <span
-                        className={
-                          m.phase === "offered" ? "status waiting" : "status"
-                        }
-                      >
-                        {m.phase === "offered"
-                          ? "Kräfte benötigt"
-                          : m.phase === "working"
-                            ? "In Bearbeitung"
-                            : "Transport"}
+                    <div>
+                      <span className="eyebrow">
+                        {t.org}
+                        {m.major ? " · GROSSLAGE" : ""}
+                        {m.shared ? " · VERBUND" : ""}
                       </span>
-                      <time>
-                        {new Date(m.created * 1000).toLocaleTimeString(
-                          "de-DE",
-                          { hour: "2-digit", minute: "2-digit" },
-                        )}
-                      </time>
+                      <h3>
+                        {m.control && !m.control.reportedTemplate
+                          ? "Ungeklärter Notruf"
+                          : t.name}
+                      </h3>
+                      <p>
+                        {m.control && !m.control.locationKnown
+                          ? "Einsatzort noch erfragen"
+                          : IS_GERMANY
+                            ? m.control?.facts.find((f) => f.key === "address")
+                                ?.text || "Einsatzort auf der Deutschlandkarte"
+                            : `${WORLD_NAME} · ${districtAt(m.pos)}`}
+                      </p>
+                      <div className="mission-meta">
+                        <span
+                          className="priority-badge"
+                          data-priority={visiblePriority(m.control?.priority)}
+                        >
+                          {visiblePriority(m.control?.priority)}
+                        </span>
+                        <span
+                          className={
+                            processing.attention ? "status waiting" : "status"
+                          }
+                          data-processing={processing.code}
+                          title={processing.detail}
+                        >
+                          {processing.label}
+                        </span>
+                        <time>
+                          seit {duration(Math.max(0, s.time - m.created))} ·{" "}
+                          {new Date(m.created * 1000).toLocaleTimeString(
+                            "de-DE",
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
+                        </time>
+                      </div>
+                      <progress value={m.progress} max={t.seconds} />
                     </div>
-                    <progress value={m.progress} max={t.seconds} />
-                  </div>
+                  </button>
+                );
+              })}
+            {!!s.missions.length && !listedMissions.length && (
+              <p className="filter-empty">Keine Einsätze passen zum Filter.</p>
+            )}
+            {pages > 1 && (
+              <nav className="mission-pagination" aria-label="Einsatzseiten">
+                <button
+                  disabled={currentPage === 0}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  Zurück
                 </button>
-              );
-            })}
-            {!!s.missions.length &&
-              !missionList(s, search, filter, sort, user?.id).length && (
-                <p className="filter-empty">
-                  Keine Einsätze passen zum Filter.
-                </p>
-              )}
+                <span>
+                  {currentPage + 1}/{pages} · {listedMissions.length} Einsätze
+                </span>
+                <button
+                  disabled={currentPage + 1 >= pages}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  Weiter
+                </button>
+              </nav>
+            )}
             {!s.missions.length && (
               <div className="empty">
                 <Radio size={32} />

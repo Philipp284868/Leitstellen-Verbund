@@ -9,6 +9,7 @@ import { Crosshair, LocateFixed, Navigation, Search, X } from "lucide-react";
 import { IncidentIcon } from "../HudIcons";
 import { bt, mt, vt } from "../catalog";
 import { vehiclePosition } from "../vehicle-position";
+import { volunteerMarkers } from "../simulation/volunteers";
 import { tripLabel } from "../travel";
 import { Operations } from "../Operations";
 import { useGame } from "../store";
@@ -39,7 +40,8 @@ type MarkerData = {
   id: string;
   name: string;
   pos: Point;
-  kind: "station" | "mission" | "vehicle";
+  kind: "station" | "mission" | "vehicle" | "volunteer";
+  target?: string;
   org: string;
   friend?: boolean;
   count?: number;
@@ -128,8 +130,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   useEffect(() => {
     if (
       readonly ||
-      !s.vehicles.some((v) =>
-        ["travel", "return", "transport"].includes(v.status),
+      !s.vehicles.some(
+        (v) =>
+          ["travel", "return", "transport"].includes(v.status) ||
+          (v.status === "alarmed" &&
+            v.turnout?.arrivals.some((a) => a.available && a.at > s.time)),
       )
     )
       return;
@@ -137,7 +142,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       if (!document.hidden) setMotionTick((v) => v + 1);
     }, 100);
     return () => clearInterval(timer);
-  }, [readonly, s.vehicles]);
+  }, [readonly, s.vehicles, s.time]);
 
   useEffect(() => {
     const container = viewport.current,
@@ -608,9 +613,12 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       if (
         (filter === "Alle" ||
           filter ===
-            { station: "Wachen", vehicle: "Fahrzeuge", mission: "Einsätze" }[
-              item.kind
-            ]) &&
+            {
+              station: "Wachen",
+              vehicle: "Fahrzeuge",
+              mission: "Einsätze",
+              volunteer: "Fahrzeuge",
+            }[item.kind]) &&
         (org === "Alle" || org === item.org)
       )
         data.push(item);
@@ -652,6 +660,17 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           pos: vehiclePosition(v, now),
           kind: "vehicle",
           org: bt(vt(v.type).home).org,
+        }),
+      );
+    if (status === "Alle" || status === "Unterwegs")
+      volunteerMarkers(s, now).forEach((a) =>
+        add({
+          id: a.id,
+          name: a.name,
+          pos: a.pos,
+          kind: "volunteer",
+          org: "Feuerwehr",
+          target: a.home,
         }),
       );
     if (showFriends)
@@ -760,7 +779,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               style={{ left: m.left, top: m.top }}
               aria-label={
                 m.count
-                  ? `${m.count} ${m.kind === "vehicle" ? "Fahrzeuge" : m.kind === "station" ? "Wachen" : "Einsätze"} · vergrößern`
+                  ? `${m.count} ${m.kind === "volunteer" ? "freiwillige Kräfte auf Anreise" : m.kind === "vehicle" ? "Fahrzeuge" : m.kind === "station" ? "Wachen" : "Einsätze"} · vergrößern`
                   : m.name
               }
               title={m.name}
@@ -773,7 +792,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                     m.pos,
                     Math.min(18, (mapRef.current?.getZoom() ?? 10) + 2),
                   );
-                else onSelect(m.friend ? "friends" : m.id);
+                else onSelect(m.friend ? "friends" : (m.target ?? m.id));
               }}
             >
               {m.count ? (
@@ -781,7 +800,13 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               ) : m.kind === "mission" ? (
                 <IncidentIcon org={m.org} />
               ) : (
-                <span>{m.kind === "vehicle" ? "▰" : "▣"}</span>
+                <span>
+                  {m.kind === "volunteer"
+                    ? "●"
+                    : m.kind === "vehicle"
+                      ? "▰"
+                      : "▣"}
+                </span>
               )}
               {m.id === selected && <small>{m.name}</small>}
             </button>

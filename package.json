@@ -1,7 +1,7 @@
 {
   "name": "leitstellen-verbund",
   "private": true,
-  "version": "2.17.0",
+  "version": "2.18.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -25,9 +25,11 @@
     "test:security": "node .tools/pnpm-11.19.0/bin/pnpm.cjs audit --prod --audit-level=high"
   },
   "dependencies": {
+    "@mapbox/vector-tile": "3.0.0",
     "dexie": "4.3.0",
     "lucide-react": "0.577.0",
     "maplibre-gl": "6.8.0",
+    "pbf": "5.1.2",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "socket.io": "4.8.3",

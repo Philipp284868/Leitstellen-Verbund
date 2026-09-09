@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { journeySchema } from "./dynamics-schema";
+import { prioritySchema } from "./schema";
 const id = z.string().min(1).max(100);
 const seconds = z.number().finite().nonnegative().max(1e12);
 export const stationKinds = {
@@ -52,6 +54,10 @@ export const dutySchema = z
     workdays: z.boolean(),
     standby: z.boolean(),
     load: seconds,
+    simulationOverride: z
+      .object({ available: z.boolean(), until: seconds })
+      .strict()
+      .optional(),
   })
   .strict();
 export const turnoutSchema = z
@@ -66,6 +72,10 @@ export const turnoutSchema = z
             at: seconds,
             available: z.boolean(),
             reason: z.string().max(120),
+            depart: seconds.optional(),
+            path: journeySchema.shape.planned.optional(),
+            motion: journeySchema.shape.motion,
+            boarded: z.boolean().optional(),
           })
           .strict(),
       )
@@ -147,7 +157,7 @@ export const aidSchema = z
       "DONE",
       "CANCELLED",
     ]),
-    priority: z.enum(["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"]),
+    priority: prioritySchema,
     types: z.array(id).min(1).max(20),
     message: z.string().trim().min(1).max(1000),
     created: seconds,
@@ -184,6 +194,7 @@ export type Station = z.infer<typeof stationSchema>;
 export type Duty = z.infer<typeof dutySchema>;
 export type TaskKind = keyof typeof taskNames;
 export const organizationActions = [
+  z.object({ type: z.literal("station-upgrade-bf"), home: id }).strict(),
   z
     .object({
       type: z.literal("station-profile"),

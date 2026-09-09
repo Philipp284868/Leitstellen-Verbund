@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { prioritySchema } from "./schema";
 const id = z.string().min(1).max(100);
 const time = z.number().finite().nonnegative();
 export const majorKinds = ["manv", "storm", "flood", "fire", "crowd"] as const;
@@ -144,7 +145,7 @@ export const majorActions = [
     .object({
       type: z.literal("mission-priority"),
       mission: id,
-      priority: z.enum(["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"]),
+      priority: prioritySchema,
     })
     .strict(),
 ] as const;

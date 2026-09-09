@@ -2,6 +2,7 @@ import type { Save, Mission } from "./model";
 import { mt } from "./catalog";
 import { distance, districtAt } from "./world";
 import { IS_GERMANY } from "./world-choice";
+import { priorityRank } from "./simulation/priority";
 export const shortcutNames = {
   call: "Nächster Notruf",
   fms: "FMS",
@@ -76,14 +77,22 @@ export function missionList(
   sort: string,
   actor = "",
 ) {
-  const priority = (m: Mission) =>
-    ["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"].indexOf(
-      m.control?.priority ?? "NORMAL",
-    );
+  const priority = (m: Mission) => priorityRank(m.control?.priority);
+  const needle = query.trim().toLocaleLowerCase("de");
+  const buildingNames = new Map(s.buildings.map((b) => [b.id, b.name]));
+  const unitText = new Map<string, string[]>();
+  if (needle)
+    for (const v of s.vehicles)
+      if (v.mission) {
+        const names = unitText.get(v.mission) ?? [];
+        names.push(`${v.name} ${buildingNames.get(v.home) ?? ""}`);
+        unitText.set(v.mission, names);
+      }
   const origin = s.buildings[0]?.pos ?? { x: 0, y: 0 };
   const candidates = s.missions.filter((m) => {
     const c = m.control;
-    if (filter === "critical" && priority(m) < 2) return false;
+    if (filter === "critical" && priority(m) < priorityRank("HOCH"))
+      return false;
     if (filter === "major" && !m.major) return false;
     if (filter === "request" && !c?.radio.some((r) => r.state === "open"))
       return false;
@@ -94,16 +103,19 @@ export function missionList(
       mt(m.template).org !== filter
     )
       return false;
-    const units = s.vehicles.filter((v) => v.mission === m.id);
+    if (!needle) return true;
     const location = c?.locationKnown
       ? IS_GERMANY
-        ? (c.secret?.address ?? "")
+        ? (c.facts.find((f) => f.key === "address")?.text ?? "")
         : districtAt(m.pos)
       : "";
-    const text = `${m.id} ${mt(m.template).name} ${location} ${c?.facts.map((f) => f.text).join(" ") ?? ""} ${m.dynamics?.patients.map((p) => p.id).join(" ") ?? ""} ${units.map((v) => `${v.name} ${s.buildings.find((b) => b.id === v.home)?.name}`).join(" ")}`;
-    return text
-      .toLocaleLowerCase("de")
-      .includes(query.trim().toLocaleLowerCase("de"));
+    const text = `${m.id} ${mt(m.template).name} ${location} ${
+      c?.facts
+        .filter((f) => f.key !== "address" || c.locationKnown)
+        .map((f) => f.text)
+        .join(" ") ?? ""
+    } ${m.dynamics?.patients.map((p) => p.id).join(" ") ?? ""} ${(unitText.get(m.id) ?? []).join(" ")}`;
+    return text.toLocaleLowerCase("de").includes(needle);
   });
   return candidates.sort((a, b) => {
     const order =

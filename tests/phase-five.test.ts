@@ -24,12 +24,7 @@ import { publicSave } from "../src/simulation/incidents";
 import { record } from "../src/simulation/events";
 import { parseWorkspace, shortcutFor, missionList } from "../src/workspace";
 import { parseSound } from "../src/audio/controller";
-import {
-  checkSoundFile,
-  normalizeSound,
-  storeSound,
-  customSounds,
-} from "../src/audio/custom";
+import { checkSoundFile, storeSound, customSounds } from "../src/audio/custom";
 import { AudioEvents } from "../src/audio/events";
 import { propose, alarm } from "../src/simulation/dispatch";
 import { nextCallDelay } from "../src/simulation/balance";
@@ -276,7 +271,7 @@ it("Balancing prüft neun vollständige kleine Einsätze mit drei Seeds und deck
   const a = balanceAudit();
   expect(a.scenarios).toHaveLength(9);
   expect(a.catalog.impossible).toEqual([]);
-  expect(a.activeLimit).toBe(2);
+  expect(a.activeLimit).toBeNull();
   expect(
     a.scenarios.every(
       (s) => s.seconds > 90 && s.seconds < 600 && s.credits! > 0,
@@ -339,27 +334,15 @@ it("Kanalregler migrieren alte Audiowerte und dringender Funk gewinnt genau einm
     details: "Dringend",
   });
   record(next, next.missions[0], "CALL_RECEIVED", "Neuer Anruf");
-  expect(events.observe(next, "multi", true)).toBe("priority");
+  expect(events.observe(next, "multi", true)).toBe("emergency");
   expect(events.observe(next, "multi", true)).toBeNull();
 });
 
-it("Eigene Signale prüfen Format, Größe, Länge, Spitzenpegel und bleiben lokal mit rücksetzbaren Kanälen", async () => {
+it("Eigene Signale prüfen das Format und bleiben lokal mit rücksetzbaren Kanälen", async () => {
   const bytes = new TextEncoder().encode("RIFF0000WAVEtest").buffer;
   expect(() => checkSoundFile("tone.wav", bytes)).not.toThrow();
   expect(() => checkSoundFile("tone.html", bytes)).toThrow();
   expect(() => checkSoundFile("tone.wav", new ArrayBuffer(3e6))).toThrow();
-  const data = new Float32Array([1, -1, 0.1]),
-    buffer = {
-      duration: 1,
-      numberOfChannels: 1,
-      getChannelData: () => data,
-    } as unknown as AudioBuffer;
-  normalizeSound(buffer);
-  expect(Math.max(...data)).toBeCloseTo(0.35);
-  expect(Math.min(...data)).toBeCloseTo(-0.35);
-  expect(() => normalizeSound({ ...buffer, duration: 16 })).toThrow();
-  data[0] = NaN;
-  expect(() => normalizeSound(buffer)).toThrow("Ungültige");
   await storeSound("radio", {
     channel: "radio",
     name: "tone.wav",
@@ -440,7 +423,13 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
     mission: id,
     vehicles: lab.save.vehicles.map((v) => v.id),
   });
-  step({ type: "advance", seconds: 65 });
+  step({
+    type: "advance",
+    seconds:
+      Math.ceil(
+        Math.max(...lab.save.vehicles.map((v) => v.depart)) - lab.save.time,
+      ) + 1,
+  });
   const vehicle = lab.save.vehicles[0].id;
   step({ type: "damage", vehicle });
   expect(lab.save.desk.fleet[vehicle].code).toBe(6);
@@ -457,9 +446,8 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
   expect(lab.save.missions[1].dynamics!.patients[0].condition).toBe("dead");
   step({ type: "patient", mission: m.id, patient, health: 80 });
   expect(lab.save.missions[1].dynamics!.patients[0].condition).toBe("stable");
-  expect(() => runLab(lab, { type: "generate", template: "bin" })).toThrow(
-    "zwei",
-  );
+  step({ type: "generate", template: "bin" });
+  expect(lab.save.missions.length).toBeGreaterThan(2);
   step({ type: "clock", hour: 1 });
   expect(lab.save.time % 86400).toBe(3600);
   step({ type: "fms", vehicle, code: 5 });
@@ -467,7 +455,7 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
   expect(verifyLab(lab).verified).toBe(true);
 });
 
-it("Serverrhythmus bleibt unregelmäßig bei 90–210 echten Sekunden und zwei offenen Einsätzen ohne Nachholstau", async () => {
+it("Serverrhythmus bleibt unregelmäßig ohne Einsatzobergrenze und ohne Nachholstau", async () => {
   expect(
     new Set(Array.from({ length: 500 }, (_, seed) => nextCallDelay(seed))).size,
   ).toBe(121);
@@ -497,7 +485,7 @@ it("Serverrhythmus bleibt unregelmäßig bei 90–210 echten Sekunden und zwei o
     game.step(1);
     expect(db.all().get(owner)!.missions).toHaveLength(1);
     for (let seconds = 0; seconds < 500; seconds += 10) game.step(10);
-    expect(db.all().get(owner)!.missions).toHaveLength(2);
+    expect(db.all().get(owner)!.missions.length).toBeGreaterThan(2);
     const ids = db
       .all()
       .get(owner)!

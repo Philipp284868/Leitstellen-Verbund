@@ -214,6 +214,9 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
 export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
   const d = m.dynamics;
   if (!d?.active || !m.control?.briefed) return null;
+  const roster = [
+    ...new Map((d.responders ?? []).map((r) => [r.person, r])).values(),
+  ];
   return (
     <section className="dynamics-panel" aria-label="Dynamische Einsatzlage">
       <OrganizationTasks s={s} m={m} />
@@ -228,6 +231,47 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
         {d.children.length > 0 &&
           `Folgeeinsätze: ${d.children.map((id) => id.slice(-8)).join(", ")}.`}
       </p>
+      {d.scenario && (
+        <div className="environment-summary">
+          <strong>Bestätigte Lage: {d.scenario.topic}</strong>
+          <span>
+            {d.scenario.variant === "access"
+              ? "Zugang erschwert – zusätzliche technische Rettung erforderlich"
+              : d.scenario.variant === "extended"
+                ? "Ausgedehnte Lage – zusätzliche Kräfte und Erkundung erforderlich"
+                : "Erstlage nach Erkundung"}
+          </span>
+          {d.scenario.patient.intensive && (
+            <span>Intensivtransport: ITW oder ITH erforderlich.</span>
+          )}
+        </div>
+      )}
+      {!!roster.length && (
+        <details>
+          <summary>
+            Dokumentierter Zustand der Einsatzkräfte ({roster.length})
+          </summary>
+          {[...new Set(roster.map((r) => r.vehicle))].map((id) => {
+            const responders = roster.filter((r) => r.vehicle === id),
+              states = [...new Set(responders.map((r) => r.state))];
+            return (
+              <p key={id}>
+                <b>
+                  {s.vehicles.find((v) => v.id === id)?.name ||
+                    "Eingesetzte Einheit"}
+                </b>{" "}
+                ·{" "}
+                {states
+                  .map(
+                    (state) =>
+                      `${responders.filter((r) => r.state === state).length} ${state.toLocaleLowerCase("de-DE").replaceAll("_", " ")}`,
+                  )
+                  .join(" · ")}
+              </p>
+            );
+          })}
+        </details>
+      )}
       {m.phase !== "done" && (
         <label>
           Taktik
@@ -257,7 +301,7 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
       )}
       <div className="hazard-grid">
         {d.hazards.map((h) => (
-          <article key={h.kind}>
+          <article key={`${h.kind}-${h.skill}`}>
             <b>{hazardNames[h.kind]}</b>
             <span>
               {h.resolved ? "Beherrscht" : `${Math.round(h.value)} / 100`}

@@ -8,8 +8,10 @@ import {
   personAvailable,
   absenceNames,
   roleNames,
-  suitableCrew,
-  crewRequired,
+  crewSummary,
+  stationCapacity,
+  reserveWarning,
+  PROFESSIONAL_FIRE,
 } from "./simulation/staffing";
 import {
   stationKinds,
@@ -22,49 +24,35 @@ import { useHospitalOptions, DutyLocation } from "./germany/GeoQueries";
 import { IS_GERMANY } from "./world-choice";
 import { nodes, districts, nearest, districtAt } from "./world";
 import { duration } from "./travel";
+import { level } from "./model";
 import "./Organizations.css";
-export function StationSettings({ b }: { s: Save; b: Building }) {
+export function StationSettings({ s, b }: { s: Save; b: Building }) {
   const [profile, setProfile] = useState(stationProfile(b));
   if (!bt(b.type).people) return null;
-  const kinds =
-    b.type === "fire"
-      ? ["bf", "ff", "works", "company", "airport"]
-      : [b.type === "heli" ? "ems" : b.type];
+  const ff = stationProfile(b).kind === "ff",
+    capacity = stationCapacity(b);
   return (
     <details className="org-settings">
       <summary>Organisation, Ausrücken und Reserve</summary>
+      <p>
+        <strong>{stationKinds[stationProfile(b).kind]}</strong> ·{" "}
+        {capacity.slots} Stellplätze · {capacity.people} Personalplätze
+      </p>
       <div className="org-form">
-        <label>
-          Organisation
-          <select
-            aria-label="Organisation"
-            value={profile.kind}
-            onChange={(e) =>
-              setProfile({
-                ...profile,
-                kind: e.target.value as Station["kind"],
-              })
-            }
-          >
-            {kinds.map((k) => (
-              <option key={k} value={k}>
-                {stationKinds[k as keyof typeof stationKinds]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Ausrück-Grundzeit in Sekunden
-          <input
-            type="number"
-            min={10}
-            max={600}
-            value={profile.turnout}
-            onChange={(e) =>
-              setProfile({ ...profile, turnout: Number(e.target.value) })
-            }
-          />
-        </label>
+        {!ff && (
+          <label>
+            Ausrück-Grundzeit in Sekunden
+            <input
+              type="number"
+              min={10}
+              max={600}
+              value={profile.turnout}
+              onChange={(e) =>
+                setProfile({ ...profile, turnout: Number(e.target.value) })
+              }
+            />
+          </label>
+        )}
         <label>
           Besatzungsregel
           <select
@@ -76,13 +64,13 @@ export function StationSettings({ b }: { s: Save; b: Building }) {
               })
             }
           >
-            <option value="minimum">Mindestbesatzung (Feuerwehr: 3)</option>
+            <option value="minimum">Fahrzeugabhängige Mindestbesatzung</option>
             <option value="normal">Regelbesatzung</option>
-            <option value="full">Vollbesatzung</option>
+            <option value="full">Vollbesatzung abwarten</option>
           </select>
         </label>
         <label>
-          Verbleibende Gebietsreserve
+          Warnschwelle für Gebietsreserve
           <input
             type="number"
             min={0}
@@ -95,15 +83,13 @@ export function StationSettings({ b }: { s: Save; b: Building }) {
         </label>
       </div>
       <p>
-        {profile.kind === "ff"
-          ? "Freiwillige erhalten den Alarm, quittieren entsprechend ihrer Erreichbarkeit und fahren von Wohn- oder Arbeitsort zur Wache. Ausrücken erst mit der erforderlichen Besatzung."
-          : "Diensthabende Kräfte sind auf der Wache. Führungsfahrzeuge verwenden die halbe Grundzeit, mindestens zehn Sekunden."}
+        {ff
+          ? "Freiwillige werden bei Alarm aus dem Wachenpool mobilisiert. Ihre Verfügbarkeit und ihre Anreise entstehen in der Simulation. Fahrzeuge rücken erst aus, wenn genügend entsprechend ausgebildete Kräfte eingetroffen sind."
+          : "Die Wachbesatzung steht vor Ort bereit. Fahrzeuge rücken mit der zugewiesenen, geeigneten Besatzung aus."}
       </p>
       <small>
-        Gespeicherte Grundzeit ersetzt die bisherige Verzögerung des
-        Alarmprofils. Mindestbesatzung ist eine vereinfachte Spielregel;
-        Ausbildung bleibt erforderlich. Änderungen erst nach Rückkehr aller
-        Fahrzeuge.
+        Reservewarnungen informieren dich. Die Dispositionsentscheidung bleibt
+        bei dir.
       </small>
       <button
         onClick={() =>
@@ -112,10 +98,64 @@ export function StationSettings({ b }: { s: Save; b: Building }) {
       >
         Wachenprofil speichern
       </button>
+      {ff && (
+        <div className="bf-expansion">
+          <h3>Ausbau zur Berufsfeuerwehr</h3>
+          <p>
+            Doppelte Fahrzeug- und Personalplätze, durchgehende Wachbesatzung
+            und 20 Sekunden Grundausrückzeit. Andere freiwillige Wachen bleiben
+            erhalten.
+          </p>
+          <p>
+            Ab Stufe {PROFESSIONAL_FIRE.level} ·{" "}
+            {PROFESSIONAL_FIRE.price.toLocaleString("de-DE")} Credits
+          </p>
+          <button
+            disabled={
+              level(s) < PROFESSIONAL_FIRE.level ||
+              s.money < PROFESSIONAL_FIRE.price ||
+              b.ready > s.time ||
+              s.vehicles.some((v) => v.home === b.id && v.status !== "ready")
+            }
+            onClick={() => void act({ type: "station-upgrade-bf", home: b.id })}
+          >
+            Zur Berufsfeuerwehr ausbauen
+          </button>
+        </div>
+      )}
     </details>
   );
 }
 export function PersonSettings({
+  s,
+  person,
+}: {
+  s: Save;
+  person: Save["people"][number];
+}) {
+  const b = s.buildings.find((b) => b.id === person.home)!;
+  if (stationProfile(b).kind === "ff")
+    return (
+      <div className="volunteer-profile">
+        <small>
+          Freiwillige Einsatzkraft ·{" "}
+          {person.skills.length ? person.skills.join(" · ") : "Grundausbildung"}
+        </small>
+        <p>
+          {person.training
+            ? "In Ausbildung"
+            : person.vehicle &&
+                s.vehicles.some(
+                  (v) => v.id === person.vehicle && v.status !== "ready",
+                )
+              ? "Für einen Einsatz gebunden"
+              : "Mitglied im Wachenpool"}
+        </p>
+      </div>
+    );
+  return <RegularPersonSettings s={s} person={person} />;
+}
+function RegularPersonSettings({
   s,
   person,
 }: {
@@ -306,12 +346,24 @@ export function PersonSettings({
 }
 export function VehicleStaffing({ s, v }: { s: Save; v: Vehicle }) {
   const [to, setTo] = useState("");
+  const ff =
+    stationProfile(s.buildings.find((b) => b.id === v.home)!).kind === "ff";
+  const crew = crewSummary(s, v),
+    warning = reserveWarning(s, v);
   return (
     <div className="vehicle-staffing">
+      <strong>
+        Besatzung: {crew.present}/{crew.capacity} · {crew.required} zum
+        Ausrücken benötigt
+      </strong>
       <small>
-        {suitableCrew(s, v).length} verfügbar · {crewRequired(s, v)} benötigt ·{" "}
-        {v.reserve ? "Reserve gesperrt" : "Disposition freigegeben"}
+        {v.status === "ready" && ff
+          ? `${crew.eligible} geeignete Kräfte im Wachenpool · Anreise nach Alarm`
+          : crew.present >= crew.required
+            ? "Besatzung vollständig: Ausrücken möglich"
+            : "Besatzung fehlt: Ausrücken noch nicht möglich"}
       </small>
+      {warning && <p className="banner">{warning}</p>}
       {v.status === "ready" && (
         <>
           <label className="inline">
@@ -326,62 +378,82 @@ export function VehicleStaffing({ s, v }: { s: Save; v: Vehicle }) {
                 })
               }
             />
-            Als Reserve zurückhalten
+            Als Reserve vormerken (nur Hinweis)
           </label>
-          <div className="inline">
-            <select
-              aria-label={`Umbesetzen ${v.name}`}
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            >
-              <option value="">Alternativfahrzeug besetzen …</option>
-              {s.vehicles
-                .filter(
-                  (other) =>
-                    other.id !== v.id &&
-                    other.home === v.home &&
-                    other.status === "ready",
-                )
-                .map((other) => (
-                  <option key={other.id} value={other.id}>
-                    {other.name}
-                  </option>
-                ))}
-            </select>
-            <button
-              disabled={!to}
-              onClick={() =>
-                void act({ type: "crew-transfer", from: v.id, to })
-              }
-            >
-              Besatzung umsetzen
-            </button>
-          </div>
+          {!ff && (
+            <div className="inline">
+              <select
+                aria-label={`Umbesetzen ${v.name}`}
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              >
+                <option value="">Alternativfahrzeug besetzen …</option>
+                {s.vehicles
+                  .filter(
+                    (other) =>
+                      other.id !== v.id &&
+                      other.home === v.home &&
+                      other.status === "ready",
+                  )
+                  .map((other) => (
+                    <option key={other.id} value={other.id}>
+                      {other.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                disabled={!to}
+                onClick={() =>
+                  void act({ type: "crew-transfer", from: v.id, to })
+                }
+              >
+                Besatzung umsetzen
+              </button>
+            </div>
+          )}
         </>
       )}
       {v.status === "alarmed" && v.turnout && (
-        <details open>
-          <summary>
-            Besatzung auf dem Weg ·{" "}
+        <div className="volunteer-turnout" aria-label="Besatzungsbildung">
+          <strong>
+            {ff
+              ? "Besatzung auf dem Weg zur Wache"
+              : "Besatzung übernimmt Fahrzeug"}{" "}
+            · {crew.present}/{crew.required} anwesend
+          </strong>
+          <progress
+            max={crew.required}
+            value={Math.min(crew.required, crew.present)}
+          />
+          <p>
             {
-              v.turnout.arrivals.filter((a) => a.available && a.at <= s.time)
+              v.turnout.arrivals.filter((a) => a.available && a.at > s.time)
                 .length
-            }
-            /{v.turnout.minimum} anwesend
-          </summary>
-          {v.turnout.arrivals.map((a) => (
-            <p key={a.person}>
-              {s.people.find((p) => p.id === a.person)?.duty?.name ||
-                `Einsatzkraft ${a.person.slice(-5)}`}{" "}
-              ·{" "}
-              {a.available
-                ? a.at <= s.time
-                  ? "An Wache eingetroffen"
-                  : `Ankunft in ${duration(a.at - s.time)}`
-                : a.reason}
+            }{" "}
+            Kräfte noch auf Anreise
+          </p>
+          {v.turnout.arrivals.filter((a) => a.available && a.at > s.time)
+            .length > 0 && (
+            <small>
+              Nächste Ankunft in{" "}
+              {duration(
+                Math.min(
+                  ...v.turnout.arrivals
+                    .filter((a) => a.available && a.at > s.time)
+                    .map((a) => a.at - s.time),
+                ),
+              )}
+            </small>
+          )}
+          {v.turnout.arrivals.filter((a) => a.available).length <
+            crew.required && (
+            <p className="banner">
+              Zu wenige Alarmrückmeldungen. Fahrzeug wartet auf Besatzung;
+              gegebenenfalls ein kleineres Fahrzeug oder andere Kräfte
+              alarmieren.
             </p>
-          ))}
-        </details>
+          )}
+        </div>
       )}
     </div>
   );

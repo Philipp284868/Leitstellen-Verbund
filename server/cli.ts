@@ -18,6 +18,8 @@ import { validate, uid } from "../src/model";
 import { statisticsSchema } from "../src/simulation/report-schema";
 import { acquireLock } from "./lock";
 import { prepareGeography } from "./germany/runtime";
+import { exportHistory } from "./history";
+import { publicSave } from "../src/simulation/incidents";
 
 const command = process.argv[2];
 if (
@@ -207,6 +209,13 @@ try {
           .get(user.id);
         if (!row)
           throw Error("Kein archivierter Einzelspielerstand vorhanden.");
+        const archived = publicSave(validate(JSON.parse(String(row.data))));
+        archived.archive = exportHistory(
+          db.sql,
+          String(user.id),
+          "single",
+          archived.archive,
+        );
         const target = arg("file");
         await writeFile(
           target,
@@ -216,7 +225,7 @@ try {
               version: 1,
               source: "retired-single-player",
               exportedAt: Date.now(),
-              save: JSON.parse(String(row.data)),
+              save: archived,
             },
             null,
             2,

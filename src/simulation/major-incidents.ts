@@ -1,5 +1,5 @@
 import type { Save, Mission, Vehicle } from "../model";
-import { mt, vt, BALANCE, type Skills } from "../catalog";
+import { mt, vt, type Skills } from "../catalog";
 import { nodes, distance } from "../world";
 import { record, simId } from "./events";
 import { sample } from "./random";
@@ -9,6 +9,8 @@ import { sectionNames, majorNames, type SectionKind } from "./major-schema";
 import { placement, effectiveSkills, sectionSkills } from "./major-resources";
 
 export function majorKind(m: Mission): keyof typeof majorNames | undefined {
+  const scenario = m.dynamics?.scenario ?? mt(m.template).profile;
+  if (scenario) return scenario.major;
   if (["rail", "crash", "bus", "collapse"].includes(m.template)) return "manv";
   if (["cellar", "flood", "pump"].includes(m.template)) return "flood";
   if (["tree", "debris", "supply"].includes(m.template)) return "storm";
@@ -87,6 +89,7 @@ export function declareMajor(s: Save, m: Mission, actor = "server") {
       m.dynamics.patients.push(newPatient(s, m, "Verletzung bei Großereignis"));
     m.dynamics.patients.forEach((p, i) => {
       if (p.transport !== "scene") return;
+      if (m.dynamics?.scenario) return;
       p.health = i === 0 ? 40 : i % 3 === 0 ? 60 : 80;
       p.priority = i === 0 ? "urgent" : "normal";
     });
@@ -128,6 +131,10 @@ export function declareMajor(s: Save, m: Mission, actor = "server") {
   s.operations.cooldown = s.time + 7200;
 }
 export function maybeMajor(s: Save, m: Mission) {
+  if ((m.dynamics?.scenario ?? mt(m.template).profile)?.major) {
+    declareMajor(s, m);
+    return;
+  }
   if (
     s.time < s.operations.cooldown ||
     s.operations.campaign ||
@@ -261,7 +268,7 @@ export function majorTick(
   }
   g.shortage = [...new Set(missing)].join(" · ").slice(0, 300);
 }
-// At most one new call, no catch-up burst, and the ordinary two-open-incident cap.
+// At most one new call per due time; existing open incidents do not suppress a campaign.
 export function campaignTick(
   s: Save,
   create: (template: string, pos: { x: number; y: number }) => Mission,
@@ -278,13 +285,7 @@ export function campaignTick(
     delete s.operations.campaign;
     return false;
   }
-  if (
-    !c.remaining ||
-    s.time < c.next ||
-    s.missions.length >= BALANCE.activeMax ||
-    s.missionWait > 0
-  )
-    return false;
+  if (!c.remaining || s.time < c.next || s.missionWait > 0) return false;
   const first = [...s.missions, ...s.archive].find(
     (m) => m.id === c.missions[0],
   );

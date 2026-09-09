@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { api } from "./store";
+import { QualityReport } from "./QualityReport";
 import type { Save, Mission } from "./model";
 import { mt } from "./catalog";
 import { buildReport } from "./simulation/reports";
@@ -134,6 +136,7 @@ export function ReportPanel({ m }: { m: Mission }) {
       <span className="eyebrow">ABSCHLUSS & AUSWERTUNG</span>
       <h2>{mt(m.template).name}</h2>
       <p>Einsatz {m.id}</p>
+      {r.quality && <QualityReport quality={r.quality} />}
       {r.partial && (
         <p className="report-note">
           Teilweise historische Erfassung. Nicht aufgezeichnete Zeiten und
@@ -259,15 +262,52 @@ export function ArchivePanel({
     [query, setQuery] = useState(""),
     [org, setOrg] = useState("Alle"),
     [major, setMajor] = useState(false);
+  const [page, setPage] = useState(0);
+  const [history, setHistory] = useState<{
+    total: number;
+    page: number;
+    missions: Mission[];
+  } | null>(null);
+  const [historyError, setHistoryError] = useState("");
+  const [historyDetail, setHistoryDetail] = useState<Mission | null>(null);
+  useEffect(() => setPage(0), [query, org, major]);
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryError("");
+    const params = new URLSearchParams({
+      page: String(page),
+      query,
+      org,
+      major: String(major),
+    });
+    const timer = setTimeout(
+      () => {
+        void api(`history?${params}`)
+          .then((result) => {
+            if (!cancelled) setHistory(result);
+          })
+          .catch((error) => {
+            if (!cancelled) setHistoryError(String(error.message));
+          });
+      },
+      query ? 250 : 0,
+    );
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [page, query, org, major, s.completed, s.player.id]);
   const t = s.statistics;
-  const filtered = s.archive.filter(
-    (m) =>
-      (org === "Alle" || mt(m.template).org === org) &&
-      (!major || m.major) &&
-      `${m.id} ${mt(m.template).name} ${m.telemetry?.units.map((u) => u.name).join(" ") ?? ""}`
-        .toLocaleLowerCase("de")
-        .includes(query.toLocaleLowerCase("de")),
-  );
+  const filtered =
+    history?.missions ??
+    s.archive.filter(
+      (m) =>
+        (org === "Alle" || mt(m.template).org === org) &&
+        (!major || m.major) &&
+        `${m.id} ${mt(m.template).name} ${m.telemetry?.units.map((u) => u.name).join(" ") ?? ""}`
+          .toLocaleLowerCase("de")
+          .includes(query.toLocaleLowerCase("de")),
+    );
   return (
     <section className="archive-console">
       <div
@@ -290,8 +330,8 @@ export function ArchivePanel({
           <h2>Deine Leitstelle in Zahlen</h2>
           <p>
             {s.completed} Einsätze insgesamt · {t.completed} Einsätze mit
-            auswertbaren Berichten. Detailarchiv: letzte 500 Einsätze; die
-            Summen neuer Abschlüsse bleiben darüber hinaus erhalten.
+            auswertbaren Berichten. Vollständige Einsatzberichte werden
+            dauerhaft auf dem Server archiviert und seitenweise geladen.
           </p>
           <dl className="report-grid">
             {[
@@ -379,7 +419,32 @@ export function ArchivePanel({
               Nur Großlagen
             </label>
           </div>
-          <p>{filtered.length} passende Berichte</p>
+          <p>{history?.total ?? filtered.length} passende Berichte</p>
+          {historyError && (
+            <p role="alert">
+              Archiv konnte nicht geladen werden: {historyError}. Angezeigt wird
+              gegebenenfalls der zuletzt geladene Ausschnitt.
+            </p>
+          )}
+          {history && history.total > 25 && (
+            <nav className="mission-pagination" aria-label="Archivseiten">
+              <button
+                disabled={history.page === 0}
+                onClick={() => setPage(history.page - 1)}
+              >
+                Vorherige Berichte
+              </button>
+              <span>
+                Seite {history.page + 1}/{Math.ceil(history.total / 25)}
+              </span>
+              <button
+                disabled={(history.page + 1) * 25 >= history.total}
+                onClick={() => setPage(history.page + 1)}
+              >
+                Weitere Berichte
+              </button>
+            </nav>
+          )}
           <button
             disabled={!filtered.length}
             onClick={() =>
@@ -390,7 +455,7 @@ export function ArchivePanel({
               )
             }
           >
-            Gefilterte Berichte als CSV
+            Angezeigte Berichte als CSV
           </button>
           {filtered.map((m) => (
             <article className="archive-item" key={m.id}>
@@ -400,9 +465,25 @@ export function ArchivePanel({
                   {duration(m.completed - m.created)} · {m.id.slice(-12)}
                 </small>
               </div>
-              <button onClick={() => open(m.id)}>Verlauf ansehen</button>
+              <button
+                onClick={() =>
+                  s.archive.some((current) => current.id === m.id)
+                    ? open(m.id)
+                    : setHistoryDetail(m)
+                }
+              >
+                Verlauf ansehen
+              </button>
             </article>
           ))}
+          {historyDetail && (
+            <section aria-label="Archivierter Einsatzverlauf">
+              <button onClick={() => setHistoryDetail(null)}>
+                Archivbericht schließen
+              </button>
+              <ReportPanel m={historyDetail} />
+            </section>
+          )}
         </>
       )}
       {tab === "journal" && (

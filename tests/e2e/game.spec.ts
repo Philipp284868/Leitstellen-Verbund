@@ -9,6 +9,8 @@ import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
+import { personDuty } from "../../src/simulation/staffing";
+import { forceVolunteerAvailability } from "../../src/simulation/volunteers";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -47,9 +49,7 @@ async function register(page: Page, label: string) {
   await page
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: false })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: false }).click();
   await expect(page.locator(".hud-budget")).toContainText("250.000");
   await expect(page.locator(".radio-bar")).toContainText(
     "Mit Spielserver verbunden",
@@ -68,11 +68,32 @@ async function enter(page: Page, username: string) {
     await page.getByLabel("Passwort", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   }
-  await page
-    .getByRole("button", { name: "Spielen", exact: false })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: false }).click();
 }
-async function resources(page: Page) {
+function ownerOf(username: string) {
+  return String(
+    app.db.sql.prepare("SELECT id FROM users WHERE username=?").get(username)!
+      .id,
+  );
+}
+async function expectAlarmableFF(page: Page, owner: string) {
+  await expect
+    .poll(() =>
+      app.game
+        .view(owner, new Set())
+        .save.vehicles.every(
+          (v) =>
+            v.availability?.alarmable === true &&
+            v.availability.dispatchable === false &&
+            v.availability.crewPresent === 0,
+        ),
+    )
+    .toBe(true);
+  await expect(page.locator(".fleet-card").first()).toContainText(
+    "Alarmierbar: Freiwillige Kräfte müssen zuerst zur Wache kommen.",
+  );
+}
+async function resources(page: Page, username: string) {
   await openPanel(page, "Wachen");
   await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
@@ -99,7 +120,15 @@ async function resources(page: Page) {
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
   await page.getByRole("button", { name: "Besetzen", exact: true }).click();
-  await expect(page.getByText("Vollständig einsatzbereit")).toBeVisible();
+  const owner = ownerOf(username),
+    s = app.db.all().get(owner)!;
+  expect(s.buildings[0].organization?.kind).toBe("ff");
+  // Auth/membership scenarios need responsive volunteers. Their real road paths,
+  // staggered arrival and actual crew-dependent departure are still simulated.
+  for (const p of s.people) p.duty = personDuty(s, p);
+  forceVolunteerAvailability(s, true, 14400);
+  app.db.save(owner, s);
+  await expectAlarmableFF(page, owner);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
 }
 function advanceWithRepairs(ownerId: string, finished: () => boolean) {
@@ -136,7 +165,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
     a.getByRole("button", { name: "Einladung erstellen" }),
   ).toHaveCount(0);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  await resources(a);
+  await resources(a, ua);
   await expect(b.locator(".hud-budget")).toContainText("250.000");
   await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
   await a.locator(".mission-card").first().click();
@@ -180,7 +209,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
       .get(owner)!
       .vehicles.every((v) => v.status === "ready"),
   );
-  await expect(a.getByText("Vollständig einsatzbereit")).toBeVisible();
+  await expectAlarmableFF(a, owner);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   const money = await a.locator(".hud-budget strong").innerText();
   await enter(a, ua);
@@ -193,8 +222,8 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   browser,
 }) => {
   const { ca, cb, a, b, ua, ub } = await pair(browser);
-  await resources(a);
-  await resources(b);
+  await resources(a, ua);
+  await resources(b, ub);
   await joinDesk(a, b, ub);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);

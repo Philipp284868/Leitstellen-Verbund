@@ -62,7 +62,8 @@ it("prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze", () => {
   const before = performance.now();
   validate(s);
   const validated = performance.now();
-  tick(s, s.time + 32);
+  // Keep the measured workload fixed; generation no longer stops at a mission cap.
+  tick(s, s.time + 32, {}, false, false);
   const after = performance.now();
   mkdirSync(".tools/test-runs", { recursive: true });
   writeFileSync(

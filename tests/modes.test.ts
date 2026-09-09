@@ -1,4 +1,5 @@
 import { environmentAt } from "../src/simulation/weather";
+import { publicSave } from "../src/simulation/incidents";
 import { it, expect } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -100,7 +101,7 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
     migrated.close();
   }
 });
-it("erzeugt einzeln mit echten, versetzten Wartezeiten und höchstens zwei Einsätzen", async () => {
+it("erzeugt einzeln mit versetzten kontextabhängigen Wartezeiten auch über zwei Einsätze hinaus", async () => {
   const { db, game, a, b } = await fixture();
   try {
     const first = owned(established("Anna"), a),
@@ -116,15 +117,19 @@ it("erzeugt einzeln mit echten, versetzten Wartezeiten und höchstens zwei Eins�
       t = db.all().get(b)!;
     expect(s.missions).toHaveLength(1);
     expect(s.missions[0].shared).toBe(false);
-    expect(s.missionWait).toBeGreaterThanOrEqual(90);
-    expect(s.missionWait).toBeLessThanOrEqual(210);
+    expect(s.missionWait).toBeGreaterThanOrEqual(45);
+    expect(s.missionWait).toBeLessThanOrEqual(326);
     expect(s.missionWait).not.toBe(t.missionWait);
     game.step(30);
     expect(db.all().get(a)!.missions).toHaveLength(1);
     expect(db.all().get(a)!.missionWait).toBe(s.missionWait - 30);
-    for (let i = 0; i < 20; i++) game.step(30);
-    expect(db.all().get(a)!.missions).toHaveLength(2);
-    expect(db.all().get(b)!.missions).toHaveLength(2);
+    for (let i = 0; i < 35; i++) {
+      const before = db.all().get(a)!.missions.length;
+      game.step(30);
+      expect(db.all().get(a)!.missions.length - before).toBeLessThanOrEqual(1);
+    }
+    expect(db.all().get(a)!.missions.length).toBeGreaterThan(2);
+    expect(db.all().get(b)!.missions.length).toBeGreaterThan(2);
     const existing = db.all().get(a)!;
     existing.missions = [];
     existing.missionWait = 0;
@@ -209,7 +214,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
     app.db.save(user, archived, "single");
     const archive = await (await request("archive-export", "multi")).json();
     expect(archive.source).toBe("retired-single-player");
-    expect(archive.save).toEqual(archived);
+    expect(archive.save).toEqual(publicSave(archived));
     const other = await app.auth.create(
       "otherarchive",
       pass,
@@ -292,7 +297,13 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   });
   const result = spawnSync(
     process.execPath,
-    [".tools/legacy-tests/server/cli.js", "restore", "--file", backup, "--confirm"],
+    [
+      ".tools/legacy-tests/server/cli.js",
+      "restore",
+      "--file",
+      backup,
+      "--confirm",
+    ],
     {
       encoding: "utf8",
       env: {

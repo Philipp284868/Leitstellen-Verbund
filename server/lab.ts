@@ -3,9 +3,9 @@ import { xpForLevel } from "../src/progression";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { fresh, validate, saveSchema, type Save } from "../src/model";
-import { apply, tick } from "../src/engine";
-import { nodes } from "../src/world";
-import { mt, BALANCE } from "../src/catalog";
+import { apply, tick, readiness } from "../src/engine";
+import { nodes, nearest } from "../src/world";
+import { mt } from "../src/catalog";
 import { simId, record } from "../src/simulation/events";
 import { attachIncident, callAction } from "../src/simulation/calls";
 import { attachDynamics } from "../src/simulation/dynamics";
@@ -17,6 +17,11 @@ import { weatherKinds } from "../src/simulation/dynamics-schema";
 import { breakVehicle, repairVehicle } from "../src/simulation/faults";
 import { setFms } from "../src/simulation/fms";
 import { personDuty } from "../src/simulation/staffing";
+import { forceVolunteerAvailability } from "../src/simulation/volunteers";
+import { newPatient } from "../src/simulation/patients";
+import { declareMajor } from "../src/simulation/major-incidents";
+import { aidCommand } from "./aid";
+import { stepLaboratoryWorlds } from "./lab-worlds";
 const id = z.string().min(1).max(100);
 export const labActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("generate"), template: id }).strict(),
@@ -58,6 +63,35 @@ export const labActionSchema = z.discriminatedUnion("type", [
     })
     .strict(),
   z.object({ type: z.literal("crew-ready") }).strict(),
+  z
+    .object({
+      type: z.literal("volunteers"),
+      available: z.boolean(),
+      seconds: z.number().int().min(1).max(14400),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("new-patient"),
+      mission: id,
+      injury: z.string().min(1).max(120),
+    })
+    .strict(),
+  z.object({ type: z.literal("major"), mission: id }).strict(),
+  z
+    .object({
+      type: z.literal("neighbor"),
+      seed: z.number().int().min(0).max(4294967295),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("neighbor-response"),
+      mission: id,
+      neighbor: id,
+      accept: z.boolean(),
+    })
+    .strict(),
 ]);
 export type LabAction = z.infer<typeof labActionSchema>;
 export const labSchema = z
@@ -68,6 +102,7 @@ export const labSchema = z
     commands: z.array(labActionSchema).max(2000),
     hashes: z.array(z.string().length(64)).max(2000),
     save: saveSchema,
+    neighbors: z.array(saveSchema).max(4).default([]),
   })
   .strict();
 export type Lab = z.infer<typeof labSchema>;
@@ -75,6 +110,14 @@ export const stateHash = (s: Save) =>
   createHash("sha256")
     .update(JSON.stringify(validate(s)))
     .digest("hex");
+const laboratoryHash = (lab: Lab) =>
+  lab.neighbors.length
+    ? createHash("sha256")
+        .update(
+          [stateHash(lab.save), ...lab.neighbors.map(stateHash)].join(":"),
+        )
+        .digest("hex")
+    : stateHash(lab.save);
 export function createLab(seed: number): Lab {
   if (!Number.isInteger(seed) || seed < 0 || seed > 4294967295)
     throw Error("Seed muss eine 32-Bit-Ganzzahl sein.");
@@ -110,6 +153,7 @@ export function createLab(seed: number): Lab {
     commands: [],
     hashes: [],
     save: s,
+    neighbors: [],
   };
 }
 export function runLab(source: Lab, input: unknown): Lab {
@@ -130,8 +174,6 @@ export function runLab(source: Lab, input: unknown): Lab {
   if ("vehicle" in action && !vehicle) throw Error("Fahrzeug fehlt.");
   if (action.type === "generate") {
     mt(action.template);
-    if (s.missions.length >= BALANCE.activeMax)
-      throw Error("Höchstens zwei offene Einsätze.");
     const m = {
       id: simId(s),
       template: action.template,
@@ -149,13 +191,23 @@ export function runLab(source: Lab, input: unknown): Lab {
     attachIncident(s, m);
     attachDynamics(s, m);
     attachOrganizations(m);
-  } else if (action.type === "advance")
-    tick(s, s.time + action.seconds, {}, false, false);
-  else if (action.type === "clock") {
+  } else if (action.type === "advance") {
+    const [own, ...neighbors] = stepLaboratoryWorlds(
+      [s, ...lab.neighbors],
+      action.seconds,
+    );
+    Object.assign(s, own);
+    lab.neighbors = neighbors;
+  } else if (action.type === "clock") {
     let seconds = (action.hour * 3600 - (s.time % 86400) + 86400) % 86400;
     while (seconds > 0) {
       const step = Math.min(seconds, 14400);
-      tick(s, s.time + step, {}, false, false);
+      const [own, ...neighbors] = stepLaboratoryWorlds(
+        [s, ...lab.neighbors],
+        step,
+      );
+      Object.assign(s, own);
+      lab.neighbors = neighbors;
       seconds -= step;
     }
   } else if (action.type === "weather") {
@@ -189,12 +241,19 @@ export function runLab(source: Lab, input: unknown): Lab {
       "developer",
     );
   } else if (action.type === "interview") {
-    const m = mission!,
-      c = m.control?.calls[0];
+    let m = mission!;
+    const c = m.control?.calls[0];
     if (!c) throw Error("Notruf fehlt.");
     callAction(s, m, c.id, "accept", "developer");
     for (const question of ["address", "report"] as const) {
-      tick(s, s.time + 5, {}, false, false);
+      const [own, ...neighbors] = stepLaboratoryWorlds(
+        [s, ...lab.neighbors],
+        5,
+      );
+      Object.assign(s, own);
+      lab.neighbors = neighbors;
+      m = s.missions.find((current) => current.id === action.mission)!;
+      if (!m) throw Error("Einsatz während der Gesprächszeit abgeschlossen.");
       callAction(s, m, c.id, "ask", "developer", question);
     }
     callAction(s, m, c.id, "end", "developer");
@@ -231,16 +290,102 @@ export function runLab(source: Lab, input: unknown): Lab {
       `Patient ${p.id}: Gesundheitswert ${p.health}.`,
       "developer",
     );
-  } else if (action.type === "crew-ready")
+  } else if (action.type === "new-patient") {
+    if (!mission!.dynamics?.active || mission!.dynamics.patients.length >= 30)
+      throw Error("Keine freie Patientenposition in dieser Lage.");
+    mission!.dynamics.patients.push(newPatient(s, mission!, action.injury));
+    mission!.dynamics.aftermath = 0;
+  } else if (action.type === "major") declareMajor(s, mission!, "developer");
+  else if (action.type === "volunteers") {
+    for (const p of s.people) p.duty = personDuty(s, p);
+    forceVolunteerAvailability(s, action.available, action.seconds);
+  } else if (action.type === "neighbor") {
+    if (lab.neighbors.length >= 4)
+      throw Error("Vier Nachbarleitstellen sind im Labor bereits vorhanden.");
+    if (action.seed === lab.seed)
+      throw Error(
+        "Seed der Nachbarleitstelle darf nicht dem eigenen Seed gleichen.",
+      );
+    if (lab.neighbors.some((n) => n.player.id === `neighbor-${action.seed}`))
+      throw Error(
+        "Seed einer vorhandenen Nachbarleitstelle ist bereits in Verwendung.",
+      );
+    const neighbor = createLab(action.seed).save;
+    neighbor.player.id = `neighbor-${action.seed}`;
+    neighbor.player.station = `Labor-Nachbar ${action.seed}`;
+    for (const b of neighbor.buildings) b.owner = neighbor.player.id;
+    for (const v of neighbor.vehicles) v.owner = neighbor.player.id;
+    neighbor.time = s.time;
+    for (const p of neighbor.people) p.duty = personDuty(neighbor, p);
+    forceVolunteerAvailability(neighbor, true, 14400);
+    lab.neighbors.push(validate(neighbor));
+  } else if (action.type === "neighbor-response") {
+    const neighbor = lab.neighbors.find((n) => n.player.id === action.neighbor);
+    if (!neighbor) throw Error("Labor-Nachbarleitstelle fehlt.");
+    const saves = new Map([s, ...lab.neighbors].map((n) => [n.player.id, n]));
+    const eligible = new Set(saves.keys()),
+      units = action.accept
+        ? neighbor.vehicles.filter((v) => !readiness(neighbor, v))
+        : neighbor.vehicles;
+    if (!units.length)
+      throw Error("Nachbarleitstelle hat keine alarmierbaren Kräfte.");
+    aidCommand(
+      saves,
+      s,
+      {
+        type: "aid-draft",
+        mission: mission!.id,
+        peer: neighbor.player.id,
+        types: units.map((v) => v.type),
+        priority: "DRINGEND",
+        message: "Reproduzierbare Unterstützungsprüfung im lokalen Labor.",
+      },
+      "developer",
+      eligible,
+    );
+    const request = s.aid.at(-1)!;
+    aidCommand(
+      saves,
+      s,
+      { type: "aid-send", id: request.id },
+      "developer",
+      eligible,
+    );
+    aidCommand(
+      saves,
+      neighbor,
+      action.accept
+        ? {
+            type: "aid-accept",
+            owner: s.player.id,
+            id: request.id,
+            vehicles: units.map((v) => v.id),
+          }
+        : {
+            type: "aid-close",
+            owner: s.player.id,
+            id: request.id,
+            op: "decline",
+          },
+      "developer",
+      eligible,
+    );
+  } else if (action.type === "crew-ready") {
     for (const p of s.people) {
       p.duty = personDuty(s, p);
       p.duty.standby = true;
       p.duty.reachability = 100;
       p.duty.absence = "none";
+      // Explicit lab preset: ready crews are already at their station.
+      p.duty.homeNode = p.duty.workNode = nearest(
+        s.buildings.find((b) => b.id === p.home)!.pos,
+      );
     }
+    forceVolunteerAvailability(s, true, 14400);
+  }
   lab.save = validate(s);
   lab.commands.push(action);
-  lab.hashes.push(stateHash(lab.save));
+  lab.hashes.push(laboratoryHash(lab));
   return lab;
 }
 export function verifyLab(lab: Lab) {
@@ -252,11 +397,11 @@ export function verifyLab(lab: Lab) {
     if (replay.hashes[index] !== lab.hashes[index])
       throw Error(`Abweichung nach Aktion ${index + 1}.`);
   }
-  if (stateHash(replay.save) !== stateHash(lab.save))
+  if (laboratoryHash(replay) !== laboratoryHash(lab))
     throw Error("Endzustand weicht vom Replay ab.");
   return {
     verified: true,
     actions: lab.commands.length,
-    hash: stateHash(replay.save),
+    hash: laboratoryHash(replay),
   };
 }

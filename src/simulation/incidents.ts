@@ -1,9 +1,13 @@
 import { turnoutReady } from "./staffing";
+import { stationProfile, crewSummaries } from "./staffing";
+import { vehicleAvailability } from "./availability";
+import { urgentPriority } from "./priority";
+import { openForceLabels } from "./force-plan";
 import { finalizeReport } from "./reports";
 import type { Skills } from "../catalog";
 import type { Save, Mission } from "../model";
 import { missing, capacity } from "../engine";
-import { capabilities, mt } from "../catalog";
+import { mt } from "../catalog";
 import { record, simId } from "./events";
 import { syncFms, setFms, operativeCode } from "./fms";
 import { callsTick } from "./calls";
@@ -96,7 +100,7 @@ export function request(
   record(s, m, "SPEAK_REQUESTED", details, "server", vehicle);
   const v = s.vehicles.find((v) => v.id === vehicle);
   if (v && (!v.fault || v.fault.state === "repaired"))
-    setFms(s, v, priority === "NOTFALL" || priority === "PRIORITÄT" ? 0 : 5);
+    setFms(s, v, urgentPriority(priority) ? 0 : 5);
 }
 export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
   syncFms(s);
@@ -153,7 +157,7 @@ export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
           m,
           atScene[0]?.id || c.firstArrival,
           "request",
-          `Nachforderung: ${deficit.map(([k, n]) => `${capabilities[k] || k} × ${n}`).join(", ")}`,
+          `Nachforderung: ${openForceLabels(Object.fromEntries(deficit)).join(", ")}`,
           "DRINGEND",
         );
       c.deficit = signature;
@@ -213,9 +217,8 @@ export function radioAction(
       m,
       "RADIO_ANSWER",
       `Rückfrage beantwortet: ${
-        missing(m, skills)
-          .map(([k, n]) => `${capabilities[k] || k} × ${n}`)
-          .join(", ") || "Kräfte vor Ort ausreichend"
+        openForceLabels(Object.fromEntries(missing(m, skills))).join(", ") ||
+        "Kräfte vor Ort ausreichend"
       }.`,
       actor,
       r.vehicle,
@@ -275,6 +278,17 @@ export function afterStep(s: Save) {
 }
 export function publicSave(source: Save): Save {
   const s = structuredClone(source);
+  const crews = crewSummaries(source);
+  for (let i = 0; i < s.vehicles.length; i++)
+    s.vehicles[i].availability = vehicleAvailability(
+      source,
+      source.vehicles[i],
+      crews.get(s.vehicles[i].id),
+    );
+  const volunteerHomes = new Set(
+    s.buildings.filter((b) => stationProfile(b).kind === "ff").map((b) => b.id),
+  );
+  for (const p of s.people) if (volunteerHomes.has(p.home)) delete p.duty;
   s.seed = 0;
   s.operations.cooldown = 0;
   if (

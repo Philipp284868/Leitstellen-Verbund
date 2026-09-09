@@ -1,4 +1,6 @@
 import { NeighborDesk } from "./NeighborDesk";
+import { ForceNeeds, ReserveOverview } from "./ForceNeeds";
+import { requirements } from "./simulation/hazards";
 import { effectiveSkills } from "./simulation/major-resources";
 import { DynamicsPanel } from "./Dynamics";
 import { travelNames } from "./simulation/traffic";
@@ -6,8 +8,9 @@ import type { TravelMode } from "./simulation/dynamics-schema";
 import { useEffect, useState } from "react";
 import type { Mission, Save } from "./model";
 import { vehicles, vt, bt, mt, capabilities } from "./catalog";
-import { capacity, missing } from "./engine";
+import { capacity } from "./engine";
 import { fleetReadiness } from "./fleet-view";
+import { reserveWarning } from "./simulation/staffing";
 import { chat, useNetwork } from "./network";
 import { act, useGame } from "./store";
 import { createId } from "./ids";
@@ -25,6 +28,12 @@ import {
   type Question,
 } from "./simulation/calls";
 import type { AAO, Alarm, Priority } from "./simulation/schema";
+import {
+  priorities,
+  priorityRank,
+  visiblePriority,
+} from "./simulation/priority";
+import { missionStatus } from "./simulation/mission-status";
 import { statuses } from "./ui";
 import "./Desk.css";
 const stages = {
@@ -38,7 +47,6 @@ const stages = {
   transport: "Patiententransport",
   closed: "Abgeschlossen",
 };
-const priorities: Priority[] = ["NORMAL", "DRINGEND", "PRIORITÄT", "NOTFALL"];
 const orgs = [
   "Alle",
   "Feuerwehr",
@@ -57,16 +65,24 @@ export function DeskQueue({
   open: (id: string) => void;
   panel: (id: string) => void;
 }) {
-  const calls = s.missions.flatMap((m) =>
-    (m.control?.calls ?? [])
-      .filter(
-        (c) =>
-          c.state === "ringing" ||
-          c.state === "dropped" ||
-          c.state === "active",
-      )
-      .map((c) => ({ m, c })),
-  );
+  const [callPage, setCallPage] = useState(0),
+    [radioPage, setRadioPage] = useState(0);
+  const calls = s.missions
+    .flatMap((m) =>
+      (m.control?.calls ?? [])
+        .filter(
+          (c) =>
+            c.state === "ringing" ||
+            c.state === "dropped" ||
+            c.state === "active",
+        )
+        .map((c) => ({ m, c })),
+    )
+    .sort(
+      (a, b) =>
+        priorityRank(b.m.control?.priority) -
+          priorityRank(a.m.control?.priority) || a.c.created - b.c.created,
+    );
   const radio = s.missions
     .flatMap((m) =>
       (m.control?.radio ?? [])
@@ -75,9 +91,17 @@ export function DeskQueue({
     )
     .sort(
       (a, b) =>
-        priorities.indexOf(b.r.priority) - priorities.indexOf(a.r.priority) ||
+        priorityRank(b.r.priority) - priorityRank(a.r.priority) ||
         a.r.created - b.r.created,
     );
+  const callsAt = Math.min(
+    callPage,
+    Math.max(0, Math.ceil(calls.length / 10) - 1),
+  );
+  const radioAt = Math.min(
+    radioPage,
+    Math.max(0, Math.ceil(radio.length / 10) - 1),
+  );
   return (
     <section className="desk-queue" aria-label="Notruf und Funk">
       <div className="desk-tools">
@@ -86,7 +110,7 @@ export function DeskQueue({
       </div>
       <strong>Notrufe · {calls.length}</strong>
       {!calls.length && <small>Keine offenen Gespräche.</small>}
-      {calls.map(({ m, c }) => (
+      {calls.slice(callsAt * 10, (callsAt + 1) * 10).map(({ m, c }) => (
         <button className="call-card" key={c.id} onClick={() => open(m.id)}>
           <b>
             {c.state === "ringing"
@@ -101,13 +125,45 @@ export function DeskQueue({
           </small>
         </button>
       ))}
+      {calls.length > 10 && (
+        <nav className="mission-pagination" aria-label="Notrufseiten">
+          <button disabled={!callsAt} onClick={() => setCallPage(callsAt - 1)}>
+            Vorherige Notrufe
+          </button>
+          <span>
+            {callsAt + 1}/{Math.ceil(calls.length / 10)}
+          </span>
+          <button
+            disabled={(callsAt + 1) * 10 >= calls.length}
+            onClick={() => setCallPage(callsAt + 1)}
+          >
+            Weitere Notrufe
+          </button>
+        </nav>
+      )}
       <strong>Funk · {radio.length} offen</strong>
-      {radio.map(({ m, r }) => (
+      {radio.slice(radioAt * 10, (radioAt + 1) * 10).map(({ m, r }) => (
         <button className="radio-request" key={r.id} onClick={() => open(m.id)}>
-          <b>{r.priority} · Sprechwunsch</b>
+          <b>{visiblePriority(r.priority)} · Sprechwunsch</b>
           <small>{r.details}</small>
         </button>
       ))}
+      {radio.length > 10 && (
+        <nav className="mission-pagination" aria-label="Funkseiten">
+          <button disabled={!radioAt} onClick={() => setRadioPage(radioAt - 1)}>
+            Vorherige Sprechwünsche
+          </button>
+          <span>
+            {radioAt + 1}/{Math.ceil(radio.length / 10)}
+          </span>
+          <button
+            disabled={(radioAt + 1) * 10 >= radio.length}
+            onClick={() => setRadioPage(radioAt + 1)}
+          >
+            Weitere Sprechwünsche
+          </button>
+        </nav>
+      )}
     </section>
   );
 }
@@ -338,26 +394,42 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   ))
     for (const [k, n] of Object.entries(effectiveSkills(m, f.vehicle)))
       skills[k] = (skills[k] || 0) + n;
-  const deficits = new Map(missing(m, skills));
   const selectedAAO = s.desk.aaos.find((x) => x.id === aao);
-  for (const [key, n] of Object.entries(selectedAAO?.skills ?? {})) {
-    const shortfall = n - (skills[key] ?? 0);
-    if (shortfall > 0)
-      deficits.set(key, Math.max(deficits.get(key) ?? 0, shortfall));
-  }
-  const deficit = [...deficits];
+  const processing = missionStatus(s, m, net.support);
   return (
     <div className="incident-desk" data-hud-section="details">
       <span className="eyebrow">
-        {c.priority} · {stages[c.stage]} · Einsatz {m.id.slice(-8)}
+        {visiblePriority(c.priority)} · {stages[c.stage]} · Einsatz{" "}
+        {m.id.slice(-8)}
       </span>
       <h2>{mt(m.template).name}</h2>
+      <p>
+        Seit {duration(Math.max(0, s.time - m.created))} offen ·{" "}
+        <strong data-processing={processing.code}>{processing.label}</strong>
+      </p>
+      <p className={processing.attention ? "warning" : "muted"}>
+        {processing.detail}
+      </p>
+      {!c.briefed && (
+        <p className="warning">
+          Offene Informationen:{" "}
+          {[
+            !c.locationKnown && "genauer Einsatzort",
+            !c.reportedTemplate && "Meldebild",
+            !c.facts.some((f) => f.key === "people") && "betroffene Personen",
+            !c.facts.some((f) => f.key === "hazard") && "erkennbare Gefahren",
+            "erste Lagemeldung",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
       {c.locationKnown && (
         <label>
           Dispositionspriorität
           <select
             aria-label="Dispositionspriorität"
-            value={c.priority}
+            value={visiblePriority(c.priority)}
             onChange={(e) =>
               void act({
                 type: "mission-priority",
@@ -407,7 +479,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
             .map((r) => (
               <article key={r.id}>
                 <b>
-                  {r.priority} ·{" "}
+                  {visiblePriority(r.priority)} ·{" "}
                   {s.vehicles.find((v) => v.id === r.vehicle)?.name ||
                     support.find((f) => f.vehicle.id === r.vehicle)?.vehicle
                       .name}
@@ -492,13 +564,22 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
               ? "Bedarf nach Erkundung"
               : "Vorläufiger Bedarf aus dem Meldebild; Erkundung kann weitere Kräfte ergeben."}
           </p>
-          <p className={deficit.length ? "warning" : "good"}>
-            {deficit.length
-              ? deficit
-                  .map(([k, n]) => `${capabilities[k] || k}: ${n} fehlen`)
-                  .join(" · ")
-              : "Bekannte Anforderungen durch Auswahl und Kräfte vor Ort gedeckt."}
-          </p>
+          <ForceNeeds
+            required={Object.fromEntries(
+              Object.entries(requirements(m))
+                .map(([key, n]) => [
+                  key,
+                  Math.max(n, selectedAAO?.skills[key] ?? 0),
+                ])
+                .concat(
+                  Object.entries(selectedAAO?.skills ?? {}).filter(
+                    ([key]) => !requirements(m)[key],
+                  ),
+                ),
+            )}
+            available={skills}
+          />
+          <ReserveOverview s={s} selected={chosen} />
           <div className="desk-form">
             <label>
               AAO auswählen
@@ -570,7 +651,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
               Priorität
               <select
                 aria-label="Priorität"
-                value={priority}
+                value={visiblePriority(priority)}
                 onChange={(e) => setPriority(e.target.value as Priority)}
               >
                 {priorities.map((p) => (
@@ -623,7 +704,11 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                     <small>
                       {ready(v) || (
                         <>
-                          <span>Einsatzbereit · </span>
+                          <span>
+                            {v.availability?.dispatchable === false
+                              ? "FF alarmierbar · "
+                              : "Einsatzbereit · "}
+                          </span>
                           <ApproachText
                             s={s}
                             vehicle={v}
@@ -634,6 +719,14 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
                         </>
                       )}
                     </small>
+                    {v.availability && (
+                      <small>
+                        Besatzung {v.availability.crewPresent}/
+                        {v.availability.crewCapacity} · zum Ausrücken{" "}
+                        {v.availability.crewRequired} erforderlich
+                      </small>
+                    )}
+                    <small>{reserveWarning(s, v)}</small>
                   </span>
                 </label>
               ))}
@@ -759,7 +852,7 @@ export function AAOPanel({ s }: { s: Save }) {
           AAO-Priorität
           <select
             aria-label="AAO-Priorität"
-            value={a.priority}
+            value={visiblePriority(a.priority)}
             onChange={(e) =>
               setA({ ...a, priority: e.target.value as Priority })
             }

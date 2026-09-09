@@ -44,9 +44,7 @@ for (const manual of [false, true])
       await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
       await page.getByLabel("Passwort", { exact: true }).fill(password);
       await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-      await page
-        .getByRole("button", { name: "Spielen", exact: true })
-        .click();
+      await page.getByRole("button", { name: "Spielen", exact: true }).click();
       if (manual) await showIncidents(page);
       await expect(
         page.locator('svg.map [aria-label="Flächenbrand"]'),
@@ -122,7 +120,9 @@ for (const manual of [false, true])
       await expect(page.locator(".incident-desk h2")).toHaveText(
         "Flächenbrand",
       );
-      await expect(page.locator(".radio-queue")).toContainText("Löschwasser");
+      await expect(page.locator(".radio-queue")).toContainText(
+        "1× TLF 2000 oder gleichwertige Kräfte",
+      );
       await page
         .getByRole("button", { name: "Nachforderung bearbeiten", exact: true })
         .click();
@@ -187,9 +187,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
   await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await openPanel(page, "FMS");
   const vehicle = page.locator(".fms-vehicle").first();
   await vehicle
@@ -223,9 +221,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .poll(() => Object.values(app.db.all().get(owner)!.desk.alarms)[0])
     .toBe("station");
   await page.reload();
-  await page
-    .getByRole("button", { name: "Spielen", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
   await expect(page.locator(".dispatch-list input").first()).toBeDisabled();
