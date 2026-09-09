@@ -7,6 +7,7 @@ import type { Save } from "../model";
 import { unproject, WORLD_CENTER } from "./projection";
 import { germanyStyle, loadGeoManifest } from "./map-style";
 import { attachTileLabels } from "./map-labels";
+import { mapInitializationMessage } from "./map-errors";
 
 maplibregl.setWorkerUrl(workerUrl);
 /** Menu and game use the same vector source and projection, with no backdrop image. */
@@ -64,7 +65,7 @@ export const GermanyScene = memo(function GermanyScene({
         };
       })
       .catch((reason) => {
-        if (!disposed) setError(String(reason.message || reason));
+        if (!disposed) setError(mapInitializationMessage(reason));
       });
     return () => {
       disposed = true;

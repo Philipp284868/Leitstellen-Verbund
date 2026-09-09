@@ -114,12 +114,15 @@ jobs:
         run: node .tools/pnpm-11.19.0/bin/pnpm.cjs exec playwright install --with-deps ${{ matrix.browser }}
       - name: Echtes virtuelles Audiogerät
         run: |
-          sudo apt-get install --no-install-recommends -y pulseaudio pulseaudio-utils
+          sudo apt-get install --no-install-recommends -y pulseaudio pulseaudio-utils xvfb libgl1-mesa-dri
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=ci_audio
           pactl set-default-sink ci_audio
       - name: Desktop-Abläufe parallel, Lastmessung anschließend isoliert
-        run: node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/2
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node .tools/pnpm-11.19.0/bin/pnpm.cjs test:e2e --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/2
+        env:
+          LV_CI_SOFTWARE_GL: "1"
+          LIBGL_ALWAYS_SOFTWARE: "1"
       - name: Testumfang und Laufzeit
         if: always()
         run: node scripts/ci-summary.mjs

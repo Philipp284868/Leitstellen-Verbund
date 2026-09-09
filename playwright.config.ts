@@ -26,6 +26,24 @@ export default defineConfig({
         ...(process.env.PW_EDGE ? { channel: "msedge" } : {}),
       },
     },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    {
+      name: "firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        // The Linux CI runner has no GPU. Use its real Mesa/Xvfb rendering
+        // context instead of Firefox's WebGL2-disabled headless backend.
+        ...(process.env.LV_CI_SOFTWARE_GL === "1"
+          ? {
+              headless: false,
+              launchOptions: {
+                firefoxUserPrefs: {
+                  "webgl.force-enabled": true,
+                  "webgl.forbid-software": false,
+                },
+              },
+            }
+          : {}),
+      },
+    },
   ],
 });

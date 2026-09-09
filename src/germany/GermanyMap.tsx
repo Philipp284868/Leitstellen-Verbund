@@ -24,6 +24,7 @@ import {
   GERMANY_BOUNDS,
 } from "./map-style";
 import { attachTileLabels } from "./map-labels";
+import { mapInitializationMessage } from "./map-errors";
 
 maplibregl.setWorkerUrl(workerUrl);
 type SearchResult = {
@@ -491,7 +492,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         };
       })
       .catch((reason) => {
-        if (!disposed) setError(String(reason.message || reason));
+        if (!disposed) setError(mapInitializationMessage(reason));
       });
     return () => {
       disposed = true;
