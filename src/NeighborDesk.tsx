@@ -6,10 +6,12 @@ import { useNetwork, type AidView } from "./network";
 import { vehicles, vt, mt } from "./catalog";
 import { requestStates, taskNames } from "./simulation/organizations-schema";
 import { readiness } from "./engine";
+import { matchingAidType } from "./simulation/aid-matching";
+import { ApproachText } from "./germany/GeoQueries";
 import { duration } from "./travel";
 import "./Organizations.css";
 export function RequestCard({ r }: { r: AidView }) {
-  const { save: s } = useGame(),
+  const { save: s, readonly } = useGame(),
     [selected, setSelected] = useState<string[]>([]),
     [text, setText] = useState("");
   const net = useNetwork();
@@ -23,7 +25,7 @@ export function RequestCard({ r }: { r: AidView }) {
     closed = ["DONE", "DECLINED", "CANCELLED"].includes(r.state);
   const remaining = [...r.types];
   r.assignments.forEach((a) => {
-    const n = remaining.indexOf(a.type);
+    const n = remaining.indexOf(a.requestedType ?? a.type);
     if (n >= 0) remaining.splice(n, 1);
   });
   const sharedMission = net.friends
@@ -40,7 +42,7 @@ export function RequestCard({ r }: { r: AidView }) {
           {form.error}
         </p>
       )}
-      <fieldset className="command-fields" disabled={form.busy}>
+      <fieldset className="command-fields" disabled={form.busy || readonly}>
         <header>
           <div>
             <span className="eyebrow">
@@ -52,6 +54,36 @@ export function RequestCard({ r }: { r: AidView }) {
           <b>{requestStates[r.state]}</b>
         </header>
         <p>{r.message}</p>
+        {!!r.vehicleWishes?.length && (
+          <div>
+            <strong>Gewünschte Fahrzeuge / Funkrufnamen</strong>
+            <ul>
+              {r.vehicleWishes.map((wish, i) => (
+                <li key={i}>{wish}</li>
+              ))}
+            </ul>
+            <small>
+              Unverbindliche Originalwünsche; unbekannte Namen bleiben
+              unaufgelöst. Eine Zusage gilt nur für die unten zugeordneten
+              Fahrzeuge.
+            </small>
+          </div>
+        )}
+        {!!r.assignments.length && (
+          <details>
+            <summary>Tatsächliche Zusagen</summary>
+            <ul>
+              {r.assignments.map((a) => (
+                <li key={a.assignment}>
+                  {a.name || vt(a.type).name} · {vt(a.type).name}
+                  {a.requestedType && a.requestedType !== a.type
+                    ? ` als Alternative für ${vt(a.requestedType).name}`
+                    : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <p>Angefordert: {r.types.map((t) => vt(t).name).join(", ")}</p>
         <p>
           <b>
@@ -88,7 +120,7 @@ export function RequestCard({ r }: { r: AidView }) {
           <div className="aid-vehicles">
             <h5>Eigene Kräfte zusagen · Teilannahme möglich</h5>
             {s.vehicles
-              .filter((v) => remaining.includes(v.type))
+              .filter((v) => matchingAidType(remaining, v.type) >= 0)
               .map((v) => (
                 <label key={v.id}>
                   <input
@@ -105,7 +137,21 @@ export function RequestCard({ r }: { r: AidView }) {
                   />
                   <span>
                     {v.name}
-                    <small>{readiness(s, v) || "Einsatzbereit"}</small>
+                    <small>
+                      {readiness(s, v) || "Einsatzbereit"}
+                      {!remaining.includes(v.type)
+                        ? " · geeignete Alternative"
+                        : ""}
+                    </small>
+                    {r.incident && (
+                      <small>
+                        <ApproachText
+                          s={s}
+                          vehicle={v}
+                          target={r.incident.pos}
+                        />
+                      </small>
+                    )}
                   </span>
                 </label>
               ))}
@@ -250,25 +296,32 @@ export function RequestCard({ r }: { r: AidView }) {
   );
 }
 export function NeighborDesk() {
-  const { save: s, mode } = useGame(),
+  const { save: s, mode, readonly } = useGame(),
     net = useNetwork();
   const [peer, setPeer] = useState(""),
     [mission, setMission] = useState(""),
     [type, setType] = useState("dlk"),
     [types, setTypes] = useState<string[]>([]),
     [message, setMessage] = useState(""),
+    [wishes, setWishes] = useState(""),
     [priority, setPriority] = useState<AidView["priority"]>("NORMAL"),
     [archive, setArchive] = useState(false),
     [compose, setCompose] = useState(false);
   const reset = () => {
     setTypes([]);
     setMessage("");
+    setWishes("");
     setPeer("");
     setMission("");
     setPriority("NORMAL");
   };
   const form = useCommandForm(
-    !!peer || !!mission || !!types.length || !!message || priority !== "NORMAL",
+    !!peer ||
+      !!mission ||
+      !!types.length ||
+      !!message ||
+      !!wishes ||
+      priority !== "NORMAL",
     reset,
   );
   if (!s || mode !== "multi") return null;
@@ -297,7 +350,7 @@ export function NeighborDesk() {
         onToggle={(e) => setCompose(e.currentTarget.open)}
       >
         <summary>Neue Unterstützungsanfrage</summary>
-        <fieldset className="command-fields" disabled={form.busy}>
+        <fieldset className="command-fields" disabled={form.busy || readonly}>
           <div className="org-form">
             <label>
               Nachbarleitstelle
@@ -344,7 +397,11 @@ export function NeighborDesk() {
             </label>
             <label>
               Gewünschter Fahrzeugtyp
-              <select value={type} onChange={(e) => setType(e.target.value)}>
+              <select
+                aria-label="Gewünschter Fahrzeugtyp"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              >
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
@@ -370,6 +427,22 @@ export function NeighborDesk() {
             ))}
           </div>
           <label>
+            Gewünschte Fahrzeuge / Funkrufnamen (optional)
+            <textarea
+              aria-label="Gewünschte Fahrzeuge / Funkrufnamen (optional)"
+              value={wishes}
+              maxLength={1619}
+              onChange={(e) => setWishes(e.target.value)}
+              placeholder="KatS-GW-SAN01
+KatS-NKTW01"
+            />
+            <small>
+              Ein Wunsch je Zeile, höchstens 20 Einträge mit je 80 Zeichen. Kein
+              Zugriff auf nicht freigegebene Fahrzeugnamen. Der Empfänger kann
+              passende Alternativen anbieten.
+            </small>
+          </label>
+          <label>
             Anfragetext
             <textarea
               value={message}
@@ -391,6 +464,10 @@ export function NeighborDesk() {
                   types,
                   priority,
                   message,
+                  vehicleWishes: wishes
+                    .split(/\r?\n/)
+                    .map((x) => x.trim())
+                    .filter(Boolean),
                 });
                 reset();
                 setCompose(false);

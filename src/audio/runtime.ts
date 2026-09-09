@@ -10,6 +10,7 @@ import {
 import { AudioOwnership } from "./ownership";
 import { smooth } from "./mixer";
 import { StreamedSignal } from "./stream";
+import { speakLocal } from "./speech";
 import {
   customSounds,
   storeSound,
@@ -37,6 +38,10 @@ type PendingCue = {
   radio: string;
   preview: boolean;
   at: number;
+  text?: string;
+  priority: number;
+  interrupted: boolean;
+  sequence: number;
 };
 type Voice = PendingCue & {
   group: MixerGroup;
@@ -46,6 +51,7 @@ type Voice = PendingCue & {
   gain: GainNode;
   stop: () => void;
   timer?: ReturnType<typeof setTimeout>;
+  speech?: ReturnType<typeof speakLocal>;
 };
 const priority = (cue: Cue) =>
   cue === "emergency"
@@ -66,7 +72,7 @@ const caps: Record<MixerGroup, number> = {
   music: 1,
   ambience: 2,
   phone: 3,
-  radio: 2,
+  radio: 1,
   alarm: 4,
   ui: 4,
 };
@@ -121,6 +127,8 @@ export class AudioController {
     filesDirty: false,
     filesBusy: false,
     error: "",
+    interrupted: [] as string[],
+    speechAvailable: false,
   };
   subscribe = (f: () => void) => {
     this.listeners.add(f);
@@ -323,6 +331,12 @@ export class AudioController {
             : p.channels[voice.channel] / 100,
           c?.currentTime ?? 0,
         );
+      voice.speech?.volume(
+        ((((groupLevel(p, voice.group, this.hidden()) * p.masterVolume) / 100) *
+          p.channels[voice.channel]) /
+          100) *
+          0.7,
+      );
     }
     if (!c) {
       if (this.snapshot.status !== "unavailable")
@@ -400,7 +414,13 @@ export class AudioController {
   };
   cue(
     cue: Cue,
-    options: { id?: string; radio?: string; preview?: boolean } = {},
+    options: {
+      id?: string;
+      radio?: string;
+      preview?: boolean;
+      text?: string;
+      priority?: number;
+    } = {},
   ) {
     const c = this.context,
       p = this.snapshot.preferences,
@@ -431,32 +451,53 @@ export class AudioController {
     const pending: PendingCue = {
       cue,
       id,
-      radio: p.parallelRadio ? (options.radio ?? "dispatch") : "dispatch",
+      radio: options.radio ?? "dispatch",
       preview: options.preview ?? false,
       at: now,
+      text: options.text,
+      priority: options.priority ?? priority(cue),
+      interrupted: false,
+      sequence: ++this.counter,
     };
-    if (priority(cue) >= 90) {
-      for (const v of [...this.voices.values()])
-        if (
-          priority(v.cue) < priority(cue) &&
-          ["radio", "ui", "ambience"].includes(v.group)
-        )
-          this.stopVoice(v.id);
-      this.queue.clear();
-      this.start(pending);
-      return;
-    }
-    if (
-      group === "radio" &&
-      [...this.voices.values()].some(
-        (v) => v.group === "radio" && v.radio === pending.radio,
-      )
-    ) {
-      const queue = this.queue.get(pending.radio) ?? [];
-      if (queue.length >= 6) queue.shift();
+    if (group === "radio") {
+      const queue = this.queue.get("dispatch") ?? [];
+      const active = [...this.voices.values()].find((v) => v.group === "radio");
+      if (
+        active &&
+        pending.priority >= 100 &&
+        active.priority < 100 &&
+        !active.interrupted &&
+        now - active.at < 60
+      ) {
+        this.stopVoice(active.id);
+        queue.push({
+          cue: active.cue,
+          id: active.id,
+          radio: active.radio,
+          preview: active.preview,
+          at: active.at,
+          text: active.text,
+          priority: active.priority,
+          interrupted: true,
+          sequence: active.sequence,
+        });
+        this.publish({
+          interrupted: [
+            ...new Set([...this.snapshot.interrupted, active.id]),
+          ].slice(-200),
+        });
+      }
+      if (queue.length >= 160) {
+        this.publish({
+          error:
+            "Funkwarteschlange ausgelastet. Weitere Meldungen bleiben im Funkverlauf abrufbar.",
+        });
+        return;
+      }
       queue.push(pending);
-      this.queue.set(pending.radio, queue);
+      this.queue.set("dispatch", queue);
       this.voiceState();
+      this.drain("dispatch");
       return;
     }
     this.start(pending);
@@ -506,12 +547,40 @@ export class AudioController {
     if (group === "music") this.graph.previewMusic(true);
     this.voiceState();
     const end = () => this.finishVoice(voice.id);
+    const signalEnded = () => {
+      if (this.voices.get(voice.id) !== voice || !this.wanted()) return;
+      if (voice.text && group === "radio") {
+        const current = this.snapshot.preferences;
+        voice.speech = speakLocal(
+          voice.text,
+          ((((groupLevel(current, group, this.hidden()) *
+            current.masterVolume) /
+            100) *
+            current.channels[channel]) /
+            100) *
+            0.7,
+          end,
+        );
+        this.publish({ speechAvailable: !!voice.speech });
+        if (voice.speech) {
+          voice.stop = () => voice.speech?.stop();
+          return;
+        }
+      }
+      end();
+    };
     const original = () => {
       if (this.voices.get(voice.id) !== voice || !this.wanted()) return;
       voice.custom = false;
       voice.name = "";
       this.voiceState();
-      const handle = this.graph!.cue(voice.cue, undefined, 1, gain, end);
+      const handle = this.graph!.cue(
+        voice.cue,
+        undefined,
+        1,
+        gain,
+        signalEnded,
+      );
       voice.stop = handle.stop;
     };
     if (
@@ -532,7 +601,7 @@ export class AudioController {
           voice.name = sound.name;
           voice.stop = () => stream.stop();
           this.voiceState();
-          await stream.play(sound.blob, 1, end, original);
+          await stream.play(sound.blob, 1, signalEnded, original);
         })
         .catch(() => {
           this.publish({
@@ -542,8 +611,18 @@ export class AudioController {
           original();
         });
     } else original();
-    if (voice.preview)
-      voice.timer = setTimeout(() => this.stopVoice(voice.id), 6000);
+    voice.timer = setTimeout(
+      () => {
+        if (!voice.preview)
+          this.publish({
+            error:
+              "Funk-/Audiosignal nach Zeitlimit beendet; Meldung bleibt im Verlauf abrufbar.",
+          });
+        this.stopVoice(voice.id);
+        this.drain("dispatch");
+      },
+      voice.preview ? 6000 : 30000,
+    );
   }
   private finishVoice(id: string) {
     const voice = this.voices.get(id);
@@ -568,22 +647,29 @@ export class AudioController {
     this.voiceState();
   }
   private drain(channel: string) {
-    if (
-      [...this.voices.values()].some(
-        (v) => v.group === "radio" && v.radio === channel,
-      )
-    )
-      return;
-    const queue = this.queue.get(channel);
+    void channel;
+    if ([...this.voices.values()].some((v) => v.group === "radio")) return;
+    const queue = this.queue.get("dispatch");
     if (!queue) return;
+    const now = this.context?.currentTime ?? 0;
+    queue.sort((a, b) => {
+      const agedA = now - a.at >= 60,
+        agedB = now - b.at >= 60;
+      return (
+        Number(agedB) - Number(agedA) ||
+        (agedA && agedB ? 0 : b.priority - a.priority) ||
+        a.at - b.at ||
+        a.sequence - b.sequence
+      );
+    });
     let next: PendingCue | undefined;
     while (
       (next = queue.shift()) &&
-      (this.context?.currentTime ?? 0) - next.at > 10
+      (this.context?.currentTime ?? 0) - next.at > 180
     ) {
       /* Never replay stale speech backlog. */
     }
-    if (!queue.length) this.queue.delete(channel);
+    if (!queue.length) this.queue.delete("dispatch");
     if (next) this.start(next);
     this.voiceState();
   }

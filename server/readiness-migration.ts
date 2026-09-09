@@ -17,6 +17,10 @@ export function planReadinessMigration(db: DatabaseSync) {
         .all()
         .map((row) => {
           const save = validate(JSON.parse(String(row.data)));
+          if (save.player.id !== String(row.user_id))
+            throw Error(
+              "Migration abgebrochen: Spielstand und Kontozuordnung stimmen nicht überein.",
+            );
           const newCores = save.buildings.filter(
             (b) =>
               b.organization?.kind === "ff" &&

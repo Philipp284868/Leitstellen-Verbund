@@ -1,4 +1,5 @@
 import { civilProtectionTick } from "./civil-protection";
+import { advanceRadio } from "./transmissions";
 import { turnoutReady } from "./staffing";
 import { isVolunteerStation, crewSummaries, personDuty } from "./staffing";
 import { vehicleAvailability } from "./availability";
@@ -8,7 +9,7 @@ import { finalizeReport } from "./reports";
 import type { Skills } from "../catalog";
 import type { Save, Mission } from "../model";
 import { missing, capacity } from "../engine";
-import { mt } from "../catalog";
+import { mt, vt } from "../catalog";
 import { record, simId } from "./events";
 import { syncFms, setFms, operativeCode } from "./fms";
 import { callsTick } from "./calls";
@@ -49,6 +50,7 @@ export function legacyIncident(s: Save, m: Mission) {
   );
 }
 export function beforeStep(s: Save) {
+  advanceRadio(s);
   civilProtectionTick(s);
   callsTick(s);
   for (const v of s.vehicles)
@@ -133,8 +135,22 @@ export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
           "server",
           v.id,
         );
-    if (!c.firstArrival && atScene.length) {
-      c.firstArrival = atScene[0].id;
+    const reconUnits = atScene.filter(
+      (v) =>
+        vt(v.type).skills.command ||
+        Object.keys(vt(v.type).skills).some(
+          (key) => mt(m.template).requirements[key],
+        ),
+    );
+    reconUnits.sort(
+      (a, b) =>
+        Number(!!vt(b.type).skills.command) -
+          Number(!!vt(a.type).skills.command) ||
+        a.arrive - b.arrive ||
+        a.id.localeCompare(b.id),
+    );
+    if (!c.firstArrival && reconUnits.length) {
+      c.firstArrival = reconUnits[0].id;
       c.stage = "recon";
       request(
         s,
@@ -382,6 +398,8 @@ export function publicSave(source: Save): Save {
 }
 import { REPORTED_IDS, reportId } from "./call-observations";
 const PRE_RECON_EVENTS = new Set([
+  "AID_VEHICLE_WISH",
+  "AID_UPDATED",
   "RADIO_CLAIMED",
   "RADIO_RELEASED",
   "MISSION_CREATED",

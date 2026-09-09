@@ -2,7 +2,13 @@ import { level, type Save } from "../model";
 import type { GameMode } from "../mode";
 import type { Cue } from "./synth";
 import { priorityRank } from "../simulation/priority";
-export type AudioEvent = { id: string; cue: Cue; radio?: string };
+export type AudioEvent = {
+  id: string;
+  cue: Cue;
+  radio?: string;
+  text?: string;
+  priority?: number;
+};
 export const priorityTone = (priority: string): Cue | null =>
   priority === "NOTFALL"
     ? "emergency"
@@ -32,6 +38,31 @@ export class AudioEvents {
     )
       return [];
     const result: AudioEvent[] = [];
+    if (save.radioNetwork) {
+      const known = new Set(
+        before.radioNetwork?.entries
+          .filter((e) => e.started !== undefined)
+          .map((e) => e.id),
+      );
+      for (const entry of save.radioNetwork.entries.filter(
+        (e) =>
+          e.state === "transmitting" &&
+          !known.has(e.id) &&
+          e.started! >= before.time,
+      ))
+        result.push({
+          id: entry.id,
+          cue:
+            entry.priority >= 100
+              ? "emergency"
+              : entry.priority >= 80
+                ? "priority"
+                : "radioOpen",
+          radio: entry.channel,
+          text: `${entry.sender}. ${entry.text}`,
+          priority: entry.priority,
+        });
+    }
     const old = new Map(before.missions.map((m) => [m.id, m]));
     for (const m of save.missions) {
       const previous = old.get(m.id);
@@ -45,9 +76,11 @@ export class AudioEvents {
         else if (e.type === "CALL_RECEIVED") cue = "phone";
         else if (e.type === "CALL_ACCEPTED") cue = "callAccept";
         else if (e.type === "CALL_ENDED") cue = "callEnd";
-        else if (e.type === "SPEAK_REQUESTED") cue = "request";
-        else if (e.type === "SPEAK_HANDLED") cue = "radioAck";
-        else if (e.type === "AID_FMS") cue = "radioOpen";
+        else if (!save.radioNetwork && e.type === "SPEAK_REQUESTED")
+          cue = "request";
+        else if (!save.radioNetwork && e.type === "SPEAK_HANDLED")
+          cue = "radioAck";
+        else if (!save.radioNetwork && e.type === "AID_FMS") cue = "radioOpen";
         if (cue)
           result.push({
             id: e.id,
@@ -58,7 +91,12 @@ export class AudioEvents {
       const oldRadio = new Set(previous?.control?.radio.map((r) => r.id) ?? []);
       for (const r of m.control?.radio ?? []) {
         const cue = priorityTone(r.priority);
-        if (cue && !oldRadio.has(r.id) && r.state === "open")
+        if (
+          !save.radioNetwork &&
+          cue &&
+          !oldRadio.has(r.id) &&
+          r.state === "open"
+        )
           result.push({ id: `radio:${r.id}`, cue });
       }
       if (
@@ -77,6 +115,7 @@ export class AudioEvents {
     }
     if (
       legacy &&
+      !(save.radioNetwork && ["arrival", "return"].includes(legacy)) &&
       [
         "dispatch",
         "arrival",
@@ -96,7 +135,7 @@ export class AudioEvents {
         id: `state:${save.generation}:${save.revision}:${legacy}`,
         cue: legacy,
       });
-    return result.slice(-24);
+    return result.slice(-160);
   }
   observe(save: Save | null, mode: GameMode, live: boolean): Cue | null {
     if (!live || !save) {

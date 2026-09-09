@@ -1,4 +1,5 @@
 import { vehicleHomeAllowed } from "./catalog";
+import { radioNetworkSchema } from "./simulation/transmission-schema";
 import { civilProtectionSchema } from "./simulation/civil-protection-schema";
 import { readinessCoreSchema } from "./simulation/readiness-core";
 import { validateCivilProtection } from "./simulation/civil-protection";
@@ -182,6 +183,7 @@ export const saveSchema = z
     operations: operationsSchema,
     aid: z.array(aidSchema).max(500).default([]),
     desk: deskSchema,
+    radioNetwork: radioNetworkSchema.optional(),
     environment: environmentSchema.optional(),
     version: z.literal(1),
     regionVersion: z.literal(3).optional(),

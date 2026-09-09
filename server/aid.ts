@@ -1,4 +1,5 @@
 import type { Save, Mission, Vehicle } from "../src/model";
+import { matchingAidType } from "../src/simulation/aid-matching";
 import { urgentPriority } from "../src/simulation/priority";
 import type {
   AidAction,
@@ -61,6 +62,8 @@ export function aidCommand(
       s.aid.splice(index, 1);
     }
     s.aid.push({
+      version: 2,
+      vehicleWishes: a.vehicleWishes ?? [],
       id: simId(s),
       owner: s.player.id,
       peer: a.peer,
@@ -106,6 +109,14 @@ export function aidCommand(
     )
       throw Error("Nachbarleitstelle hat bereits 30 offene Anfragen.");
     r.state = "SENT";
+    for (const wish of r.vehicleWishes ?? [])
+      record(
+        owner,
+        m,
+        "AID_VEHICLE_WISH",
+        `Anfrage ${r.id} · Original-Fahrzeugwunsch: ${wish}`,
+        actor,
+      );
   } else if (a.type === "aid-message") {
     if (r.state === "DRAFT" || r.messages.length >= 100)
       throw Error("Nachricht derzeit nicht möglich.");
@@ -130,16 +141,16 @@ export function aidCommand(
       throw Error("Maximal vier unterstützende Leitstellen.");
     const remaining = [...r.types];
     for (const assigned of r.assignments) {
-      const n = remaining.indexOf(assigned.type);
+      const n = remaining.indexOf(assigned.requestedType ?? assigned.type);
       if (n >= 0) remaining.splice(n, 1);
     }
     for (const id of a.vehicles) {
       const v = s.vehicles.find((v) => v.id === id);
       if (!v) throw Error("Eigenes Fahrzeug fehlt.");
-      const index = remaining.indexOf(v.type);
+      const index = matchingAidType(remaining, v.type);
       if (index < 0)
         throw Error("Dieser Fahrzeugtyp wurde nicht mehr angefordert.");
-      remaining.splice(index, 1);
+      const requestedType = remaining.splice(index, 1)[0];
       const reason = readiness(s, v);
       if (reason) throw Error(`${v.name}: ${reason}`);
       if (vt(v.type).mode === "water" && !mt(m.template).water)
@@ -164,6 +175,8 @@ export function aidCommand(
       );
       if (initialEvent) initialEvent.assignment = v.assignment;
       r.assignments.push({
+        requestedType,
+        name: v.name,
         vehicle: v.id,
         assignment: v.assignment,
         type: v.type,

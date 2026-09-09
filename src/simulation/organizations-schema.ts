@@ -145,6 +145,18 @@ export const requestStates = {
 };
 export const aidSchema = z
   .object({
+    version: z.literal(2).optional(),
+    vehicleWishes: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1)
+          .max(80)
+          .regex(/^[^\u0000-\u001f\u007f]+$/),
+      )
+      .max(20)
+      .optional(),
     id,
     owner: id,
     peer: id,
@@ -171,6 +183,8 @@ export const aidSchema = z
             vehicle: id,
             assignment: id,
             type: id,
+            requestedType: id.optional(),
+            name: z.string().min(1).max(100).optional(),
             lastFms: id.optional(),
             radio: z.boolean().optional(),
           })
@@ -249,6 +263,7 @@ export const aidActions = [
       types: z.array(id).min(1).max(20),
       priority: aidSchema.shape.priority,
       message: aidSchema.shape.message,
+      vehicleWishes: aidSchema.shape.vehicleWishes,
     })
     .strict(),
   z.object({ type: z.literal("aid-send"), id }).strict(),

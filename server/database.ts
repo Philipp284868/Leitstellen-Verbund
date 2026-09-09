@@ -13,11 +13,12 @@ import { mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { validate, type Save } from "../src/model";
 import { applyReadinessMigration } from "./readiness-migration";
+import { applyCommunicationMigration } from "./communication-migration";
 import { applyEconomyMigration } from "./economy-migration";
 
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 15;
+export const DATABASE_VERSION = 16;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -325,6 +326,15 @@ export class Database {
           this.audit(
             "server-migration",
             `real-readiness-core-v15:${JSON.stringify(summary)}`,
+          );
+        });
+      if (version < 16)
+        this.transaction(() => {
+          const summary = applyCommunicationMigration(this.sql);
+          this.sql.exec("PRAGMA user_version=16");
+          this.audit(
+            "server-migration",
+            `ordered-radio-aid-wishes-v16:${JSON.stringify(summary)}`,
           );
         });
       if (IS_GERMANY)

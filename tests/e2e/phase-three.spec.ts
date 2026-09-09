@@ -105,7 +105,16 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   expect(
     new Set(first.turnout!.arrivals.map((a) => a.at)).size,
   ).toBeGreaterThan(1);
-  const moving = first.turnout!.arrivals.reduce((longest, next) =>
+  const travelling = first.turnout!.arrivals.filter(
+    (a) =>
+      a.available &&
+      a.depart !== undefined &&
+      a.path &&
+      a.path.length > 1 &&
+      a.at > a.depart,
+  );
+  expect(travelling.length).toBeGreaterThan(0);
+  const moving = travelling.reduce((longest, next) =>
     next.at - next.depart! > longest.at - longest.depart! ? next : longest,
   );
   app.game.step(Math.max(0, moving.depart! - current.time + 2));

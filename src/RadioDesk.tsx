@@ -9,6 +9,7 @@ import { priorityRank, visiblePriority } from "./simulation/priority";
 import { duration } from "./travel";
 import { RadioRequestActions } from "./RadioRequest";
 import "./RadioDesk.css";
+import { RadioTransmissions } from "./RadioTransmissions";
 
 export function RadioDesk({
   s,
@@ -223,6 +224,7 @@ export function RadioDesk({
         Abgeschlossene Einsätze mit Funkverlauf findest du im Einsatzarchiv.
       </p>
       <button onClick={onArchive}>Einsatzarchiv öffnen</button>
+      <RadioTransmissions s={s} />
     </section>
   );
 }

@@ -129,3 +129,23 @@
     gap: 12px;
   }
 }
+.radio-transmissions {
+  margin-top: 1rem;
+  border-top: 1px solid var(--line, #344b5c);
+  padding-top: 1rem;
+}
+.transmission-list {
+  max-height: 28rem;
+  overflow: auto;
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.transmission-list article {
+  border: 1px solid var(--line, #344b5c);
+  border-radius: 0.4rem;
+  padding: 0.7rem;
+}
+.transmission-list article[data-priority="NOTFALL"] {
+  border-left: 4px solid #e14949;
+}

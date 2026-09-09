@@ -1,6 +1,7 @@
 import type { Save, Vehicle } from "../model";
 import { bt, vt } from "../catalog";
 import { record, simId } from "./events";
+import { transmit } from "./transmissions";
 export const fmsDefaults = [
   "Dringender Sprechwunsch",
   "Einsatzbereit über Funk",
@@ -61,6 +62,18 @@ export function setFms(
     vehicle: v.id,
   });
   f.history = f.history.slice(-2000);
+  if (f.history.length > 1 && ![0, 5].includes(code)) {
+    const event = f.history.at(-1)!;
+    transmit(s, {
+      id: `tx:${event.id}`,
+      channel: f.channel,
+      sender: v.name,
+      vehicle: v.id,
+      mission: v.mission ?? "",
+      text: event.text,
+      priority: 40,
+    });
+  }
   const m = [...s.missions, ...s.archive].find((m) => m.id === v.mission);
   if (m)
     record(

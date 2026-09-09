@@ -257,17 +257,12 @@ export function AudioSettingsEditor({
           />
           Musik und Umgebung bei Kommunikation absenken
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={p.parallelRadio}
-            onChange={(e) => change({ parallelRadio: e.target.checked })}
-          />
-          Leitstellenfunk und Nachbarfunk gleichzeitig hören
-        </label>
         <p>
-          Innerhalb eines Funkkanals bleiben Meldungen geordnet. Vollständig
-          angehaltene Tabs können vom Browser keine Audioausgabe erhalten.
+          Fahrzeugfunk läuft über alle überwachten Kanäle nacheinander. Telefon
+          und Musik bleiben unabhängig. Meldungstexte werden mit einer
+          installierten deutschen Stimme gesprochen, sofern der Browser diese
+          bereitstellt; andernfalls bleiben Funksignal und Textanzeige
+          verfügbar. Vollständig angehaltene Tabs erhalten keine Audioausgabe.
         </p>
       </div>
       <SoundProfiles draft={p} onChange={onChange} />

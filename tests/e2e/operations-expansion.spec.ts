@@ -350,6 +350,7 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
       types: ["hlf"],
       priority: "DRINGEND",
       message: "Löschhilfe am Nordtor benötigt",
+      vehicleWishes: ["KatS-GW-SAN 01", "Unbekannt <script>kein Code</script>"],
     },
   });
   app.game.command(helper, {
@@ -364,6 +365,10 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
   const card = page.locator(".aid-card");
   await expect(card).toHaveCount(1);
   await expect(card).toContainText("Löschhilfe am Nordtor benötigt");
+  await expect(card).toContainText("KatS-GW-SAN 01");
+  await expect(card).toContainText("Unbekannt <script>kein Code</script>");
+  await expect(card.locator("script")).toHaveCount(0);
+  await expect(card.locator(".aid-vehicles")).toContainText("Fahrt");
   await card.locator(".aid-vehicles input").first().check();
   await card
     .getByRole("button", { name: /Ausgewählte Kräfte alarmieren/ })
@@ -371,6 +376,8 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
   await expect
     .poll(() => app.db.all().get(owner)!.vehicles[0].status)
     .toBe("alarmed");
+  await card.getByText("Tatsächliche Zusagen", { exact: true }).click();
+  await expect(card).toContainText(app.db.all().get(owner)!.vehicles[0].name);
   await card.getByRole("textbox").fill("Kräfte fahren über Nordtor an");
   await card.getByRole("button", { name: "Nachricht übermitteln" }).click();
   await expect(card).toContainText("Kräfte fahren über Nordtor an");
@@ -378,4 +385,81 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
     path: info.outputPath("gemeinsame-hilfe.png"),
     fullPage: true,
   });
+});
+
+test("freie Fahrzeugwünsche werden als privater Entwurf gespeichert, nach Versand beim Empfänger angezeigt und nach Neustart erhalten", async ({
+  page,
+  browser,
+}, info) => {
+  const helper = await app.auth.create("helper", password, "Helfer", "West");
+  app.db.save(owner, organizationFixture(owner, "field", "aid-wishes-owner"));
+  app.db.save(
+    helper,
+    organizationFixture(helper, "field", "aid-wishes-helper"),
+  );
+  const second = await browser.newContext();
+  try {
+    const other = await second.newPage();
+    await login(page);
+    await login(other, "helper");
+    await openPanel(page, "Freunde");
+    await openPanel(other, "Freunde");
+    await page.getByText("Neue Unterstützungsanfrage", { exact: true }).click();
+    await page
+      .getByLabel("Nachbarleitstelle", { exact: true })
+      .selectOption(helper);
+    await page
+      .getByLabel("Eigener Einsatz", { exact: true })
+      .selectOption(app.db.all().get(owner)!.missions[0].id);
+    await page
+      .getByLabel("Gewünschter Fahrzeugtyp", { exact: true })
+      .selectOption("tsf");
+    await page
+      .getByRole("button", {
+        name: "Fahrzeug zur Anforderung hinzufügen",
+        exact: true,
+      })
+      .click();
+    await page
+      .getByLabel("Gewünschte Fahrzeuge / Funkrufnamen (optional)", {
+        exact: false,
+      })
+      .fill("KatS-GW-SAN01\nKatS-NKTW01\nFlorian unbekannt");
+    await page
+      .getByLabel("Anfragetext", { exact: true })
+      .fill("Geeignetes Löschfahrzeug für Ablösung");
+    await page
+      .getByRole("button", { name: "Entwurf anlegen", exact: true })
+      .click();
+    await expect(page.locator(".aid-card")).toContainText("Florian unbekannt");
+    await expect(other.locator(".aid-card")).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Anfrage verbindlich senden", exact: true })
+      .click();
+    const card = other.locator(".aid-card");
+    await expect(card).toContainText("KatS-NKTW01");
+    await expect(card).toContainText("geeignete Alternative");
+    await card.locator(".aid-vehicles input").first().check();
+    await card
+      .getByRole("button", {
+        name: "Ausgewählte Kräfte alarmieren",
+        exact: true,
+      })
+      .click();
+    await card.getByText("Tatsächliche Zusagen", { exact: true }).click();
+    await expect(card).toContainText("als Alternative");
+    await app.close();
+    app = compiled.startServer(config);
+    await app.listen();
+    await other.reload();
+    await enterGame(other);
+    await openPanel(other, "Freunde");
+    await expect(other.locator(".aid-card")).toContainText("Florian unbekannt");
+    await other.screenshot({
+      path: info.outputPath("fahrzeugwuensche-empfangen.png"),
+      fullPage: true,
+    });
+  } finally {
+    await second.close();
+  }
 });

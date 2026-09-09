@@ -79,6 +79,9 @@ function ownerOf(username: string) {
   );
 }
 async function expectAlarmableFF(page: Page, owner: string) {
+  const core = app.db.all().get(owner)!.buildings[0].readinessCore!.count;
+  expect(core).toBeGreaterThanOrEqual(4);
+  expect(core).toBeLessThanOrEqual(6);
   await expect
     .poll(() =>
       app.game
@@ -86,14 +89,17 @@ async function expectAlarmableFF(page: Page, owner: string) {
         .save.vehicles.every(
           (v) =>
             v.availability?.alarmable === true &&
-            v.availability.dispatchable === false &&
-            v.availability.crewPresent === 0,
+            v.availability.crewPresent === core &&
+            v.availability.dispatchable === core >= v.availability.crewRequired,
         ),
     )
     .toBe(true);
-  await expect(page.locator(".fleet-card").first()).toContainText(
-    "Alarmierbar: Freiwillige Kräfte müssen zuerst zur Wache kommen.",
-  );
+  if (
+    !app.game.view(owner, new Set()).save.vehicles[0].availability!.dispatchable
+  )
+    await expect(page.locator(".fleet-card").first()).toContainText(
+      "Alarmierbar: Freiwillige Kräfte müssen zuerst zur Wache kommen.",
+    );
 }
 async function resources(page: Page, username: string) {
   await openPanel(page, "Wachen");
@@ -134,7 +140,7 @@ async function resources(page: Page, username: string) {
   expect(s.buildings[0].organization?.kind).toBe("ff");
   expect(s.staffing?.version).toBe(1);
   expect(s.people.length).toBeGreaterThanOrEqual(6);
-  // Real automatic FF staffing still requires actual staggered travel to the station.
+  // The real 4–6 person core is already at the station; additional crew must commute.
   await expect(
     page.getByRole("button", { name: "Besetzen", exact: true }),
   ).toHaveCount(0);

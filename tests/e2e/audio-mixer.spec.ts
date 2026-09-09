@@ -277,7 +277,7 @@ test("ein Kontext mischt Musik, Umgebung, Telefon und mehrere Instanzen derselbe
   await expect.poll(async () => (await stats(page)).status).toBe("paused");
   expect((await stats(page)).players).toBe(0);
 });
-test("Funkkanäle ordnen eigene lange Quellen, unabhängige Kanäle überlappen; Notfall hat Vorrang", async ({
+test("sämtliche Fahrzeugkanäle laufen am Arbeitsplatz nacheinander; Notfall erhält unterbrochene Meldungen", async ({
   page,
 }) => {
   await open(page);
@@ -301,15 +301,15 @@ test("Funkkanäle ordnen eigene lange Quellen, unabhängige Kanäle überlappen;
     window.AudioLab.audio.cue("radio", { id: "r4", radio: "support" });
     window.AudioLab.audio.cue("radio", { id: "r5", radio: "dispatch" });
   });
-  await expect.poll(async () => (await stats(page)).players).toBe(2);
-  expect((await stats(page)).queue).toBe(1);
+  await expect.poll(async () => (await stats(page)).players).toBe(1);
+  expect((await stats(page)).queue).toBe(2);
   await page.evaluate(() =>
     window.AudioLab.audio.cue("emergency", { id: "critical" }),
   );
   await expect
     .poll(async () => (await stats(page)).players, { intervals: [20, 30] })
     .toBe(0);
-  expect((await stats(page)).queue).toBe(0);
+  expect((await stats(page)).queue).toBe(3);
   expect((await stats(page)).voices.some((v) => v.cue === "emergency")).toBe(
     true,
   );
@@ -317,6 +317,26 @@ test("Funkkanäle ordnen eigene lange Quellen, unabhängige Kanäle überlappen;
     .poll(async () => (await stats(page)).rms, { intervals: [20, 30] })
     .toBeGreaterThan(0.0001);
   await expect.poll(async () => (await stats(page)).urls).toBe(0);
+  expect(
+    await page.evaluate(() => window.AudioLab.audio.state().interrupted),
+  ).toContain("r3");
+  await expect
+    .poll(async () => (await stats(page)).voices.some((v) => v.id === "r3"))
+    .toBe(true);
+  expect(
+    (await stats(page)).voices.filter((v) => v.group === "radio"),
+  ).toHaveLength(1);
+  await page.evaluate(() =>
+    window.AudioLab.audio.cue("phone", { id: "parallel-phone" }),
+  );
+  await expect
+    .poll(async () =>
+      (await stats(page)).voices.some((v) => v.group === "phone"),
+    )
+    .toBe(true);
+  expect(
+    (await stats(page)).voices.filter((v) => v.group === "radio"),
+  ).toHaveLength(1);
 });
 test("überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und Szenenwechsel bleiben unabhängig", async ({
   page,
@@ -371,6 +391,78 @@ test("überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und S
     false,
   );
   expect((await stats(page)).contexts).toBe(1);
+});
+
+test("hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals eine Netzstimme", async ({
+  page,
+}) => {
+  await open(page);
+  await active(page);
+  await page.evaluate(() => {
+    const probe = {
+      spoken: [] as { text: string; local: boolean }[],
+      cancelled: 0,
+    };
+    Object.defineProperty(window, "speechProbe", { value: probe });
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      configurable: true,
+      value: class {
+        text: string;
+        constructor(text: string) {
+          this.text = text;
+        }
+      },
+    });
+    Object.defineProperty(window, "speechSynthesis", {
+      configurable: true,
+      value: {
+        getVoices: () => [
+          { lang: "de-DE", localService: false, name: "Remote" },
+          { lang: "de-DE", localService: true, name: "Local" },
+        ],
+        speak: (u: SpeechSynthesisUtterance) =>
+          probe.spoken.push({ text: u.text, local: u.voice!.localService }),
+        cancel: () => {
+          probe.cancelled++;
+        },
+      },
+    });
+    window.AudioLab.audio.cue("radioOpen", {
+      id: "stalled-speech",
+      text: "Erste Meldung",
+    });
+    window.AudioLab.audio.cue("radioOpen", {
+      id: "next-speech",
+      radio: "support",
+      text: "Zweite Meldung",
+    });
+  });
+  const probe = () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            speechProbe: {
+              spoken: { text: string; local: boolean }[];
+              cancelled: number;
+            };
+          }
+        ).speechProbe,
+    );
+  await expect.poll(async () => (await probe()).spoken.length).toBe(1);
+  await expect
+    .poll(async () => (await probe()).spoken.length, { timeout: 35000 })
+    .toBe(2);
+  expect((await probe()).spoken.every((u) => u.local)).toBe(true);
+  expect((await probe()).cancelled).toBeGreaterThanOrEqual(1);
+  expect(
+    (await stats(page)).voices.filter((v) => v.group === "radio"),
+  ).toHaveLength(1);
+  expect(
+    await page.evaluate(() => window.AudioLab.audio.state().error),
+  ).toContain("Zeitlimit");
+  await page.evaluate(() => window.AudioLab.audio.session(false));
+  expect((await probe()).cancelled).toBeGreaterThanOrEqual(2);
 });
 test("Hintergrundwahl und Mehrfachtab-Lease verhindern doppelte Ausgabe und geben Quellen beim Logout frei", async ({
   page,
