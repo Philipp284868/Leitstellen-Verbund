@@ -82,6 +82,10 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
   page,
   context,
 }) => {
+  // Three real app boots took 36 seconds on software-rendered CI Firefox,
+  // before login, tab checks and browser setup. Keep their assertions intact
+  // with a bounded budget for this multi-boot workflow, not the whole suite.
+  test.setTimeout(90000);
   await page.addInitScript(() => sessionStorage.setItem("lv-mode", "single"));
   const { id } = await account(page);
   const before = app.db.all().get(id)!;
@@ -101,6 +105,7 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
       before.buildings.length,
     );
   }
+  await page.bringToFront();
   await page.reload();
   await play(page);
   expect(app.db.all("single").size).toBe(0);
