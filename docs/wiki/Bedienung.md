@@ -1,6 +1,6 @@
 # Hauptmenü, Hauptleiste und Tastatur
 
-Stand: Version 2.19. Das Hauptmenü zeigt links Spielen, Leitstellen, Hilfe/Wiki, Neuigkeiten, Einstellungen und Abmelden. Rechts stehen Profil/XP, verbundener Server und Leitstellenwerte. Ein serverseitiger Bestand ist kein lokaler Lade-Slot. Spielen öffnet die berechtigte Leitstelle im [[Deutschland]]-Multiplayer.
+Stand: Version 2.20. Das Hauptmenü zeigt links Spielen, Leitstellen, Hilfe/Wiki, Neuigkeiten, Einstellungen und Abmelden. Rechts stehen Profil/XP, verbundener Server und Leitstellenwerte. Ein serverseitiger Bestand ist kein lokaler Lade-Slot. Spielen öffnet die berechtigte Leitstelle im [[Deutschland]]-Multiplayer.
 
 Im normalen Spielzustand bleibt die Karte unter einer 62 Pixel hohen Hauptleiste frei. Die Einsatzliste und Kartenwerkzeuge sind zunächst geschlossen. Es gibt keine dauerhafte untere Werkzeugleiste und keine globale Personal-/NPC-Gesamtzahl.
 

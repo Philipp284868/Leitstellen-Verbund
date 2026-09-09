@@ -16,7 +16,9 @@ PC-Multiplayer im Browser: anmelden, berechtigte Leitstelle öffnen, Notrufe bea
 - [[Entwicklung, Tests und Releases|Entwicklung]]
 - [[Grenzen und Roadmap|Roadmap]]
 
-Diese Seiten beschreiben Version **2.19.0**. Im Spiel bleibt die Deutschlandkarte unter einer kompakten oberen Hauptleiste frei; Einsatzliste, Kartenwerkzeuge und Disposition öffnen sich bei Bedarf. Die vollständige öffentliche Spielerliste zeigt verbundene Disponenten und echte gewählte Wachenstandorte, ohne private Einsätze oder Besitz freizugeben. Einheitliche Fahrzeug-/Gebäudesymbole und geografische Einrichtungen verbessern die [[Kartenübersicht|Karte-und-Fahrten]].
+Diese Seiten beschreiben Version **2.20.0**. Bereite Fahrzeuge können schon auf der Rückfahrt erneut alarmiert werden. Das Notrufaufkommen richtet sich nach tatsächlichem Ausbau, offenen Vorgängen und freien Fahrzeugen. Technische Hilfe bildet den Schwerpunkt; ungeklärte Anrufe bleiben neutral. Fähigkeitsbasierte Aufgaben, automatische Störungsbehebung und der gezielte Kräfteabzug gehören zum [[Einsatzablauf]]. Die [[Kartenübersicht|Karte-und-Fahrten]] erklärt grüne medizinische Marker und getrennte Dringlichkeit.
+
+Im Spiel bleibt die Deutschlandkarte unter einer kompakten oberen Hauptleiste frei; Einsatzliste, Kartenwerkzeuge und Disposition öffnen sich bei Bedarf. Die öffentliche Spielerliste zeigt verbundene Disponenten und echte gewählte Wachenstandorte, ohne private Einsätze oder Besitz freizugeben.
 
 Die bisherigen 653 Einsatzvorlagen, freiwilligen Anreisen, Fahrzeug-Nachbereitung und das vollständige Archiv bleiben erhalten. Die Regeln für Lagemeldung, Crew-Auswahl, erfüllbare Folgeereignisse, Klinikprofile, FMS-Zeitpunkte und tatsächlichen Einsatzabschluss sind nachgeschärft; siehe [[Einsatzablauf]]. Es gibt keine globale NPC-/Personalzahl in der Hauptleiste.
 

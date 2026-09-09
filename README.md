@@ -2,13 +2,17 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.19.0 · Freie Karte, Topbar, passende Symbole und Spielerpräsenz
+## Version 2.20.0 · Ruhiger Einstieg, verfügbare Rückkehrer und dauerhafte Einsatzaufgaben
+
+Bereite Rückkehrer lassen sich sofort vom tatsächlichen Straßenabschnitt erneut alarmieren. Der Generator berücksichtigt offene Gespräche, gebundene Fahrzeuge und die Größe der Leitstelle; technische Hilfe bildet den Schwerpunkt. Unbekannte Anrufe bleiben auch in den übertragenen Daten neutral. Geeignete Fähigkeiten entscheiden über die Bearbeitung, erledigte Aufgaben bleiben erledigt. Die neue Brandanzeige zeigt den gespeicherten Serverzustand; überzählige Fahrzeuge können einzeln oder gemeinsam zurückgeschickt werden. Medizinische Marker bleiben grün, gewöhnliche Fahrzeugstörungen enden automatisch. [Spielregeln und Migrationen](docs/EINSATZLOGIK-2.20.md) · [Notrufmessung](docs/NOTRUFE-2.20.md) · [Tatsächlicher Testbericht](docs/EINSATZLOGIK-TESTBERICHT-2.20.md).
+
+### Bestehende Oberfläche
 
 Eine einzige 62-Pixel-Leiste erschließt die Spielbereiche. Arbeitslisten und Details öffnen bei Bedarf; die untere Toolbar und globale Personalstatistik entfallen. Alle 50 Fahrzeugtypen nutzen zentrale Vektorsymbole. Reale Einrichtungen erscheinen nach Zoom und Kategorie, Mitspieler an ihrer zugeordneten Leitstelle. Öffentliche Anwesenheit überträgt keine privaten Spielstände oder Einsatzrechte. Die Simulation prüft gemeinsame Besatzungen, bestätigte Lagemeldungen, Klinikprofile und offene Abschlussbedingungen konsequenter. [Systemaudit und neue Bedienwege](docs/QUALITAET-2.19.md) · [Symbolzuordnung und Datenabdeckung](docs/QUALITAET-KARTENSYMBOLE.md) · [Präsenz und Rechte](docs/QUALITAET-PRAESENZ.md) · [Tatsächliche Prüfungen und Aufnahmen](docs/QUALITAET-TESTBERICHT.md).
 
 ### Bestehender Einsatzbetrieb
 
-**653 Einsatzvorlagen, 50 Fahrzeugtypen:** Der vorhandene Ablauf ist um konkrete Lagevarianten, echte FF-Anreisen, einen späteren BF-Ausbau, getrennte Fahrzeugbereitschaft und Rettungsmittel-Nachbereitung erweitert. Es gibt keine maximale Zahl aktiver Einsätze. Prioritäten, verständliche Fahrzeuganforderungen und eine seitenweise Einsatzliste helfen bei mehreren parallelen Lagen. Eigene WAV-, MP3- und OGG-Signale bleiben im Browser und haben keine feste 2-MB-/15-Sekunden-Grenze. Das dauerhafte SQLite-Archiv enthält alle ab diesem Update gespeicherten Abschlüsse. [Bedienung, Migration und technische Grenzen](docs/EINSATZBETRIEB-2.18.md) · [Vollständige Katalogzuordnung](docs/EINSATZKATALOG.md) · [Prüfbericht](docs/EINSATZBETRIEB-TESTBERICHT.md).
+**653 Einsatzvorlagen, 50 Fahrzeugtypen:** Der vorhandene Ablauf umfasst konkrete Lagevarianten, echte FF-Anreisen, späteren BF-Ausbau, getrennte Fahrzeugbereitschaft und zustandsabhängige Nachbereitung. Vorhandene aktive Einsätze bleiben erhalten; neue Erzeugung wird anhand der aktuellen Belastung begrenzt. Prioritäten, verständliche Fähigkeitsanforderungen und seitenweise Listen helfen bei parallelen Lagen. Eigene WAV-, MP3- und OGG-Signale bleiben im Browser. Das dauerhafte SQLite-Archiv enthält alle seit Einführung des Archivs gespeicherten Abschlüsse. [Historischer Stand 2.18](docs/EINSATZBETRIEB-2.18.md) · [Vollständige Katalogzuordnung](docs/EINSATZKATALOG.md).
 
 ## Deutschland komplett aus GitHub installieren
 

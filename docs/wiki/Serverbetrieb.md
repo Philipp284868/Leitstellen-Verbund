@@ -8,8 +8,10 @@ Die neue [[Deutschland]]-Instanz benötigt zusätzlich ein vollständiges `GEODA
 
 Update: Server kontrolliert stoppen → konsistente Sicherung erstellen → konkret geprüften main-Stand installieren → Setup/Build prüfen → starten und Verbindung kontrollieren. Ein Git-Push löst kein Produktionsupdate aus.
 
-Sicherung: `node dist/server/cli.js backup` für Rivermere, `node dist/germany/server/cli.js backup` für Deutschland. Wiederherstellung nur bei gestopptem Server nach der dokumentierten CLI-Anleitung; Sitzungen werden dabei widerrufen. Vor notwendigen Schemaänderungen wird automatisch ein Vorabbackup angelegt. Schema12 sowie eine zusätzliche Deutschland-Datensatzkennung schützen die Weltidentität. Passendes Geodatenmanifest und Datenpaket getrennt von Kontensicherungen aufbewahren.
+Sicherung: `node dist/server/cli.js backup` für Rivermere, `node dist/germany/server/cli.js backup` für Deutschland. Wiederherstellung nur bei gestopptem Server nach der dokumentierten CLI-Anleitung; Sitzungen werden dabei widerrufen. Vor notwendigen Schemaänderungen wird automatisch ein Vorabbackup angelegt. Schema 13 sowie eine zusätzliche Deutschland-Datensatzkennung schützen die Weltidentität. Passendes Geodatenmanifest und Datenpaket getrennt von Kontensicherungen aufbewahren.
 
 Alte Einzelspielerstände verbleiben unverändert als inaktive solo_saves. Eigener Export im Spiel unter Sicherungen oder offline mit `node dist/server/cli.js archive-export --username NAME --file NEUE-DATEI.json`. Bestehende Ausgabedateien werden nicht überschrieben. Archive sind keine spielbaren Modi und dürfen nicht in die Multiplayer-Wirtschaft übernommen werden. Ein Backup der gesamten Datenbank enthält sie weiterhin.
+
+Version 2.20 behält Datenbankschema 13 bei. Neue optionale Zustände `callPacing.version=1` und `mission.tasks.version=1` werden serverseitig einmalig und additiv aus dem Bestand ergänzt. Bestehende Einsätze, abgeschlossene Gefahren, Fortschritt, Besitz und Geld bleiben erhalten. Alte wartende Defekte übernehmen ihre Frist aus ursprünglichem Beginn und Typ; Wiederverbindung startet sie nicht neu. Es ist kein Weltwechsel, Geodaten-Neuimport oder Datenreset erforderlich.
 
 Keine privaten Spielstände, Tokens oder personenbezogenen Logs in GitHub veröffentlichen. Secret Scanning ersetzt nicht die Verantwortung für die private Datenablage.
