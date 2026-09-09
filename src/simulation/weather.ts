@@ -6,6 +6,12 @@ import { DYNAMICS, sample } from "./random";
 import { mt } from "../catalog";
 import type { z } from "zod";
 import type { environmentSchema } from "./dynamics-schema";
+import {
+  localSituation,
+  situationAffects,
+  SITUATION_POLICY,
+  type WorldSituation,
+} from "./world-situation";
 export const weatherNames = {
   sun: "Sonnig",
   cloud: "Bewölkt",
@@ -168,6 +174,7 @@ export function updateWeather(s: Save) {
   }
   if (!s.environment)
     throw Error("Wetterzustand konnte nicht erstellt werden.");
+  applySituationWeather(s);
   // Local incident closures survive weather-period changes and disappear after
   // the corresponding danger has been removed. No unrelated desk is exposed.
   s.environment.roads = s.environment.roads.filter(
@@ -230,6 +237,79 @@ export function updateWeather(s: Save) {
       blocked: true,
     });
   }
+}
+/** Weather is derived from the shared timeline. Local road damage remains until
+ * its incident is resolved, even after the weather has recovered. */
+function applySituationWeather(s: Save) {
+  if (!s.worldSituation || !s.environment) return;
+  const e = s.environment,
+    state = localSituation(s);
+  Object.assign(e, situationWeather(e, state));
+  for (const r of e.roads.filter(
+    (r) => r.id.startsWith("road-") && r.kind === "jam",
+  )) {
+    const point = r.position ?? nodes[r.edge[0]];
+    const affected = point && situationAffects(s.worldSituation, point);
+    const strength = affected
+      ? SITUATION_POLICY.phaseStrength[s.worldSituation.phase] *
+        s.worldSituation.intensity
+      : 0;
+    r.delay =
+      90 +
+      Math.round(
+        90 *
+          strength *
+          (s.worldSituation.profile === "normal" ||
+          s.worldSituation.profile === "quiet"
+            ? 0
+            : 1),
+      );
+  }
+}
+function situationWeather(
+  e: NonNullable<Save["environment"]>,
+  state: WorldSituation | undefined,
+) {
+  e = { ...e };
+  e.kind = "cloud";
+  e.wind = 12;
+  e.rain = 0;
+  e.visibility = 15000;
+  e.temperature = 15;
+  if (!state) return e;
+  const strength =
+    SITUATION_POLICY.phaseStrength[state.phase] * state.intensity;
+  if (strength <= 0 || ["quiet", "normal"].includes(state.profile)) return e;
+  if (state.profile === "storm") {
+    e.kind = "gale";
+    e.wind = 30 + 55 * strength;
+    e.rain = 35 * strength;
+  }
+  if (state.profile === "rain") {
+    e.kind = "heavy-rain";
+    e.rain = 35 + 50 * strength;
+    e.wind = 20 + 10 * strength;
+  }
+  if (state.profile === "heat") {
+    e.kind = "heat";
+    e.temperature = 28 + 9 * strength;
+    e.rain = 0;
+  }
+  if (state.profile === "winter") {
+    e.kind = "ice";
+    e.temperature = -2 - 5 * strength;
+    e.visibility = 900;
+  }
+  if (e.rain > 50) e.visibility = 900;
+  return e;
+}
+/** Route legs use their physical region, including helpers arriving from outside. */
+export function weatherAtPoint(s: Save, point: { x: number; y: number }) {
+  if (!s.worldSituation || !s.environment) return s.environment;
+  return situationWeather(
+    s.environment,
+    situationAffects(s.worldSituation, point) ? s.worldSituation : undefined,
+  );
 }
 export function weatherWeight(s: Save, template: string) {
   const kind = s.environment?.kind;

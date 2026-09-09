@@ -5,6 +5,7 @@ import { clamp, sample } from "./random";
 import { simId, record } from "./events";
 import { syncResponderRecovery } from "./responder-recovery";
 import { responseCrewAvailable, effectiveSkills } from "./major-resources";
+import { weatherAtPoint } from "./weather";
 export const conditionNames = {
   stable: "Stabil",
   deteriorating: "Verschlechternd",
@@ -225,7 +226,7 @@ export function patientTick(
         dt * (p.injury.includes("Verletzung") ? 0.01 : 0) -
         dt * (p.care === "bleeding" ? care * 0.2 : 0),
     );
-    const ambient = s.environment?.temperature || 15;
+    const ambient = weatherAtPoint(s, m.pos)?.temperature ?? 15;
     p.temperature = Math.max(
       30,
       Math.min(

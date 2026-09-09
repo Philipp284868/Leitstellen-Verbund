@@ -71,7 +71,7 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
     first.socket.disconnect();
     await connect(identities[0]);
     expect(app.db.all().get("owner")!.callPacing).toEqual(before);
-    for (let i = 0; i < 10; i++) app.game.step(60, now);
+    for (let i = 0; i < 21; i++) app.game.step(60, now);
     const owner = app.db.all().get("owner")!;
     expect(owner.missions).toHaveLength(1);
     expect(app.db.all().get("member")!.missions).toHaveLength(0);

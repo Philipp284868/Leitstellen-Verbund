@@ -104,8 +104,9 @@ export function buildReport(m: Mission): Report {
     },
     units: structuredClone(t?.units ?? []),
     meters: t?.meters ?? 0,
-    credits: t?.credits ?? null,
-    xp: t?.xp ?? null,
+    credits:
+      m.location?.state === "technical-closure" ? 0 : (t?.credits ?? null),
+    xp: m.location?.state === "technical-closure" ? 0 : (t?.xp ?? null),
     aaos: structuredClone(t?.aaos ?? []),
     quality: incidentQuality(m),
   };
@@ -114,7 +115,11 @@ export function buildReport(m: Mission): Report {
 export function incidentQuality(m: Mission): NonNullable<Report["quality"]> {
   const events = m.control?.events || [],
     units = m.telemetry?.units || [];
-  const assessed = !!m.telemetry && !m.telemetry.partial && !m.control?.legacy;
+  const assessed =
+    m.location?.state !== "technical-closure" &&
+    !!m.telemetry &&
+    !m.telemetry.partial &&
+    !m.control?.legacy;
   const accepted = events.find((e) => e.type === "CALL_ACCEPTED")?.at;
   const alarmed = events.find((e) => e.type === "ALARM_STARTED")?.at;
   const disposition =
@@ -233,6 +238,7 @@ export function qualityFactor(m: Mission) {
   return quality.assessed ? 0.75 + quality.score / 400 : 1;
 }
 export function finalizeReport(s: Save, m: Mission) {
+  if (m.location?.state === "technical-closure") return;
   if (m.phase !== "done" || m.report) return;
   const r = (m.report = buildReport(m)),
     t = s.statistics;

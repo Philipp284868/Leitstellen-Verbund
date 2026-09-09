@@ -12,6 +12,7 @@ import {
 import type { IncidentSiteKind } from "../../src/germany/world";
 
 type Shape = {
+  reference: string;
   kinds: IncidentSiteKind[];
   layer: string;
   featureClass: string;
@@ -23,6 +24,7 @@ type Shape = {
 };
 type Tile = { shapes: Shape[]; bytes: number };
 export type SiteEvidence = {
+  reference: string;
   layer: string;
   featureClass: string;
   featureSubclass?: string;
@@ -344,6 +346,7 @@ export class GermanyIncidentGeography {
               "OSM-Standortkachel enthält zu viele Detailgeometrien.",
             );
           shapes.push({
+            reference: `tile:${ZOOM}/${x}/${y}:${name}:${i}`,
             kinds,
             layer: name,
             featureClass: String(feature.properties.class || ""),
@@ -409,6 +412,7 @@ export class GermanyIncidentGeography {
       )
         continue;
       result = {
+        reference: shape.reference,
         layer: shape.layer,
         featureClass: shape.featureClass,
         ...(shape.featureSubclass

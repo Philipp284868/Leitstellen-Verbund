@@ -11,7 +11,7 @@ import { route, METERS_PER_UNIT, type Point } from "../world";
 import type { TravelMode } from "./dynamics-schema";
 import { DYNAMICS } from "./random";
 import { record } from "./events";
-import { roadNames } from "./weather";
+import { roadNames, weatherAtPoint } from "./weather";
 const pathSections = (path: Point[]) =>
   path
     .slice(1)
@@ -27,12 +27,15 @@ export const travelNames = {
   priority: "Sonderrechte",
   emergency: "Notfallfahrt",
 };
+export const routeWeatherKey = (s: Save) =>
+  `weather-${s.environment?.period ?? 0}${s.worldSituation ? `-${s.worldSituation.id}-${s.worldSituation.phase}` : ""}`;
 export function travelFactor(
   s: Save,
   v: Pick<Vehicle, "type">,
   mode: TravelMode,
+  point?: Point,
 ) {
-  const e = s.environment;
+  const e = point ? weatherAtPoint(s, point) : s.environment;
   const urgency = 1;
   void mode;
   if (!e) return urgency;
@@ -128,7 +131,13 @@ function calculateRoutePlan(
   const blocked = new Set(events.filter((e) => e.blocked).flatMap(roadKeys));
   let path = planned;
   let blockedUntil = 0;
-  if (t.mode === "air" && (s.environment?.wind || 0) >= 80) {
+  if (
+    t.mode === "air" &&
+    Math.max(
+      weatherAtPoint(s, origin)?.wind || 0,
+      weatherAtPoint(s, target)?.wind || 0,
+    ) >= 80
+  ) {
     blockedUntil = (s.environment!.period + 1) * DYNAMICS.weatherPeriod;
     path = [origin];
   }
@@ -151,7 +160,10 @@ function calculateRoutePlan(
               roadKeys(e).map((key) => [key, e.delay] as const),
             ),
           ),
-          travelFactor(s, v, mode),
+          Math.max(
+            travelFactor(s, v, mode, origin),
+            travelFactor(s, v, mode, target),
+          ),
         ),
       );
     } catch (error) {
@@ -222,7 +234,12 @@ function calculateRoutePlan(
           limit: first
             ? first.limit
             : Math.min(t.speed, road?.limit ?? t.speed) /
-              (conditions ? travelFactor(s, v, mode) : 1),
+              (conditions
+                ? travelFactor(s, v, mode, {
+                    x: (from.x + to.x) / 2,
+                    y: (from.y + to.y) / 2,
+                  })
+                : 1),
           edge: first?.edge ?? road?.id ?? t.mode,
           waitSeconds:
             Math.max(
@@ -326,7 +343,7 @@ export function trafficTick(s: Save, v: Vehicle) {
             (section.a === e.edge[1] && section.b === e.edge[0]),
         ),
   );
-  const weatherKey = `weather-${s.environment?.period ?? 0}`;
+  const weatherKey = routeWeatherKey(s);
   const weatherChange = !j.events.includes(weatherKey);
   if (!event && !weatherChange) return;
   const plan = routePlan(s, v, origin, j.target, j.mode);

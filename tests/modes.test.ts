@@ -88,6 +88,13 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
     const expected = JSON.parse(String(original));
     expected.environment = environmentAt(expected.time);
     expected.staffing = { version: 1, migratedAt: expected.time };
+    expected.radioNetwork = { version: 1, sequence: 0, entries: [] };
+    expected.locationReview = {
+      version: 1,
+      pending: [],
+      nextAt: expected.time,
+      checked: 0,
+    };
     expect(
       JSON.parse(
         String(

@@ -18,6 +18,10 @@ import { record, simId } from "./events";
 import { setFms, alarmNames } from "./fms";
 import type { AAO, Alarm, Priority } from "./schema";
 export function dispatchable(m: Mission) {
+  if (m.location && m.location.state !== "verified")
+    throw Error(
+      "Einsatzort wird technisch geprüft; noch keine sichere Zufahrt verfügbar.",
+    );
   if (m.control && (!m.control.locationKnown || !m.control.reportedTemplate))
     throw Error("Für die Disposition müssen Ort und Meldebild bekannt sein.");
 }

@@ -1,4 +1,9 @@
 import { vehicleHomeAllowed } from "./catalog";
+import { worldSituationSchema } from "./simulation/world-situation";
+import {
+  incidentLocationSchema,
+  generationLogSchema,
+} from "./simulation/location-schema";
 import { radioNetworkSchema } from "./simulation/transmission-schema";
 import { civilProtectionSchema } from "./simulation/civil-protection-schema";
 import { readinessCoreSchema } from "./simulation/readiness-core";
@@ -133,6 +138,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    location: incidentLocationSchema.optional(),
     paymentCents: centsSchema.optional(),
     tasks: missionTaskStateSchema.optional(),
     telemetry: telemetrySchema.optional(),
@@ -185,6 +191,17 @@ export const saveSchema = z
     desk: deskSchema,
     radioNetwork: radioNetworkSchema.optional(),
     environment: environmentSchema.optional(),
+    worldSituation: worldSituationSchema.optional(),
+    generationLog: z.array(generationLogSchema).max(50).optional(),
+    locationReview: z
+      .object({
+        version: z.literal(1),
+        pending: z.array(id).max(500),
+        nextAt: num,
+        checked: integer,
+      })
+      .strict()
+      .optional(),
     version: z.literal(1),
     regionVersion: z.literal(3).optional(),
     worldSeed: z.literal(WORLD_SEED).default(WORLD_SEED),

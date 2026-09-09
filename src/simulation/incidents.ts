@@ -135,13 +135,18 @@ export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
           "server",
           v.id,
         );
-    const reconUnits = atScene.filter(
+    const matchingReconUnits = atScene.filter(
       (v) =>
         vt(v.type).skills.command ||
         Object.keys(vt(v.type).skills).some(
-          (key) => mt(m.template).requirements[key],
+          (key) => mt(c.reportedTemplate || m.template).requirements[key],
         ),
     );
+    // A legitimately dispatched crew can report an unexpected situation even
+    // when its equipment cannot resolve it. Only one first report is issued.
+    const reconUnits = matchingReconUnits.length
+      ? matchingReconUnits
+      : [...atScene];
     reconUnits.sort(
       (a, b) =>
         Number(!!vt(b.type).skills.command) -
@@ -318,6 +323,8 @@ export function publicSave(source: Save): Save {
   }
   s.seed = 0;
   delete s.callPacing;
+  delete s.generationLog;
+  delete s.locationReview;
   s.missionWait = 0;
   s.nextMission = 0;
   s.operations.cooldown = 0;
@@ -390,7 +397,10 @@ export function publicSave(source: Save): Save {
           m.control.priority = "NORMAL";
         if (!m.control.reportedTemplate) delete m.control.proposal;
         m.template = m.control.reportedTemplate || "incoming";
-        if (!m.control.locationKnown) m.pos = { x: 0, y: 0 };
+        if (!m.control.locationKnown) {
+          m.pos = { x: 0, y: 0 };
+          delete m.location;
+        }
       }
     }
   }
@@ -398,6 +408,9 @@ export function publicSave(source: Save): Save {
 }
 import { REPORTED_IDS, reportId } from "./call-observations";
 const PRE_RECON_EVENTS = new Set([
+  "LOCATION_TECHNICAL_CLOSURE",
+  "LOCATION_REPAIRED",
+  "LOCATION_VERIFIED",
   "AID_VEHICLE_WISH",
   "AID_UPDATED",
   "RADIO_CLAIMED",

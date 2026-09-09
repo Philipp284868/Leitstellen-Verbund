@@ -376,7 +376,16 @@ it("Migration 8→9 bewahrt beide Spielstände und laufende Alarmierungen mit Or
     );
     for (const mode of ["multi", "single"] as const) {
       const actual = db.all(mode).get(w.owner)!;
-      expect({ ...actual, people: undefined }).toEqual({
+      const preserved = structuredClone(actual);
+      for (const m of preserved.missions) {
+        expect(m.location!.original).toEqual(m.pos);
+        delete m.location;
+      }
+      expect(preserved.locationReview!.pending).toEqual(
+        s.missions.map((m) => m.id),
+      );
+      delete preserved.locationReview;
+      expect({ ...preserved, people: undefined }).toEqual({
         ...s,
         people: undefined,
       });

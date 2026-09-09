@@ -362,6 +362,7 @@ it("migriert einen echten Schema-5-Bestand mit aktiver Anfahrt ohne Vermögens- 
       backup.close();
     }
     const game = new Game(db);
+    game.step(0, Date.now(), { generation: false });
     game.command(owner, {
       id: crypto.randomUUID(),
       action: {

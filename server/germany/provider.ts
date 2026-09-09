@@ -181,6 +181,15 @@ export class LocalGermanyProvider implements GermanyProvider {
         limit,
       );
   }
+  incidentEvidence(point: Point, kind: IncidentSiteKind) {
+    if (kind !== "street") return this.geography?.evidence(point, kind);
+    const anchor = this.nearest(point);
+    if (meters(point, anchor) > 100) return;
+    return {
+      reference: `osm-anchor:${anchor.id}`,
+      distanceMeters: meters(point, anchor),
+    };
+  }
   queryIncidentSites(
     center: Point,
     radius: number,

@@ -29,7 +29,15 @@ export interface AidView extends AidRequest {
   peerName: string;
   incident: { name: string; pos: Point; phase: string } | null;
 }
+export interface PublicAlarm {
+  id: string;
+  name: string;
+  phase: "mobilizing" | "ready";
+  started: number;
+  stations: number;
+}
 let net = {
+  alarms: [] as PublicAlarm[],
   requests: [] as AidView[],
   neighbors: [] as { id: string; name: string; online: boolean }[],
   friends: [] as Friend[],
@@ -41,6 +49,7 @@ function update() {
   listeners.forEach((f) => f());
 }
 export function setNetwork(data: {
+  alarms?: PublicAlarm[];
   friends: Friend[];
   support: Contribution[];
   requests?: AidView[];
@@ -50,7 +59,14 @@ export function setNetwork(data: {
   update();
 }
 export function resetNetwork() {
-  net = { friends: [], support: [], chat: [], requests: [], neighbors: [] };
+  net = {
+    friends: [],
+    support: [],
+    chat: [],
+    requests: [],
+    neighbors: [],
+    alarms: [],
+  };
   update();
 }
 export function receiveChat(data: { name: string; text: string }) {

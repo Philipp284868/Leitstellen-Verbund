@@ -8,9 +8,16 @@ import {
   civilProtectionCommand,
   civilProtectionTick,
   migrateCivilProtection,
+  readinessRecommendation,
 } from "../src/simulation/civil-protection";
 import { crewSummary, planTurnout } from "../src/simulation/staffing";
 import { vt } from "../src/catalog";
+import { attachIncident, callAction } from "../src/simulation/calls";
+import { attachDynamics } from "../src/simulation/dynamics";
+import { alarm } from "../src/simulation/dispatch";
+import { radioAction } from "../src/simulation/incidents";
+import { simId } from "../src/simulation/events";
+import { phaseFixture } from "./phase-fixture";
 function fixture() {
   const s = fresh("Test", "KatS", 1000);
   s.seed = 101;
@@ -29,6 +36,107 @@ function fixture() {
   return s;
 }
 describe("reale KatS-Bereitschaft", () => {
+  it("empfiehlt anhand kombinierter Last und hält verschiedene Ein-/Ausschaltschwellen ein", () => {
+    const s = phaseFixture("load", "bin"),
+      m = s.missions[0];
+    m.control!.calls[0].created = s.time - 180;
+    m.control!.briefed = true;
+    m.control!.reportedTemplate = "bin";
+    m.control!.priority = "NOTFALL";
+    s.vehicles.forEach((v) => (v.status = "scene"));
+    expect(readinessRecommendation(s).recommended).toBe(true);
+    s.vehicles.forEach((v) => (v.status = "ready"));
+    m.control!.priority = "NORMAL";
+    expect(readinessRecommendation(s).recommended).toBe(false);
+    s.buildings[0].civilProtection = {
+      enabled: true,
+      preparation: 60,
+      state: "mobilizing",
+      readyAt: s.time + 60,
+      history: [],
+    };
+    expect(readinessRecommendation(s).recommended).toBe(true);
+    m.control!.calls[0].state = "ended";
+    expect(readinessRecommendation(s).recommended).toBe(false);
+  });
+  it("behandelt mit GW-SAN und transportiert mit NKTW bis zur echten Klinikübergabe und Nachbereitung", () => {
+    const s = fixture(),
+      home = s.buildings[0];
+    const m = {
+      id: simId(s),
+      template: "sick",
+      pos: { ...home.pos },
+      progress: 0,
+      phase: "offered" as const,
+      created: s.time,
+      completed: 0,
+      shared: false,
+      round: simId(s),
+      contributors: [],
+      transports: [],
+    };
+    s.missions.push(m);
+    attachIncident(s, m);
+    attachDynamics(s, m);
+    const incident = s.missions[0],
+      call = incident.control!.calls[0];
+    call.stress = 30;
+    callAction(s, incident, call.id, "accept", s.player.id);
+    callAction(s, incident, call.id, "ask", s.player.id, "address");
+    tick(s, s.time + 5, {}, false, false);
+    callAction(s, incident, call.id, "ask", s.player.id, "report");
+    callAction(s, incident, call.id, "end", s.player.id);
+    alarm(
+      s,
+      incident,
+      s.vehicles.map((v) => v.id),
+      s.player.id,
+    );
+    expect(s.vehicles.every((v) => v.depart > s.time + 30)).toBe(true);
+    expect(
+      new Set(s.people.filter((p) => p.vehicle).map((p) => p.id)).size,
+    ).toBe(8);
+    let sawTransport = false,
+      sawPost = false;
+    for (let i = 0; i < 1440; i++) {
+      for (const current of s.missions)
+        for (const r of current.control?.radio.filter(
+          (r) => r.state === "open",
+        ) ?? [])
+          radioAction(
+            s,
+            current,
+            r.id,
+            r.reason === "arrival" ? "report" : "request",
+            s.player.id,
+          );
+      tick(s, s.time + 5, {}, false, false);
+      const gw = s.vehicles.find((v) => v.type === "gwsan")!,
+        nktw = s.vehicles.find((v) => v.type === "ktwb")!;
+      expect(gw.patients).toBe(0);
+      expect(gw.status).not.toBe("transport");
+      if (nktw.status === "transport") {
+        sawTransport = true;
+        expect(nktw.patients).toBeGreaterThan(0);
+        expect(nktw.destination).toBeTruthy();
+      }
+      if (nktw.postIncident) sawPost = true;
+      if (
+        s.archive.length &&
+        s.vehicles.every((v) => v.status === "ready" && !v.postIncident)
+      )
+        break;
+    }
+    expect(sawTransport).toBe(true);
+    expect(sawPost).toBe(true);
+    expect(
+      s.archive[0].dynamics!.patients.every((p) => p.transport === "delivered"),
+    ).toBe(true);
+    expect(
+      s.vehicles.every((v) => v.status === "ready" && v.patients === 0),
+    ).toBe(true);
+    expect(() => validate(s)).not.toThrow();
+  });
   it("baut einen tatsächlichen Standort und alarmiert GW-SAN/NKTW ohne Katastrophenalarm", () => {
     const s = fixture();
     expect(s.vehicles.map((v) => v.name)).toEqual([

@@ -17,5 +17,8 @@ export function approachContext(s: Save, v: Vehicle) {
     s.buildings.find((b) => b.id === v.home)?.organization?.turnout,
     s.desk.alarms[v.home],
     s.environment?.period,
+    s.worldSituation?.id,
+    s.worldSituation?.phase,
+    s.buildings.find((b) => b.id === v.home)?.civilProtection?.state,
   ]);
 }

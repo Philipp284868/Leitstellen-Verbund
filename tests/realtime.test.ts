@@ -13,6 +13,7 @@ import { Game } from "../server/game";
 import { fresh, validate } from "../src/model";
 import { established } from "./e2e/fixtures";
 import { generate, beginTrip } from "../src/engine";
+import { withoutLocationMigration } from "./helpers/location-migration-check";
 import {
   nodes,
   originalNodes,
@@ -121,7 +122,7 @@ it("übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit un
     const game = new Game(db);
     for (const mode of ["single", "multi"] as const) {
       const s = db.all(mode).get(id)!;
-      expect(s).toEqual(expected);
+      expect(withoutLocationMigration(s, expected)).toEqual(expected);
       expect(() =>
         game.command(
           id,

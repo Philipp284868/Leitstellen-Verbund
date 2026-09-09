@@ -431,6 +431,7 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
       ) + 1,
   });
   const vehicle = lab.save.vehicles[0].id;
+  expect(lab.save.environment!.visibility).toBe(150);
   step({ type: "damage", vehicle });
   expect(lab.save.desk.fleet[vehicle].code).toBe(6);
   step({ type: "repair", vehicle });

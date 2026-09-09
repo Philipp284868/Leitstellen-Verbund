@@ -8,6 +8,7 @@ import { planReadinessMigration } from "../server/readiness-migration";
 import { phaseFixture } from "./phase-fixture";
 import { recall } from "../src/engine";
 import { nodes } from "../src/world";
+import { withoutLocationMigration } from "./helpers/location-migration-check";
 const dirs: string[] = [];
 afterEach(() => {
   for (const dir of dirs.splice(0))
@@ -48,7 +49,9 @@ it("DB14-Migration besitzt eine bytegleiche Vorschau und Sicherung, erhält akti
   expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
     DATABASE_VERSION,
   );
-  expect(migrated).toEqual(preview.saves[0].save);
+  expect(withoutLocationMigration(migrated, preview.saves[0].save)).toEqual(
+    preview.saves[0].save,
+  );
   expect(migrated.vehicles[0]).toEqual(originalVehicle);
   expect(
     migrated.people.map((p) => ({ id: p.id, vehicle: p.vehicle })),

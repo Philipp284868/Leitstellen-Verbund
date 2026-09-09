@@ -4,6 +4,9 @@ import {
 } from "../src/simulation/civil-protection-schema";
 import { civilProtectionCommand } from "../src/simulation/civil-protection";
 import { mulRatio } from "../src/money";
+import { ensureWorldSituation, stepWorldSituation } from "./world-situation";
+import { advanceSituation } from "../src/simulation/world-situation";
+import { repairIncidentLocations } from "../src/simulation/location-repair";
 import { vehiclePosition } from "../src/vehicle-position";
 import { qualityFactor } from "../src/simulation/reports";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
@@ -355,11 +358,17 @@ export class Game {
   step(
     seconds: number,
     now = Date.now(),
-    options: { generation?: boolean } = {},
+    options: { generation?: boolean; sharedSituation?: boolean } = {},
   ) {
     withAutomaticRouting(() =>
       this.db.transaction(() => {
-        this.stepMode(seconds, now, "multi", options.generation !== false);
+        this.stepMode(
+          seconds,
+          now,
+          "multi",
+          options.generation !== false,
+          options.sharedSituation !== false,
+        );
       }),
     );
   }
@@ -368,14 +377,48 @@ export class Game {
     now: number,
     mode: GameMode,
     allowGeneration = true,
+    sharedSituation = true,
   ) {
     const saves = this.db.all(mode);
+    const world = ensureWorldSituation(this.db.sql);
+    for (const s of saves.values())
+      repairIncidentLocations(s, (m) => {
+        for (const helper of saves.values()) {
+          if (helper.player.id === s.player.id) continue;
+          for (const v of helper.vehicles.filter(
+            (v) =>
+              v.mission === `remote:${s.player.id}:${m.id}` &&
+              ["alarmed", "travel"].includes(v.status) &&
+              authorizedHelper(s, m, helper, v),
+          )) {
+            const departure =
+              v.status === "alarmed"
+                ? Math.max(helper.time, v.depart)
+                : helper.time;
+            beginTrip(
+              helper,
+              v,
+              m.pos,
+              v.status,
+              v.journey?.mode ?? "priority",
+            );
+            v.arrive += departure - helper.time;
+            v.depart = departure;
+          }
+        }
+      });
     // Each slice reconciles all participants from authoritative persisted state.
     const count = Math.max(
       1,
       Math.ceil(Math.min(14400, Math.max(0, seconds)) / 5),
     );
     for (let n = 0; n < count; n++) {
+      const currentWorld = advanceSituation(
+        world,
+        ((n + 1) * Math.min(14400, Math.max(0, seconds))) / count,
+      );
+      if (sharedSituation)
+        for (const s of saves.values()) s.worldSituation = currentWorld;
       aidTick(saves);
       const remote = new Map<string, Record<string, Skills>>();
       const remoteVehicles = new Map<string, Record<string, Vehicle[]>>();
@@ -385,12 +428,14 @@ export class Game {
         const skills: Record<string, Skills> = {};
         const units: Record<string, Vehicle[]> = {};
         for (const m of owner.missions) {
-          if (m.dynamics?.active)
+          const locationPending = m.location?.state === "repair-pending";
+          if (!locationPending && m.dynamics?.active)
             remoteDynamic.add(`remote:${ownerId}:${m.id}`);
           for (const [helperId, helper] of saves) {
             if (helperId === ownerId) continue;
             for (const v of helper.vehicles.filter(
               (v) =>
+                !locationPending &&
                 v.mission === `remote:${ownerId}:${m.id}` &&
                 v.status === "scene" &&
                 (!v.fault || v.fault.state === "repaired") &&
@@ -480,6 +525,7 @@ export class Game {
           remoteVehicles.get(id),
         );
         for (const m of s.archive.filter((m) => !before.has(m.round))) {
+          if (m.location?.state === "technical-closure") continue;
           this.db.sql
             .prepare("INSERT OR IGNORE INTO rewards VALUES (?,?,?)")
             .run(`owner:${m.round}:${id}`, id, m.telemetry?.credits ?? 0);
@@ -529,6 +575,7 @@ export class Game {
         helper.receipts = helper.receipts.slice(-10000);
       }
     }
+    stepWorldSituation(this.db.sql, seconds);
     aidTick(saves);
     for (const [id, s] of saves) {
       s.revision++;
@@ -673,11 +720,41 @@ export class Game {
     return {
       mode,
       workspace: access,
-      save: publicSave(save),
+      save: publicSave({
+        ...save,
+        worldSituation: ensureWorldSituation(this.db.sql),
+      }),
       network: {
         friends,
         support,
         requests: aidView(saves, user),
+        alarms: [...saves.values()]
+          .filter((p) => deskOwner(this.db, p.player.id, mode) === p.player.id)
+          .flatMap((p) => {
+            const active = p.buildings.filter(
+              (b) =>
+                b.civilProtection && b.civilProtection.state !== "inactive",
+            );
+            return active.length
+              ? [
+                  {
+                    id: p.player.id,
+                    name: p.player.station,
+                    phase: active.some(
+                      (b) => b.civilProtection!.state === "mobilizing",
+                    )
+                      ? ("mobilizing" as const)
+                      : ("ready" as const),
+                    started: Math.min(
+                      ...active.map(
+                        (b) => b.civilProtection!.started ?? p.time,
+                      ),
+                    ),
+                    stations: active.length,
+                  },
+                ]
+              : [];
+          }),
         neighbors: [...saves.values()]
           .filter(
             (p) =>

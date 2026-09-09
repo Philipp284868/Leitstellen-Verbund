@@ -2,6 +2,7 @@ import type { Save } from "../model";
 import { crewSummaries } from "./staffing";
 import { vehicleAvailability } from "./availability";
 import { sample } from "./random";
+import { situationDemand } from "./world-situation";
 
 export const CALL_PACING = {
   version: 1,
@@ -44,14 +45,17 @@ export function callLoad(s: Save) {
     open,
     waiting,
     busy: fleet.length ? 1 - available / fleet.length : 1,
-    maxOpen: Math.min(
-      8,
-      1 + Math.floor(Math.log2(Math.max(1, fleet.length)) / 1.5),
-    ),
-    maxWaiting: Math.min(
-      3,
-      1 + Math.floor(Math.log2(Math.max(1, fleet.length)) / 3),
-    ),
+    maxOpen:
+      s.completed < 3
+        ? 1
+        : Math.min(
+            8,
+            1 + Math.floor(Math.log2(Math.max(1, fleet.length)) / 1.5),
+          ),
+    maxWaiting:
+      s.completed < 3
+        ? 1
+        : Math.min(3, 1 + Math.floor(Math.log2(Math.max(1, fleet.length)) / 3)),
   };
 }
 export function pacedDelay(seed: number, s?: Save) {
@@ -61,6 +65,12 @@ export function pacedDelay(seed: number, s?: Save) {
       (CALL_PACING.initialMax - CALL_PACING.initialMin);
   if (!s) return Math.round(base);
   const load = callLoad(s);
+  // A beginner sees the same storm, with no acceleration until the desk has
+  // completed its first three incidents and has at least three usable vehicles.
+  const demand = Math.min(
+    situationDemand(s),
+    load.fleet < 3 || s.completed < 3 ? 1 : 1.8,
+  );
   const hour = new Date(s.time * 1000).getUTCHours();
   const night = hour < 6 || hour >= 23;
   const loadFactor =
@@ -75,7 +85,10 @@ export function pacedDelay(seed: number, s?: Save) {
   return Math.round(
     Math.min(
       CALL_PACING.maximum,
-      Math.max(minimum, (base / load.scale) * loadFactor * (night ? 1.2 : 1)),
+      Math.max(
+        minimum,
+        ((base / load.scale) * loadFactor * (night ? 1.2 : 1)) / demand,
+      ),
     ),
   );
 }

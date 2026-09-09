@@ -1,6 +1,6 @@
 import type { Save, Mission, Vehicle } from "../model";
 import { mt, vt, type Skills } from "../catalog";
-import { nodes, distance } from "../world";
+import { distance } from "../world";
 import { record, simId } from "./events";
 import { sample } from "./random";
 import { newPatient } from "./patients";
@@ -299,12 +299,15 @@ export function campaignTick(
   const index = 4 - c.remaining;
   // Keep the persisted campaign step pending until its real equipment is available.
   if (!canGenerate(s, mt(candidates[index]))) return false;
-  const near = (IS_GERMANY ? querySites(first.pos, 200) : nodes).filter(
+  const sites = generationLocations(s, mt(candidates[index]));
+  if (!sites) return false;
+  const near = sites.filter(
     (n) => distance(n, first.pos) < 200 && distance(n, first.pos) > 15,
   );
-  const pos =
-    near[Math.floor(sample(s.seed, c.id, index) * near.length)] || first.pos;
+  const pos = near[Math.floor(sample(s.seed, c.id, index) * near.length)];
+  if (!pos) return false;
   const m = create(candidates[index], pos);
+  m.location = verifyIncidentLocation(s, mt(candidates[index]), pos);
   c.missions.push(m.id);
   c.remaining--;
   c.next =
@@ -318,5 +321,5 @@ export function campaignTick(
   s.missionWait = 120;
   return true;
 }
-import { IS_GERMANY } from "../world-choice";
-import { querySites } from "../germany/world";
+import { generationLocations } from "./incident-location";
+import { verifyIncidentLocation } from "./location-reachability";

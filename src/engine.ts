@@ -34,7 +34,7 @@ import {
 import { updateWeather } from "./simulation/weather";
 import { chooseIncidentTemplate } from "./simulation/incident-selection";
 import { withdraw } from "./simulation/withdrawal";
-import { routePlan, trafficTick } from "./simulation/traffic";
+import { routePlan, trafficTick, routeWeatherKey } from "./simulation/traffic";
 import { withAutomaticRouting } from "./simulation/routing-context";
 import { faultsTick } from "./simulation/faults";
 import type { TravelMode } from "./simulation/dynamics-schema";
@@ -136,7 +136,7 @@ export function beginTrip(
     plannedSeconds: plan.plannedSeconds,
     delay: plan.delay,
     distanceDone: 0,
-    events: [...plan.events, `weather-${s.environment?.period ?? 0}`],
+    events: [...plan.events, routeWeatherKey(s)],
     nextCheck: s.time + 60,
     serial: 0,
     target,
@@ -495,7 +495,10 @@ export function generate(s: Save) {
   }
   if (!sites.length) return;
   const pos = sites[s.seed % sites.length];
+  const location = verifyIncidentLocation(s, t, pos);
+  if (!location) return;
   s.missions.push({
+    location,
     id: simId(s),
     template: t.id,
     paymentCents: t.reward,
@@ -632,9 +635,11 @@ function tickState(
       }
     }
     for (const m of s.missions)
-      dynamicsTick(s, m, remote[m.id], carriers, remoteUnits[m.id]);
+      if (m.location?.state !== "repair-pending")
+        dynamicsTick(s, m, remote[m.id], carriers, remoteUnits[m.id]);
     afterVehicles(s, remote);
     for (const m of s.missions) {
+      if (m.location?.state === "repair-pending") continue;
       if (m.control && !m.control.briefed) continue;
       if (m.shared && offline) continue;
       const t = mt(m.template),
@@ -733,3 +738,4 @@ function tickState(
   if (allowGeneration && !offline && s.time >= s.nextMission) generate(s);
 }
 import { generationLocations } from "./simulation/incident-location";
+import { verifyIncidentLocation } from "./simulation/location-reachability";

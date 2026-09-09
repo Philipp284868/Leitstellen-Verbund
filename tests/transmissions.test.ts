@@ -4,7 +4,9 @@ import { advanceRadio, transmit } from "../src/simulation/transmissions";
 import { setFms } from "../src/simulation/fms";
 import { AudioEvents } from "../src/audio/events";
 import { phaseFixture } from "./phase-fixture";
-import { afterVehicles } from "../src/simulation/incidents";
+import { afterVehicles, radioAction } from "../src/simulation/incidents";
+import { alarm } from "../src/simulation/dispatch";
+import { tick } from "../src/engine";
 
 function message(id: string, priority = 50, channel = "Feuerwehr") {
   return {
@@ -17,6 +19,25 @@ function message(id: string, priority = 50, channel = "Feuerwehr") {
     text: "An der Einsatzstelle angekommen.",
   };
 }
+it("eine zum Meldebild entsandte Besatzung meldet auch unerwarteten technischen Bedarf statt ohne Erstlage festzuhängen", () => {
+  const s = phaseFixture("unexpected-recon", "debris"),
+    m = s.missions[0],
+    v = s.vehicles[0];
+  m.control!.locationKnown = true;
+  m.control!.reportedTemplate = "reported-technical";
+  alarm(s, m, [v.id], s.player.id);
+  tick(s, v.arrive + 10, {}, false, false);
+  const reports = m.control!.radio.filter((r) => r.reason === "arrival");
+  expect(reports).toHaveLength(1);
+  radioAction(s, m, reports[0].id, "report", s.player.id);
+  afterVehicles(s);
+  expect(m.control!.briefed).toBe(true);
+  expect(m.control!.radio.some((r) => r.reason === "request")).toBe(true);
+  afterVehicles(s);
+  expect(m.control!.radio.filter((r) => r.reason === "arrival")).toHaveLength(
+    1,
+  );
+});
 it("nur das erste geeignete Führungsfahrzeug meldet die Erstlage; weitere Ankünfte duplizieren sie nicht", () => {
   const s = phaseFixture("recon-owner");
   const m = s.missions[0];

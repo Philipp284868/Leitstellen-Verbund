@@ -36,6 +36,9 @@ export function phaseFixture(owner: string, template = "field"): Save {
   generate(s);
   s.missions[0].template = template;
   s.missions[0].pos = nodes[2];
+  // This fixture deliberately replaces the generated scenario and location.
+  // Its original generation proof no longer describes this controlled case.
+  delete s.missions[0].location;
   s.seed = 124;
   attachIncident(s, s.missions[0]);
   s.missionWait = 210;

@@ -4,6 +4,8 @@ import { isVolunteerStation, personDuty } from "./staffing";
 import { volunteerArrival } from "./volunteers";
 import { presentAtStation } from "./staging";
 import { sample } from "./random";
+import { vt, mt } from "../catalog";
+import { fleetReadiness } from "../fleet-view";
 
 export const civilStationTypes = ["fire", "ems", "thw", "kats"];
 export const READINESS_POLICY = {
@@ -221,12 +223,46 @@ export function readinessRecommendation(s: Save) {
     .filter((c) => c.state === "ringing").length;
   const fleet = s.vehicles;
   const boundCount = fleet.filter((v) => v.status !== "ready").length;
-  const recommended =
-    open >= 2 && (waiting > 0 || boundCount >= Math.max(1, fleet.length * 0.6));
+  const oldest = Math.max(
+    0,
+    ...s.missions.flatMap((m) =>
+      (m.control?.calls ?? [])
+        .filter((c) => c.state === "ringing")
+        .map((c) => s.time - c.created),
+    ),
+  );
+  const urgent = s.missions.filter(
+    (m) =>
+      m.control?.briefed &&
+      ["DRINGEND", "NOTFALL"].includes(m.control.priority),
+  ).length;
+  const ready = fleetReadiness(s),
+    skills: Record<string, number> = {};
+  for (const v of fleet.filter((v) => !ready(v)))
+    for (const [k, n] of Object.entries(vt(v.type).skills))
+      skills[k] = (skills[k] ?? 0) + n;
+  const gaps = s.missions.filter(
+    (m) =>
+      m.control?.reportedTemplate &&
+      Object.entries(mt(m.control.reportedTemplate).requirements).some(
+        ([k, n]) => (skills[k] ?? 0) < n,
+      ),
+  ).length;
+  const score =
+    Number(open >= 2) +
+    Number(waiting > 0) +
+    Number(oldest >= 120) +
+    Math.min(2, urgent) +
+    Number(boundCount >= Math.max(1, fleet.length * 0.6)) +
+    Number(gaps > 0);
+  const active = s.buildings.some(
+    (b) => b.civilProtection && b.civilProtection.state !== "inactive",
+  );
+  const recommended = score >= (active ? 2 : 4);
   return {
     recommended,
     reason: recommended
-      ? `${open} offene Einsätze, ${waiting} wartende Notrufe, ${boundCount}/${fleet.length} Fahrzeuge gebunden`
+      ? `${open} offene Einsätze, ${waiting} wartende Notrufe (ältester ${Math.floor(oldest)} s), ${urgent} dringende Lagen, ${gaps} Vorgänge mit fehlender freier Fähigkeit, ${boundCount}/${fleet.length} Fahrzeuge gebunden`
       : "Reguläre Bereitschaft derzeit ausreichend",
     present: s.people.filter((p) => !bound(s, p) && presentAtStation(s, p))
       .length,

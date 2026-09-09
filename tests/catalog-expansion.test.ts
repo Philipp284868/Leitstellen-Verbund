@@ -295,6 +295,8 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
     const { s, m } = incident(find("Baum auf Straße"));
     // This case tests pacing with a developed fleet; missing equipment is covered separately.
     const fleet = phaseFixture("catalog-followup");
+    s.player.id = fleet.player.id;
+    s.buildings = fleet.buildings;
     s.xp = fleet.xp;
     s.vehicles = fleet.vehicles;
     m.dynamics!.pending = { template: "crash", due: s.time };

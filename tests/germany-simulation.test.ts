@@ -414,6 +414,9 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
   it("delivers a patient once when the automatic return from hospital has no router", async () => {
     const game = createGame(),
       mission = setupFleet(game);
+    // Establish the shared weather before planning the transport. This test
+    // isolates a router outage after hospital arrival, not a new weather replan.
+    game.step(1, Date.now(), { generation: false });
     const p = fixture.project({ lon: 13.4029, lat: 52.5229 });
     command(game, { type: "build", kind: "ems", pos: p });
     let save = current();

@@ -59,6 +59,10 @@ export interface GermanyProvider {
     kind: IncidentSiteKind,
     limit: number,
   ): Anchor[];
+  incidentEvidence?(
+    point: Point,
+    kind: IncidentSiteKind,
+  ): { reference: string; distanceMeters: number } | undefined;
   projectRoad(point: Point): RoadProjection;
   sectionBetween(a: Point, b: Point): RoadSection;
   route(

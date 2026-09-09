@@ -20,7 +20,7 @@ import { record, simId } from "./events";
 import { request } from "./incidents";
 import { attachIncident } from "./calls";
 import { DYNAMICS, sample } from "./random";
-import { updateWeather, weatherNames } from "./weather";
+import { updateWeather, weatherNames, weatherAtPoint } from "./weather";
 import { injureResponder, syncResponderRecovery } from "./responder-recovery";
 import {
   canGenerate,
@@ -55,7 +55,7 @@ export function attachDynamics(s: Save, m: Mission, active = true) {
     parent: "",
     children: [],
     random: m.control?.secret?.seed ?? s.seed,
-    weatherAtCall: weatherNames[s.environment!.kind],
+    weatherAtCall: weatherNames[weatherAtPoint(s, m.pos)!.kind],
   };
   if (active)
     for (const h of m.dynamics.hazards)
@@ -534,7 +534,13 @@ export function followupsTick(s: Save) {
   if (!parent?.dynamics?.pending) return;
   const d = parent.dynamics,
     template = d.pending!.template;
+  const location = verifyIncidentLocation(s, mt(template), parent.pos);
+  if (!location) {
+    d.pending!.due = s.time + 60;
+    return;
+  }
   const child: Mission = {
+    location,
     id: simId(s),
     template,
     paymentCents: mt(template).reward,
@@ -569,3 +575,4 @@ export function followupsTick(s: Save) {
   );
   s.missionWait = 120;
 }
+import { verifyIncidentLocation } from "./location-reachability";

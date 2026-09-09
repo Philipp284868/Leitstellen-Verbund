@@ -30,6 +30,7 @@ import { Auth } from "../server/auth";
 import { Game } from "../server/game";
 import type { ServerAction } from "../server/actions";
 import { breakVehicle } from "../src/simulation/faults";
+import { queueLocationReview } from "../src/simulation/location-repair";
 const password = "phase-three-password-123!";
 async function world() {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-phase3-")),
@@ -471,80 +472,110 @@ it("Nachbarhilfe erledigt Erkundung, dynamischen Brand und Belohnung über Serve
     db.close();
   }
 });
-it("fremder RTW versorgt und transportiert einzelne Patienten; kein Rückruf oder Abschluss während Transport", async () => {
-  const w = await world();
-  try {
-    const owner = organizationFixture(w.owner, "sick"),
-      helper = organizationFixture(w.helper, "field", "south"),
-      ambulance = addAmbulance(helper);
-    owner.time = helper.time;
-    owner.missions[0].dynamics!.last = owner.time;
-    owner.missions[0].control!.briefed = true;
-    owner.missions[0].dynamics!.patients[0].age = 30;
-    owner.missions[0].dynamics!.patients[0].health = 95;
-    w.db.save(w.owner, owner);
-    w.db.save(w.helper, helper);
-    w.command(w.owner, {
-      type: "organization-task",
-      mission: owner.missions[0].id,
-      task: "triage",
-    });
-    const r = w.draft(["rtw"]);
-    w.command(w.owner, { type: "aid-send", id: r.id });
-    w.command(w.helper, {
-      type: "aid-accept",
-      owner: w.owner,
-      id: r.id,
-      vehicles: [ambulance.id],
-    });
-    let aboard = false;
-    for (let n = 0; n < 200; n++) {
-      w.game.step(5);
-      const m = w.db
-        .all()
-        .get(w.owner)!
-        .missions.find((m) => m.id === r.mission);
-      if (m?.dynamics!.patients[0].transport === "aboard") {
-        aboard = true;
-        break;
-      }
-    }
-    expect(aboard).toBe(true);
-    expect(() =>
+it.each([false, true])(
+  "fremder RTW übergibt Patienten vor Abschluss, auch bei technischer Ortsprüfung: %s",
+  async (technical) => {
+    const w = await world();
+    try {
+      const owner = organizationFixture(w.owner, "sick"),
+        helper = organizationFixture(w.helper, "field", "south"),
+        ambulance = addAmbulance(helper);
+      owner.time = helper.time;
+      owner.missions[0].dynamics!.last = owner.time;
+      owner.missions[0].control!.briefed = true;
+      owner.missions[0].dynamics!.patients[0].age = 30;
+      owner.missions[0].dynamics!.patients[0].health = 95;
+      w.db.save(w.owner, owner);
+      w.db.save(w.helper, helper);
       w.command(w.owner, {
-        type: "aid-close",
+        type: "organization-task",
+        mission: owner.missions[0].id,
+        task: "triage",
+      });
+      const r = w.draft(["rtw"]);
+      w.command(w.owner, { type: "aid-send", id: r.id });
+      w.command(w.helper, {
+        type: "aid-accept",
         owner: w.owner,
         id: r.id,
-        op: "cancel",
-      }),
-    ).toThrow("Patiententransport");
-    for (
-      let n = 0;
-      n < 400 &&
-      w.db
+        vehicles: [ambulance.id],
+      });
+      let aboard = false;
+      for (let n = 0; n < 200; n++) {
+        w.game.step(5);
+        const m = w.db
+          .all()
+          .get(w.owner)!
+          .missions.find((m) => m.id === r.mission);
+        if (m?.dynamics!.patients[0].transport === "aboard") {
+          aboard = true;
+          break;
+        }
+      }
+      expect(aboard).toBe(true);
+      const protectedSave = w.db.all().get(w.owner)!;
+      const protectedMoney = protectedSave.money,
+        protectedXp = protectedSave.xp;
+      if (technical) {
+        const m = protectedSave.missions.find((m) => m.id === r.mission)!;
+        m.pos = { x: 0, y: 0 };
+        delete m.location;
+        queueLocationReview(protectedSave, m);
+        w.db.save(w.owner, protectedSave);
+        w.game.step(5, undefined, { generation: false });
+        expect(
+          w.db
+            .all()
+            .get(w.owner)!
+            .missions.find((m) => m.id === r.mission)!.location!.state,
+        ).toBe("repair-pending");
+      }
+      expect(() =>
+        w.command(w.owner, {
+          type: "aid-close",
+          owner: w.owner,
+          id: r.id,
+          op: "cancel",
+        }),
+      ).toThrow("Patiententransport");
+      for (
+        let n = 0;
+        n < 400 &&
+        w.db
+          .all()
+          .get(w.owner)!
+          .missions.some((m) => m.id === r.mission);
+        n++
+      )
+        w.game.step(5);
+      const done = w.db
         .all()
         .get(w.owner)!
-        .missions.some((m) => m.id === r.mission);
-      n++
-    )
-      w.game.step(5);
-    const done = w.db
-      .all()
-      .get(w.owner)!
-      .archive.find((m) => m.id === r.mission)!;
-    expect(done).toBeDefined();
-    expect(done.dynamics!.patients[0].transport).toBe("delivered");
-    expect(
-      done.dynamics!.patients[0].history.some((h) =>
-        h.text.includes("Krankenhaus"),
-      ),
-    ).toBe(true);
-    expect(done.transports).toHaveLength(1);
-    expect(done.transports[0].owner).toBe(w.helper);
-  } finally {
-    w.db.close();
-  }
-});
+        .archive.find((m) => m.id === r.mission)!;
+      expect(done).toBeDefined();
+      expect(done.dynamics!.patients[0].transport).toBe("delivered");
+      expect(
+        done.dynamics!.patients[0].history.some((h) =>
+          h.text.includes("Krankenhaus"),
+        ),
+      ).toBe(true);
+      expect(done.transports).toHaveLength(1);
+      expect(done.transports[0].owner).toBe(w.helper);
+      if (technical) {
+        expect(done.location!.state).toBe("technical-closure");
+        expect(w.db.all().get(w.owner)!.money).toBe(protectedMoney);
+        expect(w.db.all().get(w.owner)!.xp).toBe(protectedXp);
+        expect(
+          w.db.sql
+            .prepare("SELECT COUNT(*) AS n FROM rewards WHERE id=?")
+            .get(`coop:${done.round}:${w.helper}`)!.n,
+        ).toBe(0);
+      }
+    } finally {
+      w.db.close();
+    }
+  },
+);
 it("berechtigte Disponenten bearbeiten Anfragen derselben Leitstelle; Rechteentzug greift sofort", async () => {
   const w = await world();
   try {
@@ -591,8 +622,19 @@ it("Migration 7→8 erhält beide Welten samt laufender Alarmierung byteinhaltli
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );
-    expect(JSON.stringify(db.all().get(w.owner))).toBe(raw);
-    expect(JSON.stringify(db.all("single").get(w.owner))).toBe(raw);
+    for (const mode of ["multi", "single"] as const) {
+      const migrated = db.all(mode).get(w.owner)!;
+      expect(migrated.locationReview?.pending).toEqual(
+        s.missions.map((m) => m.id),
+      );
+      delete migrated.locationReview;
+      for (const m of migrated.missions) {
+        expect(m.location?.original).toEqual(m.pos);
+        expect(m.location?.state).toBe("repair-pending");
+        delete m.location;
+      }
+      expect(JSON.stringify(migrated)).toBe(raw);
+    }
     const file = (await readdir(w.dir)).find((f) =>
       f.startsWith("pre-migration-v2-"),
     )!;
@@ -770,6 +812,15 @@ it("historischer Schema-7-Stand ohne Phase-3-Felder erhält keine nachträgliche
     db = new Database(w.dir);
     for (const mode of ["multi", "single"] as const) {
       const migrated = db.all(mode).get(w.owner)!;
+      expect(migrated.locationReview?.pending).toEqual(
+        old.missions.map((m: { id: string }) => m.id),
+      );
+      delete migrated.locationReview;
+      for (const m of migrated.missions) {
+        expect(m.location?.original).toEqual(m.pos);
+        expect(m.location?.state).toBe("repair-pending");
+        delete m.location;
+      }
       expect(migrated).toEqual({ ...old, aid: [] });
       expect(migrated.missions[0].organization).toBeUndefined();
       expect(migrated.vehicles[0].turnout).toBeUndefined();

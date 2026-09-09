@@ -23,8 +23,19 @@ import { publicSave } from "../src/simulation/incidents";
 import { planReadinessMigration } from "./readiness-migration";
 import { planCommunicationMigration } from "./communication-migration";
 import { planEconomyMigration } from "./economy-migration";
+import { planLocationMigration } from "./location-migration";
 import { migrateEconomy } from "../src/economy/migration";
 import { migrateBuildingStaffing } from "../src/simulation/building-staffing";
+import {
+  ensureWorldSituation,
+  readWorldSituation,
+  writeWorldSituation,
+} from "./world-situation";
+import {
+  createSituation,
+  worldSituationSchema,
+  situationScopeSchema,
+} from "../src/simulation/world-situation";
 
 const command = process.argv[2];
 if (
@@ -36,6 +47,7 @@ if (
     "legacy-import",
     "unlock",
     "migration-preview",
+    "world-situation",
   ].includes(command)
 ) {
   throw Error(
@@ -115,6 +127,11 @@ try {
             economy: planEconomyMigration(db).summary,
             readiness: planReadinessMigration(db).summary,
             communication: planCommunicationMigration(db).summary,
+            locations: planLocationMigration(db).summary,
+            worldSituation: readWorldSituation(db) ?? {
+              initialize: true,
+              profile: "quiet",
+            },
           },
           null,
           2,
@@ -193,7 +210,43 @@ try {
   } else {
     const db = new Database(c.dataDir);
     try {
-      if (command === "player-create") {
+      if (command === "world-situation") {
+        const previous = ensureWorldSituation(db.sql);
+        if (!process.argv.includes("--profile"))
+          console.log(JSON.stringify(previous, null, 2));
+        else {
+          const profile = worldSituationSchema.shape.profile.parse(
+            arg("profile"),
+          );
+          const scope = process.argv.includes("--scope-file")
+            ? situationScopeSchema.parse(
+                JSON.parse(await readFile(resolve(arg("scope-file")), "utf8")),
+              )
+            : { kind: "world" as const, name: "Gesamte Serverwelt" };
+          const next = createSituation(
+            previous.clock,
+            previous.seed,
+            profile,
+            scope,
+            previous.sequence + 1,
+          );
+          next.history = [
+            ...previous.history,
+            {
+              id: previous.id,
+              profile: previous.profile,
+              started: previous.started,
+              ended: previous.clock,
+              scope: previous.scope,
+            },
+          ].slice(-24);
+          db.transaction(() => {
+            writeWorldSituation(db.sql, next);
+            db.audit("host-cli", `world-situation:${JSON.stringify(next)}`);
+          });
+          console.log(JSON.stringify(next, null, 2));
+        }
+      } else if (command === "player-create") {
         if (!process.argv.includes("--password-stdin"))
           throw Error(
             "Passwort ausschließlich per --password-stdin übergeben.",

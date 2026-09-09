@@ -5,6 +5,7 @@ import { hazardKinds, type Hazard } from "./dynamics-schema";
 import { record } from "./events";
 import { clamp } from "./random";
 import { fireExtinguished, taskRequirements } from "./mission-tasks";
+import { weatherAtPoint } from "./weather";
 export const hazardNames: Record<Hazard["kind"], string> = {
   fire: "Feuer",
   smoke: "Rauch",
@@ -47,6 +48,7 @@ export function hazard(
   };
 }
 export function initialHazards(s: Save, m: Mission): Hazard[] {
+  const weather = weatherAtPoint(s, m.pos);
   const t = mt(m.template),
     r = t.requirements,
     result: Hazard[] = [];
@@ -68,9 +70,9 @@ export function initialHazards(s: Save, m: Mission): Hazard[] {
       Object.keys(r).find(
         (k) => !["transport", "command", "medicalCommand"].includes(k),
       ) || "medical";
-    if ((s.environment?.wind ?? 0) >= 60)
+    if ((weather?.wind ?? 0) >= 60)
       result.push(hazard("weather", skill, 20, 0.008));
-    if ((s.environment?.visibility ?? 15000) < 1000)
+    if ((weather?.visibility ?? 15000) < 1000)
       result.push(hazard("visibility", skill, 20, 0.005));
     const hour = new Date(s.time * 1000).getUTCHours();
     if (hour < 6 || hour >= 21) result.push(hazard("darkness", skill, 12, 0));
@@ -108,15 +110,16 @@ export function initialHazards(s: Save, m: Mission): Hazard[] {
   if (t.id === "power") result.push(hazard("electricity", "technical", 40));
   // Environmental hazards are mitigated by the mission's primary service, with a time cost.
   const skill = Object.keys(r).find((k) => k !== "transport") || "medical";
-  if ((s.environment?.wind ?? 0) >= 60)
+  if ((weather?.wind ?? 0) >= 60)
     result.push(hazard("weather", skill, 20, 0.008));
-  if ((s.environment?.visibility ?? 15000) < 1000)
+  if ((weather?.visibility ?? 15000) < 1000)
     result.push(hazard("visibility", skill, 20, 0.005));
   const hour = new Date(s.time * 1000).getUTCHours();
   if (hour < 6 || hour >= 21) result.push(hazard("darkness", skill, 12, 0));
   return result;
 }
 export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
+  const weather = weatherAtPoint(s, m.pos);
   const d = m.dynamics!;
   for (const h of d.hazards) {
     if (h.resolved) continue;
@@ -132,11 +135,9 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
     }
     const environment =
       h.kind === "fire"
-        ? 1 +
-          (s.environment?.wind ?? 0) / 150 -
-          (s.environment?.rain ?? 0) / 250
+        ? 1 + (weather?.wind ?? 0) / 150 - (weather?.rain ?? 0) / 250
         : h.kind === "water"
-          ? 1 + (s.environment?.rain ?? 0) / 100
+          ? 1 + (weather?.rain ?? 0) / 100
           : 1;
     const tactical =
       d.tactic === "defensive"

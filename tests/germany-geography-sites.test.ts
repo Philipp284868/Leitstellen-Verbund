@@ -127,6 +127,7 @@ describe("incident locations from local OSM MVT evidence", () => {
     (kind, layer, featureClass) => {
       const geo = open([area(layer, featureClass)]);
       expect(geo.evidence(tilePoint(1000, 1000), kind)).toEqual({
+        reference: expect.stringMatching(/^tile:14\/[0-9]+\/[0-9]+:/),
         layer,
         featureClass,
         distanceMeters: 0,
@@ -371,6 +372,55 @@ const mode = (name: string) =>
     child!.send({ mode: name });
   });
 describe("provider incident access integration", () => {
+  it("verifies dataset-backed access and actual bounded road profiles before publishing German incident candidates", async () => {
+    const { center } = await startProvider();
+    locations.installGermanyProvider(provider!);
+    locations.clearReachabilityCache();
+    const s = locations.fresh("Dispatcher", "Region", 10);
+    s.buildings = [
+      {
+        id: "home",
+        owner: s.player.id,
+        type: "fire",
+        name: "Test",
+        pos: center,
+        ready: 0,
+        level: 1,
+        extensions: [],
+      },
+    ];
+    s.vehicles = [
+      {
+        id: "unit",
+        owner: s.player.id,
+        home: "home",
+        type: "hlf",
+        name: "HLF",
+        favorite: false,
+        status: "ready",
+        mission: null,
+        assignment: null,
+        path: [center],
+        depart: 0,
+        arrive: 0,
+        patients: 0,
+      },
+    ];
+    const template = locations.missions.find((t) => t.id === "bin")!;
+    const points = locations.generationLocations(s, template)!;
+    expect(points.length).toBeGreaterThan(0);
+    for (const p of points) {
+      const proof = locations.verifyIncidentLocation(s, template, p)!;
+      expect(proof.dataset).toBe(fixtureDataset);
+      expect(proof.siteRef).toMatch(/osm-anchor:/);
+      expect(proof.roadRef).toBeTruthy();
+      expect(proof.driveSeconds).toBeLessThanOrEqual(900);
+      expect(proof.profiles).toEqual(["hlf"]);
+    }
+    expect(
+      locations.verifyIncidentLocation(s, template, { x: 0, y: 0 }),
+    ).toBeUndefined();
+  });
   it("shares one routing deadline across consecutive unreachable shoreline candidates", async () => {
     const { center } = await startProvider();
     const index = new DatabaseSync(resolve(dir, "index.sqlite"));

@@ -2,6 +2,10 @@ import type { Save } from "../model";
 import type { Template } from "../catalog";
 import { sample } from "./random";
 import { weatherWeight } from "./weather";
+import {
+  situationCategoryWeight,
+  situationTemplateWeight,
+} from "./world-situation";
 
 export const INCIDENT_MIX = {
   technical: 50,
@@ -78,12 +82,20 @@ export function chooseIncidentTemplate(
   const categories = (Object.keys(INCIDENT_MIX) as IncidentCategory[]).filter(
     (k) => pool.some((t) => incidentCategory(t) === k),
   );
-  const category = weighted(categories, (k) => INCIDENT_MIX[k], categoryDraw);
+  const category = weighted(
+    categories,
+    (k) => INCIDENT_MIX[k] * situationCategoryWeight(s, k),
+    categoryDraw,
+  );
   return weighted(
     pool
       .filter((t) => incidentCategory(t) === category)
       .sort((a, b) => a.id.localeCompare(b.id)),
-    (t) => Math.min(4, Math.max(1, weatherWeight(s, t.id))),
+    (t) =>
+      Math.min(
+        6,
+        Math.max(1, weatherWeight(s, t.id)) * situationTemplateWeight(s, t),
+      ),
     templateDraw,
   );
 }

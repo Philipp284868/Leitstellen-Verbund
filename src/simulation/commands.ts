@@ -9,6 +9,7 @@ import { repairVehicle } from "./faults";
 import { record } from "./events";
 import { writable } from "./events";
 import type { DeskAction } from "./actions";
+import { queueLocationReview } from "./location-repair";
 export function deskCommand(
   s: Save,
   a: DeskAction,
@@ -20,6 +21,10 @@ export function deskCommand(
     const m = s.missions.find((m) => m.id === a.mission);
     if (!m?.control) throw Error("Eigener laufender Einsatz fehlt.");
     writable(m);
+    if (a.type === "mission-location-review") {
+      queueLocationReview(s, m);
+      return;
+    }
     if (a.type === "withdraw") {
       withdraw(s, m, a.vehicles, actor, remote, remoteUnits);
       return;

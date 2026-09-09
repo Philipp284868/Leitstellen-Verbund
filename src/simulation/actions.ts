@@ -3,6 +3,9 @@ import { aaoSchema, alarmSchema, prioritySchema, orgSchema } from "./schema";
 const id = z.string().min(1).max(100);
 export const deskActions = [
   z
+    .object({ type: z.literal("mission-location-review"), mission: id })
+    .strict(),
+  z
     .object({
       type: z.literal("mission-note"),
       mission: id,
@@ -40,7 +43,16 @@ export const deskActions = [
       call: id,
       op: z.enum(["accept", "ask", "end", "callback", "handoff"]),
       question: z
-        .enum(["address", "report", "people", "hazard", "detail", "calm"])
+        .enum([
+          "address",
+          "report",
+          "people",
+          "hazard",
+          "detail",
+          "calm",
+          "access",
+          "callback",
+        ])
         .optional(),
     })
     .strict(),

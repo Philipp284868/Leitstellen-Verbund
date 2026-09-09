@@ -15,7 +15,13 @@ export function garageIndex(s: Save) {
       group = index.get(v.home);
     if (!b || !group) continue;
     const pos = vehiclePosition(v, s.time);
-    (distance(pos, b.pos) <= 1 ? group.inside : group.away).push(v);
+    const parked =
+      ["ready", "alarmed"].includes(v.status) ||
+      (v.status === "return" && s.time >= v.arrive)
+        ? s.buildings.find((station) => distance(pos, station.pos) <= 1)
+        : undefined;
+    if (parked) index.get(parked.id)!.inside.push(v);
+    else group.away.push(v);
   }
   return index;
 }

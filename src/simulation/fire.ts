@@ -3,6 +3,7 @@ import { mt, type Skills } from "../catalog";
 import type { Dynamics } from "./dynamics-schema";
 import { clamp } from "./random";
 import { fireExtinguished } from "./mission-tasks";
+import { weatherAtPoint } from "./weather";
 // Gameplay coefficients, not a physical fire model. Data keeps scenarios extensible.
 export const fuels: Record<
   string,
@@ -117,8 +118,8 @@ export function fireTick(s: Save, m: Mission, skills: Skills, dt: number) {
   );
   f.spread =
     fuel.spread *
-    (1 + (s.environment?.wind || 0) / 120) *
-    (1 - (s.environment?.rain || 0) / 150);
+    (1 + (weatherAtPoint(s, m.pos)?.wind || 0) / 120) *
+    (1 - (weatherAtPoint(s, m.pos)?.rain || 0) / 150);
   f.smoke = clamp(
     f.smoke +
       dt *

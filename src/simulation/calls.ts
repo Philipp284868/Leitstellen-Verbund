@@ -53,6 +53,8 @@ export const questionLabels = {
   hazard: "Welche Gefahren erkennen Sie?",
   detail: "Was können Sie noch beobachten?",
   calm: "Anrufer beruhigen und Angaben wiederholen",
+  access: "Wie erreichen die Einsatzkräfte den Ort?",
+  callback: "Können wir Sie zurückrufen?",
 };
 export type Question = keyof typeof questionLabels;
 export function multipleCallers(m: Mission) {
@@ -95,6 +97,21 @@ export function questionsFor(m: Mission): Record<Question, string> {
           : {}),
   };
 }
+/** Only public knowledge controls the next conversational choices. */
+export function availableQuestions(
+  m: Mission,
+  call: Incident["calls"][number],
+): Question[] {
+  return (Object.keys(questionLabels) as Question[]).filter(
+    (q) =>
+      !call.asked.includes(q) &&
+      (q !== "calm" || call.stress >= 50) &&
+      (["address", "report", "calm", "callback"].includes(q) ||
+        (q === "access"
+          ? !!m.control?.locationKnown
+          : !!m.control?.reportedTemplate)),
+  );
+}
 export function attachIncident(s: Save, m: Mission) {
   if (m.control) return;
   const seed = s.seed,
@@ -127,7 +144,7 @@ export function attachIncident(s: Save, m: Mission) {
       report: reportId(t),
       address: IS_GERMANY
         ? addressAt(m.pos)
-        : `${road!.name} ${1 + (seed % 89)}, ${districtAt(m.pos)}`,
+        : `${road!.name}, ${districtAt(m.pos)} · Lage an der markierten Position`,
       people:
         profile?.people ??
         scenario?.people ??
@@ -371,8 +388,8 @@ export function callAction(
   if (s.time < call.nextAnswer)
     throw Error("Die anrufende Person antwortet noch.");
   if (
-    !["address", "report", "calm"].includes(question) &&
-    !call.asked.includes("report")
+    !["address", "report", "calm", "callback", "access"].includes(question) &&
+    !c.reportedTemplate
   )
     throw Error("Zuerst das Meldebild erfragen.");
   call.asked.push(question);
@@ -399,7 +416,16 @@ export function callAction(
     ];
     c.secret.report = reportId(mt(c.secret.report));
   }
-  let answer = c.secret[question];
+  let answer =
+    question === "callback"
+      ? call.callback
+        ? "Ein Rückruf über diese Verbindung ist möglich."
+        : "Ein Rückruf ist über diese Verbindung nicht möglich."
+      : question === "access"
+        ? call.quality < 60
+          ? "Zum genauen Zugang kann ich keine sichere Angabe machen. Zufahrt und Zugang müssen vor Ort geprüft werden."
+          : "Ich beobachte den Ort von der Straße aus. Ob die weitere Zufahrt frei ist, kann ich nicht sicher sagen."
+        : c.secret[question];
   if (question === "report") {
     // Existing saves may contain the older precise report ID. Normalize only
     // the public hypothesis; stored truth and already learned facts stay intact.
@@ -409,7 +435,8 @@ export function callAction(
         : reportId(mt(c.secret.report));
     answer = c.secret.observations?.[0] ?? c.secret.hazard;
   }
-  if (question === "address") c.locationKnown = true;
+  if (question === "address")
+    c.locationKnown = !m.location || m.location.state === "verified";
   if (question === "detail")
     answer =
       call.quality < 60

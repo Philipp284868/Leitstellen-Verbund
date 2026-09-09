@@ -165,7 +165,7 @@ describe("Notruflast und Reproduzierbarkeit", () => {
       game.step(1);
       expect(db.all().get("owner")!.missions).toHaveLength(0);
       const deadline = db.all().get("owner")!.callPacing!.notBefore;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 21; i++) {
         game.view("owner", new Set(["owner", "member"]));
         game.view("member", new Set(["owner", "member"]));
         game.step(60);

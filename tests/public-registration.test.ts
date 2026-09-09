@@ -1,4 +1,5 @@
 import { attachDynamics } from "../src/simulation/dynamics";
+import { withoutLocationMigration } from "./helpers/location-migration-check";
 import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
@@ -211,10 +212,14 @@ it("wandelt bestehende Administratoren mit unveränderten IDs, Passwort-Hashes u
   for (const m of [...expected.missions, ...expected.archive])
     attachDynamics(expected, m, false);
   expect(
-    JSON.parse(
-      String(
-        db.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(id)!.data,
+    withoutLocationMigration(
+      JSON.parse(
+        String(
+          db.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(id)!
+            .data,
+        ),
       ),
+      expected,
     ),
   ).toEqual(expected);
   expect(db.sql.prepare("SELECT id FROM actions").get()!.id).toBe(
@@ -243,10 +248,14 @@ it("wandelt bestehende Administratoren mit unveränderten IDs, Passwort-Hashes u
     "player",
   );
   expect(
-    JSON.parse(
-      String(
-        db.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(id)!.data,
+    withoutLocationMigration(
+      JSON.parse(
+        String(
+          db.sql.prepare("SELECT data FROM saves WHERE user_id=?").get(id)!
+            .data,
+        ),
       ),
+      expected,
     ),
   ).toEqual(expected);
   db.close();
