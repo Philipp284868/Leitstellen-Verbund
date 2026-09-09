@@ -4,8 +4,6 @@ import { audio, useSound } from "./audio/controller";
 import { AudioEvents } from "./audio/events";
 import { useGame } from "./store";
 import "./Sound.css";
-import { AudioSettingsEditor } from "./audio/settings-editor";
-export { AudioSettingsEditor } from "./audio/settings-editor";
 export function AudioSession() {
   const { save, mode, readonly, user, error } = useGame();
   const { status } = useSound();
@@ -60,14 +58,5 @@ export function SoundButton() {
     >
       {off ? <VolumeX size={20} /> : <Volume2 size={20} />}
     </button>
-  );
-}
-export function SoundSettings() {
-  const { preferences } = useSound();
-  return (
-    <AudioSettingsEditor
-      draft={preferences}
-      onChange={(next) => audio.preferences(next)}
-    />
   );
 }

@@ -234,40 +234,6 @@ progress::-moz-progress-bar {
 .level progress {
   margin: 8px 0 4px;
 }
-.navrail {
-  position: absolute;
-  top: 86px;
-  bottom: 44px;
-  width: 86px;
-  background: #101924;
-  border-right: 1px solid #26313e;
-  display: flex;
-  align-items: stretch;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 7px;
-}
-.navrail button {
-  border: 0;
-  background: none;
-  display: flex;
-  flex-direction: column;
-  padding: 13px 0;
-  gap: 7px;
-  border-radius: 6px;
-  color: #8ca0b1;
-}
-.navrail button span {
-  font-size: 10px;
-}
-.navrail button.active {
-  background: #e88b6714;
-  color: #ed9779;
-  box-shadow: inset 3px 0 #e88b67;
-}
-.navrail button:hover {
-  background: #233240;
-}
 .workspace {
   height: calc(100vh - 130px);
   margin-left: 86px;
@@ -510,37 +476,6 @@ progress::-moz-progress-bar {
 .org-icon.fire {
   color: #e99577;
   background: #4a302c;
-}
-.radio-bar {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  background: #0d1721;
-  border-top: 1px solid #30414b;
-  padding: 0 20px;
-  font-size: 11px;
-}
-.radio-bar > span:first-child {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #e1a877;
-  letter-spacing: 1px;
-}
-.radio-bar p {
-  flex: 1;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  color: #a0b1be;
-}
-.save-indicator {
-  color: #6da68e;
-}
-.radio-bar select {
-  padding: 4px;
-  font-size: 11px;
 }
 .tutorial {
   position: fixed;
@@ -827,43 +762,6 @@ li {
   color: #b6a4d9;
   margin-right: 10px;
 }
-.start-screen {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 35px;
-  background:
-    radial-gradient(ellipse at 70% 20%, #26413c66, transparent 60%),
-    linear-gradient(130deg, #172b39, #0a121c 70%);
-}
-.start-emblem {
-  color: #e9906c;
-  padding: 25px;
-  border: 1px solid #6d5540;
-  background: #5b3b241c;
-  border-radius: 22px;
-  margin-bottom: 28px;
-  box-shadow: 0 0 100px #e7906c18;
-}
-.start-screen h1 {
-  font-size: 42px;
-  letter-spacing: 7px;
-  line-height: 1.2;
-  margin: 14px 0 20px;
-}
-.start-screen h1 span {
-  display: block;
-  color: #e8a07a;
-  letter-spacing: 12px;
-}
-.start-screen p {
-  color: #b9c9d5;
-  margin-bottom: 30px;
-  font-size: 16px;
-}
 .start-actions {
   width: 350px;
   max-width: 100%;
@@ -879,12 +777,6 @@ li {
 .start-actions .inline > button {
   flex: 1;
 }
-.version-label {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #7b929e;
-  margin-top: 20px;
-}
 .loading {
   min-height: 100vh;
   display: flex;
@@ -894,9 +786,6 @@ li {
   gap: 20px;
   padding: 40px;
   text-align: center;
-}
-.mobile-tabs {
-  display: none;
 }
 .reduced * {
   transition: none !important;
@@ -908,9 +797,7 @@ li {
   color-scheme: light;
 }
 .light .topbar,
-.light .navrail,
 .light .mission-sidebar,
-.light .radio-bar,
 .light .modal {
   background: #f0f5f8;
   border-color: #c2cfd9;
@@ -940,8 +827,7 @@ li {
 }
 .light .eyebrow,
 .light small,
-.light .mission-card p,
-.light .radio-bar p {
+.light .mission-card p {
   color: #526b7b;
 }
 .light input,
@@ -1049,10 +935,7 @@ li {
   min-height: 0;
 }
 .eyebrow,
-.status,
-.navrail button span,
-.radio-bar,
-.radio-bar p {
+.status {
   font-size: 12px;
 }
 .mission-card h3 {
@@ -1080,10 +963,6 @@ li {
 .map {
   position: absolute;
   inset: 0;
-}
-.radio-bar {
-  position: relative;
-  z-index: 3;
 }
 .map-toolbar span,
 .map-legend,

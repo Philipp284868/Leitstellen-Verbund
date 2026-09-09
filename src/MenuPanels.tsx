@@ -1,10 +1,10 @@
 import { ProjectNewsPanel } from "./ProjectNews";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { missions, capabilities } from "./catalog";
 import type { Save } from "./model";
 import { logout, useGame } from "./store";
 import { missionXp, progress } from "./progression";
-import { credits, ActionButton } from "./ui";
+import { credits, ActionButton, Disclosure } from "./ui";
 import { IncidentIcon } from "./HudIcons";
 import { WORLD_NAME } from "./world-choice";
 import { version } from "../package.json";
@@ -22,13 +22,17 @@ export function ScenarioCatalog({
     [page, setPage] = useState(0),
     [selected, setSelected] = useState("");
   const currentLevel = progress(s.xp).level;
-  const filtered = missions.filter(
-    (m) =>
-      (org === "Alle" || m.org === org) &&
-      (!available || m.level <= currentLevel) &&
-      `${m.name} ${m.org} ${m.description}`
-        .toLocaleLowerCase("de")
-        .includes(query.trim().toLocaleLowerCase("de")),
+  const filtered = useMemo(
+    () =>
+      missions.filter(
+        (m) =>
+          (org === "Alle" || m.org === org) &&
+          (!available || m.level <= currentLevel) &&
+          `${m.name} ${m.org} ${m.description}`
+            .toLocaleLowerCase("de")
+            .includes(query.trim().toLocaleLowerCase("de")),
+      ),
+    [org, available, currentLevel, query],
   );
   const pages = Math.max(1, Math.ceil(filtered.length / 24)),
     currentPage = Math.min(page, pages - 1),
@@ -36,12 +40,19 @@ export function ScenarioCatalog({
     t = rows.find((m) => m.id === selected) ?? rows[0];
   return (
     <section className="scenario-catalog">
-      <p className="view-intro">
-        {missions.length} vorhandene Einsatzvorlagen. Anforderungen und
-        Grundvergütung dienen der Vorbereitung; ein unbekannter echter Notruf
-        verrät seine Vorlage nicht. Zusätzliche Lagemeldungen können den
-        Kräftebedarf verändern.
-      </p>
+      <div className="view-heading">
+        <p className="view-intro">
+          {missions.length} Einsatzarten · Anforderungen, Freischaltungen und
+          Vergütung
+        </p>
+        <Disclosure title="Hinweise zum Einsatzkatalog" className="view-help">
+          <p>
+            Anforderungen und Grundvergütung dienen der Vorbereitung; ein
+            unbekannter echter Notruf verrät seine Vorlage nicht. Zusätzliche
+            Lagemeldungen können den Kräftebedarf verändern.
+          </p>
+        </Disclosure>
+      </div>
       <div className="resource-summary">
         <label>
           Einsatzart suchen

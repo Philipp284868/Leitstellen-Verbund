@@ -1,5 +1,6 @@
 import type { TutorialView, TrainingView } from "../server/tutorial";
 import { useSyncExternalStore } from "react";
+import { subscription } from "./external-store";
 import { io, type Socket } from "socket.io-client";
 import { ensureSocketConnection } from "./socket-connection";
 import type { Save } from "./model";
@@ -70,14 +71,9 @@ export function emit(p: Partial<Snapshot>) {
   snapshot = { ...snapshot, ...p };
   listeners.forEach((f) => f());
 }
-export const useGame = () =>
-  useSyncExternalStore(
-    (f) => {
-      listeners.add(f);
-      return () => listeners.delete(f);
-    },
-    () => snapshot,
-  );
+const subscribeGame = subscription(listeners);
+const gameSnapshot = () => snapshot;
+export const useGame = () => useSyncExternalStore(subscribeGame, gameSnapshot);
 export const state = () => snapshot.save;
 export function notice(text: string) {
   emit({ notice: text });

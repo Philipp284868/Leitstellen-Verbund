@@ -1,6 +1,6 @@
 import { tutorialInteraction } from "./Tutorial";
-import { useEffect, useRef, useState } from "react";
-import { AudioSettingsEditor } from "./Sound";
+import { memo, useEffect, useRef, useState } from "react";
+import { AudioSettingsEditor } from "./audio/settings-editor";
 import { audio, useSound } from "./audio/controller";
 import { defaultSound } from "./audio/preferences";
 import {
@@ -23,7 +23,7 @@ const categories = {
   controls: "Steuerung",
   help: "Hinweise & Hilfe",
 } as const;
-export function Settings({
+export const Settings = memo(function Settings({
   onOpen,
   initialTab = "audio",
 }: {
@@ -320,4 +320,4 @@ export function Settings({
       </footer>
     </div>
   );
-}
+});

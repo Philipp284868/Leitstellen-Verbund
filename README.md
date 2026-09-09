@@ -48,7 +48,7 @@ Historisch bereits gelöschte Berichte können nicht wiederhergestellt werden. B
 
 `main` ist der einzige reguläre Projektbranch. Geprüfte abgeschlossene Teilschritte werden direkt gepusht; keine automatische Produktionsbereitstellung. [Beitragsregeln](CONTRIBUTING.md) · [Sicherheit](SECURITY.md).
 
-Installation und Build: `node scripts/amp-setup.mjs`. Entwicklungsansicht mit Hot Reload: `npm run dev` (Node.js 24). Sie verwendet localhost:5173, einen Backend-Port 4010 und ausschließlich das separate Verzeichnis `../leitstellen-verbund-rivermere-development-data`. Dort ein normales Testkonto anlegen. Produktionsdaten werden nicht verwendet. `DEV_PORT` und `DEV_API_PORT` können freie lokale Ports auswählen. Clientänderungen erscheinen über Vite-Hot-Reload; Serveränderungen nach erneutem `node scripts/build-server.mjs`; der Entwicklungsworker wird anschließend per IPC sauber neu gestartet, auch unter Windows.
+Installation und Build: `node scripts/amp-setup.mjs`. Danach bleibt `npm run dev` mit Vite-Hot-Reload und inkrementeller Serverübersetzung aktiv. Deutschland verwendet vorhandene lokale Geodaten, einen lokalen Router und einen eigenen Entwicklungsstand. Einrichtung, schnelle/vollständige Prüfungen und Cachegrenzen stehen in der [Entwicklungsanleitung](docs/ENTWICKLUNG.md).
 
 Prüfungen: `npm run test:quick`, `npm run test:unit`, `npm run test:integration`, `npm run test:e2e` und `npm run test:full`. Der vollständige Linux-Lauf bleibt für die Freigabe verpflichtend. Browser vorher mit Playwright installieren; unter Windows kann `PW_EDGE=1` das vorhandene Edge verwenden. [Testumfang und Laufzeiten](docs/TESTLAUFZEITEN.md).
 

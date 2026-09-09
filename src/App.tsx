@@ -4,19 +4,31 @@ import {
   TutorialEvents,
   tutorialInteraction,
 } from "./Tutorial";
-import { Progression } from "./ProgressionPanel";
-import { GameHud } from "./GameHud";
-import { MenuPanels } from "./MenuPanels";
-import { Settings } from "./Settings";
+const Progression = lazy(() =>
+  import("./ProgressionPanel").then((m) => ({ default: m.Progression })),
+);
+const GameHud = lazy(() =>
+  import("./GameHud").then((m) => ({ default: m.GameHud })),
+);
+const MenuPanels = lazy(() =>
+  import("./MenuPanels").then((m) => ({ default: m.MenuPanels })),
+);
+const Settings = lazy(() =>
+  import("./Settings").then((m) => ({ default: m.Settings })),
+);
 import { navigation } from "./navigation";
+import { WORLD_NAME } from "./world-choice";
 import { useDevicePreferences } from "./device-preferences";
 import { requestDialogTransition } from "./dialog-state";
 import { ReconnectSummary } from "./ReconnectSummary";
-import { Players } from "./Players";
+const Players = lazy(() =>
+  import("./Players").then((m) => ({ default: m.Players })),
+);
 import { BuildingIcon } from "./map-icons";
 import { usePresence } from "./network";
 import { shortcutFor } from "./workspace";
 import "./Workspace.css";
+import "./Settings.css";
 import { DynamicsPanel } from "./Dynamics";
 import { MissionPanel } from "./Panels";
 import { IncidentPanel, AAOPanel, FMSPanel, TeamPanel, History } from "./Desk";
@@ -26,6 +38,7 @@ import { MainMenu } from "./MainMenu";
 import { AuthScreen, Account } from "./Account";
 import {
   useState,
+  useCallback,
   useEffect,
   useRef,
   lazy,
@@ -47,6 +60,9 @@ import { BackupPanel, ProgressPanel, Help } from "./Panels";
 import { ActionButton, Modal } from "./ui";
 import { download } from "./storage";
 export function App() {
+  useEffect(() => {
+    document.title = `${WORLD_NAME} · Leitstellen-Verbund`;
+  }, []);
   return (
     <>
       <AudioSession />
@@ -59,7 +75,15 @@ export function App() {
         </p>
         <p>Der Server läuft weiter. Deine Daten bleiben erhalten.</p>
       </div>
-      <GameApp />
+      <Suspense
+        fallback={
+          <div className="loading" role="status">
+            Leitstelle wird geladen …
+          </div>
+        }
+      >
+        <GameApp />
+      </Suspense>
     </>
   );
 }
@@ -84,8 +108,10 @@ function GameApp() {
     [modal, setModalRaw] = useState(""),
     [selected, setSelected] = useState(""),
     [placing, setPlacing] = useState("");
-  const setModal = (id: string) =>
-    requestDialogTransition(() => setModalRaw(id));
+  const setModal = useCallback(
+    (id: string) => requestDialogTransition(() => setModalRaw(id)),
+    [],
+  );
   const preferences = useDevicePreferences();
   const layout = preferences.workspace;
   const [listOpen, setListOpen] = useState(false);
@@ -393,191 +419,204 @@ function GameApp() {
             })
           }
         >
-          <MenuPanels
-            panel={modal}
-            s={s}
-            onOpen={setModal}
-            onPlay={() => {
-              setScreen("game");
-              setModal("");
-            }}
-          />
-          {modal === "help" && (
-            <>
-              <p>
-                <a
-                  href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Wiki öffnen
-                </a>
+          <Suspense
+            fallback={
+              <p className="view-intro" role="status">
+                Ansicht wird geladen …
               </p>
-              <button onClick={() => setModal("catalog")}>
-                Einsatzkatalog
-              </button>
-              <div className="action-grid">
-                <button onClick={() => setModal("tutorial")}>
-                  Interaktives Tutorial
-                </button>
-                <button onClick={() => setModal("aaos")}>AAO verwalten</button>
-                <button onClick={() => setModal("fms")}>
-                  FMS & Alarmierung
-                </button>
-                <button onClick={() => setModal("account")}>
-                  Konto & Sicherheit
-                </button>
-              </div>
-              <Help />
-            </>
-          )}
-          {modal === "backups" && <BackupPanel s={s} />}
-          {modal === "settings" && (
-            <Settings onOpen={setModal} initialTab={settingsTab} />
-          )}
-          {modal === "account" && <Account />}
-          {modal === "tutorial" && (
-            <TutorialHome
-              onEnter={() => {
-                setModalRaw("");
-                setSelected("");
+            }
+          >
+            <MenuPanels
+              panel={modal}
+              s={s}
+              onOpen={setModal}
+              onPlay={() => {
                 setScreen("game");
+                setModal("");
               }}
             />
-          )}
-          {s && (
-            <>
-              {modal === "build" && (
-                <BuildingShop
-                  s={s}
-                  onPlace={(type) => {
-                    setPlacing(type);
-                    setModal("");
-                    setScreen("game");
-                  }}
-                />
-              )}
-              {modal === "stations" && (
-                <>
-                  <button className="primary" onClick={() => setModal("build")}>
-                    Wache bauen
+            {modal === "help" && (
+              <>
+                <p>
+                  <a
+                    href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Wiki öffnen
+                  </a>
+                </p>
+                <button onClick={() => setModal("catalog")}>
+                  Einsatzkatalog
+                </button>
+                <div className="action-grid">
+                  <button onClick={() => setModal("tutorial")}>
+                    Interaktives Tutorial
                   </button>
-                  {s.buildings.map((b) => (
-                    <button
-                      className="station-card"
-                      key={b.id}
-                      onClick={() => open(b.id)}
-                    >
-                      <BuildingIcon type={b.type} />
-                      <div>
-                        <b>{b.name}</b>
-                        <small>
-                          {bt(b.type).name} · Stufe {b.level}
-                        </small>
-                      </div>
-                      <ChevronRight />
-                    </button>
-                  ))}
-                </>
-              )}
-              {modal === "building" &&
-                s.buildings.find((b) => b.id === selected) && (
-                  <BuildingPanel
-                    key={selected}
+                  <button onClick={() => setModal("aaos")}>
+                    AAO verwalten
+                  </button>
+                  <button onClick={() => setModal("fms")}>
+                    FMS & Alarmierung
+                  </button>
+                  <button onClick={() => setModal("account")}>
+                    Konto & Sicherheit
+                  </button>
+                </div>
+                <Help />
+              </>
+            )}
+            {modal === "backups" && <BackupPanel s={s} />}
+            {modal === "settings" && (
+              <Settings onOpen={setModal} initialTab={settingsTab} />
+            )}
+            {modal === "account" && <Account />}
+            {modal === "tutorial" && (
+              <TutorialHome
+                onEnter={() => {
+                  setModalRaw("");
+                  setSelected("");
+                  setScreen("game");
+                }}
+              />
+            )}
+            {s && (
+              <>
+                {modal === "build" && (
+                  <BuildingShop
                     s={s}
-                    b={s.buildings.find((b) => b.id === selected)!}
+                    onPlace={(type) => {
+                      setPlacing(type);
+                      setModal("");
+                      setScreen("game");
+                    }}
                   />
                 )}
-              {modal === "building" &&
-                !s.buildings.some((b) => b.id === selected) && (
-                  <section className="empty-state">
-                    <h3>Standort nicht mehr vorhanden</h3>
-                    <p>
-                      Der Standort wurde verkauft oder gehört nicht mehr zur
-                      geöffneten Leitstelle.
-                    </p>
-                    <button onClick={() => setModal("stations")}>
-                      Wachenübersicht öffnen
-                    </button>
-                  </section>
-                )}
-              {modal === "fleet" && (
-                <Fleet
-                  s={s}
-                  onSelect={(id) => {
-                    setSelected(id);
-                    setModal("");
-                  }}
-                />
-              )}
-              {modal === "mission" &&
-                s.missions.find((m) => m.id === selected) &&
-                (s.missions.find((m) => m.id === selected)!.control ? (
-                  <IncidentPanel
-                    key={selected}
-                    s={s}
-                    m={s.missions.find((m) => m.id === selected)!}
-                  />
-                ) : (
-                  <MissionPanel
-                    key={selected}
-                    s={s}
-                    m={s.missions.find((m) => m.id === selected)!}
-                  />
-                ))}
-              {modal === "mission" &&
-                !s.missions.some((m) => m.id === selected) && (
+                {modal === "stations" && (
                   <>
-                    <p>
-                      Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
-                      Geldjournal.
-                    </p>
-                    {s.archive
-                      .filter((m) => m.id === selected)
-                      .map((m) => (
-                        <div key={m.id}>
-                          <Suspense fallback={<p>Bericht wird geladen …</p>}>
-                            <ReportPanel m={m} />
-                          </Suspense>
-                          <DynamicsPanel s={s} m={m} />
-                          <History s={s} m={m} />
+                    <button
+                      className="primary"
+                      onClick={() => setModal("build")}
+                    >
+                      Wache bauen
+                    </button>
+                    {s.buildings.map((b) => (
+                      <button
+                        className="station-card"
+                        key={b.id}
+                        onClick={() => open(b.id)}
+                      >
+                        <BuildingIcon type={b.type} />
+                        <div>
+                          <b>{b.name}</b>
+                          <small>
+                            {bt(b.type).name} · Stufe {b.level}
+                          </small>
                         </div>
-                      ))}
+                        <ChevronRight />
+                      </button>
+                    ))}
                   </>
                 )}
-              {modal === "friends" && <TeamPanel />}
-              {modal === "players" && (
-                <Players
-                  players={presence.players}
-                  ownUserId={user?.id ?? ""}
-                  ownDeskId={s.player.id}
-                  connected={presence.connected}
-                  ready={presence.ready}
-                  onJump={(point) => {
-                    setModal("");
-                    setListOpen(false);
-                    setSelected("");
-                    window.dispatchEvent(
-                      new CustomEvent("lv:map-focus", { detail: { point } }),
-                    );
-                  }}
-                />
-              )}
-              {modal === "aaos" && <AAOPanel s={s} />}
-              {modal === "fms" && <FMSPanel s={s} />}
-              {modal === "progress" && (
-                <>
-                  <Progression s={s} />
-                  <ProgressPanel s={s} />
-                </>
-              )}
-              {modal === "archive" && (
-                <Suspense fallback={<p>Auswertung wird geladen …</p>}>
-                  <ArchivePanel s={s} open={open} />
-                </Suspense>
-              )}
-            </>
-          )}
+                {modal === "building" &&
+                  s.buildings.find((b) => b.id === selected) && (
+                    <BuildingPanel
+                      key={selected}
+                      s={s}
+                      b={s.buildings.find((b) => b.id === selected)!}
+                    />
+                  )}
+                {modal === "building" &&
+                  !s.buildings.some((b) => b.id === selected) && (
+                    <section className="empty-state">
+                      <h3>Standort nicht mehr vorhanden</h3>
+                      <p>
+                        Der Standort wurde verkauft oder gehört nicht mehr zur
+                        geöffneten Leitstelle.
+                      </p>
+                      <button onClick={() => setModal("stations")}>
+                        Wachenübersicht öffnen
+                      </button>
+                    </section>
+                  )}
+                {modal === "fleet" && (
+                  <Fleet
+                    s={s}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      setModal("");
+                    }}
+                  />
+                )}
+                {modal === "mission" &&
+                  s.missions.find((m) => m.id === selected) &&
+                  (s.missions.find((m) => m.id === selected)!.control ? (
+                    <IncidentPanel
+                      key={selected}
+                      s={s}
+                      m={s.missions.find((m) => m.id === selected)!}
+                    />
+                  ) : (
+                    <MissionPanel
+                      key={selected}
+                      s={s}
+                      m={s.missions.find((m) => m.id === selected)!}
+                    />
+                  ))}
+                {modal === "mission" &&
+                  !s.missions.some((m) => m.id === selected) && (
+                    <>
+                      <p>
+                        Dieser Einsatz ist abgeschlossen. Die Belohnung steht im
+                        Geldjournal.
+                      </p>
+                      {s.archive
+                        .filter((m) => m.id === selected)
+                        .map((m) => (
+                          <div key={m.id}>
+                            <Suspense fallback={<p>Bericht wird geladen …</p>}>
+                              <ReportPanel m={m} />
+                            </Suspense>
+                            <DynamicsPanel s={s} m={m} />
+                            <History s={s} m={m} />
+                          </div>
+                        ))}
+                    </>
+                  )}
+                {modal === "friends" && <TeamPanel />}
+                {modal === "players" && (
+                  <Players
+                    players={presence.players}
+                    ownUserId={user?.id ?? ""}
+                    ownDeskId={s.player.id}
+                    connected={presence.connected}
+                    ready={presence.ready}
+                    onJump={(point) => {
+                      setModal("");
+                      setListOpen(false);
+                      setSelected("");
+                      window.dispatchEvent(
+                        new CustomEvent("lv:map-focus", { detail: { point } }),
+                      );
+                    }}
+                  />
+                )}
+                {modal === "aaos" && <AAOPanel s={s} />}
+                {modal === "fms" && <FMSPanel s={s} />}
+                {modal === "progress" && (
+                  <>
+                    <Progression s={s} />
+                    <ProgressPanel s={s} />
+                  </>
+                )}
+                {modal === "archive" && (
+                  <Suspense fallback={<p>Auswertung wird geladen …</p>}>
+                    <ArchivePanel s={s} open={open} />
+                  </Suspense>
+                )}
+              </>
+            )}
+          </Suspense>
         </Modal>
       )}
     </div>

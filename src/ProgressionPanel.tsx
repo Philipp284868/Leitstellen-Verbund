@@ -3,6 +3,27 @@ import { buildings, vehicles, extensions, bt } from "./catalog";
 import { progress } from "./progression";
 import type { Save } from "./model";
 import { formatMoney } from "./money";
+const upcoming = [
+  ...buildings.map((b) => ({
+    id: "b-" + b.id,
+    name: b.name,
+    level: b.level,
+    detail: formatMoney(b.price),
+  })),
+  ...vehicles.map((v) => ({
+    id: "v-" + v.id,
+    name: v.name,
+    level: v.level,
+    detail: `${formatMoney(v.price)} · ${bt(v.home).name} · automatische Besatzung${v.training ? ", " + v.training : ""}`,
+  })),
+  ...extensions.map((e) => ({
+    id: "e-" + e.id,
+    name: e.name,
+    level: e.level,
+    detail: `${formatMoney(e.price)} · ${bt(e.home).name}`,
+  })),
+].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name, "de"));
+
 export function Progression({ s }: { s: Save }) {
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all"),
@@ -18,26 +39,6 @@ export function Progression({ s }: { s: Save }) {
       );
     previous.current = { generation: s.generation, level: p.level };
   }, [p.level, s.generation]);
-  const upcoming = [
-    ...buildings.map((b) => ({
-      id: "b-" + b.id,
-      name: b.name,
-      level: b.level,
-      detail: formatMoney(b.price),
-    })),
-    ...vehicles.map((v) => ({
-      id: "v-" + v.id,
-      name: v.name,
-      level: v.level,
-      detail: `${formatMoney(v.price)} · ${bt(v.home).name} · automatische Besatzung${v.training ? ", " + v.training : ""}`,
-    })),
-    ...extensions.map((e) => ({
-      id: "e-" + e.id,
-      name: e.name,
-      level: e.level,
-      detail: `${formatMoney(e.price)} · ${bt(e.home).name}`,
-    })),
-  ].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name, "de"));
   const matches = upcoming.filter(
     (u) =>
       `${u.name} ${u.detail}`

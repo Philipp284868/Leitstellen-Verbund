@@ -1,6 +1,7 @@
 import type { AidRequest } from "./simulation/organizations-schema";
 import { audio } from "./audio/controller";
 import { useSyncExternalStore } from "react";
+import { subscription } from "./external-store";
 import type { Building, Vehicle, Mission } from "./model";
 import type { Point } from "./world";
 import { command, sendChat } from "./store";
@@ -57,14 +58,10 @@ export function receiveChat(data: { name: string; text: string }) {
   net = { ...net, chat: [...net.chat, data].slice(-100) };
   update();
 }
+const subscribeNetwork = subscription(listeners);
+const networkSnapshot = () => net;
 export const useNetwork = () =>
-  useSyncExternalStore(
-    (f) => {
-      listeners.add(f);
-      return () => listeners.delete(f);
-    },
-    () => net,
-  );
+  useSyncExternalStore(subscribeNetwork, networkSnapshot);
 const presenceDecoder = new PresenceDecoder(WORLD);
 const presenceListeners = new Set<() => void>();
 let presence = {
@@ -96,14 +93,10 @@ export function receivePresence(frame: unknown) {
     return false;
   }
 }
+const subscribePresence = subscription(presenceListeners);
+const presenceSnapshot = () => presence;
 export const usePresence = () =>
-  useSyncExternalStore(
-    (listener) => {
-      presenceListeners.add(listener);
-      return () => presenceListeners.delete(listener);
-    },
-    () => presence,
-  );
+  useSyncExternalStore(subscribePresence, presenceSnapshot);
 export const chat = sendChat;
 export const share = (id: string) => command({ type: "share", id });
 export const stopSharing = (id: string) => command({ type: "unshare", id });

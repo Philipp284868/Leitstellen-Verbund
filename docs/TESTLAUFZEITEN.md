@@ -1,6 +1,6 @@
 # Teststufen und Laufzeitmessung
 
-`node .tools/pnpm-11.19.0/bin/pnpm.cjs test:quick`: Typecheck und reine Logiktests ohne Server/Browser. `test:unit`: reine Logik. `test:integration`: alle übrigen Vitest-Dateien sowie echte Node-Betriebstests. Neue Dateien landen standardmäßig in Integration und werden nicht stillschweigend ausgelassen. `test:e2e`: sämtliche Browserabläufe. `test:ci`: vollständige Vitest- und Node-Suite. `test:full`: Build einschließlich Typecheck, Lint, vollständige Logik-/Betriebs- und Browserprüfungen. `test:security`: Audit der Produktionsabhängigkeiten ab hohem Schweregrad.
+Die aktuellen Befehle, dynamisch vollständigen Testgruppen und Cachegrenzen stehen in [Entwicklung und Qualitätsprüfung](ENTWICKLUNG.md). `check:quick` enthält Typ-/Lint-/Strukturprüfungen; `test:quick` ist die gezielte schnelle Regression. `test:full` umfasst Produktionsbuild, Typen, Struktur, Lint, vollständige Logik-/Betriebstests, Audit und beide Desktopbrowser. Die folgenden früheren Laufzeitmessungen behalten ihren ausdrücklich historischen Umfang.
 
 Alle vollständigen Stufen enthalten weiterhin Berechtigungen, doppelte Aktionen, Archive, Migrationen, Neustart, deterministische Simulation und Linux-Betriebstests. Der kurze Entwicklungscheck ersetzt keine Endabnahme. Echte Linux-Signal- und Symlinktests benötigen Linux; ein Windows-Lauf wird bei fehlenden Rechten nicht künstlich grün geschaltet.
 

@@ -10,7 +10,7 @@ import {
 } from "./model";
 import { command, api, useGame } from "./store";
 import { readiness, capacity, missing } from "./engine";
-import { useNetwork, chat, share, stopSharing } from "./network";
+import { useNetwork, share, stopSharing } from "./network";
 import {
   exportText,
   read,
@@ -20,14 +20,7 @@ import {
   persist,
   type RecordSave,
 } from "./storage";
-import {
-  credits,
-  statuses,
-  playerColor,
-  ActionButton,
-  ConfirmAction,
-} from "./ui";
-import { SharedMission } from "./SharedMission";
+import { credits, statuses, ActionButton, ConfirmAction } from "./ui";
 import { useDialogDirty } from "./dialog-state";
 import { missionPresentation, missionProgress } from "./mission-presentation";
 import { effectiveSkills } from "./simulation/major-resources";
@@ -322,87 +315,6 @@ export function MissionPanel({ s, m }: { s: Save; m: Mission }) {
         </form>
       )}
     </div>
-  );
-}
-export function Friends({ s }: { s: Save }) {
-  const net = useNetwork(),
-    [text, setText] = useState(""),
-    [error, setError] = useState("");
-  const { readonly } = useGame();
-  useDialogDirty(!!text.trim(), () => setText(""));
-  return (
-    <section>
-      <p>
-        Sichtbare Verbundpartner und ausdrücklich freigegebene Einsätze. Private
-        Wachen, Fahrzeuge und Einsätze anderer Leitstellen bleiben geschützt.
-        Gemeinsame Disposition erfolgt nach Einladung in dieselbe Leitstelle;
-        Hilfe von Nachbarn benötigt eine zugesagte Unterstützungsanfrage.
-      </p>
-      {net.friends.map((f) => (
-        <article className="friend" key={f.id}>
-          <strong style={{ color: playerColor(f.id) }}>{f.name}</strong>
-          <small>{f.status}</small>
-        </article>
-      ))}
-      {!net.friends.length && (
-        <p>
-          Keine Verbundpartner in dieser Ansicht. Die öffentliche Spielerpräsenz
-          findest du über „Spieler“, Disponenten und Unterstützungsanfragen über
-          „Leitstellen“.
-        </p>
-      )}
-      {net.friends.flatMap((f) =>
-        f.missions.map((m) => (
-          <SharedMission
-            key={m.id}
-            s={s}
-            friend={f}
-            m={m}
-            friends={net.friends}
-          />
-        )),
-      )}
-      <h3>Verbundfunk</h3>
-      <div className="chat-log">
-        {!net.chat.length && <p>Noch keine Nachrichten in dieser Sitzung.</p>}
-        {net.chat.map((c, i) => (
-          <p key={i}>
-            <b>{c.name}</b> {c.text}
-          </p>
-        ))}
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          try {
-            chat(text);
-            setText("");
-            setError("");
-          } catch (e) {
-            setError(String(e));
-          }
-        }}
-      >
-        <label>
-          Chatnachricht
-          <input
-            maxLength={500}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </label>
-        <button disabled={!text.trim() || readonly}>Senden</button>
-      </form>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <small>
-        Textchat, höchstens zwei Nachrichten pro Sekunde. Keine dauerhafte
-        Chatspeicherung.
-      </small>
-    </section>
   );
 }
 export function BackupPanel({ s }: { s: Save | null }) {
@@ -707,110 +619,133 @@ export function Help() {
         Leitstellen-Verbund ist ein fiktives Aufbauspiel, keine reale
         Einsatzplanungssoftware.
       </p>
-      <h3>Konto erstellen</h3>
-      <p>
-        Auf der Startseite „Neues Konto erstellen“ wählen und Benutzername,
-        Passwort, Anzeigename und Leitstellenname festlegen. Jeder kann sich
-        ohne Einladung registrieren. Es gibt ausschließlich normale
-        Spielerkonten.
-      </p>
-      <h3>Dein Multiplayer-Server</h3>
-      <p>
-        Melde dich am gewünschten Spielserver an und öffne deine berechtigte
-        Leitstelle mit Spielen. Der Server verwaltet Welt, Besitz und
-        Fortschritt. Unter Leitstellen findest du Einladungen zur gemeinsamen
-        Disposition.
-      </p>
-      <h3>Die erste Schicht</h3>
-      <ol>
-        <li>
-          Eine Feuerwache an einem erreichbaren Straßenstandort bauen. Bauzeit
-          abwarten; die passende Besetzung wird bei Inbetriebnahme automatisch
-          bereitgestellt.
-        </li>
-        <li>
-          Ein geeignetes Einstiegsfahrzeug wie das TSF kaufen. Preis,
-          Fähigkeiten und Stellplatzbedarf vor dem Kauf prüfen. Kein separates
-          Einstellen, Besetzen oder Ausbilden ist zum Ausrücken erforderlich.
-        </li>
-        <li>
-          Notruf annehmen, Ort und Meldebild erfragen. Mit AAO oder freier
-          Auswahl geeignete Fahrzeuge alarmieren.
-        </li>
-        <li>
-          Ausrücken und FMS auf dem lokalen Straßennetz verfolgen. Nach Ankunft
-          die erste Lagemeldung aufnehmen und fehlende Kräfte nachfordern.
-        </li>
-        <li>
-          Nach Abschluss wird die Euro-Vergütung einmalig gebucht und Fahrzeuge
-          kehren zurück.
-        </li>
-      </ol>
-      <h3>Ausbauen und Fähigkeiten erweitern</h3>
-      <p>
-        Die gemeinsame Fortschrittsansicht zeigt alle aktuellen Freischaltungen.
-        Eine freigeschaltete Organisation bietet ein passendes Einstiegsfahrzeug
-        zum Kauf; Freischaltung schenkt weder Fahrzeuge noch Wachen. Die
-        Personal- und Ausbildungskapazität gehört zum Betrieb und Ausbau des
-        Gebäudes. XP gibt es für abgeschlossene Einsätze; Zeit, zusätzliche
-        Fahrzeuge und wiederholte Meldungen erhöhen die Belohnung nicht.
-      </p>
-      <h3>Patienten und Wasserrettung</h3>
-      <p>
-        Patienten werden nach der Versorgung mit einem Transportfahrzeug zum
-        öffentlichen Klinikum gebracht. Behandelte Patienten geben Plätze wieder
-        frei. Auf der Deutschlandkarte erreichen Bootsgespanne einen geprüften
-        Uferzugang über echte Straßen. Eine frei befahrbare Wasserroute wird
-        derzeit nicht simuliert. Hubschrauber nutzen ihre eigene Luftfahrtlogik.
-      </p>
-      <h3>Serverzeit und Verbindung</h3>
-      <p>
-        Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln ein. Eine
-        kleine Leitstelle beginnt mit einem Grundintervall von 300–480 Sekunden;
-        offene Gespräche, unerledigte Einsätze und gebundene Fahrzeuge drosseln
-        den Nachschub zusätzlich. Eine ausgebaute Leitstelle kann mehr parallele
-        Aufgaben erhalten. Der Server simuliert deine Leitstelle auch bei
-        geschlossenem Browser. Ohne Serververbindung können keine Aktionen
-        bestätigt werden. Nach Serverstillstand werden höchstens vier Stunden
-        nachberechnet.
-      </p>
-      <h3>Freunde und Belohnungen</h3>
-      <p>
-        Unter Leitstellen können bestehende Benutzer als Disponenten derselben
-        Leitstelle eingeladen werden. Nach Annahme arbeiten sie am gemeinsamen
-        Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht. Unter
-        Leitstellen gezielte Unterstützungsanfragen an Nachbarleitstellen
-        stellen; erst eine ausdrückliche Zusage alarmiert fremde Kräfte.
-        Laufende alte Unterstützungen werden weitergeführt.
-      </p>
-      <h3>Speichern und Wiederherstellen</h3>
-      <p>
-        Besitz und Spielaktionen werden in SQLite auf dem Server gespeichert.
-        Mehrere Tabs sehen denselben bestätigten Serverstand. Alte
-        Einzelspielerstände bleiben inaktive Archive. Exportdateien und
-        freiwillige lokale Kopien stehen unter Sicherungen bereit. Die gesamte
-        Datenbank wird regelmäßig automatisch gesichert. Wiederherstellung und
-        Übernahme alter Browserdateien bleiben Wartungsaufgaben des
-        Serverbetreibers außerhalb der Spielkonten.
-      </p>
-      <h3>Bedienung</h3>
-      <p>
-        Karte ziehen und mit Mausrad oder +/− zoomen. Gebäude und Einsätze
-        anklicken oder mit Tab und Enter auswählen. Einsatzliste und
-        Kartenwerkzeuge lassen sich einklappen. Menüs lassen sich mit Escape
-        schließen.
-      </p>
-      <h3>Dein Arbeitsplatz und Audio</h3>
-      <p>
-        Alle dauerhaften Zugänge liegen in der oberen Leiste. Ansichten öffnen
-        nur bei Bedarf; nach dem Schließen bleibt die Karte frei. Hauptmenü und
-        Spiel verwenden dieselben Einstellungen. Lautstärke, Darstellung und
-        Bedienung werden zuerst als Vorschau geändert und mit „Übernehmen“ lokal
-        gespeichert. „Verwerfen“ stellt die vorherigen Werte wieder her. Audio
-        startet erst nach Interaktion; Musik, Umgebung, Telefon, Funk und
-        Alarmierung besitzen eigene Regler. Ein Audioproblem stoppt keine
-        Serveraktion.
-      </p>
+      <details>
+        <summary>Konto erstellen</summary>
+        <p>
+          Auf der Startseite „Neues Konto erstellen“ wählen und Benutzername,
+          Passwort, Anzeigename und Leitstellenname festlegen. Jeder kann sich
+          ohne Einladung registrieren. Es gibt ausschließlich normale
+          Spielerkonten.
+        </p>
+      </details>
+      <details open>
+        <summary>Dein Multiplayer-Server</summary>
+        <p>
+          Melde dich am gewünschten Spielserver an und öffne deine berechtigte
+          Leitstelle mit Spielen. Der Server verwaltet Welt, Besitz und
+          Fortschritt. Unter Leitstellen findest du Einladungen zur gemeinsamen
+          Disposition.
+        </p>
+      </details>
+      <details>
+        <summary>Die erste Schicht</summary>
+        <ol>
+          <li>
+            Eine Feuerwache an einem erreichbaren Straßenstandort bauen. Bauzeit
+            abwarten; die passende Besetzung wird bei Inbetriebnahme automatisch
+            bereitgestellt.
+          </li>
+          <li>
+            Ein geeignetes Einstiegsfahrzeug wie das TSF kaufen. Preis,
+            Fähigkeiten und Stellplatzbedarf vor dem Kauf prüfen. Kein separates
+            Einstellen, Besetzen oder Ausbilden ist zum Ausrücken erforderlich.
+          </li>
+          <li>
+            Notruf annehmen, Ort und Meldebild erfragen. Mit AAO oder freier
+            Auswahl geeignete Fahrzeuge alarmieren.
+          </li>
+          <li>
+            Ausrücken und FMS auf dem lokalen Straßennetz verfolgen. Nach
+            Ankunft die erste Lagemeldung aufnehmen und fehlende Kräfte
+            nachfordern.
+          </li>
+          <li>
+            Nach Abschluss wird die Euro-Vergütung einmalig gebucht und
+            Fahrzeuge kehren zurück.
+          </li>
+        </ol>
+      </details>
+      <details>
+        <summary>Ausbauen und Fähigkeiten erweitern</summary>
+        <p>
+          Die gemeinsame Fortschrittsansicht zeigt alle aktuellen
+          Freischaltungen. Eine freigeschaltete Organisation bietet ein
+          passendes Einstiegsfahrzeug zum Kauf; Freischaltung schenkt weder
+          Fahrzeuge noch Wachen. Die Personal- und Ausbildungskapazität gehört
+          zum Betrieb und Ausbau des Gebäudes. XP gibt es für abgeschlossene
+          Einsätze; Zeit, zusätzliche Fahrzeuge und wiederholte Meldungen
+          erhöhen die Belohnung nicht.
+        </p>
+      </details>
+      <details>
+        <summary>Patienten und Wasserrettung</summary>
+        <p>
+          Patienten werden nach der Versorgung mit einem Transportfahrzeug zum
+          öffentlichen Klinikum gebracht. Behandelte Patienten geben Plätze
+          wieder frei. Auf der Deutschlandkarte erreichen Bootsgespanne einen
+          geprüften Uferzugang über echte Straßen. Eine frei befahrbare
+          Wasserroute wird derzeit nicht simuliert. Hubschrauber nutzen ihre
+          eigene Luftfahrtlogik.
+        </p>
+      </details>
+      <details>
+        <summary>Serverzeit und Verbindung</summary>
+        <p>
+          Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln ein.
+          Eine kleine Leitstelle beginnt mit einem Grundintervall von 300–480
+          Sekunden; offene Gespräche, unerledigte Einsätze und gebundene
+          Fahrzeuge drosseln den Nachschub zusätzlich. Eine ausgebaute
+          Leitstelle kann mehr parallele Aufgaben erhalten. Der Server simuliert
+          deine Leitstelle auch bei geschlossenem Browser. Ohne Serververbindung
+          können keine Aktionen bestätigt werden. Nach Serverstillstand werden
+          höchstens vier Stunden nachberechnet.
+        </p>
+      </details>
+      <details>
+        <summary>Freunde und Belohnungen</summary>
+        <p>
+          Unter Leitstellen können bestehende Benutzer als Disponenten derselben
+          Leitstelle eingeladen werden. Nach Annahme arbeiten sie am gemeinsamen
+          Bestand. Andere Leitstellen sehen neue Einsätze und Wachen nicht.
+          Unter Leitstellen gezielte Unterstützungsanfragen an
+          Nachbarleitstellen stellen; erst eine ausdrückliche Zusage alarmiert
+          fremde Kräfte. Laufende alte Unterstützungen werden weitergeführt.
+        </p>
+      </details>
+      <details>
+        <summary>Speichern und Wiederherstellen</summary>
+        <p>
+          Besitz und Spielaktionen werden in SQLite auf dem Server gespeichert.
+          Mehrere Tabs sehen denselben bestätigten Serverstand. Alte
+          Einzelspielerstände bleiben inaktive Archive. Exportdateien und
+          freiwillige lokale Kopien stehen unter Sicherungen bereit. Die gesamte
+          Datenbank wird regelmäßig automatisch gesichert. Wiederherstellung und
+          Übernahme alter Browserdateien bleiben Wartungsaufgaben des
+          Serverbetreibers außerhalb der Spielkonten.
+        </p>
+      </details>
+      <details>
+        <summary>Bedienung</summary>
+        <p>
+          Karte ziehen und mit Mausrad oder +/− zoomen. Gebäude und Einsätze
+          anklicken oder mit Tab und Enter auswählen. Einsatzliste und
+          Kartenwerkzeuge lassen sich einklappen. Menüs lassen sich mit Escape
+          schließen.
+        </p>
+      </details>
+      <details>
+        <summary>Dein Arbeitsplatz und Audio</summary>
+        <p>
+          Alle dauerhaften Zugänge liegen in der oberen Leiste. Ansichten öffnen
+          nur bei Bedarf; nach dem Schließen bleibt die Karte frei. Hauptmenü
+          und Spiel verwenden dieselben Einstellungen. Lautstärke, Darstellung
+          und Bedienung werden zuerst als Vorschau geändert und mit „Übernehmen“
+          lokal gespeichert. „Verwerfen“ stellt die vorherigen Werte wieder her.
+          Audio startet erst nach Interaktion; Musik, Umgebung, Telefon, Funk
+          und Alarmierung besitzen eigene Regler. Ein Audioproblem stoppt keine
+          Serveraktion.
+        </p>
+      </details>
     </div>
   );
 }

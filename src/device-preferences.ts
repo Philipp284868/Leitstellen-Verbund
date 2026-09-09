@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { subscription } from "./external-store";
 import {
   defaultWorkspace,
   parseWorkspace,
@@ -132,11 +133,9 @@ export function updateDevicePreference<K extends keyof DevicePreferences>(
   if (devicePreferences()[key] === value) return;
   applyDevicePreferences({ ...devicePreferences(), [key]: value });
 }
+const subscribePreferences = subscription(listeners);
 export function useDevicePreferences() {
-  return useSyncExternalStore((fn) => {
-    listeners.add(fn);
-    return () => listeners.delete(fn);
-  }, devicePreferences);
+  return useSyncExternalStore(subscribePreferences, devicePreferences);
 }
 export function shortcutConflicts(workspace: WorkspacePreferences) {
   const keys = Object.values(workspace.keys).filter(Boolean);

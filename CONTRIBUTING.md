@@ -13,3 +13,7 @@ Die zentrale SQLite-Simulation, Berechtigungen und reproduzierbaren Seeds bleibe
 Veröffentlichungen erfolgen nur aus konkret geprüften main-Commits. Release-Entwürfe sind keine stabile Freigabe. Produktion wird separat vom Betreiber aktualisiert.
 
 Ein erfolgreicher CodeQL-Job bestätigt die Ausführung der Analyse, nicht die Abwesenheit offener Befunde. Bei Sicherheitskorrekturen zusätzlich die Code-Scanning-Alerts für den tatsächlich geprüften main-Commit kontrollieren; behobene Befunde müssen vom neuen Scan als `fixed` erkannt werden. Testdateien gehören ebenfalls zum automatisch gescannten Änderungsumfang.
+
+## Verbindliche Pflege bei Folgeänderungen
+
+Die [Entwicklungsanleitung](docs/ENTWICKLUNG.md) enthält die acht Schritte von der Aufrufprüfung bis zur tatsächlichen UI-Abnahme. Bestehende Implementierungen zuerst finden, gültige Aufrufer migrieren und nur belegte Altlasten entfernen. Neue Abhängigkeiten, Assets und Konfigurationsvarianten begründen. Keine temporären Prüfdateien committen. `check:quick` und gezielte Regressionen vor jedem Push; vollständige relevante Prüfungen am endgültigen Stand. Buildartefakte und Testresultate haben getrennte Gültigkeit: ein Buildcache ist kein Testnachweis.
