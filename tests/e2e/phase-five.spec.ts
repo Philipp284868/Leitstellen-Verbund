@@ -41,6 +41,10 @@ async function enter(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  // Shortcuts belong to the usable HUD, not its asynchronous loading screen.
+  await expect(
+    page.getByRole("navigation", { name: "Spielbereiche" }),
+  ).toBeVisible();
 }
 test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht überstehen einen Serverneustart", async ({
   page,
