@@ -13,6 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
+import { cleanRuntimeBookkeeping } from "./runtime-dependencies.mjs";
 if (process.platform !== "linux")
   throw Error(
     "Das Serverpaket wird reproduzierbar unter Linux erstellt. Windows-PCs greifen per Browser zu.",
@@ -73,12 +74,9 @@ try {
     ],
     { stdio: "inherit", env: { ...process.env, NODE_ENV: "production" } },
   );
-  // Only pnpm's installation bookkeeping contains temporary machine paths. Runtime files stay intact.
-  for (const file of [
-    "node_modules/.modules.yaml",
-    "node_modules/.pnpm-workspace-state-v1.json",
-  ])
-    await rm(join(stage, file), { force: true });
+  // Remove machine-specific metadata and generated dependency CLI wrappers;
+  // preserve the dependency modules, their bin source files and package links.
+  await cleanRuntimeBookkeeping(stage);
   await cp("docs/RUNTIME-PAKET.md", join(stage, "README.md"));
   const files = [];
   async function inventory(folder, prefix = "") {

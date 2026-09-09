@@ -1,10 +1,12 @@
 # Rivermere: Weltmodell und geschützter Betrieb
 
-Stand: 08.09.2026. Arbeitsauftrag: [Issue #26](https://github.com/Philipp284868/Leitstellen-Verbund/issues/26).
+Stand: 09.09.2026. Arbeitsauftrag: [Issue #26](https://github.com/Philipp284868/Leitstellen-Verbund/issues/26).
 
-## Ausschließlich Rivermere
+## Rivermere als geschützter bestehender Server
 
-Der normale Build erzeugt ausschließlich Rivermere: `dist/server/index.js`, `dist/server/cli.js` und `dist/client/`. AMP, `npm start`, die Entwicklungsvorschau und das Linux-Paket verwenden dieselbe neue Karte. `LV_WORLD` ist kein Kartenumschalter mehr. Die frühere zusätzliche Ausgabe unter `dist/worlds/` wird beim Build entfernt. Es gibt keinen Einzelspielermodus und keinen clientseitigen Geografieumschalter. Historischer Geografiecode bleibt ausschließlich für Migrationsprüfungen erhalten; entsprechende Testprogramme liegen unter `.tools`, niemals im ausgelieferten Paket.
+Der normale Build erhält Rivermere unter `dist/server/index.js`, `dist/server/cli.js` und `dist/client/`. `npm start`, die Entwicklungsvorschau und vorhandene AMP-Instanzen mit diesem Programmziel verwenden weiterhin Rivermere. Ab Version 2.16 erzeugt der Build zusätzlich die getrennten Deutschlandprogramme unter `dist/germany/server/` und `dist/germany/client/`; auch das Linux-Paket enthält beide Programme. Deutschland wird bewusst über `scripts/start-germany.mjs` mit einem eigenen persistenten `DATA_DIR` und vorbereitetem externem `GEODATA_DIR` eingerichtet. Die [Deutschland-Anleitung](DEUTSCHLAND.md) beschreibt diesen getrennten Betrieb. Eine normale Aktualisierung wechselt die Welt bestehender Instanzen nicht.
+
+`LV_WORLD` ist kein Kartenumschalter mehr. Die frühere zusätzliche Ausgabe unter `dist/worlds/` wird beim Build entfernt. Es gibt keinen Einzelspielermodus und keinen clientseitigen Geografieumschalter. Historischer Falkenried-Code bleibt ausschließlich für Migrationsprüfungen erhalten; entsprechende Testprogramme liegen unter `.tools`, niemals im ausgelieferten Paket.
 
 Rivermere ist eine neue Serverwelt, keine Umplatzierung bestehender Falkenried-Wachen. Die Komposition unterscheidet sich wesentlich: Rivermere liegt zentral, Falkenrieds historische Innenstadt im Nordwesten. Eine Koordinatenumrechnung könnte diese Änderung nicht verlustfrei leisten. Ein bestehendes Datenverzeichnis darf deshalb nicht für die andere Welt verwendet werden. Auch Konten, Besitz und laufende Einsätze werden nicht automatisch zwischen Serverwelten übertragen.
 
@@ -12,7 +14,7 @@ Rivermere ist eine neue Serverwelt, keine Umplatzierung bestehender Falkenried-W
 
 1. Bestehende Instanz mit dem Backup-Verfahren aus `AMP.md` sichern. Bei laufender Instanz die vorhandene Online-Sicherung verwenden.
 2. Nur lesende Vorschau: `node scripts/world-preview.mjs /absoluter/pfad/game.sqlite`. Sie zeigt Weltkennungen, Schema, Gebäude, Fahrzeuge, aktive Fahrten und Einsätze. Sie schreibt nichts und führt keinen Transfer aus.
-3. Die bisherige Anwendung kontrolliert stoppen und das alte Datenverzeichnis als Sicherung aufbewahren. Keine zweite aktive alte Karte ist vorgesehen.
+3. Beim Wechsel von Falkenried die bisherige Anwendung kontrolliert stoppen und das alte Datenverzeichnis als Sicherung aufbewahren. Der aktuelle Build liefert keinen aktiven Falkenried-Server aus. Eine vorhandene Rivermere-Instanz kann dagegen mit ihrem bisherigen Programmziel und Datenverzeichnis weiterbetrieben werden.
 4. AMP-Programmziel auf `dist/server/index.js` setzen. Ein bereits vorhandenes Rivermere-`DATA_DIR` unverändert weiterverwenden. War bisher Falkenried aktiv, ein neues persistentes Rivermere-Datenverzeichnis wählen: Eine verlustfreie geografische Übernahme ist nicht möglich; Konten und Fortschritt werden nicht automatisch übertragen. Der Start gegen Falkenried-Daten wird vor SQLite-Änderungen mit Weltkonflikt abgewiesen. Ohne ausdrücklich gesetztes `DATA_DIR` startet der Server nicht.
 5. Port und HTTPS-Adresse können beim kontrollierten Austausch derselben Instanz beibehalten werden. Bei Wechsel vom früheren verschachtelten Rivermere-Programmziel `.env` im Hauptprogrammverzeichnis beziehungsweise AMP-Umgebungsvariablen prüfen. Kein automatischer Produktivstart; Produktionsdaten werden durch den Quellcode-Build nicht verändert.
 

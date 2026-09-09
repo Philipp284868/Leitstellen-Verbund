@@ -176,3 +176,25 @@ Die lokalen, nicht in Git eingecheckten Nachweisdateien liegen im Checkout:
 - `.tools/screenshots/deutschland-last-1788909022429/05-zoom-und-eingaben.png`
 - `.tools/screenshots/deutschland-last-1788908675569/city-and-pan.cpuprofile`
 - `.tools/screenshots/deutschland-last-1788908675569/cpu-summary.json`
+
+## Überprüfter Anker-Cache des Servers
+
+Ein zusätzlicher schreibgeschützter Vergleich am tatsächlichen 500/4500-
+Testspielstand prüfte, ob ein größerer Standortcache die verbleibenden
+`Game.view`-Kosten senkt. Für die 9000 Wohn-/Arbeitsortreferenzen lagen
+1280 unterschiedliche Personalanker vor. Beide Cachevarianten lieferten
+hashgleiche View-Inhalte; die SQLite-Datei war vor und nach der Prüfung
+SHA256-gleich.
+
+| Messung                                   | Grenze 4096    | Grenze 16384   |
+| ----------------------------------------- | -------------- | -------------- |
+| Anker-SQL-Abfragen im ersten View         | 1280           | 1280           |
+| Anker-SQL-Abfragen in vier weiteren Views | jeweils 0      | jeweils 0      |
+| Tatsächlich belegte Cacheeinträge         | 1978           | 1978           |
+| Erster View                               | 342,4 ms       | 343,3 ms       |
+| Weitere Views                             | 239,0–261,3 ms | 238,4–287,5 ms |
+
+Die größere Grenze brachte in diesem Bestand keinen gemessenen Nutzen. Der
+Produktionscache bleibt daher bei 4096 Einträgen. Der Nachweis liegt unter
+`.tools/germany-anchor-cache-audit.json`; die vorhandenen View-Kosten dürfen
+nicht pauschal als Cachemisses oder zusätzliche SQL-Zugriffe erklärt werden.

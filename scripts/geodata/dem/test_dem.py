@@ -1,5 +1,7 @@
 """Small offline checks. No country raster is built and no network is used."""
 from pathlib import Path
+import hashlib
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -45,6 +47,38 @@ class DemChecks(unittest.TestCase):
         self.assertEqual(sum(item["bytes"] for item in lock["files"]), 357915645)
         self.assertTrue(all(len(item["sha256"]) == 64 for item in lock["files"]))
         self.assertIn("cop_dem_licenses.pdf", lock["license"])
+
+    def test_source_lock_matches_completed_dem_and_survives_fresh_git_checkouts(self):
+        # This snapshot's completed, transferable DEM binds the original lock bytes.
+        expected = "06dbe4655c0cd481faec6bb7fa0a61d8149bb044ed9f195b8370005afba722e2"
+        relative = "scripts/geodata/dem/source-lock.json"
+        source = (dem.REPO / relative).read_bytes()
+        self.assertEqual(hashlib.sha256(source).hexdigest(), expected)
+        for autocrlf in ("false", "true", "input"):
+            with self.subTest(autocrlf=autocrlf), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                repository = root / "repo"
+                repository.mkdir()
+                lock = repository / relative
+                lock.parent.mkdir(parents=True)
+                lock.write_bytes(source)
+                (repository / ".gitattributes").write_bytes((dem.REPO / ".gitattributes").read_bytes())
+
+                def git(*args):
+                    return subprocess.run(
+                        ["git", "-c", f"core.autocrlf={autocrlf}", "-c", "core.safecrlf=false", *args],
+                        cwd=repository, check=True, capture_output=True,
+                    ).stdout
+
+                git("init", "--quiet")
+                git("add", ".gitattributes", relative)
+                # The stored Git blob and a freshly materialized checkout must both
+                # match the ready artifact, regardless of the checkout platform.
+                self.assertEqual(hashlib.sha256(git("show", f":{relative}")).hexdigest(), expected)
+                checkout = root / "checkout"
+                checkout.mkdir()
+                git("checkout-index", "--all", f"--prefix={checkout.as_posix()}/")
+                self.assertEqual(dem.digest(checkout / relative), expected)
 
     def test_no_geodata_is_written_into_program_or_outside_selected_directory(self):
         with self.assertRaises(ValueError):

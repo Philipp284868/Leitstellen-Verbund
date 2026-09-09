@@ -72,6 +72,16 @@ vorhandene Dateien werden nicht still überschrieben. `pin` ist ausschließlich
 für eine bewusst geprüfte neue Quellenfassung vorgesehen und verweigert ein
 vorhandenes Quellen-Lock; der normale Betrieb verwendet `prepare`.
 
+Das fertige DEM und fortsetzbare Zwischenstände sind an den SHA-256 der
+**unveränderten Dateibytes** des Quellen-Locks gebunden. Für den eingecheckten
+Stand ist dies `06dbe4655c0cd481faec6bb7fa0a61d8149bb044ed9f195b8370005afba722e2`.
+Die gezielte `-text`-Regel in `.gitattributes` erhält deshalb dessen ursprüngliche
+CRLF-Zeilenenden auch unter Linux und bei abweichendem `core.autocrlf`.
+Das JSON darf nicht nur zur Formatierung umgeschrieben werden. Ein Offline-Test
+prüft den veröffentlichten Hash sowie neue Git-Checkouts mit `autocrlf=false`,
+`true` und `input`. Bereits erzeugte Geodaten und ihre Manifeste bleiben unverändert;
+die restlichen Projektdateien verwenden weiterhin die normalen LF-Regeln.
+
 ## Build, Speicher und Freigabe
 
 Der Build erzeugt **5.922 Kacheln mit 256 × 256 Pixeln** für Zoom 5–11.
