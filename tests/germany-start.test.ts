@@ -38,6 +38,8 @@ function environment(extra: Record<string, string> = {}) {
     DATA_DIR: data,
     GEODATA_DIR: geo,
     LV_FIXTURE_ROOT: app,
+    LV_FIXTURE_START_MODULE: pathToFileURL(resolve("scripts/start-germany.mjs"))
+      .href,
     LV_FIXTURE_LOG: resolve(base, "events"),
     LV_FIXTURE_ENV: resolve(base, "game-environment.json"),
     ...extra,
@@ -167,7 +169,7 @@ beforeEach(async () => {
   await writeFile(
     harness,
     `
-    import {runGermany} from ${JSON.stringify(pathToFileURL(resolve("scripts/start-germany.mjs")).href)};
+    const {runGermany} = await import(process.env.LV_FIXTURE_START_MODULE);
     process.exit(await runGermany({programRoot:process.env.LV_FIXTURE_ROOT,routerUrl:process.env.LV_FIXTURE_ROUTER||'http://127.0.0.1:8989',startupTimeoutMs:1000,shutdownTimeoutMs:500}));
   `,
   );

@@ -267,17 +267,29 @@ describe("Deutschland-Downloadpaket: Integrität, Wiederaufnahme und Bestandssch
       harness,
       `
       import {readFileSync} from 'node:fs';
-      import {installGeodata} from ${JSON.stringify(downloader)};
-      const payloads = JSON.parse(readFileSync(${JSON.stringify(fixturePath)}, 'utf8'));
-      await installGeodata({target:${JSON.stringify(target)},programRoot:${JSON.stringify(app)},manifestPath:${JSON.stringify(manifestPath)},onProgress:()=>{},fetchImpl:async(input)=>{
+      const fixture = JSON.parse(process.env.LV_DOWNLOAD_FIXTURE);
+      const {installGeodata} = await import(fixture.module);
+      const payloads = JSON.parse(readFileSync(fixture.payloadsFile, 'utf8'));
+      await installGeodata({target:fixture.target,programRoot:fixture.programRoot,manifestPath:fixture.manifestPath,onProgress:()=>{},fetchImpl:async(input)=>{
         const url=String(input);
-        if(url===${JSON.stringify(interrupted)}) process.exit(23);
+        if(url===fixture.interrupted) process.exit(23);
         return new Response(Buffer.from(payloads[url],'base64'));
       }});
     `,
     );
     const { child, closed } = ownProcess(
       spawn(process.execPath, [harness], {
+        env: {
+          ...process.env,
+          LV_DOWNLOAD_FIXTURE: JSON.stringify({
+            module: downloader,
+            payloadsFile: fixturePath,
+            target,
+            programRoot: app,
+            manifestPath,
+            interrupted,
+          }),
+        },
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       }),
@@ -575,24 +587,25 @@ describe("Deutschland-Downloadpaket: Integrität, Wiederaufnahme und Bestandssch
       `
       import {existsSync,readFileSync,writeFileSync,appendFileSync} from 'node:fs';
       import {setTimeout as delay} from 'node:timers/promises';
-      import {installGeodata} from ${JSON.stringify(downloader)};
+      const fixture=JSON.parse(process.env.LV_DOWNLOAD_FIXTURE);
+      const {installGeodata}=await import(fixture.module);
       const name=process.argv[2], originalKill=process.kill.bind(process);
       process.kill=(pid,signal)=>{
-        if(name==='B' && pid===${exited.pid}){
-          writeFileSync(${JSON.stringify(beforeCheck)},'ready');
+        if(name==='B' && pid===fixture.exitedPid){
+          writeFileSync(fixture.beforeCheck,'ready');
           const deadline=Date.now()+10000, gate=new Int32Array(new SharedArrayBuffer(4));
-          while(!existsSync(${JSON.stringify(releaseCheck)})){
+          while(!existsSync(fixture.releaseCheck)){
             if(Date.now()>deadline) throw Error('Testfreigabe fehlt');
             Atomics.wait(gate,0,0,10);
           }
         }
         return originalKill(pid,signal);
       };
-      const payloads=JSON.parse(readFileSync(${JSON.stringify(fixture)},'utf8'));
+      const payloads=JSON.parse(readFileSync(fixture.payloadsFile,'utf8'));
       try {
-        await installGeodata({target:${JSON.stringify(target)},programRoot:${JSON.stringify(app)},manifestPath:${JSON.stringify(manifestPath)},onProgress:()=>{},fetchImpl:async(input)=>{
-          appendFileSync(${JSON.stringify(networkFile)},name+'\\n');
-          while(!existsSync(${JSON.stringify(releaseNetwork)})) await delay(10);
+        await installGeodata({target:fixture.target,programRoot:fixture.programRoot,manifestPath:fixture.manifestPath,onProgress:()=>{},fetchImpl:async(input)=>{
+          appendFileSync(fixture.networkFile,name+'\\n');
+          while(!existsSync(fixture.releaseNetwork)) await delay(10);
           return new Response(Buffer.from(payloads[String(input)],'base64'));
         }});
       } catch(error) { console.error(error.message);process.exitCode=1; }
@@ -601,6 +614,21 @@ describe("Deutschland-Downloadpaket: Integrität, Wiederaufnahme und Bestandssch
     function start(name: string) {
       const { child, closed } = ownProcess(
         spawn(process.execPath, [harness, name], {
+          env: {
+            ...process.env,
+            LV_DOWNLOAD_FIXTURE: JSON.stringify({
+              module: downloader,
+              payloadsFile: fixture,
+              target,
+              programRoot: app,
+              manifestPath,
+              exitedPid: exited.pid,
+              beforeCheck,
+              releaseCheck,
+              networkFile,
+              releaseNetwork,
+            }),
+          },
           stdio: ["ignore", "pipe", "pipe"],
           windowsHide: true,
         }),

@@ -11,3 +11,5 @@ Node.js 24 verwenden. Installation/Build: `node scripts/amp-setup.mjs`. Danach l
 Die zentrale SQLite-Simulation, Berechtigungen und reproduzierbaren Seeds bleiben serverseitig. Alte Spielstände nur bestandsschützend migrieren. Oberfläche für Maus/Tastatur und Desktopfenster prüfen. Keine erfundenen Spielwerte oder unverbundenen Schaltflächen.
 
 Veröffentlichungen erfolgen nur aus konkret geprüften main-Commits. Release-Entwürfe sind keine stabile Freigabe. Produktion wird separat vom Betreiber aktualisiert.
+
+Ein erfolgreicher CodeQL-Job bestätigt die Ausführung der Analyse, nicht die Abwesenheit offener Befunde. Bei Sicherheitskorrekturen zusätzlich die Code-Scanning-Alerts für den tatsächlich geprüften main-Commit kontrollieren; behobene Befunde müssen vom neuen Scan als `fixed` erkannt werden. Testdateien gehören ebenfalls zum automatisch gescannten Änderungsumfang.

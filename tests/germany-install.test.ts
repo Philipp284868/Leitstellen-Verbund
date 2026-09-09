@@ -324,16 +324,17 @@ describe("Deutschland-Neuinstallation über GitHub", () => {
       resolve("scripts/install-germany.mjs"),
       resolve(app, "scripts/install-germany.mjs"),
     );
-    const ready = resolve(base, "child-ready");
-    const stopped = resolve(base, "child-stopped-cleanly");
-    const next = resolve(base, "next-step");
+    const ready = resolve(base, "child-ready 'quoted'");
+    const stopped = resolve(base, "child-stopped-cleanly 'quoted'");
+    const next = resolve(base, "next-step 'quoted'");
+    // Fixture paths are data, including spaces and quotes; never embed them in JS.
     writeFileSync(
       resolve(app, "scripts/amp-setup.mjs"),
-      `import {writeFileSync} from 'node:fs'; process.on('SIGTERM',()=>{writeFileSync(${JSON.stringify(stopped)},'exit-0');process.exit(0);});writeFileSync(${JSON.stringify(ready)},'ready');setInterval(()=>{},1000);`,
+      "import {writeFileSync} from 'node:fs'; process.on('SIGTERM',()=>{writeFileSync(process.env.LV_INSTALL_STOPPED,'exit-0');process.exit(0);});writeFileSync(process.env.LV_INSTALL_READY,'ready');setInterval(()=>{},1000);",
     );
     writeFileSync(
       resolve(app, "scripts/geodata/download-package.mjs"),
-      `import {writeFileSync} from 'node:fs';export async function installGeodata(){writeFileSync(${JSON.stringify(next)},'unexpected-download');}`,
+      "import {writeFileSync} from 'node:fs';export async function installGeodata(){writeFileSync(process.env.LV_INSTALL_NEXT,'unexpected-download');}",
     );
     writeFileSync(
       resolve(app, "scripts/geodata/pipeline.mjs"),
@@ -344,7 +345,7 @@ describe("Deutschland-Neuinstallation über GitHub", () => {
     // also exercises Windows, where the child kill itself is not cooperative.
     writeFileSync(
       preload,
-      `import {existsSync} from 'node:fs';const timer=setInterval(()=>{if(existsSync(${JSON.stringify(ready)})){clearInterval(timer);process.emit('SIGTERM');}},20);timer.unref();`,
+      "import {existsSync} from 'node:fs';const timer=setInterval(()=>{if(existsSync(process.env.LV_INSTALL_READY)){clearInterval(timer);process.emit('SIGTERM');}},20);timer.unref();",
     );
     const environment = { ...process.env };
     for (const key of [
@@ -368,7 +369,12 @@ describe("Deutschland-Neuinstallation über GitHub", () => {
       ],
       {
         cwd: base,
-        env: environment,
+        env: {
+          ...environment,
+          LV_INSTALL_READY: ready,
+          LV_INSTALL_STOPPED: stopped,
+          LV_INSTALL_NEXT: next,
+        },
         encoding: "utf8",
         timeout: 10000,
         windowsHide: true,
