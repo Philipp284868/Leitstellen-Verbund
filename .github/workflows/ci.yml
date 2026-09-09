@@ -32,6 +32,8 @@ jobs:
           key: geotools-${{ runner.os }}-${{ hashFiles('scripts/geodata/pipeline.mjs', 'scripts/geodata/dem/requirements.lock') }}
       - name: Geprüfte Werkzeuge ohne Download des Deutschlanddatensatzes
         run: node scripts/geodata/pipeline.mjs tools
+      - name: Unterbrochene JDK-Installation mit echtem Archiv reparieren
+        run: node scripts/geodata/test-tools.mjs
       - name: Echter OSM-Parser mit kleiner bekannter Topologie
         run: node scripts/geodata/test-index.mjs
       - name: Höhenkodierung, Quellenbindung, Geometrie und Resume-Schutz

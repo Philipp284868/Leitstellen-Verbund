@@ -256,18 +256,15 @@ if (command === "prepare" || command === "tools") {
   const receipts = await Promise.all(
     (command === "tools" ? downloads.slice(0, 3) : downloads).map(fetchFile),
   );
-  if (
-    !(await readdir(toolDir)).some(
-      (name) =>
-        name.startsWith("jdk-21.0.12.1") &&
-        existsSync(join(toolDir, name, "bin", windows ? "java.exe" : "java")),
-    )
-  )
-    await run(
-      windows ? "tar.exe" : "tar",
-      ["-xf", join(toolDir, jdk.name), "-C", toolDir],
-      "jdk-extract",
-    );
+  // An interrupted extraction can already contain bin/java while lib/modules
+  // and other required files are still absent. Explicit setup always restores
+  // the complete JDK from the archive whose pinned hash was checked above.
+  // Runtime "serve" never extracts tools or imports data.
+  await run(
+    windows ? "tar.exe" : "tar",
+    ["-xf", join(toolDir, jdk.name), "-C", toolDir],
+    "jdk-extract",
+  );
   if (command === "tools") {
     log(
       `Werkzeuge geprüft: ${toolDir}. Kein Deutschland-PBF oder Karten-Zusatzdatensatz geladen.`,
