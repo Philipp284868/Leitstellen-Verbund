@@ -33,7 +33,7 @@ Die Ausgangs-CI wurde über die GitHub-API erneut gelesen: [Prüfung 34378957792
 
 Entfernt wurden die unaufgerufene `Friends`-Ansicht, ihr ausschließlich dort benutztes `SharedMission`, der unbenutzte `SoundSettings`-Wrapper und belegte CSS-Reste der verworfenen Navigation. TeamPanel, NeighborDesk und der gemeinsame Audioeditor bleiben die tatsächlichen Bedienwege. Alle zehn Produktionsabhängigkeiten haben weiterhin aktive Laufzeitimporte; keine spekulative Paketlöschung und kein Versionsupgrade.
 
-Die [Menüinventur](MENUES.md) beschreibt die erreichbaren Ansichten und Unterdialoge. Katalog und Hilfen zeigen ihre Grundinformationen kompakt; ausführliche Erläuterungen sind aufklappbar. Gemeinsame Ressourcenübersichten, Leerzustände und Abstände ersetzen unnötige Einzelrahmen. Einstellungen, Fortschritt, Spieler, HUD und Menüs werden bei Bedarf geladen. Die Deutschlandkarte und eine obere Leiste bleiben erhalten.
+Die [Menüinventur](MENUES.md) beschreibt die erreichbaren Ansichten und Unterdialoge. Katalog und Hilfen zeigen ihre Grundinformationen kompakt; ausführliche Erläuterungen sind aufklappbar. Gemeinsame Ressourcenübersichten, Leerzustände und Abstände ersetzen unnötige Einzelrahmen. Im Hauptmenü steht die Anzahl aktiver Einsätze nur noch in der Leitstellenübersicht statt zusätzlich in der Serverkarte. Einstellungen, Fortschritt, Spieler, HUD und Menüs werden bei Bedarf geladen. Die Deutschlandkarte und eine obere Leiste bleiben erhalten.
 
 Statische Freischaltungskataloge werden einmal aufbereitet, Suchfilter anhand ihrer tatsächlichen Eingaben berechnet. Spiel-, Präsenz-, Netzwerk- und Geräteeinstellungen besitzen stabile Abonnementfunktionen; ein Render meldet diese nicht mehr unnötig ab und wieder an. Netzwerkprotokoll, Aktualisierungsfrequenz, Routenberechnung und Berechtigungen wurden nicht verändert.
 
@@ -41,7 +41,7 @@ Lokal wurden 91 regenerierbare Browserdateien mit 93.104.749 Bytes sowie 22 vera
 
 ## Gemessener Vergleich
 
-Die folgenden Messungen vergleichen das Archiv des Ausgangscommits mit dem Implementierungsstand `2cde09eb110188cbd41ab74bb57eb4ba7b97fb52`. Nachfolgende Korrekturen betreffen die CI-Paketquellen, die isolierte Reihenfolge des Labor-CLI-Tests und die Dokumentation. Build-/Dev-/Clientimplementierung dieses Vergleichs bleibt identisch. Rohdaten liegen in den Phase-0-Abnahmeartefakten; ausführbare Wiederholungen siehe [Entwicklung](ENTWICKLUNG.md).
+Die folgenden Messungen vergleichen das Archiv des Ausgangscommits mit dem Implementierungsstand `2cde09eb110188cbd41ab74bb57eb4ba7b97fb52`. Nachfolgende Korrekturen betreffen die CI-Paketquellen, die isolierte Reihenfolge des Labor-CLI-Tests, die Dokumentation und die Entfernung der doppelten Einsatzzahl im Hauptmenü. Die gemessene Build-/Dev-Implementierung bleibt identisch; der endgültige Quellstand wird erneut kalt aufgebaut und im Browser geprüft. Rohdaten liegen in den Phase-0-Abnahmeartefakten; ausführbare Wiederholungen siehe [Entwicklung](ENTWICKLUNG.md).
 
 | Messung | Vorher | Nachher | Einordnung |
 |---|---:|---:|---|

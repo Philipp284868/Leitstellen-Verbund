@@ -172,10 +172,6 @@ export function MainMenu({
                   minute: "2-digit",
                 })}
               </span>
-              <span>
-                <Siren size={14} />
-                {s.missions.length} aktive Einsätze
-              </span>
               <span>{modeName(mode)}</span>
             </div>
           </button>
