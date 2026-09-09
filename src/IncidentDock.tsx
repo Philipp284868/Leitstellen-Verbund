@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode, type RefObject } from "react";
 import { X } from "lucide-react";
 import type { Mission } from "./model";
-import { mt } from "./catalog";
+import { missionPresentation } from "./mission-presentation";
 import { districtAt } from "./world";
 import { IS_GERMANY } from "./world-choice";
 import { IncidentIcon } from "./HudIcons";
@@ -30,10 +30,9 @@ export function IncidentDock({
       if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
   }, [dockRef]);
-  const known =
-    mission && (!mission.control || mission.control.reportedTemplate);
-  const title = known ? mt(mission.template).name : "Einsatzdisposition";
-  const org = known ? mt(mission.template).org : "Unbekannt";
+  const presentation = mission && missionPresentation(mission);
+  const title = presentation?.name ?? "Einsatzdisposition";
+  const org = presentation?.org ?? "Unbekannt";
   const location =
     mission && (!mission.control || mission.control.locationKnown)
       ? IS_GERMANY
@@ -56,8 +55,12 @@ export function IncidentDock({
       }}
     >
       <header className="dock-heading">
-        <span className="dock-symbol" data-org={org}>
-          <IncidentIcon org={org} />
+        <span
+          className="dock-symbol"
+          data-org={org}
+          style={{ background: presentation?.color }}
+        >
+          <IncidentIcon org={org} category={presentation?.category} />
         </span>
         <div>
           <strong>{title}</strong>

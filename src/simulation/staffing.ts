@@ -184,7 +184,11 @@ function indexedCrew(
     (p) =>
       (!ff ||
         [...(index.bindings.get(p.id) ?? [])].every((id) => id === v.id)) &&
-      !personAvailable(s, p) &&
+      // A shift ending does not remove people from an already occupied vehicle.
+      // Injuries and training remain real individual availability constraints.
+      !(v.status === "ready" || v.status === "alarmed"
+        ? personAvailable(s, p)
+        : injuryReason(s, p) || p.training || p.ready > s.time) &&
       (!type.training || p.skills.includes(type.training)),
   );
 }
@@ -370,6 +374,7 @@ export function releaseVolunteerCrew(s: Save, v: Vehicle) {
   delete v.turnout;
 }
 export function turnoutEstimate(s: Save, v: Vehicle, alarm?: Alarm) {
+  if (v.status === "return") return 0;
   const b = s.buildings.find((b) => b.id === v.home)!,
     profile = stationProfile(b);
   if (profile.kind === "ff") return profile.turnout + 180;

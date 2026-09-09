@@ -123,7 +123,7 @@ for (const manual of [false, true])
         "Flächenbrand",
       );
       await expect(page.locator(".radio-queue")).toContainText(
-        "1× TLF 2000 oder gleichwertige Kräfte",
+        "Löschwasser: 2 Fähigkeitseinheiten benötigt",
       );
       await page
         .getByRole("button", { name: "Nachforderung bearbeiten", exact: true })

@@ -80,15 +80,10 @@ export function EnvironmentPanel({ s }: { s: Save }) {
               ? `${v.patients} Patient(en) an Bord; Versorgung läuft weiter.`
               : "Fahrzeug liefert keine Einsatzfähigkeiten. Ersatz disponieren."}
           </p>
-          {v.fault!.state === "awaiting" ? (
-            <button onClick={() => void act({ type: "repair", vehicle: v.id })}>
-              Reparatur beauftragen
-            </button>
-          ) : (
-            <span>
-              Reparatur läuft · {duration(v.fault!.repairAt - s.time)}
-            </span>
-          )}
+          <span>
+            Automatische Behebung ·{" "}
+            {duration(Math.max(0, v.fault!.repairAt - s.time))}
+          </span>
         </article>
       ))}
     </section>

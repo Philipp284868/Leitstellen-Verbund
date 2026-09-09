@@ -8,6 +8,7 @@ import { request } from "./incidents";
 import { sectionNames, majorNames, type SectionKind } from "./major-schema";
 import { placement, effectiveSkills, sectionSkills } from "./major-resources";
 import { canGenerate } from "./feasibility";
+import { fireExtinguished } from "./mission-tasks";
 
 export function majorKind(m: Mission): keyof typeof majorNames | undefined {
   const scenario = m.dynamics?.scenario ?? mt(m.template).profile;
@@ -95,7 +96,7 @@ export function declareMajor(s: Save, m: Mission, actor = "server") {
       p.priority = i === 0 ? "urgent" : "normal";
     });
   }
-  if (kind === "fire" && m.dynamics.fire) {
+  if (kind === "fire" && m.dynamics.fire && !fireExtinguished(m)) {
     m.dynamics.fire.area = Math.max(80, m.dynamics.fire.area);
     for (const section of m.dynamics.fire.sections.slice(0, 3))
       section.burning = 50;

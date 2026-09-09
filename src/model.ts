@@ -29,6 +29,7 @@ import {
   faultSchema,
 } from "./simulation/dynamics-schema";
 import { deskSchema, incidentSchema } from "./simulation/schema";
+import { missionTaskStateSchema } from "./simulation/mission-task-schema";
 import { migrateMap, validLegacySite } from "./world-migration";
 import { z } from "zod";
 import { bt, vt, mt, BALANCE } from "./catalog";
@@ -115,6 +116,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    tasks: missionTaskStateSchema.optional(),
     telemetry: telemetrySchema.optional(),
     report: reportSchema.optional(),
     major: majorSchema.optional(),
@@ -185,6 +187,15 @@ export const saveSchema = z
     seed: integer,
     nextMission: num,
     missionWait: num.default(0),
+    callPacing: z
+      .object({
+        version: z.literal(1),
+        notBefore: num,
+        lastCreated: num,
+        sequence: integer,
+      })
+      .strict()
+      .optional(),
     speed: z.number().min(1).max(32),
     settings: z
       .object({ light: z.boolean(), reduced: z.boolean() })

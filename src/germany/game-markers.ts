@@ -1,4 +1,5 @@
 import type { Point } from "./projection";
+import { incidentColors, type IncidentKind } from "../mission-presentation";
 export type MarkerData = {
   id: string;
   name: string;
@@ -11,6 +12,10 @@ export type MarkerData = {
   fms?: number;
   fault?: boolean;
   heading?: number;
+  category?: IncidentKind;
+  categories?: IncidentKind[];
+  color?: string;
+  urgent?: boolean;
 };
 export type MarkerGroup = MarkerData & {
   left: number;
@@ -58,6 +63,19 @@ export function groupGameMarkers(
     if (group) {
       group.members.push(item);
       group.count = group.members.length;
+      if (group.kind === "mission") {
+        group.categories = [
+          ...new Set(
+            group.members.flatMap(
+              (m) => m.categories ?? [m.category ?? "unknown"],
+            ),
+          ),
+        ];
+        group.category =
+          group.categories.length === 1 ? group.categories[0] : "mixed";
+        group.color = incidentColors[group.category];
+        group.urgent ||= item.urgent;
+      }
     } else
       groups.set(key, {
         ...item,

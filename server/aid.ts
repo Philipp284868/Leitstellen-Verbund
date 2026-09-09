@@ -4,7 +4,9 @@ import type {
   AidAction,
   AidRequest,
 } from "../src/simulation/organizations-schema";
-import { vt, mt } from "../src/catalog";
+import { vt, mt, type Skills } from "../src/catalog";
+import { effectiveSkills } from "../src/simulation/major-resources";
+import { assessRemoteWithdrawal } from "../src/simulation/withdrawal";
 import { beginTrip, readiness, recall } from "../src/engine";
 import { dispatchable } from "../src/simulation/dispatch";
 import { planTurnout } from "../src/simulation/staffing";
@@ -194,6 +196,30 @@ export function aidCommand(
     );
     if (vehicles.some((v) => v.patients))
       throw Error("Laufenden Patiententransport zuerst abschließen.");
+    if (vehicles.some((v) => v.status === "scene")) {
+      const units: Vehicle[] = [];
+      const skills: Skills = {};
+      for (const assisting of saves.values())
+        for (const v of assisting.vehicles) {
+          if (
+            v.mission !== `remote:${owner.player.id}:${m.id}` ||
+            !authorizedHelper(owner, m, assisting, v)
+          )
+            continue;
+          units.push(v);
+          if (v.status !== "scene" || v.arrive > owner.time) continue;
+          for (const [key, amount] of Object.entries(effectiveSkills(m, v)))
+            skills[key] = (skills[key] || 0) + amount;
+        }
+      const assessment = assessRemoteWithdrawal(
+        owner,
+        m,
+        vehicles.map((v) => v.id),
+        skills,
+        units,
+      );
+      if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
+    }
     for (const v of vehicles) recall(helper, v);
     r.state =
       a.op === "decline"

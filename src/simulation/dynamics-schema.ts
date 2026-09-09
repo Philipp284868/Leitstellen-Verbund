@@ -152,6 +152,9 @@ export const hazardSchema = z
   .strict();
 export const fireSchema = z
   .object({
+    extinguishedAt: time.optional(),
+    previousIntensity: value.optional(),
+    trend: z.enum(["rising", "steady", "falling"]).optional(),
     fuel: id,
     area: time.max(100000),
     temperature: time.max(1600),

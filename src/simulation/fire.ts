@@ -2,6 +2,7 @@ import type { Mission, Save } from "../model";
 import { mt, type Skills } from "../catalog";
 import type { Dynamics } from "./dynamics-schema";
 import { clamp } from "./random";
+import { fireExtinguished } from "./mission-tasks";
 // Gameplay coefficients, not a physical fire model. Data keeps scenarios extensible.
 export const fuels: Record<
   string,
@@ -91,7 +92,20 @@ export function fireTick(s: Save, m: Mission, skills: Skills, dt: number) {
     f = d.fire;
   if (!f) return;
   const h = d.hazards.find((h) => h.kind === "fire")!;
+  const previous = f.previousIntensity ?? f.intensity;
+  if (h.resolved || f.extinguishedAt !== undefined) {
+    f.extinguishedAt ??= s.time;
+    h.resolved = true;
+    h.value = 0;
+  }
   f.intensity = h.value;
+  f.trend =
+    f.intensity > previous + 0.1
+      ? "rising"
+      : f.intensity < previous - 0.1
+        ? "falling"
+        : "steady";
+  f.previousIntensity = f.intensity;
   const fuel = fuels[f.fuel] || fuels.Holz;
   const water = Math.min(
     1,
@@ -142,4 +156,61 @@ export function fireTick(s: Save, m: Mission, skills: Skills, dt: number) {
     smoke.value = Math.max(smoke.value, f.smoke);
     smoke.resolved = false;
   }
+}
+
+export type FireFeedback = {
+  state:
+    | "spreading"
+    | "stable"
+    | "receding"
+    | "controlled"
+    | "extinguished"
+    | "aftercare";
+  intensity: number;
+  suppression: number;
+  trend: "rising" | "steady" | "falling";
+  residualTasks: string[];
+  updatedAt: number;
+};
+/** Public values are a projection of saved server state, never a client simulation. */
+export function fireFeedback(m: Mission): FireFeedback | null {
+  const d = m.dynamics,
+    f = d?.fire;
+  if (!d?.active || !f || (m.control && !m.control.briefed)) return null;
+  const residualTasks = d.hazards
+    .filter((h) => h.kind !== "fire" && !h.resolved)
+    .map(
+      (h) =>
+        (
+          ({
+            smoke: "Rauchkontrolle",
+            heat: "Restwärme",
+            collapse: "Einsturzgefahr",
+            fuel: "Brennstoffausbreitung",
+            gas: "Gasgefahr",
+          }) as Record<string, string>
+        )[h.kind] || "Offene Restgefahr",
+    );
+  if (m.tasks?.entries.some((t) => t.id === "fire-aftercare" && !t.done))
+    residualTasks.push("Nachkontrolle");
+  const trend = f.trend ?? "steady";
+  const extinguished = fireExtinguished(m);
+  return {
+    state: extinguished
+      ? residualTasks.length
+        ? "aftercare"
+        : "extinguished"
+      : f.intensity <= 5 && trend !== "rising"
+        ? "controlled"
+        : trend === "rising"
+          ? "spreading"
+          : trend === "falling"
+            ? "receding"
+            : "stable",
+    intensity: f.intensity,
+    suppression: f.suppression,
+    trend,
+    residualTasks: [...new Set(residualTasks)],
+    updatedAt: d.last,
+  };
 }

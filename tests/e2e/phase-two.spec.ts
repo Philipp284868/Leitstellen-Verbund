@@ -45,7 +45,7 @@ async function enter(page: Page, compact = false) {
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
 }
-test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik und Abschluss", async ({
+test("dynamischer Brand, echte Fahrzeugpanne, automatische Behebung über Neustart, Taktik und Abschluss", async ({
   page,
 }, info) => {
   const s = phaseFixture(owner),
@@ -75,9 +75,9 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   await expect(page.locator(".fault-card")).toContainText("Motorschaden");
-  await page
-    .getByRole("button", { name: "Reparatur beauftragen", exact: true })
-    .click();
+  await expect(
+    page.getByRole("button", { name: "Reparatur beauftragen", exact: true }),
+  ).toHaveCount(0);
   await expect
     .poll(() => app.db.all().get(owner)!.vehicles[0].fault!.state)
     .toBe("repairing");
@@ -87,7 +87,9 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await showMapTools(page);
-  await expect(page.locator(".fault-card")).toContainText("Reparatur läuft");
+  await expect(page.locator(".fault-card")).toContainText(
+    "Automatische Behebung",
+  );
   saved = app.db.all().get(owner)!;
   app.game.step(saved.vehicles[0].fault!.repairAt - saved.time + 1);
   saved = app.db.all().get(owner)!;
@@ -153,6 +155,12 @@ test("dynamischer Brand, echte Fahrzeugpanne, Reparatur über Neustart, Taktik u
   expect(archived.dynamics!.hazards.every((h) => h.resolved)).toBe(true);
   expect(
     archived.control!.events.filter((e) => e.type === "REPAIR_ORDERED"),
+  ).toHaveLength(0);
+  expect(
+    archived.control!.events.filter((e) => e.type === "VEHICLE_BREAKDOWN"),
+  ).toHaveLength(1);
+  expect(
+    archived.control!.events.filter((e) => e.type === "VEHICLE_REPAIRED"),
   ).toHaveLength(1);
   expect(errors).toEqual([]);
 });

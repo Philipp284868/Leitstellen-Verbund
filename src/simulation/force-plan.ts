@@ -1,4 +1,9 @@
-import { vehicles, type Skills, type VehicleType } from "../catalog";
+import {
+  capabilities,
+  vehicles,
+  type Skills,
+  type VehicleType,
+} from "../catalog";
 
 type Allocation = { type: VehicleType; skills: Skills };
 export type ForceRow = {
@@ -68,13 +73,11 @@ export function forceRows(
   return [...rows.values()];
 }
 export function openForceLabels(required: Skills, available: Skills = {}) {
-  const deficit = Object.fromEntries(
-    Object.entries(required).map(([key, n]) => [
-      key,
-      Math.max(0, n - (available[key] ?? 0)),
-    ]),
-  );
-  return forceRows(deficit).map(
-    (row) => `${row.required}× ${row.name} oder gleichwertige Kräfte`,
-  );
+  return Object.entries(required)
+    .filter(([key, n]) => n > (available[key] ?? 0))
+    .map(([key, n]) =>
+      key === "fire"
+        ? `Fahrzeug mit geeignetem Löschmittel benötigt (${n - (available[key] ?? 0)} Fähigkeitseinheit${n - (available[key] ?? 0) === 1 ? "" : "en"}).`
+        : `${capabilities[key] || key}: ${n - (available[key] ?? 0)} Fähigkeitseinheit${n - (available[key] ?? 0) === 1 ? "" : "en"} benötigt.`,
+    );
 }

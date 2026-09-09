@@ -10,6 +10,7 @@ import type { startServer } from "../../server/index";
 import { established } from "./fixtures";
 import { nodes } from "../../src/world";
 import { attachIncident } from "../../src/simulation/calls";
+import { generate } from "../../src/engine";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -48,6 +49,8 @@ async function account(page: Page, distantIncident = false) {
   s.player.station = "Leitstelle Rivermere";
   s.missionWait = 0;
   for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
+  generate(s);
+  for (const m of s.missions) attachIncident(s, m);
   app.db.save(id, s);
   app.game.step(1);
   if (distantIncident) {

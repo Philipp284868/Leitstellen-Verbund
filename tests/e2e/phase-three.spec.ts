@@ -177,9 +177,16 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   expect(returning.length).toBeGreaterThan(0);
   const view = app.game.view(owner, new Set()).save;
   expect(
-    returning.every(
-      (v) => !view.vehicles.find((x) => x.id === v.id)!.availability!.alarmable,
-    ),
+    returning.every((v) => {
+      const availability = view.vehicles.find(
+        (x) => x.id === v.id,
+      )!.availability!;
+      return (
+        availability.alarmable &&
+        availability.dispatchable &&
+        availability.crewPresent >= availability.crewRequired
+      );
+    }),
   ).toBe(true);
   app.game.step(Math.max(...returning.map((v) => v.arrive)) - current.time + 1);
   expect(
@@ -369,15 +376,15 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   current = app.db.all().get(owner)!;
   const returning = current.vehicles.find((v) => v.id === ambulance.id)!;
   expect(returning.status).toBe("return");
-  expect(current.desk.fleet[returning.id].code).toBe(1);
+  expect(current.desk.fleet[returning.id].code).toBe(6);
   expect(
     app.game
       .view(owner, new Set())
       .save.vehicles.find((v) => v.id === ambulance.id)!.availability,
   ).toMatchObject({
-    state: "RETURNING",
+    state: "POST_INCIDENT",
     alarmable: false,
-    reason: "Noch auf Rückfahrt.",
+    reason: "Desinfektion nach Rückkehr erforderlich.",
   });
   app.game.step(returning.arrive - current.time + 0.05);
   current = app.db.all().get(owner)!;

@@ -20,8 +20,6 @@ export const BALANCE = {
   upgradeSeconds: 60,
   offlineMax: 14400,
   missionInterval: 120,
-  callIntervalMin: 90,
-  callIntervalMax: 210,
   hospitalSeconds: 90,
   speed: 1,
   disconnectSeconds: 30,
@@ -519,7 +517,7 @@ for (const type of vehicles)
 export interface Template {
   id: string;
   name: string;
-  org: Org | "Verbund";
+  org: Org | "Verbund" | "Unbekannt";
   requirements: Skills;
   seconds: number;
   reward: number;
@@ -938,7 +936,59 @@ export const vt = (id: string) => {
   if (!x) throw Error("Unbekannter Fahrzeugtyp");
   return x;
 };
+const reports: Record<
+  string,
+  { name: string; org: Template["org"]; requirements: Skills }
+> = {
+  incoming: { name: "Ungeklärter Notruf", org: "Unbekannt", requirements: {} },
+  "reported-fire": {
+    name: "Brandverdacht gemeldet",
+    org: "Feuerwehr",
+    requirements: { fire: 1 },
+  },
+  "reported-technical": {
+    name: "Technische Hilfe gemeldet",
+    org: "Feuerwehr",
+    requirements: { rescue: 1 },
+  },
+  "reported-medical": {
+    name: "Medizinischer Notfall gemeldet",
+    org: "Rettungsdienst",
+    requirements: { medical: 1 },
+  },
+  "reported-police": {
+    name: "Polizeiliche Hilfe gemeldet",
+    org: "Polizei",
+    requirements: { police: 1 },
+  },
+  "reported-water": {
+    name: "Notlage am Wasser gemeldet",
+    org: "Wasserrettung",
+    requirements: { rescue: 1 },
+  },
+  "reported-other": {
+    name: "Hilfegesuch gemeldet",
+    org: "Unbekannt",
+    requirements: {},
+  },
+};
 export const mt = (id: string) => {
+  if (Object.hasOwn(reports, id)) {
+    const report = reports[id];
+    return {
+      id,
+      ...report,
+      description:
+        id === "incoming"
+          ? "Ort und Meldebild müssen erfragt werden."
+          : "Vorläufige Einordnung aus den bekannten Beobachtungen. Weitere Lage durch Rückfragen und Erkundung klären.",
+      seconds: 1,
+      reward: 0,
+      patients: 0,
+      level: 1,
+      water: false,
+    } as Template;
+  }
   const x =
     id === "bma"
       ? {
@@ -949,19 +999,7 @@ export const mt = (id: string) => {
             "Automatische Brandmeldung. Ursache durch Erkundung feststellen.",
           reward: 0,
         }
-      : id === "incoming"
-        ? {
-            ...missions[0],
-            id: "incoming",
-            name: "Ungeklärter Notruf",
-            description: "Ort und Meldebild müssen erfragt werden.",
-            requirements: {},
-            patients: 0,
-            reward: 0,
-            seconds: 1,
-            level: 1,
-          }
-        : missions.find((m) => m.id === id);
+      : missions.find((m) => m.id === id);
   if (!x) throw Error("Unbekannte Einsatzart");
   return x;
 };

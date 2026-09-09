@@ -1,0 +1,215 @@
+.fire-live {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #85483e;
+  border-radius: 8px;
+  background: linear-gradient(125deg, #342426, #10202a);
+  color: #edf4f7;
+}
+.fire-live header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fire-live header > span {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 7px;
+  background: #b644362b;
+  color: #ff9d80;
+}
+.fire-live header div {
+  flex: 1;
+  min-width: 0;
+}
+.fire-live strong,
+.fire-live small {
+  display: block;
+}
+.fire-live header small {
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  color: #d0b6ac;
+  margin-bottom: 4px;
+}
+.fire-live header strong {
+  font-size: 14px;
+}
+.fire-meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+.fire-meters label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: 11px;
+  color: #cfdae2;
+}
+.fire-meters b {
+  margin-left: auto;
+}
+.fire-meters progress {
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #09161c;
+  accent-color: #e47852;
+}
+.fire-meters progress::-webkit-progress-bar {
+  background: #09161c;
+}
+.fire-meters progress::-webkit-progress-value {
+  background: #e47852;
+  transition: width 0.45s ease;
+}
+.fire-meters progress::-moz-progress-bar {
+  background: #e47852;
+}
+.fire-meters .suppression {
+  accent-color: #45ba91;
+}
+.fire-meters .suppression::-webkit-progress-value {
+  background: #45ba91;
+}
+.fire-meters .suppression::-moz-progress-bar {
+  background: #45ba91;
+}
+.fire-residual {
+  margin-top: 10px;
+  color: #c7d5de;
+  font-size: 11px;
+}
+.fire-live[data-state="extinguished"],
+.fire-live[data-state="aftercare"] {
+  border-color: #376858;
+  background: linear-gradient(125deg, #193c32, #10202a);
+}
+.fire-live.unknown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-color: #526674;
+  background: #172732;
+}
+.fire-live.unknown small {
+  margin-top: 4px;
+  color: #bdcad3;
+}
+.fire-live.reduced progress::-webkit-progress-value {
+  transition: none;
+}
+.incident-unit {
+  padding: 11px;
+  margin: 7px 0;
+  border: 1px solid #354958;
+  border-radius: 6px;
+  background: #15252f;
+}
+.incident-unit .unit-select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+}
+.unit-select input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+.unit-select svg {
+  width: 25px;
+  height: 19px;
+}
+.unit-select b {
+  flex: 1;
+}
+.unit-fms {
+  white-space: nowrap;
+  padding: 3px 5px;
+  background: #233e4e;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.incident-unit > small {
+  display: block;
+  color: #b6c6d0;
+}
+.incident-unit > button {
+  margin-top: 9px;
+}
+.incident-unit .unit-reason {
+  margin-top: 5px;
+  color: #d2c3a2;
+  font-size: 11px;
+}
+.withdraw-selection {
+  border-top: 1px solid #49606d;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.withdraw-selection p {
+  font-size: 12px;
+  color: #e0be87;
+}
+.incident-task-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.marker-urgency {
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  background: #ffd17a;
+  color: #171d23;
+  border: 1px solid #171d23;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 900;
+  width: 15px;
+  height: 17px;
+}
+.marker-secondary {
+  position: absolute;
+  right: -9px;
+  bottom: -5px;
+  background: #25845f;
+  border: 1px solid white;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+}
+.marker-secondary svg {
+  width: 12px;
+  height: 12px;
+}
+.incident-legend { display: flex; flex-wrap: wrap; gap: 9px 14px; margin: 10px 0; }
+.incident-legend > span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.incident-legend i { display:grid;place-items:center; width:24px; height:24px; border-radius:50%; color:#fff; }
+.incident-legend svg { width:16px; height:16px; }
+.germany-marker.mission:has(> b) {
+  gap: 3px;
+  width: auto;
+  min-width: 34px;
+  padding: 4px 6px;
+}
+.germany-marker.mission > b + svg {
+  width: 16px;
+  height: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fire-meters progress::-webkit-progress-value {
+    transition: none;
+  }
+}

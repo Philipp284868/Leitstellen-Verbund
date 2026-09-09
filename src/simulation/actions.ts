@@ -4,6 +4,13 @@ const id = z.string().min(1).max(100);
 export const deskActions = [
   z
     .object({
+      type: z.literal("withdraw"),
+      mission: id,
+      vehicles: z.array(id).min(1).max(500),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal("tactic"),
       mission: id,
       tactic: z.enum(["standard", "defensive", "rescue"]),

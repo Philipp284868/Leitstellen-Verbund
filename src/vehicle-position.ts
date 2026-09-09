@@ -10,6 +10,14 @@ export function vehicleMotion(v: Vehicle, time: number) {
       meters: 0,
       edge: "stopped",
     };
+  if (v.journey?.blockedUntil)
+    return {
+      position: v.path[0],
+      kmh: 0,
+      limit: 0,
+      meters: 0,
+      edge: "blocked",
+    };
   if (
     v.journey?.motion &&
     ["travel", "transport", "return", "alarmed"].includes(v.status)

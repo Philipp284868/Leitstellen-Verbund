@@ -18,7 +18,13 @@ import { clusterPresence } from "./map-presence";
 import { attachPoiLayer } from "./poi-layer";
 import { poiCategories, type PoiCategory, type MapPoi } from "./poi-data";
 import { IncidentIcon } from "../HudIcons";
-import { bt, mt, vt } from "../catalog";
+import {
+  missionPresentation,
+  incidentColors,
+  incidentKindNames,
+} from "../mission-presentation";
+import { fleetReadiness } from "../fleet-view";
+import { bt, vt } from "../catalog";
 import { vehiclePosition } from "../vehicle-position";
 import { volunteerMarkers } from "../simulation/volunteers";
 import { tripLabel } from "../travel";
@@ -698,7 +704,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       })),
       ...s.missions
         .filter((m) => !m.control || m.control.locationKnown)
-        .map((m) => ({ id: m.id, name: mt(m.template).name, pos: m.pos })),
+        .map((m) => ({
+          id: m.id,
+          name: missionPresentation(m).name,
+          pos: m.pos,
+        })),
     ]
       .filter((v) => v.name.toLocaleLowerCase("de").includes(query))
       .slice(0, 6);
@@ -768,11 +778,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       .filter((m) => !m.control || m.control.locationKnown)
       .forEach((m) =>
         add({
+          ...missionPresentation(m),
           id: m.id,
-          name: mt(m.template).name,
           pos: m.pos,
           kind: "mission",
-          org: mt(m.template).org,
+          urgent: m.control?.priority === "NOTFALL",
         }),
       );
     s.vehicles
@@ -780,7 +790,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         (v) =>
           status === "Alle" ||
           (status === "Bereit"
-            ? v.status === "ready"
+            ? !fleetReadiness(s)(v)
             : status === "Unterwegs"
               ? ["travel", "return", "transport"].includes(v.status)
               : v.status === "scene"),
@@ -832,11 +842,12 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           .filter((m) => !m.control || m.control.locationKnown)
           .forEach((m) =>
             add({
+              ...missionPresentation(m),
               id: `${f.id}:${m.id}`,
-              name: `${mt(m.template).name} · ${f.name}`,
+              name: `${missionPresentation(m).name} · ${f.name}`,
               pos: m.pos,
               kind: "mission",
-              org: mt(m.template).org,
+              urgent: m.control?.priority === "NOTFALL",
               friend: true,
             }),
           );
@@ -936,7 +947,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                 top: m.top,
                 background:
                   m.kind === "mission"
-                    ? undefined
+                    ? m.color
                     : (organizationColors[m.org] ?? "#52616b"),
               }}
               aria-label={
@@ -944,7 +955,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                   ? `${m.count} ${m.kind === "volunteer" ? "freiwillige Kräfte auf Anreise" : m.kind === "vehicle" ? "Fahrzeuge" : m.kind === "station" ? "Wachen" : "Einsätze"} · Gruppe öffnen`
                   : m.name
               }
-              title={m.name}
+              title={`${m.count ? `${m.count} Einsätze` : m.name}${m.categories ? ` · ${m.categories.map((c) => incidentKindNames[c]).join(" + ")}` : ""}${m.urgent ? " · Notfall" : ""}`}
+              data-category={m.category}
               data-testid={`map-${m.kind}`}
               data-object-id={m.id}
               onClick={() => {
@@ -962,15 +974,33 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               }}
             >
               {m.count ? (
-                <b>{m.count}</b>
+                <>
+                  <b>{m.count}</b>
+                  {m.kind === "mission" && (
+                    <IncidentIcon category={m.category} />
+                  )}
+                </>
               ) : m.kind === "mission" ? (
-                <IncidentIcon org={m.org} />
+                <IncidentIcon org={m.org} category={m.category} />
               ) : m.kind === "vehicle" ? (
                 <VehicleIcon type={m.type ?? ""} />
               ) : m.kind === "station" ? (
                 <BuildingIcon type={m.type ?? ""} />
               ) : (
                 <MapIcon glyph="civilianCar" />
+              )}
+              {m.urgent && (
+                <span className="marker-urgency" aria-label="Notfall">
+                  !
+                </span>
+              )}
+              {!m.count && m.categories && m.categories.length > 1 && (
+                <span
+                  className="marker-secondary"
+                  title="Auch medizinische Versorgung"
+                >
+                  <IncidentIcon category="medical" />
+                </span>
               )}
               {!m.count && m.fms !== undefined && (
                 <span className="marker-fms" title={`FMS ${m.fms}`}>
@@ -1190,6 +1220,10 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         </div>
         <details className="map-poi-filters">
           <summary>Einrichtungen & Kartenlegende</summary>
+          <div className="incident-legend" aria-label="Einsatzkategorien">
+            {(["unknown", "fire", "medical", "technical", "police", "water", "mixed"] as const).map(category => <span key={category}><i style={{background: incidentColors[category]}}><IncidentIcon category={category} /></i>{incidentKindNames[category]}</span>)}
+          </div>
+          <p>Grün kennzeichnet Medizin, nicht geringe Dringlichkeit. Ein gelbes ! am Einsatz zeigt NOTFALL; bei kombinierten Lagen bleiben zusätzliche Kategorien erkennbar.</p>
           <label>
             <input
               type="checkbox"
@@ -1226,7 +1260,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           <p>
             Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
             Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
-            freigegebener Verbund · !: Störung. Gruppen öffnen eine Auswahl;
+            freigegebener Verbund · ! am Fahrzeug: Störung. Gruppen öffnen eine Auswahl;
             Vergrößern zeigt räumlich getrennte Standorte.
           </p>
           <p>
@@ -1310,7 +1344,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                 ) : m.kind === "station" ? (
                   <BuildingIcon type={m.type ?? ""} size={30} />
                 ) : (
-                  <IncidentIcon org={m.org} />
+                  <IncidentIcon org={m.org} category={m.category} />
                 )}
                 <span>
                   <strong>{m.name}</strong>

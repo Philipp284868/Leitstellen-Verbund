@@ -273,7 +273,7 @@ it("Defekt bindet Fahrzeug, verhindert Fähigkeiten und Ankunft, Reparatur ist w
   expect(v.path.length).toBeGreaterThan(1);
   expect(v.assignment).toBe(assignment);
   expect(
-    m.control!.events.filter((e) => e.type === "REPAIR_ORDERED"),
+    m.control!.events.filter((e) => e.type === "VEHICLE_REPAIRED"),
   ).toHaveLength(1);
   breakVehicle(s, v, "engine");
   expect(
@@ -307,8 +307,7 @@ it("einzelne Patienten verschlechtern sich, benötigen Notarzt, werden versorgt 
   const rtw = s.vehicles.find((v) => v.type === "rtw")!;
   alarm(s, m, [rtw.id], s.player.id, "DRINGEND", "station");
   for (let n = 0; n < 1500 && s.missions.includes(m); n++) {
-    // A random vehicle fault requires a real repair, also in a patient scenario.
-    if (rtw.fault?.state === "awaiting") repairVehicle(s, rtw, s.player.id);
+    // Vehicle faults resolve from simulation time without a repair order.
     tick(s, s.time + 5, {}, false, false);
   }
   expect(s.archive.some((x) => x.id === m.id)).toBe(true);

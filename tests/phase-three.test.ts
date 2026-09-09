@@ -803,7 +803,7 @@ it("erste Nachbarkräfte melden Fehlbedarf, FMS folgt dem Funkgespräch und AAO 
     const deficit = m.control!.radio.find(
       (r) => r.state === "open" && r.details.startsWith("Nachforderung:"),
     )!;
-    expect(deficit.details).toContain("TLF");
+    expect(deficit.details).toContain("Löschwasser");
     expect(w.db.all().get(w.helper)!.desk.fleet[vehicles[0].id].code).toBe(5);
     w.command(w.owner, {
       type: "radio",

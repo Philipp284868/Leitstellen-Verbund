@@ -9,6 +9,7 @@ import type { Point } from "./projection";
 import { project, unproject } from "./projection";
 import { useGame } from "../store";
 import { GeoRequestCache, type QueryResult } from "./request-cache";
+import { approachContext } from "./approach-key";
 
 const cache = new GeoRequestCache();
 function useGeoQuery<T>(key: string, path: string, enabled: boolean) {
@@ -72,7 +73,7 @@ export function ApproachText({
   });
   const path = `/api/geo/approach?${params}`;
   const result = useGeoQuery<{ text: string }>(
-    `${scope}:${path}`,
+    `${scope}:${path}:${approachContext(s, vehicle)}`,
     path,
     IS_GERMANY && visible,
   );

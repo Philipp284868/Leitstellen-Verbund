@@ -3,6 +3,8 @@ import { mt } from "../catalog";
 import { districtAt, roads, distance } from "../world";
 import { record, simId } from "./events";
 import type { Incident } from "./schema";
+import { CALL_PACING, mayReceiveAdditionalCall } from "./pacing";
+import { REPORTED_IDS, reportId, callerObservation } from "./call-observations";
 // Meldebilder are scenario data; future hazard simulation can extend these profiles.
 export const scenarios: Record<
   string,
@@ -65,23 +67,27 @@ export function multipleCallers(m: Mission) {
   );
 }
 export function questionsFor(m: Mission): Record<Question, string> {
-  const org = m.control?.reportedTemplate
-    ? mt(m.control.reportedTemplate).org
-    : "";
+  const known = m.control?.reportedTemplate;
+  const reported =
+    known && known !== "incoming"
+      ? REPORTED_IDS.has(known)
+        ? known
+        : reportId(mt(known))
+      : "";
   return {
     ...questionLabels,
-    ...(org === "Feuerwehr"
+    ...(reported === "reported-fire"
       ? {
           hazard: "Sehen Sie Flammen, Rauch oder gefährliche Stoffe?",
           detail: "Was brennt und wohin breitet sich der Rauch aus?",
         }
-      : org === "Rettungsdienst"
+      : reported === "reported-medical"
         ? {
             people: "Wie viele Personen brauchen medizinische Hilfe?",
             detail:
               "Ist die Person ansprechbar? Was können Sie sicher beobachten?",
           }
-        : org === "Polizei"
+        : reported === "reported-police"
           ? {
               hazard: "Besteht noch eine unmittelbare Bedrohung?",
               detail: "Welche Personen oder Fahrzeuge können Sie beschreiben?",
@@ -118,7 +124,7 @@ export function attachIncident(s: Save, m: Mission) {
     events: [],
     secret: {
       seed,
-      report: scenario?.report ?? m.template,
+      report: reportId(t),
       address: IS_GERMANY
         ? addressAt(m.pos)
         : `${road!.name} ${1 + (seed % 89)}, ${districtAt(m.pos)}`,
@@ -128,18 +134,19 @@ export function attachIncident(s: Save, m: Mission) {
         (t.patients
           ? `${t.patients} betroffene Person(en) gemeldet; Anzahl noch unbestätigt.`
           : "Keine verletzten Personen bekannt; weitere Betroffene nicht ausgeschlossen."),
-      hazard:
-        profile?.observations[0] ??
-        scenario?.hazard ??
-        `Meldung aus dem Bereich ${t.org}; Gefahren vor Ort noch unbestätigt.`,
+      hazard: scenario?.hazard ?? callerObservation(t),
       detail: scenario?.detail ?? `${t.name} durch Erkundung bestätigt.`,
-      observations: profile?.observations ?? [
-        `${t.name}: Die anrufende Person beobachtet den Einsatzort.`,
-        t.patients > 0
-          ? `Ein weiterer Anrufer meldet ${t.patients} betroffene Personen an einem zweiten Zugang.`
-          : "Ein weiterer Anrufer bestätigt den betroffenen Gebäudeteil und berichtet über die Zufahrt.",
+      observations: [
+        callerObservation(t),
+        ...(profile?.observations.slice(1) ?? [
+          t.patients > 0
+            ? `Ein weiterer Anrufer meldet ${t.patients} betroffene Personen an einem zweiten Zugang.`
+            : "Ein weiterer Anrufer bestätigt den betroffenen Gebäudeteil und berichtet über die Zufahrt.",
+        ]),
       ],
-      secondaryAt: multipleCallers(m) ? s.time + 45 + (seed % 91) : 0,
+      secondaryAt: multipleCallers(m)
+        ? s.time + CALL_PACING.additionalSpacing + (seed % 91)
+        : 0,
       secondaryKind: "additional",
       dropAt: 0,
       dropCall: "",
@@ -161,7 +168,7 @@ function newCall(
   const c = m.control!,
     seed = c.secret!.seed,
     second = kind !== "initial";
-  if (c.calls.length >= 4) return;
+  if (c.calls.length >= CALL_PACING.maxCallsPerIncident) return;
   c.calls.push({
     id: simId(s),
     state: "ringing",
@@ -192,7 +199,7 @@ function newCall(
     second
       ? kind === "recovery"
         ? "Erneute Meldung nach abgebrochener oder unvollständiger Erstmeldung."
-        : "Zusätzlicher Notruf mit neuen Beobachtungen zur Großlage eingegangen."
+        : "Zusätzlicher Notruf zu einem bereits gemeldeten Ereignis eingegangen."
       : "Neuer Notruf eingegangen.",
   );
 }
@@ -201,7 +208,6 @@ export function callsTick(s: Save) {
     const c = m.control;
     if (!c?.secret) continue;
     if (c.secret.secondaryAt && s.time >= c.secret.secondaryAt) {
-      c.secret.secondaryAt = 0;
       const kind =
         c.secret.secondaryKind ??
         (c.calls.some(
@@ -210,13 +216,20 @@ export function callsTick(s: Save) {
         (!c.locationKnown || !c.reportedTemplate)
           ? "recovery"
           : "additional");
-      if (
-        kind === "recovery"
-          ? (!c.locationKnown || !c.reportedTemplate) &&
-            !c.calls.some((call) => ["ringing", "active"].includes(call.state))
-          : multipleCallers(m)
-      )
-        newCall(s, m, kind);
+      if (!mayReceiveAdditionalCall(s, kind === "recovery")) {
+        c.secret.secondaryAt = s.time + CALL_PACING.retry;
+      } else {
+        c.secret.secondaryAt = 0;
+        if (
+          kind === "recovery"
+            ? (!c.locationKnown || !c.reportedTemplate) &&
+              !c.calls.some((call) =>
+                ["ringing", "active"].includes(call.state),
+              )
+            : multipleCallers(m)
+        )
+          newCall(s, m, kind);
+      }
     }
     for (const call of c.calls)
       if (
@@ -231,9 +244,9 @@ export function callsTick(s: Save) {
         if (
           !call.callback &&
           (!c.locationKnown || !c.reportedTemplate) &&
-          c.calls.length < 4
+          c.calls.length < CALL_PACING.maxCallsPerIncident
         ) {
-          c.secret.secondaryAt = s.time + 30;
+          c.secret.secondaryAt = s.time + CALL_PACING.recoverySpacing;
           c.secret.secondaryKind = "recovery";
         }
         c.secret.dropAt = 0;
@@ -320,9 +333,9 @@ export function callAction(
     if (
       !call.callback &&
       (!c.locationKnown || !c.reportedTemplate) &&
-      c.calls.length < 4
+      c.calls.length < CALL_PACING.maxCallsPerIncident
     ) {
-      c.secret.secondaryAt = s.time + 30;
+      c.secret.secondaryAt = s.time + CALL_PACING.recoverySpacing;
       c.secret.secondaryKind = "recovery";
     }
     call.duration += s.time - call.started;
@@ -363,10 +376,24 @@ export function callAction(
     );
     return;
   }
+  if (!REPORTED_IDS.has(c.secret.report)) {
+    // Older saves stored the exact catalog name as the first phone observation.
+    // Keep recorded facts intact, but never disclose that hidden title in a new answer.
+    c.secret.observations = [
+      callerObservation(mt(m.template)),
+      ...(c.secret.observations?.slice(1) ?? []),
+    ];
+    c.secret.report = reportId(mt(c.secret.report));
+  }
   let answer = c.secret[question];
   if (question === "report") {
-    if (!c.briefed) c.reportedTemplate = c.secret.report;
-    answer = mt(c.secret.report).name;
+    // Existing saves may contain the older precise report ID. Normalize only
+    // the public hypothesis; stored truth and already learned facts stay intact.
+    if (!c.briefed)
+      c.reportedTemplate = REPORTED_IDS.has(c.secret.report)
+        ? c.secret.report
+        : reportId(mt(c.secret.report));
+    answer = c.secret.observations?.[0] ?? c.secret.hazard;
   }
   if (question === "address") c.locationKnown = true;
   if (question === "detail")

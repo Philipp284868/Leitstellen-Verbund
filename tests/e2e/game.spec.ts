@@ -145,6 +145,18 @@ function advanceWithRepairs(ownerId: string, finished: () => boolean) {
     app.game.step(30);
   }
 }
+function advanceToFirstCall(username: string) {
+  const owner = ownerOf(username);
+  // The normal first call intentionally takes several simulation minutes.
+  // Advance only the test server, in regular slices; never bypass the generator.
+  for (
+    let elapsed = 0;
+    elapsed < 1200 && !app.db.all().get(owner)!.missions.length;
+    elapsed += 30
+  )
+    app.game.step(30);
+  expect(app.db.all().get(owner)!.missions).toHaveLength(1);
+}
 async function pair(browser: Browser) {
   const ca = await browser.newContext(),
     cb = await browser.newContext(),
@@ -169,6 +181,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   await resources(a, ua);
   await expect(b.locator(".hud-budget")).toContainText("250.000");
   await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
+  advanceToFirstCall(ua);
   await showIncidents(a);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
@@ -227,6 +240,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   await resources(a, ua);
   await resources(b, ub);
   await joinDesk(a, b, ub);
+  advanceToFirstCall(ua);
   await showIncidents(a);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
@@ -265,7 +279,8 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
       .missions.find((m) => m.id === missionId)!
       .control!.events.some((e) => e.text.startsWith("FMS 3:")),
   ).toBe(true);
-  // New accounts produce seeded but different incidents. A real breakdown requires a repair order.
+  // New accounts produce seeded but different incidents; a breakdown also
+  // needs its real automatic recovery time before the vehicle can arrive.
   advance(() =>
     app.db
       .all()

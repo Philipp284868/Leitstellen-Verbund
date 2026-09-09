@@ -34,7 +34,7 @@ import "fake-indexeddb/auto";
 it("automatische Brandmeldung wird erst durch Erkundung zum bestätigten Fehlalarm und geht in die Statistik ein", () => {
   let lab = runLab(createLab(124), { type: "generate", template: "bma-false" });
   lab = runLab(lab, { type: "interview", mission: lab.save.missions[0].id });
-  expect(publicSave(lab.save).missions[0].template).toBe("bma");
+  expect(publicSave(lab.save).missions[0].template).toBe("reported-fire");
   expect(JSON.stringify(publicSave(lab.save))).not.toContain("Fehlalarm");
   expect(lab.save.missions[0].dynamics!.fire).toBeUndefined();
   const finished = completedLab(124, "bma-false");
@@ -455,10 +455,10 @@ it("Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten n
   expect(verifyLab(lab).verified).toBe(true);
 });
 
-it("Serverrhythmus bleibt unregelmäßig ohne Einsatzobergrenze und ohne Nachholstau", async () => {
+it("Serverrhythmus bleibt unregelmäßig, begrenzt wartende Vorgänge und vermeidet Nachholstau", async () => {
   expect(
     new Set(Array.from({ length: 500 }, (_, seed) => nextCallDelay(seed))).size,
-  ).toBe(121);
+  ).toBeGreaterThan(150);
   const dir = await mkdtemp(resolve(tmpdir(), "lv-phase5-cadence-")),
     db = new Database(dir);
   try {
@@ -478,14 +478,14 @@ it("Serverrhythmus bleibt unregelmäßig ohne Einsatzobergrenze und ohne Nachhol
     expect(db.all().get(owner)!.missions).toHaveLength(0);
     const after = db.all().get(owner)!,
       delay = after.missionWait;
-    expect(delay).toBeGreaterThanOrEqual(90);
-    expect(delay).toBeLessThanOrEqual(210);
+    expect(delay).toBeGreaterThanOrEqual(120);
+    expect(delay).toBeLessThanOrEqual(1200);
     for (let seconds = 0; seconds < delay - 1; seconds++) game.step(1);
     expect(db.all().get(owner)!.missions).toHaveLength(0);
     game.step(1);
     expect(db.all().get(owner)!.missions).toHaveLength(1);
     for (let seconds = 0; seconds < 500; seconds += 10) game.step(10);
-    expect(db.all().get(owner)!.missions.length).toBeGreaterThan(2);
+    expect(db.all().get(owner)!.missions.length).toBeLessThanOrEqual(2);
     const ids = db
       .all()
       .get(owner)!

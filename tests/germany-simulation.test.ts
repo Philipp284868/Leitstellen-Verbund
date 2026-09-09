@@ -198,6 +198,95 @@ const requestCount = async () =>
     .requests;
 
 describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvertrag", () => {
+  it("redispatches a persisted return along its exact directed remainder after provider restart", async () => {
+    const game = createGame(),
+      mission = setupFleet(game);
+    interview(game, mission);
+    const save = current(),
+      v = save.vehicles[0],
+      m = save.missions[0];
+    v.status = "scene";
+    v.path = [m.pos];
+    v.mission = m.id;
+    v.assignment = "old-assignment";
+    fixture.recall(save, v);
+    save.time = v.depart + Math.min(5, (v.arrive - v.depart) / 4);
+    const position = fixture.vehiclePosition(v, save.time);
+    const remainder = fixture.remainingRoadLegs(save, v, position);
+    expect(remainder.length).toBeGreaterThan(0);
+    const crew = save.people.filter((p) => p.vehicle === v.id).map((p) => p.id);
+    db!.save(owner, save);
+    db!.close();
+    await reopenProvider();
+    db = new fixture.Database(resolve(dir, "save"));
+    const restarted = new fixture.Game(db);
+    expect(
+      fixture.vehicleAvailability(current(), current().vehicles[0]),
+    ).toMatchObject({
+      state: "RETURNING",
+      alarmable: true,
+      dispatchable: true,
+    });
+    const action: ServerAction = {
+      type: "dispatch",
+      mission,
+      vehicles: [v.id],
+    };
+    const id = command(restarted, action);
+    const dispatched = current(),
+      next = dispatched.vehicles[0];
+    expect(next.path[0]).toEqual(position);
+    expect(next.path[1]).toEqual(remainder[0].to);
+    expect(next.journey!.motion![0].edge).toBe(remainder[0].edge);
+    expect(next.journey!.motion![0].meters).toBeCloseTo(remainder[0].meters, 8);
+    expect(next.status).toBe("travel");
+    expect(next.depart).toBe(dispatched.time);
+    expect(next.assignment).not.toBe("old-assignment");
+    expect(dispatched.desk.fleet[v.id].code).toBe(3);
+    expect(
+      dispatched.people.filter((p) => p.vehicle === v.id).map((p) => p.id),
+    ).toEqual(crew);
+    command(restarted, action, id);
+    expect(current()).toEqual(dispatched);
+    expect(() => command(restarted, action)).toThrow("Anfahrt");
+    expect(current()).toEqual(dispatched);
+    expect(
+      dispatched.missions[0].control!.events.filter(
+        (e) => e.type === "VEHICLE_DEPARTED",
+      ),
+    ).toHaveLength(1);
+  }, 20000);
+  it("automatically repairs a returning vehicle across SQLite/provider restart without moving it", async () => {
+    const game = createGame();
+    setupFleet(game);
+    const save = current(),
+      v = save.vehicles[0];
+    v.status = "scene";
+    v.path = [save.missions[0].pos];
+    fixture.recall(save, v);
+    save.time = v.depart + Math.min(3, (v.arrive - v.depart) / 4);
+    const position = fixture.vehiclePosition(v, save.time);
+    fixture.breakVehicle(save, v, "radio");
+    const until = v.fault!.repairAt;
+    expect(fixture.vehicleAvailability(save, v).alarmable).toBe(false);
+    db!.save(owner, save);
+    db!.close();
+    await reopenProvider();
+    db = new fixture.Database(resolve(dir, "save"));
+    const restarted = new fixture.Game(db);
+    restarted.step(until - save.time - 1);
+    expect(
+      fixture.vehiclePosition(current().vehicles[0], current().time),
+    ).toEqual(position);
+    restarted.step(1);
+    const recovered = current(),
+      next = recovered.vehicles[0];
+    expect(next.fault!.state).toBe("repaired");
+    expect(next.path[0]).toEqual(position);
+    expect(next.status).toBe("return");
+    expect(recovered.desk.fleet[v.id].code).toBe(1);
+    expect(fixture.vehicleAvailability(recovered, next).alarmable).toBe(true);
+  }, 20000);
   it("persists a safe routing wait, advances the server, and resumes after a database/provider restart", async () => {
     const game = createGame(),
       mission = setupFleet(game);
@@ -225,7 +314,10 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     let waiting = current();
     expect(waiting.time).toBe(before.time + 1);
     expect(waiting.vehicles[0].path).toEqual([position]);
-    expect(waiting.vehicles[0].journey!.motion).toEqual([]);
+    expect(waiting.vehicles[0].journey!.motion!.length).toBeGreaterThan(0);
+    expect(fixture.vehiclePosition(waiting.vehicles[0], waiting.time)).toEqual(
+      position,
+    );
     expect(waiting.vehicles[0].journey!.blockedUntil).toBe(waiting.time + 60);
     expect(waiting.vehicles[0].assignment).toBe(before.vehicles[0].assignment);
     const distanceDone = waiting.vehicles[0].journey!.distanceDone;

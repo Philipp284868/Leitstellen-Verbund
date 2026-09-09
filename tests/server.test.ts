@@ -70,6 +70,8 @@ describe("Autoritativer Server", () => {
     for (const o of [...s.vehicles, ...s.buildings]) o.owner = a;
     app.db.save(a, s);
     app.game.step(5);
+    expect(app.db.all().get(a)!.missions).toHaveLength(0);
+    for (let i = 0; i < 20; i++) app.game.step(60);
     const m = app.db.all().get(a)!.missions[0];
     expect(m.shared).toBe(false);
     expect(m.control!.calls).toHaveLength(1);

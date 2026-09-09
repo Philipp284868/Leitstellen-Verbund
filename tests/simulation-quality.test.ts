@@ -21,6 +21,7 @@ import { alarm, propose } from "../src/simulation/dispatch";
 import { publicHospitalProfile } from "../src/simulation/hospital-profiles";
 import { assessHospitals } from "../src/simulation/hospitals";
 import { nodes } from "../src/world";
+import { taskTick } from "../src/simulation/mission-tasks";
 
 function dynamic(template = "field") {
   const s = phaseFixture("quality-owner", template),
@@ -56,6 +57,7 @@ describe("Fachliche Abschluss- und Informationsinvarianten", () => {
       h.value = 0;
       h.resolved = true;
     });
+    taskTick(s, m, { fire: 2, water: 3 }, mt(m.template).seconds);
     d.aftermath = s.time - 20;
     m.organization = {
       tasks: [
@@ -81,9 +83,8 @@ describe("Fachliche Abschluss- und Informationsinvarianten", () => {
   });
 
   it("beginnt die Nachkontrolle nach einer erneuten Gefahr vollständig neu", () => {
-    const { s, m, d } = dynamic();
+    const { s, m, d } = dynamic("tree");
     d.aftermath = s.time - 20;
-    d.fire = undefined;
     s.time += 5;
     dynamicsTick(s, m);
     expect(d.aftermath).toBe(0);
@@ -124,7 +125,10 @@ describe("Fachliche Abschluss- und Informationsinvarianten", () => {
     callAction(s, m, call.id, "accept", s.player.id);
     callAction(s, m, call.id, "ask", s.player.id, "report");
     expect(m.control!.reportedTemplate).toBe("field");
-    expect(m.control!.facts.find((f) => f.key === "report")?.text).toBe(
+    expect(m.control!.facts.find((f) => f.key === "report")?.text).toMatch(
+      /Rauch|Flammen|Funken/,
+    );
+    expect(m.control!.facts.find((f) => f.key === "report")?.text).not.toBe(
       mt("bin").name,
     );
     expect(m.control!.facts.find((f) => f.key === "report")?.confidence).toBe(

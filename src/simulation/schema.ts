@@ -132,7 +132,7 @@ export const aaoSchema = z
     keyword: z.string().trim().min(1).max(60),
     level: z.number().int().min(1).max(5),
     org: orgSchema,
-    types: z.array(id).min(1).max(30),
+    types: z.array(id).max(30),
     skills: z.record(z.string().max(40), z.number().int().min(1).max(50)),
     priority: prioritySchema,
     alarm: alarmSchema,

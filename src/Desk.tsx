@@ -4,11 +4,14 @@ import { ForceNeeds, ReserveOverview } from "./ForceNeeds";
 import { requirements } from "./simulation/hazards";
 import { effectiveSkills } from "./simulation/major-resources";
 import { DynamicsPanel } from "./Dynamics";
+import { FireLiveStatus } from "./FireLiveStatus";
+import { IncidentUnits } from "./IncidentUnits";
 import { travelNames } from "./simulation/traffic";
 import type { TravelMode } from "./simulation/dynamics-schema";
 import { useEffect, useState } from "react";
 import type { Mission, Save } from "./model";
-import { vehicles, vt, bt, mt, capabilities } from "./catalog";
+import { vehicles, vt, bt, capabilities } from "./catalog";
+import { missionProgress } from "./mission-presentation";
 import { capacity } from "./engine";
 import { fleetReadiness } from "./fleet-view";
 import { reserveWarning } from "./simulation/staffing";
@@ -369,6 +372,7 @@ function Calls({ s, m }: { s: Save; m: Mission }) {
 }
 export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   const c = m.control!;
+  const progress = missionProgress(m);
   const ready = fleetReadiness(s);
   const net = useNetwork();
   const support = net.support.filter(
@@ -392,7 +396,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   const chosen = s.vehicles.filter((v) => selectedReady.includes(v.id)),
     skills = { ...capacity(s, m.id) };
   for (const v of chosen)
-    for (const [k, n] of Object.entries(vt(v.type).skills))
+    for (const [k, n] of Object.entries(effectiveSkills(m, v)))
       skills[k] = (skills[k] || 0) + n;
   for (const f of support.filter(
     (f) =>
@@ -477,6 +481,7 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
           ))}
         </ul>
       </details>
+      <FireLiveStatus m={m} reduced={s.settings.reduced} />
       <DynamicsPanel s={s} m={m} />
       {c.radio.some((r) => r.state === "open") && (
         <section className="radio-queue" data-hud-section="radio">
@@ -761,26 +766,24 @@ export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
             {statuses[f.vehicle.status]} · {tripLabel(f.vehicle, s.time)}
           </p>
         ))}
-        {s.vehicles
-          .filter((v) => v.mission === m.id)
-          .map((v) => (
-            <p key={v.id}>
-              <b>
-                <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
-                {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
-              </b>{" "}
-              · {statuses[v.status]} ·{" "}
-              {v.status === "alarmed"
-                ? `Ausrücken in ${duration(v.depart - s.time)}`
-                : tripLabel(v, s.time)}
-            </p>
-          ))}
-        <progress value={m.progress} max={mt(m.template).seconds} />
-        <small>
-          {c.briefed
-            ? "Einsatzfortschritt"
-            : "Weitere Angaben nach der ersten Erkundung"}
-        </small>
+        <IncidentUnits
+          key={m.id}
+          s={s}
+          m={m}
+          remoteUnits={support.map((f) => f.vehicle)}
+        />
+        {progress ? (
+          <>
+            <progress
+              value={progress.value}
+              max={progress.max}
+              aria-label={progress.label}
+            />
+            <small>{progress.label}</small>
+          </>
+        ) : (
+          <small>Weitere Angaben nach der ersten Erkundung</small>
+        )}
       </section>
       <History s={s} m={m} />
     </div>
@@ -792,8 +795,8 @@ const newAAO = (): AAO => ({
   keyword: "B1",
   level: 1,
   org: "Alle",
-  types: ["tsf"],
-  skills: {},
+  types: [],
+  skills: { fire: 1 },
   priority: "NORMAL",
   alarm: "dme",
 });
@@ -932,7 +935,7 @@ export function AAOPanel({ s }: { s: Save }) {
         <button
           className="primary"
           disabled={
-            !a.types.length ||
+            (!a.types.length && !Object.values(a.skills).some((n) => n > 0)) ||
             a.types.length > 30 ||
             !a.name.trim() ||
             !a.keyword.trim()

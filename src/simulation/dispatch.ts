@@ -10,7 +10,7 @@ import type { Save, Mission } from "../model";
 import { bt, vt, mt } from "../catalog";
 import { openForceLabels } from "./force-plan";
 import { readiness, beginTrip } from "../engine";
-import { route } from "../world";
+import { vehiclePosition } from "../vehicle-position";
 import { routePlan } from "./traffic";
 import { requirements } from "./hazards";
 import type { TravelMode } from "./dynamics-schema";
@@ -37,7 +37,7 @@ export function propose(
     )
     .map((v) => {
       try {
-        const plan = routePlan(s, v, v.path.at(-1)!, m.pos);
+        const plan = routePlan(s, v, vehiclePosition(v, s.time), m.pos);
         return {
           v,
           eta: plan.blockedUntil
@@ -63,7 +63,7 @@ export function propose(
   const required = {
     ...(m.control?.briefed
       ? requirements(m)
-      : mt(m.control?.reportedTemplate || m.template).requirements),
+      : mt(m.control?.reportedTemplate || "incoming").requirements),
   };
   for (const [k, n] of Object.entries(aao.skills))
     required[k] = Math.max(required[k] || 0, n);
@@ -76,6 +76,42 @@ export function propose(
       chosen.includes(v.id) ? vt(v.type).skills : effectiveSkills(m, v),
     ))
       skills[k] = (skills[k] || 0) + n;
+  // Explicit vehicle preferences stay binding. Fill remaining capability gaps
+  // from usable, staffed units; no particular vehicle model is a prerequisite.
+  const exhausted = new Set<string>();
+  while (chosen.length < 30) {
+    const ranked = candidates
+      .filter(({ v }) => !chosen.includes(v.id) && !exhausted.has(v.id))
+      .map((candidate) => ({
+        ...candidate,
+        contribution: Object.entries(required).reduce(
+          (total, [key, amount]) =>
+            total +
+            Math.min(
+              Math.max(0, amount - (skills[key] || 0)),
+              vt(candidate.v.type).skills[key] || 0,
+            ) /
+              Math.max(1, amount),
+          0,
+        ),
+      }))
+      .filter((candidate) => candidate.contribution > 0)
+      .sort(
+        (a, b) =>
+          b.contribution - a.contribution ||
+          a.eta - b.eta ||
+          a.v.id.localeCompare(b.v.id),
+      );
+    const match = ranked.find(({ v }) => {
+      if (allocateCrew(v)) return true;
+      exhausted.add(v.id);
+      return false;
+    });
+    if (!match) break;
+    chosen.push(match.v.id);
+    for (const [key, amount] of Object.entries(vt(match.v.type).skills))
+      skills[key] = (skills[key] || 0) + amount;
+  }
   deficit.push(...openForceLabels(required, skills));
   m.control!.proposal = {
     id: simId(s),
@@ -108,7 +144,13 @@ export function alarm(
     const reason = readiness(s, v);
     if (reason) throw Error(`${v.name}: ${reason}`);
     // Validate every route before binding any vehicle.
-    route(v.path.at(-1)!, m.pos, vt(v.type).mode);
+    routePlan(
+      s,
+      v,
+      v.status === "return" ? vehiclePosition(v, s.time) : v.path.at(-1)!,
+      m.pos,
+      mode,
+    );
     return v;
   });
   checkReserveSelection(s, vehicles);
@@ -135,24 +177,28 @@ export function alarm(
       });
   }
   for (const v of vehicles) {
+    const continuing = v.status === "return";
     reportUnit(s, m, v);
     const selected = profile ?? s.desk.alarms[v.home] ?? "dme";
     const fallback =
       selected === "station" ? 30 : selected === "siren" ? 45 : 60;
     v.mission = m.id;
     v.assignment = simId(s);
-    const delay = planTurnout(s, v, fallback);
+    const delay = continuing ? 0 : planTurnout(s, v, fallback);
     beginTrip(s, v, m.pos, "travel", mode);
     v.depart += delay;
     v.arrive += delay;
-    v.status = "alarmed";
+    v.status = continuing ? "travel" : "alarmed";
+    if (continuing) delete v.turnout;
     if (v.journey) v.journey.nextCheck = v.depart + 60;
-    reportUnit(s, m, v);
+    reportUnit(s, m, v, true);
     const event = record(
       s,
       m,
       "ALARM_STARTED",
-      `${v.name}: ${alarmNames[selected]} · ${priority} · Ausrücken in ${delay} s.`,
+      continuing
+        ? `${v.name}: ${priority} · Folgeauftrag direkt aus der Rückfahrt übernommen.`
+        : `${v.name}: ${alarmNames[selected]} · ${priority} · Ausrücken in ${delay} s.`,
       actor,
       v.id,
     );
@@ -161,11 +207,30 @@ export function alarm(
       s,
       m,
       "VEHICLE_DISPATCHED",
-      `${v.name} dem Einsatz zugeordnet. Tatsächliches Ausrücken folgt nach Besatzungsbildung.`,
+      continuing
+        ? `${v.name} dem Einsatz zugeordnet. Anfahrt ab aktueller Straßenposition mit vorhandener Besatzung.`
+        : `${v.name} dem Einsatz zugeordnet. Tatsächliches Ausrücken folgt nach Besatzungsbildung.`,
       actor,
       v.id,
     );
-    setFms(s, v, 9, actor, "Alarmierung quittiert");
+    setFms(
+      s,
+      v,
+      continuing ? 3 : 9,
+      actor,
+      continuing
+        ? "Folgeauftrag auf Rückfahrt übernommen"
+        : "Alarmierung quittiert",
+    );
+    if (continuing)
+      record(
+        s,
+        m,
+        "VEHICLE_DEPARTED",
+        `${v.name}: direkte Anfahrt vom aktuellen Standort begonnen.`,
+        actor,
+        v.id,
+      );
   }
   record(
     s,
@@ -179,6 +244,8 @@ export function alarm(
     delete m.control.proposal;
   }
   if (m.control && ["disposition", "interview"].includes(m.control.stage))
-    m.control.stage = "alarming";
+    m.control.stage = vehicles.some((v) => v.status === "travel")
+      ? "enroute"
+      : "alarming";
   s.tutorial = Math.max(4, s.tutorial);
 }

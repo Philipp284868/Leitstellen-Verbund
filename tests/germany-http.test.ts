@@ -388,23 +388,24 @@ function waterGeneration() {
   // routing recovery; crossing a real-time weather boundary changes the catalog draw.
   f.tick(save, Math.ceil(save.time / 900) * 900 + 120, {}, false, false);
   const available = f.capacity(save);
-  const weighted = f.missions
-    .filter(
-      (m) =>
-        m.level <= 30 &&
-        Object.entries(m.requirements).every(
-          ([k, n]) => (available[k] || 0) >= n,
-        ),
-    )
-    .flatMap((m) =>
-      Array.from({ length: f.weatherWeight(save, m.id) }, () => m),
-    );
+  const candidates = f.missions.filter((m) =>
+    f.canGenerate(save, m, available),
+  );
   for (let seed = 1; seed < 100000; seed++) {
     const next = (seed * 1664525 + 1013904223) >>> 0;
-    const selected = weighted[(next >>> 16) % weighted.length];
+    const selected = f.chooseIncidentTemplate(
+      { ...save, seed: next },
+      candidates,
+    );
     if (selected?.profile?.site !== "water") continue;
     save.seed = seed;
     save.missionWait = 0;
+    save.callPacing = {
+      version: 1,
+      notBefore: save.time,
+      lastCreated: 0,
+      sequence: 1,
+    };
     save.nextMission = save.time;
     app!.db.save(user.id, save);
     return { seed, template: selected.id, save };

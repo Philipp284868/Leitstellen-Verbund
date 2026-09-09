@@ -21,6 +21,7 @@ import {
 } from "./simulation/staffing";
 import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
+import { tasksComplete } from "./simulation/mission-tasks";
 import {
   patientSeats,
   patientTransportReason,
@@ -28,7 +29,9 @@ import {
   boardPatients,
   deliverPatients,
 } from "./simulation/patients";
-import { updateWeather, weatherWeight } from "./simulation/weather";
+import { updateWeather } from "./simulation/weather";
+import { chooseIncidentTemplate } from "./simulation/incident-selection";
+import { withdraw } from "./simulation/withdrawal";
 import { routePlan, trafficTick } from "./simulation/traffic";
 import { withAutomaticRouting } from "./simulation/routing-context";
 import { faultsTick } from "./simulation/faults";
@@ -159,12 +162,15 @@ export function beginTrip(
 }
 export function recall(s: Save, v: Vehicle) {
   if (v.fault && v.fault.state !== "repaired") return;
+  if (v.patients > 0)
+    throw Error(
+      "Patienten oder betreute Personen sind noch an das Fahrzeug gebunden.",
+    );
   queuePostIncident(s, v);
   for (const c of s.contributions.filter(
     (c) => c.assignment === v.assignment && c.status === "active",
   ))
     c.status = "returned";
-  v.patients = 0;
   const incident =
     s.missions.find((m) => m.id === v.mission) ??
     s.archive.find((m) => m.id === v.mission);
@@ -178,7 +184,15 @@ export function recall(s: Save, v: Vehicle) {
       v.id,
     );
   beginTrip(s, v, s.buildings.find((b) => b.id === v.home)!.pos, "return");
-  setFms(s, v, 1, "server", "Rückfahrt zur Wache");
+  setFms(
+    s,
+    v,
+    v.postIncident ? 6 : 1,
+    "server",
+    v.postIncident
+      ? "Rückfahrt mit erforderlicher Nachbereitung"
+      : "Einsatzbereit über Funk · Rückfahrt zur Wache",
+  );
   v.assignment = null;
   delete v.turnout;
   delete v.destination;
@@ -486,10 +500,12 @@ export function apply(s: Save, a: Action) {
       if (!v || v.status === "ready" || v.status === "return")
         throw Error("Kein laufender Auftrag.");
       if (v.fault && v.fault.state !== "repaired")
-        throw Error("Vor dem Rückruf die Reparatur beauftragen und abwarten.");
+        throw Error("Automatische Behebung der Fahrzeugstörung abwarten.");
       if (v.patients)
         throw Error("Patiententransport muss zuerst abgeschlossen werden.");
-      recall(s, v);
+      const m = s.missions.find((m) => m.id === v.mission);
+      if (m && v.status === "scene") withdraw(s, m, [v.id], s.player.id);
+      else recall(s, v);
       break;
     }
     case "favorite": {
@@ -505,10 +521,7 @@ export function generate(s: Save) {
   if (!candidates.length) return;
   const previousSeed = s.seed;
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
-  const weighted = candidates.flatMap((t) =>
-    Array.from({ length: weatherWeight(s, t.id) }, () => t),
-  );
-  const t = weighted[(s.seed >>> 16) % weighted.length];
+  const t = chooseIncidentTemplate(s, candidates);
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
   const sites = generationLocations(s, t);
   if (sites === null) {
@@ -644,6 +657,8 @@ function tickState(
           (t) => t.assignment === v.assignment,
         ))
           t.delivered = true;
+        queuePostIncident(s, v);
+        v.patients = 0;
         recall(s, v);
       }
     }
@@ -664,9 +679,13 @@ function tickState(
             t.seconds,
             m.progress + dt * (m.dynamics?.tactic === "defensive" ? 0.65 : 1),
           );
-          if (m.progress >= t.seconds && dynamicsComplete(m, s.time))
-            m.phase = "transport";
         }
+        // Durable task work may be performed sequentially by a multipurpose
+        // crew. Completed tasks never demand a second simultaneous-force timer.
+        if (m.dynamics?.active && m.tasks && tasksComplete(m))
+          m.progress = t.seconds;
+        if (m.progress >= t.seconds && dynamicsComplete(m, s.time))
+          m.phase = "transport";
       }
       if (m.phase === "transport" || canTransport(m)) {
         let remaining =

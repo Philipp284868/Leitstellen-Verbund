@@ -3,7 +3,12 @@ import { qualityFactor } from "../src/simulation/reports";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
 import { addXp } from "../src/progression";
 import { stationProfile, personDuty } from "../src/simulation/staffing";
-import { nextCallDelay } from "../src/simulation/balance";
+import {
+  prepareCallPacing,
+  mayCreateIncident,
+  recordIncidentCreated,
+  retryCallLater,
+} from "../src/simulation/pacing";
 import { majorActions, type MajorAction } from "../src/simulation/major-schema";
 import { majorCommand } from "../src/simulation/major-command";
 import { maybeMajor, campaignTick } from "../src/simulation/major-incidents";
@@ -34,6 +39,7 @@ import { deskOwner, workspace, membership } from "./workspaces";
 import { attachIncident } from "../src/simulation/calls";
 import { legacyIncident, publicSave } from "../src/simulation/incidents";
 import { alarm } from "../src/simulation/dispatch";
+import { withdraw, assessRemoteWithdrawal } from "../src/simulation/withdrawal";
 import { deskCommand } from "../src/simulation/commands";
 import { writable, simId } from "../src/simulation/events";
 import { deskActions, type DeskAction } from "../src/simulation/actions";
@@ -82,9 +88,16 @@ export class Game {
       const saves = this.db.all(mode),
         s = saves.get(owner);
       if (!s) throw Error("Konto fehlt.");
-      const external: Skills = {};
-      if ("mission" in action) {
-        const m = s.missions.find((m) => m.id === action.mission);
+      const external: Skills = {},
+        externalUnits: Vehicle[] = [];
+      const actionMission =
+        "mission" in action
+          ? action.mission
+          : action.type === "recall"
+            ? s.vehicles.find((v) => v.id === action.id)?.mission
+            : undefined;
+      if (actionMission) {
+        const m = s.missions.find((m) => m.id === actionMission);
         if (m)
           for (const helper of saves.values())
             for (const v of helper.vehicles.filter(
@@ -93,9 +106,11 @@ export class Game {
                 v.status === "scene" &&
                 (!v.fault || v.fault.state === "repaired") &&
                 authorizedHelper(s, m, helper, v),
-            ))
+            )) {
+              externalUnits.push(v);
               for (const [k, n] of Object.entries(effectiveSkills(m, v)))
                 external[k] = (external[k] || 0) + n;
+            }
       }
       if (
         majorActions.some((schema) => schema.shape.type.value === action.type)
@@ -146,8 +161,67 @@ export class Game {
       } else if (
         deskActions.some((schema) => schema.shape.type.value === action.type)
       )
-        deskCommand(s, action as DeskAction, user, external);
-      else if (action.type === "share" || action.type === "unshare") {
+        deskCommand(s, action as DeskAction, user, external, externalUnits);
+      else if (
+        action.type === "recall" &&
+        s.vehicles.some(
+          (v) =>
+            v.id === action.id &&
+            v.status === "scene" &&
+            s.missions.some((m) => m.id === v.mission),
+        )
+      ) {
+        const v = s.vehicles.find((v) => v.id === action.id)!;
+        const m = s.missions.find((m) => m.id === v.mission)!;
+        writable(m);
+        withdraw(s, m, [v.id], user, external, externalUnits);
+      } else if (
+        action.type === "recall" &&
+        s.vehicles.some(
+          (v) =>
+            v.id === action.id &&
+            v.status === "scene" &&
+            v.mission?.startsWith("remote:"),
+        )
+      ) {
+        const v = s.vehicles.find((v) => v.id === action.id)!;
+        const targetOwner = [...saves.values()].find((other) =>
+          other.missions.some(
+            (m) => v.mission === `remote:${other.player.id}:${m.id}`,
+          ),
+        );
+        const m = targetOwner?.missions.find(
+          (m) => v.mission === `remote:${targetOwner.player.id}:${m.id}`,
+        );
+        if (targetOwner && m && m.phase !== "done") {
+          writable(m);
+          if (!authorizedHelper(targetOwner, m, s, v))
+            throw Error("Keine gültige Unterstützungszuordnung.");
+          const units: Vehicle[] = [],
+            skills: Skills = {};
+          for (const helper of saves.values())
+            for (const unit of helper.vehicles) {
+              if (
+                unit.mission !== v.mission ||
+                unit.status !== "scene" ||
+                !authorizedHelper(targetOwner, m, helper, unit)
+              )
+                continue;
+              units.push(unit);
+              for (const [key, n] of Object.entries(effectiveSkills(m, unit)))
+                skills[key] = (skills[key] || 0) + n;
+            }
+          const assessment = assessRemoteWithdrawal(
+            targetOwner,
+            m,
+            [v.id],
+            skills,
+            units,
+          );
+          if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
+        }
+        recall(s, v);
+      } else if (action.type === "share" || action.type === "unshare") {
         const m = s.missions.find((m) => m.id === action.id);
         if (!m) throw Error("Eigener Einsatz fehlt.");
         if (action.type === "share" && m.control && !m.control.legacy)
@@ -164,6 +238,30 @@ export class Game {
             throw Error(
               "Laufender fremder Patiententransport muss zuerst ankommen.",
             );
+          const units: Vehicle[] = [],
+            skills: Skills = {};
+          for (const helper of saves.values())
+            for (const v of helper.vehicles) {
+              if (
+                v.mission !== `remote:${owner}:${m.id}` ||
+                !authorizedHelper(s, m, helper, v)
+              )
+                continue;
+              units.push(v);
+              if (v.status === "scene")
+                for (const [key, n] of Object.entries(effectiveSkills(m, v)))
+                  skills[key] = (skills[key] || 0) + n;
+            }
+          if (units.length) {
+            const assessment = assessRemoteWithdrawal(
+              s,
+              m,
+              units.map((v) => v.id),
+              skills,
+              units,
+            );
+            if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
+          }
           for (const helper of saves.values())
             for (const v of helper.vehicles.filter(
               (v) => v.mission === `remote:${owner}:${m.id}` && !v.patients,
@@ -336,7 +434,7 @@ export class Game {
                 v.mission === `remote:${ownerId}:${m.id}` &&
                 authorizedHelper(owner, m, helper, v),
             ))
-              carriers[v.id] = vt(v.type).skills;
+              carriers[v.id] = effectiveSkills(m, v);
             for (const order of m.transports.filter(
               (t) => t.owner === helperId && t.status === "ordered",
             )) {
@@ -422,42 +520,51 @@ export class Game {
     aidTick(saves);
     for (const [id, s] of saves) {
       s.revision++;
-      // Arrival intervals use real seconds, independent of simulation speed.
-      // Catch-up after a stopped server never creates a backlog of new calls.
-      if (seconds > 60) s.missionWait = nextCallDelay(s.seed);
-      else {
-        s.missionWait = Math.max(0, s.missionWait - Math.max(0, seconds));
-        campaignTick(s, (template, pos) => {
-          const m = {
-            id: simId(s),
-            template,
-            pos,
-            progress: 0,
-            phase: "offered" as const,
-            created: s.time,
-            completed: 0,
-            shared: false,
-            round: simId(s),
-            contributors: [],
-            transports: [],
-          };
-          s.missions.push(m);
-          attachIncident(s, m);
-          attachDynamics(s, m);
-          attachOrganizations(m);
-          return m;
-        });
-        followupsTick(s);
-        if (allowGeneration && s.missionWait === 0) {
+      // A shared dispatch has exactly one generator. Dormant member saves and
+      // missed server time cannot create an additional queue or catch-up wave.
+      const activeDesk = deskOwner(this.db, id, mode) === id;
+      prepareCallPacing(s, seconds, activeDesk);
+      if (
+        allowGeneration &&
+        activeDesk &&
+        seconds <= 60 &&
+        s.missionWait === 0
+      ) {
+        if (!mayCreateIncident(s)) retryCallLater(s);
+        else {
           const count = s.missions.length;
-          generate(s);
-          if (s.missions.length > count) {
-            attachIncident(s, s.missions.at(-1)!);
-            attachDynamics(s, s.missions.at(-1)!);
-            attachOrganizations(s.missions.at(-1)!);
-            maybeMajor(s, s.missions.at(-1)!);
-            s.missionWait = nextCallDelay(s.seed, s);
+          campaignTick(s, (template, pos) => {
+            const m = {
+              id: simId(s),
+              template,
+              pos,
+              progress: 0,
+              phase: "offered" as const,
+              created: s.time,
+              completed: 0,
+              shared: false,
+              round: simId(s),
+              contributors: [],
+              transports: [],
+            };
+            s.missions.push(m);
+            attachIncident(s, m);
+            attachDynamics(s, m);
+            attachOrganizations(m);
+            return m;
+          });
+          if (s.missions.length === count) followupsTick(s);
+          if (s.missions.length === count) {
+            generate(s);
+            if (s.missions.length > count) {
+              attachIncident(s, s.missions.at(-1)!);
+              attachDynamics(s, s.missions.at(-1)!);
+              attachOrganizations(s.missions.at(-1)!);
+              maybeMajor(s, s.missions.at(-1)!);
+            }
           }
+          if (s.missions.length > count) recordIncidentCreated(s);
+          else retryCallLater(s);
         }
       }
       this.db.save(id, s, mode);

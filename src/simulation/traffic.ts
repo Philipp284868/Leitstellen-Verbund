@@ -1,4 +1,5 @@
 import { motionProfile } from "../motion";
+import { remainingRoadLegs } from "./road-continuation";
 import { IS_GERMANY } from "../world-choice";
 import { GermanyRoutingError } from "../germany/errors";
 import { automaticRouting } from "./routing-context";
@@ -20,6 +21,7 @@ const roadKeys = (e: NonNullable<Save["environment"]>["roads"][number]) =>
   e.roadId
     ? [e.roadId]
     : [`${e.edge[0]}:${e.edge[1]}`, `${e.edge[1]}:${e.edge[0]}`];
+
 export const travelNames = {
   normal: "Normalfahrt",
   priority: "Sonderrechte",
@@ -62,8 +64,9 @@ export function routePlan(
     )
       throw error;
     // Keep the target and assignment, but never invent a replacement road or continue through a new closure.
+    const remainder = remainingRoadLegs(s, v, origin);
     return {
-      motion: [],
+      motion: motionProfile(remainder).phases,
       wait: 0,
       path: [origin],
       planned: [origin],
@@ -85,7 +88,15 @@ function calculateRoutePlan(
   mode: TravelMode,
 ) {
   const t = vt(v.type),
-    planned = route(origin, target, t.mode, new Set(), t.speed);
+    prefix = remainingRoadLegs(s, v, origin);
+  const routedOrigin = prefix.at(-1)?.to ?? origin;
+  const withPrefix = (path: Point[]) =>
+    prefix.length
+      ? [origin, ...prefix.slice(0, -1).map((leg) => leg.to), ...path]
+      : path;
+  const planned = withPrefix(
+    route(routedOrigin, target, t.mode, new Set(), t.speed),
+  );
   const events = (s.environment?.roads ?? [])
     .filter((e) => e.until > s.time)
     .map((e) => {
@@ -123,18 +134,25 @@ function calculateRoutePlan(
   }
   if (t.mode === "road") {
     try {
-      path = route(
-        origin,
-        target,
-        "road",
-        blocked,
-        t.speed,
-        new Map(
-          events.flatMap((e) =>
-            roadKeys(e).map((key) => [key, e.delay] as const),
+      if (prefix.some((leg) => blocked.has(leg.edge)))
+        throw new GermanyRoutingError(
+          "Aktuell befahrener Straßenabschnitt gesperrt.",
+          "blocked",
+        );
+      path = withPrefix(
+        route(
+          routedOrigin,
+          target,
+          "road",
+          blocked,
+          t.speed,
+          new Map(
+            events.flatMap((e) =>
+              roadKeys(e).map((key) => [key, e.delay] as const),
+            ),
           ),
+          travelFactor(s, v, mode),
         ),
-        travelFactor(s, v, mode),
       );
     } catch (error) {
       if (
@@ -149,16 +167,23 @@ function calculateRoutePlan(
       path = [origin];
     }
   }
-  const sections = t.mode === "road" ? pathSections(path) : [];
+  const sections =
+    t.mode === "road"
+      ? pathSections(
+          prefix.length && !blockedUntil ? path.slice(prefix.length) : path,
+        )
+      : [];
   const relevant =
     t.mode === "road"
-      ? events.filter((e) =>
-          sections.some((section) =>
-            e.roadId
-              ? section.id === e.roadId
-              : (section.a === e.edge[0] && section.b === e.edge[1]) ||
-                (section.a === e.edge[1] && section.b === e.edge[0]),
-          ),
+      ? events.filter(
+          (e) =>
+            prefix.some((leg) => roadKeys(e).includes(leg.edge)) ||
+            sections.some((section) =>
+              e.roadId
+                ? section.id === e.roadId
+                : (section.a === e.edge[0] && section.b === e.edge[1]) ||
+                  (section.a === e.edge[1] && section.b === e.edge[0]),
+            ),
         )
       : [];
   const profile = (points: Point[], conditions: boolean) => {
@@ -166,32 +191,44 @@ function calculateRoutePlan(
     return motionProfile(
       points.slice(1).map((to, i) => {
         const from = points[i],
-          road = t.mode === "road" ? roadSectionBetween(from, to) : null;
+          first =
+            prefix[i] && distance(to, prefix[i].to) < 1e-7
+              ? prefix[i]
+              : undefined,
+          road =
+            t.mode === "road" && !first ? roadSectionBetween(from, to) : null;
         const waits =
-          conditions && road
+          conditions && (road || first)
             ? relevant.filter(
                 (e) =>
                   !paused.has(e.id) &&
-                  (e.roadId
-                    ? e.roadId === road.id
-                    : (e.edge[0] === road.a && e.edge[1] === road.b) ||
-                      (e.edge[0] === road.b && e.edge[1] === road.a)),
+                  (first
+                    ? roadKeys(e).includes(first.edge)
+                    : e.roadId
+                      ? e.roadId === road!.id
+                      : (e.edge[0] === road!.a && e.edge[1] === road!.b) ||
+                        (e.edge[0] === road!.b && e.edge[1] === road!.a)),
               )
             : [];
         waits.forEach((e) => paused.add(e.id));
         return {
           from,
           to,
-          meters:
-            IS_GERMANY && road
+          meters: first
+            ? first.meters
+            : IS_GERMANY && road
               ? road.meters
               : distance(from, to) * METERS_PER_UNIT,
-          limit:
-            Math.min(t.speed, road?.limit ?? t.speed) /
-            (conditions ? travelFactor(s, v, mode) : 1),
-          edge: road?.id ?? t.mode,
+          limit: first
+            ? first.limit
+            : Math.min(t.speed, road?.limit ?? t.speed) /
+              (conditions ? travelFactor(s, v, mode) : 1),
+          edge: first?.edge ?? road?.id ?? t.mode,
           waitSeconds:
-            waits.reduce((n, e) => n + e.delay, 0) +
+            Math.max(
+              first?.waitSeconds ?? 0,
+              waits.reduce((n, e) => n + e.delay, 0),
+            ) +
             (road && "waitSeconds" in road ? Number(road.waitSeconds || 0) : 0),
         };
       }),
@@ -205,7 +242,12 @@ function calculateRoutePlan(
     );
   };
   const baseline = profile(planned, false),
-    actual = profile(path, true);
+    actual = profile(
+      blockedUntil && prefix.length
+        ? [origin, ...prefix.map((leg) => leg.to)]
+        : path,
+      true,
+    );
   const plannedSeconds = baseline.seconds;
   const wait = 0; // Waiting is scheduled at its affected road section in the motion profile.
   const seconds = blockedUntil ? blockedUntil - s.time : actual.seconds + wait;

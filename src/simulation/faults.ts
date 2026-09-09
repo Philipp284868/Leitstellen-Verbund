@@ -7,6 +7,8 @@ import { record } from "./events";
 import { sample, DYNAMICS } from "./random";
 import { newPatient } from "./patients";
 import { injureResponder, injuryReason } from "./responder-recovery";
+import { FAULT_SECONDS, FAULT_RECOVERY_GRACE } from "./fault-config";
+import { crewSummary } from "./staffing";
 export const faultNames = {
   engine: "Motorschaden",
   tire: "Reifenproblem",
@@ -23,7 +25,7 @@ export function breakVehicle(
 ) {
   if (
     (v.fault && v.fault.state !== "repaired") ||
-    !["travel", "scene", "transport"].includes(v.status)
+    !["ready", "travel", "scene", "transport", "return"].includes(v.status)
   )
     return;
   const position =
@@ -31,15 +33,15 @@ export function breakVehicle(
   v.fault = {
     kind,
     since: s.time,
-    repairAt: 0,
-    state: "awaiting",
+    repairAt: s.time + FAULT_SECONDS[kind],
+    state: "repairing",
     mission: v.mission || "",
     assignment: v.assignment || "",
     position,
   };
   v.path = [position];
-  v.depart = s.time;
-  v.arrive = s.time;
+  // Retain the old movement epoch: fault.since identifies its exact interrupted phase.
+  // Rendering and the engine stop at fault.position until the repair has completed.
   const m = s.missions.find((m) => m.id === v.mission);
   if (m?.control) {
     const person = s.people.find(
@@ -103,7 +105,7 @@ export function breakVehicle(
       s,
       m,
       "VEHICLE_BREAKDOWN",
-      `${v.name}: ${faultNames[kind]}. Nicht einsatzbereit; Ersatzkraft disponieren und Reparatur beauftragen.`,
+      `${v.name}: ${faultNames[kind]}. Vorübergehend nicht einsatzbereit; automatische Behebung in ${FAULT_SECONDS[kind]} s.`,
       "server",
       v.id,
     );
@@ -112,7 +114,7 @@ export function breakVehicle(
       m,
       v.id,
       "request",
-      `${v.name} ausgefallen (${faultNames[kind]}). Ersatzfahrzeug erforderlich.`,
+      `${v.name} ausgefallen (${faultNames[kind]}). Automatische Behebung läuft; bei Bedarf Ersatzfahrzeug disponieren.`,
       v.patients ? "NOTFALL" : "DRINGEND",
     );
   }
@@ -123,7 +125,8 @@ export function repairVehicle(s: Save, v: Vehicle, actor: string) {
     throw Error("Kein reparierbarer Fahrzeugdefekt.");
   if (v.fault.state === "repairing") return;
   v.fault.state = "repairing";
-  v.fault.repairAt = s.time + (v.fault.kind === "engine" ? 180 : 120);
+  // Compatibility with old manual repair actions: idempotent and never extends an interruption.
+  v.fault.repairAt = v.fault.since + FAULT_SECONDS[v.fault.kind];
   const m = [...s.missions, ...s.archive].find(
     (m) => m.id === v.fault!.mission,
   );
@@ -132,20 +135,30 @@ export function repairVehicle(s: Save, v: Vehicle, actor: string) {
       s,
       m,
       "REPAIR_ORDERED",
-      `${v.name}: mobiler Reparaturdienst beauftragt.`,
+      `${v.name}: automatische Störungsbehebung gestartet.`,
       actor,
       v.id,
     );
 }
 export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
   if (v.fault && v.fault.state !== "repaired") {
-    if (v.fault.state !== "repairing" || v.fault.repairAt > s.time) return;
-    v.fault.state = "repaired";
-    if (v.journey) {
-      delete v.journey.motion;
-      delete v.journey.motionVersion;
-    }
+    if (v.fault.state === "awaiting") repairVehicle(s, v, "server");
+    v.fault.repairAt = Math.min(
+      v.fault.repairAt || Infinity,
+      v.fault.since + FAULT_SECONDS[v.fault.kind],
+    );
+    if (v.fault.repairAt > s.time + 1e-6) return;
     const m = s.missions.find((m) => m.id === v.mission);
+    if (v.status !== "ready" && v.status !== "scene") {
+      // Keep the active fault during route planning so the current position and zero speed
+      // come from the interruption, while traffic.ts retains its directed road remainder.
+      const target =
+        v.status === "return"
+          ? s.buildings.find((b) => b.id === v.home)!.pos
+          : v.journey?.target || m?.pos || v.path.at(-1)!;
+      beginTrip(s, v, target, v.status, v.journey?.mode);
+    }
+    v.fault.state = "repaired";
     if (m)
       record(
         s,
@@ -155,12 +168,27 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
         "server",
         v.id,
       );
-    if (!m && !v.mission?.startsWith("remote:") && !v.patients) recall(s, v);
-    else if (v.status !== "scene")
-      beginTrip(s, v, v.journey?.target || m?.pos || v.path.at(-1)!, v.status);
-    setFms(s, v, operativeCode(v), "server", "Reparatur abgeschlossen");
+    if (
+      v.status !== "ready" &&
+      v.status !== "return" &&
+      !m &&
+      !v.mission?.startsWith("remote:") &&
+      !v.patients
+    )
+      recall(s, v);
+    const crew = crewSummary(s, v);
+    setFms(
+      s,
+      v,
+      crew.eligible < crew.required ? 6 : operativeCode(v),
+      "server",
+      crew.eligible < crew.required
+        ? "Störung behoben; Besatzung noch nicht einsatzbereit"
+        : "Reparatur abgeschlossen",
+    );
     return;
   }
+  if (v.fault && s.time < v.fault.repairAt + FAULT_RECOVERY_GRACE) return;
   const j = v.journey;
   if (
     !remoteDynamic &&

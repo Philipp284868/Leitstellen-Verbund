@@ -662,7 +662,8 @@ it("Offline-Aufholen erzeugt keine Einsatzflut und ein voller Patientenbestand b
     w.game.step(3600);
     expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
     for (let i = 0; i < 50; i++) w.game.step(5);
-    expect(w.db.all().get(w.owner)!.missions.length).toBeGreaterThan(2);
+    expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
+    expect(w.db.all().get(w.owner)!.operations.campaign!.remaining).toBe(4);
     const other = majorFixture("other", "crash"),
       m = other.missions[0];
     declareMajor(other, m);

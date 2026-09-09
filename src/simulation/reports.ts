@@ -14,14 +14,19 @@ export function telemetry(s: Save, m: Mission) {
     aaos: [],
   });
 }
-export function reportUnit(s: Save, m: Mission, v: Vehicle) {
+export function reportUnit(
+  s: Save,
+  m: Mission,
+  v: Vehicle,
+  dispatched = false,
+) {
   const t = telemetry(s, m);
   let u = t.units.find((u) => u.id === v.id);
   if (!u) {
     u = { id: v.id, name: v.name, type: v.type, meters: 0 };
     t.units.push(u);
   }
-  if (u && v.status === "alarmed" && u.alarmed === undefined) {
+  if (u && (v.status === "alarmed" || dispatched) && u.alarmed === undefined) {
     u.alarmed = s.time;
     u.plannedTurnout = Math.max(0, v.depart - s.time);
     if (v.journey) u.plannedSeconds = v.journey.plannedSeconds;

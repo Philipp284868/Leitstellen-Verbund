@@ -5,12 +5,16 @@ import {
 } from "./organizations";
 import type { Save, Mission, Vehicle } from "../model";
 import { majorTick } from "./major-incidents";
-import { majorComplete, effectiveSkills } from "./major-resources";
+import {
+  majorComplete,
+  effectiveSkills,
+  workingSkills,
+} from "./major-resources";
 import { mt, type Skills } from "../catalog";
 import { level } from "../model";
-import { capacity } from "../engine";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
 import { initialFire, fireTick } from "./fire";
+import { ensureMissionTasks, taskTick, tasksComplete } from "./mission-tasks";
 import { newPatient, patientTick, patientsReady } from "./patients";
 import { record, simId } from "./events";
 import { request } from "./incidents";
@@ -68,6 +72,7 @@ export function attachDynamics(s: Save, m: Mission, active = true) {
       i++
     )
       m.dynamics.patients.push(newPatient(s, m, mt(m.template).name));
+  if (active) ensureMissionTasks(s, m);
 }
 
 /** Resolve only a small, witnessed incipient fire; response and reconnaissance remain required. */
@@ -394,6 +399,7 @@ export function dynamicsTick(
 ) {
   const d = m.dynamics;
   if (!d?.active || m.phase === "done") return;
+  ensureMissionTasks(s, m);
   const elapsed =
     Math.floor((s.time - d.last) / DYNAMICS.quantum) * DYNAMICS.quantum;
   if (elapsed <= 0) return;
@@ -405,18 +411,25 @@ export function dynamicsTick(
     t += DYNAMICS.quantum
   ) {
     s.time = t;
-    const skills = { ...capacity(s, m.id) };
+    const skills: Skills = {};
     for (const v of s.vehicles.filter(
       (v) =>
         v.mission === m.id &&
         v.status === "scene" &&
-        v.arrive > t &&
+        v.arrive <= t &&
         (!v.fault || v.fault.state === "repaired"),
     ))
-      for (const [k, n] of Object.entries(effectiveSkills(m, v)))
-        skills[k] = Math.max(0, (skills[k] || 0) - n);
+      for (const [k, n] of Object.entries(workingSkills(m, v)))
+        skills[k] = (skills[k] || 0) + n;
     for (const [k, n] of Object.entries(remote))
       skills[k] = (skills[k] || 0) + n;
+    for (const v of remoteUnits.filter(
+      (v) => v.status === "scene" && v.arrive <= t,
+    )) {
+      const working = workingSkills(m, v);
+      for (const [k, n] of Object.entries(effectiveSkills(m, v)))
+        skills[k] = Math.max(0, (skills[k] || 0) - n + (working[k] || 0));
+    }
     if (d.tactic === "defensive") {
       skills.hazmat = Math.max(skills.hazmat || 0, (skills.fire || 0) * 0.5);
     }
@@ -427,6 +440,7 @@ export function dynamicsTick(
     hazardTick(s, m, skills, DYNAMICS.quantum);
     fireTick(s, m, skills, DYNAMICS.quantum);
     patientTick(s, m, skills, DYNAMICS.quantum, carriers);
+    taskTick(s, m, skills, DYNAMICS.quantum);
     syncResponderRecovery(s, m);
     escalate(s, m, skills);
     const critical = d.patients.find(
@@ -496,6 +510,7 @@ export function dynamicsTick(
 }
 export function dynamicsComplete(m: Mission, time: number) {
   return (
+    tasksComplete(m) &&
     majorComplete(m) &&
     organizationsComplete(m) &&
     (!m.dynamics?.active ||

@@ -1,5 +1,5 @@
 import type { Save, Vehicle } from "./model";
-import { bt, vt, type Skills } from "./catalog";
+import { bt, vt, capabilities, type Skills } from "./catalog";
 import { forceRows, openForceLabels } from "./simulation/force-plan";
 import { fleetReadiness } from "./fleet-view";
 import { stationProfile } from "./simulation/staffing";
@@ -17,19 +17,37 @@ export function ForceNeeds({
     <section className="force-needs" aria-label="Benötigte Kräfte">
       <h3>Benötigte Kräfte</h3>
       <div className="force-rows">
-        {rows.map((row) => (
+        {Object.entries(required).map(([skill, count]) => (
           <span
-            key={row.type}
-            className={row.present >= row.required ? "good" : "warning"}
+            key={skill}
+            className={(available[skill] || 0) >= count ? "good" : "warning"}
           >
-            {row.present >= row.required ? "✓" : "○"}{" "}
             <b>
-              {row.present}/{row.required}
+              {Math.min(count, available[skill] || 0)}/{count}
             </b>{" "}
-            {row.name}
+            {skill === "fire"
+              ? "Geeignetes Löschmittel und Löschfähigkeit"
+              : (capabilities[skill] ?? skill)}
           </span>
         ))}
       </div>
+      <details>
+        <summary>Mögliche Fahrzeugkombination</summary>
+        <div className="force-rows">
+          {rows.map((row) => (
+            <span
+              key={row.type}
+              className={row.present >= row.required ? "good" : "warning"}
+            >
+              {row.present >= row.required ? "✓" : "○"}{" "}
+              <b>
+                {row.present}/{row.required}
+              </b>{" "}
+              {row.name}
+            </span>
+          ))}
+        </div>
+      </details>
       <p>
         {missing.length
           ? `Offen: ${missing.join(" · ")}`

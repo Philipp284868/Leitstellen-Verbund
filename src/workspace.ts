@@ -1,5 +1,5 @@
 import type { Save, Mission } from "./model";
-import { mt } from "./catalog";
+import { missionPresentation } from "./mission-presentation";
 import { distance, districtAt } from "./world";
 import { IS_GERMANY } from "./world-choice";
 import { priorityRank } from "./simulation/priority";
@@ -100,7 +100,7 @@ export function missionList(
       return false;
     if (
       !["all", "critical", "major", "request", "mine"].includes(filter) &&
-      mt(m.template).org !== filter
+      missionPresentation(m).org !== filter
     )
       return false;
     if (!needle) return true;
@@ -109,7 +109,7 @@ export function missionList(
         ? (c.facts.find((f) => f.key === "address")?.text ?? "")
         : districtAt(m.pos)
       : "";
-    const text = `${m.id} ${mt(m.template).name} ${location} ${
+    const text = `${m.id} ${missionPresentation(m).name} ${location} ${
       c?.facts
         .filter((f) => f.key !== "address" || c.locationKnown)
         .map((f) => f.text)

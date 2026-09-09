@@ -414,7 +414,7 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
     });
   });
 
-  it("akzeptiert weder manipulierte Availability noch FMS als Umgehung von Rückfahrt und Nachbereitung", async () => {
+  it("alarmiert bereite Rückkehrer, akzeptiert aber keine manipulierte Availability oder FMS als Umgehung echter Nachbereitung", async () => {
     const f = await setup(),
       s = activeMissionsFixture(f.owner, 2),
       v = s.vehicles[0];
@@ -445,19 +445,22 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
       mission: s.missions[0].id,
       vehicles: [v.id],
     };
-    const blocked = await f.request("action", f.session, {
-      id: crypto.randomUUID(),
-      action: dispatch,
-    });
-    expect(blocked.status).toBe(400);
-    expect(await blocked.text()).toContain("Rückfahrt");
     expect(
       (await (await f.request("me", f.session)).json()).save.vehicles[0]
         .availability,
-    ).toMatchObject({ state: "RETURNING", alarmable: false });
+    ).toMatchObject({ state: "RETURNING", alarmable: true });
+    const dispatched = await f.request("action", f.session, {
+      id: crypto.randomUUID(),
+      action: dispatch,
+    });
+    expect(dispatched.status).toBe(200);
     const current = f.app.db.all().get(f.owner)!,
       recovering = current.vehicles[0];
     recovering.status = "ready";
+    recovering.mission = null;
+    recovering.assignment = null;
+    recovering.path = [current.buildings[0].pos];
+    delete recovering.journey;
     recovering.arrive = current.time;
     recovering.postIncident = {
       mission: "",

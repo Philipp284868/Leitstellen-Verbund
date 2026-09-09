@@ -10,6 +10,7 @@ import { validate, type Save } from "../src/model";
 import { attachIncident, callsTick, callAction } from "../src/simulation/calls";
 import { publicSave } from "../src/simulation/incidents";
 import { vehicleAvailability } from "../src/simulation/availability";
+import { queuePostIncident } from "../src/simulation/post-incident";
 import { nextCallDelay } from "../src/simulation/balance";
 import {
   priorityRank,
@@ -49,12 +50,19 @@ function ambulance() {
   v.name = "RTW 1";
   s.vehicles = [v];
   s.people = s.people.filter((p) => p.vehicle === v.id).slice(0, 2);
-  v.status = "scene";
+  v.status = "transport";
   v.mission = s.missions[0].id;
   v.assignment = "medical-assignment";
   v.path = [nodes[2]];
   v.patients = 1;
   return { s, v };
+}
+function handedOverAmbulance() {
+  const state = ambulance();
+  expect(() => recall(state.s, state.v)).toThrow("Personen");
+  queuePostIncident(state.s, state.v);
+  state.v.patients = 0; // The hospital handover has actually completed.
+  return state;
 }
 it("generates and reloads more than 60 simultaneous incidents without a hidden count limit", () => {
   const s = phaseFixture("many-calls");
@@ -84,6 +92,8 @@ it("normal calls receive no automatic duplicate, including legacy pending timers
 it("major callers contribute different observations and incomplete lost calls can recover", () => {
   const s = phaseFixture("major", "bus"),
     m = s.missions[0];
+  callAction(s, m, m.control!.calls[0].id, "accept", "owner");
+  callAction(s, m, m.control!.calls[0].id, "end", "owner");
   s.time = m.control!.secret!.secondaryAt + 1;
   callsTick(s);
   expect(m.control!.calls).toHaveLength(2);
@@ -100,16 +110,16 @@ it("major callers contribute different observations and incomplete lost calls ca
   c.callback = false;
   callAction(s, n, c.id, "accept", "owner");
   callAction(s, n, c.id, "end", "owner");
-  s.time += 31;
+  s.time += 46;
   callsTick(s);
   expect(n.control!.calls[1].kind).toBe("recovery");
 });
-it("returning FMS 1 is unavailable, then real home arrival starts persisted medical aftercare", () => {
-  const { s, v } = ambulance();
+it("real transport work blocks return with FMS 6, then home arrival starts persisted medical aftercare", () => {
+  const { s, v } = handedOverAmbulance();
   recall(s, v);
-  expect(s.desk.fleet[v.id].code).toBe(1);
-  expect(readiness(s, v)).toBe("Noch auf Rückfahrt.");
-  expect(vehicleAvailability(s, v).state).toBe("RETURNING");
+  expect(s.desk.fleet[v.id].code).toBe(6);
+  expect(readiness(s, v)).toBe("Desinfektion nach Rückkehr erforderlich.");
+  expect(vehicleAvailability(s, v).state).toBe("POST_INCIDENT");
   const until = v.arrive;
   s.missions = [];
   tick(s, until - 0.01, {}, false, false);
@@ -129,7 +139,7 @@ it("returning FMS 1 is unavailable, then real home arrival starts persisted medi
   expect(v.postIncident).toBeUndefined();
 });
 it("server readiness overrides forged cached availability and manual FMS changes", () => {
-  const { s, v } = ambulance();
+  const { s, v } = handedOverAmbulance();
   recall(s, v);
   v.availability = {
     state: "AVAILABLE",
@@ -141,7 +151,7 @@ it("server readiness overrides forged cached availability and manual FMS changes
     crewCapacity: 2,
   };
   s.desk.fleet[v.id].code = 2;
-  expect(readiness(s, v)).toBe("Noch auf Rückfahrt.");
+  expect(readiness(s, v)).toBe("Desinfektion nach Rückkehr erforderlich.");
   expect(publicSave(s).vehicles[0].availability!.alarmable).toBe(false);
 });
 it("unbounded history is persistent and paginated without leaking to other owners", () => {
@@ -213,13 +223,14 @@ it("vehicle requirements recognize equivalent equipment without raw skill names"
     ).join(" "),
   ).toMatch(/NEF|Notarzt/);
 });
-it("arrival rate changes with time/weather but not current open incident count", () => {
+it("arrival rate slows with an unresolved backlog and keeps the minimum in busy daytime conditions", () => {
   const s = phaseFixture("cadence");
   const before = nextCallDelay(120, s);
   s.missions.push(
     ...Array.from({ length: 200 }, () => structuredClone(s.missions[0])),
   );
-  expect(nextCallDelay(120, s)).toBe(before);
+  expect(nextCallDelay(120, s)).toBeGreaterThan(before);
+  s.missions = [];
   s.time = 18 * 3600;
-  expect(nextCallDelay(120, s)).not.toBe(before);
+  expect(nextCallDelay(120, s)).toBeGreaterThanOrEqual(260);
 });

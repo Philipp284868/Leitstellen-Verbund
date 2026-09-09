@@ -236,7 +236,7 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
     );
     expect(s.people[0].duty).toBeDefined();
   });
-  it("Rückfahrt bleibt trotz FMS1 gesperrt und gibt erst an der Wache den FF-Pool frei", () => {
+  it("Rückfahrt bleibt mit FMS1 alarmierbar und gibt erst an der Wache den FF-Pool frei", () => {
     const s = ffFixture(),
       v = s.vehicles[0];
     force(s, true);
@@ -245,7 +245,7 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
     recall(s, v);
     expect(v.status).toBe("return");
     expect(s.desk.fleet[v.id].code).toBe(1);
-    expect(readiness(s, v)).toContain("Rückfahrt");
+    expect(readiness(s, v)).toBe("");
     expect(s.people.some((p) => p.vehicle === v.id)).toBe(true);
     tick(s, v.arrive + 1, {}, false, false);
     expect(v.status).toBe("ready");

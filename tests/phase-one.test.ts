@@ -51,7 +51,7 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
     expect(JSON.stringify(publicSave(s))).not.toContain('"secret"');
     expect(() => alarm(s, m, [hlf.id], "owner")).toThrow("Ort und Meldebild");
     interview(s);
-    expect(publicSave(s).missions[0].template).toBe("bin");
+    expect(publicSave(s).missions[0].template).toBe("reported-fire");
     propose(s, m, aao, "owner");
     expect(m.control!.proposal!.vehicles).toEqual([hlf.id]);
     expect(hlf.status).toBe("ready");
@@ -78,7 +78,7 @@ it("spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv det
     expect(publicSave(s).missions[0].template).toBe("field");
     tick(s, s.time + 1, {}, false, false);
     const request = m.control!.radio.find((r) => r.reason === "request")!;
-    expect(request.details).toContain("TLF");
+    expect(request.details).toContain("Löschwasser");
     radioAction(s, m, request.id, "request", "owner");
     const count = m.control!.events.length;
     radioAction(s, m, request.id, "request", "owner");
@@ -131,7 +131,7 @@ it("ordnet mehrere Anrufe demselben Ereignis zu; Abbruch, Rückruf und Übernahm
   expect(c.state).toBe("dropped");
   callAction(s, m, c.id, "callback", "member");
   expect(c.asked).toEqual(["report"]);
-  tick(s, s.time + 10, {}, false, false);
+  tick(s, s.time + 110, {}, false, false);
   expect(m.control!.calls).toHaveLength(2);
   expect(s.missions).toHaveLength(1);
   callAction(s, m, c.id, "ask", "member", "calm");
@@ -157,7 +157,7 @@ it("liefert einen Folgeanruf wenn ein unvollständiges Gespräch ohne Rückruf a
   callAction(s, m, c.id, "accept", "owner");
   tick(s, s.time + 40, {}, false, false);
   expect(c.state).toBe("dropped");
-  tick(s, s.time + 35, {}, false, false);
+  tick(s, s.time + 50, {}, false, false);
   expect(m.control!.calls[1].state).toBe("ringing");
   callsTick(s);
   expect(m.control!.calls).toHaveLength(2);
@@ -169,7 +169,7 @@ it("AAO und freie Disposition respektieren Sperren, Fehlbedarf und Wachenprofile
   interview(s);
   setFms(s, v, 6, "owner", "Wartungsarbeit");
   propose(s, m, aao, "owner");
-  expect(m.control!.proposal!.vehicles).toEqual([]);
+  expect(m.control!.proposal!.vehicles).toEqual([s.vehicles[1].id]);
   expect(m.control!.proposal!.missing.join()).toContain("HLF");
   expect(() => alarm(s, m, [v.id], "owner")).toThrow("FMS 6");
   setFms(s, v, 2, "owner", "Wieder verfügbar");
@@ -407,7 +407,8 @@ it("erhält den Patiententransport im neuen Ablauf mit FMS 7, 8 und einmaligem A
   radioAction(s, m, m.control!.radio[0].id, "report", s.player.id);
   tick(s, s.time + 5000, {}, false, false);
   expect(s.archive.some((a) => a.id === m.id)).toBe(true);
-  for (const code of [3, 4, 5, 7, 8, 1, 2])
+  // Actual transport triggers short aftercare: return remains FMS 6 until it ends.
+  for (const code of [3, 4, 5, 7, 8, 6, 2])
     expect(
       s.desk.fleet[v.id].history.some((e) => e.text.startsWith(`FMS ${code}:`)),
     ).toBe(true);
@@ -427,7 +428,7 @@ it("hält widersprüchliche Angaben verschiedener Anrufer als Widerspruch fest",
   tick(s, s.time + 5, {}, false, false);
   callAction(s, m, c.id, "ask", "owner", "people");
   callAction(s, m, c.id, "end", "owner");
-  tick(s, s.time + 45, {}, false, false);
+  tick(s, s.time + 140, {}, false, false);
   const second = m.control!.calls[1];
   callAction(s, m, second.id, "accept", "owner");
   callAction(s, m, second.id, "ask", "owner", "report");

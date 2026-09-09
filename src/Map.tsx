@@ -3,6 +3,8 @@ import { WORLD_NAME, WORLD_CENTER } from "./world-choice";
 import { VehicleIcon, BuildingIcon, organizationColors } from "./map-icons";
 import type { PublicPlayer } from "./presence";
 import { IncidentIcon } from "./HudIcons";
+import { missionPresentation } from "./mission-presentation";
+import { fleetReadiness } from "./fleet-view";
 import { buildReason } from "./purchase";
 import { vehiclePosition, vehicleMotion } from "./vehicle-position";
 import { volunteerMarkers } from "./simulation/volunteers";
@@ -35,7 +37,6 @@ import {
 import { mt, bt } from "./catalog";
 import type { Save } from "./model";
 import type { Friend } from "./network";
-import { playerColor } from "./ui";
 import { VehicleMarkers } from "./VehicleMarkers";
 export const MapView = memo(function MapView({
   s,
@@ -286,7 +287,11 @@ export const MapView = memo(function MapView({
         })),
         ...s.missions
           .filter((m) => !m.control || m.control.locationKnown)
-          .map((m) => ({ id: m.id, name: mt(m.template).name, pos: m.pos })),
+          .map((m) => ({
+            id: m.id,
+            name: missionPresentation(m).name,
+            pos: m.pos,
+          })),
         ...districts.map((d) => ({
           id: "place:" + d.name,
           name: d.name,
@@ -307,12 +312,12 @@ export const MapView = memo(function MapView({
           (org === "Alle" || bt(vt(v.type).home).org === org) &&
           (status === "Alle" ||
             (status === "Bereit"
-              ? v.status === "ready"
+              ? !fleetReadiness(s)(v)
               : status === "Unterwegs"
                 ? ["travel", "return", "transport"].includes(v.status)
                 : v.status === "scene")),
       ),
-    [s.vehicles, org, status],
+    [s, org, status],
   );
   const chunkSize = 128 * unitsPerPixel;
   const chunkX = Math.floor(offset.x / chunkSize) * chunkSize,
@@ -890,7 +895,7 @@ export const MapView = memo(function MapView({
             .filter(
               (m) =>
                 (!m.control || m.control.locationKnown) &&
-                (org === "Alle" || mt(m.template).org === org),
+                (org === "Alle" || missionPresentation(m).org === org),
             )
             .map((m) => (
               <g
@@ -899,7 +904,7 @@ export const MapView = memo(function MapView({
                 className="map-marker"
                 role="button"
                 tabIndex={0}
-                aria-label={mt(m.template).name}
+                aria-label={missionPresentation(m).name}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect(m.id);
@@ -908,21 +913,15 @@ export const MapView = memo(function MapView({
               >
                 <circle
                   r={selected === m.id ? 23 : 18}
-                  fill={
-                    mt(m.template).org === "Feuerwehr"
-                      ? "#ba4236"
-                      : mt(m.template).org === "Polizei"
-                        ? "#2c73a0"
-                        : "#269161"
-                  }
+                  fill={missionPresentation(m).color}
                   stroke={selected === m.id ? "#fff" : "#17222d"}
                   strokeWidth="3"
                 />
                 <g transform="translate(-12,-12)" color="white">
-                  <IncidentIcon org={mt(m.template).org} />
+                  <IncidentIcon category={missionPresentation(m).category} />
                 </g>
                 <title>
-                  {mt(m.template).name}
+                  {missionPresentation(m).name}
                   {m.shared ? " · Gemeinsam" : ""}
                 </title>
               </g>
@@ -936,7 +935,7 @@ export const MapView = memo(function MapView({
                 className="map-marker"
                 role="button"
                 tabIndex={0}
-                aria-label={`Gemeinsam: ${mt(m.template).name} von ${f.name}`}
+                aria-label={`Gemeinsam: ${missionPresentation(m).name} von ${f.name}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect("friends");
@@ -945,16 +944,16 @@ export const MapView = memo(function MapView({
               >
                 <circle
                   r="15"
-                  fill={playerColor(f.id)}
+                  fill={missionPresentation(m).color}
                   stroke="#ebdcff"
                   strokeWidth="2"
                   strokeDasharray="3 3"
                 />
-                <text textAnchor="middle" y="5" fill="#241932" fontWeight="800">
-                  V
-                </text>
+                <g transform="translate(-10,-10)" color="white">
+                  <IncidentIcon category={missionPresentation(m).category} />
+                </g>
                 <title>
-                  {mt(m.template).name} · {f.name} · {f.status}
+                  {missionPresentation(m).name} · {f.name} · {f.status}
                 </title>
               </g>
             )),

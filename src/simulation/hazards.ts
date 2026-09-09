@@ -4,6 +4,7 @@ import { mt, type Skills } from "../catalog";
 import { hazardKinds, type Hazard } from "./dynamics-schema";
 import { record } from "./events";
 import { clamp } from "./random";
+import { fireExtinguished, taskRequirements } from "./mission-tasks";
 export const hazardNames: Record<Hazard["kind"], string> = {
   fire: "Feuer",
   smoke: "Rauch",
@@ -119,7 +120,16 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
   const d = m.dynamics!;
   for (const h of d.hazards) {
     if (h.resolved) continue;
-    const ratio = Math.min(2, (skills[h.skill] || 0) / h.required);
+    let ratio = Math.min(2, (skills[h.skill] || 0) / h.required);
+    if (h.kind === "fire") {
+      const source = d.scenario?.requirements ?? mt(m.template).requirements;
+      // A declared supply requirement is part of the actual extinguishing
+      // operation, not a timer that can be skipped after the flames disappear.
+      if (
+        ["water", "foam"].some((key) => (source[key] || 0) > (skills[key] || 0))
+      )
+        ratio = 0;
+    }
     const environment =
       h.kind === "fire"
         ? 1 +
@@ -148,23 +158,42 @@ export function hazardTick(s: Save, m: Mission, skills: Skills, dt: number) {
   }
 }
 export function requirements(m: Mission): Skills {
-  const r = {
-    ...(m.dynamics?.scenario?.requirements ?? mt(m.template).requirements),
-  };
-  if (m.major) r.command = Math.max(r.command || 0, 1);
-  for (const task of m.organization?.tasks || [])
-    if (!task.done)
-      r[taskSkills[task.kind]] = Math.max(r[taskSkills[task.kind]] || 0, 1);
-  if (!m.dynamics?.active) return r;
+  const r = taskRequirements(m);
+  if (
+    m.major &&
+    (!m.major.sections.every((s) => s.done) ||
+      m.major.evacuated < m.major.evacuees)
+  )
+    r.command = Math.max(r.command || 0, 1);
+  if (!m.dynamics?.active) {
+    for (const task of m.organization?.tasks || [])
+      if (!task.done)
+        r[taskSkills[task.kind]] = Math.max(r[taskSkills[task.kind]] || 0, 1);
+    return r;
+  }
+  // Resolved hazards keep their persisted state. Only current hazards can add work.
+  for (const h of m.dynamics.hazards)
+    if (!h.resolved) r[h.skill] = Math.max(r[h.skill] || 0, h.required);
   for (const [k, n] of Object.entries(m.dynamics.extra))
-    r[k] = Math.max(r[k] || 0, n);
+    if (
+      !(fireExtinguished(m) && ["fire", "water", "foam"].includes(k)) &&
+      (!m.tasks ||
+        !m.tasks.entries.some(
+          (t) => t.id === `additional:${k}:${n}` && t.done,
+        )) &&
+      (!m.dynamics.hazards.some((h) => h.skill === k) ||
+        m.dynamics.hazards.some((h) => h.skill === k && !h.resolved))
+    )
+      r[k] = Math.max(r[k] || 0, n);
   const waiting = m.dynamics.patients.filter(
     (p) => p.transport === "scene" && p.condition !== "dead",
   );
-  if (m.major && !waiting.length && !m.major.pending?.remaining) {
+  if (!waiting.length && !m.major?.pending?.remaining) {
     delete r.medical;
     delete r.doctor;
     delete r.transport;
+    delete r.intensive;
+    delete r.medicalCommand;
   }
   if (waiting.length) {
     r.medical = Math.max(r.medical || 0, 2);
@@ -172,5 +201,8 @@ export function requirements(m: Mission): Skills {
   }
   if (waiting.some((p) => ["critical", "cpr"].includes(p.condition)))
     r.doctor = Math.max(r.doctor || 0, 1);
+  for (const task of m.organization?.tasks || [])
+    if (!task.done)
+      r[taskSkills[task.kind]] = Math.max(r[taskSkills[task.kind]] || 0, 1);
   return r;
 }

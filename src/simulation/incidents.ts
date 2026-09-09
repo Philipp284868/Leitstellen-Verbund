@@ -298,6 +298,9 @@ export function publicSave(source: Save): Save {
     else if (!p.duty) p.duty = personDuty(source, p);
   }
   s.seed = 0;
+  delete s.callPacing;
+  s.missionWait = 0;
+  s.nextMission = 0;
   s.operations.cooldown = 0;
   if (
     s.operations.campaign &&
@@ -329,14 +332,42 @@ export function publicSave(source: Save): Save {
     }
     if (m.control) {
       delete m.control.secret;
-      if (!m.control.briefed)
-        m.control.events = m.control.events.filter(
-          (e) =>
-            !/^(MAJOR_|HAZARD_|PATIENT_|MISSION_ESCALATED|MISSION_DOWNGRADED|MISSION_STABILIZED|FIRE_SPREAD|CREW_EMERGENCY|SECONDARY_EVENT|FOLLOWUP_PENDING)/.test(
-              e.type,
-            ),
-        );
       if (!m.control.briefed && !m.control.legacy) {
+        // Fail closed for new internal event kinds: only the actual conversation,
+        // operator actions and observed unit movements are public before recon.
+        m.control.events = m.control.events.filter((e) =>
+          PRE_RECON_EVENTS.has(e.type),
+        );
+        delete m.telemetry;
+        delete m.report;
+        delete m.tasks;
+        delete m.control.deficit;
+        m.progress = 0;
+        m.control.radio = m.control.radio
+          .filter((r) => r.reason === "arrival")
+          .map((r) => ({
+            ...r,
+            details: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
+          }));
+        if (
+          m.control.reportedTemplate &&
+          !REPORTED_IDS.has(m.control.reportedTemplate)
+        )
+          m.control.reportedTemplate =
+            m.control.reportedTemplate === "incoming"
+              ? ""
+              : reportId(mt(m.control.reportedTemplate));
+        // Automatically declared hidden major incidents do not disclose urgency.
+        if (
+          !m.control.events.some(
+            (e) =>
+              e.type === "DISPATCH_COMPLETED" ||
+              e.type === "ALARM_STARTED" ||
+              e.type === "DISPATCH_PRIORITY",
+          )
+        )
+          m.control.priority = "NORMAL";
+        if (!m.control.reportedTemplate) delete m.control.proposal;
         m.template = m.control.reportedTemplate || "incoming";
         if (!m.control.locationKnown) m.pos = { x: 0, y: 0 };
       }
@@ -344,3 +375,25 @@ export function publicSave(source: Save): Save {
   }
   return s;
 }
+import { REPORTED_IDS, reportId } from "./call-observations";
+const PRE_RECON_EVENTS = new Set([
+  "MISSION_CREATED",
+  "CALL_RECEIVED",
+  "CALL_ACCEPTED",
+  "CALL_UPDATED",
+  "CALL_ENDED",
+  "AAO_PROPOSED",
+  "ALARM_STARTED",
+  "VEHICLE_DISPATCHED",
+  "VEHICLE_DEPARTED",
+  "VEHICLE_ARRIVED",
+  "DISPATCH_COMPLETED",
+  "DISPATCH_PRIORITY",
+  "FMS_CHANGED",
+  "TRAFFIC_DELAY",
+  "SPEAK_REQUESTED",
+  "SPEAK_HANDLED",
+  "VEHICLE_RECALLED",
+  "TURNOUT_UPDATED",
+  "TURNOUT_DELAYED",
+]);

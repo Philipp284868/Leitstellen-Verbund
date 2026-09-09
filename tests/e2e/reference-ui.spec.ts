@@ -165,7 +165,7 @@ for (const size of [
     });
     await expect(dock).toBeVisible();
     await expect(dock.locator(".dock-heading strong")).toHaveText(
-      "Flächenbrand",
+      "Brandverdacht gemeldet",
     );
     await expect(page.locator(".scrim")).toHaveCount(0);
     await expect(
@@ -191,7 +191,7 @@ for (const size of [
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
     await expect(dock).toHaveCount(0);
     await page.getByRole("button", { name: "Karte", exact: true }).click();
-    await page.locator('svg.map [aria-label="Flächenbrand"]').click();
+    await page.locator('svg.map [aria-label="Brandverdacht gemeldet"]').click();
     await expect(dock).toBeVisible();
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
     await showMapTools(page);

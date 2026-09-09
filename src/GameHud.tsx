@@ -4,7 +4,7 @@ import { Radio, X } from "lucide-react";
 import type { Save } from "./model";
 
 import { useNetwork, usePresence } from "./network";
-import { mt } from "./catalog";
+import { missionPresentation, missionProgress } from "./mission-presentation";
 import { districtAt } from "./world";
 
 import { act } from "./store";
@@ -366,8 +366,9 @@ export function GameHud({
                 <b>
                   {org === "all"
                     ? s.missions.length
-                    : s.missions.filter((m) => mt(m.template).org === org)
-                        .length}
+                    : s.missions.filter(
+                        (m) => missionPresentation(m).org === org,
+                      ).length}
                 </b>
               </button>
             ))}
@@ -382,7 +383,8 @@ export function GameHud({
             {listedMissions
               .slice(currentPage * 25, (currentPage + 1) * 25)
               .map((m) => {
-                const t = mt(m.template),
+                const t = missionPresentation(m),
+                  progress = missionProgress(m),
                   processing = missionStatus(s, m, net.support);
                 return (
                   <button
@@ -390,8 +392,12 @@ export function GameHud({
                     className={`mission-card ${selected === m.id ? "selected" : ""}`}
                     onClick={() => open(m.id)}
                   >
-                    <span className="mission-number" data-org={t.org}>
-                      <IncidentIcon org={t.org} />
+                    <span
+                      className="mission-number"
+                      data-org={t.org}
+                      style={{ background: t.color }}
+                    >
+                      <IncidentIcon org={t.org} category={t.category} />
                     </span>
                     <div>
                       <span className="eyebrow">
@@ -399,11 +405,7 @@ export function GameHud({
                         {m.major ? " · GROSSLAGE" : ""}
                         {m.shared ? " · VERBUND" : ""}
                       </span>
-                      <h3>
-                        {m.control && !m.control.reportedTemplate
-                          ? "Ungeklärter Notruf"
-                          : t.name}
-                      </h3>
+                      <h3>{t.name}</h3>
                       <p>
                         {m.control && !m.control.locationKnown
                           ? "Einsatzort noch erfragen"
@@ -436,7 +438,16 @@ export function GameHud({
                           )}
                         </time>
                       </div>
-                      <progress value={m.progress} max={t.seconds} />
+                      {progress && (
+                        <>
+                          <progress
+                            value={progress.value}
+                            max={progress.max}
+                            aria-label={progress.label}
+                          />
+                          <small>{progress.label}</small>
+                        </>
+                      )}
                     </div>
                   </button>
                 );

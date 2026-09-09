@@ -1,4 +1,5 @@
-import type { Save } from "../model";
+import type { Save, Vehicle } from "../model";
+import { withdraw } from "./withdrawal";
 import { vt, capabilities } from "../catalog";
 import { callAction } from "./calls";
 import { propose } from "./dispatch";
@@ -13,11 +14,16 @@ export function deskCommand(
   a: DeskAction,
   actor: string,
   remote: Record<string, number> = {},
+  remoteUnits: readonly Vehicle[] = [],
 ) {
   if ("mission" in a) {
     const m = s.missions.find((m) => m.id === a.mission);
     if (!m?.control) throw Error("Eigener laufender Einsatz fehlt.");
     writable(m);
+    if (a.type === "withdraw") {
+      withdraw(s, m, a.vehicles, actor, remote, remoteUnits);
+      return;
+    }
     if (a.type === "tactic" || a.type === "patient-care") {
       if (!m.dynamics?.active || !m.control.briefed)
         throw Error("Lagemeldung zuerst aufnehmen.");
@@ -53,6 +59,10 @@ export function deskCommand(
     if (!v) throw Error("Eigenes Fahrzeug fehlt.");
     repairVehicle(s, v, actor);
   } else if (a.type === "aao-save") {
+    if (!a.aao.types.length && !Object.values(a.aao.skills).some((n) => n > 0))
+      throw Error(
+        "Mindestens eine Fähigkeit oder einen bevorzugten Fahrzeugtyp angeben.",
+      );
     a.aao.types.forEach(vt);
     if (Object.keys(a.aao.skills).some((k) => !Object.hasOwn(capabilities, k)))
       throw Error("Unbekanntes Sondermittel.");
