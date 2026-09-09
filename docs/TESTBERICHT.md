@@ -1,5 +1,7 @@
 # Tatsächlicher Testbericht – AMP-Architektur
 
+Aktuelle Erweiterung: [Abnahme Version 2.22 – Funk, Weltlagen, Bereitschaft und erreichbare Einsatzorte](ABNAHME-2.22.md). Die nachstehenden Zahlen bleiben die historischen Ergebnisse des ursprünglichen Architekturumbaus.
+
 Stand: 6. September 2026. Die folgenden Nachweise betreffen den Node-/SQLite-/Socket.IO-Umbau. Frühere Pages-/P2P-Tests gehören zum vorherigen Stand in der Git-Historie und werden hier nicht als Servernachweis verwendet.
 
 ## Version 2.6 – Region und Echtzeit

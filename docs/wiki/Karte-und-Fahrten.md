@@ -37,3 +37,9 @@ Wasserrettung in Deutschland verwendet eine vollständige Kombination aus Zugfah
 ## Historischer Bestand
 
 Informationen zur fiktiven 100×100-km-Region und ihrer bisherigen Wasserrettung betreffen ausschließlich bestehende [[Rivermere]]-Installationen. Ein Betreiber richtet Deutschland mit eigenen Spiel- und Geodatenordnern ein; Koordinaten und Wirtschaft beider Welten werden nicht automatisch vermischt.
+
+## Einsatzorte ab 2.22
+
+Reguläre neue Einsätze benötigen einen belegten Ort und einen geeigneten Zugang, erreichbar in höchstens 900 Sekunden tatsächlicher Straßenfahrzeit mit den grundsätzlich nötigen eigenen Fahrzeugprofilen. Ausrücken wird zusätzlich ausgewiesen. Ein schneller Führungswagen oder fremder Standort erweitert die eigene Zuständigkeit nicht. Freiwillige überörtliche Hilfe darf länger fahren und zeigt ihre tatsächliche ETA vor Zusage.
+
+Ungültige neue Kandidaten werden verworfen; bei fehlendem Ergebnis folgt ein begrenzter späterer Versuch. Bestehende Orte werden am ursprünglichen Standort geprüft. Eine Zufahrtskorrektur routet laufende Kräfte von ihrer tatsächlichen Position neu. Unrettbare technische Altfälle werden ohne Vergütung, XP und Wertung im Archiv aufgehoben. Es gibt keine stille Verlegung in eine andere Stadt. [[Weltlagen-und-Katastrophenschutz]] und die ausführliche technische Anleitung erklären regionale Wetterwirkungen und Datenstand.

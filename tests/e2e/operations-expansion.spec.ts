@@ -239,6 +239,9 @@ test("gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Ber
   await expect(desk.locator(".radio-message")).toHaveCount(3);
   for (const width of [1920, 1366]) {
     await page.setViewportSize({ width, height: width === 1920 ? 1080 : 768 });
+    // Show the complete workspace header after Playwright scrolled a question
+    // into view. The submit action must fit even at the top of the dialog.
+    await page.locator(".modal-body").evaluate((el) => (el.scrollTop = 0));
     const layout = await desk.locator(".call-grid").evaluate((el) => ({
       scroll: el.scrollWidth,
       width: el.clientWidth,

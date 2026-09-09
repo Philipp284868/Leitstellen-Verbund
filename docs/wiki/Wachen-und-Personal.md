@@ -4,7 +4,11 @@ Ab Version 2.21 stellt eine **fertige eigene Wache** ihre freigeschalteten Fahrz
 
 Unter **Gebäude** beziehungsweise in den Fahrzeugdetails stehen Betriebsprofil und konkrete Ausnahmegründe. Neue Funktionen benötigen weiterhin den passenden fertiggestellten Ausbau, Spielerlevel und tatsächlichen Stellplatz. Ein noch laufender Bau oder eine gesperrte Erweiterung wird nicht durch Personalautomatik übersprungen.
 
-Neue Feuerwachen sind FF. Passende Kräfte kommen nach Alarmierung auf tatsächlichen Straßen versetzt zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Privatleben und Dienstplan sind keine Pflichtverwaltung. Ab Stufe 6 ist die Umstellung auf BF für 1.350.000,00 € möglich. Vorhandene historische BF bleiben bestehen.
+Neue Feuerwachen sind FF. Ab Version 2.22 besitzen sie einen gespeicherten Kern aus vier bis sechs hauptamtlichen Personen. Ergänzende ehrenamtliche Kräfte kommen nach Alarmierung auf tatsächlichen Straßen versetzt zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Der Kern zählt Personen, nicht Fahrzeuge, und kann nicht mehrfach gleichzeitig gebunden werden. Privatleben und Dienstplan sind keine Pflichtverwaltung. Ab Stufe 6 ist die Umstellung auf BF für 1.350.000,00 € möglich. Vorhandene historische BF bleiben bestehen.
+
+Die KatS-Wache stellt GW-SAN für Material und Behandlung sowie NKTW für Patiententransporte bereit. Qualifikation, tatsächliche Mobilisierung und Klinikübergabe bleiben nötig. [[Weltlagen-und-Katastrophenschutz]] erläutert die getrennte Katastrophenbereitschaft und ihre Wirkung auf Sammelzeiten.
+
+**Fahrzeuge in der Garage** zeigt physisch anwesende Fahrzeuge einschließlich dort abgestellter Status-6-Fahrzeuge. Fahrzeuge unterwegs stehen getrennt; eine Heimatzuordnung reicht nicht als Garagenplatz. Der Klappzustand bleibt pro Benutzer nach Echtzeitupdates und Wiederverbindung erhalten.
 
 ## Was weiter eine echte Sperre ist
 

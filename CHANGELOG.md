@@ -1,5 +1,17 @@
 # Änderungen
 
+## 2.22.0
+
+- Geordneter Funk pro Leitstelle/Kanal und eine hörbare Fahrzeugmeldung pro Arbeitsplatz, mit Prioritäten, Alterung, kontrollierter Unterbrechung, Watchdog und Historie. Musik und Telefon bleiben unabhängig. Wiederverbindung spielt keine historische Meldungswelle ab.
+- Gemeinsamer Notruf-/Dispositionsarbeitsplatz mit adaptiven Fragen, Quellen und Unsicherheit, frühem Alarmieren, AAO, freier Auswahl, ETA und sichtbaren Maßnahmen. Eine zum telefonischen Meldebild entsandte Besatzung kann auch eine unerwartete Lage melden und passende Kräfte nachfordern.
+- Zentral persistente Weltlagen mit sechs Profilen, fünf Phasen, regionalen Wetterwirkungen, begrenztem Aufkommen und ruhiger Erholung. Zwei kompakte obere Statusfelder zeigen Lage und öffentliche Alarmstellen ohne private Einsatzfreigabe.
+- Neue Einsatzorte mit belegten Referenzen und tatsächlicher 900-Sekunden-Routenprüfung für eigene geeignete Fahrzeugprofile. Begrenzte Kandidatensuche, Cache und Wiederholung; technische Prüfung bestehender Zufahrten, Neurouting laufender Hilfe und vergütungsfreie technische Aufhebung unrettbarer Fälle.
+- Katastrophenschutzwache mit vorhandenem GW-SAN/NKTW/SEG-Katalog, realer ehrenamtlicher Mobilisierung und tatsächlicher Bereitschaft; der GW-SAN transportiert keine Patienten. FFW-Kern aus einmalig vier bis sechs bestehenden Personen. Physische Garagenlisten speichern den Klappzustand.
+- Freie Namenswünsche in Unterstützungsanfragen, getrennt von zugesagten stabilen Fahrzeug-IDs, mit begrenzter Eingabe und fähigkeitsbasierten Alternativen.
+- SQLite-Migrationen 15–18 mit vorheriger Sicherung und lesender Vorschau. Bestehende Weltidentität, Geodaten, Besitz, Geld, XP, aktive Bindungen und Patiententransporte bleiben geschützt. Keine automatische Produktionsbereitstellung.
+
+Fachquellen und Spielparameter: [Katastrophenschutz](docs/KATASTROPHENSCHUTZ.md), [Funk](docs/FUNKVERARBEITUNG.md), [Lagen und Einsatzorte](docs/WELTLAGEN-UND-EINSATZORTE.md). Dieser Eintrag beschreibt Funktionen; tatsächliche Prüfbelege werden gesondert dokumentiert.
+
 ## 2.21.0
 
 ### Oberfläche und Lernweg

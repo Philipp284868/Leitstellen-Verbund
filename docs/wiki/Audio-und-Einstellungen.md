@@ -6,7 +6,9 @@ Hauptmenü und Spiel öffnen dieselben **Einstellungen**. Die Reiter heißen **A
 
 Zwei eigene Arrangements begleiten Menü und Spiel; der Szenenwechsel blendet über 2,4 Sekunden. Master, Musik, Umgebung, Telefon, Funk/Sprache, Alarmierung und UI sind getrennt regelbar. Feinregler steuern unter anderem Pieper, Sirene, Sprechwunsch und Priorität.
 
-Unabhängige Spielsignale dürfen gleichzeitig klingen. Funkmeldungen werden je Kanal geordnet. Aktive Kommunikation senkt Musik und Umgebung vorübergehend ab; nach ihrem Ende gelten die aktuell gewählten Regler. Priorität und Notfall behalten Originaltöne, ausdrücklich gewählte Mutes gelten trotzdem. Alle wichtigen Meldungen besitzen eine sichtbare Entsprechung.
+Unabhängige Spielsignale dürfen gleichzeitig klingen. Der Server ordnet Funkmeldungen je Leitstellenkanal; am einzelnen Arbeitsplatz spricht auch beim Überwachen mehrerer Kanäle nur ein Fahrzeug gleichzeitig. Wartende, unterbrochene und abgeschlossene Übertragungen bleiben sichtbar. Notfälle werden sofort hervorgehoben, normale Meldungen erhalten mit zunehmender Wartezeit Vorrang. Aktive Kommunikation senkt Musik und Umgebung vorübergehend ab; nach ihrem Ende gelten die aktuell gewählten Regler. Telefon und Funk bleiben getrennt. Priorität und Notfall behalten Originaltöne, ausdrücklich gewählte Mutes gelten trotzdem. Alle wichtigen Meldungen besitzen eine sichtbare Entsprechung.
+
+Stummschaltung, geschlossene Browser und fehlende lokale Stimmen halten die Simulation nicht an. FMS folgt der tatsächlichen Bewegung unabhängig von der Sprachwarteschlange. Wiederverbindung liest keinen historischen Stapel vor. Die optionale Sprachausgabe verwendet ausschließlich verfügbare lokale Browserstimmen; ohne geeignete Stimme bleiben Originaltöne und Texte erhalten.
 
 Mehrere Tabs desselben Kontos koordinieren die Ausgabe; der aktivierte Tab übernimmt. Hintergrundverhalten ist wählbar: alles pausieren, nur Kommunikation/Alarmierung oder Audio weiterlaufen lassen. Browser und Betriebssystem dürfen Hintergrundtabs dennoch suspendieren. Autoplay erfordert eine bewusste Interaktion; Mikrofonberechtigung und fremder Musikdienst sind nicht nötig.
 

@@ -2,7 +2,15 @@
 
 Leitstellen-Verbund ist ein deutschsprachiges Browser-Leitstellenspiel für PC mit Maus und Tastatur. Node.js 24 liefert Client, HTTP-API und Socket.IO aus; SQLite und die gesamte verbindliche Simulation laufen auf dem eigenen Server. **Kein aktiver Einzelspieler, keine Smartphone-/Tablet-Produktoberfläche, Echtzeit 1×.** Ein einzelner angemeldeter Spieler auf einem Multiplayer-Server ist zulässig.
 
-## Version 2.21.0 · Bedienung, Tutorial, automatische Wachbesetzung und Euro-Wirtschaft
+## Version 2.22.0 · Funk, gemeinsamer Notrufarbeitsplatz, Weltlagen und Katastrophenschutz
+
+Ein gemeinsamer Arbeitsbereich verbindet Anrufe, Gespräch, bekannte Fakten und Disposition. Fahrzeugfunk wird je Kanal und Arbeitsplatz geordnet wiedergegeben. Die gespeicherte Serverlage steuert ruhige Phasen, Normalbetrieb und besondere Wetterlagen mit regionaler Wirkung. Neue eigene Einsätze benötigen belegte Zufahrten und passende Straßenfahrzeiten von höchstens 900 Sekunden. Bestandsorte werden kontrolliert geprüft.
+
+KatS-Wachen nehmen GW-SAN und NKTW auf. Tatsächliche Bereitschaft mobilisiert vorhandene Kräfte und ist anderen Leitstellen über die obere Anzeige sichtbar. FFW-Wachen erhalten einmalig vier bis sechs vorhandene Personen als hauptamtlichen Kern; die Garage zeigt physisch anwesende Fahrzeuge. Freie Fahrzeugnamen ergänzen gezielte Unterstützungsanfragen.
+
+[Weltlagen, Notrufe, Fahrzeitprüfung und Migrationen](docs/WELTLAGEN-UND-EINSATZORTE.md) · [Funk und Fahrzeugwünsche](docs/FUNKVERARBEITUNG.md) · [KatS, Quellen und Bereitschaft](docs/KATASTROPHENSCHUTZ.md) · [Abnahme und Vorher-/Nachher-Messung 2.22](docs/ABNAHME-2.22.md). Keine automatische Produktionsinstallation und kein Karten- oder Datenreset.
+
+### Weiterhin gültige Funktionen aus 2.21
 
 Hauptmenü und Spiel verwenden gemeinsame Einstellungen mit Vorschau, **Übernehmen** und **Verwerfen**. Formulare behalten Eingaben bei Serverfehlern, schützen offene Entwürfe und zeigen tatsächliche Kaufkosten. Die persönliche serverseitige Übungswelt führt durch 16 Tutorialkapitel einschließlich technischem Einsatz, Brand und echter Nachforderung. Ihr Budget, Besitz, XP und Archiv bleiben von der normalen Leitstelle getrennt; Fortsetzung und Wiederholung sind auch nach einem Neustart möglich.
 

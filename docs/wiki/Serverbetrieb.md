@@ -23,3 +23,9 @@ Vorhandene Käufe, Orte, Fahrzeugbindungen, Wege und XP bleiben geschützt. Alte
 Welt-/Deutschland-Datensatzkennung bleiben unverändert. Kein Geodaten-Neuimport oder Datenreset ist nötig. Ein Downgrade benötigt alte Software und passende Vorabsicherung zusammen; alte Software nicht gegen Schema 14 starten. Historische Testberichte bestätigen keine aktuelle Release-Prüfung.
 
 Keine privaten Spielstände, Tokens oder personenbezogenen Logs in GitHub veröffentlichen. Secret Scanning ersetzt nicht die Verantwortung für die private Datenablage.
+
+## Schema 15–18
+
+Die neueren Migrationen ergänzen FFW-Bereitschaftskerne und tatsächliche KatS-Anreisen (15), geordneten Funk und Fahrzeugwünsche (16), gemeinsame Weltlagen (17) sowie Ortsprüfung und Zufahrtsreferenzen (18). Der vorhandene Vorabsicherungs- und Vorschauweg bleibt bestehen. Alte Software nicht gegen Schema 18 starten; ein Downgrade benötigt die passende alte Software samt Vorabsicherung. Weltidentität und Geodaten bleiben erhalten. Technische Standortprüfungen können Fälle vorübergehend pausieren, während belegte Zufahrten geprüft werden; laufende Patiententransporte bleiben bestehen.
+
+[Details und Host-CLI](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/WELTLAGEN-UND-EINSATZORTE.md).
