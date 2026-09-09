@@ -1,3 +1,5 @@
+import { civilProtectionSchema } from "./simulation/civil-protection-schema";
+import { validateCivilProtection } from "./simulation/civil-protection";
 import {
   centsSchema,
   signedCentsSchema,
@@ -71,6 +73,7 @@ export const buildingSchema = z
     level: integer.min(1).max(10),
     ready: num,
     organization: stationSchema.optional(),
+    civilProtection: civilProtectionSchema.optional(),
     hospital: hospitalSchema.optional(),
     extensions: z
       .array(z.enum(["technical", "hazmat", "air", "doctor"]))
@@ -390,6 +393,7 @@ export function validate(data: unknown): Save {
 }
 export function validateReferences(s: Save, legacy = false) {
   validateStaffing(s);
+  validateCivilProtection(s);
   s.completed = Math.max(s.completed, s.archive.length);
   const assignments = s.vehicles.flatMap((v) =>
     v.assignment ? [v.assignment] : [],

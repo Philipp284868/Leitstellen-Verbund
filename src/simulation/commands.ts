@@ -47,6 +47,11 @@ export function deskCommand(
         );
       }
     }
+    if (a.type === "mission-note") {
+      if (!m.control.locationKnown || !m.control.reportedTemplate)
+        throw Error("Zuerst Ort und Meldebild erfragen.");
+      record(s, m, "SITUATION_NOTE", a.text, actor);
+    }
     if (a.type === "call") callAction(s, m, a.call, a.op, actor, a.question);
     if (a.type === "radio") radioAction(s, m, a.id, a.op, actor, remote);
     if (a.type === "aao-propose") {

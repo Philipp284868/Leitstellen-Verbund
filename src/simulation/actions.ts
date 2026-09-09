@@ -4,6 +4,13 @@ const id = z.string().min(1).max(100);
 export const deskActions = [
   z
     .object({
+      type: z.literal("mission-note"),
+      mission: id,
+      text: z.string().trim().min(3).max(600),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal("withdraw"),
       mission: id,
       vehicles: z.array(id).min(1).max(500),
@@ -31,7 +38,7 @@ export const deskActions = [
       type: z.literal("call"),
       mission: id,
       call: id,
-      op: z.enum(["accept", "ask", "end", "callback"]),
+      op: z.enum(["accept", "ask", "end", "callback", "handoff"]),
       question: z
         .enum(["address", "report", "people", "hazard", "detail", "calm"])
         .optional(),

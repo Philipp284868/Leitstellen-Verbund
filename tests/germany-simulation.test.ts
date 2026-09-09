@@ -690,7 +690,7 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
   }, 20000);
 });
 
-it("Deutschland: freiwillige Kräfte fahren auf gespeicherten Straßenrouten zur Wache und bilden nach Neustart dieselbe Besatzung", () => {
+it("Deutschland: KatS-Mobilisierung erhält nach Neustart echte FF-Straßenanreise und dieselbe Besatzung", () => {
   let game = createGame();
   const mission = setupFleet(game);
   interview(game, mission);
@@ -707,6 +707,25 @@ it("Deutschland: freiwillige Kräfte fahren auf gespeicherten Straßenrouten zur
   fixture.forceVolunteerAvailability(s, true, 3600);
   db!.save(owner, s);
   const vehicle = s.vehicles[0].id;
+  const home = s.buildings[0].id;
+  command(game, {
+    type: "civil-station",
+    home,
+    enabled: true,
+    preparation: 60,
+  });
+  expect(() =>
+    command(game, { type: "dispatch", mission, vehicles: [vehicle] }),
+  ).toThrow("nicht mobilisiert");
+  command(game, { type: "civil-readiness", homes: [home], op: "mobilize" });
+  const readiness = structuredClone(current().buildings[0].civilProtection);
+  db!.close();
+  db = new fixture.Database(resolve(dir, "save"));
+  game = new fixture.Game(db);
+  expect(current().buildings[0].civilProtection).toEqual(readiness);
+  game.step(61, Date.now(), { generation: false });
+  expect(current().buildings[0].civilProtection!.state).toBe("ready");
+  expect(current().people.every((p) => p.vehicle === null)).toBe(true);
   command(game, { type: "dispatch", mission, vehicles: [vehicle] });
   s = current();
   const plan = structuredClone(s.vehicles[0].turnout!);

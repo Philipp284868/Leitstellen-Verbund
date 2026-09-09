@@ -263,7 +263,7 @@ export function callAction(
   s: Save,
   m: Mission,
   id: string,
-  op: "accept" | "end" | "callback" | "ask",
+  op: "accept" | "end" | "callback" | "ask" | "handoff",
   actor: string,
   question?: Question,
 ) {
@@ -313,10 +313,11 @@ export function callAction(
     call.started = s.time;
     call.ended = 0;
     c.stage = c.stage === "incoming" ? "interview" : c.stage;
-    if (op === "accept" && call.stress > 75) {
+    if (op === "accept" && call.stress > 75 && !c.secret.dropAt) {
       c.secret.dropCall = call.id;
       c.secret.dropAt = s.time + 35;
-    } else if (c.secret.dropCall === call.id) c.secret.dropAt = 0;
+    } else if (op === "callback" && c.secret.dropCall === call.id)
+      c.secret.dropAt = 0;
     record(
       s,
       m,
@@ -329,6 +330,19 @@ export function callAction(
   if (op === "end" && call.state === "ended" && call.actor === actor) return;
   if (call.state !== "active" || call.actor !== actor)
     throw Error("Nur der Gesprächsbearbeiter kann diesen Notruf ändern.");
+  if (op === "handoff") {
+    call.duration += s.time - call.started;
+    call.state = "ringing";
+    call.actor = "";
+    record(
+      s,
+      m,
+      "CALL_HANDED_OVER",
+      "Gespräch zur Übernahme durch einen anderen Disponenten freigegeben. Angaben und Antwortzeit bleiben erhalten.",
+      actor,
+    );
+    return;
+  }
   if (op === "end") {
     if (
       !call.callback &&

@@ -1,3 +1,4 @@
+import { civilProtectionTick } from "./civil-protection";
 import { turnoutReady } from "./staffing";
 import { stationProfile, crewSummaries, personDuty } from "./staffing";
 import { vehicleAvailability } from "./availability";
@@ -48,6 +49,7 @@ export function legacyIncident(s: Save, m: Mission) {
   );
 }
 export function beforeStep(s: Save) {
+  civilProtectionTick(s);
   callsTick(s);
   for (const v of s.vehicles)
     if (v.status === "alarmed" && v.depart <= s.time) {
@@ -385,6 +387,8 @@ const PRE_RECON_EVENTS = new Set([
   "MISSION_CREATED",
   "CALL_RECEIVED",
   "CALL_ACCEPTED",
+  "CALL_HANDED_OVER",
+  "SITUATION_NOTE",
   "CALL_UPDATED",
   "CALL_ENDED",
   "AAO_PROPOSED",

@@ -1,3 +1,4 @@
+import { civilProtectionActions } from "../src/simulation/civil-protection-schema";
 import { majorActions } from "../src/simulation/major-schema";
 import {
   organizationActions,
@@ -9,6 +10,7 @@ import { point } from "../src/model";
 const id = z.string().min(1).max(100),
   name = z.string().trim().min(1).max(48);
 export const actionSchema = z.discriminatedUnion("type", [
+  ...civilProtectionActions,
   ...majorActions,
   ...deskActions,
   ...organizationActions,

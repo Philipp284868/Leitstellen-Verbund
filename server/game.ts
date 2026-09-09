@@ -1,3 +1,8 @@
+import {
+  civilProtectionActions,
+  type CivilProtectionAction,
+} from "../src/simulation/civil-protection-schema";
+import { civilProtectionCommand } from "../src/simulation/civil-protection";
 import { mulRatio } from "../src/money";
 import { vehiclePosition } from "../src/vehicle-position";
 import { qualityFactor } from "../src/simulation/reports";
@@ -140,6 +145,12 @@ export class Game {
         );
         aidCommand(saves, s, action as AidAction, user, eligible);
       } else if (
+        civilProtectionActions.some(
+          (schema) => schema.shape.type.value === action.type,
+        )
+      )
+        civilProtectionCommand(s, action as CivilProtectionAction, user);
+      else if (
         organizationActions.some(
           (schema) => schema.shape.type.value === action.type,
         )
@@ -629,9 +640,9 @@ export class Game {
               ? "Verbunden · Online"
               : "Verbunden · Server simuliert",
             revision: other.revision,
-            buildings: other.buildings.filter((b) =>
-              visible.some((v) => v.home === b.id),
-            ),
+            buildings: other.buildings
+              .filter((b) => visible.some((v) => v.home === b.id))
+              .map((b) => ({ ...b, civilProtection: undefined })),
             vehicles: visible.map((v) => ({
               ...v,
               turnout: undefined,
