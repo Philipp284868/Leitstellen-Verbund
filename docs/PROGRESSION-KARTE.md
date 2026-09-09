@@ -1,6 +1,6 @@
-# Progression, Region und Fahrtsimulation – Version 2.12.0
+# Progression, Freischaltungen und Fahrtsimulation · Version 2.21
 
-## Bestätigte Ursachen
+## Historischer Hintergrund: bestätigte Ursachen der Korrektur 2.12
 
 Der bisherige Ausdruck `Math.min(10, 1 + Math.floor(xp / 150))` begrenzte nur die berechnete Stufe. Einsatzabschlüsse schrieben weiterhin XP in den Spielstand. Die HUD-Anzeige verwendete unabhängig davon `xp % 150`. Es gab damit keinen belegten allgemeinen Verlust von XP oberhalb Stufe 10. Es werden keine vermuteten historischen Belohnungen erfunden.
 
@@ -20,60 +20,27 @@ Alle Straßenfahrzeugtypen hatten zuvor 60 km/h als Fahrzeugwert. Streckenlänge
 
 Die letzte Formel läuft über die Freischalttabelle und Stufe 100 hinaus weiter. Die binäre Stufensuche arbeitet ohne Schleife über sämtliche verdienten Stufen. Rest-XP und größere Gutschriften bleiben erhalten. Der explizit validierte Speicherbereich beträgt 0 bis 1.000.000.000.000 XP; eine Überschreitung wird abgewiesen statt abgeschnitten. Server, HUD, Profil und Kaufbedingungen verwenden dieselbe Berechnung.
 
-Eine erfolgreiche Mission vergibt `100 + min(60, floor(Grunddauer / 30) × 10) + min(100, Anzahl ursprünglicher Fähigkeitsarten × 15) + (ursprüngliche Szenariostufe − 1) × 35` XP. Die unveränderliche Katalogdefinition ist maßgeblich, nicht absichtliche Eskalation, Wartezeit, Fahrzeuganzahl oder wiederholte Meldung. Credits bleiben unverändert. Bestätigte externe Unterstützung verwendet den vorhandenen einmaligen Auszahlungsweg mit 60 XP. Fortschritt gehört zum jeweiligen gespeicherten Leitstellenstand; mehrere Disponenten oder Tabs vervielfachen ihn nicht. Einzelspieler und Multiplayer bleiben getrennt.
+Eine erfolgreiche Mission verwendet `100 + min(60, floor(Grunddauer / 30) × 10) + min(100, Anzahl ursprünglicher Fähigkeitsarten × 15) + (ursprüngliche Szenariostufe − 1) × 35` als XP-Grundbetrag. Die unveränderliche Katalogdefinition ist maßgeblich, nicht absichtliche Eskalation, Wartezeit, Fahrzeuganzahl oder wiederholte Meldung. Euro werden getrennt nach der aktuellen Wirtschaftsregel berechnet; die bestehende Qualitätsbewertung kann die Abschlussvergütung einschließlich XP vermindern. Bestätigte externe Unterstützung erhält einmalig bis zu 60 XP, ebenfalls mit Qualitätsfaktor. Fortschritt gehört zum jeweiligen gespeicherten Leitstellenstand; mehrere Disponenten oder Tabs vervielfachen ihn nicht. PC-Multiplayer ist der einzige normale Spielmodus. Persönliche Übungen besitzen getrennten Fortschritt; alte Einzelspielerstände sind inaktive Archive.
 
-## Vollständige Freischaltungen
+## Aktuelle Freischaltungen und Preise
 
-Für sämtliche Neukäufe gelten zusätzlich Geld, fertige passende Wache, freier Stellplatz und gegebenenfalls eine vorhandene Erweiterung. Personal und Fachausbildung müssen für den tatsächlichen Einsatz bereitstehen. Schulen werden vor den ersten notwendigen Fachausbildungen erreichbar. Gebäudeausbau verlangt mindestens die Gebäudefreischaltung und das Doppelte der bisherigen Gebäudestufe; die vorhandene maximale Gebäudestufe 10 ist unabhängig vom unbegrenzten Spielerfortschritt.
+Die vollständige aus den aktuellen Katalogen erzeugte [Euro-Preisliste](EURO-PREISE.md) enthält alle **50 Fahrzeugtypen, acht Gebäudetypen und vier Erweiterungen**, ihre Freischaltstufen und Voraussetzungen. Sie ersetzt die frühere unvollständige 20-Fahrzeug-/Credit-Tabelle dieser Anleitung. Der Erzeuger `node scripts/economy-audit.mjs --write` schreibt zugleich [EURO-PREISE.json](EURO-PREISE.json).
 
-### Gebäude
+Neukäufe benötigen ausreichend Euro, Spielerlevel, fertige passende Wache, Stellplatz und gegebenenfalls Erweiterung. Ab 2.21 stellt die fertiggestellte freigeschaltete Gebäudefunktion passende Besetzung und Qualifikation automatisch bereit. Ein Ausbildungszentrum ist kein zusätzlicher Pflichtkauf für jede Fahrzeugbesatzung. Verletzungen, aktive Bindungen und tatsächliche FF-Anreise bleiben wirksam. [Automatische Wachbesetzung](GEBAEUDEBESETZUNG-2.21.md).
 
-| ID         | Inhalt                      | Stufe |      Preis | Einordnung                                                                           |
-| ---------- | --------------------------- | ----: | ---------: | ------------------------------------------------------------------------------------ |
-| `fire`     | Feuerwache                  |     1 |  55,000 Cr | Spielbarer Feuerwehrstart mit TSF-W                                                  |
-| `ems`      | Rettungswache               |     4 |  42,000 Cr | RTW und KTW gleichzeitig verfügbar                                                   |
-| `school`   | Ausbildungszentrum          |     5 |  35,000 Cr | Vor Drehleiter, Führung und weiteren Fachausbildungen                                |
-| `police`   | Polizeiwache                |     7 |  40,000 Cr | Funkstreifenwagen gleichzeitig verfügbar                                             |
-| `hospital` | Krankenhaus                 |    12 | 100,000 Cr | Eigene Aufnahme nach Einstieg in Rettungsdienst; öffentliche Klinik bleibt verfügbar |
-| `thw`      | THW-Unterkunft              |    15 |  62,000 Cr | GKW und THW-MTW gleichzeitig verfügbar; Bergungsausbildung erforderlich              |
-| `water`    | Wasserrettungsstation       |    20 |  48,000 Cr | GW-Wasserrettung und Boot gleichzeitig; Hafenbauplatz und Ausbildung                 |
-| `heli`     | Rettungshubschrauberstation |    30 |  95,000 Cr | RTH gleichzeitig; Luftrettungsausbildung                                             |
+Gebäudeausbau benötigt mindestens die Gebäudefreischaltung und das Doppelte der bisherigen Gebäudestufe. Die maximale Gebäudestufe 10 ist unabhängig vom unbegrenzten Spielerfortschritt. Bestehende Fahrzeuge werden nicht durch spätere Stufengrenzen eingezogen.
 
-### Fahrzeuge
+Die [sechs aktuellen Finanzierungsszenarien](EURO-WIRTSCHAFT.md#sechs-transparente-wirtschaftsszenarien) verwenden tatsächliche Europreise, automatische Grundfinanzierung und ausdrücklich begrenzte Annahmen zu Einsatzerlösen. Sie sind Geldmodelle, keine gemessenen Fahr- oder Aufstiegszeiten. Neue normale Leitstellen beginnen mit 1.400.000,00 €; Feuerwache und TSF-W lassen 570.000,00 € übrig. Die folgende ältere Zeitstudie wird nicht als aktuelle Deutschlandmessung ausgegeben.
 
-| ID      | Fahrzeug          | Stufe | Wache    | Personal / Ausbildung |      Preis |
-| ------- | ----------------- | ----: | -------- | --------------------- | ---------: |
-| `tsf`   | TSF-W             |     1 | `fire`   | 6 / Grundbesatzung    |  18,000 Cr |
-| `lf`    | LF 20             |     2 | `fire`   | 9 / Grundbesatzung    |  30,000 Cr |
-| `tlf`   | TLF 4000          |     3 | `fire`   | 3 / Grundbesatzung    |  35,000 Cr |
-| `rtw`   | RTW               |     4 | `ems`    | 2 / Grundbesatzung    |  25,000 Cr |
-| `ktw`   | KTW               |     4 | `ems`    | 2 / Grundbesatzung    |  16,000 Cr |
-| `hlf`   | HLF 20            |     6 | `fire`   | 9 / Grundbesatzung    |  45,000 Cr |
-| `fustw` | Funkstreifenwagen |     7 | `police` | 2 / Grundbesatzung    |  16,000 Cr |
-| `elw`   | ELW 1             |     8 | `fire`   | 2 / Führung           |  22,000 Cr |
-| `dlk`   | DLK 23            |    10 | `fire`   | 3 / Drehleiter        |  48,000 Cr |
-| `nef`   | NEF               |    11 | `ems`    | 2 / Notarzt           |  28,000 Cr |
-| `pmtw`  | Polizei-MTW       |    13 | `police` | 6 / Grundbesatzung    |  24,000 Cr |
-| `rw`    | RW                |    14 | `fire`   | 3 / Bergung           |  43,000 Cr |
-| `gkw`   | GKW               |    15 | `thw`    | 9 / Bergung           |  35,000 Cr |
-| `tmtw`  | THW-MTW           |    15 | `thw`    | 6 / Grundbesatzung    |  18,000 Cr |
-| `mzgw`  | MzGW              |    17 | `thw`    | 6 / Grundbesatzung    |  32,000 Cr |
-| `air`   | GW-Atemschutz     |    18 | `fire`   | 3 / Atemschutz        |  30,000 Cr |
-| `gww`   | GW-Wasserrettung  |    20 | `water`  | 4 / Wasserrettung     |  28,000 Cr |
-| `boat`  | Rettungsboot      |    20 | `water`  | 2 / Wasserrettung     |  18,000 Cr |
-| `haz`   | GW-Gefahrgut      |    24 | `fire`   | 3 / Gefahrgut         |  48,000 Cr |
-| `rth`   | RTH               |    30 | `heli`   | 3 / Luftrettung       | 110,000 Cr |
+## Aktuelle Migration und Karte
 
-Die Staffelung führt von Grundlöschfahrzeugen über Rettungsdienst und Polizei zu Führung, Höhenrettung, Spezialtechnik, Wasser- und Luftrettung. Bestehende Fahrzeuge werden nicht eingezogen oder durch neue Stufengrenzen stillgelegt.
+Schema 14 übernimmt die Euro-/Preisumstellung und automatische Wachbesetzung mit Vorabsicherung, read-only Vorschau und Summenprüfung. Bereits vorhandene XP, Fahrzeugbindungen und Wege bleiben dabei geschützt. [Konkreter Ablauf](AMP.md#update-und-migration-auf-schema-14) · [Bestandsschutz](EURO-WIRTSCHAFT.md). Die ältere Progressionsmigration wird bei entsprechend alten kompatiblen Beständen weiterhin nur einmal angewendet.
 
-### Erweiterungen
+Deutschland verwendet reale lokale OSM-Geometrie und Straßenrouting; aktuelle Karte, Limits und ETA stehen in [DEUTSCHLAND.md](DEUTSCHLAND.md) und [DEUTSCHLAND-ROUTING.md](DEUTSCHLAND-ROUTING.md). Die folgenden Flächen-, Knoten- und Fahrzeitwerte betreffen ausdrücklich die frühere fiktive Falkenried-Erweiterung aus Version 2.12. Sie sind kein aktueller Deutschlandumfang und keine erneute Migrationsanweisung.
 
-| ID          | Erweiterung              | Stufe | Wache  | Voraussetzung für |
-| ----------- | ------------------------ | ----: | ------ | ----------------- |
-| `technical` | Technische Hilfeleistung |    14 | `fire` | rw                |
-| `hazmat`    | Gefahrgut-Erweiterung    |    24 | `fire` | haz               |
-| `air`       | Atemschutzwerkstatt      |    18 | `fire` | air               |
-| `doctor`    | Notarztstandort          |    11 | `ems`  | nef               |
+## Historische Studie und Weltmigration aus Version 2.12
+
+Die folgenden Abschnitte bleiben als damals dokumentiertes Modell und technische Herleitung erhalten. Aussagen über zwei aktive Fälle, getrennte Spielmodi, Schema 11 oder die fiktive 100-km-Region beschreiben diesen früheren Stand. Für heutigen Betrieb gelten die aktuellen Abschnitte oben.
 
 ## Balancing: reproduzierbare Modellschätzung
 

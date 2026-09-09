@@ -1,0 +1,63 @@
+# Abnahme 2.21.0 – Menüs, Tutorial, Euro, Besetzung und Audio
+
+Die Umsetzung erweitert den vorhandenen React-/TypeScript-Client und den autoritativen Node-/SQLite-Server. Die Deutschlandkarte, Authentifizierung, Socket.IO, Routing und Simulation werden weiterverwendet. Alle Testkonten, Übungen und Serverdaten der lokalen Abnahme liegen in eigens angelegten temporären Testablagen; der private AMP-Server wurde nicht verändert.
+
+## Umfang und prüfbare Einzelberichte
+
+| Bereich       | Implementierung und Nachweis                                                                                                                                                                                                                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Menüs         | Gemeinsame Dialoge, Navigation, Entwurfs-/Busy-Schutz, Fokusführung, Fehlerzustände; vollständige Komponenten-/Daten-/Aktionsmatrix in [MENUE-MATRIX-2.21.md](MENUE-MATRIX-2.21.md).                                                                                                                                                                  |
+| Einstellungen | Identische vier Bereiche im Hauptmenü und Spiel. Gerätepräferenzen sind lokal versioniert; Einstellungen wirken als Vorschau und werden ausdrücklich übernommen, verworfen oder zurückgesetzt. Audio-Dateien liegen atomar in IndexedDB. Ein Speicherfehler rollt bereits gespeicherte Gerätewerte zurück, hält den Entwurf und meldet keinen Erfolg. |
+| Tutorial      | [16 Kapitel mit bestätigten Handlungen](TUTORIAL-2.21.md), persönliche serverseitige Übungen, getrennte Budgets/Archive, Replay-/Kontextschutz bei mehreren Tabs, Abbruch, Wiederholung und Neustart.                                                                                                                                                 |
+| Besetzung     | [Begrenzte automatische Gebäudebesetzung](GEBAEUDEBESETZUNG-2.21.md); zulässige Fahrzeuge benötigen keinen Rekrutierungsklick. Verletzte, gebundene und transportierende Besatzungen werden erhalten.                                                                                                                                                 |
+| Geld          | [Exakte Euro-Cent und Migration](EURO-WIRTSCHAFT.md), [vollständige Preisliste](EURO-PREISE.md), [alle 653 Vergütungen und Wirtschaftsszenarien](EURO-PREISE.json). XP bleiben eigenständig.                                                                                                                                                          |
+| Audio         | [Eigene Erzeuger, Herkunft, Ereignisse, Mischregeln und reale Aufnahmen](AUDIO.md). Ein Kontext, unabhängige Quellen, priorisierte Kanäle, mehrstufige Absenkung, Tab-Koordination und kein Nachspielen alter Historien.                                                                                                                              |
+
+Neue Kernmodule sind `server/tutorial.ts`, `server/economy-migration.ts`, `server/economy-report.ts`, `src/economy/`, `src/money.ts`, `src/simulation/building-staffing.ts`, `src/tutorial-model.ts`, `src/Tutorial.tsx`, `src/Settings.tsx`, `src/device-preferences.ts`, `src/dialog-state.tsx`, `src/navigation.ts` und die Mixer-/Runtime-/Preferences-Module in `src/audio/`. Die existierenden Engine-, Server-, Ressourcen-, Einsatz-, Karten-, Berichts- und Menükomponenten binden diese Module ein. Die Git-Differenz zeigt sämtliche tatsächlich geänderten Dateien.
+
+## Migration und Bestandsschutz
+
+SQLite-Schema **14** ergänzt `tutorial_progress` und `training_worlds` sowie die versionierte Übernahme der Wirtschaft und Gebäudebesetzung. Währungs- und Preisversion sind getrennt. Der virtuelle Designfaktor ist **1 historischer Credit = 10 Euro**; er ist kein realer Wechselkurs. Eine zusätzliche, separat gebuchte Bestandsschutzkomponente schützt freies Altguthaben vor der neuen Preisstruktur. Alte Buchwerte und historische Vergütungen werden nicht nachträglich zu neuen Katalogpreisen abgerechnet.
+
+Die Migration verwendet eine Sicherung vor der Änderung, eine SQLite-Transaktion, geprüfte Centgrenzen und einmalige Versionsmarker. Der CLI-Dry-Run ist schreibfrei. Aktive Einsätze, Fahrten, Patienten, Besitz, XP und Rollen bleiben erhalten. Die Details und ausgeführten Summen-/Replayprüfungen stehen im Wirtschaftsbericht. Es gibt keinen automatischen Datenreset.
+
+## Durchgehende tatsächliche Deutschland-Abnahme
+
+`node scripts/menu-acceptance.mjs --tutorial-only` wurde mit dem gebauten Deutschland-Client, lokalem vollständigen Geodatenpaket, echtem GraphHopper-Router und Edge auf 1920 × 1080 ausgeführt. Ergebnis: **bestanden, 20 aufgenommene Ansichten, keine JavaScript-Seitenfehler**.
+
+Das neue Konto öffnete die persönliche Serverübung, bediente Karte/Suche, baute eine Feuerwache für 650.000,00 €, erhielt deren automatische Betriebsbesetzung und kaufte bewusst ein LF 20 für 320.000,00 €. Der technische Notruf wurde tatsächlich angenommen und befragt, disponiert, über Straße angefahren und nach erster Lagemeldung abgeschlossen. Der Bericht zeigte die private Eurovergütung und getrennte XP. Anschließend erzeugte der reguläre Brandablauf mit nur einem LF eine echte Wassernachforderung. Der Spieler bearbeitete sie, kaufte ein TSF-W für 180.000,00 €, alarmierte es separat und schloss den Brand nach dessen Ankunft ab. Rückfahrt, Verbundansicht, Einstellungen und Hilfe wurden geöffnet. Alle 16 Kapitel wurden bestätigt.
+
+Nach tatsächlichem Schließen und erneutem Starten des Servers blieb der abgeschlossene Lernweg erhalten. Beim Verlassen der Übung zeigte das reale Konto weiterhin **1.400.000,00 €**; Übungsbesitz, Geld und XP wurden nicht übertragen. Simulationszeit wurde ausschließlich über den Test-Fixture fortgeschaltet. Das Spiel selbst besitzt weiterhin keine Tempo- oder Pausesteuerung.
+
+Die Aufnahmen und `result.json` liegen in `.tools/screenshots/menu-2.21-after/`. Vorher-Nachweise aus 18 tatsächlich geöffneten Ansichten liegen getrennt in `.tools/screenshots/menu-2.21-before/`. Diese Arbeitsartefakte sind absichtlich nicht als Produktionsressourcen im Client eingebunden.
+
+Der anschließende vollständige Lauf `node scripts/menu-acceptance.mjs` bestand mit **58 Ansichten und keinen JavaScript-Seitenfehlern**. Er öffnete zusätzlich alle 19 Menüziele über die gemeinsame Suche, schloss sie und öffnete sie erneut. Katalog und Fortschritt wurden mit Suche, Leerzustand, Filter, Seitennavigation und Details bedient; alle drei FMS- und Archivbereiche sowie die vier Settingsbereiche wurden geöffnet. Settingsvorschau, Entwurfsschutz, Speichern, erneut Öffnen und verwerfbare Standardwerte wurden tatsächlich verwendet. Danach durchlief derselbe Lauf erneut sämtliche 16 Tutorialkapitel und den Serverneustart. Eine [kuratierte Bildauswahl samt tatsächlichem Inventar](quality-evidence/2.21/README.md) liegt im Repository.
+
+Die abschließende gezielte Einstellungsprüfung bestand **4/4 Edge-Fälle in 55,2 Sekunden**. Bei 1366 × 768 und 120 % UI-Skalierung bleiben Kategorien und Aktionen bedienbar; nur der Inhalt scrollt. Beschriftungen erreichen gemessen 12,12:1, Hinweise 6,33:1, Schließen 13,06:1, Kopfzeile 5,76:1 und aktive Kategorie/Übernehmen 8,12:1. Geprüft wurden sämtliche Gerätefelder, acht Tastenkürzel, Reload, Reset/Verwerfen, Fokus/Escape, keine Karten- oder Serveraktion durch das Menü sowie beide Speicherfehler-Rollbacks.
+
+## Tatsächlich ausgeführte lokale Prüfungen
+
+- Vollständiger TypeScript-Typecheck und ESLint: erfolgreich.
+- Produktionsbuild für normalen kompatiblen Server und Deutschlandserver: erfolgreich. Der bekannte Größenhinweis zum MapLibre-Vendorchunk ist eine Buildwarnung, kein fehlgeschlagener Build.
+- Vollständiger Vitest-Lauf unter Windows: **1143 bestanden, 1 übersprungen, 1 fehlgeschlagen** bei 1145 Fällen in 82 Dateien. Der Fehler betrifft die nach Windows-SIGTERM verbliebene Lockdatei in `amp-autostart.test.ts`; die Prüfung wurde nicht abgeschwächt.
+- Separater Node-Betriebstest unter Windows: **13 bestanden, 2 durch EPERM beim Erzeugen von Dateisymlinks fehlgeschlagen, 1 Prozess-Neustartfall abgebrochen**. Dessen Diagnose zeigte ebenfalls einen verbliebenen Lock nach Windows-SIGTERM. Diese Läufe sind ausdrücklich keine vollständig grüne lokale Betriebssystemabnahme; Linux-CI ist erforderlich.
+- Gezielter Tutorial-/HTTP-Lauf: **9 bestanden** einschließlich vollständiger TH-/Brandabläufe, echter Nachforderung, deterministischer Wiederholung, Neustart, Isolation und doppelter/veralteter Steuerungsaktionen.
+- Audiologik: **22 bestanden**, darunter die Regression für bewusst freigegebenen HTTP-Betrieb ohne `crypto.randomUUID`.
+- Clientkontext: **7 bestanden**, unter anderem verspätete Antworten/401, Kontextwechsel und Wiederholungen nach Konto- oder Übungswechsel.
+- Gebäudebesetzung und Integration: **53 bestandene gezielte Fälle**; genaue Dateien im Besetzungsbericht.
+
+Der erste breite Browserlauf fand neben überholten Testzugängen einen tatsächlichen HTTP-Audiostartfehler, eine über dem Schließen-Knopf liegende Wiederverbindungsübersicht und einen Hauptmenüüberlauf bei 1366 × 768. Diese Ursachen wurden korrigiert. Die korrigierten Tests behalten echte Serveraktionen, Persistenz- und Berechtigungsprüfungen bei. Die abschließenden Browser- und GitHub-Ergebnisse werden separat dokumentiert; ältere erfolgreiche Läufe gelten nicht als Nachweis dieses Commits.
+
+Ein späterer HTTP-Nachlauf deckte außerdem den fehlenden manuellen Wiederverbindungsknopf nach einer ausschließlich lokal angezeigten Offline-Aktionsablehnung auf. Die Verbindungswarnung bietet nun selbst einen echten, gegen Mehrfachausführung geschützten Wiederverbindungsversuch mit sichtbarem Fehlerzustand an.
+
+Der vollständige Edge-Nachlauf ergab **73 bestandene von 78 Fällen** in **562,606 Sekunden**: 71/76 normale Szenarien und beide isolierten Lastfälle. Die fünf verbleibenden Fälle wurden nach den konkret beschriebenen Korrekturen gezielt geprüft: Besitz/CLI-Wiederherstellung, Chat/Sitzungswiderruf und benutzerdefiniertes Audio bestanden; die vier Settingsfälle bestanden im eigenen finalen Lauf. Der unveränderte echte HTTP-Fall bestand nach dem Wiederverbindungsfix in **13,4 Sekunden** (gesamter Aufruf **18,072 Sekunden**). Damit sind alle **78 unterschiedlichen Edge-Szenarien** über Haupt- und Korrekturläufe nachgewiesen. Das ist ausdrücklich kein behaupteter einzelner fehlerfreier lokaler Gesamtlauf. Die vollständige Linux-CI des finalen Commits prüft den zusammengeführten Stand erneut in Chromium und Firefox.
+
+## Audioaufnahme und Grenzen
+
+Die Abnahme erzeugte echte Web-Audio-Wiedergabe sowie kontrollierte MediaRecorder-/PCM-Aufnahmen. Zwei vollständige Stereoarrangements dauern jeweils **206,08 Sekunden** und wurden als PCM ausgewertet; 32-Sekunden-WAV-Vorschauen und ein überlagerter Telefon-/Funk-/Alarmmix wurden gespeichert. Gemessene Spitzen lagen beim Menü bei 0,475, im Spiel bei 0,420 und bei 15 überlagerten Stimmen bei 0,643; damit blieben die gemessenen Signale unter Vollaussteuerung. Ein beim Test gefundener Einschaltimpuls wurde durch eine Gain-Rampe behoben. Die größten benachbarten Sampledifferenzen betrugen 0,043 für die Menümusik, 0,035 für die Spielmusik und 0,094 für die absichtlich überlagerte Lastaufnahme.
+
+Eine persönliche subjektive Hörbewertung über Lautsprecher/Kopfhörer durch den Agenten fand nicht statt. Die technischen Wiedergabe-, Aufzeichnungs-, Pegel- und Überlappungsnachweise sind vorhanden; daraus wird kein subjektives Klangurteil abgeleitet. Herkunft und Nutzungsregeln stehen pro Erzeuger in `AUDIO.md`. Es gibt keine fremden BOS-Aufnahmen oder verpflichtende kostenpflichtige Audio-API.
+
+## Veröffentlichung
+
+Entwicklung erfolgt regulär auf `main`. Ein Push führt Prüfungen aus, keine Produktionsinstallation. CodeQL wird anhand des tatsächlichen neuen Analyseergebnisses und der offenen Code-Scanning-Alerts kontrolliert; ein grüner Analysejob allein reicht nicht. Der vorhandene manuelle Releaseablauf verwendet jetzt die zur Paketversion gehörenden Releasehinweise. Release-Entwürfe sind keine stabile Veröffentlichung.

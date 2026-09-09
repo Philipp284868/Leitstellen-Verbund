@@ -2,6 +2,6 @@
 
 Die gemeinsame Fortschrittsansicht zeigt tatsächliches Level, XP bis zur nächsten Stufe und Fahrzeug-/Gebäudefreischaltungen. Es besteht keine alte Level-10-Grenze. Die Tabellen werden aus denselben Katalogen und Regeln wie die Serverprüfung erzeugt.
 
-XP entsteht aus abgeschlossenen Einsätzen. Wiederholte Aktionen, zusätzlich alarmierte Fahrzeuge oder bloßes Abwarten vervielfachen die Belohnung nicht. Käufe benötigen genügend Credits, Stufe, geeignete Wache und Kapazität. Rechtmäßig erworbener Bestand bleibt bei Migrationen geschützt.
+XP entsteht aus abgeschlossenen Einsätzen. Wiederholte Aktionen, zusätzlich alarmierte Fahrzeuge oder bloßes Abwarten vervielfachen die Belohnung nicht. Käufe benötigen genügend Euro, Stufe, geeignete Wache und Kapazität. Euro und XP bleiben getrennt; die Geldumstellung 2.21 verändert keine bereits gespeicherten XP. Rechtmäßig erworbener Bestand bleibt geschützt.
 
-Die konkrete Freischalttabelle und das Balancing stehen im Hauptrepository unter docs/PROGRESSION-KARTE.md. Fehlende historische Detailwerte werden nicht nachträglich als gemessen ausgegeben.
+Die aktuelle vollständige Liste aller 50 Fahrzeuge, acht Gebäude und vier Erweiterungen steht in [EURO-PREISE.md](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/EURO-PREISE.md), die gemeinsame XP-Kurve in [PROGRESSION-KARTE.md](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/PROGRESSION-KARTE.md). Die sechs Finanzierungsszenarien unter [[Wirtschaft]] sind ausdrücklich Modellrechnungen, keine garantierten Aufstiegs- oder Einsatzzeiten. Das [[Tutorial]] verwendet eine getrennte Übungswirtschaft und ist keine Quelle für normale XP oder Geld.

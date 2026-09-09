@@ -2,6 +2,8 @@
 
 Stand: 09.09.2026. Arbeitsauftrag: [Issue #26](https://github.com/Philipp284868/Leitstellen-Verbund/issues/26).
 
+**Aktueller Betrieb 2.21:** Die Weltidentität bleibt bestehen; Datenbanken migrieren mit Vorabsicherung auf Schema 14. Euro-/Preisversion, automatische Wachbesetzung und persönliche Tutorialtabellen ändern keine Geografie. [Konkrete Migrationsvorschau und Sicherung](AMP.md#update-und-migration-auf-schema-14) · [Euro-Bestandsschutz](EURO-WIRTSCHAFT.md). Der folgende Schema-12-Abschnitt erklärt die frühere Einführung der Weltkennung, nicht die aktuelle Zielversion.
+
 ## Rivermere als geschützter bestehender Server
 
 Der normale Build erhält Rivermere unter `dist/server/index.js`, `dist/server/cli.js` und `dist/client/`. `npm start`, die Entwicklungsvorschau und vorhandene AMP-Instanzen mit diesem Programmziel verwenden weiterhin Rivermere. Ab Version 2.16 erzeugt der Build zusätzlich die getrennten Deutschlandprogramme unter `dist/germany/server/` und `dist/germany/client/`; auch das Linux-Paket enthält beide Programme. Deutschland wird bewusst über `scripts/start-germany.mjs` mit einem eigenen persistenten `DATA_DIR` und vorbereitetem externem `GEODATA_DIR` eingerichtet. Die [Deutschland-Anleitung](DEUTSCHLAND.md) beschreibt diesen getrennten Betrieb. Eine normale Aktualisierung wechselt die Welt bestehender Instanzen nicht.

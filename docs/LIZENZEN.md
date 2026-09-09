@@ -18,6 +18,6 @@ Primärquellen für die technische Auswahl:
 - [Offizielle setup-node-Action](https://github.com/actions/setup-node)
 - [Lucide-Lizenz](https://github.com/lucide-icons/lucide/blob/main/LICENSE)
 
-Alle Preise sind fiktive Spielcredits. Es gibt keine Echtgeldkäufe.
+Alle Preise sind Spiel-Euro und werden als exakte Eurocent geführt. Dokumentierte öffentliche Beschaffungen dienen teilweise als Orientierung; Spielpreise sind bewusst vereinfacht und keine vollständige Marktpreisangabe. [Quellen und Abgrenzung](EURO-WIRTSCHAFT.md). Es gibt keine Echtgeldkäufe.
 
 Serverergänzungen: Socket.IO und socket.io-client stehen unter MIT, esbuild ebenfalls unter MIT. SQLite wird über die Node.js-Standardbibliothek verwendet und ist Public Domain. Maßgebliche Lizenztexte sind in den installierten Paketen enthalten.

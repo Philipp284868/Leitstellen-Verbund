@@ -1,4 +1,4 @@
-# Deutschland als Serverwelt · Version 2.17
+# Deutschland als Serverwelt · Version 2.21
 
 Die Deutschlandwelt verbindet eine lokal ausgelieferte Vektorkarte mit einem lokalen Straßenrouter und einem räumlichen Orts-/Adressindex. Alle drei verwenden denselben vollständigen Deutschland-Auszug von OpenStreetMap. Kartenbewegung und Zoom sind lokal; Simulation, Baugenehmigung, Fahrweg, Fahrzeiten, Krankenhaussuche und Berechtigungen bleiben auf dem Spielserver. Das Spiel bleibt PC-Multiplayer und Echtzeit 1×.
 
@@ -47,7 +47,7 @@ Rivermere- und Falkenried-Koordinaten besitzen keine verlustfreie geographische 
 
 Vor dem Wechsel die alte Instanz sauber stoppen, mit ihrer bisherigen CLI sichern und die Wiederherstellbarkeit prüfen. Den vorhandenen Ordner anschließend als Bestand behalten. Bei einem geplanten Rückwechsel den Deutschland-Server stoppen und den bisherigen Programm-/Datenstand wieder starten. Keine Dateien zwischen den beiden SQLite-Welten vermischen.
 
-Die Datenbankschemaversion bleibt 12. Zusätzlich erhält eine Deutschlanddatenbank den Metadatenschlüssel `geodata-dataset-v1`, der den SHA-256 des verwendeten OSM-Snapshots enthält. Welt-ID `germany-1`, Weltseed und Datensatz müssen zum geladenen Server passen. Ein abweichender OSM-Snapshot wird beim Öffnen abgewiesen. Ein neues Geodatenpaket allein ist somit kein automatisches Weltupdate. Ein späterer verlustfreier Snapshotwechsel benötigt einen eigenen geprüften Migrationsschritt.
+Version 2.21 verwendet Datenbankschema 14 mit gesicherter Euro-/Preisumstellung, automatischer Wachbesetzung und persönlichen Tutorialtabellen. [Vorschau, Sicherung und Migration](AMP.md#update-und-migration-auf-schema-14). Die Deutschlandidentität bleibt davon unabhängig: `geodata-dataset-v1` enthält den SHA-256 des OSM-Snapshots. Welt-ID `germany-1`, Weltseed und Datensatz müssen zum geladenen Server passen. Ein abweichender OSM-Snapshot wird beim Öffnen abgewiesen. Ein neues Geodatenpaket allein ist somit kein automatisches Weltupdate. Ein späterer verlustfreier Snapshotwechsel benötigt einen eigenen geprüften Migrationsschritt.
 
 Deutschland-Wartung wird bei gestopptem Spielserver über `node dist/germany/server/cli.js backup`, `restore` oder `archive-export` ausgeführt; die bestehenden Argumente und Schutzregeln aus [AMP](AMP.md) gelten. Befehle, die Spielstände validieren, benötigen den passenden lokalen Router und Geodatenindex. Bei verwaltetem Router diesen für die Wartung mit `node scripts/geodata/pipeline.mjs serve` starten. Sicherungen zusammen mit Welt-ID, Datensatzkennung und dem passenden Geodatenmanifest aufbewahren. Kontensicherungen ersetzen keine Sicherung der wiederverwendbaren Geodaten.
 

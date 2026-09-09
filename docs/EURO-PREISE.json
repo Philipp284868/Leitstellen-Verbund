@@ -1,0 +1,5341 @@
+{
+  "version": 1,
+  "currency": "EUR",
+  "unit": "cent",
+  "world": "Deutschland",
+  "conversion": {
+    "legacyCreditCents": 1000,
+    "protection": {
+      "numerator": 160000000,
+      "denominator": 100000000
+    }
+  },
+  "prices": [
+    {
+      "kind": "vehicle",
+      "id": "tsf",
+      "legacyCredits": 18000,
+      "cents": 18000000,
+      "name": "TSF-W",
+      "prerequisite": "Stufe 1; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "lf",
+      "legacyCredits": 30000,
+      "cents": 32000000,
+      "name": "LF 20",
+      "prerequisite": "Stufe 2; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser, Pumpen; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "hlf",
+      "legacyCredits": 45000,
+      "cents": 52000000,
+      "name": "HLF 20",
+      "prerequisite": "Stufe 6; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Technische Rettung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "tlf",
+      "legacyCredits": 35000,
+      "cents": 35000000,
+      "name": "TLF 4000",
+      "prerequisite": "Stufe 3; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "dlk",
+      "legacyCredits": 48000,
+      "cents": 72000000,
+      "name": "DLK 23",
+      "prerequisite": "Stufe 10; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Höhenrettung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "elw",
+      "legacyCredits": 22000,
+      "cents": 20000000,
+      "name": "ELW 1",
+      "prerequisite": "Stufe 8; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Einsatzleitung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "rw",
+      "legacyCredits": 43000,
+      "cents": 45000000,
+      "name": "RW",
+      "prerequisite": "Stufe 14; Feuerwache; freier Stellplatz; Technische Hilfeleistung",
+      "included": "Komplettes Fahrzeug; Technische Rettung, Bergung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "haz",
+      "legacyCredits": 48000,
+      "cents": 48000000,
+      "name": "GW-Gefahrgut",
+      "prerequisite": "Stufe 24; Feuerwache; freier Stellplatz; Gefahrgut-Erweiterung",
+      "included": "Komplettes Fahrzeug; Gefahrgut; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "air",
+      "legacyCredits": 30000,
+      "cents": 29000000,
+      "name": "GW-Atemschutz",
+      "prerequisite": "Stufe 18; Feuerwache; freier Stellplatz; Atemschutzwerkstatt",
+      "included": "Komplettes Fahrzeug; Atemschutz; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "rtw",
+      "legacyCredits": 25000,
+      "cents": 24000000,
+      "name": "RTW",
+      "prerequisite": "Stufe 4; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "ktw",
+      "legacyCredits": 16000,
+      "cents": 13000000,
+      "name": "KTW",
+      "prerequisite": "Stufe 4; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "nef",
+      "legacyCredits": 28000,
+      "cents": 16000000,
+      "name": "NEF",
+      "prerequisite": "Stufe 11; Rettungswache; freier Stellplatz; Notarztstandort",
+      "included": "Komplettes Fahrzeug; Notarzt, Patientenversorgung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "rth",
+      "legacyCredits": 110000,
+      "cents": 145000000,
+      "name": "RTH",
+      "prerequisite": "Stufe 30; Rettungshubschrauberstation; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Notarzt, Patiententransport, Luftrettung; passende Gebäudebesatzung",
+      "reasoning": "Stark vereinfachter langfristiger Spielpreis; kein belegter Marktpreis"
+    },
+    {
+      "kind": "vehicle",
+      "id": "fustw",
+      "legacyCredits": 16000,
+      "cents": 8500000,
+      "name": "Funkstreifenwagen",
+      "prerequisite": "Stufe 7; Polizeiwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Polizeiarbeit, Absicherung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "pmtw",
+      "legacyCredits": 24000,
+      "cents": 12500000,
+      "name": "Polizei-MTW",
+      "prerequisite": "Stufe 13; Polizeiwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Polizeiarbeit, Absicherung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gkw",
+      "legacyCredits": 35000,
+      "cents": 39000000,
+      "name": "GKW",
+      "prerequisite": "Stufe 15; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Bergung, Technische Rettung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "mzgw",
+      "legacyCredits": 32000,
+      "cents": 36000000,
+      "name": "MzGW",
+      "prerequisite": "Stufe 17; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Bergung, Pumpen, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "tmtw",
+      "legacyCredits": 18000,
+      "cents": 11000000,
+      "name": "THW-MTW",
+      "prerequisite": "Stufe 15; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Logistik, Einsatzleitung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gww",
+      "legacyCredits": 28000,
+      "cents": 27000000,
+      "name": "GW-Wasserrettung",
+      "prerequisite": "Stufe 20; Wasserrettungsstation; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Wasserrettung, Technische Rettung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "boat",
+      "legacyCredits": 36000,
+      "cents": 32000000,
+      "name": "Zugfahrzeug mit Rettungsboot (MZB)",
+      "prerequisite": "Stufe 20; Wasserrettungsstation; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Rettungsboot, Wasserrettung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "lf10",
+      "legacyCredits": 24500,
+      "cents": 26000000,
+      "name": "LF 10",
+      "prerequisite": "Stufe 2; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser, Pumpen; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "hlf10",
+      "legacyCredits": 36500,
+      "cents": 41000000,
+      "name": "HLF 10",
+      "prerequisite": "Stufe 5; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Technische Rettung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "tlf2000",
+      "legacyCredits": 26500,
+      "cents": 28000000,
+      "name": "TLF 2000",
+      "prerequisite": "Stufe 3; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "tlf3000",
+      "legacyCredits": 31000,
+      "cents": 31000000,
+      "name": "TLF 3000",
+      "prerequisite": "Stufe 5; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "elw2",
+      "legacyCredits": 84000,
+      "cents": 78000000,
+      "name": "ELW 2",
+      "prerequisite": "Stufe 32; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Einsatzleitung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "kdow",
+      "legacyCredits": 17000,
+      "cents": 9000000,
+      "name": "KdoW",
+      "prerequisite": "Stufe 8; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Einsatzleitung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "vrw",
+      "legacyCredits": 25000,
+      "cents": 20000000,
+      "name": "VRW",
+      "prerequisite": "Stufe 9; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Technische Rettung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gwl",
+      "legacyCredits": 37000,
+      "cents": 31000000,
+      "name": "GW-L",
+      "prerequisite": "Stufe 16; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Logistik, Beleuchtung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gwmess",
+      "legacyCredits": 42000,
+      "cents": 36000000,
+      "name": "GW-Mess",
+      "prerequisite": "Stufe 22; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Gefahrstoffmessung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gwt",
+      "legacyCredits": 38000,
+      "cents": 34000000,
+      "name": "GW-T",
+      "prerequisite": "Stufe 16; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Bergung, Technische Rettung, Notstromversorgung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "abruest",
+      "legacyCredits": 76000,
+      "cents": 73000000,
+      "name": "WLF mit AB-Rüst",
+      "prerequisite": "Stufe 28; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Technische Rettung, Bergung; passende Gebäudebesatzung",
+      "reasoning": "Vollständige Träger-/Containerkombination; Spezialfähigkeiten"
+    },
+    {
+      "kind": "vehicle",
+      "id": "abwasser",
+      "legacyCredits": 69000,
+      "cents": 62000000,
+      "name": "WLF mit AB-Wasser",
+      "prerequisite": "Stufe 25; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Löschwasser, Pumpen; passende Gebäudebesatzung",
+      "reasoning": "Vollständige Träger-/Containerkombination; Spezialfähigkeiten"
+    },
+    {
+      "kind": "vehicle",
+      "id": "abschaum",
+      "legacyCredits": 74000,
+      "cents": 67000000,
+      "name": "WLF mit AB-Schaum",
+      "prerequisite": "Stufe 26; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Schaummittelversorgung, Löschwasser; passende Gebäudebesatzung",
+      "reasoning": "Vollständige Träger-/Containerkombination; Spezialfähigkeiten"
+    },
+    {
+      "kind": "vehicle",
+      "id": "abatem",
+      "legacyCredits": 71000,
+      "cents": 64000000,
+      "name": "WLF mit AB-Atemschutz",
+      "prerequisite": "Stufe 26; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Atemschutz, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Vollständige Träger-/Containerkombination; Spezialfähigkeiten"
+    },
+    {
+      "kind": "vehicle",
+      "id": "abgefahrgut",
+      "legacyCredits": 85000,
+      "cents": 79000000,
+      "name": "WLF mit AB-Gefahrgut",
+      "prerequisite": "Stufe 30; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Gefahrgut, Gefahrstoffmessung; passende Gebäudebesatzung",
+      "reasoning": "Vollständige Träger-/Containerkombination; Spezialfähigkeiten"
+    },
+    {
+      "kind": "vehicle",
+      "id": "sw",
+      "legacyCredits": 35000,
+      "cents": 30000000,
+      "name": "Schlauchwagen SW 2000",
+      "prerequisite": "Stufe 16; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Löschwasser, Pumpen; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "dekonp",
+      "legacyCredits": 59000,
+      "cents": 51000000,
+      "name": "Dekon-P",
+      "prerequisite": "Stufe 28; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Dekontamination, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "grtw",
+      "legacyCredits": 115000,
+      "cents": 98000000,
+      "name": "GRTW",
+      "prerequisite": "Stufe 34; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport, Betreuung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "naw",
+      "legacyCredits": 52000,
+      "cents": 36000000,
+      "name": "NAW",
+      "prerequisite": "Stufe 14; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Notarzt, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "itw",
+      "legacyCredits": 89000,
+      "cents": 59000000,
+      "name": "ITW",
+      "prerequisite": "Stufe 26; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Notarzt, Intensivversorgung, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "ith",
+      "legacyCredits": 170000,
+      "cents": 210000000,
+      "name": "ITH",
+      "prerequisite": "Stufe 38; Rettungshubschrauberstation; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Notarzt, Intensivversorgung, Patiententransport, Luftrettung; passende Gebäudebesatzung",
+      "reasoning": "Stark vereinfachter langfristiger Spielpreis; kein belegter Marktpreis"
+    },
+    {
+      "kind": "vehicle",
+      "id": "rtwxl",
+      "legacyCredits": 39000,
+      "cents": 31000000,
+      "name": "RTW – erweiterte Versorgung",
+      "prerequisite": "Stufe 12; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "ktwb",
+      "legacyCredits": 23000,
+      "cents": 18000000,
+      "name": "KTW-B – zwei Transportplätze",
+      "prerequisite": "Stufe 8; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "mzf",
+      "legacyCredits": 27000,
+      "cents": 22000000,
+      "name": "MZF Rettungsdienst",
+      "prerequisite": "Stufe 10; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "elrd",
+      "legacyCredits": 34000,
+      "cents": 14000000,
+      "name": "ELRD",
+      "prerequisite": "Stufe 18; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Rettungsdienstführung, Einsatzleitung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "orgl",
+      "legacyCredits": 37000,
+      "cents": 15000000,
+      "name": "OrgL Rettungsdienst",
+      "prerequisite": "Stufe 22; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Rettungsdienstführung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "lna",
+      "legacyCredits": 43000,
+      "cents": 17000000,
+      "name": "LNA",
+      "prerequisite": "Stufe 24; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Rettungsdienstführung, Notarzt; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "segrtw",
+      "legacyCredits": 21500,
+      "cents": 20000000,
+      "name": "SEG-RTW",
+      "prerequisite": "Stufe 14; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport, Betreuung; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "gwsan",
+      "legacyCredits": 58000,
+      "cents": 48000000,
+      "name": "GW-San",
+      "prerequisite": "Stufe 20; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Patientenversorgung, Betreuung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "segbetreuung",
+      "legacyCredits": 36000,
+      "cents": 27000000,
+      "name": "SEG-Betreuung",
+      "prerequisite": "Stufe 17; Rettungswache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Betreuung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "building",
+      "id": "fire",
+      "legacyCredits": 55000,
+      "cents": 65000000,
+      "name": "Feuerwache",
+      "prerequisite": "Stufe 1; gültiger eigener Bauplatz",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "ems",
+      "legacyCredits": 42000,
+      "cents": 45000000,
+      "name": "Rettungswache",
+      "prerequisite": "Stufe 4; gültiger eigener Bauplatz",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "police",
+      "legacyCredits": 40000,
+      "cents": 42000000,
+      "name": "Polizeiwache",
+      "prerequisite": "Stufe 7; gültiger eigener Bauplatz",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "thw",
+      "legacyCredits": 62000,
+      "cents": 68000000,
+      "name": "THW-Unterkunft",
+      "prerequisite": "Stufe 15; gültiger eigener Bauplatz",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "water",
+      "legacyCredits": 48000,
+      "cents": 42000000,
+      "name": "Wasserrettungsstation",
+      "prerequisite": "Stufe 20; gültiger eigener Bauplatz; geprüfter Uferzugang",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "hospital",
+      "legacyCredits": 100000,
+      "cents": 160000000,
+      "name": "Krankenhaus",
+      "prerequisite": "Stufe 12; gültiger eigener Bauplatz",
+      "included": "0 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "school",
+      "legacyCredits": 35000,
+      "cents": 40000000,
+      "name": "Ausbildungszentrum",
+      "prerequisite": "Stufe 5; gültiger eigener Bauplatz",
+      "included": "0 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "building",
+      "id": "heli",
+      "legacyCredits": 95000,
+      "cents": 98000000,
+      "name": "Rettungshubschrauberstation",
+      "prerequisite": "Stufe 30; gültiger eigener Bauplatz",
+      "included": "2 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
+      "kind": "extension",
+      "id": "technical",
+      "legacyCredits": 12000,
+      "cents": 9500000,
+      "name": "Technische Hilfeleistung",
+      "prerequisite": "Passende Wache; Stufe 14",
+      "included": "Gebäudefunktion Technische Hilfeleistung; passende Qualifikation ohne Einzelgebühr",
+      "reasoning": "Einmalige Funktionsfreigabe; keine nachträgliche Personalrechnung"
+    },
+    {
+      "kind": "extension",
+      "id": "hazmat",
+      "legacyCredits": 16000,
+      "cents": 18000000,
+      "name": "Gefahrgut-Erweiterung",
+      "prerequisite": "Passende Wache; Stufe 24",
+      "included": "Gebäudefunktion Gefahrgut-Erweiterung; passende Qualifikation ohne Einzelgebühr",
+      "reasoning": "Einmalige Funktionsfreigabe; keine nachträgliche Personalrechnung"
+    },
+    {
+      "kind": "extension",
+      "id": "air",
+      "legacyCredits": 12000,
+      "cents": 9000000,
+      "name": "Atemschutzwerkstatt",
+      "prerequisite": "Passende Wache; Stufe 18",
+      "included": "Gebäudefunktion Atemschutzwerkstatt; passende Qualifikation ohne Einzelgebühr",
+      "reasoning": "Einmalige Funktionsfreigabe; keine nachträgliche Personalrechnung"
+    },
+    {
+      "kind": "extension",
+      "id": "doctor",
+      "legacyCredits": 12000,
+      "cents": 9000000,
+      "name": "Notarztstandort",
+      "prerequisite": "Passende Wache; Stufe 11",
+      "included": "Gebäudefunktion Notarztstandort; passende Qualifikation ohne Einzelgebühr",
+      "reasoning": "Einmalige Funktionsfreigabe; keine nachträgliche Personalrechnung"
+    }
+  ],
+  "other": {
+    "start": 140000000,
+    "upgrade": 11000000,
+    "professionalFire": 135000000,
+    "hire": 0,
+    "training": 0,
+    "operatingPerHour": 0,
+    "fundingPerInterval": 3000000,
+    "fundingCeiling": 250000000,
+    "legacyReliefReward": 1500000
+  },
+  "missions": [
+    {
+      "id": "bin",
+      "name": "Müllbehälterbrand",
+      "level": 1,
+      "legacyCredits": 6500,
+      "cents": 625000
+    },
+    {
+      "id": "car",
+      "name": "Pkw-Brand",
+      "level": 1,
+      "legacyCredits": 8000,
+      "cents": 800000
+    },
+    {
+      "id": "shed",
+      "name": "Gartenlaubenbrand",
+      "level": 1,
+      "legacyCredits": 10000,
+      "cents": 675000
+    },
+    {
+      "id": "field",
+      "name": "Flächenbrand",
+      "level": 1,
+      "legacyCredits": 14000,
+      "cents": 800000
+    },
+    {
+      "id": "flat",
+      "name": "Wohnungsbrand",
+      "level": 2,
+      "legacyCredits": 18000,
+      "cents": 885000
+    },
+    {
+      "id": "roof",
+      "name": "Dachstuhlbrand",
+      "level": 2,
+      "legacyCredits": 24000,
+      "cents": 1010000
+    },
+    {
+      "id": "factory",
+      "name": "Industriebrand",
+      "level": 3,
+      "legacyCredits": 48000,
+      "cents": 1220000
+    },
+    {
+      "id": "tree",
+      "name": "Baum auf Straße",
+      "level": 2,
+      "legacyCredits": 7500,
+      "cents": 710000
+    },
+    {
+      "id": "cellar",
+      "name": "Keller unter Wasser",
+      "level": 1,
+      "legacyCredits": 9000,
+      "cents": 675000
+    },
+    {
+      "id": "chemical",
+      "name": "Gefahrstoffaustritt",
+      "level": 3,
+      "legacyCredits": 23000,
+      "cents": 1045000
+    },
+    {
+      "id": "smoke",
+      "name": "Rauchentwicklung im Tunnel",
+      "level": 3,
+      "legacyCredits": 21000,
+      "cents": 1045000
+    },
+    {
+      "id": "silo",
+      "name": "Silobrand",
+      "level": 3,
+      "legacyCredits": 35000,
+      "cents": 1220000
+    },
+    {
+      "id": "sick",
+      "name": "Medizinischer Notfall",
+      "level": 2,
+      "legacyCredits": 8500,
+      "cents": 785000
+    },
+    {
+      "id": "transfer",
+      "name": "Krankentransport",
+      "level": 2,
+      "legacyCredits": 6000,
+      "cents": 785000
+    },
+    {
+      "id": "heart",
+      "name": "Herz-Kreislauf-Stillstand",
+      "level": 2,
+      "legacyCredits": 14000,
+      "cents": 960000
+    },
+    {
+      "id": "fall",
+      "name": "Sturz im Treppenhaus",
+      "level": 2,
+      "legacyCredits": 11000,
+      "cents": 960000
+    },
+    {
+      "id": "birth",
+      "name": "Beginnende Geburt",
+      "level": 2,
+      "legacyCredits": 12000,
+      "cents": 960000
+    },
+    {
+      "id": "sport",
+      "name": "Sportunfall mit zwei Verletzten",
+      "level": 2,
+      "legacyCredits": 17000,
+      "cents": 835000
+    },
+    {
+      "id": "remote",
+      "name": "Notfall am Waldhang",
+      "level": 4,
+      "legacyCredits": 19000,
+      "cents": 1155000
+    },
+    {
+      "id": "care",
+      "name": "Evakuierung Pflegewohnung",
+      "level": 2,
+      "legacyCredits": 22000,
+      "cents": 885000
+    },
+    {
+      "id": "traffic",
+      "name": "Verkehrsbehinderung",
+      "level": 2,
+      "legacyCredits": 6500,
+      "cents": 660000
+    },
+    {
+      "id": "theft",
+      "name": "Ladendiebstahl",
+      "level": 2,
+      "legacyCredits": 7500,
+      "cents": 660000
+    },
+    {
+      "id": "burglary",
+      "name": "Einbruch mit Spurensicherung",
+      "level": 2,
+      "legacyCredits": 11500,
+      "cents": 710000
+    },
+    {
+      "id": "match",
+      "name": "Absicherung Sportveranstaltung",
+      "level": 2,
+      "legacyCredits": 14000,
+      "cents": 760000
+    },
+    {
+      "id": "search",
+      "name": "Vermisste Person im Ortskern",
+      "level": 2,
+      "legacyCredits": 16000,
+      "cents": 885000
+    },
+    {
+      "id": "demo",
+      "name": "Versammlung am Rathaus",
+      "level": 2,
+      "legacyCredits": 22000,
+      "cents": 885000
+    },
+    {
+      "id": "roadblock",
+      "name": "Straßensperre nach Hangrutsch",
+      "level": 2,
+      "legacyCredits": 12500,
+      "cents": 835000
+    },
+    {
+      "id": "fair",
+      "name": "Besucherlenkung Stadtfest",
+      "level": 3,
+      "legacyCredits": 25000,
+      "cents": 920000
+    },
+    {
+      "id": "debris",
+      "name": "Trümmer auf Fahrbahn",
+      "level": 3,
+      "legacyCredits": 13000,
+      "cents": 745000
+    },
+    {
+      "id": "pump",
+      "name": "Überflutete Unterführung",
+      "level": 3,
+      "legacyCredits": 18000,
+      "cents": 920000
+    },
+    {
+      "id": "supply",
+      "name": "Notversorgung nach Stromausfall",
+      "level": 3,
+      "legacyCredits": 21000,
+      "cents": 920000
+    },
+    {
+      "id": "shore",
+      "name": "Person am Ufer vermisst",
+      "level": 3,
+      "legacyCredits": 15000,
+      "cents": 745000
+    },
+    {
+      "id": "capsize",
+      "name": "Gekentertes Ruderboot",
+      "level": 3,
+      "legacyCredits": 20000,
+      "cents": 920000
+    },
+    {
+      "id": "flood",
+      "name": "Deichsicherung",
+      "level": 3,
+      "legacyCredits": 38000,
+      "cents": 1095000
+    },
+    {
+      "id": "crash",
+      "name": "Verkehrsunfall mit eingeklemmter Person",
+      "level": 2,
+      "legacyCredits": 23000,
+      "cents": 1135000
+    },
+    {
+      "id": "bus",
+      "name": "Busunfall",
+      "level": 3,
+      "legacyCredits": 50000,
+      "cents": 1345000
+    },
+    {
+      "id": "warehouse",
+      "name": "Lagerhallenbrand mit Verletzten",
+      "level": 2,
+      "legacyCredits": 40000,
+      "cents": 1310000
+    },
+    {
+      "id": "waterrescue",
+      "name": "Wasserrettung mit Reanimation",
+      "level": 3,
+      "legacyCredits": 30000,
+      "cents": 1295000
+    },
+    {
+      "id": "collapse",
+      "name": "Gebäudeeinsturz",
+      "level": 3,
+      "legacyCredits": 60000,
+      "cents": 1520000
+    },
+    {
+      "id": "rail",
+      "name": "Gefahrgutunfall am Güterbahnhof",
+      "level": 3,
+      "legacyCredits": 68000,
+      "cents": 1645000
+    },
+    {
+      "id": "bma-false",
+      "name": "Brandmeldeanlage – Fehlalarm",
+      "level": 1,
+      "legacyCredits": 5000,
+      "cents": 675000
+    },
+    {
+      "id": "case-muelleimerbrand-reported",
+      "name": "Mülleimerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-muelleimerbrand-access",
+      "name": "Mülleimerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-muelleimerbrand-extended",
+      "name": "Mülleimerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-muellcontainerbrand-reported",
+      "name": "Müllcontainerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-muellcontainerbrand-access",
+      "name": "Müllcontainerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-muellcontainerbrand-extended",
+      "name": "Müllcontainerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-papiercontainerbrand-reported",
+      "name": "Papiercontainerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-papiercontainerbrand-access",
+      "name": "Papiercontainerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-papiercontainerbrand-extended",
+      "name": "Papiercontainerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-altkleidercontainerbrand-reported",
+      "name": "Altkleidercontainerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-altkleidercontainerbrand-access",
+      "name": "Altkleidercontainerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-altkleidercontainerbrand-extended",
+      "name": "Altkleidercontainerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-pkw-brand-reported",
+      "name": "Pkw-Brand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-pkw-brand-access",
+      "name": "Pkw-Brand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-pkw-brand-extended",
+      "name": "Pkw-Brand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23200,
+      "cents": 1150000
+    },
+    {
+      "id": "case-lkw-brand-reported",
+      "name": "Lkw-Brand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 975000
+    },
+    {
+      "id": "case-lkw-brand-access",
+      "name": "Lkw-Brand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26300,
+      "cents": 1150000
+    },
+    {
+      "id": "case-lkw-brand-extended",
+      "name": "Lkw-Brand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24400,
+      "cents": 1200000
+    },
+    {
+      "id": "case-busbrand-reported",
+      "name": "Busbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 975000
+    },
+    {
+      "id": "case-busbrand-access",
+      "name": "Busbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26300,
+      "cents": 1150000
+    },
+    {
+      "id": "case-busbrand-extended",
+      "name": "Busbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24400,
+      "cents": 1200000
+    },
+    {
+      "id": "case-motorradbrand-reported",
+      "name": "Motorradbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-motorradbrand-access",
+      "name": "Motorradbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-motorradbrand-extended",
+      "name": "Motorradbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-fahrrad-akku-brand-reported",
+      "name": "Fahrrad-/Akku-Brand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 14300,
+      "cents": 800000
+    },
+    {
+      "id": "case-fahrrad-akku-brand-access",
+      "name": "Fahrrad-/Akku-Brand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-fahrrad-akku-brand-extended",
+      "name": "Fahrrad-/Akku-Brand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 19200,
+      "cents": 975000
+    },
+    {
+      "id": "case-garagenbrand-reported",
+      "name": "Garagenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-garagenbrand-access",
+      "name": "Garagenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-garagenbrand-extended",
+      "name": "Garagenbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-carportbrand-reported",
+      "name": "Carportbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-carportbrand-access",
+      "name": "Carportbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-carportbrand-extended",
+      "name": "Carportbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-gartenlaubenbrand-reported",
+      "name": "Gartenlaubenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-gartenlaubenbrand-access",
+      "name": "Gartenlaubenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-gartenlaubenbrand-extended",
+      "name": "Gartenlaubenbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-schuppenbrand-reported",
+      "name": "Schuppenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-schuppenbrand-access",
+      "name": "Schuppenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-schuppenbrand-extended",
+      "name": "Schuppenbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-heckenbrand-reported",
+      "name": "Heckenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 14300,
+      "cents": 800000
+    },
+    {
+      "id": "case-heckenbrand-access",
+      "name": "Heckenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-heckenbrand-extended",
+      "name": "Heckenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-grasflaechenbrand-reported",
+      "name": "Grasflächenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 14300,
+      "cents": 800000
+    },
+    {
+      "id": "case-grasflaechenbrand-access",
+      "name": "Grasflächenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-grasflaechenbrand-extended",
+      "name": "Grasflächenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-boeschungsbrand-reported",
+      "name": "Böschungsbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-boeschungsbrand-access",
+      "name": "Böschungsbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-boeschungsbrand-extended",
+      "name": "Böschungsbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-feldbrand-reported",
+      "name": "Feldbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-feldbrand-access",
+      "name": "Feldbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-feldbrand-extended",
+      "name": "Feldbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23000,
+      "cents": 1075000
+    },
+    {
+      "id": "case-strohballenbrand-reported",
+      "name": "Strohballenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-strohballenbrand-access",
+      "name": "Strohballenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-strohballenbrand-extended",
+      "name": "Strohballenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-waldbrand-reported",
+      "name": "Waldbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-waldbrand-access",
+      "name": "Waldbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-waldbrand-extended",
+      "name": "Waldbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23000,
+      "cents": 1075000
+    },
+    {
+      "id": "case-kuechenbrand-reported",
+      "name": "Küchenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-kuechenbrand-access",
+      "name": "Küchenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-kuechenbrand-extended",
+      "name": "Küchenbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-wohnzimmerbrand-reported",
+      "name": "Wohnzimmerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-wohnzimmerbrand-access",
+      "name": "Wohnzimmerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-wohnzimmerbrand-extended",
+      "name": "Wohnzimmerbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-schlafzimmerbrand-reported",
+      "name": "Schlafzimmerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-schlafzimmerbrand-access",
+      "name": "Schlafzimmerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-schlafzimmerbrand-extended",
+      "name": "Schlafzimmerbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-kellerbrand-reported",
+      "name": "Kellerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-kellerbrand-access",
+      "name": "Kellerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-kellerbrand-extended",
+      "name": "Kellerbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-fassadenbrand-reported",
+      "name": "Fassadenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-fassadenbrand-access",
+      "name": "Fassadenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-fassadenbrand-extended",
+      "name": "Fassadenbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-balkonbrand-reported",
+      "name": "Balkonbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-balkonbrand-access",
+      "name": "Balkonbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 975000
+    },
+    {
+      "id": "case-balkonbrand-extended",
+      "name": "Balkonbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27600,
+      "cents": 1455000
+    },
+    {
+      "id": "case-wohnungsbrand-reported",
+      "name": "Wohnungsbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-wohnungsbrand-access",
+      "name": "Wohnungsbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-wohnungsbrand-extended",
+      "name": "Wohnungsbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-mehrfamilienhausbrand-reported",
+      "name": "Mehrfamilienhausbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 975000
+    },
+    {
+      "id": "case-mehrfamilienhausbrand-access",
+      "name": "Mehrfamilienhausbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26300,
+      "cents": 1150000
+    },
+    {
+      "id": "case-mehrfamilienhausbrand-extended",
+      "name": "Mehrfamilienhausbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 34200,
+      "cents": 1680000
+    },
+    {
+      "id": "case-dachstuhlbrand-reported",
+      "name": "Dachstuhlbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-dachstuhlbrand-access",
+      "name": "Dachstuhlbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 1100000
+    },
+    {
+      "id": "case-dachstuhlbrand-extended",
+      "name": "Dachstuhlbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 33000,
+      "cents": 1630000
+    },
+    {
+      "id": "case-treppenhausbrand-reported",
+      "name": "Treppenhausbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-treppenhausbrand-access",
+      "name": "Treppenhausbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 1100000
+    },
+    {
+      "id": "case-treppenhausbrand-extended",
+      "name": "Treppenhausbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 33000,
+      "cents": 1630000
+    },
+    {
+      "id": "case-hochhausbrand-reported",
+      "name": "Hochhausbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 975000
+    },
+    {
+      "id": "case-hochhausbrand-access",
+      "name": "Hochhausbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26300,
+      "cents": 1150000
+    },
+    {
+      "id": "case-hochhausbrand-extended",
+      "name": "Hochhausbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 34200,
+      "cents": 1680000
+    },
+    {
+      "id": "case-hallenbrand-reported",
+      "name": "Hallenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 22300,
+      "cents": 1100000
+    },
+    {
+      "id": "case-hallenbrand-access",
+      "name": "Hallenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 27700,
+      "cents": 1275000
+    },
+    {
+      "id": "case-hallenbrand-extended",
+      "name": "Hallenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24400,
+      "cents": 1200000
+    },
+    {
+      "id": "case-lagerhallenbrand-reported",
+      "name": "Lagerhallenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 22300,
+      "cents": 1100000
+    },
+    {
+      "id": "case-lagerhallenbrand-access",
+      "name": "Lagerhallenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 27700,
+      "cents": 1275000
+    },
+    {
+      "id": "case-lagerhallenbrand-extended",
+      "name": "Lagerhallenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24400,
+      "cents": 1200000
+    },
+    {
+      "id": "case-werkstattbrand-reported",
+      "name": "Werkstattbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 21100,
+      "cents": 1100000
+    },
+    {
+      "id": "case-werkstattbrand-access",
+      "name": "Werkstattbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 25100,
+      "cents": 1225000
+    },
+    {
+      "id": "case-werkstattbrand-extended",
+      "name": "Werkstattbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23200,
+      "cents": 1150000
+    },
+    {
+      "id": "case-industriebrand-reported",
+      "name": "Industriebrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 26500,
+      "cents": 1350000
+    },
+    {
+      "id": "case-industriebrand-access",
+      "name": "Industriebrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 31900,
+      "cents": 1525000
+    },
+    {
+      "id": "case-industriebrand-extended",
+      "name": "Industriebrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 28600,
+      "cents": 1450000
+    },
+    {
+      "id": "case-maschinenbrand-reported",
+      "name": "Maschinenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 21100,
+      "cents": 1100000
+    },
+    {
+      "id": "case-maschinenbrand-access",
+      "name": "Maschinenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 25100,
+      "cents": 1225000
+    },
+    {
+      "id": "case-maschinenbrand-extended",
+      "name": "Maschinenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24600,
+      "cents": 1275000
+    },
+    {
+      "id": "case-foerderbandbrand-reported",
+      "name": "Förderbandbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 21100,
+      "cents": 1100000
+    },
+    {
+      "id": "case-foerderbandbrand-access",
+      "name": "Förderbandbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 25100,
+      "cents": 1225000
+    },
+    {
+      "id": "case-foerderbandbrand-extended",
+      "name": "Förderbandbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24600,
+      "cents": 1275000
+    },
+    {
+      "id": "case-tankstellenbrand-reported",
+      "name": "Tankstellenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 23700,
+      "cents": 1225000
+    },
+    {
+      "id": "case-tankstellenbrand-access",
+      "name": "Tankstellenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 29100,
+      "cents": 1400000
+    },
+    {
+      "id": "case-tankstellenbrand-extended",
+      "name": "Tankstellenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 25800,
+      "cents": 1325000
+    },
+    {
+      "id": "case-reifenlagerbrand-reported",
+      "name": "Reifenlagerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 23700,
+      "cents": 1225000
+    },
+    {
+      "id": "case-reifenlagerbrand-access",
+      "name": "Reifenlagerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 29100,
+      "cents": 1400000
+    },
+    {
+      "id": "case-reifenlagerbrand-extended",
+      "name": "Reifenlagerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 25800,
+      "cents": 1325000
+    },
+    {
+      "id": "case-baustellenbrand-reported",
+      "name": "Baustellenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-baustellenbrand-access",
+      "name": "Baustellenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-baustellenbrand-extended",
+      "name": "Baustellenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-containerbrand-reported",
+      "name": "Containerbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-containerbrand-access",
+      "name": "Containerbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-containerbrand-extended",
+      "name": "Containerbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 17800,
+      "cents": 975000
+    },
+    {
+      "id": "case-supermarktbrand-reported",
+      "name": "Supermarktbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-supermarktbrand-access",
+      "name": "Supermarktbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-supermarktbrand-extended",
+      "name": "Supermarktbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-einkaufszentrumbrand-reported",
+      "name": "Einkaufszentrumbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-einkaufszentrumbrand-access",
+      "name": "Einkaufszentrumbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-einkaufszentrumbrand-extended",
+      "name": "Einkaufszentrumbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 32800,
+      "cents": 1555000
+    },
+    {
+      "id": "case-schulbrand-reported",
+      "name": "Schulbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-schulbrand-access",
+      "name": "Schulbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-schulbrand-extended",
+      "name": "Schulbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-kindergartenbrand-reported",
+      "name": "Kindergartenbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-kindergartenbrand-access",
+      "name": "Kindergartenbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-kindergartenbrand-extended",
+      "name": "Kindergartenbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-hotelbrand-reported",
+      "name": "Hotelbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-hotelbrand-access",
+      "name": "Hotelbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-hotelbrand-extended",
+      "name": "Hotelbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 32800,
+      "cents": 1555000
+    },
+    {
+      "id": "case-restaurantbrand-reported",
+      "name": "Restaurantbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-restaurantbrand-access",
+      "name": "Restaurantbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-restaurantbrand-extended",
+      "name": "Restaurantbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-discotheken-clubbrand-reported",
+      "name": "Discotheken-/Clubbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-discotheken-clubbrand-access",
+      "name": "Discotheken-/Clubbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-discotheken-clubbrand-extended",
+      "name": "Discotheken-/Clubbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-bahnhofsbrand-reported",
+      "name": "Bahnhofsbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-bahnhofsbrand-access",
+      "name": "Bahnhofsbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-bahnhofsbrand-extended",
+      "name": "Bahnhofsbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-parkhausbrand-reported",
+      "name": "Parkhausbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-parkhausbrand-access",
+      "name": "Parkhausbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-parkhausbrand-extended",
+      "name": "Parkhausbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 21800,
+      "cents": 1025000
+    },
+    {
+      "id": "case-tunnelbrand-reported",
+      "name": "Tunnelbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 25100,
+      "cents": 1100000
+    },
+    {
+      "id": "case-tunnelbrand-access",
+      "name": "Tunnelbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 30500,
+      "cents": 1275000
+    },
+    {
+      "id": "case-tunnelbrand-extended",
+      "name": "Tunnelbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 27200,
+      "cents": 1200000
+    },
+    {
+      "id": "case-zugbrand-reported",
+      "name": "Zugbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 23700,
+      "cents": 1225000
+    },
+    {
+      "id": "case-zugbrand-access",
+      "name": "Zugbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 29100,
+      "cents": 1400000
+    },
+    {
+      "id": "case-zugbrand-extended",
+      "name": "Zugbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 25800,
+      "cents": 1325000
+    },
+    {
+      "id": "case-strassenbahnbrand-reported",
+      "name": "Straßenbahnbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 22500,
+      "cents": 1225000
+    },
+    {
+      "id": "case-strassenbahnbrand-access",
+      "name": "Straßenbahnbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26500,
+      "cents": 1350000
+    },
+    {
+      "id": "case-strassenbahnbrand-extended",
+      "name": "Straßenbahnbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 24600,
+      "cents": 1275000
+    },
+    {
+      "id": "case-trafo-technikbrand-reported",
+      "name": "Trafo-/Technikbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-trafo-technikbrand-access",
+      "name": "Trafo-/Technikbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-trafo-technikbrand-extended",
+      "name": "Trafo-/Technikbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 19200,
+      "cents": 1100000
+    },
+    {
+      "id": "case-kabelbrand-reported",
+      "name": "Kabelbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-kabelbrand-access",
+      "name": "Kabelbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 975000
+    },
+    {
+      "id": "case-kabelbrand-extended",
+      "name": "Kabelbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 19200,
+      "cents": 1100000
+    },
+    {
+      "id": "case-daemmstoff-isolierungsbrand-reported",
+      "name": "Dämmstoff-/Isolierungsbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-daemmstoff-isolierungsbrand-access",
+      "name": "Dämmstoff-/Isolierungsbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-daemmstoff-isolierungsbrand-extended",
+      "name": "Dämmstoff-/Isolierungsbrand – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-baum-auf-strasse-reported",
+      "name": "Baum auf Straße – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-baum-auf-strasse-access",
+      "name": "Baum auf Straße – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-baum-auf-strasse-extended",
+      "name": "Baum auf Straße – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 13600,
+      "cents": 850000
+    },
+    {
+      "id": "case-baum-auf-gebaeude-reported",
+      "name": "Baum auf Gebäude – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-baum-auf-gebaeude-access",
+      "name": "Baum auf Gebäude – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-baum-auf-gebaeude-extended",
+      "name": "Baum auf Gebäude – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 13600,
+      "cents": 850000
+    },
+    {
+      "id": "case-baum-auf-fahrzeug-reported",
+      "name": "Baum auf Fahrzeug – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-baum-auf-fahrzeug-access",
+      "name": "Baum auf Fahrzeug – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-baum-auf-fahrzeug-extended",
+      "name": "Baum auf Fahrzeug – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 13600,
+      "cents": 850000
+    },
+    {
+      "id": "case-ast-droht-zu-fallen-reported",
+      "name": "Ast droht zu fallen – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-ast-droht-zu-fallen-access",
+      "name": "Ast droht zu fallen – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-ast-droht-zu-fallen-extended",
+      "name": "Ast droht zu fallen – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 13600,
+      "cents": 850000
+    },
+    {
+      "id": "case-dachschaden-reported",
+      "name": "Dachschaden – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-dachschaden-access",
+      "name": "Dachschaden – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-dachschaden-extended",
+      "name": "Dachschaden – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-dachziegel-drohen-zu-fallen-reported",
+      "name": "Dachziegel drohen zu fallen – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-dachziegel-drohen-zu-fallen-access",
+      "name": "Dachziegel drohen zu fallen – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-dachziegel-drohen-zu-fallen-extended",
+      "name": "Dachziegel drohen zu fallen – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-baukran-beschaedigt-reported",
+      "name": "Baukran beschädigt – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-baukran-beschaedigt-access",
+      "name": "Baukran beschädigt – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-baukran-beschaedigt-extended",
+      "name": "Baukran beschädigt – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-baukran-droht-umzustuerzen-reported",
+      "name": "Baukran droht umzustürzen – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-baukran-droht-umzustuerzen-access",
+      "name": "Baukran droht umzustürzen – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-baukran-droht-umzustuerzen-extended",
+      "name": "Baukran droht umzustürzen – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-geruest-eingestuerzt-reported",
+      "name": "Gerüst eingestürzt – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1590000
+    },
+    {
+      "id": "case-geruest-eingestuerzt-access",
+      "name": "Gerüst eingestürzt – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1590000
+    },
+    {
+      "id": "case-geruest-eingestuerzt-extended",
+      "name": "Gerüst eingestürzt – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1765000
+    },
+    {
+      "id": "case-person-auf-geruest-reported",
+      "name": "Person auf Gerüst – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1155000
+    },
+    {
+      "id": "case-person-auf-geruest-access",
+      "name": "Person auf Gerüst – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-auf-geruest-extended",
+      "name": "Person auf Gerüst – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1455000
+    },
+    {
+      "id": "case-person-auf-dach-reported",
+      "name": "Person auf Dach – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1155000
+    },
+    {
+      "id": "case-person-auf-dach-access",
+      "name": "Person auf Dach – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-auf-dach-extended",
+      "name": "Person auf Dach – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1455000
+    },
+    {
+      "id": "case-person-in-schacht-reported",
+      "name": "Person in Schacht – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-person-in-schacht-access",
+      "name": "Person in Schacht – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-in-schacht-extended",
+      "name": "Person in Schacht – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23400,
+      "cents": 1330000
+    },
+    {
+      "id": "case-person-in-grube-reported",
+      "name": "Person in Grube – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-person-in-grube-access",
+      "name": "Person in Grube – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-in-grube-extended",
+      "name": "Person in Grube – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23400,
+      "cents": 1330000
+    },
+    {
+      "id": "case-verschuettete-person-reported",
+      "name": "verschüttete Person – erste Meldung",
+      "level": 4,
+      "legacyCredits": 22300,
+      "cents": 1330000
+    },
+    {
+      "id": "case-verschuettete-person-access",
+      "name": "verschüttete Person – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 24900,
+      "cents": 1380000
+    },
+    {
+      "id": "case-verschuettete-person-extended",
+      "name": "verschüttete Person – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31400,
+      "cents": 1680000
+    },
+    {
+      "id": "case-gebaeudeeinsturz-reported",
+      "name": "Gebäudeeinsturz – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-gebaeudeeinsturz-access",
+      "name": "Gebäudeeinsturz – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 20700,
+      "cents": 1515000
+    },
+    {
+      "id": "case-gebaeudeeinsturz-extended",
+      "name": "Gebäudeeinsturz – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21600,
+      "cents": 1690000
+    },
+    {
+      "id": "case-gebaeudeteileinsturz-reported",
+      "name": "Gebäudeteileinsturz – erste Meldung",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1465000
+    },
+    {
+      "id": "case-gebaeudeteileinsturz-access",
+      "name": "Gebäudeteileinsturz – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-gebaeudeteileinsturz-extended",
+      "name": "Gebäudeteileinsturz – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 20400,
+      "cents": 1640000
+    },
+    {
+      "id": "case-decke-eingestuerzt-reported",
+      "name": "Decke eingestürzt – erste Meldung",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1465000
+    },
+    {
+      "id": "case-decke-eingestuerzt-access",
+      "name": "Decke eingestürzt – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-decke-eingestuerzt-extended",
+      "name": "Decke eingestürzt – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 20400,
+      "cents": 1640000
+    },
+    {
+      "id": "case-wand-eingestuerzt-reported",
+      "name": "Wand eingestürzt – erste Meldung",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1465000
+    },
+    {
+      "id": "case-wand-eingestuerzt-access",
+      "name": "Wand eingestürzt – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-wand-eingestuerzt-extended",
+      "name": "Wand eingestürzt – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 20400,
+      "cents": 1640000
+    },
+    {
+      "id": "case-fahrzeug-unter-gebaeudeteil-reported",
+      "name": "Fahrzeug unter Gebäudeteil – erste Meldung",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1465000
+    },
+    {
+      "id": "case-fahrzeug-unter-gebaeudeteil-access",
+      "name": "Fahrzeug unter Gebäudeteil – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-fahrzeug-unter-gebaeudeteil-extended",
+      "name": "Fahrzeug unter Gebäudeteil – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 20400,
+      "cents": 1640000
+    },
+    {
+      "id": "case-baustellenunfall-reported",
+      "name": "Baustellenunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-baustellenunfall-access",
+      "name": "Baustellenunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-baustellenunfall-extended",
+      "name": "Baustellenunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-maschinenunfall-reported",
+      "name": "Maschinenunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-maschinenunfall-access",
+      "name": "Maschinenunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-maschinenunfall-extended",
+      "name": "Maschinenunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-arbeitsunfall-reported",
+      "name": "Arbeitsunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-arbeitsunfall-access",
+      "name": "Arbeitsunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-arbeitsunfall-extended",
+      "name": "Arbeitsunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-eingeklemmt-reported",
+      "name": "Person eingeklemmt – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-person-eingeklemmt-access",
+      "name": "Person eingeklemmt – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-eingeklemmt-extended",
+      "name": "Person eingeklemmt – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-person-unter-fahrzeug-reported",
+      "name": "Person unter Fahrzeug – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-person-unter-fahrzeug-access",
+      "name": "Person unter Fahrzeug – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-unter-fahrzeug-extended",
+      "name": "Person unter Fahrzeug – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-aufzug-reported",
+      "name": "Aufzug – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-aufzug-access",
+      "name": "Aufzug – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-aufzug-extended",
+      "name": "Aufzug – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-tueroeffnung-medizinischer-notfall-reported",
+      "name": "Türöffnung medizinischer Notfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-tueroeffnung-medizinischer-notfall-access",
+      "name": "Türöffnung medizinischer Notfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-tueroeffnung-medizinischer-notfall-extended",
+      "name": "Türöffnung medizinischer Notfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23400,
+      "cents": 1330000
+    },
+    {
+      "id": "case-tueroeffnung-polizei-reported",
+      "name": "Türöffnung Polizei – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12900,
+      "cents": 800000
+    },
+    {
+      "id": "case-tueroeffnung-polizei-access",
+      "name": "Türöffnung Polizei – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 14100,
+      "cents": 850000
+    },
+    {
+      "id": "case-tueroeffnung-polizei-extended",
+      "name": "Türöffnung Polizei – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 16400,
+      "cents": 975000
+    },
+    {
+      "id": "case-stromleitung-beschaedigt-reported",
+      "name": "Stromleitung beschädigt – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11500,
+      "cents": 800000
+    },
+    {
+      "id": "case-stromleitung-beschaedigt-access",
+      "name": "Stromleitung beschädigt – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-stromleitung-beschaedigt-extended",
+      "name": "Stromleitung beschädigt – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 15000,
+      "cents": 975000
+    },
+    {
+      "id": "case-technische-stoerung-reported",
+      "name": "technische Störung – erste Meldung",
+      "level": 1,
+      "legacyCredits": 10100,
+      "cents": 675000
+    },
+    {
+      "id": "case-technische-stoerung-access",
+      "name": "technische Störung – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-technische-stoerung-extended",
+      "name": "technische Störung – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 13600,
+      "cents": 850000
+    },
+    {
+      "id": "case-vu-ohne-verletzte-reported",
+      "name": "VU ohne Verletzte – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11300,
+      "cents": 935000
+    },
+    {
+      "id": "case-vu-ohne-verletzte-access",
+      "name": "VU ohne Verletzte – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15300,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vu-ohne-verletzte-extended",
+      "name": "VU ohne Verletzte – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 14800,
+      "cents": 1110000
+    },
+    {
+      "id": "case-vu-mit-verletzten-reported",
+      "name": "VU mit Verletzten – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-vu-mit-verletzten-access",
+      "name": "VU mit Verletzten – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-vu-mit-verletzten-extended",
+      "name": "VU mit Verletzten – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24600,
+      "cents": 1380000
+    },
+    {
+      "id": "case-vu-mit-mehreren-verletzten-reported",
+      "name": "VU mit mehreren Verletzten – erste Meldung",
+      "level": 4,
+      "legacyCredits": 33500,
+      "cents": 1455000
+    },
+    {
+      "id": "case-vu-mit-mehreren-verletzten-access",
+      "name": "VU mit mehreren Verletzten – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 38900,
+      "cents": 1630000
+    },
+    {
+      "id": "case-vu-mit-mehreren-verletzten-extended",
+      "name": "VU mit mehreren Verletzten – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 42600,
+      "cents": 1680000
+    },
+    {
+      "id": "case-vu-mit-eingeklemmter-person-reported",
+      "name": "VU mit eingeklemmter Person – erste Meldung",
+      "level": 4,
+      "legacyCredits": 18300,
+      "cents": 1205000
+    },
+    {
+      "id": "case-vu-mit-eingeklemmter-person-access",
+      "name": "VU mit eingeklemmter Person – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-vu-mit-eingeklemmter-person-extended",
+      "name": "VU mit eingeklemmter Person – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27400,
+      "cents": 1505000
+    },
+    {
+      "id": "case-vu-mit-feuer-reported",
+      "name": "VU mit Feuer – erste Meldung",
+      "level": 4,
+      "legacyCredits": 21100,
+      "cents": 1330000
+    },
+    {
+      "id": "case-vu-mit-feuer-access",
+      "name": "VU mit Feuer – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 25100,
+      "cents": 1455000
+    },
+    {
+      "id": "case-vu-mit-feuer-extended",
+      "name": "VU mit Feuer – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 33000,
+      "cents": 1630000
+    },
+    {
+      "id": "case-vu-mit-auslaufenden-betriebsstoffen-reported",
+      "name": "VU mit auslaufenden Betriebsstoffen – erste Meldung",
+      "level": 7,
+      "legacyCredits": 12700,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vu-mit-auslaufenden-betriebsstoffen-access",
+      "name": "VU mit auslaufenden Betriebsstoffen – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15300,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vu-mit-auslaufenden-betriebsstoffen-extended",
+      "name": "VU mit auslaufenden Betriebsstoffen – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 16200,
+      "cents": 1235000
+    },
+    {
+      "id": "case-lkw-unfall-reported",
+      "name": "Lkw-Unfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-lkw-unfall-access",
+      "name": "Lkw-Unfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 22100,
+      "cents": 1255000
+    },
+    {
+      "id": "case-lkw-unfall-extended",
+      "name": "Lkw-Unfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 28600,
+      "cents": 1555000
+    },
+    {
+      "id": "case-busunfall-reported",
+      "name": "Busunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 33500,
+      "cents": 1455000
+    },
+    {
+      "id": "case-busunfall-access",
+      "name": "Busunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 38900,
+      "cents": 1630000
+    },
+    {
+      "id": "case-busunfall-extended",
+      "name": "Busunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 42600,
+      "cents": 1680000
+    },
+    {
+      "id": "case-motorradunfall-reported",
+      "name": "Motorradunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-motorradunfall-access",
+      "name": "Motorradunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-motorradunfall-extended",
+      "name": "Motorradunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24600,
+      "cents": 1380000
+    },
+    {
+      "id": "case-fahrradunfall-reported",
+      "name": "Fahrradunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-fahrradunfall-access",
+      "name": "Fahrradunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrradunfall-extended",
+      "name": "Fahrradunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24600,
+      "cents": 1380000
+    },
+    {
+      "id": "case-mehrfachunfall-reported",
+      "name": "Mehrfachunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 33500,
+      "cents": 1455000
+    },
+    {
+      "id": "case-mehrfachunfall-access",
+      "name": "Mehrfachunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 38900,
+      "cents": 1630000
+    },
+    {
+      "id": "case-mehrfachunfall-extended",
+      "name": "Mehrfachunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 42600,
+      "cents": 1680000
+    },
+    {
+      "id": "case-massenkarambolage-reported",
+      "name": "Massenkarambolage – erste Meldung",
+      "level": 4,
+      "legacyCredits": 33500,
+      "cents": 1455000
+    },
+    {
+      "id": "case-massenkarambolage-access",
+      "name": "Massenkarambolage – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 38900,
+      "cents": 1630000
+    },
+    {
+      "id": "case-massenkarambolage-extended",
+      "name": "Massenkarambolage – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 42600,
+      "cents": 1680000
+    },
+    {
+      "id": "case-fahrzeug-im-graben-reported",
+      "name": "Fahrzeug im Graben – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-fahrzeug-im-graben-access",
+      "name": "Fahrzeug im Graben – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrzeug-im-graben-extended",
+      "name": "Fahrzeug im Graben – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24600,
+      "cents": 1380000
+    },
+    {
+      "id": "case-fahrzeug-im-wasser-reported",
+      "name": "Fahrzeug im Wasser – erste Meldung",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrzeug-im-wasser-access",
+      "name": "Fahrzeug im Wasser – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 23500,
+      "cents": 1255000
+    },
+    {
+      "id": "case-fahrzeug-im-wasser-extended",
+      "name": "Fahrzeug im Wasser – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1555000
+    },
+    {
+      "id": "case-fahrzeug-gegen-gebaeude-reported",
+      "name": "Fahrzeug gegen Gebäude – erste Meldung",
+      "level": 4,
+      "legacyCredits": 22500,
+      "cents": 1455000
+    },
+    {
+      "id": "case-fahrzeug-gegen-gebaeude-access",
+      "name": "Fahrzeug gegen Gebäude – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 23700,
+      "cents": 1455000
+    },
+    {
+      "id": "case-fahrzeug-gegen-gebaeude-extended",
+      "name": "Fahrzeug gegen Gebäude – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1755000
+    },
+    {
+      "id": "case-fahrzeug-gegen-baum-reported",
+      "name": "Fahrzeug gegen Baum – erste Meldung",
+      "level": 4,
+      "legacyCredits": 18300,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrzeug-gegen-baum-access",
+      "name": "Fahrzeug gegen Baum – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrzeug-gegen-baum-extended",
+      "name": "Fahrzeug gegen Baum – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27400,
+      "cents": 1505000
+    },
+    {
+      "id": "case-fahrzeug-gegen-laterne-reported",
+      "name": "Fahrzeug gegen Laterne – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-fahrzeug-gegen-laterne-access",
+      "name": "Fahrzeug gegen Laterne – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-fahrzeug-gegen-laterne-extended",
+      "name": "Fahrzeug gegen Laterne – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24600,
+      "cents": 1380000
+    },
+    {
+      "id": "case-fahrzeug-auf-bahnuebergang-reported",
+      "name": "Fahrzeug auf Bahnübergang – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11300,
+      "cents": 935000
+    },
+    {
+      "id": "case-fahrzeug-auf-bahnuebergang-access",
+      "name": "Fahrzeug auf Bahnübergang – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15300,
+      "cents": 1060000
+    },
+    {
+      "id": "case-fahrzeug-auf-bahnuebergang-extended",
+      "name": "Fahrzeug auf Bahnübergang – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 14800,
+      "cents": 1110000
+    },
+    {
+      "id": "case-gefahrgutunfall-strasse-reported",
+      "name": "Gefahrgutunfall Straße – erste Meldung",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1330000
+    },
+    {
+      "id": "case-gefahrgutunfall-strasse-access",
+      "name": "Gefahrgutunfall Straße – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 26300,
+      "cents": 1505000
+    },
+    {
+      "id": "case-gefahrgutunfall-strasse-extended",
+      "name": "Gefahrgutunfall Straße – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1680000
+    },
+    {
+      "id": "case-lkw-verliert-ladung-reported",
+      "name": "Lkw verliert Ladung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 15300,
+      "cents": 1060000
+    },
+    {
+      "id": "case-lkw-verliert-ladung-access",
+      "name": "Lkw verliert Ladung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 20700,
+      "cents": 1235000
+    },
+    {
+      "id": "case-lkw-verliert-ladung-extended",
+      "name": "Lkw verliert Ladung – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 18800,
+      "cents": 1285000
+    },
+    {
+      "id": "case-tankauflieger-beschaedigt-reported",
+      "name": "Tankauflieger beschädigt – erste Meldung",
+      "level": 4,
+      "legacyCredits": 18100,
+      "cents": 1205000
+    },
+    {
+      "id": "case-tankauflieger-beschaedigt-access",
+      "name": "Tankauflieger beschädigt – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 22100,
+      "cents": 1255000
+    },
+    {
+      "id": "case-tankauflieger-beschaedigt-extended",
+      "name": "Tankauflieger beschädigt – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 27200,
+      "cents": 1555000
+    },
+    {
+      "id": "case-gasgeruch-reported",
+      "name": "Gasgeruch – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gasgeruch-access",
+      "name": "Gasgeruch – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gasgeruch-extended",
+      "name": "Gasgeruch – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-gasleck-reported",
+      "name": "Gasleck – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gasleck-access",
+      "name": "Gasleck – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gasleck-extended",
+      "name": "Gasleck – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-gasflasche-beschaedigt-reported",
+      "name": "Gasflasche beschädigt – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gasflasche-beschaedigt-access",
+      "name": "Gasflasche beschädigt – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gasflasche-beschaedigt-extended",
+      "name": "Gasflasche beschädigt – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-unbekannter-stoff-reported",
+      "name": "unbekannter Stoff – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-unbekannter-stoff-access",
+      "name": "unbekannter Stoff – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-unbekannter-stoff-extended",
+      "name": "unbekannter Stoff – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-chemikalienleck-reported",
+      "name": "Chemikalienleck – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-chemikalienleck-access",
+      "name": "Chemikalienleck – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-chemikalienleck-extended",
+      "name": "Chemikalienleck – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-chemikalienaustritt-reported",
+      "name": "Chemikalienaustritt – erste Meldung",
+      "level": 24,
+      "legacyCredits": 15300,
+      "cents": 1655000
+    },
+    {
+      "id": "case-chemikalienaustritt-access",
+      "name": "Chemikalienaustritt – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 20700,
+      "cents": 1830000
+    },
+    {
+      "id": "case-chemikalienaustritt-extended",
+      "name": "Chemikalienaustritt – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 18800,
+      "cents": 1880000
+    },
+    {
+      "id": "case-gefahrgut-lkw-reported",
+      "name": "Gefahrgut-Lkw – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gefahrgut-lkw-access",
+      "name": "Gefahrgut-Lkw – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gefahrgut-lkw-extended",
+      "name": "Gefahrgut-Lkw – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-gefahrgut-bahn-reported",
+      "name": "Gefahrgut-Bahn – erste Meldung",
+      "level": 24,
+      "legacyCredits": 16700,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gefahrgut-bahn-access",
+      "name": "Gefahrgut-Bahn – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 22100,
+      "cents": 1955000
+    },
+    {
+      "id": "case-gefahrgut-bahn-extended",
+      "name": "Gefahrgut-Bahn – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 20200,
+      "cents": 2005000
+    },
+    {
+      "id": "case-beschaedigter-tank-reported",
+      "name": "beschädigter Tank – erste Meldung",
+      "level": 24,
+      "legacyCredits": 15300,
+      "cents": 1655000
+    },
+    {
+      "id": "case-beschaedigter-tank-access",
+      "name": "beschädigter Tank – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 20700,
+      "cents": 1830000
+    },
+    {
+      "id": "case-beschaedigter-tank-extended",
+      "name": "beschädigter Tank – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 18800,
+      "cents": 1880000
+    },
+    {
+      "id": "case-unbekannte-daempfe-reported",
+      "name": "unbekannte Dämpfe – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-unbekannte-daempfe-access",
+      "name": "unbekannte Dämpfe – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-unbekannte-daempfe-extended",
+      "name": "unbekannte Dämpfe – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-verdaechtiger-behaelter-reported",
+      "name": "verdächtiger Behälter – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-verdaechtiger-behaelter-access",
+      "name": "verdächtiger Behälter – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-verdaechtiger-behaelter-extended",
+      "name": "verdächtiger Behälter – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-kontaminierte-person-reported",
+      "name": "kontaminierte Person – erste Meldung",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1330000
+    },
+    {
+      "id": "case-kontaminierte-person-access",
+      "name": "kontaminierte Person – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 26300,
+      "cents": 1505000
+    },
+    {
+      "id": "case-kontaminierte-person-extended",
+      "name": "kontaminierte Person – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31400,
+      "cents": 1680000
+    },
+    {
+      "id": "case-kontaminiertes-gebaeude-reported",
+      "name": "kontaminiertes Gebäude – erste Meldung",
+      "level": 24,
+      "legacyCredits": 16700,
+      "cents": 1780000
+    },
+    {
+      "id": "case-kontaminiertes-gebaeude-access",
+      "name": "kontaminiertes Gebäude – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 22100,
+      "cents": 1955000
+    },
+    {
+      "id": "case-kontaminiertes-gebaeude-extended",
+      "name": "kontaminiertes Gebäude – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 21600,
+      "cents": 2005000
+    },
+    {
+      "id": "case-gefahrstoff-auf-strasse-reported",
+      "name": "Gefahrstoff auf Straße – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gefahrstoff-auf-strasse-access",
+      "name": "Gefahrstoff auf Straße – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gefahrstoff-auf-strasse-extended",
+      "name": "Gefahrstoff auf Straße – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-gefahrstoff-in-betrieb-reported",
+      "name": "Gefahrstoff in Betrieb – erste Meldung",
+      "level": 24,
+      "legacyCredits": 14100,
+      "cents": 1655000
+    },
+    {
+      "id": "case-gefahrstoff-in-betrieb-access",
+      "name": "Gefahrstoff in Betrieb – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 18100,
+      "cents": 1780000
+    },
+    {
+      "id": "case-gefahrstoff-in-betrieb-extended",
+      "name": "Gefahrstoff in Betrieb – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 17600,
+      "cents": 1830000
+    },
+    {
+      "id": "case-dekontamination-erforderlich-reported",
+      "name": "Dekontamination erforderlich – erste Meldung",
+      "level": 24,
+      "legacyCredits": 16700,
+      "cents": 1780000
+    },
+    {
+      "id": "case-dekontamination-erforderlich-access",
+      "name": "Dekontamination erforderlich – Zugang erschwert",
+      "level": 24,
+      "legacyCredits": 22100,
+      "cents": 1955000
+    },
+    {
+      "id": "case-dekontamination-erforderlich-extended",
+      "name": "Dekontamination erforderlich – Lage ausgeweitet",
+      "level": 24,
+      "legacyCredits": 21600,
+      "cents": 2005000
+    },
+    {
+      "id": "case-person-im-see-reported",
+      "name": "Person im See – erste Meldung",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-im-see-access",
+      "name": "Person im See – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-im-see-extended",
+      "name": "Person im See – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-person-im-fluss-reported",
+      "name": "Person im Fluss – erste Meldung",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-im-fluss-access",
+      "name": "Person im Fluss – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-im-fluss-extended",
+      "name": "Person im Fluss – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-person-im-wasser-reported",
+      "name": "Person im Wasser – erste Meldung",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-person-im-wasser-access",
+      "name": "Person im Wasser – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-person-im-wasser-extended",
+      "name": "Person im Wasser – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-gekentertes-boot-reported",
+      "name": "gekentertes Boot – erste Meldung",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-gekentertes-boot-access",
+      "name": "gekentertes Boot – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 26300,
+      "cents": 1380000
+    },
+    {
+      "id": "case-gekentertes-boot-extended",
+      "name": "gekentertes Boot – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1555000
+    },
+    {
+      "id": "case-bootsunfall-reported",
+      "name": "Bootsunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-bootsunfall-access",
+      "name": "Bootsunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 26300,
+      "cents": 1380000
+    },
+    {
+      "id": "case-bootsunfall-extended",
+      "name": "Bootsunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1555000
+    },
+    {
+      "id": "case-vermisster-schwimmer-reported",
+      "name": "vermisster Schwimmer – erste Meldung",
+      "level": 4,
+      "legacyCredits": 21100,
+      "cents": 1205000
+    },
+    {
+      "id": "case-vermisster-schwimmer-access",
+      "name": "vermisster Schwimmer – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 25100,
+      "cents": 1330000
+    },
+    {
+      "id": "case-vermisster-schwimmer-extended",
+      "name": "vermisster Schwimmer – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30200,
+      "cents": 1505000
+    },
+    {
+      "id": "case-eisunfall-reported",
+      "name": "Eisunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-eisunfall-access",
+      "name": "Eisunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-eisunfall-extended",
+      "name": "Eisunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-hochwasser-keller-reported",
+      "name": "Hochwasser Keller – erste Meldung",
+      "level": 15,
+      "legacyCredits": 12700,
+      "cents": 1215000
+    },
+    {
+      "id": "case-hochwasser-keller-access",
+      "name": "Hochwasser Keller – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 16700,
+      "cents": 1340000
+    },
+    {
+      "id": "case-hochwasser-keller-extended",
+      "name": "Hochwasser Keller – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 16200,
+      "cents": 1390000
+    },
+    {
+      "id": "case-hochwasser-strasse-reported",
+      "name": "Hochwasser Straße – erste Meldung",
+      "level": 15,
+      "legacyCredits": 12700,
+      "cents": 1215000
+    },
+    {
+      "id": "case-hochwasser-strasse-access",
+      "name": "Hochwasser Straße – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 16700,
+      "cents": 1340000
+    },
+    {
+      "id": "case-hochwasser-strasse-extended",
+      "name": "Hochwasser Straße – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 16200,
+      "cents": 1390000
+    },
+    {
+      "id": "case-hochwasser-wohngebiet-reported",
+      "name": "Hochwasser Wohngebiet – erste Meldung",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1465000
+    },
+    {
+      "id": "case-hochwasser-wohngebiet-access",
+      "name": "Hochwasser Wohngebiet – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 24900,
+      "cents": 1640000
+    },
+    {
+      "id": "case-hochwasser-wohngebiet-extended",
+      "name": "Hochwasser Wohngebiet – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 23000,
+      "cents": 1690000
+    },
+    {
+      "id": "case-ueberschwemmtes-gebaeude-reported",
+      "name": "überschwemmtes Gebäude – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1465000
+    },
+    {
+      "id": "case-ueberschwemmtes-gebaeude-access",
+      "name": "überschwemmtes Gebäude – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 22300,
+      "cents": 1590000
+    },
+    {
+      "id": "case-ueberschwemmtes-gebaeude-extended",
+      "name": "überschwemmtes Gebäude – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1640000
+    },
+    {
+      "id": "case-deichproblem-reported",
+      "name": "Deichproblem – erste Meldung",
+      "level": 15,
+      "legacyCredits": 13900,
+      "cents": 1215000
+    },
+    {
+      "id": "case-deichproblem-access",
+      "name": "Deichproblem – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19300,
+      "cents": 1390000
+    },
+    {
+      "id": "case-deichproblem-extended",
+      "name": "Deichproblem – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 17400,
+      "cents": 1440000
+    },
+    {
+      "id": "case-baum-durch-sturm-reported",
+      "name": "Baum durch Sturm – erste Meldung",
+      "level": 1,
+      "legacyCredits": 11300,
+      "cents": 725000
+    },
+    {
+      "id": "case-baum-durch-sturm-access",
+      "name": "Baum durch Sturm – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 13900,
+      "cents": 725000
+    },
+    {
+      "id": "case-baum-durch-sturm-extended",
+      "name": "Baum durch Sturm – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 14800,
+      "cents": 900000
+    },
+    {
+      "id": "case-dachschaden-durch-sturm-reported",
+      "name": "Dachschaden durch Sturm – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-dachschaden-durch-sturm-access",
+      "name": "Dachschaden durch Sturm – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15300,
+      "cents": 850000
+    },
+    {
+      "id": "case-dachschaden-durch-sturm-extended",
+      "name": "Dachschaden durch Sturm – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 16200,
+      "cents": 1025000
+    },
+    {
+      "id": "case-strommast-durch-sturm-reported",
+      "name": "Strommast durch Sturm – erste Meldung",
+      "level": 1,
+      "legacyCredits": 12700,
+      "cents": 850000
+    },
+    {
+      "id": "case-strommast-durch-sturm-access",
+      "name": "Strommast durch Sturm – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 15300,
+      "cents": 850000
+    },
+    {
+      "id": "case-strommast-durch-sturm-extended",
+      "name": "Strommast durch Sturm – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 16200,
+      "cents": 1025000
+    },
+    {
+      "id": "case-feld-waldbrand-reported",
+      "name": "Feld-/Waldbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-feld-waldbrand-access",
+      "name": "Feld-/Waldbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-feld-waldbrand-extended",
+      "name": "Feld-/Waldbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23000,
+      "cents": 1075000
+    },
+    {
+      "id": "case-vegetationsbrand-reported",
+      "name": "Vegetationsbrand – erste Meldung",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 850000
+    },
+    {
+      "id": "case-vegetationsbrand-access",
+      "name": "Vegetationsbrand – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 24900,
+      "cents": 1025000
+    },
+    {
+      "id": "case-vegetationsbrand-extended",
+      "name": "Vegetationsbrand – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23000,
+      "cents": 1075000
+    },
+    {
+      "id": "case-bewusstlose-person-reported",
+      "name": "Bewusstlose Person – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14100,
+      "cents": 955000
+    },
+    {
+      "id": "case-bewusstlose-person-access",
+      "name": "Bewusstlose Person – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 18100,
+      "cents": 1080000
+    },
+    {
+      "id": "case-bewusstlose-person-extended",
+      "name": "Bewusstlose Person – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-kreislaufproblem-reported",
+      "name": "Kreislaufproblem – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-kreislaufproblem-access",
+      "name": "Kreislaufproblem – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-kreislaufproblem-extended",
+      "name": "Kreislaufproblem – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-atemnot-reported",
+      "name": "Atemnot – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14100,
+      "cents": 955000
+    },
+    {
+      "id": "case-atemnot-access",
+      "name": "Atemnot – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 18100,
+      "cents": 1080000
+    },
+    {
+      "id": "case-atemnot-extended",
+      "name": "Atemnot – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23200,
+      "cents": 1255000
+    },
+    {
+      "id": "case-brustschmerz-reported",
+      "name": "Brustschmerz – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-brustschmerz-access",
+      "name": "Brustschmerz – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-brustschmerz-extended",
+      "name": "Brustschmerz – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23200,
+      "cents": 1255000
+    },
+    {
+      "id": "case-schlaganfallverdacht-reported",
+      "name": "Schlaganfallverdacht – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-schlaganfallverdacht-access",
+      "name": "Schlaganfallverdacht – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schlaganfallverdacht-extended",
+      "name": "Schlaganfallverdacht – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 23200,
+      "cents": 1255000
+    },
+    {
+      "id": "case-krampfanfall-reported",
+      "name": "Krampfanfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-krampfanfall-access",
+      "name": "Krampfanfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-krampfanfall-extended",
+      "name": "Krampfanfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-sturz-reported",
+      "name": "Sturz – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-sturz-access",
+      "name": "Sturz – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-sturz-extended",
+      "name": "Sturz – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwerer-sturz-reported",
+      "name": "schwerer Sturz – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-schwerer-sturz-access",
+      "name": "schwerer Sturz – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwerer-sturz-extended",
+      "name": "schwerer Sturz – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-kopfverletzung-reported",
+      "name": "Kopfverletzung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-kopfverletzung-access",
+      "name": "Kopfverletzung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-kopfverletzung-extended",
+      "name": "Kopfverletzung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwere-blutung-reported",
+      "name": "schwere Blutung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-schwere-blutung-access",
+      "name": "schwere Blutung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwere-blutung-extended",
+      "name": "schwere Blutung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-starke-schmerzen-reported",
+      "name": "starke Schmerzen – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-starke-schmerzen-access",
+      "name": "starke Schmerzen – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-starke-schmerzen-extended",
+      "name": "starke Schmerzen – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-allergische-reaktion-reported",
+      "name": "allergische Reaktion – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-allergische-reaktion-access",
+      "name": "allergische Reaktion – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-allergische-reaktion-extended",
+      "name": "allergische Reaktion – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwere-allergische-reaktion-reported",
+      "name": "schwere allergische Reaktion – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-schwere-allergische-reaktion-access",
+      "name": "schwere allergische Reaktion – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwere-allergische-reaktion-extended",
+      "name": "schwere allergische Reaktion – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-vergiftung-reported",
+      "name": "Vergiftung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-vergiftung-access",
+      "name": "Vergiftung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-vergiftung-extended",
+      "name": "Vergiftung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-intoxikation-reported",
+      "name": "Intoxikation – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-intoxikation-access",
+      "name": "Intoxikation – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-intoxikation-extended",
+      "name": "Intoxikation – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-unterkuehlung-reported",
+      "name": "Unterkühlung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-unterkuehlung-access",
+      "name": "Unterkühlung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-unterkuehlung-extended",
+      "name": "Unterkühlung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-ueberhitzung-reported",
+      "name": "Überhitzung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-ueberhitzung-access",
+      "name": "Überhitzung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-ueberhitzung-extended",
+      "name": "Überhitzung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-dehydrierung-reported",
+      "name": "Dehydrierung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-dehydrierung-access",
+      "name": "Dehydrierung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-dehydrierung-extended",
+      "name": "Dehydrierung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-verbrennung-reported",
+      "name": "Verbrennung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-verbrennung-access",
+      "name": "Verbrennung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-verbrennung-extended",
+      "name": "Verbrennung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-rauchgasexposition-reported",
+      "name": "Rauchgasexposition – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-rauchgasexposition-access",
+      "name": "Rauchgasexposition – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-rauchgasexposition-extended",
+      "name": "Rauchgasexposition – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-ertrinkungsunfall-reported",
+      "name": "Ertrinkungsunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-ertrinkungsunfall-access",
+      "name": "Ertrinkungsunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-ertrinkungsunfall-extended",
+      "name": "Ertrinkungsunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-badeunfall-reported",
+      "name": "Badeunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-badeunfall-access",
+      "name": "Badeunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-badeunfall-extended",
+      "name": "Badeunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-sportunfall-reported",
+      "name": "Sportunfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-sportunfall-access",
+      "name": "Sportunfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-sportunfall-extended",
+      "name": "Sportunfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-haeuslicher-notfall-reported",
+      "name": "häuslicher Notfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-haeuslicher-notfall-access",
+      "name": "häuslicher Notfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-haeuslicher-notfall-extended",
+      "name": "häuslicher Notfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-kindernotfall-reported",
+      "name": "Kindernotfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-kindernotfall-access",
+      "name": "Kindernotfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-kindernotfall-extended",
+      "name": "Kindernotfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-saeuglingsnotfall-reported",
+      "name": "Säuglingsnotfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-saeuglingsnotfall-access",
+      "name": "Säuglingsnotfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-saeuglingsnotfall-extended",
+      "name": "Säuglingsnotfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-schwangerschaftsnotfall-reported",
+      "name": "Schwangerschaftsnotfall – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-schwangerschaftsnotfall-access",
+      "name": "Schwangerschaftsnotfall – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schwangerschaftsnotfall-extended",
+      "name": "Schwangerschaftsnotfall – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-geburt-reported",
+      "name": "Geburt – erste Meldung",
+      "level": 4,
+      "legacyCredits": 14300,
+      "cents": 1030000
+    },
+    {
+      "id": "case-geburt-access",
+      "name": "Geburt – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-geburt-extended",
+      "name": "Geburt – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-reanimation-reported",
+      "name": "Reanimation – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-reanimation-access",
+      "name": "Reanimation – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 19500,
+      "cents": 1205000
+    },
+    {
+      "id": "case-reanimation-extended",
+      "name": "Reanimation – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-mehrere-verletzte-reported",
+      "name": "mehrere Verletzte – erste Meldung",
+      "level": 4,
+      "legacyCredits": 32100,
+      "cents": 1330000
+    },
+    {
+      "id": "case-mehrere-verletzte-access",
+      "name": "mehrere Verletzte – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 37500,
+      "cents": 1505000
+    },
+    {
+      "id": "case-mehrere-verletzte-extended",
+      "name": "mehrere Verletzte – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 41200,
+      "cents": 1555000
+    },
+    {
+      "id": "case-manv-reported",
+      "name": "MANV – erste Meldung",
+      "level": 4,
+      "legacyCredits": 32100,
+      "cents": 1330000
+    },
+    {
+      "id": "case-manv-access",
+      "name": "MANV – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 37500,
+      "cents": 1505000
+    },
+    {
+      "id": "case-manv-extended",
+      "name": "MANV – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 41200,
+      "cents": 1555000
+    },
+    {
+      "id": "case-medizinischer-notfall-in-oeffentlichem-gebaeude-reported",
+      "name": "medizinischer Notfall in öffentlichem Gebäude – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-medizinischer-notfall-in-oeffentlichem-gebaeude-access",
+      "name": "medizinischer Notfall in öffentlichem Gebäude – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-medizinischer-notfall-in-oeffentlichem-gebaeude-extended",
+      "name": "medizinischer Notfall in öffentlichem Gebäude – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-einbruch-reported",
+      "name": "Einbruch – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-einbruch-access",
+      "name": "Einbruch – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-einbruch-extended",
+      "name": "Einbruch – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-einbruchalarm-reported",
+      "name": "Einbruchalarm – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-einbruchalarm-access",
+      "name": "Einbruchalarm – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-einbruchalarm-extended",
+      "name": "Einbruchalarm – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-raub-reported",
+      "name": "Raub – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-raub-access",
+      "name": "Raub – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-raub-extended",
+      "name": "Raub – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-diebstahl-reported",
+      "name": "Diebstahl – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-diebstahl-access",
+      "name": "Diebstahl – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-diebstahl-extended",
+      "name": "Diebstahl – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-koerperverletzung-reported",
+      "name": "Körperverletzung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-koerperverletzung-access",
+      "name": "Körperverletzung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 18300,
+      "cents": 1205000
+    },
+    {
+      "id": "case-koerperverletzung-extended",
+      "name": "Körperverletzung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-schlaegerei-reported",
+      "name": "Schlägerei – erste Meldung",
+      "level": 4,
+      "legacyCredits": 16900,
+      "cents": 1080000
+    },
+    {
+      "id": "case-schlaegerei-access",
+      "name": "Schlägerei – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 20900,
+      "cents": 1205000
+    },
+    {
+      "id": "case-schlaegerei-extended",
+      "name": "Schlägerei – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 26000,
+      "cents": 1380000
+    },
+    {
+      "id": "case-messerangriff-reported",
+      "name": "Messerangriff – erste Meldung",
+      "level": 4,
+      "legacyCredits": 19700,
+      "cents": 1080000
+    },
+    {
+      "id": "case-messerangriff-access",
+      "name": "Messerangriff – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 23700,
+      "cents": 1205000
+    },
+    {
+      "id": "case-messerangriff-extended",
+      "name": "Messerangriff – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 28800,
+      "cents": 1380000
+    },
+    {
+      "id": "case-bedrohung-reported",
+      "name": "Bedrohung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-bedrohung-access",
+      "name": "Bedrohung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-bedrohung-extended",
+      "name": "Bedrohung – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-haeusliche-gewalt-reported",
+      "name": "häusliche Gewalt – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-haeusliche-gewalt-access",
+      "name": "häusliche Gewalt – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 18300,
+      "cents": 1205000
+    },
+    {
+      "id": "case-haeusliche-gewalt-extended",
+      "name": "häusliche Gewalt – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-vermisste-person-reported",
+      "name": "vermisste Person – erste Meldung",
+      "level": 7,
+      "legacyCredits": 12900,
+      "cents": 885000
+    },
+    {
+      "id": "case-vermisste-person-access",
+      "name": "vermisste Person – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vermisste-person-extended",
+      "name": "vermisste Person – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 16400,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vermisstes-kind-reported",
+      "name": "vermisstes Kind – erste Meldung",
+      "level": 7,
+      "legacyCredits": 12900,
+      "cents": 885000
+    },
+    {
+      "id": "case-vermisstes-kind-access",
+      "name": "vermisstes Kind – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 1060000
+    },
+    {
+      "id": "case-vermisstes-kind-extended",
+      "name": "vermisstes Kind – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 16400,
+      "cents": 1060000
+    },
+    {
+      "id": "case-suizidandrohung-reported",
+      "name": "Suizidandrohung – erste Meldung",
+      "level": 4,
+      "legacyCredits": 15700,
+      "cents": 1030000
+    },
+    {
+      "id": "case-suizidandrohung-access",
+      "name": "Suizidandrohung – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 18300,
+      "cents": 1205000
+    },
+    {
+      "id": "case-suizidandrohung-extended",
+      "name": "Suizidandrohung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 24800,
+      "cents": 1330000
+    },
+    {
+      "id": "case-gefaehrliche-person-reported",
+      "name": "gefährliche Person – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-gefaehrliche-person-access",
+      "name": "gefährliche Person – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-gefaehrliche-person-extended",
+      "name": "gefährliche Person – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-bewaffnete-person-reported",
+      "name": "bewaffnete Person – erste Meldung",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 935000
+    },
+    {
+      "id": "case-bewaffnete-person-access",
+      "name": "bewaffnete Person – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 19500,
+      "cents": 1060000
+    },
+    {
+      "id": "case-bewaffnete-person-extended",
+      "name": "bewaffnete Person – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 19000,
+      "cents": 1110000
+    },
+    {
+      "id": "case-geisellage-reported",
+      "name": "Geisellage – erste Meldung",
+      "level": 4,
+      "legacyCredits": 37700,
+      "cents": 1455000
+    },
+    {
+      "id": "case-geisellage-access",
+      "name": "Geisellage – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 43100,
+      "cents": 1630000
+    },
+    {
+      "id": "case-geisellage-extended",
+      "name": "Geisellage – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 46800,
+      "cents": 1680000
+    },
+    {
+      "id": "case-amoklage-reported",
+      "name": "Amoklage – erste Meldung",
+      "level": 4,
+      "legacyCredits": 37700,
+      "cents": 1455000
+    },
+    {
+      "id": "case-amoklage-access",
+      "name": "Amoklage – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 43100,
+      "cents": 1630000
+    },
+    {
+      "id": "case-amoklage-extended",
+      "name": "Amoklage – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 46800,
+      "cents": 1680000
+    },
+    {
+      "id": "case-brandstiftung-reported",
+      "name": "Brandstiftung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 12900,
+      "cents": 1010000
+    },
+    {
+      "id": "case-brandstiftung-access",
+      "name": "Brandstiftung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 1185000
+    },
+    {
+      "id": "case-brandstiftung-extended",
+      "name": "Brandstiftung – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 20600,
+      "cents": 1310000
+    },
+    {
+      "id": "case-sachbeschaedigung-reported",
+      "name": "Sachbeschädigung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-sachbeschaedigung-access",
+      "name": "Sachbeschädigung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-sachbeschaedigung-extended",
+      "name": "Sachbeschädigung – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-fahrzeugflucht-reported",
+      "name": "Fahrzeugflucht – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-fahrzeugflucht-access",
+      "name": "Fahrzeugflucht – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-fahrzeugflucht-extended",
+      "name": "Fahrzeugflucht – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-verkehrskontrolle-reported",
+      "name": "Verkehrskontrolle – erste Meldung",
+      "level": 7,
+      "legacyCredits": 11500,
+      "cents": 885000
+    },
+    {
+      "id": "case-verkehrskontrolle-access",
+      "name": "Verkehrskontrolle – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 14100,
+      "cents": 1060000
+    },
+    {
+      "id": "case-verkehrskontrolle-extended",
+      "name": "Verkehrskontrolle – Lage ausgeweitet",
+      "level": 7,
+      "legacyCredits": 15000,
+      "cents": 1060000
+    },
+    {
+      "id": "case-groessere-menschenansammlung-reported",
+      "name": "größere Menschenansammlung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 16700,
+      "cents": 1060000
+    },
+    {
+      "id": "case-groessere-menschenansammlung-access",
+      "name": "größere Menschenansammlung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 22100,
+      "cents": 1235000
+    },
+    {
+      "id": "case-groessere-menschenansammlung-extended",
+      "name": "größere Menschenansammlung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1555000
+    },
+    {
+      "id": "case-absicherung-reported",
+      "name": "Absicherung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 1060000
+    },
+    {
+      "id": "case-absicherung-access",
+      "name": "Absicherung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 19500,
+      "cents": 1185000
+    },
+    {
+      "id": "case-absicherung-extended",
+      "name": "Absicherung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 28800,
+      "cents": 1505000
+    },
+    {
+      "id": "case-demonstration-reported",
+      "name": "Demonstration – erste Meldung",
+      "level": 7,
+      "legacyCredits": 16700,
+      "cents": 1060000
+    },
+    {
+      "id": "case-demonstration-access",
+      "name": "Demonstration – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 22100,
+      "cents": 1235000
+    },
+    {
+      "id": "case-demonstration-extended",
+      "name": "Demonstration – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30000,
+      "cents": 1555000
+    },
+    {
+      "id": "case-veranstaltung-reported",
+      "name": "Veranstaltung – erste Meldung",
+      "level": 7,
+      "legacyCredits": 15500,
+      "cents": 1060000
+    },
+    {
+      "id": "case-veranstaltung-access",
+      "name": "Veranstaltung – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 19500,
+      "cents": 1185000
+    },
+    {
+      "id": "case-veranstaltung-extended",
+      "name": "Veranstaltung – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 28800,
+      "cents": 1505000
+    },
+    {
+      "id": "case-schwere-technische-bergung-reported",
+      "name": "schwere technische Bergung – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1465000
+    },
+    {
+      "id": "case-schwere-technische-bergung-access",
+      "name": "schwere technische Bergung – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1465000
+    },
+    {
+      "id": "case-schwere-technische-bergung-extended",
+      "name": "schwere technische Bergung – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1640000
+    },
+    {
+      "id": "case-ueberflutung-reported",
+      "name": "Überflutung – erste Meldung",
+      "level": 15,
+      "legacyCredits": 12700,
+      "cents": 1215000
+    },
+    {
+      "id": "case-ueberflutung-access",
+      "name": "Überflutung – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 16700,
+      "cents": 1340000
+    },
+    {
+      "id": "case-ueberflutung-extended",
+      "name": "Überflutung – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 16200,
+      "cents": 1390000
+    },
+    {
+      "id": "case-pumpeneinsatz-reported",
+      "name": "Pumpeneinsatz – erste Meldung",
+      "level": 15,
+      "legacyCredits": 12700,
+      "cents": 1215000
+    },
+    {
+      "id": "case-pumpeneinsatz-access",
+      "name": "Pumpeneinsatz – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 16700,
+      "cents": 1340000
+    },
+    {
+      "id": "case-pumpeneinsatz-extended",
+      "name": "Pumpeneinsatz – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 16200,
+      "cents": 1390000
+    },
+    {
+      "id": "case-stromversorgung-reported",
+      "name": "Stromversorgung – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1590000
+    },
+    {
+      "id": "case-stromversorgung-access",
+      "name": "Stromversorgung – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 22300,
+      "cents": 1715000
+    },
+    {
+      "id": "case-stromversorgung-extended",
+      "name": "Stromversorgung – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 23200,
+      "cents": 1765000
+    },
+    {
+      "id": "case-beleuchtung-reported",
+      "name": "Beleuchtung – erste Meldung",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1465000
+    },
+    {
+      "id": "case-beleuchtung-access",
+      "name": "Beleuchtung – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 20900,
+      "cents": 1590000
+    },
+    {
+      "id": "case-beleuchtung-extended",
+      "name": "Beleuchtung – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1640000
+    },
+    {
+      "id": "case-truemmer-reported",
+      "name": "Trümmer – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1465000
+    },
+    {
+      "id": "case-truemmer-access",
+      "name": "Trümmer – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1465000
+    },
+    {
+      "id": "case-truemmer-extended",
+      "name": "Trümmer – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1640000
+    },
+    {
+      "id": "case-abstuetzung-reported",
+      "name": "Abstützung – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1465000
+    },
+    {
+      "id": "case-abstuetzung-access",
+      "name": "Abstützung – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1465000
+    },
+    {
+      "id": "case-abstuetzung-extended",
+      "name": "Abstützung – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 21800,
+      "cents": 1640000
+    },
+    {
+      "id": "case-versorgung-nach-stromausfall-reported",
+      "name": "Versorgung nach Stromausfall – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18300,
+      "cents": 1590000
+    },
+    {
+      "id": "case-versorgung-nach-stromausfall-access",
+      "name": "Versorgung nach Stromausfall – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 22300,
+      "cents": 1715000
+    },
+    {
+      "id": "case-versorgung-nach-stromausfall-extended",
+      "name": "Versorgung nach Stromausfall – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 23200,
+      "cents": 1765000
+    },
+    {
+      "id": "case-katastrophenschutz-reported",
+      "name": "Katastrophenschutz – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-katastrophenschutz-access",
+      "name": "Katastrophenschutz – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 23500,
+      "cents": 1640000
+    },
+    {
+      "id": "case-katastrophenschutz-extended",
+      "name": "Katastrophenschutz – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 23000,
+      "cents": 1690000
+    },
+    {
+      "id": "case-grossschadenslage-reported",
+      "name": "Großschadenslage – erste Meldung",
+      "level": 15,
+      "legacyCredits": 18100,
+      "cents": 1465000
+    },
+    {
+      "id": "case-grossschadenslage-access",
+      "name": "Großschadenslage – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 23500,
+      "cents": 1640000
+    },
+    {
+      "id": "case-grossschadenslage-extended",
+      "name": "Großschadenslage – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 23000,
+      "cents": 1690000
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "entry",
+      "name": "Einstieg: Feuerwache und TSF-W",
+      "initial": 140000000,
+      "spending": 83000000,
+      "goal": 32000000,
+      "requiredLevel": 2,
+      "callsPerHour": 1,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 57000000,
+      "nextReserve": 25000000,
+      "secondsToGoal": 0,
+      "incomeCents": 0,
+      "fundingCents": 0,
+      "missionPaymentsCents": 0,
+      "completed": 0,
+      "fixedPaymentCents": 625000,
+      "finalCents": 25000000
+    },
+    {
+      "id": "expansion",
+      "name": "Früher Ausbau: eigener Rettungsdienst",
+      "initial": 140000000,
+      "spending": 115000000,
+      "goal": 69000000,
+      "requiredLevel": 4,
+      "callsPerHour": 1,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 25000000,
+      "nextReserve": 2875000,
+      "secondsToGoal": 13500,
+      "incomeCents": 46875000,
+      "fundingCents": 45000000,
+      "missionPaymentsCents": 1875000,
+      "completed": 3,
+      "fixedPaymentCents": 625000,
+      "finalCents": 2875000
+    },
+    {
+      "id": "medical",
+      "name": "Rettungsdienst: Notarzt ergänzen",
+      "initial": 69000000,
+      "spending": 69000000,
+      "goal": 25000000,
+      "requiredLevel": 11,
+      "callsPerHour": 1,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 0,
+      "nextReserve": 250000,
+      "secondsToGoal": 7200,
+      "incomeCents": 25250000,
+      "fundingCents": 24000000,
+      "missionPaymentsCents": 1250000,
+      "completed": 2,
+      "fixedPaymentCents": 625000,
+      "finalCents": 250000
+    },
+    {
+      "id": "specialist",
+      "name": "Spezialisierung: Drehleiter",
+      "initial": 140000000,
+      "spending": 115000000,
+      "goal": 72000000,
+      "requiredLevel": 10,
+      "callsPerHour": 2,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 25000000,
+      "nextReserve": 2375000,
+      "secondsToGoal": 13500,
+      "incomeCents": 49375000,
+      "fundingCents": 45000000,
+      "missionPaymentsCents": 4375000,
+      "completed": 7,
+      "fixedPaymentCents": 625000,
+      "finalCents": 2375000
+    },
+    {
+      "id": "advanced",
+      "name": "Große Leitstelle: Luftrettung ergänzen",
+      "initial": 100000000,
+      "spending": 0,
+      "goal": 243000000,
+      "requiredLevel": 30,
+      "callsPerHour": 2,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 100000000,
+      "nextReserve": 2750000,
+      "secondsToGoal": 39600,
+      "incomeCents": 145750000,
+      "fundingCents": 132000000,
+      "missionPaymentsCents": 13750000,
+      "completed": 22,
+      "fixedPaymentCents": 625000,
+      "finalCents": 2750000
+    },
+    {
+      "id": "absence",
+      "name": "Leeres Budget, keine Einsätze, 30 Tage abwesend",
+      "initial": 0,
+      "spending": 0,
+      "goal": 18000000,
+      "requiredLevel": 1,
+      "callsPerHour": 0,
+      "currency": "EUR",
+      "unit": "cent",
+      "reserve": 0,
+      "nextReserve": 0,
+      "secondsToGoal": 5400,
+      "incomeCents": 18000000,
+      "fundingCents": 18000000,
+      "missionPaymentsCents": 0,
+      "completed": 0,
+      "fixedPaymentCents": 625000,
+      "finalCents": 250000000
+    }
+  ]
+}

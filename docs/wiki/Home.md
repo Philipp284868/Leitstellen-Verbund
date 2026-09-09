@@ -9,6 +9,10 @@ PC-Multiplayer im Browser: anmelden, berechtigte Leitstelle öffnen, Notrufe bea
 - [[Rollen und Berechtigungen|Berechtigungen]]
 - [[Hauptmenü, neue Hauptleiste und Tastatur|Bedienung]]
 - [[Notruf, Disposition, AAO, FMS und Funk|Einsatzablauf]]
+- [[Persönliches Tutorial und Übungswelt|Tutorial]]
+- [[Euro, Grundfinanzierung und Bestandsschutz|Wirtschaft]]
+- [[Automatische Wachbesetzung|Wachen-und-Personal]]
+- [[Audio, Einstellungen und lokale Sicherung|Audio-und-Einstellungen]]
 - [[Level, XP und Freischaltungen|Fortschritt]]
 - [[Karte, Straßenlimits und ETA|Karte-und-Fahrten]]
 - [[Ganz Deutschland: echte Geografie und kontrollierter Weltwechsel|Deutschland]]
@@ -16,7 +20,9 @@ PC-Multiplayer im Browser: anmelden, berechtigte Leitstelle öffnen, Notrufe bea
 - [[Entwicklung, Tests und Releases|Entwicklung]]
 - [[Grenzen und Roadmap|Roadmap]]
 
-Diese Seiten beschreiben Version **2.20.0**. Bereite Fahrzeuge können schon auf der Rückfahrt erneut alarmiert werden. Das Notrufaufkommen richtet sich nach tatsächlichem Ausbau, offenen Vorgängen und freien Fahrzeugen. Technische Hilfe bildet den Schwerpunkt; ungeklärte Anrufe bleiben neutral. Fähigkeitsbasierte Aufgaben, automatische Störungsbehebung und der gezielte Kräfteabzug gehören zum [[Einsatzablauf]]. Die [[Kartenübersicht|Karte-und-Fahrten]] erklärt grüne medizinische Marker und getrennte Dringlichkeit.
+Diese Seiten beschreiben Version **2.21.0**. Die gemeinsamen Einstellungen verwenden Vorschau, Übernehmen und Verwerfen. Das [[Tutorial]] führt in 16 Kapiteln durch das tatsächliche Spiel; eine persönliche serverseitige Übungswelt schützt den normalen Bestand. Fertige Wachen liefern ihre passende [[Besetzung und Qualifikation|Wachen-und-Personal]] automatisch. [[Europreise, Grundfinanzierung und Migration|Wirtschaft]] ersetzen alte Credits und wiederholbare Förderklicks. [[Audio-und-Einstellungen]] erklärt getrennte Klanggruppen, eigene lokale Dateien und die Gerätesicherung.
+
+Bereite Fahrzeuge können weiterhin schon auf der Rückfahrt erneut alarmiert werden. Das Notrufaufkommen richtet sich nach Ausbau, offenen Vorgängen und freien Fahrzeugen. Technische Hilfe bildet den Schwerpunkt; ungeklärte Anrufe bleiben neutral. Fähigkeitsbasierte Aufgaben, automatische Störungsbehebung und der gezielte Kräfteabzug gehören zum [[Einsatzablauf]]. Die [[Kartenübersicht|Karte-und-Fahrten]] erklärt grüne medizinische Marker und getrennte Dringlichkeit.
 
 Im Spiel bleibt die Deutschlandkarte unter einer kompakten oberen Hauptleiste frei; Einsatzliste, Kartenwerkzeuge und Disposition öffnen sich bei Bedarf. Die öffentliche Spielerliste zeigt verbundene Disponenten und echte gewählte Wachenstandorte, ohne private Einsätze oder Besitz freizugeben.
 

@@ -70,4 +70,6 @@ Für normale Updates: Anwendung stoppen, Spielstand sichern, den konkret geprüf
 
 `.env.germany` separat sichern. SQLite-Spielstände mit dem vorhandenen Sicherungs-/Wiederherstellungsablauf behandeln; eine laufend beschriebene Datenbank nicht als einzelne Datei blind kopieren. Die Geodaten sind erneut installierbar und sollten in der zum Spielstand gehörenden Version erhalten bleiben. Der normale Setup-Befehl aktualisiert den Datenbestand nicht auf eine beliebige neue OSM-Version.
 
+**Update 2.21:** Vorhandene Spielstände werden nach Vorabsicherung auf Schema 14 migriert; reine Neuinstallationen beginnen direkt damit. Eurocent, ein getrennt verbuchter Kaufkraftausgleich für Altguthaben, automatische Wachbesetzung und persönliche Tutorialtabellen benötigen keine zusätzlichen AMP-Werte oder Geodaten. Vor dem ersten regulären Start ist eine schreibgeschützte Vorschau möglich. [Konkrete Wartungsschritte](AMP.md#update-und-migration-auf-schema-14) · [Wirtschaft und sechs Finanzierungsszenarien](EURO-WIRTSCHAFT.md) · [Tutorial](TUTORIAL-2.21.md) · [Audio und lokale Sicherung](AUDIO.md).
+
 Weitere Hinweise: [Deutschlandbetrieb und Weltgrenzen](DEUTSCHLAND.md), [Datensatz und Import](DEUTSCHLAND-DATEN.md), [Quellen und Lizenzen](LIZENZEN.md), [bestehende AMP-Installationen](AMP.md).

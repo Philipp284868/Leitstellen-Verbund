@@ -1,96 +1,99 @@
-# Musik, Spielsignale und lokale Audiodateien
+# Musik, Kommunikation und Mehrkanalton
 
-## Lokale Soundverwaltung
+Stand: 9. September 2026. Diese Beschreibung bezieht sich auf die gemeinsame Audioimplementierung in `src/audio/`. Der verbindliche Stand einer Veröffentlichung ergibt sich aus deren Commit und CI; lokale Prüfergebnisse stehen im Abschnitt Abnahme.
 
-Unter **Einstellungen → Musik & Spielsound → Signalregler und eigene Soundprofile**
-stehen getrennte Lautstärken für **Pieper, Sirene, Alarm, Funk, Sprechwunsch,
-Telefon, Prioritätsalarm und Ereignisse** zur Verfügung. Master, Musik und Effekte
-behalten ihre eigenen Regler; vorhandene Einstellungen werden übernommen. Die
-neuen Regler Sprechwunsch und Prioritätsalarm beginnen bei 100 Prozent ihres Kanals.
-Die bestehende Gesamt- und Effektlautstärke gilt weiterhin.
+## Bedienung und lokale Einstellungen
 
-Für jeden normalen Signalkanal lässt sich eine eigene **WAV-, MP3- oder OGG-Datei**
-auswählen. Eine neue Auswahl ersetzt die bisherige Zuordnung erst nach erfolgreicher
-Prüfung und Speicherung. Die Checkbox schaltet eine eigene Datei aus, ohne sie zu
-löschen; dann erklingt wieder das Original. Vorhandene lokale Dateien können über
-die Zuordnungsauswahl auch für einen anderen normalen Kanal verwendet werden.
-Löschen entfernt nur die ausgewählte Zuordnung. **Eigenen Sound stoppen** beendet
-eine laufende Aufnahme sofort.
+Hauptmenü und Spiel öffnen denselben Dialog **Einstellungen → Audio**. Masterlautstärke, Musik, Umgebung, Telefon, Funk/Sprache, Alarmierung und UI/Hinweise sind unabhängig regel- und stummschaltbar. Der globale Effektregler wirkt zusätzlich auf alle Gruppen außer Musik. Unter **Signalregler und eigene Soundprofile** gibt es feinere Regler für Pieper, Sirene, Funk, Sprechwunsch, Prioritätsalarm, Telefon, Wachalarm und Ereignisse. Die Profile Standard, Ruhige Nachtschicht und Funk im Vordergrund setzen abgestimmte Reglerwerte als Vorschau.
 
-Es gibt **keine feste 2-MB- oder 15-Sekunden-Grenze** und keine feste Gesamtspeichergrenze
-der Anwendung. Die Oberfläche zeigt die vom Browser geschätzte freie Speicherquota
-für diese Website. Diese Schätzung umfasst auch andere lokale Websitedaten und ist
-kein garantiert verfügbarer Festplattenplatz. Bei fehlendem Schätz-API entscheidet
-die tatsächliche IndexedDB-Speicherung. Speicherfehler und nicht lesbare Codecs
-werden verständlich gemeldet; ein fehlgeschlagener Ersatz erhält die alte Datei.
-Die tatsächliche Codec-Unterstützung hängt vom Browser und Betriebssystem ab.
+Änderungen werden sofort hörbar vorgeführt und erst mit **Übernehmen** auf diesem Gerät gespeichert. **Verwerfen** stellt die gespeicherten Regler und Dateizuordnungen wieder her. Das gilt auch nach einer vorherigen Übernahme im weiterhin geöffneten Dialog. **Standardwerte** ist ebenfalls eine Vorschau. Eine Dateiänderung zählt als ungespeicherter Entwurf, auch wenn kein Regler verändert wurde. Beim Schließen erfolgt die gemeinsame Entwurfsabfrage. Während einer laufenden Datei-/Codecprüfung ist Übernehmen gesperrt; wird der Entwurf verworfen, kann die später endende Prüfung keine Datei mehr schreiben.
 
-Eigene Dateien und ihre Zuordnungen liegen **ausschließlich in IndexedDB dieses
-Browsers**. Sie werden weder zum Spielserver hochgeladen noch über Multiplayer
-übertragen, in SQLite abgelegt oder in serverseitige Spielstandsicherungen
-aufgenommen. Die Audioeinstellungen gelten für diesen Browser und diese
-Spieladresse. Beim Wechsel der Adresse oder des Browsers müssen Dateien dort
-neu ausgewählt werden. Das Löschen von Websitedaten entfernt die lokalen Sounds.
-Mehrere geöffnete Tabs derselben Adresse erhalten lediglich eine lokale
-Änderungsnachricht, keine Audiodateien über das Netzwerk.
+Hörproben lassen sich gezielt stoppen und enden spätestens nach sechs Sekunden. Eine neue Hörprobe ersetzt die vorherige Hörprobe. Eine Musikprobe blendet die regulär laufende Musik vorübergehend ab und verwendet dieselbe Lautstärke und Stummschaltung. Sie schaltet ausgeschaltete Musik nicht ungefragt ein. Reguläre unabhängige Spielsignale dürfen weiterhin überlappen.
 
-## Geschützte Prioritätsmeldungen
+Die Einstellungen liegen versioniert im lokalen Schlüssel `lv-audio-v1` mit `version: 2`. Der Schlüsselname bleibt für vorhandene Browserprofile kompatibel. Andere Computer, Browserprofile oder Spieladressen erhalten diese Einstellungen nicht. Spielstände, Euro-/XP-Werte, Rollen und Serverregeln werden dadurch nicht verändert.
 
-Hohe und kritische Meldungen haben einen festen Prioritätston. **NOTFALL** besitzt
-einen anderen, deutlich erkennbaren Originalton. Alte Spielstände mit PRIORITÄT
-werden klanglich wie HOCH behandelt. Eigene Dateien können diese Töne nicht
-überschreiben. Priorität und Notfall unterbrechen eine laufende eigene Aufnahme;
-der Notfallton hat auch Vorrang vor dem Prioritätston. Der eigene Prioritätsregler
-bleibt unabhängig von Funk und normalen Sprechwünschen. Explizite Stummschaltung,
-ausgeschaltete Effekte oder ein auf null gestellter Prioritätsregler gelten trotzdem.
+## Klangkonzept und Herkunft der Erzeuger
 
-Benachrichtigungen entstehen aus bestätigten neuen Serverständen, einschließlich
-neuer Sprechwünsche und einer erhöhten Einsatzpriorität. Das erste Laden,
-Wiederverbindung, Kontowechsel und erneut empfangene Stände spielen alte Meldungen
-nicht nach. Alle Informationen bleiben als Text sichtbar.
+Die Ausgabe verwendet die Perspektive eines Leitstellenarbeitsplatzes. Kommunikation und Alarmierung sind zentral hörbar. Kamerabewegungen beeinflussen Bürotelefon und Funk nicht; es gibt keine weltweite Geräuschkulisse aller Fahrzeuge. Unbekannte Notrufe verwenden neutrale Signale. Weder Musik noch Umgebung hängen von einer geheimen Einsatzart ab.
 
-## Klanggestaltung und Wiedergabe
+Alle folgenden Produktionsklänge werden aus eigenem Quellcode in `src/audio/synth.ts` erzeugt. Es werden **keine fremden Aufnahmen, Musikstreams, Sprachdienste oder vertraulichen Notruf-/BOS-Aufnahmen** geladen. Für die selbst erzeugten Klänge ist keine zusätzliche fremde Namensnennung nötig. Die Nutzung des Projektquellcodes richtet sich nach den Bedingungen des Repositories; diese Dokumentation erteilt keine zusätzliche Lizenz für fremde Dateien.
 
-**Nachtschicht** ist die eigene instrumentale Komposition für die Leitstelle:
-78 BPM, D-Moll, 64 Takte und etwa 3 Minuten 17 Sekunden mit wiederkehrenden Motiven.
-Klavier, Bass, Flächen und ein zurückhaltender Rhythmus werden im Browser aus
-Notenfolgen und Klangparametern synthetisiert. Im Hauptmenü ist das Arrangement
-ruhiger; im Spiel kommt ein leiser Rhythmus hinzu. Es werden keine fremden
-Aufnahmen oder Musikstreams benötigt. Die Originalsignale entstehen ebenfalls
-lokal im Klanggenerator.
+| Erzeuger / verwendete Ereignisse                      | Eigene Klanggestaltung und Quelle                                                                                                                                                                                          |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lichter der Region**, Hauptmenü                     | Eigene Komposition aus der bisherigen Notenbasis „Nachtschicht“: D-Moll, 78 BPM, 64 Takte, etwa 3:17 Minuten; weiche Klavierpartials, stereoverteilte Flächen, Bass, wiederkehrende Motive. Akkordwechsel alle zwei Takte. |
+| **Ruhiger Dienst**, Spiel                             | Eigenes abgestimmtes Arrangement derselben harmonischen Welt; langsamere Akkordwechsel alle vier Takte, andere Startfolge, weniger Klaviernoten/Melodie, leiser runder Puls. Kein einsatzabhängiger Actionloop.            |
+| Telefonklingeln                                       | Eigenes Doppeltonspektrum mit zwei kurzen Ringgruppen; kein Hinweis auf die interne Einsatzvorlage.                                                                                                                        |
+| Gesprächsannahme / Gesprächsende / besetzt            | Unterschiedliche kurze Schaltgeräusche und auf-/absteigende Intervalle; Besetztfall mit drei getrennten tiefen Doppeltonimpulsen.                                                                                          |
+| Funkaktivierung / Funkquittierung                     | Eigenes bandbegrenztes Rauschen mit kurzen, unterschiedlichen Tonfolgen; keine Stimmenimitation.                                                                                                                           |
+| Sprechwunsch                                          | Eigene dreiteilige Tonfolge, separater Lautstärkeregler.                                                                                                                                                                   |
+| Priorität / Notfall                                   | Unterschiedliche originale Wechseltonfolgen; Priorität vier, Notfall sechs schnellere Impulse. Keine frei austauschbaren Dateien.                                                                                          |
+| DME / Pieper                                          | Vier kurze hohe Impulse.                                                                                                                                                                                                   |
+| Wachalarm / Gong                                      | Eigener inharmonischer Glockenklang plus absteigende Wachalarmfolge; der Gong-Erzeuger verwendet die Teiltonverhältnisse 1 : 2,76 : 5,4.                                                                                   |
+| Sirenenalarmierung                                    | Zwei leicht gegeneinander verstimmte Dreieckstöne mit einer weichen an- und abschwellenden Frequenzkurve. Kein endloser Fahrzeugsirenenloop.                                                                               |
+| UI-Klick / Erfolg / Fehler / Bau / Ankunft / Rückkehr | Verschiedene kurze, zurückhaltende Tonfolgen.                                                                                                                                                                              |
+| Leitstellenumgebung                                   | Sehr leise gefilterte Lüftung und tiefe Elektronikanteile. Keine geheimen Lagegeräusche.                                                                                                                                   |
+| Raumanteil                                            | Eigener, deterministisch erzeugter Stereo-Faltungsimpuls; keine fremde Hallaufnahme.                                                                                                                                       |
 
-Eigene Aufnahmen werden über einen **lokalen Blob und HTMLAudioElement** gestreamt
-und durch den vorhandenen Web-Audio-Mixer mit konservativem Eingangspegel und
-Dynamikkompressor geführt. Lange Dateien werden nicht vollständig mit
-`decodeAudioData` in einen großen PCM-Puffer verwandelt. Beim Start werden nur
-Metadaten geladen; höchstens eine eigene Aufnahme spielt gleichzeitig. Die
-Metadaten-/Codecprüfung liest den Dateikopf und den ersten abspielbaren Frame.
-Sie garantiert nicht, dass eine beschädigte Stelle weiter hinten in einer
-Aufnahme fehlerfrei ist. Ein Wiedergabefehler fällt auf das Originalsignal zurück.
+Die Produktionsdateien werden im normalen Clientbuild eingebunden. Für Musik und Originalsignale ist kein zusätzlicher Download nötig. Klavierpuffer und Rauschgrundlage werden innerhalb eines Audiokontexts wiederverwendet; pro Wiedergabe entsteht eine eigene Quelle. Die Musik wird mit kurzem Vorlauf auf der Audiozeit geplant. Die Simulationstaktung beeinflusst weder Tempo noch Tonhöhe.
 
-Audio beginnt nach Nutzerinteraktion. Stummschaltung, Stop, Tab-/Fensterwechsel,
-Abmeldung, Ersetzen und Löschen beenden die betroffene lokale Wiedergabe. Dabei
-werden MediaElement-Verbindungen und Blob-URLs freigegeben. Der aktive Tab
-übernimmt die Ausgabe; andere Tabs bleiben still. Eine unterbrochene eigene
-Aufnahme wird beim Zurückwechseln nicht automatisch fortgesetzt.
+Beim Wechsel zwischen Hauptmenü und Spiel werden die beiden Musikbusse über **2,4 Sekunden** überblendet. Der alte Bus fällt auf null; beide vollständigen Arrangements laufen nicht dauerhaft hörbar nebeneinander. Ein kurzer vorhandener Hallausklang darf ausklingen. Die Schleife setzt ihre Motive nach 256 Schlägen fort; die Abnahme rendert darüber hinaus, um den Übergang mitzuprüfen.
 
-## Migration und Prüfung
+## Mischregeln und Gleichzeitigkeit
 
-Die lokale IndexedDB `lv-custom-audio-v1` wird von Version 1 auf Version 2
-aktualisiert. Vorhandene ArrayBuffer-Signale werden als Blob übernommen. Der
-zusätzliche Metadatenstore erlaubt Dateiliste und Regler ohne Laden aller
-Aufnahmen. Es gibt dafür keine Änderung der Serverdatenbank oder Spielstände.
+Ein gemeinsamer `AudioContext` versorgt sechs Gruppen: Musik, Umgebung, Telefon, Funk, Alarmierung, UI. Die Gruppen laufen parallel durch einen gemeinsamen Master und Dynamikkompressor. Eigene Dateien erhalten einen konservativen Eingangspegel von 0,35; Master besitzt zusätzlich Reserve. Das ist ein kontrollierter Spielmix, kein Versprechen über jede beliebige beschädigte oder extrem ausgesteuerte Nutzerdatei.
 
-Die Tests prüfen echte längere WAV-, MP3- und OGG-Dateien, WAV über 2 MB,
-Wiedergabe, Quota-/Codecfehler, atomaren Ersatz, Migration, Aktivierung,
-Zuordnung, Löschen, Reload, lokale Netzwerkisolation, Originaltöne und
-Freigabe der Quellen. Die Synthesizerprüfung rendert Musik und Originalsignale
-mit OfflineAudioContext und prüft hörbaren Stereo-Ton ohne Clipping.
-Maßgeblich sind die tatsächlich ausgeführten Testergebnisse des jeweiligen Commits.
+| Regel                  | Implementiertes Verhalten                                                                                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unabhängige Signale    | Jede Wiedergabe erhält eine eigene Instanz. Drei Alarmierungen können beispielsweise dieselbe lokale WAV gleichzeitig spielen, während Musik, Umgebung und Telefon weiterlaufen.                                                           |
+| Begrenzung             | Maximal 16 gleichzeitig verwaltete Signal-/Probeinstanzen: Musikprobe 1, Umgebung 2, Telefon 3, Funk 2, Alarmierung 4, UI 4. Die separat geplanten, kurzlebigen Instrumentalquellen bilden die reguläre Musik.                             |
+| Last                   | Bei voller Belegung verdrängt ein wichtigeres Signal eine weniger wichtige Instanz. Umgebung hat die niedrigste Priorität. Es werden keine unbegrenzten Quellen angehäuft.                                                                 |
+| Funk                   | Je logischem Funkkanal geordnete Wiedergabe. Standardmäßig ein Hörkanal; optional Leitstellenfunk und Nachbarfunk parallel. Je Kanal höchstens sechs wartende Signale; nach zehn Sekunden veraltete Queueeinträge werden verworfen.        |
+| Priorität              | Hohe/kritische Meldungen verdrängen nachrangigen Funk, UI und Umgebung. NOTFALL hat außerdem Vorrang vor dem Prioritätston. Telefon und echte Alarmierung werden nicht pauschal abgebrochen.                                               |
+| Ducking                | Jede aktive relevante Kommunikationsquelle und jedes laufende Gespräch besitzt eine eigene Absenkungsmarke. Solange mindestens eine Marke aktiv ist, liegt der Musikfaktor bei 0,24 und Umgebung bei 0,18. Attack 0,12 s, Rückkehr 0,65 s. |
+| Regler während Ducking | Gruppenpegel und Duckingfaktor liegen auf getrennten Knoten. Nach der letzten Kommunikation gilt der **aktuell** eingestellte Pegel, nicht ein alter zwischengespeicherter Wert.                                                           |
+| Wiederholungen         | UI-Klicks werden auf mindestens 80 ms Abstand begrenzt. Telefonklingeln wird frühestens alle sechs Sekunden wiederholt; eine noch laufende eigene Klingeldatei wird dabei nicht mit sich selbst gestapelt.                                 |
 
-Die Linux-Browser-CI verwendet ein virtuelles PulseAudio-Ausgabegerät. Der
-AMP-Spielserver selbst benötigt weder Audiohardware noch PulseAudio.
+Priorität und Notfall behalten ihre Originaltöne; alte `PRIORITÄT`-Werte entsprechen klanglich HOCH. Der Prioritätsregler ist unabhängig von normalem Funk und Sprechwünschen. Explizites Master-, Gruppen- oder Prioritätsmute sowie ausgeschaltete Effekte gelten weiterhin. Alle wichtigen Meldungen haben eine sichtbare Entsprechung.
 
-Technische Referenzen: [Browser-Speicherschätzung](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate),
-[MediaElement im Web-Audio-Mixer](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createMediaElementSource),
-[Freigabe lokaler Blob-URLs](https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL_static).
+## Eigene lokale WAV-, MP3- und OGG-Dateien
+
+Für normale Signalkategorien stehen **Auswählen/Ersetzen, Anhören, Aktivieren/Deaktivieren, Zuweisen, Stoppen und Löschen** zur Verfügung. Eine deaktivierte Datei bleibt gespeichert; das Originalsignal wird verwendet. Löschen entfernt nur die gewählte Zuordnung. **Eigenen Sound stoppen** beendet die derzeit laufenden eigenen Dateiinstanzen.
+
+Es gibt keine künstliche 2-MB-/15-Sekunden-Grenze. Die praktische Grenze bilden unterstützter Codec und verfügbarer Browserspeicher. Die angezeigte Quota ist eine Schätzung für alle Websitedaten. Die tatsächliche IndexedDB-Transaktion entscheidet über die Speicherung. Fehler bei Codec, Datei oder Quota lassen die gespeicherte bisherige Zuordnung erhalten.
+
+Die Prüfung liest nur 16 Kopfbytes und den ersten vom Browser abspielbaren Frame. Lange Dateien werden als Blob durch eigene `HTMLAudioElement`-Instanzen gestreamt, über `MediaElementAudioSourceNode` in den Mixer geführt und **nicht vollständig als PCM dekodiert**. Beim Start wird nur die Metadatenliste geladen. Ein beschädigter späterer Frame kann trotzdem scheitern; die Wiedergabe fällt dann auf das Originalsignal zurück.
+
+Dateien und Zuordnungen liegen ausschließlich in IndexedDB `lv-custom-audio-v1`. Es gibt keinen Upload, keine Socket-Nachricht mit der Datei und keine Aufnahme in SQLite oder Server-Spielstandsicherungen. Ein lokaler BroadcastChannel meldet anderen Tabs nur, dass die Dateiliste verändert wurde. Fremde PCs erhalten weder Name noch Inhalt. Beim Löschen der Websitedaten gehen diese lokalen Dateien verloren; Originaldateien sollten deshalb außerhalb des Browsers aufbewahrt werden.
+
+## Verbindung, Tabwechsel und Fehler
+
+Audio beginnt erst nach bewusster Interaktion und benötigt keine Mikrofonberechtigung. Fehlende Audiofunktionen, abgelehnte Wiedergabe oder Speicherfehler erscheinen verständlich in den Einstellungen. Ein Audiofehler darf keine serverseitige Alarmierung oder Buchung verhindern.
+
+`AudioEvents` verarbeitet einzelne neue, autorisierte Ereignisse mit stabiler ID. Wiederholt empfangene Stände, erste Snapshots, eine andere Spielgeneration, Abmeldung und Wiederverbindung spielen keine erledigte Historie nach. Ein alter neu sichtbar gewordener Einsatz wird nicht nachträglich vertont. Ein weiterhin klingelnder aktueller Notruf darf aus dem aktuellen, berechtigten Gesprächszustand wiederhergestellt werden. Unbekannte interne Einsatzmerkmale bestimmen keinen Klang.
+
+Mehrere Tabs desselben Kontos koordinieren die Ausgabe über eine kontobezogene, vier Sekunden gültige lokale Lease und BroadcastChannel. Ein neu aktivierter Tab übernimmt; andere stoppen Quellen und geben Blob-URLs frei. Der Nachrichteninhalt dieser Koordination enthält nur Tabkennung und Fristen, keine Spielereignisse oder Audiodateien. Unterschiedliche Konten besitzen getrennte Leases.
+
+Das Hintergrundverhalten ist wählbar: **alles pausieren**, **nur Kommunikation und Alarmierung**, **Audio weiterlaufen lassen**. Browser dürfen vollständig angehaltene Tabs und Audiohardware dennoch suspendieren; dafür wird keine garantierte Hintergrundausgabe behauptet. Wenn sowohl lokale Speicherung als auch BroadcastChannel blockiert sind, ist die Koordination technisch nur eingeschränkt möglich. Normales Fokus-/Sichtbarkeitsverhalten bleibt aktiv.
+
+Abmeldung, Mute, Verlassen und gezielter Stop bereinigen Wiedergabequellen, Eventhandler und Blob-URLs. Menüöffnungen legen keinen zusätzlichen Audiokontext an. Abgebrochene eigene Aufnahmen starten nach einem Tabwechsel nicht von vorn; neue aktuelle Ereignisse bleiben hörbar.
+
+## Migration und Datenerhalt
+
+`parseSound` führt die sichere, wiederholbare Vorschau alter Reglerdaten nach Schema 2 durch. Explizite Mutes, vorhandene Lautstärken und Kanalwerte bleiben erhalten; neue Felder bekommen sichere Vorgaben. Diese Prüfung verändert den vorhandenen LocalStorage-Eintrag nicht. Erst Übernehmen schreibt die neue Fassung. Bei einem Dateitransaktionsfehler wird der vorherige Reglerstand zurückgeschrieben; ein zusätzlich fehlgeschlagener Rückschreibversuch wird ausdrücklich gemeldet. Unter „Audioeinstellungen sichern“ lassen sich die gespeicherten Regler als JSON exportieren. Der JSON-Import validiert Format/Version und lädt ausschließlich eine verwerfbare Vorschau; erst Übernehmen schreibt. Diese JSON-Datei und die Originalaudiodateien bilden den Sicherungsweg. Server-Spielstandsicherungen enthalten sie absichtlich nicht.
+
+Die bereits vorhandene IndexedDB-Migration von Version 1 nach 2 übernimmt ArrayBuffer-Signale als Blob und ergänzt den Metadatenstore ohne Audiobeschneidung. Mehrere im Dialog geänderte Zuordnungen werden in **einer** Transaktion über Dateien und Metadaten gespeichert. Ein Abbruch bewahrt alle alten Zuordnungen. Es entsteht keine Änderung an Serverdatenbank, Besitz oder Spielstandschema.
+
+## Tatsächliche Abnahme
+
+- `tests/audio.test.ts`, `tests/audio-local.test.ts`, `tests/audio-multichannel.test.ts`: **22 bestandene Tests** im lokalen gezielten Lauf. Darunter Reglernormalisierung, mehrfache Duckingmarken, atomarer Multi-Datei-Abbruch, Vorschau/Übernahme/Verwerfen, verspätete Dateiprüfung, Kontoleases, mehrere Ereignisse und Historienunterdrückung. Ein zusätzlicher zuvor fehlgeschlagener Test sichert den Audiostart auf HTTP-Ursprüngen ohne `crypto.randomUUID` ab; die Tabkennung verwendet den vorhandenen sicheren `getRandomValues`-Fallback.
+- `tests/e2e/audio-mixer.spec.ts`: **6 von 6 bestandene Tests** im vollständigen lokalen Edge-Lauf (42,2 Sekunden), echtes Browser-WebAudio mit mehrfachen lokalen Medieninstanzen, Funkqueues, Notfallvorrang, Reglern, Szenenwechsel und zwei tatsächlichen Tabs. Ein Teil des Hintergrundtests löst das Browser-Blur-Ereignis kontrolliert aus, weil Headless Chromium mehrere Seiten als fokussiert behandeln kann. Die Audioausgabe selbst ist nicht gemockt.
+- Beide vollständigen Musikarrangements wurden mit **44,1 kHz Stereo über jeweils 206,08 Sekunden** einschließlich Schleifenübergang in `OfflineAudioContext` gerendert; zusätzlich 24 einzelne Effektgeneratoren und ein gleichzeitiger 15-Stimmen-Stressmix mit Musik. Menü-Spitzenpegel 0,475, Spiel 0,420, Stressmix 0,643; alle unter digitalem Vollpegel 1.
+- Der PCM-Test fand einen echten einzelnen Samplesprung von 0,324 in der Spielmusik. Neu angelegte Hüllkurven starten nun ausdrücklich bei Gain 0; danach betrug der größte Spielmusikschritt rund 0,035. Dieser Fehler wäre durch reine Methoden-Mocks unentdeckt geblieben.
+- Zwei hörbare **32-Sekunden-WAV-Vorschauen** sowie eine **echte MediaRecorder-Aufnahme des gemischten Audioausgangs** wurden als Testartefakte erstellt. Die aktuelle Aufnahme, beide WAV-Vorschauen und `pcm-messwerte.json` liegen unter `.tools/test-runs/audio-mixer-final-results/`; die genaue Unterstruktur stammt vom Playwright-Lauf.
+- Die bestehenden Anwendungstests `audio.spec.ts` und `audio-custom.spec.ts` prüfen Anmeldung, wirklichen Servernotruf, gemeinsame Einstellungen, Speichern/Reload, WAV über 2 MB, längere MP3/OGG, Codec-/Quotafehler, Netzwerkisolation und Cleanup. Alle zwölf Anwendungsfälle wurden nach den gezielten Erst-/Nachläufen im gemeinsamen lokalen Edge-Nachlauf erneut vollständig erfolgreich ausgeführt. Das ist ein Nachweis dieser Audiofälle, kein Ersatz für den gesonderten vollständigen Projekt- und CI-Status.
+- `tests/e2e/settings-workstation.spec.ts`: **4 von 4 bestandene Tests** auf dem abschließenden gemeinsamen Build, Edge, 55,2 Sekunden. Kategorien und Übernehmen/Verwerfen bleiben bei **1366 × 768 und 120 % UI-Skalierung** sichtbar und anklickbar; nur der Inhalt scrollt. Alle Anzeige-, Steuerungs- und Hinweisfelder einschließlich acht Tastenkürzeln überstehen Speicherung/Reload. Geprüft sind außerdem Standardwerte, Arbeitsplatz-Reset, Verwerfen, Tastenkonflikte, Fokusfalle, Escape, Kamerabeibehaltung, kein Durchklicken auf die Karte und unveränderter Serverbestand. Kontrollierte Audio- und Geräte-`setItem`-Fehler erhalten die vorherigen gespeicherten Werte, während der Entwurf korrigierbar bleibt.
+- Die abschließend visuell geprüften Settings-Screenshots liegen unter `.tools/test-runs/settings-workstation-final-results/`. Der Bericht `.tools/test-runs/settings-workstation-final-browser.json` enthält zusätzlich die gemessenen Lightmode-Textkontraste: Beschriftungen 12,12 : 1, Hinweise 6,33 : 1, Schließen 13,06 : 1, Kopfzeile 5,76 : 1, aktive Kategorie und Übernehmen jeweils 8,12 : 1. Die zunächst zu kontrastarme Kopfzeile und das Schließen-Symbol wurden vor diesem erfolgreichen Nachlauf korrigiert.
+
+**Hörgrenze:** Echte Wiedergabe, kontrollierte Aufnahme und PCM-/Pegelprüfung wurden ausgeführt. Eine subjektive Hörprüfung mit menschlichem Gehör beziehungsweise ein geeignetes Hörwerkzeug stand dem Agenten nicht zur Verfügung. Daher wird keine subjektive Aussage wie „professionell gemastert“ oder „klanglich perfekt“ behauptet. Die Aufnahmen ermöglichen eine nachträgliche Hörabnahme.
+
+Die MP3-/OGG-Testdateien sind separat erzeugte 18-Sekunden-Sinussignale; ihre Frequenzen und FFmpeg-Parameter stehen in `tests/e2e/fixtures/audio/README.md`. Diese Fixtures gehören nicht zum Produktionsklang. Die Linux-CI verwendet ein virtuelles PulseAudio-Gerät; der AMP-Spielserver braucht weder Audiohardware noch PulseAudio.

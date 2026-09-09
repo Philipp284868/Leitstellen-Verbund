@@ -1,50 +1,50 @@
-# Serverarchitektur
+# Serverarchitektur · Version 2.21
 
-Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. HTTP-Frontend, Spiel-API und Socket.IO teilen denselben Anwendungsport. Der Server liefert ausschließlich dist/client aus; .env, Quelltexte und SQLite sind nicht über die statische Auslieferung erreichbar.
+Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. Website, Spiel-API und Socket.IO teilen den Anwendungsport. Der Rivermere-Build liefert `dist/client`, der Deutschland-Build `dist/germany/client` aus. Konfiguration, Quelltexte, SQLite und private Geodatenpfade werden nicht als statische Verzeichnisse veröffentlicht.
 
-| Modul                             | Verantwortung                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| src/catalog, world, model, engine | Bestehende Kataloge, Welt, Validierung und testbare Simulation                        |
-| server/config                     | Explizites Laden der .env, Port, Origin, Datenverzeichnis und Proxy-Vertrauen         |
-| server/database                   | SQLite-Schema, Migration, Transaktionen, persistierte Zustände, konsistente Sicherung |
-| server/auth                       | Gesalzene scrypt-Hashes, freie Spielerregistrierung, widerrufbare Sitzungen, Loginlimits   |
-| server/actions                    | Strikte Schema-Whitelist zulässiger Spielaktionen                                     |
-| server/game                       | Autoritative Aktionen und Ticks, kontoübergreifende Kooperation und Belohnungen       |
-| server/index                      | HTTP, Cookies/CSRF/Origin, Socket.IO, statische Website, Stoppsignale                 |
-| server/cli, lock                  | Backup/Restore/Altimport, exklusiver Zugriff                       |
-| src/store, network                | Bestätigte Serveransicht, Anmeldung, Aktionen und Socket-Verbindung                   |
+| Modul                              | Verantwortung                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| src/catalog, model, engine         | Kataloge, Validierung und Orchestrierung der Simulation                                               |
+| src/simulation                     | Gespräche, Disposition, FMS, persistente Aufgaben, Gefahren, Patienten, Organisationen und Auswertung |
+| src/money, src/economy             | Sichere Eurocentarithmetik, Preise, Buchungen, Finanzierung und versionierte Geldumstellung           |
+| src/simulation/building-staffing   | Automatische qualifizierte Wachbesetzung und bestandsschützende Personalübernahme                     |
+| server/config                      | Weltbezogene Konfiguration, Port, Origin, Datenpfade und Proxyvertrauen                               |
+| server/database, economy-migration | Schema 14, Transaktionen, Vorabsicherung, Migrationsplan und Summenprüfung                            |
+| server/auth, actions, workspaces   | Anmeldung, strikte Aktionsschemas, Mitgliedschaft und Eigentumsprüfung                                |
+| server/game, aid                   | Autoritative Aktionen/Ticks, ausdrückliche Nachbarhilfe und Auszahlungsbelege                         |
+| server/tutorial                    | Persönlicher Lernfortschritt, isolierte Übungswelt und Spielkontextprüfung                            |
+| server/index                       | HTTP, Cookies/CSRF/Origin, Socket.IO, Clientauslieferung und regulärer Stopp                          |
+| server/cli, lock                   | Offline-Vorschau, Backup/Restore/kompatibler Altimport und exklusiver Zugriff                         |
+| server/germany, src/germany        | Lokale Geodaten, Straßenrouting, reale Standorte und Vektorkartendarstellung                          |
+| src/store, network                 | Bestätigte Serveransichten, Sitzung, Anfragen und geordnete Kontextwechsel                            |
+| src/audio, device-preferences      | Lokale Audiowiedergabe, Datei-/Reglerentwürfe und Gerätepräferenzen                                   |
 
-## Transaktionen und Zeit
+## Aktionen, Zeit und Geld
 
-Jede Aktion hat eine UUID. Der Server bindet sie an das angemeldete Konto und den Hash der geprüften Aktion. Gleiche ID und gleicher Inhalt ergeben keine erneute Mutation; eine andere Bedeutung wird abgelehnt. Der Browser übergibt weder Guthaben noch Eigentümer oder Zeitstempel als autoritativen Zustand. SQLite BEGIN IMMEDIATE, WAL und synchronous=FULL sichern die gemeinsame Speicherung von Zustand und Belegen.
+Jede Spielaktion hat eine UUID. Der Server bindet sie an das Konto und den Hash der geprüften Aktion. Gleiche ID und gleicher Inhalt ergeben keine erneute Mutation; andere Bedeutung wird abgelehnt. Der Browser bestimmt weder Guthaben noch Eigentümer oder Serverzeit. SQLite `BEGIN IMMEDIATE`, WAL und `synchronous=FULL` sichern Zustand und Belege gemeinsam.
 
-Ein Server-Takt liest die Konten, berechnet deren Bewegung, Ausbildung und Missionen und übernimmt den vollständigen Tick in einer Transaktion. Die Serverzeit bestimmt den Fortschritt; eine echte Sekunde ergibt genau eine Simulationssekunde in beiden Modi. Eine Aktion zur Tempoänderung wird abgelehnt; alte Spielstände werden auf Tempo 1 normalisiert. Browser-Anwesenheit beeinflusst die Simulation nicht. Nach Serverstillstand werden höchstens vier Stunden nachberechnet. Ein Rücksprung der Uhr erzeugt keine negative Spielzeit. Bei Speicher-/Validierungsfehlern pausiert die Simulation, statt nicht gespeicherte Zustände auszuliefern.
+Eine echte Sekunde ergibt eine Simulationssekunde; Tempoänderungen werden abgelehnt. Die normale Multiplayerwelt läuft ohne Browser weiter. Nach Serverstillstand werden höchstens vier Stunden nachberechnet, ein Uhrenrücksprung erzeugt keine negative Zeit. Bei Speicher-/Validierungsfehlern werden keine ungesicherten Zustände als erfolgreich ausgeliefert.
 
-## Phase-1-Ablauf und Leitstellen
+Geld bleibt integercentgenau; Multiplikation und Summen verwenden geprüfte rationale beziehungsweise BigInt-Zwischenschritte. Währungsversion 1 und Preisversion 1 sind getrennte Markierungen. Automatische Finanzierung nutzt einen persistenten nächsten Abrechnungszeitpunkt. Einsatzerlöse werden aus dem ursprünglichen Auftrag und bestätigter Qualität berechnet; Wiederverbindung, weitere Fahrzeuge und Warten erzeugen keine zweite Vergütung. [Wirtschaft und Migration](EURO-WIRTSCHAFT.md).
 
-Die neuen Module unter `src/simulation` trennen Gespräche, AAO/Alarmierung, FMS, Lagemeldungen und bestätigte Ereignisse. Die bestehende Engine orchestriert Bewegung, Arbeit und Transport. Erst bekannt gewordene Angaben werden durch `publicSave` freigegeben; Seed und interne Szenariodaten bleiben aus HTTP, Socket und Kontoexport entfernt. Die Kernsimulation arbeitet mit den vollständigen SQLite-Zuständen.
+## Informationsstand und Zusammenarbeit
 
-`server/workspaces` löst Multiplayeraktionen anhand der aktuellen Mitgliedschaft auf den Leitstelleninhaber auf. Aktionsbelege und Bearbeiternamen bleiben dem tatsächlich angemeldeten Konto zugeordnet. Einladungen benötigen gezielte Erstellung und ausdrückliche Annahme. Einzelspieler löst immer auf das eigene Konto auf. Chat wird nur innerhalb der aktuell berechtigten Leitstelle verteilt.
+`publicSave` gibt nur beobachtete beziehungsweise bestätigte Angaben frei. Unbekannte Anrufe bleiben neutral; Seed, interne Vorlagen, Zufallsentscheidungen und unerkundete Gefahren/Messwerte fehlen in normalen Ansichten. Die Kernsimulation verwendet die vollständigen SQLite-Zustände. Persistente Einsatzaufgaben unterscheiden dauerhaft erledigte Arbeit von noch nötiger Abdeckung; Rückruf und Mehrfachabzug prüfen diese gemeinsam mit Patienten- und Abschnittsbindungen.
 
-Neue Fälle sind privat für unabhängige Leitstellen. Die folgenden Regeln gelten ausschließlich für erhaltene Altfälle; das vollständige neue Unterstützungsanfragen-System bleibt Phase 3. [Schema 6 und Datenfluss](PHASE-1.md).
+`server/workspaces` löst Spielaktionen anhand der aktuellen Mitgliedschaft auf den Leitstelleninhaber auf. Belege und Bearbeiternamen bleiben beim tatsächlichen Konto. Einladungen benötigen ausdrückliche Annahme; Chat wird nur in der berechtigten Leitstelle verteilt. Alte Einzelspielerstände sind inaktive Archive.
 
-## Erhaltene alte Kooperation
+Unabhängige Leitstellen erhalten keine automatischen Einsatzfreigaben. `server/aid` bearbeitet gezielte Anfragen, Rückfragen, Zusagen und begrenzte Fremdansichten. Erst tatsächlich beteiligte zulässige Kräfte zählen; Hilfe, Transport und Auszahlung bleiben serverseitig überprüft. Rücknahme einer Unterstützung darf keine erforderlichen Patienten-/Aufgabenbindungen umgehen. [Aktuelle Zusammenarbeit](MULTIPLAYER.md).
 
-Ein Besitzer gibt einen Einsatz ausdrücklich frei. Andere eingeladene Konten bieten jeweils ein eigenes einsatzbereites Fahrzeug an; die Freigabe erlaubt diese Unterstützung. Der Server prüft Runde, eigenen Besitz, Besatzung, Zustand und Gewässereignung. Fahrzeuge erhalten eine eindeutige Zuweisung. Erst tatsächlich am Einsatzort befindliche Fahrzeuge liefern Fähigkeiten und bestätigen ihre Eigentümer als Helfer. Höchstens vier unterstützende Konten je Einsatz werden zugelassen.
+## Tutorial und Kontextwechsel
 
-Die bestehenden Krankenhaus- und Transportregeln gelten auch für Helfer. Ein gespeicherter Transportauftrag wird erst bei tatsächlicher Übergabe als geliefert behandelt. Der Einsatzgeber erhält bei Unterstützung die Hälfte; die andere Hälfte teilen bestätigte Helfer, jeweils abgerundet. Kontoübergreifende Gutschriften und eindeutige SQL-Auszahlungsbelege werden zusammen mit dem Abschluss committed. Das funktioniert ohne offenen Besitzer- oder Helferbrowser und über Serverneustarts hinweg.
+Jeder Benutzer besitzt persönlichen Fortschritt und optional eine eigene serverseitige Übungswelt in separaten Tabellen. Die Übung benutzt dieselbe Engine, vorhandene Kataloge und echte Routen. Ihr Budget, XP, Aktionsbelege und Archiv gelangen nicht in die normale Leitstelle; laufende Grundfinanzierung bleibt dort aus. Verlassen pausiert die Übung.
 
-Es gibt keine Browser-Koordinatorwahl und keine P2P-Übernahme. Ein Verbindungsabbruch beendet nur die Ansicht. Bei ausdrücklichem Abbruch einer Kooperation werden fremde Kräfte zurückgerufen; laufende Patiententransporte müssen zuerst enden. Verwaiste Zuweisungen werden serverseitig zurückgeführt.
+Eine persistente monotone `playContext`-Revision und eine zusätzliche Übungssitzung schützen Kontextwechsel. Aktionen, Tutorialkontrollen und Übungssteuerung müssen den aktuellen Kontext senden. Start/Stop/Reset verwenden gespeicherte Belege mit ID und Fingerprint; Replay wirkt nicht doppelt. Der Browser verwirft verspätete Antworten nach Konto-/Kontextwechsel und bindet Wiederholungen an die ursprüngliche Anfrage. [Vollständiger Vertrag und Tests](TUTORIAL-2.21.md).
 
-## Darstellung, Daten und Grenzen
+## Darstellung, lokale Daten und Grenzen
 
-Socket.IO übermittelt den freigegebenen Leitstellenstand an berechtigte Konten. Unabhängige Leitstellen erhalten keine neuen Fälle oder Wachen. Nur noch laufende alte Unterstützungen besitzen die erforderlichen eingeschränkten Fremdansichten; diese enthalten keine fremden Guthaben oder Personaldateien. Der Gruppenchat bleibt flüchtig und wird als Text gerendert. Bei Abmeldung werden Browseransicht und Chat geleert; freiwillig angelegte lokale Kopien bleiben ausdrücklich erhalten.
+Deutschland verwendet eine lokal ausgelieferte MapLibre-Vektorkarte mit realen Straßengeometrien, Suchindex und lokalem GraphHopper. Historisches Rivermere behält seine SVG-Karte und eigene Weltidentität. Kamerabewegung ist lokal, Fahrplan und Einsatzentscheidung serverseitig. Keine Browser-Koordinatorwahl oder P2P-Übernahme ist erforderlich.
 
-Die SVG-Karte und getrennte Fahrzeuganimation bleiben bestehen. Der Client bestätigt keine Offline-Aktionen und persistiert Serveransichten nicht automatisch als geteilten Offline-Cache. Statische gehashte Assets dürfen gecacht werden, API, Socket.IO, HTML und Kontoexporte erhalten no-store. Der alte Offline-Worker wird stillgelegt, ohne IndexedDB-Bestände zu löschen.
+Audio- und Anzeigeentwürfe werden erst mit Übernehmen lokal gespeichert. Audiodateien verlassen IndexedDB nicht; Serverbackups enthalten keine eigenen Sounds. Die Klangereignisse folgen ausschließlich freigegebenen aktuellen Ereignissen, nicht geheimer Lageinformation. [Audio](AUDIO.md).
 
-Dies ist eine Einzelserverarchitektur mit freier Spielerregistrierung und ausdrücklich angenommenen Leitstellenmitgliedschaften. SQLite und das Prozess-Lock ersetzen keinen Mehrserver-Cluster. Pro Tick werden alle Konten verarbeitet; umfassende Lastmessungen mit vielen gleichzeitig angemeldeten Konten sind separat erforderlich. Der vorhandene Test für 100 Wachen/300 Fahrzeuge/50 Einsätze bleibt erhalten, beweist aber keine unbegrenzte Serverkapazität.
-
-
-## Phase 2 / Schema 7
-
-`simulation/dynamics` orchestriert die getrennten Module `hazards`, `fire`, `patients`, `weather`, `traffic` und `faults`. Gefahrenschritte und zufällige Folgeentscheidungen besitzen persistierte Zeit-/Ereignisfortschritte. `engine` nutzt aktuellen Ressourcenbedarf und wartet vor Transport/Abschluss auf beherrschte Gefahren und versorgte Patienten. `world.route` akzeptiert gesperrte Kanten; Fahrten behalten Sollweg, tatsächlichen Weg, Verzögerungen und Reparaturzustände. Wetter wird deterministisch aus der regionalen Zeitperiode ermittelt. Die UI-Komponente `Dynamics` zeigt freigegebene Lage und Aufträge. `publicSave` entfernt interne Dynamik vor Erkundung und Zufall/Folgepläne generell. Migration 7 ergänzt Bestandsfälle inaktiv, ohne aktive Fahrten zu ändern. [Details](PHASE-2.md).
+Private API-/Socketdaten, HTML und Kontoexporte werden nicht gecacht; gehashte öffentliche Assets dürfen gecacht werden. Offline bestätigt der Client keine neue Aktion und beginnt keine Ersatzsimulation. Ein einzelnes SQLite-Prozesslock ersetzt keinen Mehrservercluster. Lastmessungen und Browserabnahmen gelten nur für die tatsächlich dokumentierten Szenarien und Commits. Historische Phasenberichte bleiben Nachweise ihrer damaligen Version.

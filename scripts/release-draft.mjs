@@ -65,6 +65,12 @@ if (
   throw Error("Falscher Checkout.");
 const pkg = JSON.parse(await readFile("package.json", "utf8")),
   tag = `v${pkg.version}`;
+if (!/^\d+\.\d+\.\d+$/.test(pkg.version))
+  throw Error("Gültige Releaseversion erforderlich.");
+const notes = await readFile(
+  `docs/RELEASE-${pkg.version.split(".").slice(0, 2).join(".")}.md`,
+  "utf8",
+);
 const releases = await api("/releases?per_page=100");
 if (releases.some((r) => r.tag_name === tag))
   throw Error(
@@ -81,10 +87,10 @@ await verifiedMain();
 const release = await api("/releases", "POST", {
   tag_name: tag,
   target_commitish: sha,
-  name: `${tag} – PC-Multiplayer (Entwurf)`,
+  name: `${tag} – Leitstellen-Verbund (Entwurf)`,
   draft: true,
   prerelease: false,
-  body: await readFile("docs/RELEASE-2.14.md", "utf8"),
+  body: notes,
 });
 const upload = new URL(release.upload_url.split("{")[0]);
 if (upload.origin !== "https://uploads.github.com")

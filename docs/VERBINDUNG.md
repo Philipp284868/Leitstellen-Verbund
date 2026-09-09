@@ -1,5 +1,7 @@
 # Verbindungskorrektur 2.2.2
 
+Diese Seite dokumentiert die ursprüngliche Verbindungskorrektur. Für aktuellen Betrieb 2.21 gelten [AMP](AMP.md) beziehungsweise die [Deutschland-Neuinstallation](AMP-NEUINSTALLATION.md). Deutschland startet über `scripts/start-germany.mjs` mit `.env.germany`; vorhandenes Rivermere behält `dist/server/index.js`. Die aktuelle SQLite-Migration wird in der AMP-Anleitung beschrieben. Ein Verbindungsproblem ist kein Grund für einen Datenreset.
+
 ## Fehlerbild
 
 Die Website und Anmeldung können funktionieren, während `/socket.io/?EIO=4&transport=polling` mit 403 antwortet. Ein gewöhnlicher HTTP-Ursprung außerhalb von localhost ist kein sicherer Browserkontext: Der erste Polling-GET kann sowohl ohne Origin als auch ohne Fetch-Metadata ankommen. Die bestehende serverseitige Prüfung lehnt das ab.
@@ -16,7 +18,7 @@ Serveraktionen erzeugen ihre eindeutigen IDs über `src/ids.ts`. Bei fehlendem `
 
 Die bestehende `.env` bleibt erhalten. PUBLIC_URL muss exakt der verwendeten Spieladresse mit Schema und gegebenenfalls Port entsprechen. Eine falsche PUBLIC_URL führt weiterhin absichtlich zur Ablehnung. Keine Firewall- oder DNS-Änderungen werden durch dieses Update vorgenommen.
 
-Die Kennzeichnung „VERSION 2.0“ auf dem bisherigen Startbildschirm ist noch ein statischer Oberflächentext, kein zuverlässiger Nachweis des installierten Commits. Prüfe stattdessen package.json (2.2.2) und den erfolgreichen AMP-Build.
+Für die aktuell installierte Fassung die Version in `package.json`, den tatsächlich ausgecheckten Commit und den erfolgreichen AMP-Build prüfen. Historische Bildschirmtexte und die hier beschriebene Version 2.2.2 sind kein Nachweis des heutigen Serverstands.
 
 ## Grenzen und Abnahme
 
