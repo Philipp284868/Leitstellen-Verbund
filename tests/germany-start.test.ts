@@ -1,3 +1,4 @@
+import { fixtureDataset } from "./fixtures/germany/locations";
 import { build } from "esbuild";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
@@ -17,7 +18,14 @@ import { relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-let base: string, app: string, data: string, geo: string, harness: string;
+import { createGermanyPackage } from "./fixtures/germany/package";
+import { installationDatabase } from "./fixtures/installation";
+let base: string,
+  app: string,
+  data: string,
+  geo: string,
+  harness: string,
+  gamePort: number;
 const owned = new Set<ChildProcess>();
 const delay = (ms: number) => new Promise((done) => setTimeout(done, ms));
 function environment(extra: Record<string, string> = {}) {
@@ -35,6 +43,7 @@ function environment(extra: Record<string, string> = {}) {
     delete env[key];
   return {
     ...env,
+    PORT: String(gamePort),
     DATA_DIR: data,
     GEODATA_DIR: geo,
     LV_FIXTURE_ROOT: app,
@@ -123,16 +132,10 @@ beforeEach(async () => {
     geo,
   ])
     await mkdir(directory, { recursive: true });
+  gamePort = await port();
+  installationDatabase(data);
+  createGermanyPackage(geo);
   await writeFile(resolve(data, "existing-save"), "unmodified-existing-save");
-  await writeFile(
-    resolve(geo, "manifest.json"),
-    JSON.stringify({
-      schema: 1,
-      status: "ready",
-      worldId: "germany-1",
-      dataset: "f".repeat(64),
-    }),
-  );
   await writeFile(resolve(app, "package.json"), '{"type":"module"}');
   await writeFile(
     resolve(app, "dist/server/index.js"),
@@ -141,6 +144,7 @@ beforeEach(async () => {
     const log = (value) => appendFileSync(process.env.LV_FIXTURE_LOG, value+'\\n');
     writeFileSync(process.env.LV_FIXTURE_ENV, JSON.stringify({DATA_DIR:process.env.DATA_DIR,GEODATA_DIR:process.env.GEODATA_DIR,GRAPHHOPPER_URL:process.env.GRAPHHOPPER_URL}));
     log('game-started '+process.pid);
+    process.send?.({type:'ready',port:Number(process.env.PORT)});
     if(process.env.LV_FIXTURE_EXIT) process.exit(Number(process.env.LV_FIXTURE_EXIT));
     setInterval(()=>{},1000);
     process.on('message', (message)=>{
@@ -189,64 +193,31 @@ afterEach(async () => {
 });
 
 describe("Deutschland-Start und Bestandsschutz", () => {
-  it("verwendet die eigenen Deutschland-Daten und den eigenen Router aus .env.germany", async () => {
-    const legacy = resolve(base, "legacy");
-    await mkdir(legacy);
+  it("rejects competing legacy files instead of choosing another world", async () => {
     await writeFile(
-      resolve(legacy, "save.sqlite"),
-      "bestehender Rivermere-Spielstand",
+      resolve(app, ".env"),
+      `DATA_DIR="${resolve(base, "legacy")}"\nGEODATA_DIR="${geo}"\n`,
     );
-    const oldConfig = `DATA_DIR="${legacy}"\nGEODATA_DIR="${legacy}"\nGRAPHHOPPER_URL=http://127.0.0.1:1\n`;
-    await writeFile(resolve(app, ".env"), oldConfig);
-    const germanyConfig = `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\nGRAPHHOPPER_URL=http://127.0.0.1:8989\n`;
-    await writeFile(resolve(app, ".env.germany"), germanyConfig);
-    const run = launch({
-      DATA_DIR: legacy,
-      GEODATA_DIR: legacy,
-      GRAPHHOPPER_URL: "http://127.0.0.1:2",
-    });
-    await event("game-started");
-    run.child.send({ type: "shutdown" });
-    const result = await run.ended;
-    expect(result.code, result.output).toBe(0);
-    expect(
-      JSON.parse(
-        await readFile(resolve(base, "game-environment.json"), "utf8"),
-      ),
-    ).toEqual({
-      DATA_DIR: data,
-      GEODATA_DIR: geo,
-      GRAPHHOPPER_URL: "http://127.0.0.1:8989",
-    });
-    expect(await events()).not.toContain("router-started");
-    expect(await readFile(resolve(app, ".env"), "utf8")).toBe(oldConfig);
-    expect(await readFile(resolve(app, ".env.germany"), "utf8")).toBe(
-      germanyConfig,
+    await writeFile(
+      resolve(app, ".env.germany"),
+      `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\n`,
     );
-    expect(await readFile(resolve(legacy, "save.sqlite"), "utf8")).toBe(
-      "bestehender Rivermere-Spielstand",
-    );
+    const result = await launch().ended;
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("Konfigurationskonflikt");
+    expect(await events()).toBe("");
   });
-
-  it("übernimmt keinen alten GRAPHHOPPER_URL-Wert, wenn .env.germany den verwalteten Router nutzt", async () => {
+  it("uses a single legacy file and retains the managed router lifecycle", async () => {
     const router = `http://127.0.0.1:${await port()}`;
     await writeFile(
       resolve(app, ".env.germany"),
       `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\n`,
     );
-    await writeFile(
-      resolve(app, ".env"),
-      "GRAPHHOPPER_URL=http://127.0.0.1:1\n",
-    );
-    const run = launch({
-      LV_FIXTURE_ROUTER: router,
-      GRAPHHOPPER_URL: "http://127.0.0.1:2",
-    });
+    const run = launch({ LV_FIXTURE_ROUTER: router });
     await event("game-started");
     run.child.send({ type: "shutdown" });
     const result = await run.ended;
     expect(result.code, result.output).toBe(0);
-    expect(await events()).toContain("router-started");
     expect(await events()).toContain("router-stopped");
     expect(
       JSON.parse(
@@ -254,7 +225,6 @@ describe("Deutschland-Start und Bestandsschutz", () => {
       ),
     ).toEqual({ DATA_DIR: data, GEODATA_DIR: geo, GRAPHHOPPER_URL: router });
   });
-
   it("startet bei unvollständigen Daten oder fehlendem Spielbuild keinen schweren Routingprozess", async () => {
     await writeFile(
       resolve(geo, "manifest.json"),
@@ -262,7 +232,7 @@ describe("Deutschland-Start und Bestandsschutz", () => {
         schema: 1,
         status: "building",
         worldId: "germany-1",
-        dataset: "f".repeat(64),
+        dataset: fixtureDataset,
       }),
     );
     let run = launch();
@@ -274,7 +244,7 @@ describe("Deutschland-Start und Bestandsschutz", () => {
         schema: 1,
         status: "ready",
         worldId: "germany-1",
-        dataset: "f".repeat(64),
+        dataset: fixtureDataset,
       }),
     );
     await rm(resolve(app, "dist/server/index.js"));
@@ -357,7 +327,7 @@ describe("Deutschland-Start und Bestandsschutz", () => {
     const run = await configBinary();
     const result = run({ DATA_DIR: "" });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("ausdrücklich gesetztes eigenes DATA_DIR");
+    expect(result.stderr).toContain("DATA_DIR fehlt");
     await expect(access(resolve(base, "leitstellen-data"))).rejects.toThrow();
   });
   it("verhindert beide Verschachtelungsrichtungen von Spiel- und Geodaten", async () => {

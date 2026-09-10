@@ -15,10 +15,16 @@ import { spawn } from "node:child_process";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { DatabaseSync } from "node:sqlite";
+import { resolveConfiguration } from "../configuration.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const configuration = resolveConfiguration({
+  programRoot: repo,
+  requirePaths: false,
+});
 const root = resolve(
-  process.env.GEODATA_DIR || join(repo, "../leitstellen-deutschland-geodata"),
+  repo,
+  configuration.settings.GEODATA_DIR || "../leitstellen-deutschland-geodata",
 );
 const relativeRoot = relative(repo, root);
 if (

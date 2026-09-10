@@ -153,7 +153,7 @@ async function removeFile(path) {
     await unlink(path);
   }
 }
-async function acquireLock(path) {
+export async function acquireLock(path) {
   await safePath(path);
   const value = JSON.stringify({ pid: process.pid, hostname: hostname() });
   try {

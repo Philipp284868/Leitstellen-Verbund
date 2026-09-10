@@ -85,26 +85,25 @@ function run(extra: Record<string, string> = {}) {
     windowsHide: true,
   });
 }
-describe("Deutschland-Konfiguration für Server und CLI", () => {
-  it("verwendet beim direkten Programmeinstieg die Deutschlanddatei und erhält den alten Spielstand", () => {
+describe("shared configuration for direct server and CLI", () => {
+  it("rejects conflicting files and preserves both", () => {
     configure();
-    const original = readFileSync(resolve(app, ".env"));
-    const result = run({ DATA_DIR: oldData, GEODATA_DIR: oldGeo });
-    expect(result.status, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({
-      host: "0.0.0.0",
-      port: 7788,
-      publicUrl: "https://germany.example",
-      dataDir: data,
-      geodataDir: geo,
-      routerUrl: "http://127.0.0.1:8989",
-    });
-    expect(readFileSync(resolve(app, ".env"))).toEqual(original);
-    expect(readFileSync(resolve(oldData, "old-save"), "utf8")).toBe(
-      "unmodified-rivermere-save",
-    );
+    const before = readFileSync(resolve(app, ".env"));
+    const result = run();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Konfigurationskonflikt");
+    expect(readFileSync(resolve(app, ".env"))).toEqual(before);
   });
-  it("behält die vom Launcher verwaltete Routeradresse und ausdrückliche Netzwerk-Umgebungswerte", () => {
+  it("supports a single legacy configuration consistently without writing it during start", () => {
+    rmSync(resolve(app, ".env"));
+    configure();
+    const result = run();
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout).dataDir).toBe(data);
+    expect(existsSync(data)).toBe(false);
+  });
+  it("honors explicit network overrides and reports the same routing URL to CLI", () => {
+    rmSync(resolve(app, ".env"));
     configure();
     const result = run({
       PORT: "7799",
@@ -119,44 +118,28 @@ describe("Deutschland-Konfiguration für Server und CLI", () => {
       dataDir: data,
     });
   });
-  it("wendet einen ausdrücklich in Deutschland konfigurierten separaten Router an", () => {
-    configure("GRAPHHOPPER_URL=http://127.0.0.1:9011\n");
-    const result = run({ GRAPHHOPPER_URL: "http://127.0.0.1:8999" });
-    expect(result.status, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout).routerUrl).toBe("http://127.0.0.1:9011");
-  });
   it.each(["DATA_DIR", "GEODATA_DIR"])(
-    "fällt bei fehlendem %s nicht auf einen alten AMP-Pfad zurück",
-    (missing) => {
+    "rejects conflicting environment path %s",
+    (key) => {
+      rmSync(resolve(app, ".env"));
       configure();
-      const file = resolve(app, ".env.germany");
-      writeFileSync(
-        file,
-        readFileSync(file, "utf8")
-          .split("\n")
-          .filter((line) => !line.startsWith(`${missing}=`))
-          .join("\n"),
-      );
-      const result = run({ DATA_DIR: oldData, GEODATA_DIR: oldGeo });
+      const result = run({ [key]: oldData });
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain(missing);
-      expect(readFileSync(resolve(oldData, "old-save"), "utf8")).toBe(
-        "unmodified-rivermere-save",
-      );
-      if (missing === "DATA_DIR") expect(existsSync(data)).toBe(false);
+      expect(result.stderr).toContain("Datenpfadkonflikt");
+      expect(existsSync(data)).toBe(false);
     },
   );
-  it("erhält die bisherige .env-Auswertung einer manuell eingerichteten Deutschlandwelt", () => {
+  it("uses program-relative paths when the caller has another cwd", () => {
     writeFileSync(
       resolve(app, ".env"),
-      `DATA_DIR="${data}"\nGEODATA_DIR="${geo}"\nPUBLIC_URL=https://existing-germany.example\n`,
+      "DATA_DIR=../germany-data\nGEODATA_DIR=../germany-geo\nPUBLIC_URL=https://existing.example\n",
     );
     const result = run();
     expect(result.status, result.stderr).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({
       dataDir: data,
       geodataDir: geo,
-      publicUrl: "https://existing-germany.example",
+      port: 7777,
     });
   });
 });

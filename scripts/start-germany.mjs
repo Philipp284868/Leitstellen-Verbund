@@ -1,26 +1,15 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
-import { loadEnvFile } from "node:process";
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+
 import { setTimeout as pause } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { createConnection } from "node:net";
-import { parseEnv } from "node:util";
+import { resolveConfiguration } from "./configuration.mjs";
+import { inspectInstallation } from "./installation-storage.mjs";
+import { assertPortFree } from "./network-check.mjs";
 
 const script = fileURLToPath(import.meta.url);
-const inside = (parent, child) => {
-  const path = relative(parent, child);
-  return (
-    path === "" ||
-    !(path === ".." || path.startsWith(`..${sep}`) || isAbsolute(path))
-  );
-};
-function canonical(path) {
-  if (existsSync(path)) return realpathSync(path);
-  const parent = dirname(path);
-  if (parent === path) throw Error("Datenpfad kann nicht aufgelöst werden.");
-  return resolve(canonical(parent), relative(parent, path));
-}
 async function occupied(url) {
   const address = new URL(url);
   return new Promise((done) => {
@@ -48,65 +37,17 @@ export async function runGermany({
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw Error("Node.js 24 erforderlich.");
   programRoot = realpathSync(programRoot);
-  const germanyEnv = resolve(programRoot, ".env.germany");
-  const env = existsSync(germanyEnv)
-    ? germanyEnv
-    : resolve(programRoot, ".env");
-  if (existsSync(env)) {
-    loadEnvFile(env);
-    if (env === germanyEnv) {
-      const settings = parseEnv(readFileSync(germanyEnv, "utf8"));
-      // AMP may still inherit paths belonging to the old world. The explicitly
-      // separated Germany configuration owns these three values exclusively.
-      for (const key of ["DATA_DIR", "GEODATA_DIR", "GRAPHHOPPER_URL"]) {
-        if (settings[key]) process.env[key] = settings[key];
-        else delete process.env[key];
-      }
-    }
-  }
-  if (!process.env.DATA_DIR || !process.env.GEODATA_DIR)
-    throw Error(
-      "Deutschland benötigt eigene Datenpfade. AMP-Setup-Befehl: node scripts/install-germany.mjs. Bestehende Daten bleiben unverändert.",
-    );
-  const data = canonical(resolve(programRoot, process.env.DATA_DIR));
-  const geo = canonical(resolve(programRoot, process.env.GEODATA_DIR));
-  if (inside(programRoot, data) || inside(programRoot, geo))
-    throw Error(
-      "Spiel- und Geodaten müssen außerhalb des Programmverzeichnisses liegen.",
-    );
-  if (inside(data, geo) || inside(geo, data))
-    throw Error("Spieldaten und Geodaten benötigen getrennte Verzeichnisse.");
-  if (
-    (existsSync(data) && !statSync(data).isDirectory()) ||
-    (existsSync(geo) && !statSync(geo).isDirectory())
-  )
-    throw Error("DATA_DIR und GEODATA_DIR müssen Verzeichnisse sein.");
-  const manifestFile = resolve(geo, "manifest.json");
-  if (!existsSync(manifestFile))
-    throw Error(
-      "Fertiges Deutschland-Datenpaket fehlt. Einrichtung ausführen: node scripts/install-germany.mjs.",
-    );
-  if (!inside(geo, realpathSync(manifestFile)))
-    throw Error("Geodatenmanifest liegt außerhalb seines Datenpakets.");
-  const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
-  if (
-    manifest.schema !== 1 ||
-    manifest.status !== "ready" ||
-    manifest.worldId !== "germany-1" ||
-    !/^[a-f0-9]{64}$/.test(manifest.dataset)
-  )
-    throw Error(
-      "Deutschland-Datenpaket ist noch nicht vollständig freigegeben.",
-    );
+  const configuration = resolveConfiguration({ programRoot });
+  const env = configuration.environment;
+  inspectInstallation(configuration);
   if (!existsSync(resolve(programRoot, "dist/server/index.js")))
     throw Error(
-      "Deutschland-Serverbuild fehlt. Anwendung zuerst vollständig bauen.",
+      "Deutschland-Serverbuild fehlt. Setup: node scripts/install-germany.mjs",
     );
-  // Children and direct server configuration resolve the same absolute paths,
-  // including when AMP launches this script from a different working directory.
-  process.env.DATA_DIR = data;
-  process.env.GEODATA_DIR = geo;
-
+  await assertPortFree(env.HOST, Number(env.PORT));
+  console.log(
+    `Startprüfung erfolgreich. PORT ${env.PORT} (${configuration.sources.PORT}); PUBLIC_URL ${env.PUBLIC_URL} (${configuration.sources.PUBLIC_URL}). Routing wird geprüft.`,
+  );
   const children = new Set();
   const startup = new AbortController();
   let stopping = false,
@@ -160,7 +101,7 @@ export async function runGermany({
       cwd: programRoot,
       stdio: ["inherit", "inherit", "inherit", "ipc"],
       windowsHide: true,
-      env: process.env,
+      env,
     });
     children.add(child);
     child.once("error", (error) => {
@@ -179,7 +120,7 @@ export async function runGermany({
     return child;
   };
   try {
-    if (!process.env.GRAPHHOPPER_URL) {
+    if (!env.GRAPHHOPPER_URL) {
       if (await occupied(routerUrl))
         throw Error(
           "Routing-Port ist bereits belegt. Bestehenden Dienst prüfen und GRAPHHOPPER_URL ausdrücklich konfigurieren.",
@@ -204,9 +145,26 @@ export async function runGermany({
           throw Error("Routingdienst wurde nicht rechtzeitig bereit.");
         await pause(100);
       }
-      process.env.GRAPHHOPPER_URL = routerUrl;
+      env.GRAPHHOPPER_URL = routerUrl;
     }
-    if (!stopping) spawnChild(["dist/server/index.js"]);
+    if (!stopping) {
+      const child = spawnChild(["dist/server/index.js"]);
+      const timer = setTimeout(() => {
+        console.error(
+          "Spielserver wurde nicht rechtzeitig bereit. Datenbank, Geodaten und Routing prüfen.",
+        );
+        void stop(1);
+      }, startupTimeoutMs);
+      child.once("exit", () => clearTimeout(timer));
+      child.on("message", (message) => {
+        if (message?.type === "ready" && message.port === Number(env.PORT)) {
+          clearTimeout(timer);
+          console.log(
+            `Spiel bereit: ${env.HOST}:${env.PORT}; Browseradresse: ${env.PUBLIC_URL}. Öffentliche HTTPS-Erreichbarkeit separat prüfen.`,
+          );
+        }
+      });
+    }
   } catch (error) {
     if (!stopping) console.error(error.message);
     await stop(stopping ? 0 : 1);

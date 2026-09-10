@@ -17,7 +17,7 @@ import {
 } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnvFile } from "node:process";
+import { resolveConfiguration } from "./configuration.mjs";
 
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const sqliteSuffix = "\\.sqlite(?:-wal|-shm|-journal)?";
@@ -336,11 +336,8 @@ if (invoked) {
         "Aufruf: scripts/hard-reset.mjs --confirm-delete-all-player-data --request EINMALIGE-KENNUNG",
       );
     const programDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-    const env = resolve(programDir, ".env");
-    if (metadata(env)) loadEnvFile(env);
-    const dataDir = resolve(
-      process.env.DATA_DIR || resolve(programDir, "../leitstellen-data"),
-    );
+    const dataDir = resolveConfiguration({ programRoot: programDir }).settings
+      .DATA_DIR;
     console.log(
       `Einmaliger Offline-Reset: ${dataDir}. Keine neue Sicherung; bekannte alte Spielbackups werden entfernt.`,
     );
@@ -356,7 +353,7 @@ if (invoked) {
         : `HARDRESET ERFOLGREICH: ${result.deletedFiles} bekannte Dateien entfernt. Beim nächsten Spielstart registrieren sich alle neu.`,
     );
     console.log(
-      "In AMP App Name auf dist/server/index.js zurückstellen und App Command Line Arguments leeren.",
+      "In AMP App Name auf scripts/start-germany.mjs zurückstellen und App Command Line Arguments leeren. Geschützte Installationszuordnung vor einem ausdrücklich angeordneten neuen Spielstand betreut prüfen.",
     );
   } catch (error) {
     console.error(`HARDRESET ABGEBROCHEN: ${error.message}`);

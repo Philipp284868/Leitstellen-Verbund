@@ -3,12 +3,14 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { bootstrapPnpm } from "./pnpm-bootstrap.mjs";
+import { resolveConfiguration } from "./configuration.mjs";
 if (Number(process.versions.node.split(".")[0]) !== 24)
   throw Error("AMP muss Node.js 24 verwenden.");
 if (process.argv.slice(2).some((arg) => arg !== "--install-only"))
   throw Error("Unbekannte AMP-Setup-Option.");
 const root = fileURLToPath(new URL("../", import.meta.url)),
   started = performance.now();
+resolveConfiguration({ programRoot: root, requirePaths: false });
 const manager = await bootstrapPnpm(root);
 async function run(args) {
   await new Promise((done, reject) => {

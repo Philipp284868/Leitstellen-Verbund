@@ -26,6 +26,7 @@ import {
   verifyPassword,
 } from "./auth";
 import { config, root, type Config } from "./config";
+import { recordDatabaseReady } from "../scripts/installation.mjs";
 import { Database } from "./database";
 import { Game } from "./game";
 import { prepareGeography, type Geography } from "./germany/runtime";
@@ -850,6 +851,7 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   }
   try {
     await app.listen();
+    recordDatabaseReady(root);
   } catch (e) {
     await app.close();
     throw e;
@@ -857,6 +859,8 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   console.log(
     `Leitstellen-Verbund bereit: ${c.host}:${c.port} · ${c.publicUrl} · Freie Registrierung, nur Spielerkonten.`,
   );
+  if (process.connected)
+    process.send?.({ type: "ready", host: c.host, port: c.port });
   let closing = false;
   const stop = () => {
     if (closing) return;
