@@ -1,10 +1,10 @@
-# Die Leitstelle übernehmen · Version 2.21
+# Die Leitstelle übernehmen · Version 2.23
 
 Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder anmelden. Es gibt keine Admin-Spielkonten und keine Registrierungseinladung. Ein einzelner Spieler darf allein auf dem Multiplayer-Server disponieren. Gemeinsame Disponenten derselben Leitstelle werden ausdrücklich eingeladen; unabhängige Leitstellen teilen ihre Einsätze nicht automatisch. Die persönliche Übungswelt ist ein getrennter Lernbereich, kein wieder eingeführter Einzelspieler-Modus.
 
 ## Einstieg und Tutorial
 
-Im Hauptmenü **Spielen** öffnet die berechtigte Leitstelle. Der Tutorialknopf darunter bietet Einstieg, Fortsetzung oder Wiederholung. Das Tutorial führt in 16 Kapiteln durch tatsächliche Menüs, Wachenbau, Fahrzeugkauf, Notruf, Disposition, FMS, Lage, Nachforderung und Archiv. Bereits erfüllte Voraussetzungen im vorhandenen Spielstand werden berücksichtigt; dort sind keine unnötigen erneuten Käufe erforderlich.
+Im Hauptmenü **Spielen** öffnet die berechtigte Leitstelle. Der Tutorialknopf darunter bietet Einstieg, Fortsetzung oder Wiederholung. Das Tutorial führt in 16 Kapiteln durch tatsächliche Menüs, Standortkauf, Fahrzeugkauf, Notruf, Disposition, FMS, Lage, Nachforderung und Archiv. Bereits erfüllte Voraussetzungen im vorhandenen Spielstand werden berücksichtigt; dort sind keine unnötigen erneuten Käufe erforderlich.
 
 Für einen geschützten vollständigen Lernablauf **Persönliche Übung** verwenden. Diese serverseitig gespeicherte Welt hat eigenes Budget, Fahrzeuge und Einsätze. Sie beginnt auf Stufe 2 mit 1.400.000,00 €. Eine Feuerwache für 650.000,00 € und ein LF 20 für 320.000,00 € lassen 430.000,00 € Reserve. Zuerst wird ein Keller unter Wasser bearbeitet. Die anschließende Flächenbrandübung benötigt zusätzliches Löschwasser: LF anfahren lassen, erste Lage aufnehmen, die echte Nachforderung bearbeiten und beispielsweise ein TSF-W für 180.000,00 € nachalarmieren. Ein bloß angeklickter Hinweis ersetzt diese Schritte nicht.
 
@@ -12,9 +12,9 @@ Für einen geschützten vollständigen Lernablauf **Persönliche Übung** verwen
 
 ## Budget und Wachen
 
-Neue normale Leitstellen starten auf Stufe 1 mit 1.400.000,00 €. Feuerwache und TSF-W kosten zusammen 830.000,00 €; 570.000,00 € bleiben übrig. Das LF 20 ist ab Stufe 2 kaufbar. Geld allein überspringt weder Stufen noch erforderliche Gebäudefunktionen. Bauvorschau und Kaufbestätigung zeigen tatsächlichen Preis, Voraussetzungen und verbleibendes Budget.
+Neue normale Leitstellen starten auf Stufe 1 mit 1.400.000,00 €. Feuerwache und TSF-W kosten zusammen 830.000,00 €; 570.000,00 € bleiben übrig. Das LF 20 ist ab Stufe 2 kaufbar. Geld allein überspringt weder Stufen noch erforderliche Gebäudefunktionen. Standortdetails und Kaufbestätigung zeigen tatsächlichen Preis, Voraussetzungen und verbleibendes Budget.
 
-Unter **Gebäude** einen zulässigen Standort wählen und den Wachenbau bestätigen. Auf der Deutschlandkarte muss die echte Zufahrt geprüft werden können; Wasserrettung benötigt einen geeigneten Uferzugang. Nach Bauabschluss stellt die Wache ihre zulässigen Fahrzeugfunktionen mit passender Besetzung und Qualifikation automatisch bereit. Es gibt keine zusätzlichen Rekrutierungs- oder Ausbildungsgebühren und keinen manuellen Pflichtschritt „Besetzen“.
+Unter **Standorte → Standort kaufen** einen realen vorhandenen Standort wählen und den Kauf ausdrücklich bestätigen. Auf der Deutschlandkarte muss die echte Zufahrt geprüft werden können; Wasserrettung benötigt einen geeigneten Uferzugang. Nach der Inbetriebnahme stellt die Wache ihre zulässigen Fahrzeugfunktionen mit passender Besetzung und Qualifikation automatisch bereit. Es gibt keine zusätzlichen Rekrutierungs- oder Ausbildungsgebühren und keinen manuellen Pflichtschritt „Besetzen“.
 
 Neue Feuerwachen sind Freiwillige Feuerwehren. Nach einer Alarmierung kommen die benötigten Kräfte zeitlich versetzt auf tatsächlichen Straßen zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Die Automatik beseitigt keine Verletzungen, laufenden Bindungen, Defekte oder Übergaben. Eine Person wird nicht gleichzeitig mehreren Fahrzeugen zugesagt. Ab Stufe 6 ist die Umstellung zur Berufsfeuerwehr für 1.350.000,00 € möglich. Historische Berufsfeuerwehren bleiben bestehen. [Wachbetrieb und Bestandsschutz](GEBAEUDEBESETZUNG-2.21.md).
 
@@ -57,3 +57,5 @@ Musik, Umgebung, Telefon, Funk, Alarmierung und UI lassen sich getrennt regeln. 
 Im Spiel bleibt die Karte unter der oberen Hauptleiste frei. Einsatzliste, Disposition und Kartenwerkzeuge öffnen bei Bedarf. Ziehen verschiebt, Mausrad und Zoomknöpfe ändern den Maßstab. Tab/Enter bedienen fokussierbare Elemente; Escape schließt die aktuelle Ansicht beziehungsweise zuerst ihren Entwurf. Tastenkürzel sind in den Einstellungen einsehbar und anpassbar. Unter 1100×650 erscheint ein Desktop-Hinweis, keine Smartphone-Oberfläche.
 
 Bestätigte Spielaktionen werden auf dem Server gespeichert. Ohne Verbindung bleiben Aktionen gesperrt; es startet keine lokale Ersatzsimulation. Die normale Welt läuft ohne offenen Browser weiter, nach Serverstillstand werden höchstens vier Stunden nachberechnet. Persönliches Tutorial und Übung überstehen Wiederverbindung und Neustart. Kontoexporte und freiwillige lokale Kopien stehen unter **Spielstände & Sicherungen** bereit; eine Vorschau importiert keinen Besitz. Vollständige Wiederherstellung bleibt eine ausdrückliche Wartungsaufgabe des Betreibers. [Daten und Sicherungen](DATEN.md) · [AMP-Betrieb](AMP.md).
+
+Die vollständige Standortlogik, Datenabdeckung und Bestandsmigration stehen unter [Reale Standorte](STANDORTE.md). Freie Platzierung ist nicht mehr möglich.

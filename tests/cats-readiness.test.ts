@@ -1,7 +1,7 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { apply, readiness, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
-import { buildReason } from "../src/purchase";
 import { sites as nodes } from "./fixtures/germany/locations";
 
 import { vt } from "../src/catalog";
@@ -25,11 +25,7 @@ function fixture() {
   s.generation = "kats-readiness-fixed";
   s.money = 1e10;
   s.xp = xpForLevel(25);
-  apply(s, {
-    type: "build",
-    kind: "kats",
-    pos: nodes.find((p) => !buildReason(s, "kats", p))!,
-  });
+  apply(s, fixturePurchase("kats", nodes[0]));
   tick(s, s.time + 25, {}, false, false);
   const b = s.buildings[0];
   apply(s, { type: "buy", kind: "gwsan", home: b.id });

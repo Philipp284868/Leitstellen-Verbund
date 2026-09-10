@@ -10,6 +10,8 @@ Notruf annehmen → Angaben erfragen → AAO oder Fahrzeuge auswählen → alarm
 
 Erhalten sind persönliche Tutorials und getrennte Übungsdaten, automatische Wachbesetzung, FF-Anreisen, BF-Ausbau, reale Straßenfahrten mit ETA und Geschwindigkeit, Fahrzeugdefekte und Nachbereitung, Funkdisziplin, gemeinsame Einsatzlagen, Katastrophenschutz, Euro-Wirtschaft, Fortschritt, Audio und eigene lokale Sounds. Unterschiedliche Leitstellen erhalten neue Einsätze nicht automatisch. Zusammenarbeit erfolgt über berechtigte Disponenten derselben Leitstelle und ausdrückliche Nachbarhilfe.
 
+Wachen und Kliniken werden an festen realen Standorten erworben: **Standorte → Standort kaufen** oder einen Kartenmarker wählen. Freies Bauen und Verschieben sind abgeschaltet. [Katalog, Bedienung und notwendige Altstand-Migration](docs/STANDORTE.md).
+
 Die geografische Karte verwendet das lokal installierte Deutschland-Datenpaket. Karteneinträge sind keine automatisch verfügbaren Spielgebäude; reale Personalstärken und Klinikkapazitäten werden nicht aus Kartenmarkern behauptet.
 
 ## Aus GitHub installieren

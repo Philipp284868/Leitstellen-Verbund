@@ -1,5 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
-import { resolve } from "node:path";
+import { SqliteFacilityCatalog } from "../facilities/catalog";
+import { resolve, dirname } from "node:path";
+import { existsSync } from "node:fs";
 import { RoutingBridge } from "./bridge";
 import { GermanyIncidentGeography } from "./geography-sites";
 import { GermanyRoutingError } from "../../src/germany/errors";
@@ -55,6 +57,7 @@ function remaining(deadline: number) {
   return budget;
 }
 export interface GermanyOptions {
+  facilitiesPath?: string;
   indexPath: string;
   mapsPath?: string;
   dataset: string;
@@ -62,6 +65,7 @@ export interface GermanyOptions {
   timeout?: number;
 }
 export class LocalGermanyProvider implements GermanyProvider {
+  readonly facilities?: SqliteFacilityCatalog;
   readonly dataset: string;
   private db: DatabaseSync;
   private bridge: RoutingBridge;
@@ -111,6 +115,11 @@ export class LocalGermanyProvider implements GermanyProvider {
           this.dataset,
         );
       this.bridge = new RoutingBridge(options.routerUrl, options.timeout);
+      const catalogPath =
+        options.facilitiesPath ??
+        resolve(dirname(options.indexPath), "facilities.sqlite");
+      if (existsSync(catalogPath))
+        this.facilities = new SqliteFacilityCatalog(catalogPath, this.dataset);
     } catch (e) {
       this.geography?.close();
       this.db.close();
@@ -574,6 +583,40 @@ export class LocalGermanyProvider implements GermanyProvider {
     return `${anchor.name}, ${this.districtAt(point)}`;
   }
   hospitals(point: Point, limit: number): Hospital[] {
+    if (this.facilities) {
+      const p = unproject(point);
+      for (const radius of [0.1, 0.5, 2, 10]) {
+        const found = this.facilities
+          .query({
+            kind: "hospital",
+            usable: true,
+            bbox: [
+              p.lon - radius,
+              p.lat - radius,
+              p.lon + radius,
+              p.lat + radius,
+            ],
+            limit: 200,
+          })
+          .filter((f) => f.access && f.emergency !== "no")
+          .sort(
+            (a, b) =>
+              meters(point, a.access!.pos) - meters(point, b.access!.pos),
+          )
+          .slice(0, limit);
+        if (found.length)
+          return found.map((f) => ({
+            ...f.access!.pos,
+            id: f.id,
+            facilityId: f.id,
+            name: f.name || "Krankenhaus ohne erfassten Namen",
+            osmLocation: f.pos,
+            aliases: f.sources,
+            emergency: f.emergency,
+          }));
+      }
+      return [];
+    }
     for (const radius of [10000, 40000, 120000, 400000]) {
       const rows = this.nearby(
         "places",
@@ -634,6 +677,7 @@ export class LocalGermanyProvider implements GermanyProvider {
     this.closed = true;
     clearGermanyProvider(this);
     this.geography?.close();
+    this.facilities?.close();
     this.incidentSitesCache.clear();
     this.shoreSitesCache.clear();
     this.db.close();

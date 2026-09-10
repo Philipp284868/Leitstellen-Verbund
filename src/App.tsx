@@ -1,3 +1,4 @@
+import { FacilityBrowser } from "./facilities/FacilityBrowser";
 import { ChevronRight, Radio } from "lucide-react";
 import {
   lazy,
@@ -26,7 +27,7 @@ import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "./product";
 import { RadioDesk } from "./RadioDesk";
 import { ReconnectSummary } from "./ReconnectSummary";
-import { BuildingPanel, BuildingShop, Fleet } from "./Resources";
+import { BuildingPanel, Fleet } from "./Resources";
 import "./Settings.css";
 import { SituationDesk } from "./SituationDesk";
 import { AudioSession } from "./Sound";
@@ -110,8 +111,7 @@ function GameApp() {
 
   const [screen, setScreen] = useState("start"),
     [modal, setModalRaw] = useState(""),
-    [selected, setSelected] = useState(""),
-    [placing, setPlacing] = useState("");
+    [selected, setSelected] = useState("");
   const setModal = useCallback(
     (id: string) => requestDialogTransition(() => setModalRaw(id)),
     [],
@@ -148,15 +148,14 @@ function GameApp() {
         e.target instanceof Element &&
         !!e.target.closest("input,textarea,select,[contenteditable=true]");
       if (e.key === "Escape" && !editing) {
-        if (!modal && !placing && !selected) return;
+        if (!modal && !selected) return;
         e.preventDefault();
         if (modal) {
           requestDialogTransition(() => {
             setModalRaw("");
             setSelected("");
           });
-        } else if (placing) setPlacing("");
-        else if (selected) setSelected("");
+        } else if (selected) setSelected("");
         return;
       }
       if (modal) return;
@@ -184,7 +183,7 @@ function GameApp() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [s, screen, selected, layout.keys, modal, placing]);
+  }, [s, screen, selected, layout.keys, modal]);
   useEffect(() => {
     if (modal === "archive") tutorialInteraction("budget");
     if (modal === "building") tutorialInteraction("staff");
@@ -195,7 +194,6 @@ function GameApp() {
   useEffect(() => {
     setSelected("");
     setModalRaw("");
-    setPlacing("");
   }, [s?.generation]);
   if (loading)
     return (
@@ -302,8 +300,6 @@ function GameApp() {
           selected={selected}
           open={open}
           setModal={setModal}
-          placing={placing}
-          setPlacing={setPlacing}
           readonly={readonly}
           notice={notice}
           onMenu={() => setScreen("start")}
@@ -401,7 +397,7 @@ function GameApp() {
                 support: "Support",
                 language: "Sprache",
                 players: "Spieler dieser Serverwelt",
-                build: "Wache bauen",
+                facilities: "Standorte kaufen",
                 stations: "Wachen verwalten",
                 building: "Wachendetails",
                 fleet: "Fuhrpark",
@@ -496,7 +492,7 @@ function GameApp() {
                   <CivilProtectionDesk
                     s={s}
                     onOpen={open}
-                    onBuild={() => setModal("build")}
+                    onFacilities={() => setModal("facilities")}
                   />
                 )}
                 {modal === "situation" && (
@@ -509,11 +505,12 @@ function GameApp() {
                     onArchive={() => setModal("archive")}
                   />
                 )}
-                {modal === "build" && (
-                  <BuildingShop
+                {modal === "facilities" && (
+                  <FacilityBrowser
                     s={s}
-                    onPlace={(type) => {
-                      setPlacing(type);
+                    readonly={readonly}
+                    onManage={open}
+                    onMap={() => {
                       setModal("");
                       setScreen("game");
                     }}
@@ -523,9 +520,9 @@ function GameApp() {
                   <>
                     <button
                       className="primary"
-                      onClick={() => setModal("build")}
+                      onClick={() => setModal("facilities")}
                     >
-                      Wache bauen
+                      Standort kaufen
                     </button>
                     {s.buildings.map((b) => (
                       <article key={b.id}>

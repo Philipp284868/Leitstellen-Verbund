@@ -11,7 +11,7 @@ import { vehiclePosition } from "../src/vehicle-position";
 import { qualityFactor } from "../src/simulation/reports";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
 import { addXp } from "../src/progression";
-import { stationProfile, personDuty } from "../src/simulation/staffing";
+import { personDuty } from "../src/simulation/staffing";
 import {
   prepareCallPacing,
   mayCreateIncident,
@@ -76,6 +76,20 @@ export class Game {
   constructor(public db: Database) {}
   command(user: string, input: unknown, mode: GameMode = "multi") {
     parseMode(mode);
+    if (
+      input &&
+      typeof input === "object" &&
+      "action" in input &&
+      input.action &&
+      typeof input.action === "object" &&
+      "type" in input.action &&
+      ["build", "move-building", "relocate-building"].includes(
+        String(input.action.type),
+      )
+    )
+      throw Error(
+        "BUILDING_PURCHASE_ONLY: Bitte einen bestehenden Standort erwerben.",
+      );
     const { id, action } = commandSchema.parse(input),
       fingerprint = hash(JSON.stringify(action));
     return this.db.transaction(() => {
@@ -335,11 +349,6 @@ export class Game {
         s.templates.push({ name: action.name, types: action.types });
       } else {
         apply(s, action as Action);
-        if (action.type === "build") {
-          const b = s.buildings.at(-1)!;
-          if (!["hospital", "school"].includes(b.type))
-            b.organization = stationProfile(b);
-        }
         if (action.type === "hire")
           for (const p of s.people.filter(
             (p) => p.home === action.home && !p.duty,

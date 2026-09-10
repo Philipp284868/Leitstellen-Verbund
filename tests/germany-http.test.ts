@@ -1,3 +1,5 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
+import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import {
   afterEach,
   beforeAll,
@@ -32,7 +34,7 @@ import type * as Fixture from "./germany-simulation-fixture";
 import type { Config } from "../server/config";
 import type { ServerAction } from "../server/actions";
 import type { Mission, Save } from "../src/model";
-import { unproject } from "../src/germany/projection";
+import { project, unproject } from "../src/germany/projection";
 import {
   PresenceDecoder,
   type PublicPlayer,
@@ -47,6 +49,19 @@ import {
 
 const dataset = "d".repeat(64),
   password = "Isolated-germany-test-284!";
+const facilityPositions = [
+  ...Array.from({ length: 10 }, (_, i) =>
+    project({ lon: 13.4 + i * 0.0001, lat: 52.52 + i * 0.0001 }),
+  ),
+  ...[
+    [1550, 1000],
+    [2600, 1000],
+    [1550, 600],
+    [1550, 1450],
+  ].map(([x, y]) => tilePoint(x, y)),
+];
+const purchaseAt = (kind: string, pos: { x: number; y: number }) =>
+  fixturePurchase(kind, pos, facilityPositions);
 type Session = { id: string; cookie: string; csrf: string };
 type View = ReturnType<InstanceType<typeof Fixture.Game>["view"]>;
 let f: typeof Fixture,
@@ -188,6 +203,7 @@ beforeEach(async () => {
   db.exec(
     "INSERT INTO places VALUES(1,'node','10','city','Berlin','Berlin',13.4,52.52,'Berlin'); INSERT INTO places_rtree VALUES(1,13.4,13.4,52.52,52.52); INSERT INTO places VALUES(2,'way','11','hospital','Testklinik','Testklinik',13.4009,52.5209,'Berlin'); INSERT INTO places_rtree VALUES(2,13.4009,13.4009,52.5209,52.5209); INSERT INTO places_fts(places_fts) VALUES('rebuild')",
   );
+  createFacilityFixture(geodataDir, { dataset, positions: facilityPositions });
   db.close();
   const tiles = new DatabaseSync(resolve(geodataDir, "maps.mbtiles"));
   tiles.exec(
@@ -247,11 +263,7 @@ beforeEach(async () => {
   fundTestBudget(s, 2000000);
   s.xp = f.xpForLevel(30);
   s.missionWait = 100000;
-  f.apply(s, {
-    type: "build",
-    kind: "fire",
-    pos: f.project({ lon: 13.4, lat: 52.52 }),
-  });
+  f.apply(s, { type: "purchase-facility", facility: "fixture:fire:0" });
   f.tick(s, s.time + 30, {}, false, false);
   app!.db.save(owner, s);
   const home = s.buildings[0].id;
@@ -355,9 +367,9 @@ async function routerMode(mode: string) {
 function waterGeneration() {
   const save = app!.db.all().get(user.id)!;
   fundTestBudget(save, 4000000); // This integration fixture equips two additional organizations.
-  f.apply(save, { type: "build", kind: "water", pos: tilePoint(1550, 1000) });
+  f.apply(save, purchaseAt("water", tilePoint(1550, 1000)));
   const water = save.buildings.at(-1)!.id;
-  f.apply(save, { type: "build", kind: "ems", pos: tilePoint(2600, 1000) });
+  f.apply(save, purchaseAt("ems", tilePoint(2600, 1000)));
   const ems = save.buildings.at(-1)!.id;
   f.tick(save, save.time + 30, {}, false, false);
   f.apply(save, { type: "extension", id: ems, kind: "doctor" });
@@ -490,10 +502,15 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     await vi.waitFor(() => expect(b.players()).toHaveLength(2));
     const own = a.players().find((p) => p.id === user.id)!,
       foreign = a.players().find((p) => p.id === other.id)!;
-    expect(own.location).toMatchObject({
-      ...f.project({ lon: 13.4, lat: 52.52 }),
-      source: "station",
-    });
+    expect(own.location?.source).toBe("station");
+    expect(own.location?.x).toBeCloseTo(
+      f.project({ lon: 13.4, lat: 52.52 }).x,
+      6,
+    );
+    expect(own.location?.y).toBeCloseTo(
+      f.project({ lon: 13.4, lat: 52.52 }).y,
+      6,
+    );
     expect(foreign).toEqual({
       id: other.id,
       name: "Fremde",
@@ -672,24 +689,24 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
       `/api/geo/site?type=water&x=${p.x}&y=${p.y}`;
     expect((await request(url(shore))).status).toBe(401);
     const invalid = await request(url(inland), user);
-    expect(invalid.status).toBe(200);
-    expect((await invalid.json()).reason).toMatch(/Uferzugang/);
+    expect(invalid.status).toBe(410);
+    expect((await invalid.json()).error).toMatch(/BUILDING_PURCHASE_ONLY/);
     const before = app!.db.all().get(user.id)!;
     expect(
       (
         await request("/api/action", user, {
           id: crypto.randomUUID(),
-          action: { type: "build", kind: "water", pos: inland },
+          action: purchaseAt("water", inland),
         })
       ).status,
     ).toBe(400);
     expect(app!.db.all().get(user.id)!.money).toBe(before.money);
     const checked = await request(url(shore), user);
-    expect(checked.status).toBe(200);
-    expect((await checked.json()).reason).toBeNull();
+    expect(checked.status).toBe(410);
+    expect((await checked.json()).error).toMatch(/BUILDING_PURCHASE_ONLY/);
     const action = {
       id: crypto.randomUUID(),
-      action: { type: "build", kind: "water", pos: shore },
+      action: purchaseAt("water", shore),
     };
     expect((await request("/api/action", user, action)).status).toBe(200);
     const after = app!.db.all().get(user.id)!;
@@ -772,7 +789,7 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
           .status,
       ).toBe(401);
     expect((await request(`/api/geo/site?${location()}`, user)).status).toBe(
-      200,
+      410,
     );
     expect(
       (
@@ -785,8 +802,10 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     const hospitals = await (
       await request(`/api/geo/hospitals?${location()}&vehicle=${vehicle}`, user)
     ).json();
-    expect(hospitals.options[0].id).toBe("public:way:11");
-    expect(hospitals.options[0].name).toMatch(/^Testklinik · Spielprofil:/);
+    expect(hospitals.options[0].id).toMatch(/^public:fixture:hospital:/);
+    expect(hospitals.options[0].name).toMatch(
+      /^Teststandort hospital .* · Spielprofil:/,
+    );
     expect(hospitals.options[0].profileSource).toBe("simulation-v1");
     expect((await request("/api/geo/site?x=Infinity&y=1", user)).status).toBe(
       400,

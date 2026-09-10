@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import { phaseFixture } from "../dispatch-fixture";
 import { sites } from "../fixtures/germany/locations";
+import { fixturePurchase } from "../fixtures/germany/facilities";
+import { apply } from "../../src/engine";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
 import { showIncidents, showMapTools } from "./ui-navigation";
@@ -33,12 +35,8 @@ test.beforeEach(async () => {
   const s = phaseFixture(owner);
   s.missionWait = 99999;
   s.nextMission = s.time + 99999;
-  s.buildings.push({
-    ...structuredClone(s.buildings[0]),
-    id: "empty-station",
-    name: "Testwache ohne Fahrzeuge",
-    pos: sites[3],
-  });
+  apply(s, fixturePurchase("fire", sites[3]));
+  s.buildings.at(-1)!.name = "Testwache ohne Fahrzeuge";
   app.db.save(owner, s);
 });
 test.afterEach(async () => {
@@ -144,7 +142,7 @@ test("Mausrad erhält geografischen Anker; Texteingabe und HUD-Scroll verändern
   await page.keyboard.press("Control+-");
   await expect(map(page)).toHaveAttribute("data-camera", wheel!);
 });
-test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Bauvorschau behalten sichere Grenzen", async ({
+test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Standortauswahl behalten sichere Grenzen", async ({
   page,
   context,
 }) => {
@@ -229,24 +227,28 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Bauvorschau behalten si
   await focus(page);
   await page.keyboard.press("ArrowRight");
   await expect(map(page)).not.toHaveAttribute("data-camera", camera!);
-  await page.getByRole("button", { name: "Wachen", exact: true }).click();
-  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
+  await page.getByRole("button", { name: "Standorte", exact: true }).click();
   await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Platzieren", exact: true })
-    .first()
+    .getByRole("button", { name: "Standort kaufen", exact: true })
+    .click();
+  await expect(page.getByLabel("Ort, Adresse oder Standortname")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Platzieren", exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Standorte direkt auf der Karte auswählen" })
     .click();
   await page.mouse.move(900, 500);
   await page.mouse.down();
   await page.mouse.move(1020, 580, { steps: 12 });
   await page.mouse.up();
   await expect(
-    page.getByRole("button", { name: "Bau bestätigen", exact: true }),
+    page.getByRole("button", { name: "Kauf verbindlich bestätigen" }),
   ).toHaveCount(0);
   await focus(page);
   await page.keyboard.press("Escape");
   await expect(
-    page.getByRole("button", { name: "Bau abbrechen", exact: true }),
+    page.getByRole("button", { name: "Bau bestätigen" }),
   ).toHaveCount(0);
 });
 test("CSS-Pixelschwelle bleibt bei doppelter Pixeldichte korrekt", async ({

@@ -383,7 +383,7 @@ export class TutorialService {
         deskCommand(save, action as DeskAction, user);
       } else if (
         [
-          "build",
+          "purchase-facility",
           "buy",
           "upgrade",
           "extension",

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -6,7 +7,6 @@ import { Game } from "../server/game";
 import { writeWorldSituation } from "../server/world-situation";
 import { mt } from "../src/catalog";
 import { apply } from "../src/engine";
-import { buildReason } from "../src/purchase";
 import { incidentCategory } from "../src/simulation/incident-selection";
 import { callLoad } from "../src/simulation/pacing";
 import {
@@ -34,11 +34,7 @@ function measure(seed: number) {
     if (expanded) {
       for (const kind of ["hlf", "lf", "rtw", "rtw", "nef", "gkw"])
         addUnit(s, kind);
-      apply(s, {
-        type: "build",
-        kind: "hospital",
-        pos: nodes.find((p) => !buildReason(s, "hospital", p))!,
-      });
+      apply(s, fixturePurchase("hospital", nodes[6]));
       s.buildings.find((b) => b.type === "hospital")!.ready = s.time;
     } else {
       s.vehicles = s.vehicles.slice(0, 1);

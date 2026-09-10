@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -70,9 +71,7 @@ it("supplies staff through real build/buy sessions, serializes shared crews and 
         },
         body: JSON.stringify({ id, action }),
       });
-    expect(
-      (await send(0, { type: "build", kind: "fire", pos: nodes[0] })).status,
-    ).toBe(200);
+    expect((await send(0, fixturePurchase("fire", nodes[0]))).status).toBe(200);
     let save = app.db.all().get(owner)!;
     expect(save.people).toHaveLength(0);
     app.game.step(save.buildings[0].ready - save.time + 1, Date.now(), {

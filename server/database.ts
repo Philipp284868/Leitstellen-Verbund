@@ -1,6 +1,10 @@
 import { closeSync, existsSync, mkdirSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import { DatabaseSync, backup } from "node:sqlite";
+import {
+  FACILITY_RIGHTS_SCHEMA,
+  persistFacilityRights,
+} from "./facilities/rights";
 import { germanyProvider } from "../src/germany/world";
 import { validate, type Save } from "../src/model";
 import { WORLD_NAME, WORLD_SEED } from "../src/product";
@@ -18,7 +22,7 @@ import { applyReadinessMigration } from "./readiness-migration";
 import { ensureWorldSituation } from "./world-situation";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 18;
+export const DATABASE_VERSION = 19;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -382,6 +386,20 @@ export class Database {
             `incident-access-v18:${JSON.stringify(summary)}`,
           );
         });
+      if (version < 19)
+        this.transaction(() => {
+          this.sql.exec(FACILITY_RIGHTS_SCHEMA);
+          for (const row of this.sql.prepare("SELECT data FROM saves").all())
+            persistFacilityRights(
+              this.sql,
+              validate(JSON.parse(String(row.data))),
+            );
+          this.sql.exec("PRAGMA user_version=19");
+          this.audit(
+            "server-migration",
+            "facility-rights-v19; geographic assignment requires explicit preview",
+          );
+        });
       this.sql
         .prepare(
           "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
@@ -418,6 +436,13 @@ export class Database {
     if (!this.sql.isTransaction)
       return this.transaction(() => this.save(id, s, mode));
     const checked = validate(s);
+    if (
+      mode === "multi" &&
+      this.sql
+        .prepare("SELECT name FROM sqlite_master WHERE name='facility_rights'")
+        .get()
+    )
+      persistFacilityRights(this.sql, checked);
     // Earlier migrations can call save before v13 creates the history table.
     if (
       this.sql

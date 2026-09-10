@@ -1,0 +1,161 @@
+{
+  "snapshot": "2026-09-07",
+  "dataset": "155596c0041a76f05d3b5fb03a36f2b9e26540b517fde8b4b9884c62c4fc1a90",
+  "states": [
+    {
+      "state": "DE-BB",
+      "id": "osm:node:10589571568",
+      "name": "Feuerwache",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-BE",
+      "id": "osm:node:253618460",
+      "name": "Berufsfeuerwache Friedrichshain",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-BW",
+      "id": "osm:node:10868811798",
+      "name": "Feuerwache",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-BY",
+      "id": "osm:node:10108580394",
+      "name": "Freiwillige Feuerwehr Frauenaurach (8)",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-HB",
+      "id": "osm:way:200291117",
+      "name": "Feuer- und Rettungswache 2",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-HE",
+      "id": "osm:node:10053674722",
+      "name": "Feuerwache",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-HH",
+      "id": "osm:way:1409833304",
+      "name": "Feuer- und Rettungswache Billstedt",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-MV",
+      "id": "osm:node:13055104569",
+      "name": "Freiwillige Feuerwehr Liessow",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-NI",
+      "id": "osm:node:10182303840",
+      "name": "Freiwillige Feuerwehr Wöllmarshausen",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-NW",
+      "id": "osm:node:1056224535",
+      "name": "Gerätehaus Westladbergen",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-RP",
+      "id": "osm:node:1012315136",
+      "name": "Feuerwache",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-SH",
+      "id": "osm:node:1240693297",
+      "name": "Freiwillige Feuerwehr Probstei Nord - GH Wisch",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-SL",
+      "id": "osm:node:1823285442",
+      "name": "Feuerwehrgerätehaus Leitersweiler",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-SN",
+      "id": "osm:node:1029786705",
+      "name": "Feuerwehr Großdeuben",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-ST",
+      "id": "osm:node:10263204110",
+      "name": "Streusandkasten",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    },
+    {
+      "state": "DE-TH",
+      "id": "osm:node:12121892570",
+      "name": "Freiwillige Feuerwehr Lichtenau",
+      "vehicle": "tsf",
+      "personnel": 6,
+      "status": "passed"
+    }
+  ],
+  "hospital": [
+    {
+      "id": "osm:node:1197225482",
+      "status": "passed",
+      "emergency": "yes"
+    },
+    {
+      "id": "osm:node:12478205837",
+      "status": "passed",
+      "emergency": "unknown"
+    },
+    {
+      "id": "osm:node:694347304",
+      "status": "passed",
+      "emergency": "no"
+    },
+    {
+      "id": "osm:node:916096834",
+      "status": "passed",
+      "emergency": "no"
+    },
+    {
+      "id": "osm:relation:10674140",
+      "status": "failed",
+      "error": "GermanyRoutingError: Routingdienst: Connection between locations not found"
+    }
+  ]
+}

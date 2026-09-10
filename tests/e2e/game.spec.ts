@@ -112,7 +112,7 @@ async function resources(page: Page, username: string) {
     "data-camera",
     /"zoom":14/,
   );
-  await openPanel(page, "Wachen");
+  await openPanel(page, "Standorte");
   await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
     .locator(".shop-card")

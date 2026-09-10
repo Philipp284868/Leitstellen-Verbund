@@ -25,7 +25,7 @@ import {
   parseStoredJson,
 } from "./configuration.mjs";
 
-export const DATABASE_VERSION = 18;
+export const DATABASE_VERSION = 19;
 export const digest = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
 export function atomicPrivate(file, bytes) {

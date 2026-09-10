@@ -79,15 +79,6 @@
   border-top: 0;
   display: block;
 }
-.map-wrap .placement-hint {
-  position: static;
-  transform: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  background: #213e3d;
-}
 .map-wrap .map-marker:focus-visible,
 .map-wrap g[role="button"]:focus-visible {
   outline: 2px solid #fff;

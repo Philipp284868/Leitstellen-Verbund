@@ -35,7 +35,14 @@ import { volunteerMarkers } from "../simulation/volunteers";
 import { emit, useGame } from "../store";
 import { tripLabel } from "../travel";
 import { tutorialInteraction } from "../Tutorial";
-import { credits } from "../ui";
+import { FacilityDetails } from "../facilities/FacilityBrowser";
+import { attachFacilityLayer } from "../facilities/map-layer";
+import {
+  facilityKinds,
+  facilityLabels,
+  type FacilityKind,
+  type FacilityCluster,
+} from "../facilities/types";
 import { vehicleMotion, vehiclePosition } from "../vehicle-position";
 import type { Point } from "../world";
 import { groupGameMarkers, type MarkerData } from "./game-markers";
@@ -61,18 +68,14 @@ type SearchResult = {
   lon: number;
   lat: number;
 };
-type Site = { point: Point; reason: string | null };
 export type GermanyMapProps = {
   s: Save;
   selected: string;
   onSelect: (id: string) => void;
-  placing: string;
-  onPlace: (point: Point) => void;
   friends: Friend[];
   presence?: readonly PublicPlayer[];
   ownDeskId?: string;
   readonly?: boolean;
-  onCancelPlace?: () => void;
   onInspect?: () => void;
   inspectionsHidden?: boolean;
 };
@@ -82,13 +85,10 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     s,
     selected,
     onSelect,
-    placing,
-    onPlace,
     friends,
     presence = [],
     ownDeskId,
     readonly = false,
-    onCancelPlace,
     onInspect,
     inspectionsHidden = false,
   } = props;
@@ -153,13 +153,21 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     [objectGroup, setObjectGroup] = useState<MarkerData[]>([]);
   const poiOptions = useRef({
     enabled: pois,
-    categories: poiFilter,
+    categories: new Set(
+      [...poiFilter].filter(
+        (k) => !["fire", "ems", "police", "thw", "hospital"].includes(k),
+      ),
+    ),
     buildings: s.buildings,
     selected: poiSelection?.id,
   });
   poiOptions.current = {
     enabled: pois,
-    categories: poiFilter,
+    categories: new Set(
+      [...poiFilter].filter(
+        (k) => !["fire", "ems", "police", "thw", "hospital"].includes(k),
+      ),
+    ),
     buildings: s.buildings,
     selected: poiSelection?.id,
   };
@@ -204,11 +212,26 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   }, [inspectionsHidden]);
   const labelsRef = useRef(labels);
   labelsRef.current = labels;
-  const [candidate, setCandidate] = useState<Site | null>(null),
-    [checking, setChecking] = useState(false),
-    [siteError, setSiteError] = useState("");
-  const siteRequest = useRef<AbortController | null>(null),
-    clock = useRef({ time: s.time, at: performance.now() });
+  const [facilityId, setFacilityId] = useState(""),
+    [facilityGroup, setFacilityGroup] = useState<FacilityCluster[]>([]),
+    [facilityKind, setFacilityKind] = useState<FacilityKind | "">(""),
+    [showFacilities, setShowFacilities] = useState(true),
+    [facilityError, setFacilityError] = useState("");
+  const facilityCanvas = useRef<HTMLCanvasElement>(null),
+    facilityLayer = useRef<ReturnType<typeof attachFacilityLayer> | null>(null);
+  const facilityOptions = useRef({
+    enabled: showFacilities,
+    kind: facilityKind,
+    owned: new Set<string>(),
+  });
+  facilityOptions.current = {
+    enabled: showFacilities,
+    kind: facilityKind,
+    owned: new Set(
+      s.buildings.flatMap((b) => (b.facility ? [b.facility.id] : [])),
+    ),
+  };
+  const clock = useRef({ time: s.time, at: performance.now() });
   if (clock.current.time !== s.time)
     clock.current = { time: s.time, at: performance.now() };
   const cameraKey = `lv-germany-camera-v1:${s.world}:${s.player.id}`;
@@ -220,7 +243,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       : Math.min(2, (performance.now() - clock.current.at) / 1000));
   const selectionPosition = selectedVehicle
     ? vehiclePosition(selectedVehicle, now)
-    : (s.buildings.find((b) => b.id === selected)?.pos ??
+    : (s.buildings.find((b) => b.id === selected)?.facility?.position ??
+      s.buildings.find((b) => b.id === selected)?.pos ??
       s.missions.find(
         (m) => m.id === selected && (!m.control || m.control.locationKnown),
       )?.pos);
@@ -239,11 +263,17 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     });
 
   useEffect(() => {
-    siteRequest.current?.abort();
-    setCandidate(null);
-    setSiteError("");
-    setChecking(false);
-  }, [placing]);
+    facilityLayer.current?.refresh();
+  }, [showFacilities, facilityKind]);
+  useEffect(() => {
+    facilityLayer.current?.repaint();
+  }, [s.buildings]);
+  useEffect(() => {
+    if (inspectionsHidden) {
+      setFacilityId("");
+      setFacilityGroup([]);
+    }
+  }, [inspectionsHidden]);
   useEffect(() => {
     if (
       readonly ||
@@ -336,6 +366,13 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             manifest.dataset ?? "",
             () => poiOptions.current,
             setPoiError,
+          );
+        if (facilityCanvas.current)
+          facilityLayer.current = attachFacilityLayer(
+            gl,
+            facilityCanvas.current,
+            () => facilityOptions.current,
+            setFacilityError,
           );
         gl.on("load", () => {
           if (!disposed) {
@@ -489,7 +526,33 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           if (gesture.moved) tutorialInteraction("pan");
           cancel();
           if (!click) return;
-          if (!latest.current.placing) {
+          {
+            const box = container.getBoundingClientRect();
+            const facilities =
+              facilityLayer.current?.hitTest(
+                event.clientX - box.left,
+                event.clientY - box.top,
+              ) || [];
+            if (facilities.length) {
+              latest.current.onInspect?.();
+              setPoiSelection(null);
+              setPoiGroup([]);
+              const cluster = facilities.find((f) => f.count > 1);
+              if (cluster) {
+                gl.easeTo({
+                  center: [cluster.lon, cluster.lat],
+                  zoom: Math.min(18, gl.getZoom() + 2),
+                  duration: 0,
+                });
+                return;
+              }
+              const ids = facilities.flatMap((f) => (f.id ? [f.id] : []));
+              setFacilityId(ids.length === 1 ? ids[0] : "");
+              setFacilityGroup(ids.length > 1 ? facilities : []);
+              return;
+            }
+            setFacilityId("");
+            setFacilityGroup([]);
             const bounds = container.getBoundingClientRect();
             const hit = poiLayer.current?.hitTest(
               event.clientX - bounds.left,
@@ -515,45 +578,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             });
             return;
           }
-          if (latest.current.readonly) return;
-          const rect = container.getBoundingClientRect(),
-            ll = gl.unproject([
-              event.clientX - rect.left,
-              event.clientY - rect.top,
-            ]),
-            p = project({ lon: ll.lng, lat: ll.lat });
-          siteRequest.current?.abort();
-          const request = new AbortController();
-          siteRequest.current = request;
-          setCandidate(null);
-          setChecking(true);
-          setSiteError("");
-          void fetch(
-            `/api/geo/site?${new URLSearchParams({ x: String(p.x), y: String(p.y), type: latest.current.placing })}`,
-            {
-              signal: request.signal,
-              credentials: "same-origin",
-              headers: { "x-game-mode": modeRef.current },
-            },
-          )
-            .then(async (response) => {
-              if (!response.ok)
-                throw Error("Der Bauplatz konnte nicht geprüft werden.");
-              const result = (await response.json()) as Site;
-              if (
-                !result.point ||
-                ![result.point.x, result.point.y].every(Number.isFinite)
-              )
-                throw Error("Ungültige Bauplatzantwort.");
-              if (!request.signal.aborted) setCandidate(result);
-            })
-            .catch((reason) => {
-              if (!request.signal.aborted)
-                setSiteError(String(reason.message || reason));
-            })
-            .finally(() => {
-              if (!request.signal.aborted) setChecking(false);
-            });
         };
         const click = (event: MouseEvent) => {
           if (suppress) {
@@ -632,7 +656,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           }
           if (event.key === "Escape") {
             cancel();
-            latest.current.onCancelPlace?.();
+            setFacilityId("");
+            setFacilityGroup([]);
           }
         };
         const hidden = () => {
@@ -661,6 +686,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           persist();
           cancel();
           removeLabels();
+          facilityLayer.current?.destroy();
+          facilityLayer.current = null;
           poiLayer.current?.destroy();
           poiLayer.current = null;
           observer.disconnect();
@@ -685,7 +712,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     return () => {
       disposed = true;
       controller.abort();
-      siteRequest.current?.abort();
       cleanup();
       map?.remove();
       mapRef.current = null;
@@ -767,7 +793,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     const query = search.trim().toLocaleLowerCase("de");
     if (!query) return [];
     return [
-      ...s.buildings.map((b) => ({ id: b.id, name: b.name, pos: b.pos })),
+      ...s.buildings.map((b) => ({
+        id: b.id,
+        name: b.name,
+        pos: b.facility?.position ?? b.pos,
+      })),
       ...s.vehicles.map((v) => ({
         id: v.id,
         name: v.name,
@@ -839,7 +869,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       add({
         id: b.id,
         name: b.name,
-        pos: b.pos,
+        pos: b.facility?.position ?? b.pos,
         kind: "station",
         type: b.type,
         org: bt(b.type).org,
@@ -902,7 +932,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           add({
             id: `${f.id}:${b.id}`,
             name: `${b.name} · ${f.name}`,
-            pos: b.pos,
+            pos: b.facility?.position ?? b.pos,
             kind: "station",
             type: b.type,
             org: bt(b.type).org,
@@ -983,14 +1013,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       box.height,
     );
   }, [ready, cameraTick, presenceDesks, showPlayers]);
-  const candidatePixel =
-    candidate && ready
-      ? (() => {
-          const p = unproject(candidate.point);
-          return mapRef.current?.project([p.lon, p.lat]);
-        })()
-      : null;
-
   return (
     <div
       className="map-wrap germany-map"
@@ -1005,6 +1027,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         <canvas
           ref={labelCanvas}
           className="germany-labels"
+          aria-hidden="true"
+        />
+        <canvas
+          ref={facilityCanvas}
+          className="facility-map-canvas"
           aria-hidden="true"
         />
         <canvas ref={poiCanvas} className="germany-pois" aria-hidden="true" />
@@ -1115,15 +1142,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             </button>
           ))}
         </div>
-        {candidatePixel && (
-          <span
-            className="germany-site-pin"
-            style={{ left: candidatePixel.x, top: candidatePixel.y }}
-            aria-label="Gewählter Bauplatz"
-          >
-            +
-          </span>
-        )}
       </div>
       {(!ready || error) && (
         <div className="germany-map-message" role={error ? "alert" : "status"}>
@@ -1348,25 +1366,30 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             Geografische Einrichtungen
           </label>
           <div className="poi-category-grid">
-            {(Object.keys(poiCategories) as PoiCategory[]).map((key) => (
-              <label key={key}>
-                <input
-                  type="checkbox"
-                  checked={poiFilter.has(key)}
-                  onChange={(e) => {
-                    const next = new Set(poiFilter);
-                    if (e.target.checked) next.add(key);
-                    else next.delete(key);
-                    setPoiFilter(next);
-                    setPoiSelection(null);
-                    setPoiGroup([]);
-                  }}
-                />
-                <MapIcon glyph={poiCategories[key].glyph} size={20} />
-                {poiCategories[key].label}
-                <small>ab Zoom {poiCategories[key].minZoom}</small>
-              </label>
-            ))}
+            {(Object.keys(poiCategories) as PoiCategory[])
+              .filter(
+                (key) =>
+                  !["fire", "ems", "police", "thw", "hospital"].includes(key),
+              )
+              .map((key) => (
+                <label key={key}>
+                  <input
+                    type="checkbox"
+                    checked={poiFilter.has(key)}
+                    onChange={(e) => {
+                      const next = new Set(poiFilter);
+                      if (e.target.checked) next.add(key);
+                      else next.delete(key);
+                      setPoiFilter(next);
+                      setPoiSelection(null);
+                      setPoiGroup([]);
+                    }}
+                  />
+                  <MapIcon glyph={poiCategories[key].glyph} size={20} />
+                  {poiCategories[key].label}
+                  <small>ab Zoom {poiCategories[key].minZoom}</small>
+                </label>
+              ))}
           </div>
           <p>
             Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
@@ -1420,7 +1443,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             Ziehen: Karte verschieben · Mausrad: Zoom zum Zeiger · Klick:
             auswählen. Pfeiltasten und +/− bei fokussierter Karte, Pos1: ganz
             Deutschland. Strg+Mausrad vergrößert den Browser. Escape bricht die
-            Bauplatzwahl ab.
+            Standortsuche ab.
           </p>
         </details>
         <Operations s={s} />
@@ -1642,46 +1665,68 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             </span>
           </div>
         )}
-      {placing && (
-        <div className="placement-hint germany-placement">
-          <button
-            onClick={() => {
-              siteRequest.current?.abort();
-              setCandidate(null);
-              onCancelPlace?.();
+      <div className="facility-map-controls">
+        <label>
+          <input
+            type="checkbox"
+            checked={showFacilities}
+            onChange={(e) => setShowFacilities(e.target.checked)}
+          />{" "}
+          Standorte
+        </label>
+        <select
+          aria-label="Standorte nach Organisation filtern"
+          value={facilityKind}
+          onChange={(e) => setFacilityKind(e.target.value as FacilityKind | "")}
+        >
+          <option value="">Alle Organisationen</option>
+          {facilityKinds.map((k) => (
+            <option key={k} value={k}>
+              {facilityLabels[k]}
+            </option>
+          ))}
+        </select>
+        <small>+ erwerbbar · × Datenprüfung</small>
+      </div>
+      {!inspectionsHidden && showFacilities && facilityId && (
+        <div className="facility-map-panel">
+          <FacilityDetails
+            key={facilityId}
+            s={s}
+            id={facilityId}
+            readonly={readonly}
+            onClose={() => setFacilityId("")}
+            onManage={(id) => {
+              setFacilityId("");
+              onSelect(id);
             }}
-          >
-            Bau abbrechen
-          </button>
-          {checking ? (
-            <span role="status">
-              Straßenanbindung wird serverseitig geprüft …
-            </span>
-          ) : candidate ? (
-            <>
-              <span>
-                {candidate.reason ||
-                  `Bauplatz geprüft · ${bt(placing).name}: ${credits(bt(placing).price)} · Budget danach: ${credits(s.money - bt(placing).price)} · ${bt(placing).slots} Stellplätze · automatische Besetzung · keine laufenden Kosten.`}
-              </span>
-              <button
-                disabled={readonly || !!candidate.reason}
-                onClick={() => {
-                  if (candidate) onPlace(candidate.point);
-                }}
-              >
-                Bau bestätigen
-              </button>
-              <button onClick={() => setCandidate(null)}>
-                Position verwerfen
-              </button>
-            </>
-          ) : (
-            <span>
-              {siteError ||
-                "Bauplatz auf der Karte wählen · anschließend bestätigen"}
-            </span>
-          )}
+          />
         </div>
+      )}
+      {!inspectionsHidden && showFacilities && !!facilityGroup.length && (
+        <div className="facility-map-panel facility-details">
+          <button className="close" onClick={() => setFacilityGroup([])}>
+            ×
+          </button>
+          <h3>Einrichtungen an dieser Stelle</h3>
+          {facilityGroup.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => {
+                setFacilityId(f.id!);
+                setFacilityGroup([]);
+              }}
+            >
+              {f.name || "Name nicht erfasst"} ·{" "}
+              {f.kind ? facilityLabels[f.kind] : "Einrichtung"}
+            </button>
+          ))}
+        </div>
+      )}
+      {facilityError && showFacilities && (
+        <p className="facility-map-panel facility-details" role="status">
+          {facilityError}
+        </p>
       )}
     </div>
   );

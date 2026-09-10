@@ -1,0 +1,141 @@
+.facility-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.facility-filters label {
+  flex: 1;
+  min-width: 170px;
+}
+.facility-columns {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(270px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.facility-results {
+  max-height: 58vh;
+  overflow: auto;
+}
+.facility-result {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 13px;
+  margin-bottom: 7px;
+}
+.facility-result > span {
+  flex: 1;
+  min-width: 0;
+}
+.facility-result b,
+.facility-result small {
+  display: block;
+}
+.facility-result[aria-pressed="true"] {
+  border-color: #85c9e7;
+  background: #173440;
+}
+.facility-details {
+  position: relative;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #405763;
+  border-radius: 8px;
+  background: #0d1b25f5;
+  color: #e7f0f5;
+  user-select: text;
+}
+.facility-details .close {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+}
+.facility-details h2 {
+  margin: 12px 22px 10px 0;
+  font-size: 19px;
+}
+.facility-details .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.facility-details dl {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 8px 15px;
+  font-size: 13px;
+}
+.facility-details dd {
+  margin: 0;
+}
+.facility-details dt,
+.facility-details .hint {
+  color: #a8bdca;
+}
+.facility-details details a {
+  display: block;
+}
+.facility-details p {
+  line-height: 1.5;
+}
+.facility-details > .primary,
+.facility-confirm > button {
+  margin-top: 12px;
+}
+.facility-confirm {
+  padding: 12px;
+  border: 1px solid #b27e54;
+  border-radius: 5px;
+}
+.facility-map-panel {
+  position: absolute;
+  top: 100px;
+  right: 16px;
+  width: 340px;
+  max-height: calc(100% - 150px);
+  overflow: auto;
+  z-index: 9;
+}
+.facility-map-controls {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #0b1b24ee;
+  border: 1px solid #3f5965;
+  border-radius: 5px;
+}
+.facility-map-controls select {
+  max-width: 175px;
+}
+.facility-map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+@media (max-width: 900px) {
+  .facility-columns {
+    grid-template-columns: 1fr;
+  }
+  .facility-map-controls {
+    top: 62px;
+  }
+  .facility-map-panel {
+    width: min(340px, 80vw);
+    top: 120px;
+  }
+  .facility-results {
+    max-height: 32vh;
+  }
+}

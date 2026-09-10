@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   BALANCE,
   bt,
-  buildings,
   capabilities,
   extensions,
   vehicleHomeAllowed,
@@ -21,7 +20,7 @@ import {
   StationSettings,
   VehicleStaffing,
 } from "./Organizations";
-import { buildReason, purchaseReason } from "./purchase";
+import { purchaseReason } from "./purchase";
 import { buildingStaffingStatus } from "./simulation/building-staffing";
 import { operativeCode } from "./simulation/fms";
 import { stationCapacity } from "./simulation/staffing";
@@ -36,96 +35,6 @@ import {
   statuses,
 } from "./ui";
 import { useCommandForm } from "./use-command-form";
-export function BuildingShop({
-  s,
-  onPlace,
-}: {
-  s: Save;
-  onPlace: (type: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const matches = buildings.filter((b) =>
-    `${b.name} ${b.org}`
-      .toLocaleLowerCase("de")
-      .includes(query.toLocaleLowerCase("de")),
-  );
-  return (
-    <section data-tutorial="build-shop">
-      <p className="view-intro">
-        Wähle die Aufgabe deines neuen Standorts. Den genauen Bauplatz und das
-        verbleibende Budget bestätigst du anschließend auf der Karte.
-      </p>
-      <div className="resource-summary">
-        <div>
-          <small>Verfügbares Budget</small>
-          <strong>{credits(s.money)}</strong>
-        </div>
-        <div>
-          <small>Eigene Standorte</small>
-          <strong>{s.buildings.length} / 150</strong>
-        </div>
-        <div>
-          <small>Personalbereitstellung</small>
-          <strong>Automatisch</strong>
-        </div>
-      </div>
-      <label>
-        Gebäude oder Organisation suchen
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Feuerwehr, Rettung, Krankenhaus …"
-        />
-      </label>
-      <div className="shop-grid">
-        {matches.map((b) => (
-          <article className="shop-card" key={b.id}>
-            <span className="eyebrow">{b.org}</span>
-            <h3>
-              <BuildingIcon type={b.id} /> {b.name}
-            </h3>
-            <p>
-              {b.slots
-                ? `${b.slots} Stellplätze · automatische Grundbesetzung`
-                : b.id === "hospital"
-                  ? "20 Behandlungsplätze · Aufnahme und Fachabteilungen verwalten"
-                  : "Organisationsübergreifendes Ausbildungszentrum"}
-            </p>
-            <dl>
-              <dt>Kaufpreis</dt>
-              <dd>{credits(b.price)}</dd>
-              <dt>Budget nach Bau</dt>
-              <dd>{credits(s.money - b.price)}</dd>
-              <dt>Laufende Kosten</dt>
-              <dd>Keine</dd>
-              <dt>Bauzeit</dt>
-              <dd>{BALANCE.buildSeconds} Sekunden</dd>
-            </dl>
-            <footer>
-              <span>
-                {buildReason(s, b.id) || `Freigeschaltet · Stufe ${b.level}`}
-              </span>
-              <button
-                data-tutorial={`build-${b.id}`}
-                disabled={!!buildReason(s, b.id)}
-                onClick={() => onPlace(b.id)}
-              >
-                Platzieren
-              </button>
-            </footer>
-          </article>
-        ))}
-      </div>
-      {!matches.length && (
-        <div className="empty-state">
-          <h3>Kein Gebäude gefunden</h3>
-          <p>Suche nach Gebäudetyp oder Organisation.</p>
-          <button onClick={() => setQuery("")}>Filter zurücksetzen</button>
-        </div>
-      )}
-    </section>
-  );
-}
 export function BuildingPanel({
   s,
   b,
@@ -662,7 +571,8 @@ export function Fleet({
         )}
         {!s.vehicles.length && (
           <p className="empty">
-            Deine ersten Fahrzeuge kaufst du in einer fertig gebauten Wache.
+            Deine ersten Fahrzeuge kaufst du in einer erworbenen,
+            betriebsbereiten Wache.
           </p>
         )}
       </fieldset>

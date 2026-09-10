@@ -20,14 +20,14 @@ export const tutorialChapters = [
   },
   {
     title: "Der erste Standort",
-    text: "Öffne Gebäude und baue eine Feuerwache. Wähle den Straßenstandort bewusst und bestätige den Preis. Eine vorhandene Feuerwache zählt bereits.",
+    text: "Öffne Standorte, suche eine reale Feuerwache in deiner Region und prüfe Zufahrt und Kaufpreis. Bestätige den Erwerb des festen Standorts. Eine bereits erworbene Feuerwache zählt.",
     target: "stations",
     panel: "stations",
     kind: "building",
   },
   {
     title: "Automatische Wachbesetzung",
-    text: "Öffne die fertige Wache. Besatzung und freigeschaltete Qualifikationen werden automatisch bereitgestellt. Laufende Bauarbeiten müssen zuerst fertig werden.",
+    text: "Öffne die fertige Wache. Besatzung und freigeschaltete Qualifikationen werden automatisch bereitgestellt. Ausbauten müssen zuerst fertig werden.",
     target: "automatic-staff",
     panel: "building",
     kind: "staff",

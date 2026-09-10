@@ -7,7 +7,13 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { resolve } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, backup as sqliteBackup } from "node:sqlite";
+import { z } from "zod";
+import { germanyProvider } from "../src/germany/world";
+import {
+  planFacilityMigration,
+  applyFacilityMigration,
+} from "./facilities/migration";
 import { migrateEconomy } from "../src/economy/migration";
 import { parseMode } from "../src/mode";
 import { level, uid, validate } from "../src/model";
@@ -48,10 +54,12 @@ if (
     "migration-preview",
     "world-situation",
     "retired-export",
+    "facilities-preview",
+    "facilities-migrate",
   ].includes(command)
 ) {
   throw Error(
-    "Befehle: player-create, backup, restore, migration-preview, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
+    "Befehle: player-create, backup, restore, migration-preview, facilities-preview, facilities-migrate, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
   );
 }
 const arg = (key: string) => {
@@ -97,7 +105,78 @@ const geography = await prepareGeography(c);
 let release = () => {};
 try {
   release = acquireLock(c.dataDir);
-  if (command === "migration-preview") {
+  if (command === "facilities-preview" || command === "facilities-migrate") {
+    const catalog = germanyProvider().facilities;
+    if (!catalog) throw Error("Standortkatalog fehlt.");
+    const resolutions = process.argv.includes("--resolutions")
+      ? z
+          .array(
+            z
+              .object({
+                owner: z.string().min(1).max(100),
+                building: z.string().min(1).max(100),
+                facility: z.string().min(1).max(100),
+                evidence: z.string().trim().min(20).max(2000),
+              })
+              .strict(),
+          )
+          .max(25000)
+          .parse(JSON.parse(await readFile(arg("resolutions"), "utf8")))
+      : [];
+    const source = new DatabaseSync(resolve(c.dataDir, "game.sqlite"), {
+      readOnly: true,
+    });
+    let backupPath = "";
+    try {
+      assertWorldMetadata(source, true);
+      const plan = planFacilityMigration(source, catalog, resolutions);
+      if (command === "facilities-preview")
+        console.log(JSON.stringify({ readOnly: true, ...plan }, null, 2));
+      else {
+        if (!process.argv.includes("--confirm"))
+          throw Error(
+            "Zuerst facilities-preview prüfen. Migration benötigt --confirm.",
+          );
+        if (!plan.ready) throw Error(JSON.stringify(plan, null, 2));
+        backupPath = resolve(
+          c.dataDir,
+          `pre-facilities-${Date.now()}-${crypto.randomUUID()}.sqlite`,
+        );
+        await sqliteBackup(source, backupPath);
+        const check = new DatabaseSync(backupPath, { readOnly: true });
+        try {
+          if (
+            check.prepare("PRAGMA integrity_check").get()!.integrity_check !==
+            "ok"
+          )
+            throw Error(
+              "Standortsicherung ungültig; Migration nicht ausgeführt.",
+            );
+        } finally {
+          check.close();
+        }
+      }
+    } finally {
+      source.close();
+    }
+    if (backupPath) {
+      const db = new Database(c.dataDir);
+      try {
+        const result = db.transaction(() => {
+          const plan = applyFacilityMigration(db.sql, catalog, resolutions);
+          for (const [id, s] of db.all()) db.save(id, s);
+          db.audit(
+            "maintenance",
+            `facilities-migration:${JSON.stringify(plan.changes)}`,
+          );
+          return plan;
+        });
+        console.log(JSON.stringify({ backup: backupPath, ...result }, null, 2));
+      } finally {
+        db.close();
+      }
+    }
+  } else if (command === "migration-preview") {
     const db = new DatabaseSync(resolve(c.dataDir, "game.sqlite"), {
       readOnly: true,
     });
@@ -402,6 +481,10 @@ try {
             throw Error(
               "Zielkonto hat aktive Fahrzeuge. Erst Aufträge abschließen.",
             );
+          // Explicit offline replacement already has a verified backup; normal game writes cannot rebind rights.
+          db.sql
+            .prepare("DELETE FROM facility_rights WHERE owner=?")
+            .run(user.id);
           db.save(String(user.id), s, mode);
           db.sql.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);
           db.audit("server-console", `legacy-import:${user.id}`);

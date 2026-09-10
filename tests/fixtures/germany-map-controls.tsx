@@ -53,14 +53,12 @@ if (new URLSearchParams(location.search).has("fleet")) {
 emit({ mode: "multi", readonly: false });
 function App() {
   const [selected, setSelected] = useState(""),
-    [placing, setPlacing] = useState(""),
     [inspected, setInspected] = useState(0),
     [hidden, setHidden] = useState(false);
   return (
     <>
       <header>
         <b>Isolierte Kartensteuerungsprüfung · keine Geografieabnahme</b>
-        <button onClick={() => setPlacing("fire")}>Testbau starten</button>
         <button onClick={() => setHidden(!hidden)}>
           Testarbeitsansicht umschalten
         </button>
@@ -77,12 +75,6 @@ function App() {
           setSelected("");
           setHidden(false);
         }}
-        placing={placing}
-        onPlace={() => {
-          setSelected("placed");
-          setPlacing("");
-        }}
-        onCancelPlace={() => setPlacing("")}
         friends={[]}
         ownDeskId="own-desk"
         presence={

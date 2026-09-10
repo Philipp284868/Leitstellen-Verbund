@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -179,7 +180,7 @@ describe("Autoritativer Server", () => {
       a = await login(),
       b = await login("ben");
     const id = crypto.randomUUID(),
-      action = { type: "build", kind: "fire", pos: nodes[0] };
+      action = fixturePurchase("fire", nodes[0]);
     for (let i = 0; i < 2; i++)
       expect(
         (await request("action", { id, action }, a.cookie, a.csrf)).status,
@@ -265,7 +266,7 @@ describe("Autoritativer Server", () => {
       game = new Game(db);
     const command = {
       id: crypto.randomUUID(),
-      action: { type: "build", kind: "fire", pos: nodes[0] },
+      action: fixturePurchase("fire", nodes[0]),
     };
     game.command(id, command);
     game.step(900);
@@ -401,7 +402,7 @@ describe("Autoritativer Server", () => {
     expect(() =>
       app.game.command(a, {
         id: crypto.randomUUID(),
-        action: { type: "build", kind: "fire", pos: nodes[2] },
+        action: fixturePurchase("fire", nodes[2]),
       }),
     ).toThrow();
     app.db.sql.exec("PRAGMA query_only=OFF");

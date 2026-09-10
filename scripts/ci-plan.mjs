@@ -137,7 +137,13 @@ export async function makePlan({ head, base, paths, requested = "auto" }) {
         .filter((f) => f.endsWith(".node.mjs"))
         .map((f) => "tests/" + f.replaceAll("\\", "/"))
         .sort();
-      selected.geodata = ["tools", "jdk-repair", "osm-index", "dem"];
+      selected.geodata = [
+        "tools",
+        "jdk-repair",
+        "osm-index",
+        "facilities",
+        "dem",
+      ];
       selected.package = [
         "runtime-package",
         "reproducibility",

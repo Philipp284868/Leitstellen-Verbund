@@ -1,10 +1,10 @@
+import { germanyProvider } from "../src/germany/world";
 import { xpForLevel } from "../src/progression";
 // Offline developer sandbox. Never imported by the HTTP server or client.
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { mt } from "../src/catalog";
 import { apply, readiness, tick } from "../src/engine";
-import { WORLD_CENTER } from "../src/germany/projection";
 import { fresh, saveSchema, validate, type Save } from "../src/model";
 import { attachIncident, callAction } from "../src/simulation/calls";
 import { alarm } from "../src/simulation/dispatch";
@@ -20,7 +20,7 @@ import { newPatient } from "../src/simulation/patients";
 import { personDuty } from "../src/simulation/staffing";
 import { forceVolunteerAvailability } from "../src/simulation/volunteers";
 import { environmentAt } from "../src/simulation/weather";
-import { nearest, queryIncidentSites, querySites } from "../src/world";
+import { nearest, queryIncidentSites } from "../src/world";
 import { aidCommand } from "./aid";
 import { stepLaboratoryWorlds } from "./lab-worlds";
 const id = z.string().min(1).max(100);
@@ -128,10 +128,16 @@ export function createLab(seed: number): Lab {
   s.seed = seed;
   s.tutorial = 6;
   s.xp = xpForLevel(6);
-  const site = querySites(WORLD_CENTER, 1000, 1)[0];
-  if (!site)
-    throw Error("Keine Deutschland-Straßendaten am Laborstandort vorhanden.");
-  apply(s, { type: "build", kind: "fire", pos: site });
+  const facility = germanyProvider().facilities?.query({
+    kind: "fire",
+    usable: true,
+    limit: 1,
+  })[0];
+  if (!facility)
+    throw Error(
+      "Keine nutzbare reale Feuerwache für die Laborübung vorhanden.",
+    );
+  apply(s, { type: "purchase-facility", facility: facility.id });
   tick(s, s.time + 30, {}, false, false);
   for (const kind of ["tsf", "tlf"] as const) {
     apply(s, { type: "buy", kind, home: s.buildings[0].id });

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { Auth } from "../server/auth";
 import { Database } from "../server/database";
@@ -108,13 +109,13 @@ describe("personal tutorial and authoritative practice", () => {
     try {
       const before = JSON.stringify([...f.db.all()]);
       const id = crypto.randomUUID(),
-        build: ServerAction = { type: "build", kind: "fire", pos: nodes[0] };
+        build: ServerAction = fixturePurchase("fire", nodes[0]);
       f.command(build, id);
       f.command(build, id);
       expect(f.tutorial.trainingSave(f.user)!.buildings).toHaveLength(1);
-      expect(() =>
-        f.command({ type: "build", kind: "ems", pos: nodes[2] }, id),
-      ).toThrow(/Aktions-ID/);
+      expect(() => f.command(fixturePurchase("ems", nodes[2]), id)).toThrow(
+        /Aktions-ID/,
+      );
       f.advance(40);
       const home = f.tutorial.trainingSave(f.user)!.buildings[0].id;
       f.command({ type: "buy", kind: "lf", home });
@@ -170,7 +171,7 @@ describe("personal tutorial and authoritative practice", () => {
       expect(() =>
         f.tutorial.control(f.user, { op: "next", chapter: 2 }, s),
       ).toThrow(/noch nicht/);
-      f.command({ type: "build", kind: "fire", pos: nodes[0] });
+      f.command(fixturePurchase("fire", nodes[0]));
       s = f.tutorial.trainingSave(f.user)!;
       f.tutorial.control(f.user, { op: "next", chapter: 2 }, s);
       expect(f.tutorial.progress(f.user).chapter).toBe(3);
@@ -188,7 +189,7 @@ describe("personal tutorial and authoritative practice", () => {
     const f = await setup();
     try {
       const before = JSON.stringify([...f.db.all()]);
-      f.command({ type: "build", kind: "fire", pos: nodes[0] });
+      f.command(fixturePurchase("fire", nodes[0]));
       f.advance(40);
       let s = f.tutorial.trainingSave(f.user)!;
       f.command({ type: "buy", kind: "lf", home: s.buildings[0].id });

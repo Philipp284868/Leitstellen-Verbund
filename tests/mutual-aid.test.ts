@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -262,7 +263,7 @@ it("Krankenhäuser lehnen ungeeignete Patienten ab, reservieren Betten und lenke
     m = s.missions[0];
   s.money += 100000;
   s.xp = xpForLevel(30);
-  apply(s, { type: "build", kind: "hospital", pos: nodes[30] });
+  apply(s, fixturePurchase("hospital", nodes[30]));
   tick(s, s.time + 30, {}, false, false);
   const b = s.buildings.at(-1)!;
   organizationCommand(

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { vehicleHomeAllowed } from "../src/catalog";
 import { euro } from "../src/money";
 import { SpatialIndex } from "../src/spatial";
@@ -83,9 +84,7 @@ it("definiert den vollständigen Katalog, nutzbare Organisationseinstiege und se
     const s = fresh("Test", "Test", 100);
     s.xp = xpForLevel(b.level) - 1;
     if (s.xp >= 0)
-      expect(() =>
-        apply(s, { type: "build", kind: b.id, pos: nodes[0] }),
-      ).toThrow();
+      expect(() => apply(s, fixturePurchase(b.id, nodes[0]))).toThrow();
   }
   for (const v of vehicles) {
     expect(v.level).toBeGreaterThanOrEqual(
@@ -108,7 +107,7 @@ it("definiert den vollständigen Katalog, nutzbare Organisationseinstiege und se
       kind: "fire",
       pos: { x: WORLD_WIDTH + 1, y: 2 },
     }),
-  ).toThrow(/Spielgebiet/);
+  ).toThrow(/BUILDING_PURCHASE_ONLY/);
   expect(missionXp(mt("bin"))).toBeGreaterThan(60);
   expect(missionXp(mt("bin"))).toBeLessThan(missionXp(mt("crash")));
 });

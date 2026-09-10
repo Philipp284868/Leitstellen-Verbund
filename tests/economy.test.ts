@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { buildings, extensions, missions, vehicles } from "../src/catalog";
 import { economyBalanceAudit } from "../src/economy/balancing";
@@ -156,7 +157,7 @@ describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {
   });
   it("bewahrt rollende Fahrzeuge, Besatzungsbindungen und Seeds und übernimmt ursprüngliche Katalogbuchwerte", () => {
     const s = fresh("Mobil", "Nord", 1000);
-    apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+    apply(s, fixturePurchase("fire", nodes[0]));
     tick(s, s.time + 30, {}, false, false);
     apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
     beginTrip(s, s.vehicles[0], nodes[1], "return");

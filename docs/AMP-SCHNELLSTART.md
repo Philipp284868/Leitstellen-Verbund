@@ -1,17 +1,19 @@
 # Leitstellen-Verbund auf AMP
 
-| AMP-Feld | Wert |
-|---|---|
-| App Download Type | Git Repository |
-| App Download Source | `https://github.com/Philipp284868/Leitstellen-Verbund.git` |
-| Git Repo Branch | `main` |
-| Node.js Release Stream | `24` |
-| npm Install Type | `None` |
-| Run App Setup Commands | aktiviert |
-| App Setup Commands | `node scripts/install-germany.mjs` |
-| App Name | `scripts/start-germany.mjs` |
-| App Installation Location | vorhandenen funktionierenden Wert behalten; Startdatei muss relativ zur Programmwurzel erreichbar sein |
-| Run App Pre-start Commands | deaktiviert |
+**Standortumstellung:** Vor dem ersten Start mit bestehenden frei platzierten Gebäuden den [Trockenlauf und die gesicherte Standortmigration](STANDORTE.md) ausführen. Bei ungelösten Zuordnungen hält der Server mit `FACILITY_MIGRATION_REQUIRED` an; kein Datenreset und keine neuen `.env`-Pfade. Der Standortkatalog kommt mit dem normalen Git-Build.
+
+| AMP-Feld                   | Wert                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| App Download Type          | Git Repository                                                                                         |
+| App Download Source        | `https://github.com/Philipp284868/Leitstellen-Verbund.git`                                             |
+| Git Repo Branch            | `main`                                                                                                 |
+| Node.js Release Stream     | `24`                                                                                                   |
+| npm Install Type           | `None`                                                                                                 |
+| Run App Setup Commands     | aktiviert                                                                                              |
+| App Setup Commands         | `node scripts/install-germany.mjs`                                                                     |
+| App Name                   | `scripts/start-germany.mjs`                                                                            |
+| App Installation Location  | vorhandenen funktionierenden Wert behalten; Startdatei muss relativ zur Programmwurzel erreichbar sein |
+| Run App Pre-start Commands | deaktiviert                                                                                            |
 
 Die Startdatei und das Setup finden ihre Programmwurzel selbst, auch bei abweichendem Arbeitsverzeichnis. Die konkrete AMP-Installation und ein leeres Feld „App Installation Location“ sind auf dem privaten Server nicht durch Codex geprüft. Bei einer neuen Instanz den tatsächlichen Ordner mit `package.json` und `scripts/` als Programmwurzel verwenden; keine pauschale Pfadänderung einer bestehenden Instanz.
 

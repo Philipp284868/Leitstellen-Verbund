@@ -110,6 +110,7 @@ export async function runGroup(group, part) {
       await run(["scripts/geodata/pipeline.mjs", "tools"]);
       await run(["scripts/geodata/test-tools.mjs"]);
       await run(["scripts/geodata/test-index.mjs"]);
+      await run(["scripts/geodata/test-facilities.mjs"]);
       await run(
         [
           "-m",

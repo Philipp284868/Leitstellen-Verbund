@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { commandSchema } from "../server/actions";
 import { BALANCE, buildings, missions, mt, vehicles } from "../src/catalog";
@@ -18,7 +19,7 @@ import { along, length, roadSectionBetween, route } from "../src/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 function setup() {
   const s = fresh("Anna", "Leitstelle Nord", 1000);
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  apply(s, fixturePurchase("fire", nodes[0]));
   tick(s, 1030);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
 
@@ -77,9 +78,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     expect(() =>
       apply(s, { type: "buy", kind: "rtw", home: s.buildings[0].id }),
     ).toThrow();
-    expect(() =>
-      apply(s, { type: "build", kind: "heli", pos: nodes[1] }),
-    ).toThrow();
+    expect(() => apply(s, fixturePurchase("heli", nodes[1]))).toThrow();
   });
   it("alarmiert niemals dasselbe Fahrzeug zweimal und ruft kontrolliert zurück", () => {
     const s = setup();
@@ -122,7 +121,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   it("Ausbildung blockiert Besatzung und schließt zeitbasiert ab", () => {
     const s = setup();
     s.xp = xpForLevel(5);
-    apply(s, { type: "build", kind: "school", pos: nodes[3] });
+    apply(s, fixturePurchase("school", nodes[3]));
     tick(s, s.time + 30);
     s.people.splice(4); // Training removes one member from the minimum available crew.
     apply(s, { type: "train", person: s.people[0].id, skill: "Drehleiter" });
@@ -146,8 +145,8 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     const s = setup();
     s.xp = xpForLevel(12);
     money(s, euro(2500000), "Testkapital für Klinik und Rettungsdienst");
-    apply(s, { type: "build", kind: "ems", pos: nodes[3] });
-    apply(s, { type: "build", kind: "hospital", pos: nodes[6] });
+    apply(s, fixturePurchase("ems", nodes[3]));
+    apply(s, fixturePurchase("hospital", nodes[6]));
     tick(s, s.time + 30);
     const home = s.buildings.find((b) => b.type === "ems")!;
     apply(s, { type: "buy", kind: "rtw", home: home.id });

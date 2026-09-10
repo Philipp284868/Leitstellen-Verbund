@@ -1,8 +1,8 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { bookMoney } from "../src/economy/ledger";
 import { apply, tick } from "../src/engine";
 import { validate, type Save } from "../src/model";
 import { euro } from "../src/money";
-import { buildReason } from "../src/purchase";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { attachOrganizations } from "../src/simulation/organizations";
 import { sites as nodes } from "./fixtures/germany/locations";
@@ -29,11 +29,7 @@ export function organizationFixture(
 }
 export function addAmbulance(s: Save) {
   bookMoney(s, euro(1000000), "Entwickler-Testbudget f�r Rettungswache");
-  apply(s, {
-    type: "build",
-    kind: "ems",
-    pos: [nodes[3], ...nodes].find((p) => !buildReason(s, "ems", p))!,
-  });
+  apply(s, fixturePurchase("ems", nodes[3]));
   tick(s, s.time + 30, {}, false, false);
   const b = s.buildings.at(-1)!;
   apply(s, { type: "buy", kind: "rtw", home: b.id });

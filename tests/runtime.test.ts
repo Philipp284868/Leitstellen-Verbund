@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import {
@@ -123,7 +124,7 @@ it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert n
     expect(me.user.role).toBe("player");
     const command = {
       id: crypto.randomUUID(),
-      action: { type: "build", kind: "fire", pos: nodes[0] },
+      action: fixturePurchase("fire", nodes[0]),
     };
     for (let i = 0; i < 2; i++)
       expect(

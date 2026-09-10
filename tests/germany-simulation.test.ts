@@ -1,3 +1,6 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
+import { createFacilityFixture } from "./fixtures/germany/facility-package";
+import { project } from "../src/germany/projection";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { fundTestBudget } from "./money-fixture";
@@ -55,6 +58,12 @@ beforeEach(async () => {
   index.exec(
     "INSERT INTO places VALUES(1,'node','10','city','Berlin','Berlin',13.4,52.52,'Berlin'); INSERT INTO places_rtree VALUES(1,13.4,13.4,52.52,52.52)",
   );
+  createFacilityFixture(dir, {
+    dataset,
+    positions: Array.from({ length: 30 }, (_, i) =>
+      project({ lon: 13.4 + i * 0.0001, lat: 52.52 + i * 0.0001 }),
+    ),
+  });
   index.close();
   router = fork(resolve("tests/helpers/germany-router.mjs"), {
     stdio: ["ignore", "ignore", "ignore", "ipc"],
@@ -108,11 +117,7 @@ const command = (
 };
 const current = (): Save => db!.all().get(owner)!;
 function setupFleet(game: InstanceType<typeof Fixture.Game>) {
-  command(game, {
-    type: "build",
-    kind: "fire",
-    pos: fixture.project({ lon: 13.4, lat: 52.52 }),
-  });
+  command(game, { type: "purchase-facility", facility: "fixture:fire:0" });
   let save = current();
   save.buildings[0].organization = {
     kind: "bf",
@@ -407,7 +412,16 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     // isolates a router outage after hospital arrival, not a new weather replan.
     game.step(1, Date.now(), { generation: false });
     const p = fixture.project({ lon: 13.4029, lat: 52.5229 });
-    command(game, { type: "build", kind: "ems", pos: p });
+    command(
+      game,
+      fixturePurchase(
+        "ems",
+        p,
+        Array.from({ length: 30 }, (_, i) =>
+          project({ lon: 13.4 + i * 0.0001, lat: 52.52 + i * 0.0001 }),
+        ),
+      ),
+    );
     let save = current();
     fixture.tick(save, save.time + 30, {}, false, false);
     db!.save(owner, save);

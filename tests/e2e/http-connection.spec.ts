@@ -114,23 +114,20 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
           ).zoom,
       )
       .toBe(14);
-    await openPanel(a, "Wachen");
-    await a.getByRole("button", { name: "Wache bauen", exact: true }).click();
+    await openPanel(a, "Standorte");
     await a
-      .locator(".shop-card")
-      .filter({
-        has: a.getByRole("heading", { name: "Feuerwache", exact: true }),
-      })
-      .getByRole("button", { name: "Platzieren" })
+      .getByRole("button", { name: "Standort kaufen", exact: true })
       .click();
-    const bounds = await a
-      .locator("[data-testid=germany-map-viewport]")
-      .boundingBox();
-    await a.locator("[data-testid=germany-map-viewport]").click({
-      position: { x: bounds!.width * 0.5, y: bounds!.height * 0.5 },
-    });
+    await a.locator(".facility-result").first().click();
+    await a.getByRole("button", { name: /^Kaufen ·/ }).click();
     await a
-      .getByRole("button", { name: "Bau bestätigen", exact: true })
+      .getByRole("button", { name: "Kauf verbindlich bestätigen" })
+      .click();
+    await expect(
+      a.getByRole("button", { name: "Verwalten", exact: true }),
+    ).toBeVisible();
+    await a
+      .getByRole("button", { name: "Standorte direkt auf der Karte auswählen" })
       .click();
     await expect(
       a.locator(
@@ -167,7 +164,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
     await expect(a.locator(".banner")).toBeVisible();
-    await openPanel(a, "Wachen");
+    await openPanel(a, "Standorte");
     await a.locator(".station-card").click();
     const ownerState = () =>
       [...app.db.all().values()].find(

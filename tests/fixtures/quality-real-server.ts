@@ -1,3 +1,4 @@
+import { buyRealFacility } from "./real-facility";
 // Isolated acceptance harness. Commands arrive only over the parent process IPC channel.
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
@@ -65,8 +66,7 @@ for (let index = 0; index < 2; index++) {
     number,
     string[],
   ][]) {
-    const p = geography!.provider.nearest(project({ lon, lat }));
-    apply(s, { type: "build", kind, pos: { x: p.x, y: p.y } });
+    buyRealFacility(s, kind, project({ lon, lat }));
     const home = s.buildings.at(-1)!;
     tick(s, home.ready + 1, {}, false, false);
     if (kind === "fire")

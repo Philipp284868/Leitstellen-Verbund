@@ -290,18 +290,6 @@
   background: var(--hud-panel);
   border: 1px solid var(--hud-border);
 }
-.app.command-hud .placement-hint {
-  position: absolute;
-  top: 14px;
-  bottom: auto;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-  height: auto;
-  width: min(600px, 70%);
-  z-index: 19;
-  background: var(--hud-panel);
-}
 .app.command-hud .workspace {
   display: block;
   position: static;

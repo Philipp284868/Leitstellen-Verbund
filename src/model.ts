@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { facilityBindingSchema } from "./facilities/schema";
 import { BALANCE, bt, mt, vehicleHomeAllowed, vt } from "./catalog";
 import { assertSaveWorld } from "./compatibility/save-world";
 import {
@@ -52,6 +53,7 @@ import {
   WORLD,
   WORLD_HEIGHT,
   WORLD_WIDTH,
+  germanyProvider,
   distance,
   isWaterSite,
   nearest,
@@ -69,6 +71,7 @@ export const point = z
   .strict();
 export const buildingSchema = z
   .object({
+    facility: facilityBindingSchema.optional(),
     purchasePriceCents: centsSchema.optional(),
     id,
     owner: id,
@@ -413,10 +416,10 @@ export function validateReferences(s: Save) {
   for (const b of s.buildings) {
     const t = bt(b.type);
     if (
-      distance(b.pos, nodes[nearest(b.pos)]) > 1 ||
+      (!b.facility && distance(b.pos, nodes[nearest(b.pos)]) > 1) ||
       (t.water && !isWaterSite(b.pos))
     )
-      throw Error("Ungültiger Bauplatz.");
+      throw Error("Ungültiger Einrichtungsstandort.");
     if (
       s.vehicles.filter((v) => v.home === b.id).length >
         stationCapacity(b).slots ||
@@ -461,6 +464,11 @@ export function validateReferences(s: Save) {
     if (
       bed.home !== "public" &&
       !/^public:(?:node|way|relation):[0-9]+$/.test(bed.home) &&
+      !(
+        bed.home.startsWith("public:") &&
+        germanyProvider().facilities?.get(bed.home.slice(7))?.kind ===
+          "hospital"
+      ) &&
       !s.buildings.some((b) => b.id === bed.home && b.type === "hospital")
     )
       throw Error("Patient ohne Krankenhaus.");

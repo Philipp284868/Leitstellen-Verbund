@@ -65,11 +65,11 @@ export function CivilStationSettings({ s, b }: { s: Save; b: Building }) {
 export function CivilProtectionDesk({
   s,
   onOpen,
-  onBuild,
+  onFacilities,
 }: {
   s: Save;
   onOpen: (id: string) => void;
-  onBuild: () => void;
+  onFacilities: () => void;
 }) {
   const { readonly, workspace } = useGame();
   const [selected, setSelected] = useState<string[]>([]);
@@ -109,7 +109,7 @@ export function CivilProtectionDesk({
         {recommendation.recommended ? "Empfehlung: Bereitschaft prüfen. " : ""}
         {recommendation.reason}
       </p>
-      <button onClick={onBuild}>Neuen Standort bauen</button>
+      <button onClick={onFacilities}>Realen Standort kaufen</button>
       {workspace?.canManage === false && (
         <p>
           Nur die Leitstellenleitung darf Bereitschaft anordnen und beenden.

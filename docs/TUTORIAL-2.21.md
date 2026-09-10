@@ -14,7 +14,7 @@ Die 16 Kapitel sind:
 | --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Dein Arbeitsplatz                | Karte verschieben, zoomen und Suche verwenden.                                                                                       |
 | 2   | Leitstelle und Budget            | Geldjournal öffnen.                                                                                                                  |
-| 3   | Der erste Standort               | Eigene Feuerwache vorhanden oder tatsächlich gebaut.                                                                                 |
+| 3   | Der erste Standort               | Eigene Feuerwache vorhanden oder aus dem realen Katalog erworben.                                                                    |
 | 4   | Automatische Wachbesetzung       | Fertige Feuerwache und automatisches Personalmodell; Wachbereich geöffnet.                                                           |
 | 5   | Das passende Fahrzeug            | Tatsächliches Fahrzeug mit Pumpfähigkeit vorhanden. LF 20 ist die vorgestellte passende Wahl.                                        |
 | 6   | Ein neutraler Notruf             | Anruf angenommen; Ort und Meldebild durch das Gespräch bekannt.                                                                      |

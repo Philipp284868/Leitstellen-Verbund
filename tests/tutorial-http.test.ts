@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -210,7 +211,7 @@ it("authenticates practice requests and isolates two dispatchers of one real des
       members: [],
     });
     expect(b.network).toMatchObject({ friends: [], support: [], requests: [] });
-    const build: ServerAction = { type: "build", kind: "fire", pos: nodes[0] };
+    const build: ServerAction = fixturePurchase("fire", nodes[0]);
     expect((await f.command(owner, undefined, build)).status).toBe(400);
     expect((await f.command(owner, b.training!.session, build)).status).toBe(
       400,
@@ -235,7 +236,7 @@ it("authenticates practice requests and isolates two dispatchers of one real des
         await f.command(
           owner,
           a.training!.session,
-          { type: "build", kind: "ems", pos: nodes[2] },
+          fixturePurchase("ems", nodes[2]),
           id,
         )
       ).status,
@@ -276,7 +277,7 @@ it("upgrades an earlier practice envelope without changing assets, progress, see
       started = await f.value(f.request(client, "training", { op: "start" })),
       session = started.training!.session,
       id = crypto.randomUUID(),
-      build: ServerAction = { type: "build", kind: "fire", pos: nodes[0] };
+      build: ServerAction = fixturePurchase("fire", nodes[0]);
     const built = await f.value(f.command(client, session, build, id));
     // This is an explicit historical serialized fixture in a fresh test DB,
     // reproducing the envelope before context fields were introduced.
@@ -378,7 +379,7 @@ it("serializes context switches and rejects stale controls without replaying res
           "action",
           {
             id: crypto.randomUUID(),
-            action: { type: "build", kind: "fire", pos: nodes[0] },
+            action: fixturePurchase("fire", nodes[0]),
           },
           session,
           oldHeaders,
@@ -449,11 +450,7 @@ it("keeps real call, dispatch, FMS, radio, rewards and export exclusively in the
       started = await f.value(f.request(client, "training", { op: "start" })),
       session = started.training!.session;
     await f.value(
-      f.command(client, session, {
-        type: "build",
-        kind: "fire",
-        pos: nodes[0],
-      }),
+      f.command(client, session, fixturePurchase("fire", nodes[0])),
     );
     f.advance(client, 40);
     let s = (await f.value(f.request(client, "me"))).save;
@@ -834,7 +831,7 @@ it("persists private progress, session and duplicate receipts through a real ser
       started = await f.value(f.request(client, "training", { op: "start" })),
       session = started.training!.session,
       id = crypto.randomUUID(),
-      build: ServerAction = { type: "build", kind: "fire", pos: nodes[0] };
+      build: ServerAction = fixturePurchase("fire", nodes[0]);
     const real = f.realEconomy(client);
     expect(
       (await f.request(client, "tutorial", { op: "next", chapter: 0 }, session))

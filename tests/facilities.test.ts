@@ -1,0 +1,391 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { Database } from "../server/database";
+import { Game } from "../server/game";
+import { apply, tick } from "../src/engine";
+import { fresh, validate } from "../src/model";
+import { bt } from "../src/catalog";
+import { xpForLevel } from "../src/progression";
+import { bookMoney } from "../src/economy/ledger";
+import { hospitalOptions } from "../src/simulation/hospitals";
+import {
+  fixturePurchase,
+  logicFacilityCatalog,
+} from "./fixtures/germany/facilities";
+import { sites } from "./fixtures/germany/locations";
+import { installGermanyProvider, germanyProvider } from "../src/germany/world";
+import {
+  applyFacilityMigration,
+  assertFacilityMigration,
+  planFacilityMigration,
+} from "../server/facilities/migration";
+import { facilityResponse } from "../server/facilities/http";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+
+const resources: (() => void)[] = [];
+afterEach(() => {
+  for (const close of resources.reverse()) close();
+  resources.length = 0;
+});
+function setup() {
+  const db = new Database("unused", { memory: true });
+  resources.push(() => db.close());
+  const game = new Game(db);
+  for (const id of ["owner", "member", "other"]) {
+    db.sql
+      .prepare("INSERT INTO users VALUES(?,?,?,'player',0)")
+      .run(id, id, "unused");
+    const s = fresh(id, id, 1000);
+    s.player.id = id;
+    db.save(id, s);
+  }
+  db.sql
+    .prepare("INSERT INTO desk_members(user_id,owner_id) VALUES(?,?)")
+    .run("member", "owner");
+  return {
+    db,
+    game,
+    run: (user: string, action: unknown, id = crypto.randomUUID()) =>
+      game.command(user, { id, action }),
+  };
+}
+describe("reale Standortkäufe und unveränderliche Identität", () => {
+  it("übernimmt Klinikpatienten und Transportreservierungen ohne Doppelzählung; öffentliche Behandlung bleibt ohne Kauf möglich", () => {
+    const s = fresh("A", "B", 1000);
+    s.xp = xpForLevel(30);
+    bookMoney(s, 200000000, "Isoliertes Testbudget");
+    apply(s, fixturePurchase("ems", sites[0]));
+    tick(s, 1030, {}, false, false);
+    apply(s, { type: "buy", kind: "rtw", home: s.buildings[0].id });
+    const clinic = logicFacilityCatalog.get(
+      fixturePurchase("hospital", sites[1]).facility,
+    )!;
+    const provider = germanyProvider();
+    installGermanyProvider({
+      ...provider,
+      hospitals: () => [
+        {
+          ...clinic.access!.pos,
+          id: clinic.id,
+          facilityId: clinic.id,
+          name: clinic.name,
+          aliases: clinic.sources,
+          emergency: "unknown",
+        },
+      ],
+    });
+    const publicId = `public:${clinic.id}`;
+    s.beds.push({ id: "already-treated", home: publicId, until: 2000 });
+    const v = s.vehicles[0];
+    v.status = "transport";
+    v.destination = publicId;
+    v.patients = 1;
+    v.path = [sites[0], sites[1]];
+    v.depart = s.time;
+    v.arrive = s.time + 100;
+    const before = hospitalOptions(s, sites[0], 1);
+    expect(before).toHaveLength(1);
+    expect(before[0]).toMatchObject({
+      id: publicId,
+      occupied: 1,
+      reserved: 1,
+      reason: "",
+    });
+    const path = structuredClone(v.path),
+      arrival = v.arrive;
+    apply(s, fixturePurchase("hospital", sites[1]));
+    const home = s.buildings.at(-1)!;
+    expect(v.path).toEqual(path);
+    expect(v.arrive).toBe(arrival);
+    expect(s.beds[0].home).toBe(home.id);
+    expect(v.destination).toBe(home.id);
+    expect(hospitalOptions(s, sites[0], 1)).toMatchObject([
+      { id: home.id, occupied: 1, reserved: 1 },
+    ]);
+    s.beds = [];
+    expect(() => apply(s, { type: "sell", id: home.id })).toThrow(/Transporte/);
+    tick(s, arrival + 1, {}, false, false);
+    expect(s.beds.filter((b) => b.home === home.id)).toHaveLength(1);
+    expect(v.patients).toBe(0);
+    expect(v.status).toBe("return");
+    expect(() => validate(s)).not.toThrow();
+    home.facility!.emergency = "no";
+    expect(hospitalOptions(s, sites[0], 1)[0].reason).toBe("Abgemeldet");
+  });
+  it("listet vor dem Kauf reale Referenzen ohne sie zu verschenken und bucht pro Leitstelle atomar nur einmal", () => {
+    const { db, run } = setup(),
+      action = fixturePurchase("fire", sites[0]),
+      before = db.all().get("owner")!.money;
+    const offer = facilityResponse(
+      new URL(`http://test/api/facilities?id=${action.facility}`),
+      db.all().get("owner")!,
+    );
+    expect(offer).toMatchObject({
+      price: bt("fire").price,
+      owned: undefined,
+      reason: "",
+    });
+    expect(db.all().get("owner")!.buildings).toHaveLength(0);
+    const id = crypto.randomUUID();
+    run("owner", action, id);
+    run("owner", action, id);
+    run("member", action);
+    run("owner", action);
+    const s = db.all().get("owner")!;
+    expect(s.money).toBe(before - bt("fire").price);
+    expect(s.buildings).toHaveLength(1);
+    expect(s.buildings[0].facility!.id).toBe(action.facility);
+    expect(s.buildings[0].pos).toEqual(sites[0]);
+    expect(db.all().get("member")!.buildings).toHaveLength(0);
+    run("other", action);
+    expect(db.all().get("other")!.buildings[0].facility!.id).toBe(
+      action.facility,
+    );
+    expect(
+      db.sql.prepare("SELECT COUNT(*) n FROM facility_rights").get()!.n,
+    ).toBe(2);
+  });
+  it("verwirft Preise, Eigentümer und Koordinaten vom Client; prüft Geld, Stufe, Zugang und freie Bauaktionen", () => {
+    const { db, run } = setup(),
+      action = fixturePurchase("fire", sites[0]);
+    const before = JSON.stringify(db.all().get("owner"));
+    for (const forged of [
+      { ...action, price: 1 },
+      { ...action, owner: "other" },
+      { ...action, pos: sites[1] },
+      { ...action, capacity: 999 },
+      { type: "build", kind: "fire", pos: sites[1] },
+      { type: "move-building", id: "any", pos: sites[1] },
+    ])
+      expect(() => run("owner", forged)).toThrow();
+    expect(() => run("owner", fixturePurchase("heli", sites[0]))).toThrow(
+      /Stufe/,
+    );
+    expect(() =>
+      run("owner", { type: "purchase-facility", facility: "unknown" }),
+    ).toThrow(/Katalog/);
+    expect(JSON.stringify(db.all().get("owner"))).toBe(before);
+    const s = db.all().get("owner")!;
+    bookMoney(s, -s.money, "Testbudget aufgebraucht");
+    db.save("owner", s);
+    expect(() => run("owner", action)).toThrow(/Budget/);
+    const provider = germanyProvider(),
+      facility = logicFacilityCatalog.get(action.facility)!;
+    installGermanyProvider({
+      ...provider,
+      facilities: {
+        ...logicFacilityCatalog,
+        get: () => ({ ...facility, access: undefined }),
+      },
+    });
+    expect(() => apply(fresh("A", "B", 1000), action)).toThrow(/Zufahrt/);
+    installGermanyProvider({
+      ...provider,
+      route: () => {
+        throw Error("Kein Fahrweg");
+      },
+    });
+    const roadSave = fresh("A", "B", 1000),
+      unchanged = JSON.stringify(roadSave);
+    expect(() => apply(roadSave, action)).toThrow(/Fahrweg/);
+    expect(JSON.stringify(roadSave)).toBe(unchanged);
+  });
+  it("sperrt nachträgliche Standortänderungen und rollt einen Identitätskonflikt vollständig zurück", () => {
+    const { db, run } = setup();
+    run("owner", fixturePurchase("fire", sites[0]));
+    const saved = db.all().get("owner")!,
+      before = JSON.stringify(saved);
+    for (const edit of [
+      (s: typeof saved) => {
+        s.buildings[0].pos = sites[1];
+      },
+      (s: typeof saved) => {
+        s.buildings[0].facility!.id = "other";
+      },
+      (s: typeof saved) => {
+        delete s.buildings[0].facility;
+      },
+      (s: typeof saved) => {
+        s.buildings.push({ ...s.buildings[0], id: "duplicate" });
+      },
+    ]) {
+      const changed = structuredClone(saved);
+      edit(changed);
+      expect(() => db.save("owner", changed)).toThrow();
+      expect(JSON.stringify(db.all().get("owner"))).toBe(before);
+    }
+    expect(() =>
+      run("owner", {
+        type: "move",
+        id: saved.buildings[0].id,
+        home: saved.buildings[0].id,
+      }),
+    ).toThrow(/BUILDING_PURCHASE_ONLY/);
+  });
+  it("erhält Kauf, Personal und Fahrzeug nach SQLite-Neustart; Datenupdates ändern keine laufenden Positionen", () => {
+    const dir = mkdtempSync(resolve(tmpdir(), "lv-facilities-"));
+    resources.push(() => rmSync(dir, { recursive: true, force: true }));
+    let db = new Database(dir);
+    try {
+      db.sql
+        .prepare(
+          "INSERT INTO users VALUES('restart','restart','unused','player',0)",
+        )
+        .run();
+      const s = fresh("A", "B", 1000);
+      s.player.id = "restart";
+      apply(s, fixturePurchase("fire", sites[0]));
+      tick(s, 1030, {}, false, false);
+      apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
+      db.save("restart", s);
+      const before = JSON.stringify(db.all().get("restart"));
+      db.close();
+      db = new Database(dir);
+      expect(JSON.stringify(db.all().get("restart"))).toBe(before);
+      const provider = germanyProvider();
+      installGermanyProvider({
+        ...provider,
+        facilities: {
+          ...logicFacilityCatalog,
+          get: (id) => {
+            const f = logicFacilityCatalog.get(id);
+            return (
+              f && {
+                ...f,
+                name: "Neuer Quellenname",
+                snapshot: "future",
+                pos: sites[10],
+              }
+            );
+          },
+        },
+      });
+      expect(JSON.stringify(db.all().get("restart"))).toBe(before);
+      expect(() => assertFacilityMigration(db.sql)).not.toThrow();
+    } finally {
+      db.close();
+    }
+  });
+});
+describe("sichere Standortmigration", () => {
+  it("erhält auch persönliche Übungswelten und hält ihre Standortrechte vom Livebestand getrennt", () => {
+    const { db, run } = setup();
+    run("owner", fixturePurchase("fire", sites[0]));
+    const s = structuredClone(db.all().get("owner")!);
+    delete s.buildings[0].facility;
+    const envelope = {
+      version: 1,
+      active: false,
+      session: crypto.randomUUID(),
+      save: s,
+      commands: {},
+      scenarios: [],
+      contextRevision: 3,
+      controlCommands: {},
+    };
+    db.sql
+      .prepare("INSERT INTO training_worlds VALUES(?,?,?)")
+      .run("owner", JSON.stringify(envelope), 123);
+    const live = JSON.stringify(db.all().get("owner"));
+    const plan = planFacilityMigration(db.sql, logicFacilityCatalog);
+    expect(plan).toMatchObject({
+      ready: true,
+      changes: [{ owner: "practice:owner" }],
+    });
+    expect(() => assertFacilityMigration(db.sql)).toThrow(/practice:owner/);
+    db.transaction(() => applyFacilityMigration(db.sql, logicFacilityCatalog));
+    const restored = JSON.parse(
+      String(
+        db.sql
+          .prepare("SELECT payload FROM training_worlds WHERE user_id='owner'")
+          .get()!.payload,
+      ),
+    );
+    expect(restored.session).toBe(envelope.session);
+    expect(restored.contextRevision).toBe(3);
+    expect(restored.save.money).toBe(s.money);
+    expect(restored.save.buildings[0].facility.id).toBe(
+      fixturePurchase("fire", sites[0]).facility,
+    );
+    expect(JSON.stringify(db.all().get("owner"))).toBe(live);
+    expect(
+      planFacilityMigration(db.sql, logicFacilityCatalog).changes,
+    ).toHaveLength(0);
+  });
+  it("ordnet ausschließlich eindeutigen Bestand zu und erhält Referenzen, bezahlte Werte, AAO und Personal", () => {
+    const { db } = setup(),
+      s = db.all().get("owner")!;
+    apply(s, fixturePurchase("fire", sites[0]));
+    tick(s, 1030, {}, false, false);
+    apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
+    delete s.buildings[0].facility;
+    // A pre-feature checkpoint, intentionally bypassing the new writer to exercise migration.
+    db.sql
+      .prepare("UPDATE saves SET data=? WHERE user_id='owner'")
+      .run(JSON.stringify(s));
+    const before = structuredClone(s),
+      plan = planFacilityMigration(db.sql, logicFacilityCatalog);
+    expect(plan.ready).toBe(true);
+    expect(plan.changes).toHaveLength(1);
+    expect(() => assertFacilityMigration(db.sql)).toThrow(
+      /FACILITY_MIGRATION_REQUIRED/,
+    );
+    db.transaction(() => applyFacilityMigration(db.sql, logicFacilityCatalog));
+    const after = db.all().get("owner")!;
+    expect(after.buildings[0].id).toBe(before.buildings[0].id);
+    expect(after.buildings[0].purchasePriceCents).toBe(
+      before.buildings[0].purchasePriceCents,
+    );
+    expect(after.people).toEqual(before.people);
+    expect(after.vehicles).toEqual(before.vehicles);
+    expect(after.money).toBe(before.money);
+    expect(after.desk).toEqual(before.desk);
+    expect(
+      db.transaction(() => applyFacilityMigration(db.sql, logicFacilityCatalog))
+        .changes,
+    ).toHaveLength(0);
+    expect(validate(after)).toEqual(after);
+  });
+  it("meldet Namen-/Besitzkonflikte und verschiebt keine laufende Rückfahrt", () => {
+    const { db } = setup(),
+      s = db.all().get("owner")!;
+    s.xp = xpForLevel(3);
+    apply(s, fixturePurchase("fire", sites[0]));
+    delete s.buildings[0].facility;
+    s.buildings[0].name = "Meine frei gewählte Wache";
+    db.sql
+      .prepare("UPDATE saves SET data=? WHERE user_id='owner'")
+      .run(JSON.stringify(s));
+    expect(
+      planFacilityMigration(db.sql, logicFacilityCatalog).conflicts,
+    ).toHaveLength(1);
+    const before = JSON.stringify(db.all().get("owner"));
+    expect(() =>
+      db.transaction(() =>
+        applyFacilityMigration(db.sql, logicFacilityCatalog),
+      ),
+    ).toThrow(/Konflikte/);
+    expect(JSON.stringify(db.all().get("owner"))).toBe(before);
+    const resolution = {
+      owner: "owner",
+      building: s.buildings[0].id,
+      facility: fixturePurchase("fire", sites[0]).facility,
+      evidence: "Dokumentierte Zuordnung durch den Serverbetreiber",
+    };
+    expect(
+      planFacilityMigration(db.sql, logicFacilityCatalog, [resolution]).ready,
+    ).toBe(true);
+    tick(s, 1030, {}, false, false);
+    apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
+    s.vehicles[0].status = "return";
+    db.sql
+      .prepare("UPDATE saves SET data=? WHERE user_id='owner'")
+      .run(JSON.stringify(s));
+    expect(
+      planFacilityMigration(db.sql, logicFacilityCatalog, [
+        { ...resolution, facility: fixturePurchase("fire", sites[1]).facility },
+      ]).conflicts[0].reason,
+    ).toMatch(/Laufende Fahrt/);
+  });
+});

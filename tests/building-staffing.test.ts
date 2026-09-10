@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { apply, generate, recall, tick } from "../src/engine";
 import { fresh, validate, type Save } from "../src/model";
@@ -37,7 +38,7 @@ function emptyDesk() {
 
 function station(type = "fire", professional = false) {
   const s = emptyDesk();
-  apply(s, { type: "build", kind: type, pos: nodes[0] });
+  apply(s, fixturePurchase(type, nodes[0]));
   if (professional && type === "fire")
     s.buildings[0].organization = { ...newStationProfile("fire")!, kind: "bf" };
   tick(s, s.time + BALANCE.buildSeconds, {}, false, false);
@@ -61,7 +62,7 @@ function mission(s: Save) {
 describe("automatic building staffing", () => {
   it("commissions a new station with real staff without a hire action", () => {
     const s = emptyDesk();
-    apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+    apply(s, fixturePurchase("fire", nodes[0]));
     expect(s.people).toHaveLength(0);
     tick(s, s.time + BALANCE.buildSeconds, {}, false, false);
     expect(s.people.length).toBeGreaterThanOrEqual(vt("tsf").crew);
@@ -69,7 +70,7 @@ describe("automatic building staffing", () => {
 
   it("makes a permitted ambulance usable immediately after purchase without assignment", () => {
     const s = emptyDesk();
-    apply(s, { type: "build", kind: "ems", pos: nodes[0] });
+    apply(s, fixturePurchase("ems", nodes[0]));
     tick(s, s.time + BALANCE.buildSeconds, {}, false, false);
     apply(s, { type: "buy", home: s.buildings[0].id, kind: "rtw" });
     const crew = crewSummary(s, s.vehicles[0]);
@@ -155,7 +156,7 @@ describe("automatic building staffing", () => {
   it("provides newly unlocked qualifications only with the actual completed building function", () => {
     const s = emptyDesk();
     s.xp = xpForLevel(11);
-    apply(s, { type: "build", kind: "ems", pos: nodes[0] });
+    apply(s, fixturePurchase("ems", nodes[0]));
     tick(s, s.time + BALANCE.buildSeconds, {}, false, false);
     const b = s.buildings[0];
     expect(buildingStaffingPlan(s, b).qualifications).not.toContain("Notarzt");

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "../fixtures/germany/facilities";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -41,7 +42,7 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
   const s = fresh("Disponent", "Nord", Date.UTC(2026, 8, 10, 12) / 1000);
   s.player.id = owner;
   s.seed = 123;
-  apply(s, { type: "build", kind: "fire", pos: sites[0] });
+  apply(s, fixturePurchase("fire", sites[0]));
   tick(s, s.time + 30, {}, false, false);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
   app.db.save(owner, s);

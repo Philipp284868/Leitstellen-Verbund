@@ -1,3 +1,4 @@
+import { buyRealFacility } from "./real-facility";
 // Isolated real-geography acceptance fixture. IPC controls only fixture events, time and restart.
 import { randomUUID } from "node:crypto";
 import { mkdtempSync } from "node:fs";
@@ -62,8 +63,7 @@ for (const [kind, lon, lat, types] of [
   ["fire", 13.405, 52.52, ["tlf", "dlk", "hlf"]],
   ["ems", 13.422, 52.515, ["rtw", "nef"]],
 ] as [string, number, number, string[]][]) {
-  const anchor = geography!.provider.nearest(project({ lon, lat }));
-  apply(s, { type: "build", kind, pos: { x: anchor.x, y: anchor.y } });
+  buyRealFacility(s, kind, project({ lon, lat }));
   const home = s.buildings.at(-1)!;
   tick(s, home.ready + 1, {}, false, false);
   if (kind === "fire")

@@ -82,7 +82,12 @@ export async function buildApplication({ incremental = false } = {}) {
         ),
         ...(kind === "client"
           ? ["public", "vite.config.ts", "index.html"]
-          : ["scripts/server-build-options.mjs", "scripts/build-server.mjs"]),
+          : [
+              "scripts/server-build-options.mjs",
+              "scripts/build-server.mjs",
+              "scripts/geodata/install-facilities.mjs",
+              "data/facilities",
+            ]),
       ]),
     ]);
     const key = JSON.stringify({

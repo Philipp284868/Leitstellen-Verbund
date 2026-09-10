@@ -317,7 +317,7 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
 test("Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbruch und Doppelbestellung", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Wachen", exact: true }).click();
+  await page.getByRole("button", { name: "Standorte", exact: true }).click();
   await page.locator(".station-card").first().click();
   await page.locator(".org-settings > summary").first().click();
   await page

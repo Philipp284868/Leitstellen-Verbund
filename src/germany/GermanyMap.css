@@ -189,32 +189,6 @@
 .germany-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
   margin: 0;
 }
-.germany-map .germany-placement {
-  position: absolute;
-  top: 88px;
-  bottom: auto;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 8;
-  width: min(600px, 65%);
-  border: 1px solid #80a294;
-  border-radius: 6px;
-}
-.app.command-hud .germany-map .germany-placement {
-  top: 72px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  white-space: normal;
-  color: var(--hud-text, #e4eef4);
-  font-weight: 500;
-  line-height: 1.5;
-}
-.app.command-hud .germany-placement > span {
-  flex: 1 0 100%;
-  overflow-wrap: anywhere;
-}
 .germany-map .map-vehicle-detail {
   position: absolute;
   top: 12px;
@@ -265,9 +239,6 @@
   user-select: text;
 }
 @media (max-width: 1100px) {
-  .germany-map .germany-placement {
-    width: 88%;
-  }
   .germany-map .maplibregl-ctrl-attrib {
     font-size: 9px;
   }

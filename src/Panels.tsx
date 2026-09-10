@@ -641,9 +641,9 @@ export function Help() {
         <summary>Die erste Schicht</summary>
         <ol>
           <li>
-            Eine Feuerwache an einem erreichbaren Straßenstandort bauen. Bauzeit
-            abwarten; die passende Besetzung wird bei Inbetriebnahme automatisch
-            bereitgestellt.
+            Unter Standorte eine reale Feuerwache mit geklärter Zufahrt suchen
+            und den Kauf bestätigen. Die passende Spielbesetzung wird bei der
+            Inbetriebnahme automatisch bereitgestellt.
           </li>
           <li>
             Ein geeignetes Einstiegsfahrzeug wie das TSF kaufen. Preis,

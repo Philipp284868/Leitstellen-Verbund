@@ -1,3 +1,4 @@
+import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { fundTestBudget } from "./money-fixture";
@@ -78,8 +79,14 @@ beforeEach(async () => {
     CREATE VIRTUAL TABLE places_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);
     CREATE VIRTUAL TABLE places_fts USING fts5(name,display_name,content='places',content_rowid='id');
     INSERT INTO anchors VALUES(16000000000,13.4,52.52,'Teststraße','residential',0,0,'');
-    INSERT INTO anchors_rtree VALUES(16000000000,13.4,13.4,52.52,52.52);`);
+    INSERT INTO anchors_rtree VALUES(16000000000,13.4,13.4,52.52,52.52);
+    INSERT INTO anchors VALUES(16000000001,13.4008,52.5208,'Teststraße','residential',0,0,'');
+    INSERT INTO anchors_rtree VALUES(16000000001,13.4008,13.4008,52.5208,52.5208);`);
   index.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
+  createFacilityFixture(geodataDir, {
+    dataset,
+    positions: [f.project({ lon: 13.4, lat: 52.52 })],
+  });
   index.close();
   createMap(
     resolve(geodataDir, "maps.mbtiles"),
@@ -172,6 +179,79 @@ async function cliCommand(args: string[]) {
 }
 const restore = () => cliCommand(["restore", "--file", backup, "--confirm"]);
 describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", () => {
+  it("migriert Altstandorte erst nach Trockenlauf und Sicherung, wiederholt sicher und stellt den Altstand tatsächlich wieder her", async () => {
+    const file = resolve(dataDir, "game.sqlite"),
+      sql = new DatabaseSync(file);
+    const save = JSON.parse(
+      String(
+        sql.prepare("SELECT data FROM saves WHERE user_id=?").get(owner)!.data,
+      ),
+    );
+    save.buildings.push({
+      id: "legacy-fire",
+      owner,
+      type: "fire",
+      name: "Teststandort fire 0",
+      pos: f.project({ lon: 13.4, lat: 52.52 }),
+      level: 1,
+      ready: save.time,
+      extensions: [],
+      purchasePriceCents: 123456,
+    });
+    sql
+      .prepare("UPDATE saves SET data=? WHERE user_id=?")
+      .run(JSON.stringify(save), owner);
+    sql.close();
+    const before = readFileSync(file);
+    const preview = await cliCommand(["facilities-preview"]);
+    expect(preview.code, preview.output).toBe(0);
+    expect(preview.output).toContain('"ready": true');
+    expect(readFileSync(file)).toEqual(before);
+    const rejected = await cliCommand(["facilities-migrate"]);
+    expect(rejected.code).not.toBe(0);
+    expect(readFileSync(file)).toEqual(before);
+    const result = await cliCommand(["facilities-migrate", "--confirm"]);
+    expect(result.code, result.output).toBe(0);
+    const saved = JSON.parse(
+      result.output.slice(
+        result.output.indexOf("{"),
+        result.output.lastIndexOf("}") + 1,
+      ),
+    );
+    const migrated = new f.Database(dataDir);
+    const after = migrated.all().get(owner)!;
+    expect(after.buildings[0]).toMatchObject({
+      id: "legacy-fire",
+      purchasePriceCents: 123456,
+      facility: { id: "fixture:fire:0" },
+    });
+    expect(after.money).toBe(save.money);
+    migrated.close();
+    const repeat = await cliCommand(["facilities-migrate", "--confirm"]);
+    expect(repeat.code, repeat.output).toBe(0);
+    expect(repeat.output).toContain('"changes": []');
+    const restored = await cliCommand([
+      "restore",
+      "--file",
+      saved.backup,
+      "--confirm",
+    ]);
+    expect(restored.code, restored.output).toBe(0);
+    const restoredDb = new DatabaseSync(file, { readOnly: true });
+    try {
+      const old = JSON.parse(
+        String(
+          restoredDb
+            .prepare("SELECT data FROM saves WHERE user_id=?")
+            .get(owner)!.data,
+        ),
+      );
+      expect(old.buildings[0].facility).toBeUndefined();
+      expect(old.money).toBe(save.money);
+    } finally {
+      restoredDb.close();
+    }
+  }, 60000);
   it.each(["different", "missing"])(
     "weist migration-preview bei %s PBF-Metadaten schreibgeschützt zurück",
     async (mismatch) => {

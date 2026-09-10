@@ -401,6 +401,41 @@ if (command === "prepare" || command === "tools") {
       .run();
     tiles.close();
   }
+} else if (command === "facilities") {
+  await checkBuildInputs([downloads[1], downloads[2], downloads[3]]);
+  const extraction = join(root, "facilities-260907.ndjson");
+  if (!existsSync(extraction))
+    await run(
+      await javaPath(),
+      [
+        "-Xmx2g",
+        "-cp",
+        `${gh}${windows ? ";" : ":"}${planet}`,
+        join(repo, "scripts/geodata/ExtractFacilities.java"),
+        pbf,
+        extraction,
+      ],
+      "facility-extraction",
+    );
+  await run(
+    process.execPath,
+    [
+      join(repo, "scripts/geodata/import-facilities.mjs"),
+      extraction,
+      join(root, "index.sqlite"),
+      join(root, "facilities-candidate.sqlite"),
+      join(repo, "data/facilities/supplemental.json"),
+      ...(existsSync(join(root, "facilities.sqlite"))
+        ? [join(root, "facilities.sqlite")]
+        : existsSync(join(repo, "dist/server/facilities.sqlite"))
+          ? [join(repo, "dist/server/facilities.sqlite")]
+          : []),
+    ],
+    "facility-import",
+  );
+  log(
+    "Standortkandidat erstellt. Datenbericht prüfen; vorhandener veröffentlichter Katalog bleibt unverändert.",
+  );
 } else if (command === "index") {
   await checkBuildInputs([downloads[1], downloads[2], downloads[3]]);
   await run(

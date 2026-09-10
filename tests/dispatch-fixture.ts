@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { bookMoney } from "../src/economy/ledger";
 import { apply, tick } from "../src/engine";
 import { fresh, type Save } from "../src/model";
@@ -17,7 +18,7 @@ export function phaseFixture(owner: string, template = "field"): Save {
   s.economy!.fundingNextAt = 1e12;
   s.xp = xpForLevel(30);
   s.tutorial = 6;
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  apply(s, fixturePurchase("fire", nodes[0]));
   // Existing phase suites model an established professional station. Volunteer starts have their own suite.
   s.buildings[0].organization = {
     kind: "bf",

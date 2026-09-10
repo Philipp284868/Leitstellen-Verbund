@@ -12,7 +12,6 @@ import type { Save } from "./model";
 import { useNetwork, usePresence } from "./network";
 import { missionStatus } from "./simulation/mission-status";
 import { visiblePriority } from "./simulation/priority";
-import { command, emit } from "./store";
 import { HudNotice, Topbar } from "./Topbar";
 import { duration } from "./travel";
 import { missionList } from "./workspace";
@@ -21,8 +20,6 @@ type Props = {
   selected: string;
   open: (id: string) => void;
   setModal: (panel: string) => void;
-  placing: string;
-  setPlacing: (kind: string) => void;
   readonly: boolean;
   notice: string;
   onMenu: () => void;
@@ -46,8 +43,6 @@ export function GameHud({
   selected,
   open,
   setModal,
-  placing,
-  setPlacing,
   readonly,
   notice,
   onMenu,
@@ -75,8 +70,6 @@ export function GameHud({
   );
   const presence = usePresence();
   const [layers, setLayers] = useState(false);
-  const [buildingBusy, setBuildingBusy] = useState(false);
-  const buildingLock = useRef(false);
   const working = !!activePanel && activePanel !== "mission";
   useEffect(() => {
     if (working) {
@@ -93,8 +86,7 @@ export function GameHud({
         event.key !== "Escape" ||
         event.defaultPrevented ||
         working ||
-        showDetail ||
-        placing
+        showDetail
       )
         return;
       if (layers || listOpen) {
@@ -112,7 +104,7 @@ export function GameHud({
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [layers, listOpen, working, showDetail, placing, setListOpen]);
+  }, [layers, listOpen, working, showDetail, setListOpen]);
   const [tab, setTab] = useState("details");
   const [page, setPage] = useState(0);
   const listedMissions = missionList(s, search, filter, sort, user?.id);
@@ -227,21 +219,7 @@ export function GameHud({
             setLayers(false);
             onCloseDetail();
           }}
-          placing={placing}
-          readonly={readonly || buildingBusy}
-          onCancelPlace={() => setPlacing("")}
-          onPlace={(pos) => {
-            if (buildingLock.current) return;
-            buildingLock.current = true;
-            setBuildingBusy(true);
-            void command({ type: "build", kind: placing, pos })
-              .then(() => setPlacing(""))
-              .catch((error) => emit({ error: String(error) }))
-              .finally(() => {
-                buildingLock.current = false;
-                setBuildingBusy(false);
-              });
-          }}
+          readonly={readonly}
           friends={net.friends}
           presence={presence.ready ? presence.players : []}
           ownDeskId={s.player.id}
@@ -472,7 +450,7 @@ export function GameHud({
                           ? "fleet"
                           : hasStation
                             ? "stations"
-                            : "build",
+                            : "facilities",
                       )
                     }
                   >
@@ -480,7 +458,7 @@ export function GameHud({
                       ? "Fuhrpark öffnen"
                       : hasStation
                         ? "Wachen öffnen"
-                        : "Erste Wache bauen"}
+                        : "Ersten Standort kaufen"}
                   </button>
                 )}
               </div>

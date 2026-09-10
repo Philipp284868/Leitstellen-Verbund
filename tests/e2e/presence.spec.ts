@@ -1,3 +1,4 @@
+import { fixturePurchase } from "../fixtures/germany/facilities";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -44,7 +45,7 @@ test.beforeEach(async () => {
   );
   const s = app.db.all().get(owner)!;
   s.missionWait = 100000;
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  apply(s, fixturePurchase("fire", nodes[0]));
   s.buildings[0].name = "Echte Nordwache";
   app.db.save(owner, s);
 });

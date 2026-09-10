@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { Database } from "../server/database";
 import { Game } from "../server/game";
@@ -35,7 +36,7 @@ describe("Serverautoritatives Euro-Budget", () => {
     const { db, game, run, read } = world();
     try {
       const start = read().money,
-        action = { type: "build", kind: "fire", pos: nodes[0] };
+        action = fixturePurchase("fire", nodes[0]);
       run("build-once", action);
       run("build-once", action);
       expect(read().buildings).toHaveLength(1);
@@ -66,7 +67,7 @@ describe("Serverautoritatives Euro-Budget", () => {
   it("gibt beim Verkauf 60 Prozent des gespeicherten Kaufwerts und keine Neubewertungsgewinne", () => {
     const { db, game, run, read } = world();
     try {
-      run("build", { type: "build", kind: "fire", pos: nodes[0] });
+      run("build", fixturePurchase("fire", nodes[0]));
       game.step(30);
       run("buy", { type: "buy", kind: "tsf", home: read().buildings[0].id });
       const s = read(),

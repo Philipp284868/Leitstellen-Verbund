@@ -34,7 +34,7 @@ export function economyPriceReport() {
       prerequisite: v
         ? `Stufe ${v.level}; ${buildings.find((b) => b.id === v.home)!.name}; freier Stellplatz${extension ? `; ${extension.name}` : ""}`
         : b
-          ? `Stufe ${b.level}; gültiger eigener Bauplatz${b.water ? "; geprüfter Uferzugang" : ""}`
+          ? `Stufe ${b.level}; reale Einrichtung mit geprüfter Zufahrt${b.water ? "; geprüfter Uferzugang" : ""}`
           : `Passende Wache; Stufe ${e!.level}`,
       included: v
         ? `Komplettes Fahrzeug; ${Object.keys(v.skills)

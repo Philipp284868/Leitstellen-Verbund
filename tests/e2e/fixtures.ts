@@ -1,7 +1,9 @@
+import { logicFacilityCatalog } from "../fixtures/germany/facilities";
+import { facilityBinding } from "../../server/facilities/migration";
+import { fixturePurchase } from "../fixtures/germany/facilities";
 import { apply, tick } from "../../src/engine";
 import { fresh, uid, type Save } from "../../src/model";
 import { xpForLevel } from "../../src/progression";
-import { buildReason } from "../../src/purchase";
 import { fixtureTime, sites as nodes } from "../fixtures/germany/locations";
 import { fixtureMission } from "../fixtures/germany/mission";
 import { fundTestBudget } from "../money-fixture";
@@ -14,7 +16,7 @@ export function established(name: string): Save {
   s.completed = 3;
   s.economy!.fundingNextAt = 1e12;
   s.speed = 1;
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  apply(s, fixturePurchase("fire", nodes[0]));
   s.buildings[0].organization = {
     kind: "bf",
     turnout: 30,
@@ -29,11 +31,7 @@ export function established(name: string): Save {
 export function emsProfile(name: string) {
   const s = established(name);
   s.xp = Math.max(s.xp, xpForLevel(4));
-  apply(s, {
-    type: "build",
-    kind: "ems",
-    pos: [nodes[3], ...nodes].find((p) => !buildReason(s, "ems", p))!,
-  });
+  apply(s, fixturePurchase("ems", nodes[3]));
   tick(s, s.time + 30, {}, false, false);
   const home = s.buildings.find((b) => b.type === "ems")!;
   apply(s, { type: "buy", kind: "rtw", home: home.id });
@@ -51,6 +49,7 @@ export function largeProfile() {
       type: "fire",
       name: `Wache ${i}`,
       pos: nodes[i],
+      facility: facilityBinding(logicFacilityCatalog.get(`fixture:fire:${i}`)!),
       level: 1,
       ready: 0,
       extensions: [],

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -51,13 +52,13 @@ it("weist entfernte Modi ab und erhält das inaktive Archiv bytegleich nach Neus
       expect(() =>
         game.command(
           a,
-          command({ type: "build", kind: "fire", pos: nodes[0] }),
+          command(fixturePurchase("fire", nodes[0])),
           value as never,
         ),
       ).toThrow("Multiplayer");
     }
     expect(db.all().get(a)).toEqual(before);
-    const cmd = command({ type: "build", kind: "fire", pos: nodes[0] });
+    const cmd = command(fixturePurchase("fire", nodes[0]));
     game.command(a, cmd);
     game.command(a, cmd);
     expect(db.all().get(a)!.buildings).toHaveLength(1);

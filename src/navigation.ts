@@ -25,7 +25,11 @@ export const navigation = [
     title: "Wachen verwalten",
     words: "Gebäude Standorte Organisation Krankenhaus",
   },
-  { id: "build", title: "Wache bauen", words: "Gebäude kaufen platzieren" },
+  {
+    id: "facilities",
+    title: "Standorte kaufen",
+    words: "Gebäude Wache Krankenhaus Standort erwerben",
+  },
   {
     id: "fleet",
     title: "Fuhrpark",

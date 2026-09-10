@@ -3,7 +3,8 @@ import { bookMoney, fundingTick, saleValue } from "./economy/ledger";
 import { ECONOMY_PRICES } from "./economy/prices";
 import { mulRatio } from "./money";
 import { reconcileBuildingStaffing } from "./simulation/building-staffing";
-import { buildReason, purchaseReason } from "./purchase";
+import { purchaseReason } from "./purchase";
+import { purchaseFacility } from "./facilities/purchase";
 import { canGenerate } from "./simulation/feasibility";
 import { dispatchReason } from "./simulation/availability";
 import {
@@ -16,11 +17,7 @@ import { addXp, missionXp } from "./progression";
 import { selectHospital } from "./simulation/hospitals";
 import { measureTravel, telemetry, qualityFactor } from "./simulation/reports";
 import { effectiveSkills, canTransport } from "./simulation/major-resources";
-import {
-  stationCapacity,
-  newStationProfile,
-  releaseVolunteerCrew,
-} from "./simulation/staffing";
+import { stationCapacity, releaseVolunteerCrew } from "./simulation/staffing";
 import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
 import { tasksComplete } from "./simulation/mission-tasks";
@@ -51,16 +48,9 @@ import {
   type Skills,
 } from "./catalog";
 import { level, type Save, type Mission, type Vehicle } from "./model";
-import {
-  nodes,
-  nearest,
-  isWaterSite,
-  WORLD_WIDTH,
-  WORLD_HEIGHT,
-  distance,
-  type Point,
-} from "./world";
+import { distance, type Point } from "./world";
 export type Action =
+  | { type: "purchase-facility"; facility: string }
   | { type: "build"; kind: string; pos: Point }
   | { type: "buy"; kind: string; home: string }
   | { type: "hire"; home: string; count: number }
@@ -228,45 +218,13 @@ export function apply(s: Save, a: Action) {
       s.people = s.people.filter((x) => x.id !== p.id);
       break;
     }
-    case "build": {
-      const reason = buildReason(s, a.kind, a.pos);
-      if (reason) throw Error(reason);
-      const t = bt(a.kind);
-      if (level(s) < t.level) throw Error(`Freischaltung ab Stufe ${t.level}.`);
-      if (
-        !Number.isFinite(a.pos.x) ||
-        !Number.isFinite(a.pos.y) ||
-        a.pos.x < 0 ||
-        a.pos.y < 0 ||
-        a.pos.x > WORLD_WIDTH ||
-        a.pos.y > WORLD_HEIGHT
-      )
-        throw Error("Bauplatz außerhalb des Spielgebiets.");
-      const pos = nodes[nearest(a.pos)];
-      if (
-        s.buildings.some(
-          (b) => Math.hypot(b.pos.x - pos.x, b.pos.y - pos.y) < 20,
-        )
-      )
-        throw Error("Bauplatz bereits belegt.");
-      if (t.water && !isWaterSite(pos))
-        throw Error("Wasserrettung benötigt einen markierten Hafenbauplatz.");
-      money(s, -t.price, `Bau: ${t.name}`);
-      s.buildings.push({
-        id: simId(s),
-        owner: s.player.id,
-        type: t.id,
-        purchasePriceCents: t.price,
-        name: `${t.name} ${s.buildings.length + 1}`,
-        pos,
-        level: 1,
-        ready: s.time + BALANCE.buildSeconds,
-        organization: newStationProfile(t.id),
-        extensions: [],
-      });
-      s.tutorial = Math.max(1, s.tutorial);
+    case "build":
+      throw Error(
+        "BUILDING_PURCHASE_ONLY: Bitte einen bestehenden Standort erwerben.",
+      );
+    case "purchase-facility":
+      purchaseFacility(s, a.facility);
       break;
-    }
     case "buy": {
       const reason = purchaseReason(s, a.kind, a.home);
       if (reason) throw Error(reason);
@@ -395,12 +353,16 @@ export function apply(s: Save, a: Action) {
         const b = s.buildings.find((b) => b.id === a.id);
         if (
           !b ||
-          s.vehicles.some((v) => v.home === b.id) ||
+          s.vehicles.some(
+            (v) =>
+              v.home === b.id ||
+              (v.status === "transport" && v.destination === b.id),
+          ) ||
           s.people.some((p) => p.home === b.id && (p.vehicle || p.injury)) ||
           s.beds.some((x) => x.home === b.id)
         )
           throw Error(
-            "Wache muss ohne Fahrzeuge, Personal und Patienten sein.",
+            "Standort muss ohne Fahrzeuge, gebundenes Personal, Patienten und laufende Transporte sein.",
           );
         s.people = s.people.filter((p) => p.home !== b.id);
         s.buildings = s.buildings.filter((x) => x.id !== b.id);
@@ -413,6 +375,10 @@ export function apply(s: Save, a: Action) {
       break;
     }
     case "move": {
+      if (s.buildings.some((b) => b.id === a.id))
+        throw Error(
+          "BUILDING_PURCHASE_ONLY: Einrichtungsstandorte können nicht versetzt werden.",
+        );
       const v = s.vehicles.find((v) => v.id === a.id),
         b = s.buildings.find((b) => b.id === a.home);
       if (

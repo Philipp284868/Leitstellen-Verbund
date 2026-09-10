@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { apply, generate, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
@@ -15,7 +16,7 @@ function station(seed = 101) {
   s.generation = "readiness-core-fixed-generation";
   s.seed = seed;
   s.money = 1e9;
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  apply(s, fixturePurchase("fire", nodes[0]));
   return s;
 }
 

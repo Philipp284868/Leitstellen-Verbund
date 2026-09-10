@@ -126,15 +126,19 @@ try {
   assert.equal(siteResponse.status, 200, await siteResponse.clone().text());
   const site = await siteResponse.json();
   assert.ok(JSON.stringify(site).includes("Straße des 17. Juni"));
-  const lon = 13.324,
-    lat = 52.5142;
-  const { project } = await import(
-    pathToFileURL(resolve(".tools/runtime-fixture/projection.mjs")).href
+  const locations = await fetch(
+    origin + "/api/facilities?kind=fire&status=available",
+    { headers: { Cookie: cookie } },
   );
-  const pos = project({ lon, lat });
+  assert.equal(locations.status, 200);
+  const offers = await locations.json();
+  assert.ok(offers.offers.length);
   const action = {
     id: crypto.randomUUID(),
-    action: { type: "build", kind: "fire", pos },
+    action: {
+      type: "purchase-facility",
+      facility: offers.offers[0].facility.id,
+    },
   };
   for (let i = 0; i < 2; i++) {
     const r = await fetch(origin + "/api/action", {

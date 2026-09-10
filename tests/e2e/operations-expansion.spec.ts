@@ -55,7 +55,7 @@ test("Garagen zeigen physische Anwesenheit und behalten ihren Klappzustand über
   page,
 }, info) => {
   await login(page);
-  await openPanel(page, "Wachen");
+  await openPanel(page, "Standorte");
   const garage = page.locator(".station-garage").first();
   await garage.locator("summary").click();
   await expect(garage).toHaveAttribute("open", "");
@@ -69,7 +69,7 @@ test("Garagen zeigen physische Anwesenheit und behalten ihren Klappzustand über
   await page.screenshot({ path: info.outputPath("garage-aufgeklappt.png") });
   await page.reload();
   await enterGame(page);
-  await openPanel(page, "Wachen");
+  await openPanel(page, "Standorte");
   await expect(garage).toHaveAttribute("open", "");
   await garage.locator("summary").click();
   app.game.step(5, Date.now(), { generation: false });

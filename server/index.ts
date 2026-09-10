@@ -13,7 +13,8 @@ import { germanyProvider } from "../src/germany/world";
 import { parseMode } from "../src/mode";
 import type { Save } from "../src/model";
 import type { PublicPlayer } from "../src/presence";
-import { buildReason } from "../src/purchase";
+import { facilityResponse } from "./facilities/http";
+import { assertFacilityMigration } from "./facilities/migration";
 import { hospitalOptions } from "../src/simulation/hospitals";
 import { publicSave } from "../src/simulation/incidents";
 import { alarmSchema } from "../src/simulation/schema";
@@ -69,6 +70,12 @@ export function startServer(
   let db: Database;
   try {
     db = new Database(c.dataDir);
+    try {
+      assertFacilityMigration(db.sql);
+    } catch (error) {
+      db.close();
+      throw error;
+    }
   } catch (e) {
     release();
     throw e;
@@ -224,6 +231,17 @@ export function startServer(
           return reply(res, 200, { ok: true });
         }
         if (!session) return reply(res, 401, { error: "Bitte anmelden." });
+        if (path === "/api/facilities" && req.method === "GET") {
+          auth.limit(`facilities:${session.user_id}`, 240, 60000);
+          return reply(
+            res,
+            200,
+            facilityResponse(
+              requestUrl,
+              viewForActor(session.user_id, online(), mode).save,
+            ),
+          );
+        }
         if (path.startsWith("/api/geo/")) {
           if (req.method !== "GET")
             return reply(res, 405, { error: "GET erforderlich." });
@@ -234,14 +252,18 @@ export function startServer(
             return reply(res, 400, { error: "Ungültiger Kartenstandort." });
           const s = viewForActor(session.user_id, online(), mode).save;
           if (path === "/api/geo/site") {
-            const kind = params.get("type") || "fire",
-              anchor = germanyProvider().nearest(p);
+            if (params.get("purpose") !== "staff")
+              return reply(res, 410, {
+                error:
+                  "BUILDING_PURCHASE_ONLY: Bitte einen bestehenden Standort erwerben.",
+              });
+            const anchor = germanyProvider().nearest(p);
             const reason =
               params.get("purpose") === "staff"
                 ? germanyProvider().isLandSite(anchor)
                   ? null
                   : "Wohn- und Arbeitsorte benötigen einen zugänglichen Straßenstandort an Land."
-                : buildReason(s, kind, p) || null;
+                : "BUILDING_PURCHASE_ONLY";
             return reply(res, 200, {
               point: { x: anchor.x, y: anchor.y },
               nodeId: anchor.id,

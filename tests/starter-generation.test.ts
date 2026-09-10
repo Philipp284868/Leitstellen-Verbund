@@ -1,3 +1,4 @@
+import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { Database } from "../server/database";
 import { Game } from "../server/game";
@@ -24,7 +25,7 @@ function starter() {
   s.seed = 123;
   s.generation = "11111111-2222-4333-8444-555555555555";
   s.player.id = "starter";
-  apply(s, { type: "build", kind: "fire", pos: sites[0] });
+  apply(s, fixturePurchase("fire", sites[0]));
   tick(s, s.time + 30, {}, false, false);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
   return s;

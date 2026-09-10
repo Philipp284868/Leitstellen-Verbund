@@ -1,4 +1,5 @@
 import { sites, fixtureDataset } from "./locations";
+import { logicFacilityCatalog } from "./facilities";
 import { meters, inBounds } from "../../../src/germany/projection";
 import {
   installGermanyProvider,
@@ -49,6 +50,7 @@ export function installLogicGeography() {
       .sort((a, b) => meters(a, center) - meters(b, center))
       .slice(0, limit);
   const provider: GermanyProvider = {
+    facilities: logicFacilityCatalog,
     dataset: fixtureDataset,
     node: (id) => anchors[id],
     nearest,

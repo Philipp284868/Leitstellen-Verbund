@@ -368,9 +368,6 @@ progress::-moz-progress-bar {
   touch-action: none;
   cursor: grab;
 }
-.map.placing {
-  cursor: crosshair;
-}
 .map-marker {
   cursor: pointer;
 }
@@ -424,18 +421,6 @@ progress::-moz-progress-bar {
   background: #12222fe8;
   color: #a8bfcb;
   font-size: 11px;
-}
-.placement-hint {
-  position: absolute;
-  top: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #e89d6e;
-  color: #14212b;
-  padding: 15px;
-  border-radius: 8px;
-  font-weight: 700;
-  white-space: nowrap;
 }
 .station-strip {
   display: flex;

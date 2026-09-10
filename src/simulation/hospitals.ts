@@ -17,6 +17,11 @@ export function hospitalOptions(
 ) {
   const publicOptions = germanyProvider()
     .hospitals(origin, 20)
+    .filter(
+      (h) =>
+        !h.facilityId ||
+        !s.buildings.some((b) => b.facility?.id === h.facilityId),
+    )
     .map(publicHospitalProfile);
   return assessHospitals(
     s,
@@ -34,7 +39,15 @@ export function hospitalOptions(
           name: b.name,
           pos: b.pos,
           capacity: b.hospital?.capacity ?? 20 * b.level,
-          open: b.hospital?.open ?? true,
+          open:
+            b.facility?.emergency === "no" ? false : (b.hospital?.open ?? true),
+          emergency: b.facility?.emergency,
+          aliases: b.facility
+            ? [
+                `public:${b.facility.id}`,
+                ...b.facility.sources.map((ref) => `public:${ref}`),
+              ]
+            : [],
           specialties: b.hospital?.specialties ?? Object.keys(specialties),
         })),
     ],
@@ -70,13 +83,14 @@ export function assessHospitals(
   }
   return options
     .map((h) => {
-      const occupied = s.beds.filter((b) => b.home === h.id).length;
+      const identities = new Set([h.id, ...(h.aliases || [])]);
+      const occupied = s.beds.filter((b) => identities.has(b.home)).length;
       const reserved = s.vehicles
         .filter(
           (v) =>
             v.status === "transport" &&
             (v.destination
-              ? v.destination === h.id
+              ? identities.has(v.destination)
               : distance(v.path.at(-1)!, h.pos) < 1),
         )
         .reduce((n, v) => n + v.patients, 0);
@@ -121,7 +135,7 @@ export function selectHospital(
     options.find((h) =>
       preference === "public"
         ? h.id.startsWith("public:")
-        : h.id === preference,
+        : h.id === preference || !!h.aliases?.includes(preference ?? ""),
     ) ?? options[0]
   );
 }

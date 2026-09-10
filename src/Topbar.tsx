@@ -211,12 +211,12 @@ export function Topbar({
         </button>
         <button
           data-tutorial="stations"
-          aria-label="Wachen"
-          title="Gebäude, Bau und Ausbau"
+          aria-label="Standorte"
+          title="Reale Standorte kaufen und verwalten"
           onClick={() => action(() => panel("stations"))}
         >
           <Building2 />
-          <span>Gebäude</span>
+          <span>Standorte</span>
         </button>
         {popup(
           "radio",

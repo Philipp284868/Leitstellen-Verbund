@@ -1,4 +1,5 @@
 import { pointAlong, polylineLength } from "../geometry";
+import type { FacilityCatalog } from "../facilities/types";
 import { meters, METERS_PER_UNIT, type Point } from "./projection";
 export { METERS_PER_UNIT, WORLD_HEIGHT, WORLD_WIDTH } from "./projection";
 export type { Point } from "./projection";
@@ -35,6 +36,9 @@ export type Hospital = Point & {
   id: string;
   name: string;
   osmLocation?: Point;
+  facilityId?: string;
+  aliases?: string[];
+  emergency?: "yes" | "no" | "unknown";
 };
 export type RoadProjection = {
   point: Point;
@@ -43,6 +47,7 @@ export type RoadProjection = {
   distance: number;
 };
 export interface GermanyProvider {
+  readonly facilities?: FacilityCatalog;
   readonly dataset: string;
   node(id: number): Anchor | undefined;
   nearest(point: Point): Anchor;

@@ -1,3 +1,4 @@
+import { fixturePurchase } from "../fixtures/germany/facilities";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -36,7 +37,7 @@ async function enter(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
 }
 async function station(page: Page, name: string) {
-  await openPanel(page, "Wachen");
+  await openPanel(page, "Standorte");
   await page.locator(".station-card").filter({ hasText: name }).click();
 }
 async function doubleClick(button: Locator) {
@@ -70,7 +71,7 @@ test.beforeEach(async ({ page }) => {
   s.missions = [];
   s.missionWait = 1e9;
   // Only setup uses the deterministic fixture; subsequent mutations use the UI.
-  apply(s, { type: "build", kind: "fire", pos: nodes[100] });
+  apply(s, fixturePurchase("fire", nodes[100]));
   tick(s, s.time + 31, {}, false, false);
   s.buildings[0].name = "Nordwache";
   s.buildings[1].name = "Südwache";

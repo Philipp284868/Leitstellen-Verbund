@@ -11,6 +11,9 @@ export type HospitalOption = {
   open: boolean;
   specialties: string[];
   profileSource?: "simulation-v1";
+  aliases?: string[];
+  facilityId?: string;
+  emergency?: "yes" | "no" | "unknown";
 };
 const profiles = [
   { name: "Basisversorgung", capacity: 30, specialties: ["general"] },
@@ -42,7 +45,10 @@ export function publicHospitalProfile(h: Hospital): HospitalOption {
     pos: { x: h.x, y: h.y },
     osmLocation: h.osmLocation,
     capacity: profile.capacity,
-    open: true,
+    open: h.emergency !== "no",
+    aliases: h.aliases?.map((ref) => `public:${ref}`),
+    facilityId: h.facilityId,
+    emergency: h.emergency ?? "unknown",
     specialties: [...profile.specialties],
     profileSource: "simulation-v1",
   };

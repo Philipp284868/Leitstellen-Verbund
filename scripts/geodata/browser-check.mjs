@@ -103,11 +103,14 @@ try {
   f.fundTestBudget(s, 10000000);
   s.tutorial = 6;
   s.missionWait = 100000;
-  const a = geo.provider
-    .querySites(f.project({ lon: 13.405, lat: 52.52 }), 100, 64)
-    .find((p) => geo.provider.isLandSite(p));
-  if (!a) throw Error("Kein zugänglicher realer Berliner Testwachenstandort.");
-  f.apply(s, { type: "build", kind: "fire", pos: { x: a.x, y: a.y } });
+  const facility = geo.provider.facilities.query({
+    kind: "fire",
+    usable: true,
+    search: "Berlin",
+    limit: 100,
+  })[0];
+  if (!facility) throw Error("Kein realer Berliner Teststandort im Katalog.");
+  f.apply(s, { type: "purchase-facility", facility: facility.id });
   f.tick(s, s.buildings[0].ready + 1, {}, false, false);
   const home = s.buildings[0].id;
   s.buildings[0].organization = {

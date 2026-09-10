@@ -1,3 +1,4 @@
+import { buyRealFacility } from "../fixtures/real-facility";
 /** Real-data load harness. Only the dedicated temporary benchmark save is opened. */
 import { randomUUID } from "node:crypto";
 import { mkdtemp, writeFile } from "node:fs/promises";
@@ -13,7 +14,7 @@ import { prepareGeography } from "../../server/germany/runtime";
 import { RouteSnapshotEncoder } from "../../server/germany/snapshots";
 import { startServer } from "../../server/index";
 import { apply, tick } from "../../src/engine";
-import { meters, project, unproject } from "../../src/germany/projection";
+import { project, unproject } from "../../src/germany/projection";
 import type {
   RouteSnapshotFrame,
   SnapshotDocument,
@@ -212,7 +213,7 @@ try {
   s.tutorial = 6;
   s.missionWait = 100000;
   status(
-    "Baue 20 Testwachen auf echten Berliner Straßenstandorten und erweitere regulär auf Stufe 8.",
+    "Erwerbe 20 reale Wachen im Berliner Umland und erweitere regulär auf Stufe 8.",
   );
   for (let i = 0; i < 20; i++) {
     const angle = (i / 20) * Math.PI * 2;
@@ -220,18 +221,7 @@ try {
       lon: 13.405 + Math.cos(angle) * 0.17,
       lat: 52.52 + Math.sin(angle) * 0.1,
     });
-    const candidates = geo.provider.querySites(center, 100, 64);
-    const site = candidates.find(
-      (p) =>
-        geo.provider.isLandSite(p) &&
-        s.buildings.every((b) => meters(b.pos, p) > 500) &&
-        connected(p),
-    );
-    if (!site)
-      throw Error(
-        `Kein realer geeigneter Straßenstandort für Testwache${i + 1}.`,
-      );
-    apply(s, { type: "build", kind: "fire", pos: { x: site.x, y: site.y } });
+    buyRealFacility(s, "fire", center);
     const home = s.buildings.at(-1)!;
     tick(s, home.ready + 1, {}, false, false);
     for (let level = 1; level < 8; level++) {
