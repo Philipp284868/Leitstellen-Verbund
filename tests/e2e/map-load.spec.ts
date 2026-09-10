@@ -54,6 +54,12 @@ test(
       await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
         "Regionsfahrzeug 99-4",
       );
+      // Keep the original overview/search/selection budget separate from the
+      // additional 100-input drag measurement below (software rendering varies).
+      const overviewSearchSelectMs = Date.now() - before;
+      const viewport = page.getByTestId("germany-map-viewport");
+      await expect(viewport).toHaveAttribute("data-camera-moving", "false");
+      const cameraBeforeDrag = await viewport.getAttribute("data-camera");
       await page.evaluate(() => {
         const measurement = {
           gaps: [] as number[],
@@ -74,6 +80,10 @@ test(
       await page.mouse.move(650, 550, { steps: 50 });
       await page.mouse.move(1100, 430, { steps: 50 });
       await page.mouse.up();
+      await expect(viewport).not.toHaveAttribute(
+        "data-camera",
+        cameraBeforeDrag!,
+      );
       const dragMs = performance.now() - dragStart;
       const gaps = await page.evaluate(() => {
         const m = (
@@ -97,7 +107,7 @@ test(
         activeTrips: 100,
         missions: 40,
         loginAndOpenMs: readyMs,
-        overviewSearchSelectMs: Date.now() - before,
+        overviewSearchSelectMs,
         markerElements: await page.locator(".germany-marker").count(),
       };
       await writeFile(

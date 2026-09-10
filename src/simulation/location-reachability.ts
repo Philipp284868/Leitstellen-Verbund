@@ -238,7 +238,16 @@ export function incidentSiteReference(t: Template, pos: Point) {
     const provider = germanyProvider(),
       evidence = provider.incidentEvidence?.(pos, kind);
     if (!evidence) return;
-    const road = projectRoad(pos);
+    let road;
+    try {
+      road = projectRoad(pos);
+    } catch (error) {
+      // A confirmed OSM place can still lack a usable road entrance. Skip
+      // that candidate; outages and malformed provider responses remain errors.
+      if (error instanceof GermanyRoutingError && error.code === "no-route")
+        return;
+      throw error;
+    }
     if (road.distance > LOCATION_POLICY.repairRadius) return;
     access = { ...road.point };
     siteRef = evidence.reference;

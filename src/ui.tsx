@@ -13,6 +13,20 @@ import {
   useDialogDirty,
 } from "./dialog-state";
 export const credits = formatMoney;
+function exposedByDetails(element: HTMLElement) {
+  for (
+    let parent = element.parentElement;
+    parent;
+    parent = parent.parentElement
+  ) {
+    if (parent.tagName !== "DETAILS" || parent.hasAttribute("open")) continue;
+    const summary = Array.from(parent.children).find(
+      (child) => child.tagName === "SUMMARY",
+    );
+    if (!summary?.contains(element)) return false;
+  }
+  return true;
+}
 export const playerColor = (id: string) =>
   `hsl(${150 + ([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 160)} 55% 68%)`;
 export function Modal({
@@ -106,6 +120,7 @@ export function Modal({
                 (el) =>
                   !el.matches(":disabled") &&
                   !el.closest("[hidden], [inert]") &&
+                  exposedByDetails(el) &&
                   (el.tabIndex >= 0 || el.isContentEditable) &&
                   el.getClientRects().length > 0 &&
                   getComputedStyle(el).visibility !== "hidden",

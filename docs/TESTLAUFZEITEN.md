@@ -2,14 +2,14 @@
 
 ## Frisch gemessener Ausgangsstand
 
-Commit `03e9878217292f1879d71a01a7722e87dc14eb1d`, [vollständiger Actions-Lauf 34464694146](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34464694146), Ubuntu und Node 24. Der Lauf dauerte von 10:10:55 bis 10:28:00 UTC: **17 min 05 s**, ohne eine vorherige Warteschlange. Es liefen 93 normale und zwei Lastfälle je Browser (190 Ausführungen insgesamt).
+Commit `03e9878217292f1879d71a01a7722e87dc14eb1d`, [vollständiger Actions-Lauf 34464694146](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34464694146), Ubuntu und Node 24. Der Lauf dauerte von 10:10:55 bis 10:28:00 UTC: **17 min 05 s**, ohne eine vorherige Warteschlange. Geplant waren 93 normale und zwei Lastfälle je Browser: 190 Fälle, davon tatsächlich 189 bestanden und ein Chromium-spezifischer CDP-Fall in Firefox übersprungen. Der neue Prüfplan weist diese Enginegrenze ausdrücklich aus, statt einen Skip als erfolgreichen Test mitzuzählen.
 
-| Job | Gesamtdauer | Normale Browserphase | Nachgeschaltete Lastphase |
-|---|---:|---:|---:|
-| Chromium 1 | 473 s | 387,387 s (47 Fälle) | 33,55 s |
-| Chromium 2 | 556 s | 427,311 s (46 Fälle) | 33,84 s |
-| Firefox 1 | 720 s | 630,896 s (47 Fälle) | 52,13 s |
-| Firefox 2 | 974 s | 875,488 s (46 Fälle) | 57,92 s |
+| Job        | Gesamtdauer | Normale Browserphase | Nachgeschaltete Lastphase |
+| ---------- | ----------: | -------------------: | ------------------------: |
+| Chromium 1 |       473 s | 387,387 s (47 Fälle) |                   33,55 s |
+| Chromium 2 |       556 s | 427,311 s (46 Fälle) |                   33,84 s |
+| Firefox 1  |       720 s | 630,896 s (47 Fälle) |                   52,13 s |
+| Firefox 2  |       974 s | 875,488 s (46 Fälle) |                   57,92 s |
 
 Einzeltestzeiten und Zuordnung bilden die Anfangsgewichte in `scripts/browser-costs.json`. Die Lastphase enthielt je Start rund 14–20 s Vorbereitung über die eigentliche Testzeit hinaus. Buildjob 44 s, Geodatenjob 38 s, Logik-/Paketjob 369 s. Download, Installation und Artefakttransport sind in den Jobzeiten enthalten, nicht in den Browserphasen. Die parallel laufenden Jobs dürfen nicht zur verstrichenen Gesamtdauer addiert werden.
 

@@ -10,6 +10,7 @@ import {
 } from "../server/location-migration";
 import { tick } from "../src/engine";
 import { GermanyRoutingError } from "../src/germany/errors";
+import { germanyProvider } from "../src/germany/world";
 import { validate } from "../src/model";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { publicSave } from "../src/simulation/incidents";
@@ -25,6 +26,28 @@ import * as traffic from "../src/simulation/traffic";
 afterEach(() => {
   vi.restoreAllMocks();
   clearReachabilityCache();
+});
+it("verwirft belegte Orte ohne Straßenanbindung, verdeckt aber keine Routerausfälle oder kaputten Daten", () => {
+  const s = phaseFixture("owner", "bin");
+  const road = vi.spyOn(germanyProvider(), "projectRoad");
+  road.mockImplementation(() => {
+    throw new GermanyRoutingError("Keine Zufahrt", "no-route");
+  });
+  expect(
+    verifyIncidentLocation(s, mt("bin"), s.missions[0].pos),
+  ).toBeUndefined();
+  road.mockImplementation(() => {
+    throw new GermanyRoutingError("Router offline", "unavailable");
+  });
+  expect(() => verifyIncidentLocation(s, mt("bin"), s.missions[0].pos)).toThrow(
+    "Router offline",
+  );
+  road.mockImplementation(() => {
+    throw Error("Beschädigte Antwort");
+  });
+  expect(() => verifyIncidentLocation(s, mt("bin"), s.missions[0].pos)).toThrow(
+    "Beschädigte Antwort",
+  );
 });
 
 it.each([64, 65])(

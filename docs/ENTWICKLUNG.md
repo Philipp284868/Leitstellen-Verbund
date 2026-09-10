@@ -12,20 +12,20 @@ Für ein neues vollständig eingerichtetes Spiel aus GitHub gilt [AMP-Neuinstall
 
 ## Befehle
 
-| Befehl | Tatsächlicher Umfang |
-|---|---|
-| `check:quick` | Projektgrenzen, Links, Format, Lint, vollständige Typprüfung |
-| `build` | Deutschland-Client und -Server; Typen und Bundlebudgets immer |
-| `build:fast` | Gleiche Abnahme, unveränderte intakte Ausgaben aus dem Buildcache |
-| `start` / `preview` | Derselbe Deutschland-Start einschließlich lokalem Router |
-| `test:quick -- --base SHA` | Abhängigkeitsauswahl zwischen expliziter Basis und HEAD; bei unbekannter/breiter Änderung vollständige Logik |
-| `test:unit` / `test:integration` | Nach tatsächlichen Laufzeitimporten ermittelte, disjunkte Gruppen |
-| `test` / `test:ci` | Alle Logik-/Integrationstests und Node-Betriebsprüfungen |
-| `test:e2e` | Alle normalen Browserfälle in Chromium und Firefox, ein Start |
-| `test:e2e -- --load` | Isolierte Kartenlastfälle, ein Worker, kein vorgelagerter normaler Durchlauf |
-| `test:full` | Build, Struktur, Lint, gesamte Logik, Node, Audit und normale Browser |
-| `node scripts/ci-plan.mjs --profile full --base SHA` | Maschinenlesbarer vollständiger GitHub-Abnahmeplan |
-| `clean` | Nur Vorschau; ausdrücklicher Bereinigungsaufruf schützt Daten und Verknüpfungen |
+| Befehl                                               | Tatsächlicher Umfang                                                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `check:quick`                                        | Projektgrenzen, Links, Format, Lint, vollständige Typprüfung                                                 |
+| `build`                                              | Deutschland-Client und -Server; Typen und Bundlebudgets immer                                                |
+| `build:fast`                                         | Gleiche Abnahme, unveränderte intakte Ausgaben aus dem Buildcache                                            |
+| `start` / `preview`                                  | Derselbe Deutschland-Start einschließlich lokalem Router                                                     |
+| `test:quick -- --base SHA`                           | Abhängigkeitsauswahl zwischen expliziter Basis und HEAD; bei unbekannter/breiter Änderung vollständige Logik |
+| `test:unit` / `test:integration`                     | Nach tatsächlichen Laufzeitimporten ermittelte, disjunkte Gruppen                                            |
+| `test` / `test:ci`                                   | Alle Logik-/Integrationstests und Node-Betriebsprüfungen                                                     |
+| `test:e2e`                                           | Alle normalen Browserfälle in Chromium und Firefox, ein Start                                                |
+| `test:e2e -- --load`                                 | Isolierte Kartenlastfälle, ein Worker, kein vorgelagerter normaler Durchlauf                                 |
+| `test:full`                                          | Build, Struktur, Lint, gesamte Logik, Node, Audit und normale Browser                                        |
+| `node scripts/ci-plan.mjs --profile full --base SHA` | Maschinenlesbarer vollständiger GitHub-Abnahmeplan                                                           |
+| `clean`                                              | Nur Vorschau; ausdrücklicher Bereinigungsaufruf schützt Daten und Verknüpfungen                              |
 
 `test:full` ist die lokale Vollprüfung. Die verbindliche Linux-Produktabnahme ergänzt echte Geodatenwerkzeuge, reproduzierbares Runtime-Paket und dessen Start/Neustart. Ein lokaler Windows-Lauf ersetzt insbesondere den Linux-SIGTERM- und Symlinknachweis nicht.
 
@@ -46,6 +46,8 @@ Ein Release verlangt vollständige Abnahme und Sicherheitslauf für exakt den ak
 Schreibbare Datenbanken und Sitzungen sind pro Test getrennt. Der kleine unveränderliche Geodatenbestand wird pro Worker wiederverwendet. Szenarien springen in kurzen Simulationsschritten bis zur geprüften Bedingung; Formularprüfungen bekommen direkt einen gültigen Kontostand. Gebäudekäufe verwenden die automatische Besetzung. Allgemeine Fixtures führen kein veraltetes hire/assign aus.
 
 Browserdateien bleiben intern seriell. Zwei Worker verarbeiten unabhängige Dateien; gewichtete Shards nutzen gemessene Dateilaufzeiten aus `scripts/browser-costs.json`. Neue unbekannte Dateien erhalten ein konservatives Gewicht und werden vollständig zugeteilt.
+
+Die zusätzliche Prüfung verweigerter Clipboard-Berechtigungen verwendet das ausschließlich in Chromium verfügbare CDP-Protokoll. Sie steht ausdrücklich in `clipboard-permissions.chromium.spec.ts`; Plan, Playwright und Releaseprüfung stimmen über diesen Engineumfang überein. Der normale Supportdialog, Datenschutz und der Fallback bei fehlender Clipboard-API laufen in beiden Engines. Es gibt dafür keinen zur Laufzeit übersprungenen Firefox-Fall.
 
 [Zuordnung alter und neuer Prüfanforderungen](TESTMIGRATION.json) · [Datenbrücken](KOMPATIBILITAET.md) · [Laufzeitmessungen](TESTLAUFZEITEN.md) · [Historische Nachweise](HISTORIE.md)
 

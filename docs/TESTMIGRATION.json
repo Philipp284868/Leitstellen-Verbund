@@ -312,7 +312,10 @@
         "Support ohne Clipboard-API bietet weiterhin auswählbaren manuellen Text und löst keine Serveraktion aus",
         "Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerruft nur diese Sitzung und erhält den Spielstand"
       ],
-      "replacement": "tests/e2e/account-support.spec.ts",
+      "replacement": [
+        "tests/e2e/account-support.spec.ts",
+        "tests/e2e/clipboard-permissions.chromium.spec.ts"
+      ],
       "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
     },
     {

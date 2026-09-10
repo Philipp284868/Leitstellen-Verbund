@@ -106,6 +106,15 @@ it("Release prüft alle aktuellen Testdateien erneut gegen den gemeldeten Gesamt
     requested: "full",
   });
   expect(() => verifyCoverage(p)).not.toThrow();
+  const specific = "tests/e2e/clipboard-permissions.chromium.spec.ts";
+  expect(p.selected.chromium).toContain(specific);
+  expect(p.selected.firefox).not.toContain(specific);
+  for (const engine of ["chromium", "firefox"]) {
+    expect(p.selected[engine]).toContain("tests/e2e/account-support.spec.ts");
+    expect(p.partitions[engine].flat().sort()).toEqual(
+      [...p.selected[engine]].sort(),
+    );
+  }
   expect(() =>
     verifyCoverage({
       ...p,

@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertReleaseAcceptance, sameSet } from "./ci-contract.mjs";
+import { forEngine } from "./browser-scope.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export function releaseRun(runs, path, head) {
@@ -33,8 +34,8 @@ export function verifyCoverage(proof) {
   if (
     !sameSet(proof.selected.logic, logic) ||
     !sameSet(proof.selected.node, node) ||
-    !sameSet(proof.selected.chromium, browser) ||
-    !sameSet(proof.selected.firefox, browser)
+    !sameSet(proof.selected.chromium, forEngine(browser, "chromium")) ||
+    !sameSet(proof.selected.firefox, forEngine(browser, "firefox"))
   )
     throw Error(
       "Releaseabnahme deckt nicht das vollständige aktuelle Produkt ab.",

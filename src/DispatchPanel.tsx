@@ -240,13 +240,14 @@ export function DispatchPanel({ s, m }: { s: Save; m: Mission }) {
                         type="checkbox"
                         disabled={!!ready(v)}
                         checked={selectedReady.includes(v.id)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const checked = e.currentTarget.checked;
                           setSelected((ids) =>
-                            e.target.checked
+                            checked
                               ? [...ids, v.id]
                               : ids.filter((id) => id !== v.id),
-                          )
-                        }
+                          );
+                        }}
                       />
                       <span>
                         <b>

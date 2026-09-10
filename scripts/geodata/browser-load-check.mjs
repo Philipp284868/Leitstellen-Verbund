@@ -177,7 +177,7 @@ const report = {
     server:
       "Eigener Node-Prozess; echte Game.step/Game.view/RouteSnapshotEncoder-Aufrufe. Keine künstlichen tick-Schleifen während der Browsermessung.",
     fixture:
-      "500 regulär gekaufte HLF mit 4500 Einsatzkräften; 100 reguläre Alarmierungen zu 2 Einsätzen. Vorgegebener Testfortschritt, echte OSM-/GraphHopper-Geometrie und persistente isolierte SQLite.",
+      "500 regulär gekaufte HLF mit automatischen Besatzungen; 100 reguläre Alarmierungen zu 12 vorbereiteten Einsätzen. Vorgegebener Testfortschritt, echte OSM-/GraphHopper-Geometrie und persistente isolierte SQLite. Generatorwahl ist eine separate Prüfung.",
   },
 };
 try {
@@ -306,8 +306,8 @@ try {
   const viewport = page.getByTestId("germany-map-viewport"),
     canvas = page.getByLabel("Interaktive Karte von Deutschland");
   async function mapTools(open) {
-    const toggle = page.getByRole("button", { name: "Layer", exact: true });
-    if ((await toggle.getAttribute("aria-pressed")) !== String(open))
+    const toggle = page.getByRole("button", { name: "Karte", exact: true });
+    if ((await toggle.getAttribute("aria-expanded")) !== String(open))
       await toggle.click();
   }
   await expect(viewport).toBeVisible();

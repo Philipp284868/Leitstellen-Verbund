@@ -26,6 +26,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: /\.firefox\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
         ...(process.env.PW_EDGE ? { channel: "msedge" } : {}),
@@ -33,6 +34,7 @@ export default defineConfig({
     },
     {
       name: "firefox",
+      testIgnore: /\.chromium\.spec\.ts$/,
       use: {
         ...devices["Desktop Firefox"],
         // The Linux CI runner has no GPU. Use its real Mesa/Xvfb rendering

@@ -10,6 +10,7 @@ import {
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CI_CONTRACT, contractHash, sameSet } from "./ci-contract.mjs";
+import { forEngine } from "./browser-scope.mjs";
 
 export function changedPaths(base, head, cwd = resolve(".")) {
   if (
@@ -110,11 +111,17 @@ export async function makePlan({ head, base, paths, requested = "auto" }) {
               /\/(?:economy|ids|source-graph|ci-contract)\.test\.ts$/.test(f),
           )
         : groups.all;
-    selected.chromium = selected.firefox =
+    const selectedBrowser =
       profile === "fast"
         ? browser.filter((f) => affected(f) || f.endsWith("/game.spec.ts"))
         : browser;
-    if (!selected.logic.length || !selected.chromium.length)
+    for (const engine of ["chromium", "firefox"])
+      selected[engine] = forEngine(selectedBrowser, engine);
+    if (
+      !selected.logic.length ||
+      !selected.chromium.length ||
+      !selected.firefox.length
+    )
       throw Error("Pflicht-Prüfumfang ist leer.");
     const costs = JSON.parse(
       readFileSync("scripts/browser-costs.json", "utf8"),

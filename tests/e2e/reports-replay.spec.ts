@@ -260,6 +260,9 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
       Math.round(30000 * Math.sin((i * Math.PI * 2 * 440) / 44100)),
       44 + i * 2,
     );
+  await expect(
+    page.getByLabel("Datei für Funk", { exact: true }),
+  ).toBeEnabled();
   await page.getByLabel("Datei für Funk", { exact: true }).setInputFiles({
     name: "mein-funk.wav",
     mimeType: "audio/wav",
@@ -342,6 +345,12 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
       }),
     }),
   ).not.toContainText("mein-funk.wav");
+  await expect(page.locator(".settings-actions")).toContainText(
+    "Gespeichert auf diesem Gerät",
+  );
+  await expect(
+    page.getByLabel("Datei für Funk", { exact: true }),
+  ).toBeEnabled();
   await page.getByLabel("Datei für Funk", { exact: true }).setInputFiles({
     name: "fake.wav",
     mimeType: "audio/wav",

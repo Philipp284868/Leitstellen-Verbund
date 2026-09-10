@@ -12,7 +12,7 @@ import { Game } from "../../server/game";
 import { prepareGeography } from "../../server/germany/runtime";
 import { RouteSnapshotEncoder } from "../../server/germany/snapshots";
 import { startServer } from "../../server/index";
-import { apply, generate, tick } from "../../src/engine";
+import { apply, tick } from "../../src/engine";
 import { meters, project, unproject } from "../../src/germany/projection";
 import type {
   RouteSnapshotFrame,
@@ -25,6 +25,8 @@ import { alarm } from "../../src/simulation/dispatch";
 import { personDuty } from "../../src/simulation/staffing";
 import { vehiclePosition } from "../../src/vehicle-position";
 import { fundTestBudget } from "../money-fixture";
+import { fixtureMission } from "../fixtures/germany/mission";
+import { GermanyRoutingError } from "../../src/germany/errors";
 
 const projectRoot = resolve(process.env.LV_BENCH_PROJECT || ".");
 const output = resolve(process.env.LV_BENCH_OUTPUT!);
@@ -171,6 +173,21 @@ try {
       "Die Lastprüfung benötigt das vollständig vorbereitete echte Höhenmodell.",
     );
   const geo = geography;
+  const hub = geo.provider.nearest(project({ lon: 13.43, lat: 52.51 }));
+  const connected = (site: { x: number; y: number }) => {
+    try {
+      for (const [from, to] of [
+        [site, hub],
+        [hub, site],
+      ])
+        geo.provider.route(from, to, "road", new Set(), 80, new Map(), 1);
+      return true;
+    } catch (error) {
+      if (error instanceof GermanyRoutingError && error.code === "no-route")
+        return false;
+      throw error;
+    }
+  };
   report.dataset = geo.maps.manifest.dataset;
   report.dem = geo.maps.publicManifest().dem;
   setupDb = new Database(dataDir);
@@ -201,7 +218,8 @@ try {
     const site = candidates.find(
       (p) =>
         geo.provider.isLandSite(p) &&
-        s.buildings.every((b) => meters(b.pos, p) > 500),
+        s.buildings.every((b) => meters(b.pos, p) > 500) &&
+        connected(p),
     );
     if (!site)
       throw Error(
@@ -228,12 +246,17 @@ try {
   }
   for (const person of s.people) person.duty = personDuty(s, person);
   for (let i = 0; i < 12; i++) {
-    generate(s);
-    const mission = s.missions.at(-1)!;
-    const site = geo.provider.nearest(
-      project({ lon: 13.395 + i * 0.02, lat: 52.522 - i * 0.004 }),
-    );
-    mission.pos = { x: site.x, y: site.y };
+    const center = project({
+      lon: 13.405 + Math.cos((i * Math.PI) / 6) * 0.008,
+      lat: 52.52 + Math.sin((i * Math.PI) / 6) * 0.004,
+    });
+    const site = geo.provider.querySites(center, 100, 64).find(connected);
+    if (!site)
+      throw Error("Kein verbundener realer Einsatzort für die Lastprüfung.");
+    // Fixed load precondition. Generator selection has its own real-data and
+    // deterministic tests; every alarm below still computes a real road route.
+    const mission = fixtureMission(s, "bin", { x: site.x, y: site.y });
+    s.missions.push(mission);
     attachIncident(s, mission);
     const call = mission.control!.calls[0].id;
     callAction(s, mission, call, "accept", owner);

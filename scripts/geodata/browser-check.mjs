@@ -280,6 +280,7 @@ try {
   await expect(page.getByLabel("Karte durchsuchen")).toHaveValue("Hamburg");
   await button("Suche löschen").click();
   await mapButton("Meine Wachen");
+  await showIncidents();
   await page.locator(".mission-card").first().click();
   await button("Notruf annehmen").click();
   await expect.poll(() => incident().control.calls[0].state).toBe("active");

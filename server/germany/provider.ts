@@ -471,8 +471,9 @@ export class LocalGermanyProvider implements GermanyProvider {
         /* Try another real nearby road endpoint, never invent a connection. */
       }
     }
-    throw Error(
+    throw new GermanyRoutingError(
       "Keine geprüfte Straßenanbindung für diesen Standort verfügbar.",
+      "no-route",
     );
   }
   isWaterSite(point: Point): boolean {

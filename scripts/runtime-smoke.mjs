@@ -120,10 +120,10 @@ try {
   }
   const me = await view();
   const siteResponse = await fetch(
-    origin + "/api/geo/search?q=" + encodeURIComponent("Straße des 17. Juni"),
+    origin + "/geo/search?q=" + encodeURIComponent("Straße des 17. Juni"),
     { headers: { Cookie: cookie } },
   );
-  assert.equal(siteResponse.status, 200);
+  assert.equal(siteResponse.status, 200, await siteResponse.clone().text());
   const site = await siteResponse.json();
   assert.ok(JSON.stringify(site).includes("Straße des 17. Juni"));
   const lon = 13.324,
