@@ -2,9 +2,17 @@ import { xpForLevel, progress } from "../src/progression";
 import { it, expect } from "vitest";
 import { AudioEvents } from "../src/audio/events";
 import { fresh, type Save } from "../src/model";
-import { established } from "./e2e/fixtures";
-import { generate } from "../src/engine";
+import { phaseFixture } from "./dispatch-fixture";
+import { fixtureMission } from "./fixtures/germany/mission";
 import { parseSound, defaultSound } from "../src/audio/controller";
+// Audio observes accepted snapshots. Generator selection is covered separately;
+// this fixture supplies current staffed vehicles without generating an incident.
+const audioSnapshot = () => {
+  const save = phaseFixture("Test");
+  save.missions = [];
+  save.xp = 0;
+  return save;
+};
 const update = (s: Save) => ({
   ...structuredClone(s),
   revision: s.revision + 1,
@@ -25,11 +33,11 @@ it("normalisiert beschädigte Lautstärken und behält explizite Stummschaltung"
 });
 it("meldet neue Einsätze einmal und spielt beim Einstieg, Reload oder alten Snapshots nichts nach", () => {
   const events = new AudioEvents(),
-    s = established("Test");
+    s = audioSnapshot();
   s.revision = 10;
   expect(events.observe(s, "multi", true)).toBeNull();
   const next = update(s);
-  generate(next);
+  next.missions.push(fixtureMission(next, "bin"));
   expect(events.observe(next, "multi", true)).toBe("mission");
   expect(events.observe(next, "multi", true)).toBeNull();
   expect(events.observe(s, "multi", true)).toBeNull();
@@ -39,10 +47,10 @@ it("meldet neue Einsätze einmal und spielt beim Einstieg, Reload oder alten Sna
 });
 it("isoliert Konto, Spielgeneration und Offline-Wiederverbindung", () => {
   const events = new AudioEvents(),
-    s = established("Test");
+    s = audioSnapshot();
   events.observe(s, "multi", true);
   const next = update(s);
-  generate(next);
+  next.missions.push(fixtureMission(next, "bin"));
   expect(events.observe(next, "multi", true)).toBe("mission");
   expect(
     events.observe(
@@ -59,7 +67,7 @@ it("isoliert Konto, Spielgeneration und Offline-Wiederverbindung", () => {
 });
 it("unterscheidet Alarmierung, Ankunft, Rückkehr, Bau und Erfolg, ohne Sammelmeldungen zu stapeln", () => {
   const events = new AudioEvents();
-  let s = established("Test");
+  let s = audioSnapshot();
   events.observe(s, "multi", true);
   let next = update(s);
   next.vehicles[0].status = "travel";
@@ -84,7 +92,7 @@ it("unterscheidet Alarmierung, Ankunft, Rückkehr, Bau und Erfolg, ohne Sammelme
   s = next;
   next = update(s);
   next.receipts.push("a", "b");
-  generate(next);
+  next.missions.push(fixtureMission(next, "bin"));
   expect(events.observe(next, "multi", true)).toBe("complete");
   s = next;
   next = update(s);
