@@ -357,9 +357,25 @@ describe("sichere Standortmigration", () => {
     db.sql
       .prepare("UPDATE saves SET data=? WHERE user_id='owner'")
       .run(JSON.stringify(s));
-    expect(
-      planFacilityMigration(db.sql, logicFacilityCatalog).conflicts,
-    ).toHaveLength(1);
+    const plan = planFacilityMigration(db.sql, logicFacilityCatalog);
+    expect(plan.conflicts).toHaveLength(1);
+    expect(plan.conflicts[0]).toMatchObject({
+      name: "Meine frei gewählte Wache",
+      type: "fire",
+      position: { lon: expect.any(Number), lat: expect.any(Number) },
+      candidateDetails: expect.arrayContaining([
+        expect.objectContaining({
+          id: fixturePurchase("fire", sites[0]).facility,
+          name: expect.any(String),
+          distanceMeters: 0,
+          status: "active",
+          hasAccess: true,
+        }),
+      ]),
+    });
+    expect(() => assertFacilityMigration(db.sql)).toThrow(
+      /scripts\/facilities-maintenance.mjs/,
+    );
     const before = JSON.stringify(db.all().get("owner"));
     expect(() =>
       db.transaction(() =>

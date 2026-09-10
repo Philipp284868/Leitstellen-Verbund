@@ -10,6 +10,33 @@ import { inspectInstallation } from "./installation-storage.mjs";
 import { assertPortFree } from "./network-check.mjs";
 
 const script = fileURLToPath(import.meta.url);
+function maintenanceCommand(args) {
+  if (!Array.isArray(args) || args.some((arg) => typeof arg !== "string"))
+    throw Error("Ungültige Wartungsargumente.");
+  const [command = "facilities-preview", ...flags] = args;
+  if (!["facilities-preview", "facilities-migrate"].includes(command))
+    throw Error(
+      "Wartung erlaubt nur facilities-preview oder facilities-migrate.",
+    );
+  const seen = new Set();
+  for (let i = 0; i < flags.length; i++) {
+    const flag = flags[i];
+    if (seen.has(flag)) throw Error(`Doppeltes Wartungsargument: ${flag}`);
+    seen.add(flag);
+    if (flag === "--resolutions") {
+      if (!flags[++i] || flags[i].startsWith("--"))
+        throw Error(
+          "--resolutions benötigt den Pfad der geprüften Zuordnungsdatei.",
+        );
+    } else if (flag !== "--confirm" || command !== "facilities-migrate")
+      throw Error(`Unzulässiges Wartungsargument: ${flag}`);
+  }
+  if (command === "facilities-migrate" && !seen.has("--confirm"))
+    throw Error(
+      "Standortmigration erst nach geprüftem Trockenlauf mit --confirm ausführen.",
+    );
+  return [command, ...flags];
+}
 async function occupied(url) {
   const address = new URL(url);
   return new Promise((done) => {
@@ -33,20 +60,28 @@ export async function runGermany({
   routerUrl = "http://127.0.0.1:8989",
   startupTimeoutMs = 120000,
   shutdownTimeoutMs = 30000,
+  maintenanceArgs,
 } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw Error("Node.js 24 erforderlich.");
   programRoot = realpathSync(programRoot);
+  const maintenance =
+    maintenanceArgs === undefined
+      ? undefined
+      : maintenanceCommand(maintenanceArgs);
   const configuration = resolveConfiguration({ programRoot });
   const env = configuration.environment;
   inspectInstallation(configuration);
-  if (!existsSync(resolve(programRoot, "dist/server/index.js")))
+  const entry = maintenance ? "dist/server/cli.js" : "dist/server/index.js";
+  if (!existsSync(resolve(programRoot, entry)))
     throw Error(
-      "Deutschland-Serverbuild fehlt. Setup: node scripts/install-germany.mjs",
+      `Deutschland-Serverbuild fehlt (${entry}). Setup: node scripts/install-germany.mjs`,
     );
-  await assertPortFree(env.HOST, Number(env.PORT));
+  if (!maintenance) await assertPortFree(env.HOST, Number(env.PORT));
   console.log(
-    `Startprüfung erfolgreich. PORT ${env.PORT} (${configuration.sources.PORT}); PUBLIC_URL ${env.PUBLIC_URL} (${configuration.sources.PUBLIC_URL}). Routing wird geprüft.`,
+    maintenance
+      ? `Standortwartung: ${maintenance[0]}. Vorhandene Spiel- und Geodaten werden verwendet. Routing wird geprüft.`
+      : `Startprüfung erfolgreich. PORT ${env.PORT} (${configuration.sources.PORT}); PUBLIC_URL ${env.PUBLIC_URL} (${configuration.sources.PUBLIC_URL}). Routing wird geprüft.`,
   );
   const children = new Set();
   const startup = new AbortController();
@@ -95,11 +130,11 @@ export async function runGermany({
   process.once("SIGTERM", signal);
   process.on("message", ipc);
   if (process.connected) process.once("disconnect", signal);
-  const spawnChild = (args, router = false) => {
+  const spawnChild = (args, { router = false, ipc = true } = {}) => {
     if (stopping) return undefined;
     const child = spawn(process.execPath, args, {
       cwd: programRoot,
-      stdio: ["inherit", "inherit", "inherit", "ipc"],
+      stdio: ipc ? ["inherit", "inherit", "inherit", "ipc"] : "inherit",
       windowsHide: true,
       env,
     });
@@ -126,7 +161,7 @@ export async function runGermany({
           "Routing-Port ist bereits belegt. Bestehenden Dienst prüfen und GRAPHHOPPER_URL ausdrücklich konfigurieren.",
         );
       if (stopping) return ended;
-      spawnChild(["scripts/geodata/pipeline.mjs", "serve"], true);
+      spawnChild(["scripts/geodata/pipeline.mjs", "serve"], { router: true });
       const deadline = Date.now() + startupTimeoutMs;
       while (!stopping) {
         try {
@@ -148,6 +183,10 @@ export async function runGermany({
       env.GRAPHHOPPER_URL = routerUrl;
     }
     if (!stopping) {
+      if (maintenance) {
+        spawnChild([entry, ...maintenance], { ipc: false });
+        return ended;
+      }
       const child = spawnChild(["dist/server/index.js"]);
       const timer = setTimeout(() => {
         console.error(

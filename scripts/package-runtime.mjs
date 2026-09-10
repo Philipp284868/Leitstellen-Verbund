@@ -61,6 +61,7 @@ try {
     "data/facilities/manifest.json",
     "data/facilities/README.md",
     "scripts/start-germany.mjs",
+    "scripts/facilities-maintenance.mjs",
     "scripts/configuration.mjs",
     "scripts/installation-storage.mjs",
     "scripts/installation.mjs",

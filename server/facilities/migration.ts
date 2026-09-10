@@ -63,6 +63,10 @@ export function planFacilityMigration(
       building: string;
       facility: string;
       reason: string;
+      name: string;
+      position: ReturnType<typeof unproject>;
+      targetName: string;
+      targetPosition: ReturnType<typeof unproject>;
     }[] = [],
     conflicts: {
       owner: string;
@@ -70,6 +74,17 @@ export function planFacilityMigration(
       name: string;
       reason: string;
       candidates: string[];
+      type?: Building["type"];
+      position?: ReturnType<typeof unproject>;
+      candidateDetails?: {
+        id: string;
+        name: string;
+        distanceMeters: number;
+        position: ReturnType<typeof unproject>;
+        status: Facility["status"];
+        hasAccess: boolean;
+        sources: Facility["sources"];
+      }[];
     }[] = [];
   const saves = storedWorlds(sql);
   const matched = new Map<string, string>();
@@ -137,14 +152,35 @@ export function planFacilityMigration(
           f = undefined;
         } else matched.set(key, b.id);
       }
-      if (f) changes.push({ owner, building: b.id, facility: f.id, reason });
+      if (f)
+        changes.push({
+          owner,
+          building: b.id,
+          facility: f.id,
+          reason,
+          name: b.name,
+          position: p,
+          targetName: f.name,
+          targetPosition: unproject(f.pos),
+        });
       else
         conflicts.push({
           owner,
           building: b.id,
           name: b.name,
+          type: b.type,
+          position: p,
           reason,
           candidates: candidates.map((f) => f.id),
+          candidateDetails: candidates.map((f) => ({
+            id: f.id,
+            name: f.name,
+            distanceMeters: Math.round(meters(f.pos, b.pos)),
+            position: unproject(f.pos),
+            status: f.status,
+            hasAccess: !!f.access,
+            sources: f.sources,
+          })),
         });
     }
   // A later legacy building can collide with an already processed target too; the entire apply is blocked.
@@ -218,7 +254,7 @@ export function assertFacilityMigration(sql: DatabaseSync) {
     const conflicts = save.buildings.filter((b: Building) => !b.facility);
     if (conflicts.length)
       throw Error(
-        `FACILITY_MIGRATION_REQUIRED: Leitstelle ${row.owner} hat ${conflicts.length} noch nicht zugeordnete Einrichtungen. Server gestoppt; Bestand erhalten. Zuerst „node dist/server/cli.js facilities-preview“ und gesicherte Standortmigration ausführen.`,
+        `FACILITY_MIGRATION_REQUIRED: Leitstelle ${row.owner} hat ${conflicts.length} noch nicht zugeordnete Einrichtungen (${conflicts.map((b: Building) => b.name).join(", ")}). Server gestoppt; Bestand erhalten. AMP: App Name vorübergehend „scripts/facilities-maintenance.mjs“ für die schreibfreie Prüfung verwenden. Terminal: „node scripts/facilities-maintenance.mjs“. Danach Zuordnung prüfen und gesicherte Standortmigration ausführen. Anleitung: docs/STANDORTE.md.`,
       );
   }
 }

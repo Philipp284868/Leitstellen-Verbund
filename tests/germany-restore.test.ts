@@ -149,11 +149,11 @@ afterEach(async () => {
     });
   if (dir) rmSync(dir, { recursive: true, force: true });
 });
-async function cliCommand(args: string[]) {
+async function cliCommand(args: string[], managed = false) {
   return new Promise<{ code: number; output: string }>((done) => {
     execFile(
       process.execPath,
-      [cli, ...args],
+      [managed ? resolve("scripts/facilities-maintenance.mjs") : cli, ...args],
       {
         cwd: resolve("."),
         windowsHide: true,
@@ -178,39 +178,44 @@ async function cliCommand(args: string[]) {
   });
 }
 const restore = () => cliCommand(["restore", "--file", backup, "--confirm"]);
+function legacyStation(name = "Teststandort fire 0") {
+  const file = resolve(dataDir, "game.sqlite"),
+    sql = new DatabaseSync(file);
+  const save = JSON.parse(
+    String(
+      sql.prepare("SELECT data FROM saves WHERE user_id=?").get(owner)!.data,
+    ),
+  );
+  save.buildings.push({
+    id: "legacy-fire",
+    owner,
+    type: "fire",
+    name,
+    pos: f.project({ lon: 13.4, lat: 52.52 }),
+    level: 1,
+    ready: save.time,
+    extensions: [],
+    purchasePriceCents: 123456,
+  });
+  sql
+    .prepare("UPDATE saves SET data=? WHERE user_id=?")
+    .run(JSON.stringify(save), owner);
+  sql.close();
+  return { file, save };
+}
+
 describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", () => {
   it("migriert Altstandorte erst nach Trockenlauf und Sicherung, wiederholt sicher und stellt den Altstand tatsächlich wieder her", async () => {
-    const file = resolve(dataDir, "game.sqlite"),
-      sql = new DatabaseSync(file);
-    const save = JSON.parse(
-      String(
-        sql.prepare("SELECT data FROM saves WHERE user_id=?").get(owner)!.data,
-      ),
-    );
-    save.buildings.push({
-      id: "legacy-fire",
-      owner,
-      type: "fire",
-      name: "Teststandort fire 0",
-      pos: f.project({ lon: 13.4, lat: 52.52 }),
-      level: 1,
-      ready: save.time,
-      extensions: [],
-      purchasePriceCents: 123456,
-    });
-    sql
-      .prepare("UPDATE saves SET data=? WHERE user_id=?")
-      .run(JSON.stringify(save), owner);
-    sql.close();
+    const { file, save } = legacyStation();
     const before = readFileSync(file);
-    const preview = await cliCommand(["facilities-preview"]);
+    const preview = await cliCommand([], true);
     expect(preview.code, preview.output).toBe(0);
     expect(preview.output).toContain('"ready": true');
     expect(readFileSync(file)).toEqual(before);
-    const rejected = await cliCommand(["facilities-migrate"]);
+    const rejected = await cliCommand(["facilities-migrate"], true);
     expect(rejected.code).not.toBe(0);
     expect(readFileSync(file)).toEqual(before);
-    const result = await cliCommand(["facilities-migrate", "--confirm"]);
+    const result = await cliCommand(["facilities-migrate", "--confirm"], true);
     expect(result.code, result.output).toBe(0);
     const saved = JSON.parse(
       result.output.slice(
@@ -251,6 +256,83 @@ describe("Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität", 
     } finally {
       restoredDb.close();
     }
+  }, 60000);
+  it("zeigt bei einer frei benannten Altwache Kandidaten und verlangt eine belegte Zuordnung", async () => {
+    const { file } = legacyStation("Feuerwehrwache 1");
+    const before = readFileSync(file);
+    const preview = await cliCommand([], true);
+    expect(preview.code, preview.output).toBe(0);
+    const report = JSON.parse(
+      preview.output.slice(
+        preview.output.indexOf("{"),
+        preview.output.lastIndexOf("}") + 1,
+      ),
+    );
+    expect(report).toMatchObject({ readOnly: true, ready: false, changes: [] });
+    expect(report.conflicts[0]).toMatchObject({
+      owner,
+      building: "legacy-fire",
+      name: "Feuerwehrwache 1",
+      type: "fire",
+      position: { lon: expect.closeTo(13.4, 5), lat: expect.closeTo(52.52, 5) },
+      candidateDetails: [
+        expect.objectContaining({
+          id: "fixture:fire:0",
+          name: "Teststandort fire 0",
+        }),
+      ],
+    });
+    expect(readFileSync(file)).toEqual(before);
+    const rejected = await cliCommand(
+      ["facilities-migrate", "--confirm"],
+      true,
+    );
+    expect(rejected.code).not.toBe(0);
+    expect(readFileSync(file)).toEqual(before);
+    expect(
+      readdirSync(dataDir).some((p) => p.startsWith("pre-facilities-")),
+    ).toBe(false);
+    const resolutions = resolve(dir, "Geprüfte Zuordnung.json");
+    writeFileSync(
+      resolutions,
+      JSON.stringify([
+        {
+          owner,
+          building: "legacy-fire",
+          facility: "fixture:fire:0",
+          evidence:
+            "Synthetische Prüfwache am identischen dokumentierten Standort.",
+        },
+      ]),
+    );
+    const checked = await cliCommand(
+      ["facilities-preview", "--resolutions", resolutions],
+      true,
+    );
+    expect(checked.code, checked.output).toBe(0);
+    expect(checked.output).toContain('"ready": true');
+    expect(readFileSync(file)).toEqual(before);
+    const migrated = await cliCommand(
+      ["facilities-migrate", "--resolutions", resolutions, "--confirm"],
+      true,
+    );
+    expect(migrated.code, migrated.output).toBe(0);
+    const after = new f.Database(dataDir);
+    try {
+      expect(after.all().get(owner)!.buildings[0].facility?.id).toBe(
+        "fixture:fire:0",
+      );
+    } finally {
+      after.close();
+    }
+    const lockFile = resolve(dataDir, "server.lock");
+    writeFileSync(lockFile, JSON.stringify({ pid: process.pid }));
+    const locked = readFileSync(file);
+    const refused = await cliCommand([], true);
+    expect(refused.code).not.toBe(0);
+    expect(refused.output).toContain("bereits gesperrt");
+    expect(readFileSync(file)).toEqual(locked);
+    expect(readFileSync(lockFile, "utf8")).toContain(String(process.pid));
   }, 60000);
   it.each(["different", "missing"])(
     "weist migration-preview bei %s PBF-Metadaten schreibgeschützt zurück",

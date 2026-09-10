@@ -55,14 +55,17 @@ Die Kaufaktion akzeptiert ausschließlich `purchase-facility` mit einer Standort
 
 **Kein Datenreset.** Datenbankschema 19 ergänzt Besitzrechte. Eine geografische Zuordnung alter frei platzierter Gebäude erfolgt ausdrücklich **nicht automatisch**. Beim Start mit noch ungebundenen Altgebäuden hält der Server mit `FACILITY_MIGRATION_REQUIRED` an. Konten und Spielstände bleiben erhalten. Vor dem produktiven Versionswechsel laufende Fahrten auf dem bisherigen Stand beenden und den Server stoppen.
 
-Die Wartungsbefehle verwenden die bestehende Installation und deren Prozesssperre. Keine neue `.env` und keine geänderten Datenpfade erforderlich:
+**AMP ohne separate Shell:** Nach dem normalen Git-Update und Setup in derselben gestoppten Instanz **App Name vorübergehend auf `scripts/facilities-maintenance.mjs` setzen** und einmal starten. Ohne Argumente wird ausschließlich der Trockenlauf ausgeführt. Die Ausgabe enthält die betroffenen Gebäude mit Namen, Typ und Koordinaten sowie nahe Katalogeinträge mit Namen, IDs, Abstand und Zugang. Bei eindeutigen Vorschlägen stehen Ausgangs- und Zielstandort unter `changes`. Die Kandidatenliste umfasst denselben Einrichtungstyp im Umkreis von 100 Metern; eine leere Liste erlaubt keine beliebige Fernzuordnung. Den Bericht aus der AMP-Konsole auswerten. Der Wartungsprozess beendet sich danach absichtlich; das ist noch kein laufendes Spiel.
+
+Der Wartungsstart lädt dieselbe Konfiguration, startet bei Bedarf selbst den Routingdienst und beendet nur seinen eigenen Dienst nach der Prüfung. Ein ausdrücklich über `GRAPHHOPPER_URL` konfigurierter externer Router bleibt unverändert. Die bestehenden Prozesssperren verhindern Wartung während des Spielbetriebs. Keine neue `.env` und keine geänderten Datenpfade erforderlich. In einem Terminal innerhalb der Programmwurzel entsprechen dem:
 
 ```sh
-node dist/server/cli.js facilities-preview
-node dist/server/cli.js facilities-migrate --confirm
+node scripts/facilities-maintenance.mjs
+# Erst nach geprüftem Bericht mit ready=true:
+node scripts/facilities-maintenance.mjs facilities-migrate --confirm
 ```
 
-Der Trockenlauf liest nur und prüft den Zugang mit dem vorhandenen Router. Auch gespeicherte persönliche Übungen werden erhalten und zugeordnet; ihre Kennung erscheint als `practice:Benutzer-ID` und kollidiert nicht mit dem Livebesitz. Automatische Vorschläge verlangen denselben Typ und normalisierten Namen innerhalb von 60 Metern; die bloß nächste Wache genügt nicht. Fehlender eindeutiger Bezug, mehrfach beanspruchte Standorte und eine Verschiebung während laufender Fahrten werden als konkrete Konflikte ausgegeben. **Ein einziger ungelöster Konflikt blockiert die gesamte Umstellung.**
+Der Trockenlauf liest nur und prüft den Zugang mit dem Router. `ready=true` bedeutet, dass eine bestätigte Umstellung möglich ist; durchgeführt ist sie damit noch nicht. Auch gespeicherte persönliche Übungen werden erhalten und zugeordnet; ihre Kennung erscheint als `practice:Benutzer-ID` und kollidiert nicht mit dem Livebesitz. Automatische Vorschläge verlangen denselben Typ und normalisierten Namen innerhalb von 60 Metern; die bloß nächste Wache genügt nicht. Fehlender eindeutiger Bezug, mehrfach beanspruchte Standorte und eine Verschiebung während laufender Fahrten werden als konkrete Konflikte ausgegeben. **Ein einziger ungelöster Konflikt blockiert die gesamte Umstellung.**
 
 Belegte Einzelfälle können in einer JSON-Zuordnungsdatei stehen:
 
@@ -78,11 +81,15 @@ Belegte Einzelfälle können in einer JSON-Zuordnungsdatei stehen:
 ```
 
 ```sh
-node dist/server/cli.js facilities-preview --resolutions zuordnungen.json
-node dist/server/cli.js facilities-migrate --resolutions zuordnungen.json --confirm
+node scripts/facilities-maintenance.mjs facilities-preview --resolutions zuordnungen.json
+node scripts/facilities-maintenance.mjs facilities-migrate --resolutions zuordnungen.json --confirm
 ```
 
-Vor dem Schreiben entsteht eine konsistente, integritätsgeprüfte Sicherung `pre-facilities-…sqlite` im vorhandenen Datenverzeichnis. Die Ausgabe nennt den genauen Pfad. Gebäude-IDs, bezahlte Werte, Kontostände, Besetzung, Fahrzeuge, AAO und Historien bleiben erhalten. Ein zweiter Migrationslauf erzeugt keine neuen Käufe oder Besatzungen. Rücksicherung bei gestopptem Server:
+**Bestätigte Umstellung nur über AMP:** Wenn kein Terminal verfügbar ist, kann der oben geprüfte Migrationsbefehl einmalig als **App Setup Commands** eingetragen und über die Setup-/Update-Funktion ausgeführt werden. Vorher den normalen Setup-Befehl notieren und anschließend wieder auf `node scripts/install-germany.mjs` zurückstellen. Bei expliziten Zuordnungen die geprüfte JSON-Datei zuvor in der Programmwurzel ablegen. Den Migrationsbefehl nicht als dauerhaften Pre-start-Befehl eintragen. Bei einem Fehler den Bericht klären; keine Pfade austauschen und keine Datenbank löschen.
+
+Vor dem Schreiben entsteht eine konsistente, integritätsgeprüfte Sicherung `pre-facilities-…sqlite` im vorhandenen Datenverzeichnis. Die Ausgabe nennt den genauen Pfad. Gebäude-IDs, bezahlte Werte, Kontostände, Besetzung, Fahrzeuge, AAO und Historien bleiben erhalten. Ein zweiter Migrationslauf erzeugt keine neuen Käufe oder Besatzungen. Nach erfolgreicher Umstellung in AMP **App Name wieder auf `scripts/start-germany.mjs`** stellen und normal starten. Erst „Spiel bereit“ bestätigt den Spielbetrieb.
+
+Die direkten Befehle `node dist/server/cli.js facilities-preview` und `facilities-migrate` bleiben für betreute Wartung verfügbar, benötigen jedoch einen bereits laufenden Router. Für den direkten CLI-Aufruf zur Rücksicherung bei gestopptem Server ebenfalls zuerst den vorhandenen externen Router verwenden oder `node scripts/geodata/pipeline.mjs serve` in einem getrennten Terminal starten:
 
 ```sh
 node dist/server/cli.js restore --file /tatsaechlicher/pfad/pre-facilities-…sqlite --confirm

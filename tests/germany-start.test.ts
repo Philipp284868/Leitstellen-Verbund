@@ -154,6 +154,15 @@ beforeEach(async () => {
   `,
   );
   await writeFile(
+    resolve(app, "dist/server/cli.js"),
+    `
+    import {appendFileSync} from 'node:fs';
+    appendFileSync(process.env.LV_FIXTURE_LOG, 'maintenance-started '+process.pid+' '+JSON.stringify(process.argv.slice(2))+'\\n');
+    console.log('maintenance-router '+process.env.GRAPHHOPPER_URL);
+    setTimeout(()=>process.exit(Number(process.env.LV_FIXTURE_EXIT||0)),Number(process.env.LV_FIXTURE_DELAY_CLI||0));
+  `,
+  );
+  await writeFile(
     resolve(app, "scripts/geodata/pipeline.mjs"),
     `
     import {createServer} from 'node:http';
@@ -173,7 +182,7 @@ beforeEach(async () => {
     harness,
     `
     const {runGermany} = await import(process.env.LV_FIXTURE_START_MODULE);
-    process.exit(await runGermany({programRoot:process.env.LV_FIXTURE_ROOT,routerUrl:process.env.LV_FIXTURE_ROUTER||'http://127.0.0.1:8989',startupTimeoutMs:1000,shutdownTimeoutMs:500}));
+    process.exit(await runGermany({programRoot:process.env.LV_FIXTURE_ROOT,routerUrl:process.env.LV_FIXTURE_ROUTER||'http://127.0.0.1:8989',startupTimeoutMs:1000,shutdownTimeoutMs:500,maintenanceArgs:process.env.LV_FIXTURE_MAINTENANCE?JSON.parse(process.env.LV_FIXTURE_MAINTENANCE):undefined}));
   `,
   );
 });
@@ -193,6 +202,98 @@ afterEach(async () => {
 });
 
 describe("Deutschland-Start und Bestandsschutz", () => {
+  it("führt die AMP-Standardprüfung mit eigenem Router aus und wartet auf das Ende der Wartung statt eine Spielbereitschaft", async () => {
+    const router = `http://127.0.0.1:${await port()}`;
+    const before = await readFile(resolve(data, "game.sqlite"));
+    const result = await launch({
+      LV_FIXTURE_ROUTER: router,
+      LV_FIXTURE_MAINTENANCE: "[]",
+      LV_FIXTURE_DELAY_CLI: "1200",
+    }).ended;
+    expect(result.code, result.output).toBe(0);
+    expect(result.output).toContain(`maintenance-router ${router}`);
+    expect(await events()).toContain('["facilities-preview"]');
+    expect(await events()).toContain("router-stopped");
+    expect(await events()).not.toContain("game-started");
+    expect(await readFile(resolve(data, "game.sqlite"))).toEqual(before);
+  });
+  it("lässt einen externen Router und den Spielport unberührt und reicht Wartungsfehler weiter", async () => {
+    const server = createServer((socket) => socket.end());
+    await new Promise<void>((done) =>
+      server.listen(gamePort, "127.0.0.1", done),
+    );
+    try {
+      const result = await launch({
+        GRAPHHOPPER_URL: `http://127.0.0.1:${gamePort}`,
+        LV_FIXTURE_MAINTENANCE: JSON.stringify([
+          "facilities-migrate",
+          "--resolutions",
+          "Zuordnung mit Leerzeichen.json",
+          "--confirm",
+        ]),
+        LV_FIXTURE_EXIT: "7",
+      }).ended;
+      expect(result.code, result.output).toBe(7);
+      expect(await events()).toContain(
+        '"Zuordnung mit Leerzeichen.json","--confirm"',
+      );
+      expect(await events()).not.toMatch(/router-started|game-started/);
+      expect(server.listening).toBe(true);
+    } finally {
+      await new Promise<void>((done) => server.close(() => done()));
+    }
+  });
+  it.each([
+    ["restore", "--confirm"],
+    ["facilities-migrate"],
+    ["facilities-preview", "--confirm"],
+    ["facilities-preview", "--resolutions"],
+    [
+      "facilities-preview",
+      "--resolutions",
+      "a.json",
+      "--resolutions",
+      "b.json",
+    ],
+  ])(
+    "verwirft ungültige oder unbestätigte Wartungsargumente vor Prozessstart: %j",
+    async (...args) => {
+      const result = await launch({
+        LV_FIXTURE_MAINTENANCE: JSON.stringify(args),
+      }).ended;
+      expect(result.code).toBe(1);
+      expect(await events()).toBe("");
+    },
+  );
+  it("startet bei Routing-Timeout keine Wartung und beendet den eigenen Router", async () => {
+    const result = await launch({
+      LV_FIXTURE_ROUTER: `http://127.0.0.1:${await port()}`,
+      LV_FIXTURE_MAINTENANCE: "[]",
+      LV_FIXTURE_DELAY: "10000",
+    }).ended;
+    expect(result.code, result.output).toBe(1);
+    expect(result.output).toContain(
+      "Routingdienst wurde nicht rechtzeitig bereit",
+    );
+    expect(await events()).toContain("router-stopped");
+    expect(await events()).not.toContain("maintenance-started");
+  });
+  it("beendet bei AMP-Stopp sowohl die Wartung ohne IPC als auch den eigenen Router", async () => {
+    const run = launch({
+      LV_FIXTURE_ROUTER: `http://127.0.0.1:${await port()}`,
+      LV_FIXTURE_MAINTENANCE: "[]",
+      LV_FIXTURE_DELAY_CLI: "10000",
+    });
+    await event("maintenance-started");
+    run.child.send({ type: "shutdown" });
+    const result = await run.ended;
+    expect(result.code, result.output).toBe(0);
+    expect(await events()).toContain("router-stopped");
+    for (const pid of (await events()).matchAll(
+      /(?:maintenance|router)-started (\d+)/g,
+    ))
+      expect(() => process.kill(Number(pid[1]), 0)).toThrow();
+  });
   it("reports an occupied game port before launching any child", async () => {
     const server = createServer();
     await new Promise<void>((done) =>

@@ -1,8 +1,9 @@
 import { build } from "esbuild";
 import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { execFile, execFileSync, spawn } from "node:child_process";
+import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
+import { promisify } from "node:util";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { createServer } from "node:net";
@@ -59,23 +60,24 @@ try {
   const port = listener.address().port;
   await new Promise((done) => listener.close(done));
   const origin = `http://127.0.0.1:${port}`;
+  const environment = {
+    ...process.env,
+    NODE_ENV: "production",
+    HOST: "127.0.0.1",
+    PORT: String(port),
+    PUBLIC_URL: origin,
+    DATA_DIR: dataDir,
+    TRUSTED_PROXIES: "",
+    ALLOW_HTTP: "true",
+    GEODATA_DIR: runtime.geodataDir,
+    GRAPHHOPPER_URL: runtime.routerUrl,
+  };
   async function start() {
     let output = "";
     child = spawn(process.execPath, ["dist/server/index.js"], {
       cwd: appDir,
       stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        NODE_ENV: "production",
-        HOST: "127.0.0.1",
-        PORT: String(port),
-        PUBLIC_URL: origin,
-        DATA_DIR: dataDir,
-        TRUSTED_PROXIES: "",
-        ALLOW_HTTP: "true",
-        GEODATA_DIR: runtime.geodataDir,
-        GRAPHHOPPER_URL: runtime.routerUrl,
-      },
+      env: environment,
     });
     child.stdout.on("data", (b) => (output += b));
     child.stderr.on("data", (b) => (output += b));
@@ -164,8 +166,27 @@ try {
   assert.equal(after.save.money, before.save.money);
   assert.deepEqual(after.save.buildings, before.save.buildings);
   await stop();
+  const database = join(dataDir, "game.sqlite");
+  const databaseBefore = await readFile(database);
+  const preview = await promisify(execFile)(
+    process.execPath,
+    ["scripts/facilities-maintenance.mjs"],
+    {
+      cwd: appDir,
+      env: environment,
+      timeout: 30000,
+      encoding: "utf8",
+    },
+  );
+  assert.match(preview.stdout, /"readOnly": true/);
+  assert.match(preview.stdout, /"ready": true/);
+  assert.deepEqual(
+    await readFile(database),
+    databaseBefore,
+    "Paket-Wartung verändert den Bestand nicht",
+  );
   console.log(
-    "Runtime-Paket bestanden: echter Start, Website, Registrierung, Multiplayer-Spielstand, sauberer Stopp, persistenter Neustart.",
+    "Runtime-Paket bestanden: echter Start, Website, Registrierung, Multiplayer-Spielstand, sauberer Stopp, persistenter Neustart, schreibfreie Standortwartung aus dem Archiv.",
   );
 } finally {
   if (child) {

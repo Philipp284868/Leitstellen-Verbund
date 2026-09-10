@@ -2,6 +2,8 @@
 
 **Standortumstellung:** Vor dem ersten Start mit bestehenden frei platzierten Gebäuden den [Trockenlauf und die gesicherte Standortmigration](STANDORTE.md) ausführen. Bei ungelösten Zuordnungen hält der Server mit `FACILITY_MIGRATION_REQUIRED` an; kein Datenreset und keine neuen `.env`-Pfade. Der Standortkatalog kommt mit dem normalen Git-Build.
 
+**Wenn AMP bereits diesen Fehler zeigt:** Nach Update/Setup vorübergehend **App Name = `scripts/facilities-maintenance.mjs`** setzen und einmal starten. Das führt die schreibfreie Standortprüfung einschließlich Routingstart aus und beendet sich anschließend. Den Bericht mit `changes`, `conflicts` und `ready` prüfen; erst danach die [bestätigte Migration](STANDORTE.md#bestehende-spielstände-vor-dem-ersten-start-umstellen) durchführen. Für den Spielbetrieb anschließend wieder `scripts/start-germany.mjs` verwenden.
+
 | AMP-Feld                   | Wert                                                                                                   |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
 | App Download Type          | Git Repository                                                                                         |
