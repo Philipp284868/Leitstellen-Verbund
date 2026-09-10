@@ -93,6 +93,18 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       args.push(query.kind);
     }
     if (query.usable) where.push("f.usable=1");
+    if (query.offerFilter) {
+      const { kinds, owned, available } = query.offerFilter;
+      const canBuy = kinds.length
+        ? `(f.usable=1 AND f.kind IN (${kinds.map(() => "?").join(",")}))`
+        : "0";
+      where.push(available ? canBuy : `NOT ${canBuy}`);
+      args.push(...kinds);
+      if (owned.length) {
+        where.push(`f.id NOT IN (${owned.map(() => "?").join(",")})`);
+        args.push(...owned);
+      }
+    }
     if (query.ids) {
       if (!query.ids.length) return [];
       const ids = query.ids.slice(0, 150);

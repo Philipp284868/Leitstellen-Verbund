@@ -52,6 +52,11 @@ export type FacilityQuery = {
   kind?: FacilityKind;
   ids?: string[];
   usable?: boolean;
+  offerFilter?: {
+    kinds: FacilityKind[];
+    owned: string[];
+    available: boolean;
+  };
   limit?: number;
 };
 export type FacilityCluster = {

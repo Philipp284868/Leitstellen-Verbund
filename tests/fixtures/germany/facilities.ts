@@ -56,6 +56,12 @@ export const logicFacilityCatalog: FacilityCatalog = {
       .filter(
         (f) =>
           (!q.kind || f.kind === q.kind) &&
+          (!q.offerFilter ||
+            (!q.offerFilter.owned.includes(f.id) &&
+              (f.status === "active" &&
+                !!f.access &&
+                q.offerFilter.kinds.includes(f.kind)) ===
+                q.offerFilter.available)) &&
           (!q.ids || q.ids.includes(f.id)) &&
           (!q.bbox ||
             (f.lon >= q.bbox[0] &&

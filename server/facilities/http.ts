@@ -1,3 +1,5 @@
+import { bt } from "../../src/catalog";
+import { progress } from "../../src/progression";
 import { z } from "zod";
 import { facilityKinds } from "../../src/facilities/types";
 import { germanyProvider } from "../../src/germany/world";
@@ -58,7 +60,23 @@ export function facilityResponse(url: URL, s: Save) {
     ...(status === "owned"
       ? { ids: s.buildings.flatMap((b) => (b.facility ? [b.facility.id] : [])) }
       : {}),
-    ...(status === "available" ? { usable: true } : {}),
+    ...(["available", "locked"].includes(status)
+      ? {
+          offerFilter: {
+            available: status === "available",
+            owned: s.buildings.flatMap((b) =>
+              b.facility ? [b.facility.id] : [],
+            ),
+            kinds: facilityKinds.filter(
+              (kind) =>
+                kind !== "other" &&
+                s.buildings.length < 150 &&
+                progress(s.xp).level >= bt(kind).level &&
+                s.money >= bt(kind).price,
+            ),
+          },
+        }
+      : {}),
   });
   const offers = facilities
     .map((f) => facilityOffer(s, f))
