@@ -5,7 +5,7 @@ import { afterEach, expect, it } from "vitest";
 import { Database } from "../server/database";
 import { historyPage } from "../server/history";
 import { vt } from "../src/catalog";
-import { generate, readiness, recall, tick } from "../src/engine";
+import { apply, generate, readiness, recall, tick } from "../src/engine";
 import { validate, type Save } from "../src/model";
 import { vehicleAvailability } from "../src/simulation/availability";
 import { nextCallDelay } from "../src/simulation/balance";
@@ -225,6 +225,8 @@ it("vehicle requirements recognize equivalent equipment without raw skill names"
 });
 it("arrival rate slows with an unresolved backlog and keeps the minimum in busy daytime conditions", () => {
   const s = phaseFixture("cadence");
+  s.completed = 3;
+  apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
   const before = nextCallDelay(120, s);
   s.missions.push(
     ...Array.from({ length: 200 }, () => structuredClone(s.missions[0])),
