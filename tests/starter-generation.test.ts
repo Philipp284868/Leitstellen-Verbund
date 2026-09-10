@@ -145,7 +145,9 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
       }
       for (const database of [db, continuous]) {
         const game = new Game(database);
-        for (let i = 0; i < 120; i++) game.step(1);
+        // Five-second server slices retain the same simulated interval without
+        // hundreds of redundant durable commits in the disk-backed restart test.
+        for (let i = 0; i < 24; i++) game.step(5);
       }
       const deadline = db.all().get(s.player.id)!.callPacing!.notBefore;
       db.close();
@@ -155,7 +157,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
         resumed.view(s.player.id, new Set([s.player.id]));
       expect(db.all().get(s.player.id)!.callPacing!.notBefore).toBe(deadline);
       for (const game of [resumed, new Game(continuous)])
-        for (let i = 0; i < 480; i++) game.step(1);
+        for (let i = 0; i < 96; i++) game.step(5);
       const after = db.all().get(s.player.id)!;
       expect(after.missions).toHaveLength(1);
       expect(after.missions).toEqual(

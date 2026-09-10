@@ -90,6 +90,13 @@
   max-height: 32vh;
   overflow: auto;
 }
+.dispatch-list .dispatch-approach {
+  display: block;
+  line-height: 1.5;
+  /* Reserve four lines before route estimates arrive so lower checkboxes do
+     not move away between pointer down and pointer up. Longer text stays visible. */
+  min-height: 6em;
+}
 .dispatch-area .desk-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

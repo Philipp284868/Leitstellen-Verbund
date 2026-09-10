@@ -254,7 +254,7 @@ export function DispatchPanel({ s, m }: { s: Save; m: Mission }) {
                           <VehicleIcon type={v.type} /> {v.name} · FMS{" "}
                           {s.desk.fleet[v.id]?.code ?? operativeCode(v)}
                         </b>
-                        <small>
+                        <small className="dispatch-approach">
                           {ready(v) || (
                             <>
                               <span>

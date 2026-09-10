@@ -336,6 +336,14 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   await page.setViewportSize({ width: 1366, height: 768 });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  let releaseRoutes!: () => void;
+  const routesReady = new Promise<void>((resolve) => {
+    releaseRoutes = resolve;
+  });
+  await page.route("**/api/geo/approach?**", async (route) => {
+    await routesReady;
+    await route.continue();
+  });
   await enter(page);
   await showIncidents(page);
   await showIncidents(page);
@@ -360,11 +368,19 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(
     "public:way:100000",
   );
-  await page
+  const ambulanceChoice = page
     .locator(".dispatch-list label")
     .filter({ hasText: "RTW" })
-    .locator("input")
-    .check();
+    .locator("input");
+  await ambulanceChoice.scrollIntoViewIfNeeded();
+  const beforeRoutes = await ambulanceChoice.boundingBox();
+  releaseRoutes();
+  await expect(page.locator(".dispatch-list [aria-busy=true]")).toHaveCount(0);
+  const afterRoutes = await ambulanceChoice.boundingBox();
+  expect(beforeRoutes).not.toBeNull();
+  expect(afterRoutes).not.toBeNull();
+  expect(Math.abs(afterRoutes!.y - beforeRoutes!.y)).toBeLessThan(2);
+  await ambulanceChoice.check();
   await page
     .getByRole("button", { name: "Alarmieren (1)", exact: true })
     .click();
