@@ -1,5 +1,7 @@
 # Version 2.4 – eine neue Region für Falkenried
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 ## Neue Spielkarte
 
 Das rechteckige Straßenraster ist vollständig ersetzt. Falkenried besitzt eine unregelmäßige Altstadt, geschwungene Wohnstraßen, Landstraßen nach Lindenau und Mühlendorf, einen Gewerbepark und Seebruck am Falkensee. Einzelne Häuser stehen entlang ihrer Straßen und haben unterschiedlich ausgerichtete Grundrisse. Felder, Baumgruppen, Wald, Stadtpark, ein Bach und der Fluss Falke gliedern die Landschaft.

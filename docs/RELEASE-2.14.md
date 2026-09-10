@@ -1,5 +1,7 @@
 # Version 2.14.0 – PC-Multiplayer
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Dieser Stand ist ein Release-Entwurf. Er wird nicht automatisch stabil veröffentlicht oder auf einem Spielserver installiert.
 
 - Ausschließlich serverbasierter Multiplayer; keine aktive Einzelspieler-Umschaltung oder lokale Ersatzsimulation.

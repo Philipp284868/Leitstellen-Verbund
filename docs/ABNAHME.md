@@ -1,5 +1,7 @@
 # Abnahme des AMP-Umbaus
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Die Architekturänderung ersetzt die frühere Pages-/P2P-Abnahme. Historische Nachweise sind in der Git-Historie erhalten und werden nicht als Belege für den neuen Server ausgegeben.
 
 | Anforderung                       | Implementierung / Nachweis                                                           |

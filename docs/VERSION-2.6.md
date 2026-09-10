@@ -1,5 +1,7 @@
 # Version 2.6 – Große Region, feste Echtzeit und Fahrtenübersicht
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Die Karte wächst von 1300 × 850 auf 5200 × 3400 Karteneinheiten. Bei unveränderten 12 Metern je Einheit entspricht das 62,4 × 40,8 km und der 16-fachen Fläche. Die bestehende Stadt bleibt an ihrem Platz. Rosenfeld, Hohenbrück, Eichenbach, Bergheim, Waldstein, Auenburg, Wiesental, Kirchhain, Oberwald und Steinfurt ergänzen die Region. Geschwungene Landstraßen verbinden die neuen Orte mit dem bisherigen Straßennetz. Geometrische Straßenkreuzungen sind auch im Routing verbunden.
 
 ## Karte bedienen

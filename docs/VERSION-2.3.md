@@ -1,5 +1,7 @@
 # Version 2.3 – Karte, Leitstellenoberfläche und getrennte Spielwelten
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 ## Zwei Spielstände pro Konto
 
 Im Hauptmenü zwischen **Einzelspieler** und **Multiplayer** wählen. Beide Modi laufen auf dem eigenen AMP-Server. Jeder Modus besitzt eigene Wachen, Fahrzeuge, Personal, Guthaben, Einsätze und Fortschritte. Es findet kein Transfer von Credits oder Besitz zwischen den Modi statt. Der Modus wird pro Browser-Tab gespeichert. Ein zweiter Tab kann die andere Welt öffnen; eine Verbindung und Anmeldung bleiben für beide erforderlich.

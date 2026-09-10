@@ -1,5 +1,7 @@
 # UI-Abnahme 2.13.0
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 ## Auftrag und Ausgangslage
 
 Die zwei bereitgestellten Referenzen bestimmen die Komposition: große Regionskarte, linke Menüaktionen/rechte Statuskarten im Hauptmenü; im Spiel schmale Kopf- und Fußleiste, kompakte Einsatzliste und rechte Kontextdisposition. Zuvor beanspruchten Verwaltungsnavigation, Wachenstreifen und ständig offene Kartenwerkzeuge einen erheblichen Teil der Karte; die Einsatzdisposition öffnete sich als großes modales Fenster.
@@ -18,15 +20,15 @@ Die Simulation bleibt vollständig auf dem bestehenden Server. Es gibt keine Än
 
 ## Navigation und ehrliche Grenzen
 
-| Menüpunkt | Tatsächliches Ziel |
-|---|---|
-| Weiterspielen | Aktuell bestätigter Serverbestand des gewählten Modus |
-| Neues Spiel | Erstanlage einer Wache im leeren Bestand; bestehende Leitstelle fortsetzen oder anderen Modus/Konto wählen |
-| Mehrspieler | Multiplayerbestand und dessen vorhandene Disponenten-/Nachbarleitstellenverwaltung |
-| Szenario | Durchsuchbarer Katalog der vorhandenen 41 Einsatzarten mit Anforderungen, Stufen und Belohnungen; kein neuer Szenario-Spielmodus |
-| Einstellungen | Bestehende Arbeitsplatz-, Audio-, Konto- und Darstellungsoptionen, weitere Spielbereiche |
-| Beenden | Expliziter Abmeldeablauf; anschließend kann der Tab geschlossen werden |
-| Datenschutz / Support / Deutsch | Tatsächliche Speicherinformationen, vorhandene Hilfe/Projekt-Issues, Hinweis auf die vorhandene deutsche Oberfläche |
+| Menüpunkt                       | Tatsächliches Ziel                                                                                                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Weiterspielen                   | Aktuell bestätigter Serverbestand des gewählten Modus                                                                            |
+| Neues Spiel                     | Erstanlage einer Wache im leeren Bestand; bestehende Leitstelle fortsetzen oder anderen Modus/Konto wählen                       |
+| Mehrspieler                     | Multiplayerbestand und dessen vorhandene Disponenten-/Nachbarleitstellenverwaltung                                               |
+| Szenario                        | Durchsuchbarer Katalog der vorhandenen 41 Einsatzarten mit Anforderungen, Stufen und Belohnungen; kein neuer Szenario-Spielmodus |
+| Einstellungen                   | Bestehende Arbeitsplatz-, Audio-, Konto- und Darstellungsoptionen, weitere Spielbereiche                                         |
+| Beenden                         | Expliziter Abmeldeablauf; anschließend kann der Tab geschlossen werden                                                           |
+| Datenschutz / Support / Deutsch | Tatsächliche Speicherinformationen, vorhandene Hilfe/Projekt-Issues, Hinweis auf die vorhandene deutsche Oberfläche              |
 
 Die Bilder enthalten fotorealistische Luftbilder und Ereignisfotografien. Diese Implementierung verwendet eine verfeinerte, stilisierte SVG-Karte mit echten Spielkoordinaten. Eine fotorealistische Satelliten-/3D-Rekonstruktion der Welt ist nicht Bestandteil des vorhandenen Renderers. Das Kartenbild entspricht daher nicht pixelgenau der Bildvorlage. Die Layoutstruktur, Panelpositionen und Informationshierarchie wurden dagegen direkt übernommen. Beispielnamen, fremdes Studio-Branding, erfundene Spielstunden und Beispieldaten wurden nicht in das Produkt kopiert.
 
@@ -36,12 +38,12 @@ Die Vorlage zeigt Zeitbeschleunigung; auf ausdrücklichen früheren Wunsch bleib
 
 Die Dateien sind unveränderte Browseraufnahmen der laufenden Anwendung mit einer lokalen, isolierten SQLite-Testwelt. Profil, Einsatz und Fahrzeugdaten werden tatsächlich vom Testserver geladen. Sie sind keine Mockups oder zugeschnittenen Referenzbilder. Testwelt und 1970-Simulationszeit stammen aus dem bestehenden deterministischen Testbestand; reale neue Spielstände beginnen mit dem Serverzeitpunkt.
 
-| Auflösung | Hauptmenü | In-Game-HUD |
-|---|---|---|
+| Auflösung   | Hauptmenü                                                                                                                                          | In-Game-HUD                                                                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1920 × 1080 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-1920.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-1920.png) |
 | 2560 × 1440 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-2560.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-2560.png) |
-| 1366 × 768 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-1366.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-1366.png) |
-| 390 × 844 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-390.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-390.png) |
+| 1366 × 768  | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-1366.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-1366.png) |
+| 390 × 844   | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-390.png)  | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-390.png)  |
 
 Geprüft werden vollständige Kartenfläche, sichtbare Hauptaktionen, innerhalb des Viewports liegende Kontextleiste, echte Fahrzeugauswahl, Routen, Zoom, Suche und Einstellungen. Die visuelle Gegenprüfung bewertet außerdem Hierarchie, Abstände, Kartenfokus, Lesbarkeit und die gemeinsamen Farben.
 

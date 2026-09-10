@@ -6,14 +6,18 @@ on:
         description: Vollständiger bereits vollständig geprüfter main-Commit
         required: true
         type: string
+      verify_only:
+        description: Nur Freigabe und Paketbytes prüfen, keinen Release-Entwurf erstellen
+        type: boolean
+        default: true
 permissions:
-  contents: write
+  contents: read
   actions: read
 concurrency:
   group: release-draft
   cancel-in-progress: false
 jobs:
-  draft:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -30,10 +34,6 @@ jobs:
         run: node scripts/release-draft.mjs --verify-only
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Ausschließlich das bereits abgenommene Paket als Entwurf bereitstellen
-        run: node scripts/release-draft.mjs
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -41,3 +41,25 @@ jobs:
           path: .tools/release-verification/verification.json
           include-hidden-files: true
           retention-days: 30
+  draft:
+    needs: verify
+    if: ${{ !inputs.verify_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    env:
+      RELEASE_SHA: ${{ inputs.commit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: main
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Freigabe erneut prüfen und ausschließlich getestete Paketbytes als Entwurf bereitstellen
+        run: node scripts/release-draft.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

@@ -215,6 +215,11 @@ try {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await button("Anmelden").click();
   await expect(button("Spielen")).toBeVisible();
+  await expect(page.getByTestId("germany-menu-map")).toHaveCount(2);
+  for (const scene of await page.getByTestId("germany-menu-map").all())
+    await expect(scene).toHaveAttribute("data-ready", "true", {
+      timeout: 60000,
+    });
   await capture("01-hauptmenue");
   await expect(page.locator(".germany-scene-error")).toHaveCount(0);
   await button("Spielen").click();

@@ -1,5 +1,7 @@
 # Version 2.21.0 – Einstieg, Menüs, Audio und Euro-Wirtschaft
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Dieser Release bleibt ein Entwurf. Er installiert nichts auf einem Spielserver. Sein Tag und das Laufzeitpaket beziehen sich auf den im Release angegebenen geprüften main-Commit.
 
 - Optionaler Lernweg mit 16 persistenten Kapiteln, echten Spielhandlungen und getrennten serverseitigen Übungen. Technische Hilfe, erste Lagemeldung, Brand, echte Wassernachforderung, Rückfahrt und Wiederaufnahme verwenden die vorhandene Simulation.

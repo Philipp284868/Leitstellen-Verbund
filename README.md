@@ -33,7 +33,7 @@ Direkt auf `main` in geprüften Schritten arbeiten; fremde Änderungen und Schut
 
 GitHub wählt anhand klarer Ausgangs-/Zielcommits zwischen Dokumentationsprüfung, schneller Rückmeldung, vollständiger Abnahme und vertiefter Lastprüfung. Gemeinsame Grundlagen und unbekannte Änderungen erhalten die volle Prüfung. Beide Browserengines bleiben unterstützt. Fehlende Pflichtjobs oder Testdateien verhindern den Gesamtstatus.
 
-Ein Release benötigt vollständige Abnahme, Sicherheit und passende Build-/Paketprüfsummen für exakt den aktuellen main-Commit. Eine Schnellprüfung genügt nicht. Der manuelle Releaseworkflow übernimmt das tatsächlich geprüfte Runtime-Paket und erstellt nur einen Entwurf. [Runtime-Vertrag](docs/RUNTIME-PAKET.md) · [Messungen](docs/TESTLAUFZEITEN.md) · [Zuordnung der Testanforderungen](docs/TESTMIGRATION.json).
+Ein Release benötigt vollständige Abnahme, Sicherheit und passende Build-/Paketprüfsummen für exakt den aktuellen main-Commit. Eine Schnellprüfung genügt nicht. Der manuelle Releaseworkflow prüft standardmäßig nur die Freigabe; ein Entwurf übernimmt nach ausdrücklicher Auswahl das tatsächlich geprüfte Runtime-Paket. [Aktueller Umbau und Abnahme](docs/ABNAHME-DEUTSCHLAND-ONLY.md) · [Runtime-Vertrag](docs/RUNTIME-PAKET.md) · [Messungen](docs/TESTLAUFZEITEN.md) · [Zuordnung der Testanforderungen](docs/TESTMIGRATION.json).
 
 ## Anleitungen
 

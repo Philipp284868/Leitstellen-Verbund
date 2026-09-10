@@ -1,22 +1,24 @@
 # Tatsächliche Prüfung der Einsatzlogik 2.20
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Stand: 09.09.2026. Getestet wird ausschließlich mit isolierten Testkonten, temporären SQLite-Verzeichnissen und lokalen Diensten. Kein Produktionsserver wurde aktualisiert oder zurückgesetzt. Dieser Bericht dokumentiert die lokalen Prüfnachweise; den verbindlichen CI-Status liefert der zum jeweiligen Commit gehörende GitHub-Actions-Lauf.
 
 ## Nachweisstand
 
-| Prüfung | Tatsächliches Ergebnis |
-|---|---|
-| Produktionsbuild beider vorhandenen Welten | Erfolgreich; bestehende Größenwarnung des Deutschland-Vendor-Chunks bleibt |
-| TypeScript | Erfolgreich |
-| ESLint | Erfolgreich |
-| Vollständige lokale Vitest-Regression | 1.077 Fälle: 1.075 bestanden, 1 fehlgeschlagen, 1 übersprungen |
-| Node-Betriebsprüfung unter Windows | 16 Fälle: 13 bestanden, 2 Symlink-Fehler, 1 Prozessfall mit Zeitüberschreitung |
-| Abschließende gezielte Logik-/HTTP-/Migrationsprüfungen | 74/74 bestanden in elf betroffenen Dateien |
-| Abschließende Aufgabenanzeige und Wissensprojektion | 10/10 bestanden, davon vier neue Fortschrittsfälle |
-| Vollständiger lokaler Edge-Erstlauf | 52/60 bestanden, acht veraltete Browsererwartungen fehlgeschlagen; beide Lasttests bestanden |
-| Nachprüfung der vier betroffenen Browserdateien | 17/17 bestanden nach Anpassung an die neuen Spielregeln |
-| Zusätzliche Referenzprüfung des finalen Meldetitels | 6/6 bestanden, darunter vier Desktopgrößen |
-| Zusammenhängende echte Deutschlandabnahme | Erfolgreich mit zwei authentifizierten Disponenten, echtem Router, Neustart und Wiederverbindung |
+| Prüfung                                                 | Tatsächliches Ergebnis                                                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Produktionsbuild beider vorhandenen Welten              | Erfolgreich; bestehende Größenwarnung des Deutschland-Vendor-Chunks bleibt                       |
+| TypeScript                                              | Erfolgreich                                                                                      |
+| ESLint                                                  | Erfolgreich                                                                                      |
+| Vollständige lokale Vitest-Regression                   | 1.077 Fälle: 1.075 bestanden, 1 fehlgeschlagen, 1 übersprungen                                   |
+| Node-Betriebsprüfung unter Windows                      | 16 Fälle: 13 bestanden, 2 Symlink-Fehler, 1 Prozessfall mit Zeitüberschreitung                   |
+| Abschließende gezielte Logik-/HTTP-/Migrationsprüfungen | 74/74 bestanden in elf betroffenen Dateien                                                       |
+| Abschließende Aufgabenanzeige und Wissensprojektion     | 10/10 bestanden, davon vier neue Fortschrittsfälle                                               |
+| Vollständiger lokaler Edge-Erstlauf                     | 52/60 bestanden, acht veraltete Browsererwartungen fehlgeschlagen; beide Lasttests bestanden     |
+| Nachprüfung der vier betroffenen Browserdateien         | 17/17 bestanden nach Anpassung an die neuen Spielregeln                                          |
+| Zusätzliche Referenzprüfung des finalen Meldetitels     | 6/6 bestanden, darunter vier Desktopgrößen                                                       |
+| Zusammenhängende echte Deutschlandabnahme               | Erfolgreich mit zwei authentifizierten Disponenten, echtem Router, Neustart und Wiederverbindung |
 
 Die vollständige Vitest-Prüfung ist `.tools/test-runs/2.20-final-vitest.json` zugeordnet. Der lokale Fehlfall ist `amp-autostart`: Nach dem Windows-Prozessstopp bleibt die Sperre erhalten. Der übersprungene Test betrifft DEM-Symlinks. `.tools/test-runs/2.20-node.log` hält zwei `EPERM`-Fehler beim Erstellen von Symlinks und den echten Prozessfall fest, der nach 30 Sekunden abbrach. Diese Ergebnisse werden nicht als Erfolge umgedeutet. Die vorhandene Linux-CI muss dieselben Betriebsprüfungen erfolgreich ausführen.
 

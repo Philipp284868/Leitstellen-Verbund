@@ -60,60 +60,60 @@ Erkundete Informationen erscheinen im Einsatzfenster. Zusatzpatienten, Brandübe
 
 Es gibt **50 Fahrzeuge** und **26 Fähigkeiten**. Die 20 alten Fahrzeug-IDs bleiben erhalten; 30 Fahrzeuge ergänzen Feuerwehr und Rettungsdienst. Polizei und THW verwenden weiterhin ihre bestehenden Typen. AB-Einträge sind vollständige WLF-/Abrollbehälterkombinationen mit Kosten, Mannschaft und Fähigkeiten, keine selbstfahrenden Behälter.
 
-| ID             | Fahrzeug                     | Wache  | Freischaltung | Soll-/Mindestbesatzung | Transportplätze |
-| -------------- | ---------------------------- | ------ | ------------: | ---------------------: | --------------: |
-| `tsf`          | TSF-W                        | fire   |             1 |                  6 / 4 |               0 |
-| `lf`           | LF 20                        | fire   |             2 |                  9 / 6 |               0 |
-| `hlf`          | HLF 20                       | fire   |             6 |                  9 / 6 |               0 |
-| `tlf`          | TLF 4000                     | fire   |             3 |                  3 / 3 |               0 |
-| `dlk`          | DLK 23                       | fire   |            10 |                  3 / 3 |               0 |
-| `elw`          | ELW 1                        | fire   |             8 |                  2 / 2 |               0 |
-| `rw`           | RW                           | fire   |            14 |                  3 / 3 |               0 |
-| `haz`          | GW-Gefahrgut                 | fire   |            24 |                  3 / 3 |               0 |
-| `air`          | GW-Atemschutz                | fire   |            18 |                  3 / 3 |               0 |
-| `rtw`          | RTW                          | ems    |             4 |                  2 / 2 |               1 |
-| `ktw`          | KTW                          | ems    |             4 |                  2 / 2 |               1 |
-| `nef`          | NEF                          | ems    |            11 |                  2 / 2 |               0 |
-| `rth`          | RTH                          | heli   |            30 |                  3 / 3 |               1 |
-| `fustw`        | Funkstreifenwagen            | police |             7 |                  2 / 2 |               0 |
-| `pmtw`         | Polizei-MTW                  | police |            13 |                  6 / 6 |               0 |
-| `gkw`          | GKW                          | thw    |            15 |                  9 / 9 |               0 |
-| `mzgw`         | MzGW                         | thw    |            17 |                  6 / 6 |               0 |
-| `tmtw`         | THW-MTW                      | thw    |            15 |                  6 / 6 |               0 |
-| `gww`          | GW-Wasserrettung             | water  |            20 |                  4 / 4 |               0 |
-| `boat`         | Rettungsboot                 | water  |            20 |                  2 / 2 |               0 |
-| `lf10`         | LF 10                        | fire   |             2 |                  9 / 6 |               0 |
-| `hlf10`        | HLF 10                       | fire   |             5 |                  9 / 6 |               0 |
-| `tlf2000`      | TLF 2000                     | fire   |             3 |                  3 / 3 |               0 |
-| `tlf3000`      | TLF 3000                     | fire   |             5 |                  3 / 3 |               0 |
-| `elw2`         | ELW 2                        | fire   |            32 |                  4 / 4 |               0 |
-| `kdow`         | KdoW                         | fire   |             8 |                  1 / 1 |               0 |
-| `vrw`          | VRW                          | fire   |             9 |                  3 / 3 |               0 |
-| `gwl`          | GW-L                         | fire   |            16 |                  3 / 3 |               0 |
-| `gwmess`       | GW-Mess                      | fire   |            22 |                  3 / 3 |               0 |
-| `gwt`          | GW-T                         | fire   |            16 |                  3 / 3 |               0 |
-| `abruest`      | WLF mit AB-Rüst              | fire   |            28 |                  2 / 2 |               0 |
-| `abwasser`     | WLF mit AB-Wasser            | fire   |            25 |                  2 / 2 |               0 |
-| `abschaum`     | WLF mit AB-Schaum            | fire   |            26 |                  2 / 2 |               0 |
-| `abatem`       | WLF mit AB-Atemschutz        | fire   |            26 |                  2 / 2 |               0 |
-| `abgefahrgut`  | WLF mit AB-Gefahrgut         | fire   |            30 |                  3 / 3 |               0 |
-| `sw`           | Schlauchwagen SW 2000        | fire   |            16 |                  3 / 3 |               0 |
-| `dekonp`       | Dekon-P                      | fire   |            28 |                  6 / 6 |               0 |
-| `grtw`         | GRTW                         | ems    |            34 |                  4 / 4 |               6 |
-| `naw`          | NAW                          | ems    |            14 |                  3 / 3 |               1 |
-| `itw`          | ITW                          | ems    |            26 |                  3 / 3 |               1 |
-| `ith`          | ITH                          | heli   |            38 |                  4 / 4 |               1 |
-| `rtwxl`        | RTW – erweiterte Versorgung  | ems    |            12 |                  3 / 3 |               1 |
-| `ktwb`         | KTW-B – zwei Transportplätze | ems    |             8 |                  2 / 2 |               2 |
-| `mzf`          | MZF Rettungsdienst           | ems    |            10 |                  2 / 2 |               1 |
-| `elrd`         | ELRD                         | ems    |            18 |                  2 / 2 |               0 |
-| `orgl`         | OrgL Rettungsdienst          | ems    |            22 |                  2 / 2 |               0 |
-| `lna`          | LNA                          | ems    |            24 |                  2 / 2 |               0 |
-| `segrtw`       | SEG-RTW                      | ems    |            14 |                  3 / 3 |               1 |
-| `gwsan`        | GW-San                       | ems    |            20 |                  6 / 6 |               0 |
-| `segbetreuung` | SEG-Betreuung                | ems    |            17 |                  6 / 6 |               0 |
+| ID             | Fahrzeug                           | Wache  | Freischaltung | Soll-/Mindestbesatzung | Transportplätze |
+| -------------- | ---------------------------------- | ------ | ------------: | ---------------------: | --------------: |
+| `tsf`          | TSF-W                              | fire   |             1 |                  6 / 4 |               0 |
+| `lf`           | LF 20                              | fire   |             2 |                  9 / 6 |               0 |
+| `hlf`          | HLF 20                             | fire   |             6 |                  9 / 6 |               0 |
+| `tlf`          | TLF 4000                           | fire   |             3 |                  3 / 3 |               0 |
+| `dlk`          | DLK 23                             | fire   |            10 |                  3 / 3 |               0 |
+| `elw`          | ELW 1                              | fire   |             8 |                  2 / 2 |               0 |
+| `rw`           | RW                                 | fire   |            14 |                  3 / 3 |               0 |
+| `haz`          | GW-Gefahrgut                       | fire   |            24 |                  3 / 3 |               0 |
+| `air`          | GW-Atemschutz                      | fire   |            18 |                  3 / 3 |               0 |
+| `rtw`          | RTW                                | ems    |             4 |                  2 / 2 |               1 |
+| `ktw`          | KTW                                | ems    |             4 |                  2 / 2 |               1 |
+| `nef`          | NEF                                | ems    |            11 |                  2 / 2 |               0 |
+| `rth`          | RTH                                | heli   |            30 |                  3 / 3 |               1 |
+| `fustw`        | Funkstreifenwagen                  | police |             7 |                  2 / 2 |               0 |
+| `pmtw`         | Polizei-MTW                        | police |            13 |                  6 / 6 |               0 |
+| `gkw`          | GKW                                | thw    |            15 |                  9 / 9 |               0 |
+| `mzgw`         | MzGW                               | thw    |            17 |                  6 / 6 |               0 |
+| `tmtw`         | THW-MTW                            | thw    |            15 |                  6 / 6 |               0 |
+| `gww`          | GW-Wasserrettung                   | water  |            20 |                  4 / 4 |               0 |
+| `boat`         | Zugfahrzeug mit Rettungsboot (MZB) | water  |            20 |                  4 / 4 |               0 |
+| `lf10`         | LF 10                              | fire   |             2 |                  9 / 6 |               0 |
+| `hlf10`        | HLF 10                             | fire   |             5 |                  9 / 6 |               0 |
+| `tlf2000`      | TLF 2000                           | fire   |             3 |                  3 / 3 |               0 |
+| `tlf3000`      | TLF 3000                           | fire   |             5 |                  3 / 3 |               0 |
+| `elw2`         | ELW 2                              | fire   |            32 |                  4 / 4 |               0 |
+| `kdow`         | KdoW                               | fire   |             8 |                  1 / 1 |               0 |
+| `vrw`          | VRW                                | fire   |             9 |                  3 / 3 |               0 |
+| `gwl`          | GW-L                               | fire   |            16 |                  3 / 3 |               0 |
+| `gwmess`       | GW-Mess                            | fire   |            22 |                  3 / 3 |               0 |
+| `gwt`          | GW-T                               | fire   |            16 |                  3 / 3 |               0 |
+| `abruest`      | WLF mit AB-Rüst                    | fire   |            28 |                  2 / 2 |               0 |
+| `abwasser`     | WLF mit AB-Wasser                  | fire   |            25 |                  2 / 2 |               0 |
+| `abschaum`     | WLF mit AB-Schaum                  | fire   |            26 |                  2 / 2 |               0 |
+| `abatem`       | WLF mit AB-Atemschutz              | fire   |            26 |                  2 / 2 |               0 |
+| `abgefahrgut`  | WLF mit AB-Gefahrgut               | fire   |            30 |                  3 / 3 |               0 |
+| `sw`           | Schlauchwagen SW 2000              | fire   |            16 |                  3 / 3 |               0 |
+| `dekonp`       | Dekon-P                            | fire   |            28 |                  6 / 6 |               0 |
+| `grtw`         | GRTW                               | ems    |            34 |                  4 / 4 |               6 |
+| `naw`          | NAW                                | ems    |            14 |                  3 / 3 |               1 |
+| `itw`          | ITW                                | ems    |            26 |                  3 / 3 |               1 |
+| `ith`          | ITH                                | heli   |            38 |                  4 / 4 |               1 |
+| `rtwxl`        | RTW – erweiterte Versorgung        | ems    |            12 |                  3 / 3 |               1 |
+| `ktwb`         | KTW-B – zwei Transportplätze       | ems    |             8 |                  2 / 2 |               2 |
+| `mzf`          | MZF Rettungsdienst                 | ems    |            10 |                  2 / 2 |               1 |
+| `elrd`         | ELRD                               | ems    |            18 |                  2 / 2 |               0 |
+| `orgl`         | OrgL Rettungsdienst                | ems    |            22 |                  2 / 2 |               0 |
+| `lna`          | LNA                                | ems    |            24 |                  2 / 2 |               0 |
+| `segrtw`       | SEG-RTW                            | ems    |            14 |                  3 / 3 |               1 |
+| `gwsan`        | GW-San                             | ems    |            20 |                  6 / 6 |               0 |
+| `segbetreuung` | SEG-Betreuung                      | ems    |            17 |                  6 / 6 |               0 |
 
-Die Tabellenzeile `boat` zeigt den erhaltenen Rivermere-Typ. Im Deutschland-Build heißt dieselbe ID „Zugfahrzeug mit Rettungsboot (MZB)“, benötigt vier Personen, kostet 36.000 Credits und fährt auf dem Straßengraphen zum Uferzugang.
+Die ID `boat` bezeichnet ausschließlich „Zugfahrzeug mit Rettungsboot (MZB)“, benötigt vier Personen und fährt auf dem Straßengraphen zum Uferzugang. Aktuelle Europreise stehen in der [Preistabelle](EURO-PREISE.md); ein historischer Rivermere-Bootbetrieb ist nicht mehr enthalten.
 
 Neue Fähigkeiten sind Schaummittelversorgung, Gefahrstoffmessung, Dekontamination, Intensivversorgung, Rettungsdienstführung, Betreuung, Notstrom und Beleuchtung. Der Katalogtest prüft, dass jede verlangte Fähigkeit von real kaufbaren Typen erfüllt werden kann. GRTW und KTW-B belegen mehrere tatsächliche Patientenplätze; ITW und ITH haben jeweils einen Intensivtransportplatz.
 

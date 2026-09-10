@@ -1,0 +1,23 @@
+{
+  "at": "2026-09-10T12:34:18.723Z",
+  "sourceBase": "b115785d4e3bd08cc5f41e01903441493aa0d76f",
+  "workingTree": "Updated acceptance harness and documentation; no different gameplay implementation.",
+  "browser": "chromium",
+  "dataset": "155596c0041a76f05d3b5fb03a36f2b9e26540b517fde8b4b9884c62c4fc1a90",
+  "dem": "d8b7d65b0729dddb528d1ad64ac5d989d60a2ac0d322f15fccf118eb4220801c",
+  "checks": [
+    "Echte Deutschlandkarte und HUD bereit; Gesamtübersicht",
+    "Zwei reale Browseransichten derselben Leitstelle sehen denselben Einsatz/FMS-Stand; Kamerabewegung bleibt lokal",
+    "Notruf, freie Alarmierung, reale Fahrt/FMS3, Serverneustart mit gleichem Fahrweg, Lagemeldung, Nachforderung, Abschluss und persistente Historie",
+    "Realer Bauplatz über Karte geprüft und gekauft"
+  ],
+  "routePoints": 102,
+  "tiles": {
+    "vector": 139,
+    "dem": 170
+  },
+  "pageErrors": [],
+  "failedRequests": [],
+  "screenshots": ["hauptmenue.png", "einsatz-und-anfahrt.png"],
+  "note": "Neue isolierte Testleitstelle; Spielzeit wird im Prüflauf gezielt über die echte Serverlogik fortgeschaltet. Dies ist keine Echtzeit-Leistungsmessung."
+}

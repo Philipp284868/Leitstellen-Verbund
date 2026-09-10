@@ -279,6 +279,13 @@ try {
     socket.on("framereceived", ({ payload }) => {
       const text =
         typeof payload === "string" ? payload : payload.toString("utf8");
+      report.transport ??= { count: 0, prefixes: {} };
+      report.transport.count++;
+      const prefix = text.startsWith("42[")
+        ? text.slice(0, text.indexOf(",")).slice(0, 40)
+        : text.slice(0, 2);
+      report.transport.prefixes[prefix] =
+        (report.transport.prefixes[prefix] || 0) + 1;
       if (!text.startsWith("42")) return;
       try {
         const [event, frame] = JSON.parse(text.slice(2));
@@ -310,7 +317,8 @@ try {
     if ((await toggle.getAttribute("aria-expanded")) !== String(open))
       await toggle.click();
   }
-  await expect(viewport).toBeVisible();
+  // The 500-vehicle initial snapshot must finish before measuring camera work.
+  await expect(viewport).toBeVisible({ timeout: 30000 });
   await expect(page.locator(".germany-map-message")).toHaveCount(0, {
     timeout: 60000,
   });
@@ -481,6 +489,11 @@ try {
       })
       .toBe(true);
     await expect(page.getByTestId("map-vehicle").first()).toBeVisible();
+    const incidents = page.getByRole("button", {
+      name: /^Einsatzliste (aus|ein)klappen$/,
+    });
+    if ((await incidents.getAttribute("aria-expanded")) !== "true")
+      await incidents.click();
     await page.locator(".mission-card").first().click();
   });
   await phase("03-schwenken", async () => {
@@ -515,6 +528,7 @@ try {
         async () => JSON.parse(await viewport.getAttribute("data-camera")).zoom,
       )
       .toBeCloseTo(13, 1);
+    await mapTools(true);
     for (let i = 0; i < 3; i++) {
       await page.getByLabel("Vergrößern", { exact: true }).click();
       await expect
@@ -524,6 +538,7 @@ try {
         )
         .toBeCloseTo(14 + i, 1);
     }
+    await mapTools(false);
     await canvas.focus();
     for (let i = 0; i < 5; i++) {
       await page.keyboard.press(i % 2 ? "ArrowLeft" : "ArrowRight");

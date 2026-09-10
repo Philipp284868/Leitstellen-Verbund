@@ -40,9 +40,8 @@ Domänenaktionen:
 
 - 20 auf realen Berliner Straßenstandorten gebaute und auf Stufe 8 erweiterte
   Feuerwachen.
-- 500 gekaufte HLF, 4500 eingestellte und zugeordnete Einsatzkräfte mit echten
-  importierten Standortkennungen.
-- Zwei generierte, regulär angenommene und abgefragte Einsätze.
+- 500 regulär gekaufte HLF; fertige Wachen stellen qualifizierte Besatzungen automatisch.
+- Zwölf vorbereitete, regulär angenommene und abgefragte Einsätze. Die Generatorwahl wird separat geprüft.
 - 100 einzeln alarmierte Fahrzeuge mit tatsächlichen GraphHopper-Fahrwegen,
   Fahrprofilen und FMS-Statuswechseln. Jede aktive Route muss mindestens drei
   Punkte und Abschnitte aus dem geprüften deutschen Datensatz enthalten.
@@ -94,7 +93,9 @@ pauschales Leistungsversprechen. Der Status `measured-with-findings` bedeutet,
 dass die funktionale Lastprüfung ausgeführt wurde und Auffälligkeiten gemessen
 wurden; `failed` bedeutet eine unvollständige oder fehlgeschlagene Prüfung.
 
-## Ausgeführter Deutschlandlauf vom 9. September 2026
+## Historischer Vergleichslauf vom 9. September 2026
+
+Der neue Deutschland-only-Lauf vom 10.09.2026 ist in der [aktuellen Abnahme einschließlich gemessener Leistungsgrenzen](ABNAHME-DEUTSCHLAND-ONLY.md#grenzen-des-zusätzlichen-extremtests) dokumentiert. Er verwendet zwölf vorbereitete Einsätze, automatische Besetzung und vorab bestätigte reale Verbindungen auf einem größeren Berliner Wachenring. Die folgenden Werte bleiben der ausdrücklich ältere Vergleichsstand.
 
 Die reale Messung `deutschland-last-1788909022429` wurde ohne CPU-Profiler auf
 Windows mit Node 24.19.0, Edge 152.0.4191.66, Intel Core i7-13700K,

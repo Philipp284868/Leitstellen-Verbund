@@ -39,6 +39,8 @@ Ein Job baut den Commit. Folgejobs erhalten dieselben Ausgaben und Werkzeuge, pr
 
 Ein Release verlangt vollständige Abnahme und Sicherheitslauf für exakt den aktuellen main-Commit, den aktuellen Vertrag, vollständige Dateiabdeckung sowie identische Build-/Paketprüfsummen. Der manuelle Releaseworkflow übernimmt das bereits getestete Paket; er baut kein neues ungeprüftes Paket.
 
+Der manuelle Releaseworkflow startet standardmäßig mit `verify_only: true`: Nur lesende Repository-Rechte, Paketdownload, Prüfsummen und Freigabenachweis; kein Tag und kein Entwurf. Erst die ausdrücklich ausgeschaltete Option erlaubt dem getrennten Entwurfsjob Schreibrechte. Dieser prüft den main-Stand und die Paketbytes erneut.
+
 ## Fixtures und Wartung
 
 `tests/fixtures/germany/` enthält einen kleinen technischen Berliner Ausschnitt, feste IDs/Zufallswerte und kontrollierte Zeit. Er ist kein spielbarer Ersatzdatensatz. Für Logiktests ist der externe Geodatenlieferant ein ausdrücklicher Vertragsprovider. HTTP- und Browserfälle verwenden echte Produktionsserver, SQLite und MapLibre mit kleiner SQLite/MBTiles-Datei und getrenntem Routerprozess. Parser-, Quellen-, Routing- und DEM-Verträge werden zusätzlich eigenständig geprüft.

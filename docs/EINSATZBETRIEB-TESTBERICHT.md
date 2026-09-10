@@ -1,5 +1,7 @@
 # Prüfbericht Einsatzbetrieb 2.18
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Stand: 09.09.2026. Geprüft wurde die Erweiterung des bestehenden Repositorys ab `d0eacd4` auf Version 2.18.0. Dieser Bericht unterscheidet lokale Ergebnisse und die verpflichtende Linux-CI. Er behauptet keine Installation auf dem privaten AMP-Server.
 
 ## Lokale Abschlussprüfung

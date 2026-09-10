@@ -1,8 +1,8 @@
-# Serverdaten und Sicherungen · Version 2.21
+# Serverdaten und Sicherungen · Deutschland
 
 Verbindliche Konten, gesalzene Passwort-Hashes, gehashte Sitzungstoken, Leitstellenmitgliedschaften, Spielstände, Aktions-/Belohnungsbelege und die dauerhafte Einsatzhistorie liegen im konfigurierten SQLite-`DATA_DIR`. Der Datenordner muss außerhalb des austauschbaren Programms liegen. Weltkennung und im Deutschlandbetrieb die Datensatzkennung verhindern eine Vermischung anderer Geografien. Konfiguration, Datenbank und Sicherungen werden nicht über die statische Website ausgeliefert.
 
-Schema 14 führt Geld als exakte Eurocent, kennzeichnet Währungs- und Preisversion getrennt und übernimmt automatische Gebäudebesetzung. Guthaben, Journal, Berichte, Auszahlungsbelege und inaktive Einzelspielerarchive werden konsistent umgerechnet. Freies Altguthaben erhält einen separat ausgewiesenen Kaufkraftausgleich; vorhandene Käufe und laufende Vergütungszusagen bleiben geschützt. XP sind keine Geldbeträge. [Migration, Summenprüfung und Beispiel](EURO-WIRTSCHAFT.md).
+Aktuelles Datenbankschema: 18. Welt und Datensatz werden vor schreibender Öffnung geprüft. Die erhaltene Migration auf Schema 14 führt Geld als exakte Eurocent, kennzeichnet Währungs- und Preisversion getrennt und übernimmt automatische Gebäudebesetzung. Guthaben, Journal, Berichte, Auszahlungsbelege und inaktive Einzelspielerarchive werden konsistent umgerechnet. Freies Altguthaben erhält einen separat ausgewiesenen Kaufkraftausgleich; vorhandene Käufe und laufende Vergütungszusagen bleiben geschützt. XP sind keine Geldbeträge. [Migration, Summenprüfung und Beispiel](EURO-WIRTSCHAFT.md).
 
 Persönlicher Tutorialfortschritt liegt in `tutorial_progress`; Übungswelten liegen in `training_worlds`. Beide gehören dem jeweiligen Benutzer, auch wenn mehrere Disponenten dieselbe normale Leitstelle bedienen. Übungsgeld, XP, Fahrzeuge und Berichte sind von produktiven Spielständen getrennt. Die vollständige SQLite-Sicherung enthält diese Tabellen. Ein persönlicher Übungsreset ersetzt keine normale Leitstelle. [Tutorial und Kontextschutz](TUTORIAL-2.21.md).
 

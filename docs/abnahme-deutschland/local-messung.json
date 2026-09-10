@@ -1,0 +1,63 @@
+{
+  "note": "Same Windows machine and Node 24.19.0. Dependencies and OS caches preserved. Cold build: dist moved aside. Warm: same intact generated outputs. Source base b115785 plus documentation/acceptance tooling edits; production inputs unchanged. One run per case, no inferred percentiles.",
+  "measurements": [
+    {
+      "label": "germany-only-cold-checked",
+      "commit": "b115785d4e3bd08cc5f41e01903441493aa0d76f",
+      "node": "v24.19.0",
+      "platform": "win32",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13700K",
+      "cores": 24,
+      "ram": 34114330624,
+      "startedAt": "2026-09-10T12:35:35.510Z",
+      "command": "build",
+      "cache": "preserved; caller records cold/warm preparation",
+      "exit": 0,
+      "durationMs": 7163
+    },
+    {
+      "label": "germany-only-warm",
+      "commit": "b115785d4e3bd08cc5f41e01903441493aa0d76f",
+      "node": "v24.19.0",
+      "platform": "win32",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13700K",
+      "cores": 24,
+      "ram": 34114330624,
+      "startedAt": "2026-09-10T12:35:42.969Z",
+      "command": "build:fast",
+      "cache": "preserved; caller records cold/warm preparation",
+      "exit": 0,
+      "durationMs": 3088
+    },
+    {
+      "label": "germany-only-check",
+      "commit": "b115785d4e3bd08cc5f41e01903441493aa0d76f",
+      "node": "v24.19.0",
+      "platform": "win32",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13700K",
+      "cores": 24,
+      "ram": 34114330624,
+      "startedAt": "2026-09-10T12:35:46.361Z",
+      "command": "check:quick",
+      "cache": "preserved; caller records cold/warm preparation",
+      "exit": 0,
+      "durationMs": 5908
+    },
+    {
+      "label": "germany-only-hmr",
+      "commit": "b115785d4e3bd08cc5f41e01903441493aa0d76f",
+      "node": "v24.19.0",
+      "platform": "win32",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13700K",
+      "cores": 24,
+      "ram": 34114330624,
+      "startedAt": "2026-09-10T12:35:59.655Z",
+      "command": "dev",
+      "cache": "preserved; caller records cold/warm preparation",
+      "usableLoginMs": 2840,
+      "hmrMs": 88,
+      "errors": [],
+      "exit": 0
+    }
+  ]
+}

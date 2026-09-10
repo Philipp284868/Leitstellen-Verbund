@@ -1,5 +1,7 @@
 # Kartenabnahme: Rivermere und PC-Steuerung
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Stand: 08.09.2026 · Version 2.15.0 · [Auftrag und abschließender Commit-/CI-Nachweis: Issue #26](https://github.com/Philipp284868/Leitstellen-Verbund/issues/26).
 
 ## Bestätigter Fehler und Korrektur
@@ -26,15 +28,15 @@ Schema 12 speichert Weltkennung, Seed und Generierungsversion. Vor dem Schemawec
 
 ## Tatsächlich ausgeführte Prüfungen
 
-| Prüfung | Nachweis |
-| --- | --- |
-| Produktionsbuild beider Welten inklusive Typecheck | Lokal erfolgreich |
-| Lint | Lokal erfolgreich |
-| Logik-, Sicherheits-, Migrations- und Integrationstests | 183 lokal bestanden; ausschließlich der Linux-SIGTERM-Test ist auf Windows ausgenommen |
-| Vollständige lokale Browserprüfung | 44 Abläufe in Edge 152.0.4191.66 bestanden, darunter zwei anschließend isoliert ausgeführte Lastprüfungen |
-| Abschließende gezielte Browserabnahme | Vier Eingabetests und zwei Rivermere-Tests bestanden; die Rivermere-Suite erzeugte die fünf nachstehenden Aufnahmen und die Messdatei |
-| Linux-CI der Weltintegration `875a601` | 182 Logiktests, 16 Node-Betriebstests und je 44 Browserabläufe in Chromium und Firefox erfolgreich; [Lauf 34221356426](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34221356426) |
-| CI nach den abschließenden Ergänzungen | Commitbezogene Ergebnisse und Links werden in Issue #26 festgehalten; der frühere Lauf ist kein Nachweis eines späteren Commits |
+| Prüfung                                                 | Nachweis                                                                                                                                                                                              |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Produktionsbuild beider Welten inklusive Typecheck      | Lokal erfolgreich                                                                                                                                                                                     |
+| Lint                                                    | Lokal erfolgreich                                                                                                                                                                                     |
+| Logik-, Sicherheits-, Migrations- und Integrationstests | 183 lokal bestanden; ausschließlich der Linux-SIGTERM-Test ist auf Windows ausgenommen                                                                                                                |
+| Vollständige lokale Browserprüfung                      | 44 Abläufe in Edge 152.0.4191.66 bestanden, darunter zwei anschließend isoliert ausgeführte Lastprüfungen                                                                                             |
+| Abschließende gezielte Browserabnahme                   | Vier Eingabetests und zwei Rivermere-Tests bestanden; die Rivermere-Suite erzeugte die fünf nachstehenden Aufnahmen und die Messdatei                                                                 |
+| Linux-CI der Weltintegration `875a601`                  | 182 Logiktests, 16 Node-Betriebstests und je 44 Browserabläufe in Chromium und Firefox erfolgreich; [Lauf 34221356426](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34221356426) |
+| CI nach den abschließenden Ergänzungen                  | Commitbezogene Ergebnisse und Links werden in Issue #26 festgehalten; der frühere Lauf ist kein Nachweis eines späteren Commits                                                                       |
 
 Die neuen Fälle prüfen außerdem eine echte Server-Neustartfolge mit gespeicherter Fahrt, deterministische erneute Weltgenerierung, bytegleich erhaltene SQLite-Dateien bei Weltkonflikt, fremde Objektaktionen und wiederholte Aktionen. Neue Wachen auf Flussknoten werden abgewiesen; trockene Wasserrettungsstandorte bleiben baubar.
 

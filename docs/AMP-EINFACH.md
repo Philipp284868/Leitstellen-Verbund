@@ -1,4 +1,4 @@
-# AMP-Kurzanleitung · Version 2.21
+# AMP-Kurzanleitung · Deutschland
 
 **Jeder erstellt sein eigenes normales Spielerkonto direkt auf der Spielwebsite. Es gibt keine Admin-Konten und keine Einladungen mehr.** Diese Anleitung ersetzt das frühere Admin-Dateiverfahren aus Version 2.1.
 
@@ -6,9 +6,9 @@ Aktuell ist PC-Multiplayer der einzige normale Spielmodus; ein einzelner Spieler
 
 ## Update
 
-Eine Deutschland-Instanz verwendet Branch `main`, Node.js 24, `npm Install Type: None`, Setup `node scripts/install-germany.mjs` und App Name `scripts/start-germany.mjs`. Vorhandenes Rivermere behält Setup `node scripts/amp-setup.mjs` und App Name `dist/server/index.js`. Spiel stoppen, konsistent sichern, konkret geprüften Stand aktualisieren und erfolgreichen Build abwarten. `.env.germany` beziehungsweise `.env` und dauerhafte Datenordner behalten. [Neue Deutschland-Instanz](AMP-NEUINSTALLATION.md).
+Eine Deutschland-Instanz verwendet Branch `main`, Node.js 24, `npm Install Type: None` und App Name `scripts/start-germany.mjs`. Die ausdrückliche Neuinstallation mit großem Geodatenpaket verwendet `node scripts/install-germany.mjs`; spätere Programmupdates verwenden `node scripts/amp-setup.mjs`. Spiel stoppen, konsistent sichern, konkret geprüften Stand aktualisieren und erfolgreichen Build abwarten. `.env.germany` beziehungsweise `.env` und dauerhafte Datenordner behalten. [Neue Deutschland-Instanz](AMP-NEUINSTALLATION.md).
 
-Vor dem ersten Start mit 2.21 ist eine schreibgeschützte Migrationsvorschau möglich. Der reguläre Start sichert die bisherige SQLite-Datei und migriert auf Schema 14: exakte Eurocent, separater einmaliger Kaufkraftausgleich, automatische Wachbesetzung und persönliche Tutorialtabellen. Bestehende XP, Orte, Fahrzeuge und laufende Bindungen bleiben geschützt. Keine Daten löschen. Genaue CLI-Befehle einschließlich Deutschland-Routervoraussetzung: [AMP-Migration](AMP.md#update-und-migration-auf-schema-14).
+Vor dem ersten Start ist eine schreibgeschützte Migrationsvorschau möglich. Das aktuelle Schema ist 18; bestehende Deutschlanddaten werden mit Vorabsicherung übernommen. Fiktive Rivermere-/Falkenried-Welten können mit diesem Programm nicht mehr gestartet werden. Ihr vollständiger schreibgeschützter Export bleibt über die [Kompatibilitätsbrücke](KOMPATIBILITAET.md) möglich. Keine Daten löschen oder Koordinaten umdeuten. Genaue CLI-Befehle: [AMP-Migration](AMP.md#update-sicherung-und-wiederherstellung).
 
 ## Konto anlegen
 

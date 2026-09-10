@@ -1,5 +1,7 @@
 # PC-Multiplayer: Abnahme und verbleibende Einrichtung
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Stand: 08.09.2026. Dieser Bericht trennt nachgewiesene Ergebnisse von noch ausstehender Freigabe. Der zugehörige Git-Commit und dessen Actions-Prüfung sind maßgeblich; ein früherer grüner Lauf bestätigt keinen späteren Commit.
 
 ## Produkt und Bestandsschutz
@@ -16,11 +18,11 @@ Menü: links sechs funktionierende Einstiege, rechts Profil, echter verbundener 
 
 Alle acht Aufnahmen wurden mit der gebauten Anwendung und isolierten Testkonten erzeugt. Die Werte gehören zu einer Testwelt, nicht zu einem privaten Spielerstand.
 
-| Größe | Hauptmenü | Spiel-HUD |
-|---|---|---|
+| Größe       | Hauptmenü                                                                                                                                      | Spiel-HUD                                                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1920 × 1080 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-1920.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-1920.png) |
 | 2560 × 1440 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-2560.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-2560.png) |
-| 1366 × 768 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-1366.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-1366.png) |
+| 1366 × 768  | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-1366.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-1366.png) |
 | 3440 × 1440 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-3440.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-3440.png) |
 
 Die Referenzkomposition wird übernommen, die Karte bleibt eine gezeichnete fiktive Spielkarte. Sie ist keine fotorealistische Satellitenansicht. Die Einsatzdetails zeigen tatsächlich vorhandene Notruf-/AAO-Funktionen statt einer rein dekorativen Brandfotografie. Moderne Desktopbrowser sind Zielplattform; keine Windows-EXE und keine neue mobile Version.
@@ -53,6 +55,5 @@ Der Release-Workflow erstellt nach vollständiger Prüfung ausschließlich einen
 - Auslieferung: scripts/build.mjs, scripts/sync-project-news.mjs, scripts/package-runtime.mjs, scripts/runtime-smoke.mjs, scripts/release-draft.mjs, .github/workflows und die Betriebs-/Wiki-/Abnahmedokumentation.
 
 Die vollständige Änderungsliste gegenüber 4d1c170 ist über Git nachvollziehbar. Historische Versionsberichte bleiben erhalten und sind keine aktiven Produktvorgaben.
-
 
 Zusätzliche Live-Abnahme: Die lokale Vorschau auf localhost:5173 wurde mit einem getrennten Entwicklungskonto geöffnet. Nach einem echten Backend-Neubuild verband sie sich mit erhaltenem Konto wieder. Der Entwicklungsworker erhält den Stopp per IPC, sodass Windows-Neustarts SQLite und Sperre sauber schließen. Eine zuvor verwaiste Entwicklungssperre wurde nach nachgewiesen beendetem Prozess mit dem vorhandenen CLI-unlock entfernt; keinerlei Spielbestand wurde gelöscht. Freigegebene Nachrichten besitzen nun eine einzige Quelle in src/project-news-fallback.json; Vite importiert keine Dateien aus public. Testberichte lösen keinen unnötigen Hot Reload aus. Der neue Prozess-/Neustarttest besteht lokal und bleibt in der vollständigen CI enthalten.

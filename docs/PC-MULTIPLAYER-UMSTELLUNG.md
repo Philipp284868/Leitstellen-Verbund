@@ -1,5 +1,7 @@
 # PC-Multiplayer-Umstellung
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 ## Bestandsaufnahme 08.09.2026
 
 Ausgangscommit 4d1c170 (2.13.0). main und dev lokal/remote identisch, ein Worktree, keine uncommittete Arbeit. Zwei ältere lokale Feature-Branches sind vollständig in main enthalten und remote bereits entfernt. Keine offenen PRs. Standardbranch main. Ein aktiver Workflow: Prüfung; kein Deployment-, Restart- oder Migrationsworkflow. Keine Releases, keine eigenständigen Issues vor Auftrag #19. Wiki, Discussions und Projects sind in den Repository-Einstellungen aktiviert; tatsächliche Inhalte und Zugriff werden separat geprüft.

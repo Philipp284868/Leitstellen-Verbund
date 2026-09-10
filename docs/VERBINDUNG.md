@@ -1,6 +1,6 @@
 # Verbindungskorrektur 2.2.2
 
-Diese Seite dokumentiert die ursprüngliche Verbindungskorrektur. Für aktuellen Betrieb 2.21 gelten [AMP](AMP.md) beziehungsweise die [Deutschland-Neuinstallation](AMP-NEUINSTALLATION.md). Deutschland startet über `scripts/start-germany.mjs` mit `.env.germany`; vorhandenes Rivermere behält `dist/server/index.js`. Die aktuelle SQLite-Migration wird in der AMP-Anleitung beschrieben. Ein Verbindungsproblem ist kein Grund für einen Datenreset.
+Diese Seite dokumentiert die ursprüngliche Verbindungskorrektur. Für aktuellen Betrieb gelten [AMP](AMP.md) und die [Deutschland-Neuinstallation](AMP-NEUINSTALLATION.md). Deutschland ist das einzige aktive Produkt und startet über `scripts/start-germany.mjs`. Frühere Weltstände werden über die [Datenbrücke](KOMPATIBILITAET.md) gesichert, nicht gestartet. Ein Verbindungsproblem ist kein Grund für einen Datenreset.
 
 ## Fehlerbild
 

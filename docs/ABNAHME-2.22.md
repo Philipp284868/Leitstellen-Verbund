@@ -1,5 +1,7 @@
 # Abnahme 2.22 – Funk, Notrufarbeitsplatz, Weltlagen und Einsatzorte
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Stand: 10. September 2026. Dieser Bericht beschreibt die tatsächlich implementierten Regeln und die lokalen Messungen. Der GitHub-Prüflauf ist zusätzlich am jeweiligen Commit zu kontrollieren; ein lokales Ergebnis ist keine Aussage über einen noch laufenden CI-Job oder den privaten AMP-Server.
 
 ## Bestätigte Ursachen und Änderungen

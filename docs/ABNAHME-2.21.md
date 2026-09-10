@@ -1,5 +1,7 @@
 # Abnahme 2.21.0 – Menüs, Tutorial, Euro, Besetzung und Audio
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Die Umsetzung erweitert den vorhandenen React-/TypeScript-Client und den autoritativen Node-/SQLite-Server. Die Deutschlandkarte, Authentifizierung, Socket.IO, Routing und Simulation werden weiterverwendet. Alle Testkonten, Übungen und Serverdaten der lokalen Abnahme liegen in eigens angelegten temporären Testablagen; der private AMP-Server wurde nicht verändert.
 
 ## Umfang und prüfbare Einzelberichte

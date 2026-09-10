@@ -1,6 +1,6 @@
-# Serverarchitektur · Version 2.21
+# Serverarchitektur · Deutschland
 
-Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. Website, Spiel-API und Socket.IO teilen den Anwendungsport. Der Rivermere-Build liefert `dist/client`, der Deutschland-Build `dist/germany/client` aus. Konfiguration, Quelltexte, SQLite und private Geodatenpfade werden nicht als statische Verzeichnisse veröffentlicht.
+Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. Website, Spiel-API und Socket.IO teilen den Anwendungsport. Der einzige Produktbuild liefert den Deutschlandclient aus `dist/client` und den Server aus `dist/server`. Konfiguration, Quelltexte, SQLite und private Geodatenpfade werden nicht als statische Verzeichnisse veröffentlicht.
 
 | Modul                              | Verantwortung                                                                                         |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -9,7 +9,7 @@ Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. Website, Spiel
 | src/money, src/economy             | Sichere Eurocentarithmetik, Preise, Buchungen, Finanzierung und versionierte Geldumstellung           |
 | src/simulation/building-staffing   | Automatische qualifizierte Wachbesetzung und bestandsschützende Personalübernahme                     |
 | server/config                      | Weltbezogene Konfiguration, Port, Origin, Datenpfade und Proxyvertrauen                               |
-| server/database, economy-migration | Schema 14, Transaktionen, Vorabsicherung, Migrationsplan und Summenprüfung                            |
+| server/database, economy-migration | Schema 18, Welt-/Datensatzprüfung vor Schreibzugriff, Transaktionen, Vorabsicherung und Summenprüfung |
 | server/auth, actions, workspaces   | Anmeldung, strikte Aktionsschemas, Mitgliedschaft und Eigentumsprüfung                                |
 | server/game, aid                   | Autoritative Aktionen/Ticks, ausdrückliche Nachbarhilfe und Auszahlungsbelege                         |
 | server/tutorial                    | Persönlicher Lernfortschritt, isolierte Übungswelt und Spielkontextprüfung                            |
@@ -43,7 +43,7 @@ Eine persistente monotone `playContext`-Revision und eine zusätzliche Übungssi
 
 ## Darstellung, lokale Daten und Grenzen
 
-Deutschland verwendet eine lokal ausgelieferte MapLibre-Vektorkarte mit realen Straßengeometrien, Suchindex und lokalem GraphHopper. Historisches Rivermere behält seine SVG-Karte und eigene Weltidentität. Kamerabewegung ist lokal, Fahrplan und Einsatzentscheidung serverseitig. Keine Browser-Koordinatorwahl oder P2P-Übernahme ist erforderlich.
+Deutschland verwendet eine lokal ausgelieferte MapLibre-Vektorkarte mit realen Straßengeometrien, Suchindex und lokalem GraphHopper. Die früheren fiktiven Renderer sind entfernt; ihre Daten bleiben über die begrenzte [Kompatibilitätsbrücke](KOMPATIBILITAET.md) unverändert exportierbar. Kamerabewegung ist lokal, Fahrplan und Einsatzentscheidung serverseitig. Keine Browser-Koordinatorwahl oder P2P-Übernahme ist erforderlich.
 
 Audio- und Anzeigeentwürfe werden erst mit Übernehmen lokal gespeichert. Audiodateien verlassen IndexedDB nicht; Serverbackups enthalten keine eigenen Sounds. Die Klangereignisse folgen ausschließlich freigegebenen aktuellen Ereignissen, nicht geheimer Lageinformation. [Audio](AUDIO.md).
 

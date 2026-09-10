@@ -110,6 +110,12 @@ function summary() {
     ...report,
     timings,
     memory: process.memoryUsage(),
+    transports: app
+      ? [...app.io.sockets.sockets.values()].map((socket) => ({
+          transport: socket.conn.transport.name,
+          writable: socket.conn.transport.writable,
+        }))
+      : [],
     eventLoop: {
       utilization: performance.eventLoopUtilization(eventLoopStart),
       meanMs: histogram.mean / 1e6,
@@ -211,8 +217,8 @@ try {
   for (let i = 0; i < 20; i++) {
     const angle = (i / 20) * Math.PI * 2;
     const center = project({
-      lon: 13.405 + Math.cos(angle) * 0.115,
-      lat: 52.52 + Math.sin(angle) * 0.065,
+      lon: 13.405 + Math.cos(angle) * 0.17,
+      lat: 52.52 + Math.sin(angle) * 0.1,
     });
     const candidates = geo.provider.querySites(center, 100, 64);
     const site = candidates.find(

@@ -1,5 +1,7 @@
 # Abnahme 2.12.0 – Fortschritt, Region und Fahrtmodell
 
+> Historischer Nachweis des im Dokument genannten Stands. Frühere Karten, Bedienwege und Prüfzahlen sind keine aktuelle Produktanleitung. Aktuell: [Deutschland](DEUTSCHLAND.md), [Entwicklung](ENTWICKLUNG.md), [Laufzeitmessungen](TESTLAUFZEITEN.md).
+
 Lokale Prüfung am 08.09.2026, Windows, Node 24.19.0. Fachliche Regeln, alle Freischaltungen, Migration und Einschränkungen stehen in [PROGRESSION-KARTE.md](PROGRESSION-KARTE.md). Die folgenden Ergebnisse stammen aus tatsächlich ausgeführten Prüfungen. Der jeweilige Linux-CI-Status und der geprüfte Commit sind zusätzlich im zugehörigen Pull Request unter [GitHub Actions](https://github.com/Philipp284868/Leitstellen-Verbund/actions) nachvollziehbar; dieses Dokument ersetzt keine Prüfung des aktuellen PR-Commits.
 
 ## Lokale Prüfungen
