@@ -21,7 +21,8 @@ afterEach(async () => {
   for (const s of running.splice(0)) await s.close();
 });
 async function server() {
-  const dir = await mkdtemp(resolve(tmpdir(), "lv-server-test-"));
+  const base = await mkdtemp(resolve(tmpdir(), "lv-server-test-")),
+    dir = resolve(base, "new-data");
   const port = 22000 + Math.floor(Math.random() * 15000),
     origin = `http://127.0.0.1:${port}`;
   const app = startServer(

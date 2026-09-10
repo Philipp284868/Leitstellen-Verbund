@@ -21,7 +21,6 @@ it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert n
     program = resolve(base, "app"),
     data = resolve(base, "data");
   await mkdir(program);
-  await mkdir(data);
   await cp(resolve("dist"), resolve(program, "dist"), { recursive: true });
   await symlink(
     resolve("node_modules"),
