@@ -1,11 +1,11 @@
-import { expect, it } from "vitest";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { io, type Socket } from "socket.io-client";
-import { startServer } from "../server/index";
-import { listenBrowserServer } from "./e2e/server-helper";
-import { organizationFixture } from "./phase-three-fixture";
+import { expect, it } from "vitest";
+import { startServer } from "./fixtures/germany/server";
+import { listenServer as listenBrowserServer } from "./helpers/listen-server";
+import { organizationFixture } from "./mutual-aid-fixture";
 
 it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung und Neustart erhalten; Rechte und Zusagen werden serverseitig geprüft", async () => {
   const config = {

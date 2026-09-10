@@ -1,18 +1,17 @@
-import { OrganizationTasks } from "./Organizations";
-import { MajorPanel } from "./Major";
-import type { Save, Mission } from "./model";
-import { command } from "./store";
-import { useCommandForm } from "./use-command-form";
-import { duration, kilometers } from "./travel";
-import { length, nodes } from "./world";
-import { IS_GERMANY } from "./world-choice";
-import { hazardNames } from "./simulation/hazards";
-import { conditionNames, careNames } from "./simulation/patients";
-import { faultNames } from "./simulation/faults";
-import { travelNames } from "./simulation/traffic";
-import { weatherNames, roadNames } from "./simulation/weather";
-import type { Patient } from "./simulation/dynamics-schema";
 import "./Dynamics.css";
+import { MajorPanel } from "./Major";
+import type { Mission, Save } from "./model";
+import { OrganizationTasks } from "./Organizations";
+import type { Patient } from "./simulation/dynamics-schema";
+import { faultNames } from "./simulation/faults";
+import { hazardNames } from "./simulation/hazards";
+import { careNames, conditionNames } from "./simulation/patients";
+import { travelNames } from "./simulation/traffic";
+import { roadNames, weatherNames } from "./simulation/weather";
+import { command } from "./store";
+import { duration, kilometers } from "./travel";
+import { useCommandForm } from "./use-command-form";
+import { length } from "./world";
 const states = {
   developing: "In Entwicklung",
   escalating: "Eskalierend",
@@ -61,10 +60,7 @@ export function EnvironmentPanel({ s }: { s: Save }) {
         {e.roads.map((e) => (
           <p key={e.id}>
             {roadNames[e.kind]} ·{" "}
-            {IS_GERMANY
-              ? e.roadName || `Straßenabschnitt ${e.edge[0]}–${e.edge[1]}`
-              : `${Math.round(nodes[e.edge[0]]?.x || 0)} / ${Math.round(nodes[e.edge[0]]?.y || 0)}`}{" "}
-            ·{" "}
+            {e.roadName || `Straßenabschnitt ${e.edge[0]}–${e.edge[1]}`} ·{" "}
             {e.blocked
               ? "Umleitung oder Warten erforderlich"
               : `bis zu ${e.delay} s Verzögerung`}{" "}

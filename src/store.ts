@@ -1,44 +1,56 @@
-import type { TutorialView, TrainingView } from "../server/tutorial";
 import { useSyncExternalStore } from "react";
-import { subscription } from "./external-store";
 import { io, type Socket } from "socket.io-client";
-import { ensureSocketConnection } from "./socket-connection";
-import type { Save } from "./model";
 import type { ServerAction } from "../server/actions";
+import type { TrainingView, TutorialView } from "../server/tutorial";
 import type { Action } from "./engine";
-import {
-  setNetwork,
-  resetNetwork,
-  receiveChat,
-  resetPresence,
-  presenceConnection,
-  receivePresence,
-} from "./network";
-import type { GameMode } from "./mode";
-import { createId } from "./ids";
-import { IS_GERMANY } from "./world-choice";
+import { subscription } from "./external-store";
 import {
   RouteSnapshotDecoder,
   type RouteSnapshotFrame,
 } from "./germany/snapshot";
+import { createId } from "./ids";
+import type { GameMode } from "./mode";
+import type { Save } from "./model";
+import {
+  presenceConnection,
+  receiveChat,
+  receivePresence,
+  resetNetwork,
+  resetPresence,
+  setNetwork,
+} from "./network";
+import { ensureSocketConnection } from "./socket-connection";
 export interface Snapshot {
   playContext: number;
   tutorial?: TutorialView;
   training?: TrainingView;
   mode: GameMode;
   workspace?: {
-    outgoing: { id: string; name: string }[];
+    outgoing: {
+      id: string;
+      name: string;
+    }[];
     owner: string;
     canManage: boolean;
-    members: { id: string; name: string }[];
-    invitations: { owner: string; name: string }[];
+    members: {
+      id: string;
+      name: string;
+    }[];
+    invitations: {
+      owner: string;
+      name: string;
+    }[];
   };
   save: Save | null;
   loading: boolean;
   readonly: boolean;
   error: string;
   notice: string;
-  user: { id: string; username: string; role: string } | null;
+  user: {
+    id: string;
+    username: string;
+    role: string;
+  } | null;
 }
 let snapshot: Snapshot = {
   playContext: 0,
@@ -185,8 +197,7 @@ export async function refresh() {
       // Keep the server's strict Origin, session and CSRF checks unchanged.
       transports: ["websocket", "polling"],
       tryAllTransports: true,
-      auth: (cb) =>
-        cb({ csrf, mode, ...(IS_GERMANY ? { routeSnapshots: 1 } : {}) }),
+      auth: (cb) => cb({ csrf, mode, ...{ routeSnapshots: 1 } }),
       withCredentials: true,
     });
     socket.on("connect", () => {
@@ -328,7 +339,6 @@ if (typeof window !== "undefined") {
   });
   window.addEventListener("online", () => ensureSocketConnection(socket));
 }
-
 export async function tutorialControl(data: unknown) {
   const context = requestContext();
   const result = await api("tutorial", data, context.mode, context);

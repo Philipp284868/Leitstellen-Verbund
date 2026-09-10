@@ -1,12 +1,12 @@
-import { beforeAll, expect, it } from "vitest";
 import { build } from "esbuild";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { phaseFixture } from "./phase-fixture";
+import { beforeAll, expect, it } from "vitest";
 import { publicSave } from "../src/simulation/incidents";
+import { phaseFixture } from "./dispatch-fixture";
 import type * as Client from "./fixtures/germany-client-staffing";
 
 let client: typeof Client;
@@ -21,17 +21,6 @@ beforeAll(async () => {
     format: "esm",
     packages: "external",
     loader: { ".css": "empty" },
-    define: { __LV_WORLD__: JSON.stringify("germany-1") },
-    plugins: [
-      {
-        name: "germany-world",
-        setup(b) {
-          b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-            path: resolve("src/germany/world.ts"),
-          }));
-        },
-      },
-    ],
   });
   client = await import(pathToFileURL(outfile).href);
 });

@@ -1,19 +1,19 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { listenBrowserServer } from "./server-helper";
-import { enterGame, openPanel } from "./ui-navigation";
-import { phaseFixture } from "../phase-fixture";
-import { organizationFixture } from "../phase-three-fixture";
+import type { startServer } from "../../server/index";
 import { writeWorldSituation } from "../../server/world-situation";
 import {
-  createSituation,
   advanceSituation,
+  createSituation,
 } from "../../src/simulation/world-situation";
+import { phaseFixture } from "../dispatch-fixture";
+import { organizationFixture } from "../mutual-aid-fixture";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
+import { enterGame, openPanel } from "./ui-navigation";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -347,7 +347,7 @@ test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, a
     await expect(civil).toContainText("Bereitschaft");
     const at = app.db.all().get(owner)!.buildings[0].civilProtection!.readyAt;
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await page.reload();
     await enterGame(page);
@@ -419,7 +419,7 @@ test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, a
       )
       .toBe(true);
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await page.reload();
     await enterGame(page);
@@ -574,6 +574,7 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
   await expect(card).toContainText("KatS-GW-SAN 01");
   await expect(card).toContainText("Unbekannt <script>kein Code</script>");
   await expect(card.locator("script")).toHaveCount(0);
+  await card.locator(".aid-vehicles").scrollIntoViewIfNeeded();
   await expect(card.locator(".aid-vehicles")).toContainText("Fahrt");
   await card.locator(".aid-vehicles input").first().check();
   await card
@@ -655,7 +656,7 @@ test("freie Fahrzeugwünsche werden als privater Entwurf gespeichert, nach Versa
     await card.getByText("Tatsächliche Zusagen", { exact: true }).click();
     await expect(card).toContainText("als Alternative");
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await other.reload();
     await enterGame(other);

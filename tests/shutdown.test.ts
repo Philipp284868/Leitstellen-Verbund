@@ -1,11 +1,13 @@
-import { it, expect } from "vitest";
+import { once } from "node:events";
 import { mkdtemp } from "node:fs/promises";
+import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { connect } from "node:net";
-import { once } from "node:events";
-import { startServer } from "../server/index";
+import { expect, it } from "vitest";
 import { Database } from "../server/database";
+import { installLogicGeography } from "./fixtures/germany/logic-provider";
+import { startServer } from "./fixtures/germany/server";
+import "./fixtures/germany/session";
 it("stoppt mit unvollständigen HTTP-Verbindungen begrenzt, idempotent und mit gesichertem Bestand", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-shutdown-"));
   const app = startServer({
@@ -33,6 +35,7 @@ it("stoppt mit unvollständigen HTTP-Verbindungen begrenzt, idempotent und mit g
     const closing = app.close();
     expect(app.close()).toBe(closing);
     await closing;
+    installLogicGeography();
     const restored = new Database(dir);
     try {
       expect(restored.all().get(owner)).toEqual(before);

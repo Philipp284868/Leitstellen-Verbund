@@ -1,17 +1,19 @@
-import type { Save, Mission } from "../model";
 import { mt, vt, type Skills } from "../catalog";
+import { money } from "../engine";
+import { isLandSite } from "../germany/world";
+import type { Mission, Save } from "../model";
+import { level } from "../model";
 import { nodes } from "../world";
-import { writable, record } from "./events";
+import { record, writable } from "./events";
+import { hospitalOptions } from "./hospitals";
 import { taskNames, type OrganizationAction } from "./organizations-schema";
 import {
   crewRequired,
-  personAvailable,
-  stationProfile,
   isVolunteerStation,
+  personAvailable,
   PROFESSIONAL_FIRE,
+  stationProfile,
 } from "./staffing";
-import { level } from "../model";
-import { money } from "../engine";
 export function attachOrganizations(m: Mission) {
   if (m.organization) return;
   const r = mt(m.template).requirements;
@@ -156,9 +158,8 @@ export function organizationCommand(
     if (!nodes[a.duty.homeNode] || !nodes[a.duty.workNode])
       throw Error("Wohn- oder Arbeitsort ungültig.");
     if (
-      IS_GERMANY &&
-      (!isLandSite(nodes[a.duty.homeNode]) ||
-        !isLandSite(nodes[a.duty.workNode]))
+      !isLandSite(nodes[a.duty.homeNode]) ||
+      !isLandSite(nodes[a.duty.workNode])
     )
       throw Error(
         "Wohn- und Arbeitsorte benötigen eine zugängliche Straße an Land.",
@@ -207,12 +208,14 @@ export function organizationCommand(
     writable(m);
     if (!m.control?.briefed) throw Error("Zuerst die Lagemeldung bearbeiten.");
     if (a.type === "hospital-select") {
-      if (
-        a.home !== "auto" &&
-        a.home !== "public" &&
-        !s.buildings.some((b) => b.id === a.home && b.type === "hospital")
-      )
-        throw Error("Eigenes Krankenhaus fehlt.");
+      const hospital =
+        a.home === "auto" || a.home === "public"
+          ? undefined
+          : hospitalOptions(s, m.pos, 1, m).find((h) => h.id === a.home);
+      if (a.home !== "auto" && a.home !== "public" && !hospital)
+        throw Error(
+          "Eigenes Krankenhaus oder bestätigte öffentliche Klinik fehlt.",
+        );
       m.organization ??= { tasks: [] };
       if (a.home === "auto") delete m.organization.hospital;
       else m.organization.hospital = a.home;
@@ -220,7 +223,7 @@ export function organizationCommand(
         s,
         m,
         "HOSPITAL_SELECTED",
-        `Transportziel: ${a.home === "auto" ? "automatische geeignete Aufnahme" : a.home === "public" ? "Regionalklinik" : s.buildings.find((b) => b.id === a.home)!.name}. Bereits fahrende Transporte behalten ihre Aufnahmezusage.`,
+        `Transportziel: ${a.home === "auto" ? "automatische geeignete Aufnahme" : a.home === "public" ? "öffentliche Regionalklinik" : hospital!.name}. Bereits fahrende Transporte behalten ihre Aufnahmezusage.`,
         actor,
       );
     } else {
@@ -232,5 +235,3 @@ export function organizationCommand(
     }
   }
 }
-import { IS_GERMANY } from "../world-choice";
-import { isLandSite } from "../germany/world";

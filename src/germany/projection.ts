@@ -1,10 +1,8 @@
 /** Display projection: spherical Mercator scaled at 51°N, 12 projected metres per unit.
  * Route lengths always use geodesy/GH section distances, never Mercator distance.
  */
-export interface Point {
-  x: number;
-  y: number;
-}
+import type { Point } from "../geometry";
+export type { Point } from "../geometry";
 export interface Geographic {
   lon: number;
   lat: number;

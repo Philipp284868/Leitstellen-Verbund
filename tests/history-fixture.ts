@@ -1,6 +1,6 @@
 import type { Mission, Save } from "../src/model";
-import { organizationFixture } from "./phase-three-fixture";
 import { priorities } from "../src/simulation/priority";
+import { organizationFixture } from "./mutual-aid-fixture";
 
 /** Complete archived records, with private simulation state intentionally retained on disk. */
 export function historyFixture(owner: string, count = 537): Save {

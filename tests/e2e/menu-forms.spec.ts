@@ -1,15 +1,15 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { phaseFixture } from "../phase-fixture";
-import { fmsDefaults } from "../../src/simulation/fms";
+import type { startServer } from "../../server/index";
 import { vt } from "../../src/catalog";
-import { listenBrowserServer } from "./server-helper";
+import { fmsDefaults } from "../../src/simulation/fms";
+import { phaseFixture } from "../dispatch-fixture";
 import { interviewUI } from "./desk-helpers";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -184,7 +184,7 @@ test("FMS-Definitionen und Alarmprofile übernehmen, verwerfen, Standard laden u
     .toBe("siren");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await app.close();
-  app = compiled.startServer(config);
+  app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();

@@ -1,6 +1,4 @@
-import { IS_GERMANY } from "../world-choice";
 import { checkedCents, euro } from "../money";
-
 export const PRICE_VERSION = 1;
 /** Deliberately compressed game prices; procurement evidence/limits are in docs/EURO-WIRTSCHAFT.md. */
 const euros = {
@@ -35,7 +33,7 @@ const euros = {
     mzgw: 360000,
     tmtw: 110000,
     gww: 270000,
-    boat: IS_GERMANY ? 320000 : 160000,
+    boat: 320000,
     lf10: 260000,
     hlf10: 410000,
     tlf2000: 280000,

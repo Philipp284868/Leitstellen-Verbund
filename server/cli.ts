@@ -1,42 +1,40 @@
-import { level } from "../src/model";
 import {
-  readFile,
-  writeFile,
-  stat,
   copyFile,
+  readFile,
   rename,
+  stat,
   unlink,
+  writeFile,
 } from "node:fs/promises";
-import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { migrateEconomy } from "../src/economy/migration";
 import { parseMode } from "../src/mode";
-import { config } from "./config";
-import { Database, DATABASE_VERSION, assertWorldMetadata } from "./database";
-import { IS_GERMANY } from "../src/world-choice";
-import { Auth } from "./auth";
-import { validate, uid } from "../src/model";
+import { level, uid, validate } from "../src/model";
+import { migrateBuildingStaffing } from "../src/simulation/building-staffing";
+import { publicSave } from "../src/simulation/incidents";
 import { statisticsSchema } from "../src/simulation/report-schema";
-import { acquireLock } from "./lock";
+import {
+  createSituation,
+  situationScopeSchema,
+  worldSituationSchema,
+} from "../src/simulation/world-situation";
+import { Auth } from "./auth";
+import { planCommunicationMigration } from "./communication-migration";
+import { exportRetiredDatabase } from "./compatibility/retired-database";
+import { config } from "./config";
+import { assertWorldMetadata, Database, DATABASE_VERSION } from "./database";
+import { planEconomyMigration } from "./economy-migration";
 import { prepareGeography } from "./germany/runtime";
 import { exportHistory } from "./history";
-import { publicSave } from "../src/simulation/incidents";
-import { planReadinessMigration } from "./readiness-migration";
-import { planCommunicationMigration } from "./communication-migration";
-import { planEconomyMigration } from "./economy-migration";
 import { planLocationMigration } from "./location-migration";
-import { migrateEconomy } from "../src/economy/migration";
-import { migrateBuildingStaffing } from "../src/simulation/building-staffing";
+import { acquireLock } from "./lock";
+import { planReadinessMigration } from "./readiness-migration";
 import {
   ensureWorldSituation,
   readWorldSituation,
   writeWorldSituation,
 } from "./world-situation";
-import {
-  createSituation,
-  worldSituationSchema,
-  situationScopeSchema,
-} from "../src/simulation/world-situation";
-
 const command = process.argv[2];
 if (
   ![
@@ -48,18 +46,29 @@ if (
     "unlock",
     "migration-preview",
     "world-situation",
+    "retired-export",
   ].includes(command)
 ) {
   throw Error(
-    "Befehle: player-create, backup, restore, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
+    "Befehle: player-create, backup, restore, migration-preview, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
   );
 }
-const c = config();
 const arg = (key: string) => {
   const i = process.argv.indexOf(`--${key}`);
   if (i < 0 || !process.argv[i + 1]) throw Error(`--${key} fehlt.`);
   return process.argv[i + 1];
 };
+if (command === "retired-export") {
+  console.log(
+    JSON.stringify(
+      await exportRetiredDatabase(arg("source"), arg("file")),
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
+const c = config();
 if (command === "unlock") {
   if (!process.argv.includes("--confirm"))
     throw Error("Lock-Freigabe benötigt --confirm nach AMP-Stopp.");
@@ -91,7 +100,7 @@ try {
       readOnly: true,
     });
     try {
-      assertWorldMetadata(db, IS_GERMANY);
+      assertWorldMetadata(db, true);
       const result = [];
       for (const table of ["saves", "solo_saves"].filter((t) =>
         db
@@ -146,7 +155,7 @@ try {
     const file = resolve(arg("file"));
     const input = new DatabaseSync(file, { readOnly: true });
     try {
-      assertWorldMetadata(input, IS_GERMANY);
+      assertWorldMetadata(input, true);
       const version = Number(
         input.prepare("PRAGMA user_version").get()!.user_version,
       );

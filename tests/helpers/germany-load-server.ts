@@ -1,30 +1,30 @@
 /** Real-data load harness. Only the dedicated temporary benchmark save is opened. */
+import { randomUUID } from "node:crypto";
 import { mkdtemp, writeFile } from "node:fs/promises";
-import { tmpdir, cpus, totalmem } from "node:os";
+import { cpus, tmpdir, totalmem } from "node:os";
 import { resolve } from "node:path";
 import { monitorEventLoopDelay, performance } from "node:perf_hooks";
-import { randomUUID } from "node:crypto";
-import { fundTestBudget } from "../money-fixture";
 import { setImmediate as yieldNode } from "node:timers/promises";
-import { Database } from "../../server/database";
 import { Auth } from "../../server/auth";
+import type { Config } from "../../server/config";
+import { Database } from "../../server/database";
 import { Game } from "../../server/game";
 import { prepareGeography } from "../../server/germany/runtime";
-import { startServer } from "../../server/index";
 import { RouteSnapshotEncoder } from "../../server/germany/snapshots";
-import { fresh, validate } from "../../src/model";
+import { startServer } from "../../server/index";
 import { apply, generate, tick } from "../../src/engine";
-import { xpForLevel } from "../../src/progression";
-import { project, meters, unproject } from "../../src/germany/projection";
-import { attachIncident, callAction } from "../../src/simulation/calls";
-import { alarm } from "../../src/simulation/dispatch";
-import { personDuty } from "../../src/simulation/staffing";
-import { vehiclePosition } from "../../src/vehicle-position";
-import type { Config } from "../../server/config";
+import { meters, project, unproject } from "../../src/germany/projection";
 import type {
   RouteSnapshotFrame,
   SnapshotDocument,
 } from "../../src/germany/snapshot";
+import { fresh, validate } from "../../src/model";
+import { xpForLevel } from "../../src/progression";
+import { attachIncident, callAction } from "../../src/simulation/calls";
+import { alarm } from "../../src/simulation/dispatch";
+import { personDuty } from "../../src/simulation/staffing";
+import { vehiclePosition } from "../../src/vehicle-position";
+import { fundTestBudget } from "../money-fixture";
 
 const projectRoot = resolve(process.env.LV_BENCH_PROJECT || ".");
 const output = resolve(process.env.LV_BENCH_OUTPUT!);
@@ -218,12 +218,10 @@ try {
     if (stopping) throw Error("Lastvorbereitung angehalten.");
   }
   tick(s, fixtureTime - 60, {}, false, false);
-  status("Kaufe 500 HLF und ordne 4500 regulär eingestellte Einsatzkräfte zu.");
+  status("Kaufe 500 HLF; die Wachen stellen ihre Besatzungen automatisch.");
   for (const home of s.buildings) {
     for (let i = 0; i < 25; i++) {
       apply(s, { type: "buy", kind: "hlf", home: home.id });
-      apply(s, { type: "hire", home: home.id, count: 9 });
-      apply(s, { type: "assign", vehicle: s.vehicles.at(-1)!.id });
     }
     await yieldNode();
     if (stopping) throw Error("Lastvorbereitung angehalten.");
@@ -317,7 +315,7 @@ try {
   setupDb.save(owner, validate(s));
   setupDb.close();
   setupDb = undefined;
-  app = startServer(c, resolve(projectRoot, "dist/germany/client"), geo);
+  app = startServer(c, resolve(projectRoot, "dist/client"), geo);
   await app.listen();
   const address = app.http.address();
   if (!address || typeof address === "string")

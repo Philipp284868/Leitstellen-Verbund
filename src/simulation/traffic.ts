@@ -1,16 +1,20 @@
-import { motionProfile } from "../motion";
-import { remainingRoadLegs } from "./road-continuation";
-import { IS_GERMANY } from "../world-choice";
-import { GermanyRoutingError } from "../germany/errors";
-import { automaticRouting } from "./routing-context";
-import { vehiclePosition, vehicleMotion } from "../vehicle-position";
-import { roadSectionBetween, distance } from "../world";
-import type { Save, Vehicle } from "../model";
 import { vt } from "../catalog";
-import { route, METERS_PER_UNIT, type Point } from "../world";
+import { GermanyRoutingError } from "../germany/errors";
+import type { Save, Vehicle } from "../model";
+import { motionProfile } from "../motion";
+import { vehicleMotion, vehiclePosition } from "../vehicle-position";
+import {
+  distance,
+  METERS_PER_UNIT,
+  roadSectionBetween,
+  route,
+  type Point,
+} from "../world";
 import type { TravelMode } from "./dynamics-schema";
-import { DYNAMICS } from "./random";
 import { record } from "./events";
+import { DYNAMICS } from "./random";
+import { remainingRoadLegs } from "./road-continuation";
+import { automaticRouting } from "./routing-context";
 import { roadNames, weatherAtPoint } from "./weather";
 const pathSections = (path: Point[]) =>
   path
@@ -21,7 +25,6 @@ const roadKeys = (e: NonNullable<Save["environment"]>["roads"][number]) =>
   e.roadId
     ? [e.roadId]
     : [`${e.edge[0]}:${e.edge[1]}`, `${e.edge[1]}:${e.edge[0]}`];
-
 export const travelNames = {
   normal: "Normalfahrt",
   priority: "Sonderrechte",
@@ -51,7 +54,11 @@ export function travelFactor(
 }
 export function routePlan(
   s: Save,
-  v: Vehicle | { type: string },
+  v:
+    | Vehicle
+    | {
+        type: string;
+      },
   origin: Point,
   target: Point,
   mode: TravelMode = "priority",
@@ -60,7 +67,6 @@ export function routePlan(
     return calculateRoutePlan(s, v, origin, target, mode);
   } catch (error) {
     if (
-      !IS_GERMANY ||
       !automaticRouting() ||
       !(error instanceof GermanyRoutingError) ||
       error.code === "blocked"
@@ -85,7 +91,11 @@ export function routePlan(
 }
 function calculateRoutePlan(
   s: Save,
-  v: Vehicle | { type: string },
+  v:
+    | Vehicle
+    | {
+        type: string;
+      },
   origin: Point,
   target: Point,
   mode: TravelMode,
@@ -167,10 +177,7 @@ function calculateRoutePlan(
         ),
       );
     } catch (error) {
-      if (
-        IS_GERMANY &&
-        (!(error instanceof GermanyRoutingError) || error.code !== "blocked")
-      )
+      if (!(error instanceof GermanyRoutingError) || error.code !== "blocked")
         throw error;
       if (!blocked.size) throw error;
       blockedUntil = Math.min(
@@ -228,7 +235,7 @@ function calculateRoutePlan(
           to,
           meters: first
             ? first.meters
-            : IS_GERMANY && road
+            : road
               ? road.meters
               : distance(from, to) * METERS_PER_UNIT,
           limit: first
@@ -320,28 +327,13 @@ export function trafficTick(s: Save, v: Vehicle) {
     s.environment?.roads.filter(
       (e) => e.until > s.time && !j.events.includes(e.id),
     ) ?? [];
-  let passed = 0;
-  const covered = vehicleMotion(v, s.time).meters;
-  const remaining = v.path.filter((p, i) => {
-    if (i) passed += distance(v.path[i - 1], p) * METERS_PER_UNIT;
-    return passed > covered;
-  });
-  const sections = IS_GERMANY ? [] : pathSections([origin, ...remaining]);
   const remainingEdges = new Set(
-    IS_GERMANY
-      ? (j.motion ?? [])
-          .filter((phase) => phase.start + phase.duration >= s.time - v.depart)
-          .map((phase) => phase.edge)
-      : [],
+    (j.motion ?? [])
+      .filter((phase) => phase.start + phase.duration >= s.time - v.depart)
+      .map((phase) => phase.edge),
   );
   const event = active.find((e) =>
-    IS_GERMANY
-      ? roadKeys(e).some((key) => remainingEdges.has(key))
-      : sections.some(
-          (section) =>
-            (section.a === e.edge[0] && section.b === e.edge[1]) ||
-            (section.a === e.edge[1] && section.b === e.edge[0]),
-        ),
+    roadKeys(e).some((key) => remainingEdges.has(key)),
   );
   const weatherKey = routeWeatherKey(s);
   const weatherChange = !j.events.includes(weatherKey);

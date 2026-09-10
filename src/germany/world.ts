@@ -1,8 +1,8 @@
+import { pointAlong, polylineLength } from "../geometry";
 import { meters, METERS_PER_UNIT, type Point } from "./projection";
-export { WORLD_WIDTH, WORLD_HEIGHT, METERS_PER_UNIT } from "./projection";
+export { METERS_PER_UNIT, WORLD_HEIGHT, WORLD_WIDTH } from "./projection";
 export type { Point } from "./projection";
 export const WORLD: string = "germany-1";
-export const LEGACY_WORLD = "falkenried-1";
 export type RoadKind = "main" | "street" | "lane" | "country";
 export type RoadSection = {
   id: string;
@@ -18,12 +18,6 @@ export type RoadSection = {
   bridge?: boolean;
   tunnel?: boolean;
   waitSeconds?: number;
-};
-export type Road = {
-  name: string;
-  kind: RoadKind;
-  ids: number[];
-  points: Point[];
 };
 export type Anchor = Point & { id: number; name: string; roadClass: string };
 export type IncidentSiteKind =
@@ -106,19 +100,6 @@ export const nodes: Point[] = new Proxy([] as Point[], {
     return Reflect.get(target, key, receiver);
   },
 });
-export const roads: Road[] = [];
-export const roadSections: RoadSection[] = [];
-export const edges: [number, number][] = [];
-export const districts: (Point & { name: string })[] = [];
-export const originalNodes: Point[] = [];
-export const overpasses: {
-  x: number;
-  y: number;
-  upper: string;
-  lower: string;
-  angle: number;
-}[] = [];
-export const docks: Point[] = [];
 export const nearest = (point: Point) => germanyProvider().nearest(point).id;
 export const querySites = (
   center: Point,
@@ -159,14 +140,6 @@ export function hospitalAt(point: Point): Hospital {
     );
   return found;
 }
-// Kept only for historical consumers; actual Germany hospital selection uses hospitalAt(origin).
-export const publicHospital: Point = new Proxy({} as Point, {
-  get(_target, key) {
-    if (key === "x" || key === "y")
-      throw Error("Deutschland benötigt eine regional gewählte Klinik.");
-    return undefined;
-  },
-});
 export function route(
   a: Point,
   b: Point,
@@ -186,22 +159,6 @@ export function route(
     timeFactor,
   );
 }
-export const length = (path: Point[]) =>
-  path.slice(1).reduce((sum, p, i) => sum + distance(path[i], p), 0);
-export function along(path: Point[], fraction: number): Point {
-  let left = length(path) * Math.max(0, Math.min(1, fraction));
-  for (let i = 1; i < path.length; i++) {
-    const segment = distance(path[i - 1], path[i]);
-    if (left <= segment) {
-      const f = segment ? left / segment : 0;
-      return {
-        x: path[i - 1].x + (path[i].x - path[i - 1].x) * f,
-        y: path[i - 1].y + (path[i].y - path[i - 1].y) * f,
-      };
-    }
-    left -= segment;
-  }
-  const last = path.at(-1);
-  if (!last) throw Error("Fahrzeugroute hat keine Position.");
-  return last;
-}
+export const length = (path: Point[]) => polylineLength(path, distance);
+export const along = (path: Point[], fraction: number) =>
+  pointAlong(path, fraction, distance);

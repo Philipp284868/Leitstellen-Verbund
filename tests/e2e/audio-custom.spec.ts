@@ -1,12 +1,13 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { listenBrowserServer } from "./server-helper";
 import { fresh, type Mission } from "../../src/model";
 import { legacyIncident } from "../../src/simulation/incidents";
-import { nodes } from "../../src/world";
+import { sites as nodes } from "../fixtures/germany/locations";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
+
 import type { startServer } from "../../server/index";
 
 const compiled = (await import(

@@ -1,6 +1,27 @@
 import { createServer } from "node:net";
+import { resolve as resolvePath } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Config } from "../../server/config";
 import type { startServer } from "../../server/index";
+import { browserGeography } from "./test";
+const product = (await import(
+  pathToFileURL(resolvePath("dist/server/index.js")).href
+)) as typeof import("../../server/index");
+
+export async function createBrowserServer(
+  start: typeof startServer,
+  config: Config,
+) {
+  const { geodataDir, routerUrl } = browserGeography();
+  const c = Object.assign(config, { geodataDir, routerUrl });
+  const geography = await product.prepareGeography(c);
+  try {
+    return start(c, undefined, geography);
+  } catch (error) {
+    await geography?.close();
+    throw error;
+  }
+}
 
 async function availablePort(host: string) {
   const probe = createServer();
@@ -24,7 +45,7 @@ export async function listenBrowserServer(
   for (let attempt = 0; attempt < 5; attempt++) {
     c.port = await availablePort(c.host);
     c.publicUrl = `http://${c.host}:${c.port}`;
-    const app = start(c);
+    const app = await createBrowserServer(start, c);
     try {
       await app.listen();
       return app;

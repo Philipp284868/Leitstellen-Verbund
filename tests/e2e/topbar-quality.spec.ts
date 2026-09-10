@@ -1,12 +1,12 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { listenBrowserServer } from "./server-helper";
-import { phaseFixture } from "../phase-fixture";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
+import type { startServer } from "../../server/index";
+import { phaseFixture } from "../dispatch-fixture";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -46,7 +46,9 @@ async function enter(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator("svg.map")).toBeVisible();
+  await expect(
+    page.locator("[data-testid=germany-map-viewport]"),
+  ).toBeVisible();
 }
 
 test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei Menürückkehr", async ({
@@ -56,7 +58,7 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   page.on("pageerror", (error) => errors.push(error.message));
   await enter(page);
   const topbar = page.locator(".topbar"),
-    map = page.locator("svg.map"),
+    map = page.locator("[data-testid=germany-map-viewport]"),
     tools = page.getByRole("complementary", {
       name: "Kartenwerkzeuge",
       exact: true,
@@ -97,7 +99,7 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await expect(tools).toBeHidden();
   await expect(mapButton).toBeFocused();
   const radio = page.getByRole("button", { name: "Funk", exact: true });
-  const before = await map.getAttribute("viewBox");
+  const before = await map.getAttribute("data-camera");
   await radio.click();
   const popup = page.locator("#topbar-radio");
   await expect(popup).toBeVisible();
@@ -112,21 +114,21 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await page.keyboard.press("Escape");
   await expect(popup).toHaveCount(0);
   await expect(radio).toBeFocused();
-  expect(await map.getAttribute("viewBox")).toBe(before);
+  expect(await map.getAttribute("data-camera")).toBe(before);
   await page.mouse.move(1050, 500);
   await page.mouse.wheel(0, -360);
-  await expect.poll(() => map.getAttribute("viewBox")).not.toBe(before);
-  const zoomed = await map.getAttribute("viewBox");
+  await expect.poll(() => map.getAttribute("data-camera")).not.toBe(before);
+  const zoomed = await map.getAttribute("data-camera");
   await page.mouse.move(1050, 500);
   await page.mouse.down();
   await page.mouse.move(1220, 570, { steps: 12 });
   await page.mouse.up();
-  await expect.poll(() => map.getAttribute("viewBox")).not.toBe(zoomed);
-  const camera = await map.getAttribute("viewBox");
+  await expect.poll(() => map.getAttribute("data-camera")).not.toBe(zoomed);
+  const camera = await map.getAttribute("data-camera");
   await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
   await expect(page.locator(".command-menu")).toBeVisible();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(map).toHaveAttribute("viewBox", camera!);
+  await expect(map).toHaveAttribute("data-camera", camera!);
   await expect(page.locator(".mission-sidebar")).toBeHidden();
   expect(errors).toEqual([]);
 });

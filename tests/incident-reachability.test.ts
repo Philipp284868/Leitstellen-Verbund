@@ -1,26 +1,27 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { phaseFixture } from "./phase-fixture";
 import { mt } from "../src/catalog";
-import { nodes } from "../src/world";
-import * as traffic from "../src/simulation/traffic";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
+
+import { DatabaseSync } from "node:sqlite";
 import {
-  verifyIncidentLocation,
+  applyLocationMigration,
+  planLocationMigration,
+} from "../server/location-migration";
+import { tick } from "../src/engine";
+import { GermanyRoutingError } from "../src/germany/errors";
+import { validate } from "../src/model";
+import { attachDynamics } from "../src/simulation/dynamics";
+import { publicSave } from "../src/simulation/incidents";
+import {
   clearReachabilityCache,
+  verifyIncidentLocation,
 } from "../src/simulation/location-reachability";
 import {
   queueLocationReview,
   repairIncidentLocations,
 } from "../src/simulation/location-repair";
-import {
-  planLocationMigration,
-  applyLocationMigration,
-} from "../server/location-migration";
-import { DatabaseSync } from "node:sqlite";
-import { publicSave } from "../src/simulation/incidents";
-import { validate } from "../src/model";
-import { tick } from "../src/engine";
-import { attachDynamics } from "../src/simulation/dynamics";
-import { GermanyRoutingError } from "../src/germany/errors";
+import * as traffic from "../src/simulation/traffic";
 afterEach(() => {
   vi.restoreAllMocks();
   clearReachabilityCache();
@@ -138,7 +139,7 @@ it("prüft tatsächliche Straßenroute, verwirft Nullpunkte und verbirgt interne
   expect(result).toBeDefined();
   expect(result!.driveSeconds).toBeLessThanOrEqual(900);
   expect(result!.profiles).toContain("hlf");
-  expect(result!.siteRef).toContain("node:");
+  expect(result!.siteRef).toContain("fixture:street:");
   expect(verifyIncidentLocation(s, t, { x: 0, y: 0 })).toBeUndefined();
   expect(verifyIncidentLocation(s, t, { x: NaN, y: 7 })).toBeUndefined();
   m.location = result;

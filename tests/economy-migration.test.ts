@@ -1,17 +1,18 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, readdirSync, rmSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { afterEach, describe, expect, it } from "vitest";
 import { Database, DATABASE_VERSION } from "../server/database";
 import { planEconomyMigration } from "../server/economy-migration";
-import { fresh, missionSchema } from "../src/model";
-import { newEconomy } from "../src/economy/schema";
-import { ledgerBalance } from "../src/economy/ledger";
-import { buildReport } from "../src/simulation/reports";
 import { legacyMissionRewards, mt } from "../src/catalog";
+import { ledgerBalance } from "../src/economy/ledger";
 import { convertLegacyCredits } from "../src/economy/migration";
+import { newEconomy } from "../src/economy/schema";
+import { fresh, missionSchema } from "../src/model";
+import { buildReport } from "../src/simulation/reports";
+import "./fixtures/germany/session";
 const dirs: string[] = [];
 afterEach(() => {
   for (const dir of dirs.splice(0))
@@ -90,7 +91,7 @@ describe("Offline Euro-/Personal-Datenbankmigration 14", () => {
       before = readFileSync(file);
     const result = spawnSync(
       process.execPath,
-      [resolve(".tools/legacy-tests/server/cli.js"), "migration-preview"],
+      [resolve("dist/server/cli.js"), "migration-preview"],
       {
         env: {
           ...process.env,

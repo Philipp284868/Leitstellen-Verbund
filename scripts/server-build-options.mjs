@@ -1,22 +1,8 @@
-import { resolve } from "node:path";
-export function serverBuildOptions(world, outdir) {
+export function serverBuildOptions(outdir) {
   return {
-    entryPoints: ["server/index.ts", "server/cli.ts"],
+    entryPoints: ["server/index.ts", "server/cli.ts", "server/lab-cli.ts"],
     outdir,
-    define: { __LV_WORLD__: JSON.stringify(world) },
-    plugins:
-      world === "germany-1"
-        ? [
-            {
-              name: "germany-world",
-              setup(build) {
-                build.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-                  path: resolve("src/germany/world.ts"),
-                }));
-              },
-            },
-          ]
-        : [],
+    plugins: [],
     bundle: true,
     platform: "node",
     target: "node24",

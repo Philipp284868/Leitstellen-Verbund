@@ -1,15 +1,15 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { io, type Socket } from "socket.io-client";
-import { listenBrowserServer } from "./server-helper";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { fresh } from "../../src/model";
+import type { startServer } from "../../server/index";
 import { apply } from "../../src/engine";
-import { nodes } from "../../src/world";
+import { fresh } from "../../src/model";
+import { sites as nodes } from "../fixtures/germany/locations";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -198,7 +198,7 @@ test("echte Präsenz: getrennte Konten, Standortsuche, Tabs, Grace, Berechtigung
       "2 Spieler · 2 Leitstellen",
     );
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await page.reload();
     await page.getByRole("button", { name: "Spielen", exact: true }).click();

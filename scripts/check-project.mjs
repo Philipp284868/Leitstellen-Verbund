@@ -15,6 +15,19 @@ for (const file of sources) {
   const text = readFileSync(file, "utf8"),
     ast = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   function visit(node) {
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      ts.isStringLiteral(node.arguments[0])
+    ) {
+      const name = node.arguments[0].text;
+      if (!name.startsWith(".") && !name.startsWith("node:"))
+        packages.add(
+          name.startsWith("@")
+            ? name.split("/").slice(0, 2).join("/")
+            : name.split("/")[0],
+        );
+    }
     if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
       const specifier = node.moduleSpecifier?.text;
       if (!specifier) return;
@@ -51,6 +64,25 @@ for (const file of sources) {
     ts.forEachChild(node, visit);
   }
   visit(ast);
+  if (
+    /\b__LV_WORLD__\b|["'][^"']*(?:world-choice|\/rivermere\/|MapTerrain|RegionScene)["']/.test(
+      text,
+    )
+  )
+    errors.push(`${file}: entfernter Welt-Einstieg wieder eingeführt`);
+}
+for (const retired of [
+  "src/world-choice.ts",
+  "src/Map.tsx",
+  "src/MapTerrain.tsx",
+  "src/RegionScene.tsx",
+  "src/region.ts",
+  "src/rivermere",
+  "tests/legacy-build.ts",
+  "tests/rivermere-fixture.ts",
+]) {
+  if (existsSync(retired))
+    errors.push(`Entfernter Produkteinstieg wieder vorhanden: ${retired}`);
 }
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 for (const dep of Object.keys(pkg.dependencies))
@@ -64,14 +96,26 @@ if (
   groups.unit.some((f) => groups.integration.includes(f))
 )
   errors.push("Unvollständige/überlappende Testgruppen");
-// Active documents only. Historical evidence may deliberately reference old paths.
+const inventory = JSON.parse(
+  readFileSync("docs/TESTMIGRATION.json", "utf8"),
+).entries;
+if (new Set(inventory.map((e) => e.old)).size !== inventory.length)
+  errors.push("Doppelte Alt-Testzuordnung");
+for (const entry of inventory) {
+  if (!entry.requirements?.length || !entry.disposition || !entry.category)
+    errors.push(`Unbegründete Testzuordnung: ${entry.old}`);
+  for (const successor of [entry.replacement].flat().filter(Boolean)) {
+    if (!existsSync(successor))
+      errors.push(`Fehlender Testnachfolger: ${entry.old} -> ${successor}`);
+  }
+}
+// Historical evidence uses immutable commit links; local links must stay valid.
 for (const file of [
   "README.md",
   "CONTRIBUTING.md",
-  "docs/PHASE-0.md",
-  "docs/ENTWICKLUNG.md",
-  "docs/MENUES.md",
-  "docs/wiki/Entwicklung.md",
+  ...readdirSync("docs", { recursive: true })
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => "docs/" + f.replaceAll("\\", "/")),
 ]) {
   if (!existsSync(file)) {
     errors.push(`Aktive Anleitung fehlt: ${file}`);
@@ -84,6 +128,12 @@ for (const file of [
     if (!existsSync(resolve(dirname(file), decodeURIComponent(link))))
       errors.push(`${file}: verwaister lokaler Link ${link}`);
   }
+  if (file.startsWith("docs/wiki/"))
+    for (const match of text.matchAll(/\[\[([^\]]+)\]\]/g)) {
+      const page = match[1].split("|").at(-1).split("#")[0];
+      if (page && !existsSync(resolve("docs/wiki", page + ".md")))
+        errors.push(`${file}: verwaiste Wiki-Seite ${page}`);
+    }
 }
 // Retired navigation has no dynamic registry or persisted selector references.
 for (const file of readdirSync("src", { recursive: true }).filter((f) =>

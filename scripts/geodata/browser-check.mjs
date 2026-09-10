@@ -28,17 +28,6 @@ await build({
   format: "esm",
   platform: "node",
   packages: "external",
-  define: { __LV_WORLD__: JSON.stringify("germany-1") },
-  plugins: [
-    {
-      name: "real-germany",
-      setup(b) {
-        b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-          path: resolve(root, "src/germany/world.ts"),
-        }));
-      },
-    },
-  ],
 });
 const f = await import(pathToFileURL(fixture).href);
 const c = {
@@ -64,15 +53,11 @@ const report = {
   note: "Neue isolierte Testleitstelle; Spielzeit wird im Prüflauf gezielt über die echte Serverlogik fortgeschaltet. Dies ist keine Echtzeit-Leistungsmessung.",
 };
 async function start() {
-  await access(resolve(root, "dist/germany/client/index.html"));
+  await access(resolve(root, "dist/client/index.html"));
   const geography = await f.prepareGeography(c);
   let candidate;
   try {
-    candidate = f.startServer(
-      c,
-      resolve(root, "dist/germany/client"),
-      geography,
-    );
+    candidate = f.startServer(c, resolve(root, "dist/client"), geography);
     await candidate.listen();
   } catch (error) {
     if (candidate) await candidate.close();
@@ -115,7 +100,7 @@ try {
   s.player.id = owner;
   s.seed = 124;
   s.xp = f.xpForLevel(30);
-  s.money = 2000000;
+  s.money = 100000000;
   s.tutorial = 6;
   s.missionWait = 100000;
   const a = geo.provider
@@ -123,15 +108,10 @@ try {
     .find((p) => geo.provider.isLandSite(p));
   if (!a) throw Error("Kein zugänglicher realer Berliner Testwachenstandort.");
   f.apply(s, { type: "build", kind: "fire", pos: { x: a.x, y: a.y } });
-  f.tick(s, s.time + 30, {}, false, false);
+  f.tick(s, s.buildings[0].ready + 1, {}, false, false);
   const home = s.buildings[0].id;
-  for (const [kind, count] of [
-    ["hlf", 9],
-    ["tlf", 3],
-  ]) {
+  for (const kind of ["hlf", "tlf"]) {
     f.apply(s, { type: "buy", kind, home });
-    f.apply(s, { type: "hire", home, count });
-    f.apply(s, { type: "assign", vehicle: s.vehicles.at(-1).id });
   }
   f.generate(s);
   const mission = s.missions[0];
@@ -174,7 +154,11 @@ try {
   });
   page.setDefaultTimeout(20000);
   const capture = async (name) => {
-    await page.waitForTimeout(1200);
+    if (await page.getByTestId("germany-map-viewport").isVisible())
+      await expect(page.getByTestId("germany-map-viewport")).toHaveAttribute(
+        "data-camera-moving",
+        "false",
+      );
     await expect(page.locator("body")).not.toContainText("Illegal invocation");
     await expect(
       page.locator(".germany-map-message[role=alert], .germany-scene-error"),
@@ -191,7 +175,7 @@ try {
   const incident = () => snap().missions.find((m) => m.id === mission.id);
   const button = (name) => page.getByRole("button", { name, exact: true });
   async function mapTools(open) {
-    const toggle = button("Layer");
+    const toggle = button("Karte");
     if ((await toggle.getAttribute("aria-pressed")) !== String(open))
       await toggle.click();
   }
@@ -209,7 +193,10 @@ try {
       .first()
       .click();
     await mapTools(false);
-    await page.waitForTimeout(700);
+    await expect(page.getByTestId("germany-map-viewport")).toHaveAttribute(
+      "data-camera-moving",
+      "false",
+    );
   }
   await page.goto(c.publicUrl);
   await page
@@ -221,6 +208,7 @@ try {
   await capture("01-hauptmenue");
   await expect(page.locator(".germany-scene-error")).toHaveCount(0);
   await button("Spielen").click();
+  await button("Einsätze").click();
   await expect(page.locator(".germany-map-message")).toHaveCount(0, {
     timeout: 60000,
   });
@@ -323,6 +311,9 @@ try {
   colleague.on("pageerror", (e) => report.pageErrors.push(e.message));
   await colleague.goto(c.publicUrl);
   await colleague.getByRole("button", { name: "Spielen", exact: true }).click();
+  await colleague
+    .getByRole("button", { name: "Einsätze", exact: true })
+    .click();
   await expect(colleague.locator(".germany-map-message")).toHaveCount(0, {
     timeout: 60000,
   });
@@ -351,6 +342,7 @@ try {
   expect(JSON.stringify(snap().vehicles[0].path)).toBe(pathBefore);
   await page.reload();
   await button("Spielen").click();
+  await button("Einsätze").click();
   await page.locator(".mission-card").first().click();
   state = snap();
   await advance(Math.max(0, state.vehicles[0].arrive - state.time) + 1);
@@ -381,7 +373,7 @@ try {
   expect(snap().archive.some((m) => m.id === mission.id)).toBe(true);
   await capture("07-einsatzabschluss");
   await button("Schließen").click();
-  await page.getByRole("button", { name: /Einsatzarchiv/ }).click();
+  await button("Archiv").click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Einsatzberichte", exact: true })
@@ -396,7 +388,7 @@ try {
   );
   await button("Schließen").click();
   if (await button("Schließen").isVisible()) await button("Schließen").click();
-  await button("Wachen").click();
+  await button("Gebäude").click();
   await button("Wache bauen").click();
   await page
     .locator(".shop-card")

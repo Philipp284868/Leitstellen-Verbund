@@ -1,21 +1,22 @@
-import { expect, it } from "vitest";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { expect, it } from "vitest";
 import { Database } from "../server/database";
 import { Game } from "../server/game";
 import { writeWorldSituation } from "../server/world-situation";
+import { mt } from "../src/catalog";
+import { apply } from "../src/engine";
+import { buildReason } from "../src/purchase";
+import { incidentCategory } from "../src/simulation/incident-selection";
+import { callLoad } from "../src/simulation/pacing";
 import {
   createSituation,
   type SituationProfile,
 } from "../src/simulation/world-situation";
-import { incidentCategory } from "../src/simulation/incident-selection";
-import { mt } from "../src/catalog";
-import { phaseFixture } from "./phase-fixture";
-import { addUnit } from "./phase-four-fixture";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
 import { operate } from "./helpers/ideal-dispatcher";
-import { callLoad } from "../src/simulation/pacing";
-import { apply } from "../src/engine";
-import { nodes } from "../src/world";
+import { addUnit } from "./incident-dynamics-fixture";
 
 it("misst ruhigen Einstieg, Normalbetrieb, steigenden Sturm, Hauptphase und Rückstauabbau mit festen Seeds", () => {
   const results = [];
@@ -36,7 +37,11 @@ it("misst ruhigen Einstieg, Normalbetrieb, steigenden Sturm, Hauptphase und Rüc
       if (expanded) {
         for (const kind of ["hlf", "lf", "rtw", "rtw", "nef", "gkw"])
           addUnit(s, kind);
-        apply(s, { type: "build", kind: "hospital", pos: nodes[10] });
+        apply(s, {
+          type: "build",
+          kind: "hospital",
+          pos: nodes.find((p) => !buildReason(s, "hospital", p))!,
+        });
         s.buildings.find((b) => b.type === "hospital")!.ready = s.time;
       } else {
         s.vehicles = s.vehicles.slice(0, 1);

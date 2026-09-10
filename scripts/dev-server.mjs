@@ -12,25 +12,11 @@ const config = {
   dataDir: process.env.DATA_DIR,
   secure: false,
   trustedProxies: [],
-  ...(process.env.LV_BUILD_WORLD === "germany-1"
-    ? {
-        geodataDir: process.env.GEODATA_DIR,
-        routerUrl: process.env.GRAPHHOPPER_URL,
-      }
-    : {}),
+  geodataDir: process.env.GEODATA_DIR,
+  routerUrl: process.env.GRAPHHOPPER_URL,
 };
-const geography = config.geodataDir
-  ? await runtime.prepareGeography(config)
-  : undefined;
-const app = runtime.startServer(
-  config,
-  resolve(
-    process.env.LV_BUILD_WORLD === "germany-1"
-      ? "dist/germany/client"
-      : "dist/client",
-  ),
-  geography,
-);
+const geography = await runtime.prepareGeography(config);
+const app = runtime.startServer(config, resolve("dist/client"), geography);
 let closing;
 const stop = () =>
   (closing ??= (async () => {

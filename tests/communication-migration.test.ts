@@ -1,11 +1,11 @@
-import { expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
+import { expect, it } from "vitest";
 import {
-  planCommunicationMigration,
   applyCommunicationMigration,
+  planCommunicationMigration,
 } from "../server/communication-migration";
-import { phaseFixture } from "./phase-fixture";
 import { transmit } from "../src/simulation/transmissions";
+import { phaseFixture } from "./dispatch-fixture";
 it("versioniert alte Anfragen ohne neue Fahrzeugzuweisung oder Funkwiederholung, Vorschau und Wiederholung bleiben sicher", () => {
   const db = new DatabaseSync(":memory:");
   try {

@@ -1,23 +1,21 @@
-import { WORLD } from "../src/world";
-import { HISTORY_SCHEMA, persistHistory } from "./history";
-import { WORLD_SEED } from "../src/region";
-import { IS_GERMANY, WORLD_NAME } from "../src/world-choice";
+import { closeSync, existsSync, mkdirSync, openSync, readSync } from "node:fs";
+import { resolve } from "node:path";
+import { DatabaseSync, backup } from "node:sqlite";
 import { germanyProvider } from "../src/germany/world";
+import { validate, type Save } from "../src/model";
+import { WORLD_NAME, WORLD_SEED } from "../src/product";
 import { attachDynamics } from "../src/simulation/dynamics";
+import { syncFms } from "../src/simulation/fms";
+import { legacyIncident } from "../src/simulation/incidents";
 import { migrateReports } from "../src/simulation/reports";
 import { updateWeather } from "../src/simulation/weather";
-import { legacyIncident } from "../src/simulation/incidents";
-import { syncFms } from "../src/simulation/fms";
-import { DatabaseSync, backup } from "node:sqlite";
-import { mkdirSync, existsSync, openSync, readSync, closeSync } from "node:fs";
-import { resolve } from "node:path";
-import { validate, type Save } from "../src/model";
-import { applyReadinessMigration } from "./readiness-migration";
+import { WORLD } from "../src/world";
 import { applyCommunicationMigration } from "./communication-migration";
 import { applyEconomyMigration } from "./economy-migration";
-import { ensureWorldSituation } from "./world-situation";
+import { HISTORY_SCHEMA, persistHistory } from "./history";
 import { applyLocationMigration } from "./location-migration";
-
+import { applyReadinessMigration } from "./readiness-migration";
+import { ensureWorldSituation } from "./world-situation";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
 export const DATABASE_VERSION = 18;
@@ -35,7 +33,7 @@ export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
     throw Error(
       "Weltkonflikt: Dieses Datenverzeichnis gehört einer anderen Serverwelt.",
     );
-  if (IS_GERMANY) {
+  {
     const dataset = hasMeta
       ? sql
           .prepare("SELECT value FROM meta WHERE key='geodata-dataset-v1'")
@@ -55,7 +53,9 @@ export class Database {
   path: string;
   constructor(
     public dir: string,
-    options: { memory?: boolean } = {},
+    options: {
+      memory?: boolean;
+    } = {},
   ) {
     if (!options.memory) mkdirSync(dir, { recursive: true, mode: 0o700 });
     this.path = options.memory ? ":memory:" : resolve(dir, "game.sqlite");
@@ -103,10 +103,7 @@ export class Database {
             continue;
           for (const row of check.prepare(`SELECT data FROM ${table}`).all()) {
             const world = JSON.parse(String(row.data)).world;
-            if (
-              world !== WORLD &&
-              !(WORLD === "falkenried-2" && world === "falkenried-1")
-            )
+            if (world !== WORLD)
               throw Error(
                 `Weltkonflikt: Datenbestand ${world}, Anwendung ${WORLD}. Bestehende Welt unverändert weiterbetreiben; für ${WORLD_NAME} ein eigenes DATA_DIR verwenden.`,
               );
@@ -323,7 +320,7 @@ export class Database {
               JSON.stringify({
                 world: WORLD,
                 seed: WORLD_SEED,
-                generator: IS_GERMANY || WORLD === "rivermere-1" ? 1 : 3,
+                generator: 1,
               }),
             );
           this.sql.exec("PRAGMA user_version=12");
@@ -385,12 +382,11 @@ export class Database {
             `incident-access-v18:${JSON.stringify(summary)}`,
           );
         });
-      if (IS_GERMANY)
-        this.sql
-          .prepare(
-            "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
-          )
-          .run(germanyProvider().dataset);
+      this.sql
+        .prepare(
+          "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
+        )
+        .run(germanyProvider().dataset);
     } catch (e) {
       this.sql.close();
       throw e;

@@ -1,10 +1,10 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
 import { listenBrowserServer } from "./server-helper";
+import { expect, test, type BrowserContext, type Page } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -360,13 +360,26 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
     const firstCookie = await cookie(page.context()),
       otherCookie = await cookie(otherContext);
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
-    const map = page.locator("svg.map");
+    const map = page.locator("[data-testid=germany-map-viewport]");
     await expect(map).toBeVisible();
-    const oldCamera = await map.getAttribute("viewBox");
+    const oldCamera = await map.getAttribute("data-camera");
     await page.mouse.move(1000, 440);
     await page.mouse.wheel(0, -240);
-    await expect.poll(() => map.getAttribute("viewBox")).not.toBe(oldCamera);
-    const camera = await map.getAttribute("viewBox");
+    await expect
+      .poll(() => map.getAttribute("data-camera"))
+      .not.toBe(oldCamera);
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("lv-germany-camera-v1:"))
+            .map((k) => JSON.parse(localStorage.getItem(k)!))
+            .some((c) => c.zoom > 6),
+        ),
+      )
+      .toBe(true);
+    await expect(map).toHaveAttribute("data-camera-moving", "false");
+    const camera = await map.getAttribute("data-camera");
     await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
     const exit = page.getByRole("dialog", {
@@ -379,7 +392,7 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
       .getByRole("button", { name: "Zurück zum Spiel", exact: true })
       .click();
     await expect(exit).toHaveCount(0);
-    await expect(map).toHaveAttribute("viewBox", camera!);
+    await expect(map).toHaveAttribute("data-camera", camera!);
     expect(app.auth.session(firstCookie)?.user_id).toBe(owner);
     const before = app.db.all().get(owner)!;
     const game = {
@@ -401,7 +414,9 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
       page.getByLabel("Benutzername", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.locator(".command-menu, .hud-budget, svg.map"),
+      page.locator(
+        ".command-menu, .hud-budget, [data-testid=germany-map-viewport]",
+      ),
     ).toHaveCount(0);
     expect(app.auth.session(firstCookie)).toBeNull();
     expect(app.auth.session(otherCookie)?.user_id).toBe(owner);

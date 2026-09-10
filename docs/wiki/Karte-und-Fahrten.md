@@ -36,7 +36,7 @@ Wasserrettung in Deutschland verwendet eine vollständige Kombination aus Zugfah
 
 ## Historischer Bestand
 
-Informationen zur fiktiven 100×100-km-Region und ihrer bisherigen Wasserrettung betreffen ausschließlich bestehende [[Rivermere]]-Installationen. Ein Betreiber richtet Deutschland mit eigenen Spiel- und Geodatenordnern ein; Koordinaten und Wirtschaft beider Welten werden nicht automatisch vermischt.
+Die historische fiktive Region ist aus dem aktiven Produkt entfernt. [[Rivermere]] beschreibt ausschließlich den Bestandsschutz und verweist auf den schreibgeschützten Export.
 
 ## Einsatzorte ab 2.22
 

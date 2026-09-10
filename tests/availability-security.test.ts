@@ -1,23 +1,23 @@
 import { expect, it } from "vitest";
-import { postIncidentSchema } from "../src/simulation/availability-schema";
 import { vehicleAvailability } from "../src/simulation/availability";
+import { postIncidentSchema } from "../src/simulation/availability-schema";
+import { alarm } from "../src/simulation/dispatch";
 import {
-  startPostIncident,
   postIncidentTick,
+  startPostIncident,
 } from "../src/simulation/post-incident";
 import {
+  crewSummary,
+  newStationProfile,
   personAvailable,
   personDuty,
-  newStationProfile,
   turnoutReady,
-  crewSummary,
 } from "../src/simulation/staffing";
 import {
   forceVolunteerAvailability,
   volunteerAvailability,
 } from "../src/simulation/volunteers";
-import { phaseFixture } from "./phase-fixture";
-import { alarm } from "../src/simulation/dispatch";
+import { phaseFixture } from "./dispatch-fixture";
 
 it("rejects incomplete, impossible and misindexed persisted post-incident work", () => {
   const pending = {

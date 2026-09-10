@@ -1,26 +1,21 @@
-import { requestDialogTransition } from "./dialog-state";
-import { WORLD_NAME, IS_GERMANY } from "./world-choice";
-import { useState, useRef, useEffect, type ReactNode } from "react";
 import { Radio, X } from "lucide-react";
-import type { Save } from "./model";
-
-import { useNetwork, usePresence } from "./network";
-import { missionPresentation, missionProgress } from "./mission-presentation";
-import { districtAt } from "./world";
-
-import { command, emit } from "./store";
-import { MapView } from "./Map";
-import { OperationsOverview } from "./Major";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DeskQueue } from "./Desk";
-import { missionList } from "./workspace";
-import { visiblePriority } from "./simulation/priority";
-import { missionStatus } from "./simulation/mission-status";
-import { duration } from "./travel";
+import { requestDialogTransition } from "./dialog-state";
 import { ReserveOverview } from "./ForceNeeds";
-import { Topbar, HudNotice } from "./Topbar";
-import { IncidentDock } from "./IncidentDock";
+import { MapView } from "./germany/GermanyMap";
 import { IncidentIcon } from "./HudIcons";
-
+import { IncidentDock } from "./IncidentDock";
+import { OperationsOverview } from "./Major";
+import { missionPresentation, missionProgress } from "./mission-presentation";
+import type { Save } from "./model";
+import { useNetwork, usePresence } from "./network";
+import { missionStatus } from "./simulation/mission-status";
+import { visiblePriority } from "./simulation/priority";
+import { command, emit } from "./store";
+import { HudNotice, Topbar } from "./Topbar";
+import { duration } from "./travel";
+import { missionList } from "./workspace";
 type Props = {
   s: Save;
   selected: string;
@@ -140,7 +135,6 @@ export function GameHud({
     const target = dock.current?.querySelector<HTMLElement>(
       `[data-hud-section="${section}"]`,
     );
-
     (
       target ??
       (section === "radio"
@@ -387,10 +381,8 @@ export function GameHud({
                       <p>
                         {m.control && !m.control.locationKnown
                           ? "Einsatzort noch erfragen"
-                          : IS_GERMANY
-                            ? m.control?.facts.find((f) => f.key === "address")
-                                ?.text || "Einsatzort auf der Deutschlandkarte"
-                            : `${WORLD_NAME} · ${districtAt(m.pos)}`}
+                          : m.control?.facts.find((f) => f.key === "address")
+                              ?.text || "Einsatzort auf der Deutschlandkarte"}
                       </p>
                       <div className="mission-meta">
                         <span

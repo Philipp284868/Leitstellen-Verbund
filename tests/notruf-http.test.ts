@@ -1,11 +1,11 @@
-import { it, expect, vi } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { io, type Socket } from "socket.io-client";
-import { startServer } from "../server/index";
-import { phaseFixture } from "./phase-fixture";
+import { expect, it, vi } from "vitest";
 import { type Save } from "../src/model";
+import { phaseFixture } from "./dispatch-fixture";
+import { startServer } from "./fixtures/germany/server";
 
 it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notrufrate nicht; Geheimnisse bleiben serverseitig", async () => {
   const now = Date.now();

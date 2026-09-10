@@ -1,13 +1,47 @@
+import { ChevronRight, Radio } from "lucide-react";
 import {
-  TutorialHome,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { Account, AuthScreen } from "./Account";
+import { audio } from "./audio/controller";
+import { CallDesk } from "./CallDesk";
+import { bt } from "./catalog";
+import { CivilProtectionDesk } from "./CivilProtection";
+import { AAOPanel, FMSPanel, History, IncidentPanel, TeamPanel } from "./Desk";
+import { useDevicePreferences } from "./device-preferences";
+import { requestDialogTransition } from "./dialog-state";
+import { DynamicsPanel } from "./Dynamics";
+import { MainMenu } from "./MainMenu";
+import { BuildingIcon } from "./map-icons";
+import { level } from "./model";
+import { navigation } from "./navigation";
+import { usePresence } from "./network";
+import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
+import { WORLD_NAME } from "./product";
+import { RadioDesk } from "./RadioDesk";
+import { ReconnectSummary } from "./ReconnectSummary";
+import { BuildingPanel, BuildingShop, Fleet } from "./Resources";
+import "./Settings.css";
+import { SituationDesk } from "./SituationDesk";
+import { AudioSession } from "./Sound";
+import { garageIndex, StationGarage } from "./StationGarage";
+import { download } from "./storage";
+import { emit, retryStorage, useGame } from "./store";
+import {
   TutorialCoach,
   TutorialEvents,
+  TutorialHome,
   tutorialInteraction,
 } from "./Tutorial";
-import { RadioDesk } from "./RadioDesk";
-import { CallDesk } from "./CallDesk";
-import { CivilProtectionDesk } from "./CivilProtection";
-import { SituationDesk } from "./SituationDesk";
+import { ActionButton, Modal } from "./ui";
+import { shortcutFor } from "./workspace";
+import "./Workspace.css";
 const Progression = lazy(() =>
   import("./ProgressionPanel").then((m) => ({ default: m.Progression })),
 );
@@ -20,50 +54,15 @@ const MenuPanels = lazy(() =>
 const Settings = lazy(() =>
   import("./Settings").then((m) => ({ default: m.Settings })),
 );
-import { navigation } from "./navigation";
-import { WORLD_NAME } from "./world-choice";
-import { useDevicePreferences } from "./device-preferences";
-import { requestDialogTransition } from "./dialog-state";
-import { ReconnectSummary } from "./ReconnectSummary";
 const Players = lazy(() =>
   import("./Players").then((m) => ({ default: m.Players })),
 );
-import { StationGarage, garageIndex } from "./StationGarage";
-import { BuildingIcon } from "./map-icons";
-import { usePresence } from "./network";
-import { shortcutFor } from "./workspace";
-import "./Workspace.css";
-import "./Settings.css";
-import { DynamicsPanel } from "./Dynamics";
-import { MissionPanel } from "./Panels";
-import { IncidentPanel, AAOPanel, FMSPanel, TeamPanel, History } from "./Desk";
-import { AudioSession } from "./Sound";
-import { audio } from "./audio/controller";
-import { MainMenu } from "./MainMenu";
-import { AuthScreen, Account } from "./Account";
-import {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  lazy,
-  Suspense,
-  type CSSProperties,
-} from "react";
 const ArchivePanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ArchivePanel })),
 );
 const ReportPanel = lazy(() =>
   import("./Reports").then((m) => ({ default: m.ReportPanel })),
 );
-import { Radio, ChevronRight } from "lucide-react";
-import { useGame, emit, retryStorage } from "./store";
-import { bt } from "./catalog";
-import { level } from "./model";
-import { BuildingShop, BuildingPanel, Fleet } from "./Resources";
-import { BackupPanel, ProgressPanel, Help } from "./Panels";
-import { ActionButton, Modal } from "./ui";
-import { download } from "./storage";
 export function App() {
   useEffect(() => {
     document.title = `${WORLD_NAME} · Leitstellen-Verbund`;

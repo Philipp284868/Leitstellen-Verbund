@@ -1,12 +1,12 @@
-import { expect, it } from "vitest";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { io, type Socket } from "socket.io-client";
-import { startServer } from "../server/index";
-import { listenBrowserServer } from "./e2e/server-helper";
-import { radioFixture } from "./radio-fixture";
+import { expect, it } from "vitest";
 import { RADIO_LEASE_SECONDS } from "../src/simulation/radio-state";
+import { startServer } from "./fixtures/germany/server";
+import { listenServer as listenBrowserServer } from "./helpers/listen-server";
+import { radioFixture } from "./radio-fixture";
 
 it("HTTP und Socket: konkurrierende Übernahme, Identität, Wiederverbindung, Neustart, Ablauf und Rechteentzug", async () => {
   const config = {

@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Auth } from "../server/auth";
-import { Game } from "../server/game";
-import { organizationFixture } from "./phase-three-fixture";
 import { commandSchema, type ServerAction } from "../server/actions";
-import { matchingAidType } from "../src/simulation/aid-matching";
+import { Auth } from "../server/auth";
+import { Database } from "../server/database";
+import { Game } from "../server/game";
 import { validate } from "../src/model";
+import { matchingAidType } from "../src/simulation/aid-matching";
+import { organizationFixture } from "./mutual-aid-fixture";
 
 it("freie Wünsche bleiben privat, werden übertragen und historisiert; geeignete Alternative bindet nur eigene stabile IDs", async () => {
   const db = new Database("memory", { memory: true });

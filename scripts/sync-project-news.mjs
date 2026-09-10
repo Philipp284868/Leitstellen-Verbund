@@ -40,7 +40,7 @@ try {
     "Projektmeldungen: geprüfte lokale Veröffentlichung als Fallback.",
   );
 }
-for (const directory of ["../dist/client", "../dist/germany/client"])
+for (const directory of ["../dist/client", "../dist/client"])
   if (existsSync(new URL(directory, import.meta.url)))
     await writeFile(
       new URL(directory + "/project-news.json", import.meta.url),

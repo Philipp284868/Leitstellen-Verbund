@@ -18,11 +18,11 @@ Rivermere ist eine eigenständige Welt mit 100.000 Metern je Achse: 10.000 km².
 
 Straßenzeichnung, Knoten, Abschnittslängen und Fahrzeugrouten verwenden dieselben Geometrien. Die vorhandene Fahrzeitsimulation mit Straßenlimits, Fahrzeuggrenzen, Sperren, Verkehr, Beschleunigung und Bremsung bleibt erhalten. Die Kamera beeinflusst weder Simulation noch fremde Clients.
 
-Die Bildkomposition wurde in eine fiktive Vektorwelt übersetzt: zentraler Ballungsraum, 22 Außenorte, drei Seen und Flusslandschaft. Das Ergebnis ist keine fotorealistische Luftaufnahme. Kleine Straßen, Bebauung, Geländeflächen und Höhen sind konstruiert und nicht aus dem Bild vermessen. Hafenbauplätze liegen an Land; ihr vereinfachter Anschluss an den Fluss ist ausdrücklich in [RIVERMERE.md](RIVERMERE.md) beschrieben.
+Die Bildkomposition wurde in eine fiktive Vektorwelt übersetzt: zentraler Ballungsraum, 22 Außenorte, drei Seen und Flusslandschaft. Das Ergebnis ist keine fotorealistische Luftaufnahme. Kleine Straßen, Bebauung, Geländeflächen und Höhen sind konstruiert und nicht aus dem Bild vermessen. Hafenbauplätze liegen an Land; ihr vereinfachter Anschluss an den Fluss ist ausdrücklich in [RIVERMERE.md](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/RIVERMERE.md) beschrieben.
 
 Eine verlustfreie Umplatzierung des bestehenden Falkenried ist nicht möglich. Deshalb bleiben der bisherige Server und seine Welt erhalten. Der Build liefert Rivermere zusätzlich unter `dist/worlds/rivermere/dist/server/index.js`. Diese Anwendung benötigt eine eigene Instanz und ein eigenes ausdrücklich gesetztes dauerhaftes `DATA_DIR`. Es wurde kein Produktivserver geändert.
 
-Schema 12 speichert Weltkennung, Seed und Generierungsversion. Vor dem Schemawechsel wird die bestehende Sicherung erstellt. Die Migration verändert keine Wachen, Besitzstände, aktiven Einsätze oder Fahrten. Eine fremde Welt wird vor Datenbankschreiboperationen abgelehnt. `scripts/world-preview.mjs` bietet eine ausschließlich lesende Vorschau. Die Betriebsfolge steht in [RIVERMERE.md](RIVERMERE.md) und [AMP.md](AMP.md).
+Schema 12 speichert Weltkennung, Seed und Generierungsversion. Vor dem Schemawechsel wird die bestehende Sicherung erstellt. Die Migration verändert keine Wachen, Besitzstände, aktiven Einsätze oder Fahrten. Eine fremde Welt wird vor Datenbankschreiboperationen abgelehnt. `scripts/world-preview.mjs` bietet eine ausschließlich lesende Vorschau. Die Betriebsfolge steht in [RIVERMERE.md](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/RIVERMERE.md) und [AMP.md](AMP.md).
 
 ## Tatsächlich ausgeführte Prüfungen
 
@@ -50,7 +50,7 @@ Lokal war Edge verfügbar. Google Chrome war nicht installiert. Downloads der zu
 
 Testrechner: Windows 11 Pro 10.0.26200, Intel Core i7-13700K (16 Kerne / 24 Threads), etwa 32 GB RAM. Browser: Edge 152.0.4191.66, 1920 × 1080 CSS-Pixel. Lastbestand: 100 Wachen, 500 Fahrzeuge, 40 Einsätze, darunter 100 aktive Rückfahrten.
 
-Ein eigener Serverprozess betreibt diesen Bestand. Playwright zieht mit 100 Mausbewegungsschritten; `requestAnimationFrame` erfasst die gesamte Geste bis zum Loslassen. [Messwerte](screenshots/rivermere/chromium-performance.json) enthalten Dauer, erfasste Frames, Median, 95. Perzentil, Frames über 33 ms und SVG-Elementzahl. Trotz des Playwright-Projektnamens `chromium` identifiziert diese lokale Datei ihren tatsächlich verwendeten Browser als Edge.
+Ein eigener Serverprozess betreibt diesen Bestand. Playwright zieht mit 100 Mausbewegungsschritten; `requestAnimationFrame` erfasst die gesamte Geste bis zum Loslassen. [Messwerte](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-performance.json) enthalten Dauer, erfasste Frames, Median, 95. Perzentil, Frames über 33 ms und SVG-Elementzahl. Trotz des Playwright-Projektnamens `chromium` identifiziert diese lokale Datei ihren tatsächlich verwendeten Browser als Edge.
 
 Abschließender Lauf nach Korrektur der Bebauung an kurzen Straßenabschnitten: 5.922,5 ms Gestendauer, 288 erfasste Frames, Median 12,2 ms, 95. Perzentil 30,4 ms, zehn Frames über 33 ms und 4.496 SVG-Elemente. Das entspricht über die Geste ungefähr 49 erfassten Frames pro Sekunde. Die Zielmarke von durchgehend 60 fps wurde in diesem Lastlauf nicht erreicht. Andere Probeläufe lagen bei einem Median von 12,1 ms und einem 95. Perzentil von 24,3 ms; diese günstigeren Werte ersetzen nicht den abschließenden Messdatensatz.
 
@@ -62,11 +62,11 @@ Optimierungen: unveränderte eingeklappte Betriebsstatistiken werden wiederverwe
 
 Die Aufnahmen stammen aus der gestarteten Anwendung mit einem isolierten Testkonto, nicht aus einem Entwurf. Die Testzeit und Kontodaten sind künstliche Testdaten. Es gibt keine nachträglich aufgemalten Routen oder HUD-Flächen.
 
-- [Gesamte Region](screenshots/rivermere/chromium-region.png)
-- [Rivermere / Innenstadt](screenshots/rivermere/chromium-city.png)
-- [Westhaven / kleinere Stadt](screenshots/rivermere/chromium-town.png)
-- [Meadowbrook / Dorf und Umland](screenshots/rivermere/chromium-village.png)
-- [Einsatz mit Fahrzeugroute](screenshots/rivermere/chromium-incident-route.png)
+- [Gesamte Region](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-region.png)
+- [Rivermere / Innenstadt](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-city.png)
+- [Westhaven / kleinere Stadt](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-town.png)
+- [Meadowbrook / Dorf und Umland](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-village.png)
+- [Einsatz mit Fahrzeugroute](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/rivermere/chromium-incident-route.png)
 
 Eine zusätzliche Bedienungsaufnahme als Video wurde nicht erstellt. Die Interaktionsnachweise sind die ausgeführten Browserprüfungen.
 

@@ -1,13 +1,14 @@
-import { expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { startServer } from "../server/index";
+import { expect, it } from "vitest";
 import type { ServerAction } from "../server/actions";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { startServer } from "./fixtures/germany/server";
+
 import { generate } from "../src/engine";
-import { attachIncident } from "../src/simulation/calls";
 import { vehicleAvailability } from "../src/simulation/availability";
+import { attachIncident } from "../src/simulation/calls";
 
 it("supplies staff through real build/buy sessions, serializes shared crews and persists them across restart", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-auto-staff-http-"));

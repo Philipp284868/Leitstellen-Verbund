@@ -1,14 +1,14 @@
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { listenBrowserServer } from "./server-helper";
-import { enterGame, openPanel } from "./ui-navigation";
-import { radioFixture } from "../radio-fixture";
+import type { startServer } from "../../server/index";
 import { request } from "../../src/simulation/incidents";
+import { radioFixture } from "../radio-fixture";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
+import { enterGame, openPanel } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -105,7 +105,7 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     const lease = app.db.all().get(owner)!.missions[0].control!.radio[0]
       .handling;
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await page.reload();
     await enterGame(page);
@@ -174,7 +174,7 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
       page.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
     ).toBeVisible();
     await app.close();
-    app = compiled.startServer(config);
+    app = await createBrowserServer(compiled.startServer, config);
     await app.listen();
     await page.reload();
     await enterGame(page);

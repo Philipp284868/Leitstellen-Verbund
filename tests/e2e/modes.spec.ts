@@ -1,16 +1,17 @@
-import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
-import { listenBrowserServer } from "./server-helper";
-import { interviewUI } from "./desk-helpers";
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
+import { sites as nodes } from "../fixtures/germany/locations";
+import { interviewUI } from "./desk-helpers";
 import { established } from "./fixtures";
-import { nodes } from "../../src/world";
-import { attachIncident } from "../../src/simulation/calls";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
+import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
+
 import { generate } from "../../src/engine";
+import { attachIncident } from "../../src/simulation/calls";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -42,11 +43,11 @@ async function account(page: Page, distantIncident = false) {
     username,
     password,
     "Alex",
-    "Leitstelle Rivermere",
+    "Leitstelle Berlin",
   );
   const s = established("Alex");
   s.player.id = id;
-  s.player.station = "Leitstelle Rivermere";
+  s.player.station = "Leitstelle Berlin";
   s.missionWait = 0;
   for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
   generate(s);
@@ -57,7 +58,7 @@ async function account(page: Page, distantIncident = false) {
     // Keep the real routed journey visible throughout desktop window checks.
     const prepared = app.db.all().get(id)!;
     const mission = prepared.missions[0];
-    mission.pos = nodes.find((p) => p.x > 6500 && p.y > 5500)!;
+    mission.pos = nodes[110];
     delete mission.control;
     attachIncident(prepared, mission);
     app.db.save(id, prepared);
@@ -101,9 +102,11 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
     await expect(
       p.getByRole("button", { name: "Einzelspieler", exact: true }),
     ).toHaveCount(0);
-    await expect(p.locator("svg.map [data-own-station]")).toHaveCount(
-      before.buildings.length,
-    );
+    await expect(
+      p.locator(
+        "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+      ),
+    ).toHaveCount(before.buildings.length);
   }
   await page.bringToFront();
   await page.reload();
@@ -122,7 +125,9 @@ test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat
   const first = await account(a);
   await account(b);
   await play(b);
-  await expect(b.locator('svg.map [aria-label*="von Alex"]')).toHaveCount(0);
+  await expect(
+    b.locator('[data-testid=germany-map-viewport] [aria-label*="von Alex"]'),
+  ).toHaveCount(0);
   expect(app.game.view(first.id, new Set()).network.friends).toEqual([]);
   await openPanel(b, "Freunde");
   await expect(b.getByLabel("Eigenes Fahrzeug anbieten")).toHaveCount(0);
@@ -140,29 +145,42 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await account(page);
   await play(page);
-  const mapArea = await page.locator("svg.map").boundingBox();
+  const mapArea = await page
+    .locator("[data-testid=germany-map-viewport]")
+    .boundingBox();
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   const toolsArea = await page.locator(".map-layers").boundingBox();
-  const legendArea = await page.locator(".map-legend").boundingBox();
+  const scale = page.locator(".maplibregl-ctrl-scale");
+  const legendArea = await scale.boundingBox();
   expect(toolsArea!.y).toBeGreaterThanOrEqual(mapArea!.y);
   expect(legendArea!.y + legendArea!.height).toBeLessThanOrEqual(
     mapArea!.y + mapArea!.height,
   );
+  await expect(scale).toContainText(/m|km/);
+  const viewport = page.getByTestId("germany-map-viewport");
+  const zoom = async () =>
+    JSON.parse((await viewport.getAttribute("data-camera"))!).zoom;
+  const initialZoom = await zoom();
   await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
-  await expect(page.locator(".map-legend")).toContainText("125 %");
+  await expect.poll(zoom).toBeGreaterThan(initialZoom);
   await page
     .getByRole("button", { name: "Karte zentrieren", exact: true })
     .click();
-  await expect(page.locator(".map-legend")).toContainText("100 %");
-  await page.getByLabel("Stadtviertel anzeigen").selectOption("Old Town");
-  await expect(page.locator(".map-legend")).toContainText("200 %");
+  await page.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
+  await page
+    .locator(".map-search-results")
+    .getByRole("button", { name: "Straße des 17. Juni street", exact: true })
+    .click();
+  await expect.poll(zoom).toBe(14);
   await page.screenshot({
-    path: info.outputPath("karte-altstadt.png"),
+    path: info.outputPath("karte-berlin.png"),
     fullPage: true,
   });
-  await page.locator("svg.map").focus();
+  await page
+    .getByLabel("Interaktive Karte von Deutschland", { exact: true })
+    .focus();
   await page.keyboard.press("Home");
-  await expect(page.locator(".map-legend")).toContainText("100 %");
+  await expect.poll(zoom).toBeLessThan(7);
   await expect(
     page.getByRole("button", { name: "Fahrwege", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
@@ -219,7 +237,9 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await showIncidents(page);
   await expect(page.locator(".mission-sidebar")).toBeVisible();
   await page.getByRole("button", { name: "Karte", exact: true }).click();
-  await expect(page.locator("svg.map")).toBeVisible();
+  await expect(
+    page.locator("[data-testid=germany-map-viewport]"),
+  ).toBeVisible();
 });
 
 test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in großen und kleinen Desktopfenstern", async ({
@@ -232,30 +252,42 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
   await expect(page.locator(".hud-clock")).toHaveAttribute("title", /Echtzeit/);
   await page.getByRole("button", { name: "Karte", exact: true }).click();
   await page
-    .getByRole("button", { name: "Gesamte Region", exact: true })
+    .getByRole("button", { name: "Ganz Deutschland", exact: true })
     .click();
-  await expect(page.locator("svg.map")).toHaveAttribute(
-    "viewBox",
-    `0 0 ${100000 / 12} ${100000 / 12}`,
-  );
+  const viewport = page.getByTestId("germany-map-viewport");
+  await expect
+    .poll(async () => {
+      const bounds = JSON.parse((await viewport.getAttribute("data-bounds"))!);
+      return (
+        bounds[0][0] <= 5.5 &&
+        bounds[0][1] <= 47.1 &&
+        bounds[1][0] >= 15.6 &&
+        bounds[1][1] >= 55.2
+      );
+    })
+    .toBe(true);
   await page.screenshot({
-    path: info.outputPath("region-2.6-gesamt.png"),
+    path: info.outputPath("deutschland-gesamt.png"),
     fullPage: true,
   });
-  await page.getByLabel("Stadtviertel anzeigen").selectOption("Southwell");
-  const box = (await page.locator("svg.map").getAttribute("viewBox"))!
-    .split(" ")
-    .map(Number);
-  expect(box[0]).toBeGreaterThan(3000);
-  expect(box[1]).toBeGreaterThan(2000);
-  await page.screenshot({
-    path: info.outputPath("region-rivermere-southwell.png"),
-    fullPage: true,
-  });
-  await page.getByRole("button", { name: "Meine Wachen", exact: true }).click();
+  await page.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
+  await page
+    .locator(".map-search-results")
+    .getByRole("button", { name: "Straße des 17. Juni street", exact: true })
+    .click();
+  await expect
+    .poll(
+      async () =>
+        JSON.parse((await viewport.getAttribute("data-camera"))!).zoom,
+    )
+    .toBe(14);
+  await page
+    .getByRole("button", { name: "Karte zentrieren", exact: true })
+    .click();
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);
+  await page.locator(".dispatch-list").scrollIntoViewIfNeeded();
   await expect(page.locator(".dispatch-list")).toContainText("km · ca.");
   await page.locator(".dispatch-list input").first().check();
   await page

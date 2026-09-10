@@ -66,17 +66,6 @@ beforeAll(async () => {
     format: "esm",
     platform: "node",
     packages: "external",
-    define: { __LV_WORLD__: JSON.stringify("germany-1") },
-    plugins: [
-      {
-        name: "germany-world",
-        setup(b) {
-          b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-            path: resolve("src/germany/world.ts"),
-          }));
-        },
-      },
-    ],
   });
   f = await import(pathToFileURL(outfile).href);
 }, 20000);

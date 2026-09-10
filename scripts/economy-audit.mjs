@@ -12,7 +12,6 @@ await build({
   platform: "node",
   target: "node24",
   format: "esm",
-  define: { __LV_WORLD__: '"germany-1"' },
 });
 const { economyPriceReport, priceMarkdown } = await import(
   pathToFileURL(file).href

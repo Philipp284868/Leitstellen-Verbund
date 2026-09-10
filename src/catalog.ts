@@ -1,8 +1,8 @@
-import { WORLD_NAME, IS_GERMANY } from "./world-choice";
-import { unlockLevel } from "./progression";
-import { incidentVariants } from "./catalog/incident-variants";
 import type { IncidentProfile } from "./catalog/incident-profile";
+import { incidentVariants } from "./catalog/incident-variants";
 import { catalogPrice, ECONOMY_PRICES, missionPayment } from "./economy/prices";
+import { WORLD_NAME } from "./product";
+import { unlockLevel } from "./progression";
 export type Org =
   | "Feuerwehr"
   | "Rettungsdienst"
@@ -283,14 +283,14 @@ export const vehicles: VehicleType[] = [
   ),
   v(
     "boat",
-    IS_GERMANY ? "Zugfahrzeug mit Rettungsboot (MZB)" : "Rettungsboot",
+    "Zugfahrzeug mit Rettungsboot (MZB)",
     "water",
-    IS_GERMANY ? 36000 : 18000,
-    IS_GERMANY ? 4 : 2,
+    36000,
+    4,
     { boat: 2, diver: 1 },
     3,
     "Wasserrettung",
-    IS_GERMANY ? "road" : "water",
+    "road",
   ),
   v("lf10", "LF 10", "fire", 24500, 9, { fire: 2, water: 1, pump: 1 }, 2),
   v("hlf10", "HLF 10", "fire", 36500, 9, { fire: 1, rescue: 2, water: 1 }, 2),
@@ -967,7 +967,11 @@ export const vt = (id: string) => {
 };
 const reports: Record<
   string,
-  { name: string; org: Template["org"]; requirements: Skills }
+  {
+    name: string;
+    org: Template["org"];
+    requirements: Skills;
+  }
 > = {
   incoming: { name: "Ungeklärter Notruf", org: "Unbekannt", requirements: {} },
   "reported-fire": {

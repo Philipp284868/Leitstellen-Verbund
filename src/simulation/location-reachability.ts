@@ -1,22 +1,17 @@
+import { vt, type Skills, type Template } from "../catalog";
+import { GermanyRoutingError } from "../germany/errors";
+import { germanyProvider } from "../germany/world";
 import type { Save } from "../model";
-import { vt, type Template, type Skills } from "../catalog";
 import {
-  WORLD,
-  WORLD_WIDTH,
   WORLD_HEIGHT,
+  WORLD_WIDTH,
   distance,
-  nearest,
-  nodes,
   projectRoad,
   type Point,
 } from "../world";
-import { IS_GERMANY } from "../world-choice";
-import { germanyProvider } from "../germany/world";
-import { GermanyRoutingError } from "../germany/errors";
 import { generationRequirements } from "./feasibility";
-import { routePlan } from "./traffic";
 import type { IncidentLocation } from "./location-schema";
-
+import { routePlan } from "./traffic";
 export const LOCATION_POLICY = {
   maximumDriveSeconds: 900,
   maximumCandidates: 16,
@@ -24,7 +19,11 @@ export const LOCATION_POLICY = {
   cacheEntries: 2048,
   repairRadius: 8,
 } as const;
-type CachedRoute = { seconds: number; blocked: boolean; reached: boolean };
+type CachedRoute = {
+  seconds: number;
+  blocked: boolean;
+  reached: boolean;
+};
 const cache = new Map<string, CachedRoute>();
 export function clearReachabilityCache() {
   cache.clear();
@@ -44,7 +43,7 @@ function planned(
 ): CachedRoute {
   const e = s.environment;
   const key = JSON.stringify([
-    IS_GERMANY ? germanyProvider().dataset : WORLD,
+    germanyProvider().dataset,
     type,
     origin,
     target,
@@ -67,11 +66,7 @@ function planned(
   const old = cache.get(key);
   if (old) return old;
   const plan = routePlan(s, { type }, origin, target);
-  if (
-    IS_GERMANY &&
-    plan.blockedUntil &&
-    plan.reason?.toLowerCase().includes("routing")
-  )
+  if (plan.blockedUntil && plan.reason?.toLowerCase().includes("routing"))
     throw new GermanyRoutingError(
       "Straßenrouting derzeit nicht verfügbar.",
       "unavailable",
@@ -210,7 +205,7 @@ export function verifyIncidentLocation(
   );
   return {
     version: 1,
-    dataset: IS_GERMANY ? germanyProvider().dataset : WORLD,
+    dataset: germanyProvider().dataset,
     kind,
     siteRef,
     roadRef,
@@ -233,14 +228,13 @@ export function verifyIncidentLocation(
       "Ort, Zugang und eigene Fahrzeugprofile über Straßenrouting geprüft.",
   };
 }
-
 export function incidentSiteReference(t: Template, pos: Point) {
   if (!validIncidentPoint(pos)) return;
   const kind = t.profile?.site ?? (t.water ? "water" : "street");
   let access = { ...pos },
     siteRef: string,
     roadRef: string;
-  if (IS_GERMANY) {
+  {
     const provider = germanyProvider(),
       evidence = provider.incidentEvidence?.(pos, kind);
     if (!evidence) return;
@@ -249,13 +243,6 @@ export function incidentSiteReference(t: Template, pos: Point) {
     access = { ...road.point };
     siteRef = evidence.reference;
     roadRef = road.section.id;
-  } else {
-    const index = nearest(pos),
-      point = nodes[index];
-    if (!point || distance(point, pos) > LOCATION_POLICY.repairRadius) return;
-    access = { ...point };
-    siteRef = `${WORLD}:node:${index}`;
-    roadRef = siteRef;
   }
   if (!validIncidentPoint(access)) return;
   return { kind, siteRef, roadRef, access };

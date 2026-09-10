@@ -1,11 +1,18 @@
-import { buildReason } from "../../src/purchase";
-import { xpForLevel } from "../../src/progression";
+import { apply, tick } from "../../src/engine";
 import { fresh, uid, type Save } from "../../src/model";
-import { apply, tick, generate } from "../../src/engine";
-import { nodes } from "../../src/world";
-import { mt } from "../../src/catalog";
+import { xpForLevel } from "../../src/progression";
+import { buildReason } from "../../src/purchase";
+import { fixtureTime, sites as nodes } from "../fixtures/germany/locations";
+import { fixtureMission } from "../fixtures/germany/mission";
+import { fundTestBudget } from "../money-fixture";
+
 export function established(name: string): Save {
-  const s = fresh(name, `Leitstelle ${name}`, Date.now() / 1000);
+  const s = fresh(name, `Leitstelle ${name}`, fixtureTime);
+  s.seed = 124;
+  fundTestBudget(s, 4000000);
+  s.xp = xpForLevel(4);
+  s.completed = 3;
+  s.economy!.fundingNextAt = 1e12;
   s.speed = 1;
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
   s.buildings[0].organization = {
@@ -14,20 +21,8 @@ export function established(name: string): Save {
     crew: "normal",
     reserve: 0,
   };
-  tick(s, s.time + 30);
+  tick(s, s.time + 30, {}, false, false);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
-  apply(s, { type: "hire", home: s.buildings[0].id, count: 6 });
-  apply(s, { type: "assign", vehicle: s.vehicles[0].id });
-  for (let i = 0; i < 3; i++) {
-    s.missions = [];
-    generate(s);
-    apply(s, {
-      type: "dispatch",
-      mission: s.missions[0].id,
-      vehicles: [s.vehicles[0].id],
-    });
-    tick(s, s.time + 10000);
-  }
   s.missions = [];
   return s;
 }
@@ -39,19 +34,10 @@ export function emsProfile(name: string) {
     kind: "ems",
     pos: [nodes[3], ...nodes].find((p) => !buildReason(s, "ems", p))!,
   });
-  tick(s, s.time + 30);
+  tick(s, s.time + 30, {}, false, false);
   const home = s.buildings.find((b) => b.type === "ems")!;
   apply(s, { type: "buy", kind: "rtw", home: home.id });
-  apply(s, { type: "hire", home: home.id, count: 2 });
-  apply(s, {
-    type: "assign",
-    vehicle: s.vehicles.find((v) => v.type === "rtw")!.id,
-  });
-  s.missions = [];
-  generate(s);
-  s.missions[0].template = "sick";
-  s.missions[0].paymentCents = mt("sick").reward;
-  s.missions[0].pos = nodes[2];
+  s.missions = [fixtureMission(s, "sick")];
   return s;
 }
 export function largeProfile() {

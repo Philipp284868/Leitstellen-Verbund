@@ -1,24 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-import { phaseFixture } from "./phase-fixture";
-import { beginTrip, recall, tick, readiness } from "../src/engine";
+import { vt } from "../src/catalog";
+import { beginTrip, readiness, recall, tick } from "../src/engine";
 import { validate } from "../src/model";
-import { nodes, distance } from "../src/world";
-import { vehiclePosition } from "../src/vehicle-position";
-import { alarm } from "../src/simulation/dispatch";
+import { motionProfile } from "../src/motion";
 import { vehicleAvailability } from "../src/simulation/availability";
-import { queuePostIncident } from "../src/simulation/post-incident";
+import { alarm } from "../src/simulation/dispatch";
+import { FAULT_RECOVERY_GRACE } from "../src/simulation/fault-config";
 import { breakVehicle, faultsTick } from "../src/simulation/faults";
 import { setFms } from "../src/simulation/fms";
-import { turnoutEstimate } from "../src/simulation/staffing";
-import { vt } from "../src/catalog";
-import { motionProfile } from "../src/motion";
-import { remainingRoadLegs } from "../src/simulation/road-continuation";
-import { FAULT_RECOVERY_GRACE } from "../src/simulation/fault-config";
-import * as random from "../src/simulation/random";
 import {
   postIncidentTick,
+  queuePostIncident,
   startPostIncident,
 } from "../src/simulation/post-incident";
+import * as random from "../src/simulation/random";
+import { remainingRoadLegs } from "../src/simulation/road-continuation";
+import { turnoutEstimate } from "../src/simulation/staffing";
+import { vehiclePosition } from "../src/vehicle-position";
+import { distance } from "../src/world";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
 
 function fixture() {
   const s = phaseFixture("return-fault-owner"),

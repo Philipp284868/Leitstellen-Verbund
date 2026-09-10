@@ -1,52 +1,48 @@
 import { vehicleHomeAllowed } from "../src/catalog";
-import { SpatialIndex } from "../src/spatial";
-import { fundTestBudget } from "./money-fixture";
 import { euro } from "../src/money";
-import { createHash } from "node:crypto";
-import { it, expect } from "vitest";
+import { SpatialIndex } from "../src/spatial";
+import "./fixtures/germany/session";
+import { fundTestBudget } from "./money-fixture";
+
+import { expect, it } from "vitest";
+import { apply, beginTrip, tick } from "../src/engine";
+import { fresh, level, validate } from "../src/model";
 import {
-  xpForLevel,
-  progress,
+  constantSeconds,
+  motionAt,
+  motionProfile,
+  type MotionLeg,
+} from "../src/motion";
+import {
   addXp,
   MAX_XP,
   missionXp,
+  progress,
   unlockLevel,
+  xpForLevel,
 } from "../src/progression";
-import {
-  constantSeconds,
-  motionProfile,
-  motionAt,
-  type MotionLeg,
-} from "../src/motion";
 import { fastestPath, type Link } from "../src/routing";
-import { fresh, validate, level } from "../src/model";
-import { apply, beginTrip, tick } from "../src/engine";
 import {
-  nodes,
-  roads,
-  roadSections,
-  route,
-  length,
-  distance,
-  nearest,
-  WORLD_WIDTH,
-  WORLD_HEIGHT,
-  METERS_PER_UNIT,
   along,
+  distance,
+  roadSectionBetween,
+  route,
+  WORLD_WIDTH,
 } from "../src/world";
-import { regionTowns } from "../src/region-extension";
-import { vehiclePosition, vehicleMotion } from "../src/vehicle-position";
-import { buildings, vehicles, extensions, mt } from "../src/catalog";
-import { established } from "./e2e/fixtures";
+import { sites as nodes } from "./fixtures/germany/locations";
+
+import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
 import { Auth } from "../server/auth";
-import { spawnSync } from "node:child_process";
-import { createLab, runLab, type LabAction } from "../server/lab";
+import { Database } from "../server/database";
 import { Game } from "../server/game";
+import { createLab, runLab, type LabAction } from "../server/lab";
+import { buildings, extensions, mt, vehicles } from "../src/catalog";
 import { routePlan } from "../src/simulation/traffic";
+import { vehicleMotion, vehiclePosition } from "../src/vehicle-position";
+import { established } from "./e2e/fixtures";
 
 it("verarbeitet alle Schwellen, Rest-XP und mehrere Aufstiege bis weit über 100 ohne Tabelle", () => {
   for (const l of [1, 2, 9, 10, 11, 25, 50, 100, 101, 1000, 10000]) {
@@ -213,29 +209,52 @@ it("wählt die längere schnellere zulässige Route; Richtung, Sperrung und Zeit
     fastestPath(graph, [[0, 0]], new Map([[1, 0]]), 0, new Set()),
   ).toThrow();
 });
-it("berücksichtigt bekannte Verzögerungen auch zwischen Endpunkten desselben Straßenabschnitts", () => {
-  const section = roadSections[0];
-  const a = nodes[section.a],
-    b = nodes[section.b];
-  const direct = route(a, b);
-  const detour = route(
-    a,
-    b,
-    "road",
-    new Set(),
-    120,
-    new Map([
-      [section.id, 900],
-      [`${section.b}:${section.a}`, 900],
-    ]),
-  );
-  expect(length(detour)).toBeGreaterThan(length(direct));
-  expect(detour[0]).toEqual(a);
-  expect(detour.at(-1)).toEqual(b);
+it("wartet bei einer bekannten Verzögerung am belegten Deutschland-Straßenabschnitt statt eine Umleitung zu erfinden", () => {
+  const s = established("Verzögerung"),
+    v = s.vehicles[0],
+    a = nodes[0],
+    b = nodes[2];
+  s.environment = undefined;
+  const baseline = routePlan(s, v, a, b),
+    section = roadSectionBetween(baseline.path[0], baseline.path[1]);
+  s.environment = {
+    version: 1,
+    period: 0,
+    kind: "sun",
+    temperature: 20,
+    wind: 0,
+    rain: 0,
+    visibility: 30000,
+    density: 0,
+    roads: [
+      {
+        id: "known-wait",
+        kind: "jam",
+        edge: [section.a, section.b],
+        roadId: section.id,
+        start: s.time,
+        until: s.time + 1200,
+        delay: 900,
+        blocked: false,
+      },
+    ],
+  };
+  const delayed = routePlan(s, v, a, b);
+  expect(delayed.path).toEqual(baseline.path);
+  expect(delayed.events).toEqual(["known-wait"]);
+  expect(delayed.seconds - baseline.seconds).toBeCloseTo(900, 7);
+  expect(
+    delayed.motion
+      .filter((p) => p.velocity === 0 && p.acceleration === 0)
+      .reduce((n, p) => n + p.duration, 0),
+  ).toBe(900);
 });
 it("wendet eine bekannte Wartezeit auch auf Teilstrecken innerhalb einer Straßenkante an", () => {
   const s = established("Teilstrecke"),
-    edge = roadSections[0];
+    from = along([nodes[0], nodes[2]], 0.1),
+    to = along([nodes[0], nodes[2]], 0.2),
+    path = route(from, to),
+    edge = roadSectionBetween(path[0], path[1]);
   s.environment = {
     version: 1,
     period: 0,
@@ -248,6 +267,7 @@ it("wendet eine bekannte Wartezeit auch auf Teilstrecken innerhalb einer Straße
     roads: [
       {
         id: "partial-wait",
+        roadId: edge.id,
         kind: "jam",
         edge: [edge.a, edge.b],
         start: s.time,
@@ -257,8 +277,6 @@ it("wendet eine bekannte Wartezeit auch auf Teilstrecken innerhalb einer Straße
       },
     ],
   };
-  const from = along([nodes[edge.a], nodes[edge.b]], 0.1),
-    to = along([nodes[edge.a], nodes[edge.b]], 0.2);
   const plan = routePlan(s, s.vehicles[0], from, to);
   expect(plan.events).toContain("partial-wait");
   expect(
@@ -277,26 +295,7 @@ it("wendet eine bekannte Wartezeit auch auf Teilstrecken innerhalb einer Straße
       .reduce((n, p) => n + p.duration, 0),
   ).toBe(1);
 });
-it("erweitert das metrische Gebiet und verbindet alle neuen Orte über echte Straßen", () => {
-  expect(WORLD_WIDTH * METERS_PER_UNIT).toBe(100000);
-  expect(WORLD_HEIGHT * METERS_PER_UNIT).toBe(100000);
-  for (const t of regionTowns) {
-    const path = route(nodes[0], nodes[nearest(t)]);
-    expect(length(path) * METERS_PER_UNIT).toBeGreaterThan(10000);
-    expect(distance(path.at(-1)!, t)).toBeLessThan(1);
-  }
-  expect(new Set(roadSections.map((e) => e.limit))).toEqual(
-    new Set([30, 50, 80, 100]),
-  );
-  for (const e of roadSections)
-    expect(e.meters).toBeCloseTo(distance(nodes[e.a], nodes[e.b]) * 12, 8);
-  expect(roads.length).toBeGreaterThan(150);
-  expect(
-    createHash("sha256")
-      .update(JSON.stringify(nodes.slice(0, 1959)))
-      .digest("hex"),
-  ).toBe("18994f4732e0236739b7f2ac91d88a35ce2f1d20a3c772a8c14506a8dd866aa0");
-});
+
 it("positioniert am tatsächlichen Profil und trifft innerhalb eines großen Ticks exakt ein", () => {
   const original = established("Uhr");
   original.environment = undefined;
@@ -354,7 +353,7 @@ it("Vorschau und SQLite-Migration erhalten aktive Positionen, Konten und XP übe
     db.close();
     const preview = spawnSync(
       process.execPath,
-      [".tools/legacy-tests/server/cli.js", "migration-preview"],
+      ["dist/server/cli.js", "migration-preview"],
       {
         encoding: "utf8",
         env: {

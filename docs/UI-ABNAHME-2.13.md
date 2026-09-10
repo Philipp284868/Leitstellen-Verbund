@@ -38,10 +38,10 @@ Die Dateien sind unveränderte Browseraufnahmen der laufenden Anwendung mit eine
 
 | Auflösung | Hauptmenü | In-Game-HUD |
 |---|---|---|
-| 1920 × 1080 | [Aufnahme](screenshots/2.13/menu-1920.png) | [Aufnahme](screenshots/2.13/hud-1920.png) |
-| 2560 × 1440 | [Aufnahme](screenshots/2.13/menu-2560.png) | [Aufnahme](screenshots/2.13/hud-2560.png) |
-| 1366 × 768 | [Aufnahme](screenshots/2.13/menu-1366.png) | [Aufnahme](screenshots/2.13/hud-1366.png) |
-| 390 × 844 | [Aufnahme](screenshots/2.13/menu-390.png) | [Aufnahme](screenshots/2.13/hud-390.png) |
+| 1920 × 1080 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-1920.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-1920.png) |
+| 2560 × 1440 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-2560.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-2560.png) |
+| 1366 × 768 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-1366.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-1366.png) |
+| 390 × 844 | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/menu-390.png) | [Aufnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.13/hud-390.png) |
 
 Geprüft werden vollständige Kartenfläche, sichtbare Hauptaktionen, innerhalb des Viewports liegende Kontextleiste, echte Fahrzeugauswahl, Routen, Zoom, Suche und Einstellungen. Die visuelle Gegenprüfung bewertet außerdem Hierarchie, Abstände, Kartenfokus, Lesbarkeit und die gemeinsamen Farben.
 

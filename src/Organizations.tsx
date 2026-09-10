@@ -428,6 +428,11 @@ export function OrganizationTasks({ s, m }: { s: Save; m: Mission }) {
                 <option value="auto">
                   Automatisch: geeignete Aufnahme mit kürzester Anfahrt
                 </option>
+                {m.organization?.hospital === "public" && (
+                  <option value="public">
+                    Öffentliche Regionalklinik (gespeicherte Auswahl)
+                  </option>
+                )}
                 {options.map((h) => (
                   <option key={h.id} value={h.id}>
                     {h.name} ·{" "}

@@ -1,14 +1,14 @@
-import { test, expect } from "@playwright/test";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { listenBrowserServer } from "./server-helper";
-import { enterGame, openPanel, showIncidents } from "./ui-navigation";
-import { activeMissionsFixture, historyFixture } from "../history-fixture";
+import type { startServer } from "../../server/index";
 import { priorities } from "../../src/simulation/priority";
+import { activeMissionsFixture, historyFixture } from "../history-fixture";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test } from "./test";
+import { enterGame, openPanel, showIncidents } from "./ui-navigation";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -127,7 +127,7 @@ test("73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft 
     fullPage: true,
   });
   await app.close();
-  app = compiled.startServer(config);
+  app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   await page.reload();
   await enterGame(page);

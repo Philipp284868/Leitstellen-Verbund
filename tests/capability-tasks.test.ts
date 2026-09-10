@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { phaseFixture } from "./phase-fixture";
-import { addUnit, atScene } from "./phase-four-fixture";
+import { capacity, tick } from "../src/engine";
+import { validate } from "../src/model";
 import { alarm, propose } from "../src/simulation/dispatch";
 import { attachDynamics, dynamicsTick } from "../src/simulation/dynamics";
 import { fireFeedback, fireTick } from "../src/simulation/fire";
+import { setFms } from "../src/simulation/fms";
 import { hazard, requirements } from "../src/simulation/hazards";
+import { declareMajor } from "../src/simulation/major-incidents";
+import * as resourceSkills from "../src/simulation/major-resources";
 import {
   effectiveSkills,
   workingSkills,
@@ -14,20 +17,17 @@ import {
   taskTick,
   tasksComplete,
 } from "../src/simulation/mission-tasks";
+import { newPatient } from "../src/simulation/patients";
+import * as traffic from "../src/simulation/traffic";
+import { environmentAt } from "../src/simulation/weather";
 import {
-  assessWithdrawal,
   assessRemoteWithdrawal,
+  assessWithdrawal,
   createWithdrawalAssessment,
   withdraw,
 } from "../src/simulation/withdrawal";
-import { environmentAt } from "../src/simulation/weather";
-import { capacity, tick } from "../src/engine";
-import { validate } from "../src/model";
-import { setFms } from "../src/simulation/fms";
-import { newPatient } from "../src/simulation/patients";
-import { declareMajor } from "../src/simulation/major-incidents";
-import * as traffic from "../src/simulation/traffic";
-import * as resourceSkills from "../src/simulation/major-resources";
+import { phaseFixture } from "./dispatch-fixture";
+import { addUnit, atScene } from "./incident-dynamics-fixture";
 
 function setup(template = "bin") {
   const s = phaseFixture("tasks-owner", template),

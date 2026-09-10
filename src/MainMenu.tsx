@@ -1,34 +1,34 @@
-import { WORLD_NAME } from "./world-choice";
 import {
-  Radio,
-  Play,
-  Users,
-  Settings,
-  Power,
-  ChevronRight,
-  Shield,
-  Truck,
-  Siren,
-  Wallet,
   BookOpen,
+  Building2,
+  ChevronRight,
+  Clock,
   Globe,
   LifeBuoy,
-  Clock,
-  Building2,
   Newspaper,
+  Play,
+  Power,
+  Radio,
+  Settings,
+  Shield,
+  Siren,
+  Truck,
+  Users,
+  Wallet,
 } from "lucide-react";
-import { useProjectNews } from "./ProjectNews";
-import { BrandMark } from "./BrandMark";
-import { SoundButton } from "./Sound";
-import type { Save } from "./model";
-import { progress } from "./progression";
-import { credits } from "./ui";
-import { useGame } from "./store";
-import { modeName } from "./mode";
-import { fleetReadiness } from "./fleet-view";
-import { RegionScene } from "./RegionScene";
 import { version } from "../package.json";
+import { BrandMark } from "./BrandMark";
 import "./MainMenu.css";
+import { useProjectNews } from "./ProjectNews";
+import { SoundButton } from "./Sound";
+import { fleetReadiness } from "./fleet-view";
+import { GermanyScene } from "./germany/GermanyScene";
+import { modeName } from "./mode";
+import type { Save } from "./model";
+import { WORLD_NAME } from "./product";
+import { progress } from "./progression";
+import { useGame } from "./store";
+import { credits } from "./ui";
 export function MainMenu({
   save: s,
   readonly,
@@ -85,7 +85,7 @@ export function MainMenu({
   ];
   return (
     <main className="command-menu">
-      <RegionScene save={s} />
+      <GermanyScene save={s} />
       <div className="menu-vignette" />
       <header className="menu-brand">
         <BrandMark />
@@ -157,7 +157,7 @@ export function MainMenu({
           </h2>
           <button className="last-save" onClick={onPlay}>
             <div className="save-preview">
-              <RegionScene save={s} miniature />
+              <GermanyScene save={s} miniature />
             </div>
             <div>
               <strong>{s.player.station}</strong>

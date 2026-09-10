@@ -1,27 +1,27 @@
-import { xpForLevel } from "../src/progression";
-import { describe, it, expect } from "vitest";
-import { fresh, validate, level, achievementProgress } from "../src/model";
+import { describe, expect, it } from "vitest";
+import { commandSchema } from "../server/actions";
+import { BALANCE, buildings, missions, mt, vehicles } from "../src/catalog";
 import {
   apply,
-  tick,
+  capacity,
+  generate,
+  missing,
   money,
   readiness,
-  capacity,
-  missing,
-  generate,
+  tick,
 } from "../src/engine";
-import { buildings, vehicles, missions, mt, BALANCE } from "../src/catalog";
-import { nodes, route, length, along, docks } from "../src/world";
-import { exportText, parseImport } from "../src/storage";
-import { commandSchema } from "../server/actions";
+import { achievementProgress, fresh, level, validate } from "../src/model";
 import { euro } from "../src/money";
+import { xpForLevel } from "../src/progression";
+import { exportText, parseImport } from "../src/storage";
+import { along, length, roadSectionBetween, route } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
 function setup() {
   const s = fresh("Anna", "Leitstelle Nord", 1000);
   apply(s, { type: "build", kind: "fire", pos: nodes[0] });
   tick(s, 1030);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
-  apply(s, { type: "hire", home: s.buildings[0].id, count: 6 });
-  apply(s, { type: "assign", vehicle: s.vehicles[0].id });
+
   return s;
 }
 describe("Kataloge und Erreichbarkeit", () => {
@@ -53,7 +53,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   it("finanziert Erstwache, zwei Basisfahrzeuge und Besatzung mit Reserve", () => {
     const s = setup();
     apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
-    apply(s, { type: "hire", home: s.buildings[0].id, count: 6 });
+
     expect(s.money).toBe(euro(390000));
     expect(s.journal.reduce((n, j) => n + j.amount, BALANCE.start)).toBe(
       s.money,
@@ -151,9 +151,9 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     tick(s, s.time + 30);
     const home = s.buildings.find((b) => b.type === "ems")!;
     apply(s, { type: "buy", kind: "rtw", home: home.id });
-    apply(s, { type: "hire", home: home.id, count: 2 });
+
     const v = s.vehicles.find((v) => v.type === "rtw")!;
-    apply(s, { type: "assign", vehicle: v.id });
+
     s.missions = [];
     generate(s);
     const m = s.missions[0];
@@ -162,7 +162,8 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     m.pos = nodes[6];
     apply(s, { type: "dispatch", mission: m.id, vehicles: [v.id] });
     const before = s.money;
-    tick(s, s.time + 120);
+    for (let i = 0; i < 400 && !s.beds.length; i++)
+      tick(s, s.time + 5, {}, false, false);
     expect(s.archive.some((x) => x.id === m.id)).toBe(true);
     expect(s.beds[0]?.home).toBe(
       s.buildings.find((b) => b.type === "hospital")!.id,
@@ -175,16 +176,21 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   });
 });
 describe("Wege und Zeit", () => {
-  it("berechnet Straßenwege mit Zwischenknoten statt Luftlinie", () => {
+  it("nutzt die vom Provider gelieferten Zwischenpunkte und metrischen Abschnitte", () => {
     const path = route(nodes[0], nodes[116]);
-    expect(path.length).toBeGreaterThan(15);
-    expect(length(path)).toBeGreaterThan(length([nodes[0], nodes[116]]));
+    expect(path.length).toBe(3);
+    const sections = path
+      .slice(1)
+      .map((p, i) => roadSectionBetween(path[i], p));
+    expect(sections.reduce((sum, s) => sum + s.meters, 0)).toBeCloseTo(
+      length(path) * 12,
+      6,
+    );
     expect(along(path, 0)).toEqual(nodes[0]);
     expect(along(path, 1)).toEqual(nodes[116]);
   });
-  it("trennt Wasser- und Flugwege", () => {
+  it("trennt Luftwege vom Straßenprofil und lehnt unbelegtes Wasserrouting ab", () => {
     expect(() => route(nodes[0], nodes[1], "water")).toThrow();
-    expect(route(docks[0], docks[1], "water")).toHaveLength(4);
     expect(route(nodes[0], nodes[116], "air")).toHaveLength(2);
   });
   it("begrenzt Offlinezeit und erzeugt offline keine Einsätze", () => {

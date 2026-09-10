@@ -1,58 +1,57 @@
-import { requestDialogTransition } from "../dialog-state";
-import { tutorialInteraction } from "../Tutorial";
-import { searchNavigation, openNavigation } from "../navigation";
-import { credits } from "../ui";
-import { emit } from "../store";
-import {
-  useDevicePreferences,
-  updateDevicePreference,
-  devicePreferences,
-} from "../device-preferences";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import * as maplibregl from "maplibre-gl";
+import { Crosshair, LocateFixed, Navigation, Search, X } from "lucide-react";
 import type { Map as GLMap, GeoJSONSource } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import "../MapTools.css";
-import "./GermanyMap.css";
-import { Crosshair, LocateFixed, Navigation, Search, X } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { bt, vt } from "../catalog";
 import {
-  VehicleIcon,
+  devicePreferences,
+  updateDevicePreference,
+  useDevicePreferences,
+} from "../device-preferences";
+import { requestDialogTransition } from "../dialog-state";
+import { fleetReadiness } from "../fleet-view";
+import { IncidentIcon } from "../HudIcons";
+import { DRAG_THRESHOLD, wheelPixels } from "../map-camera";
+import {
   BuildingIcon,
   MapIcon,
+  VehicleIcon,
   organizationColors,
 } from "../map-icons";
-import { groupPresence, type PublicPlayer } from "../presence";
-import { groupGameMarkers, type MarkerData } from "./game-markers";
-import { clusterPresence } from "./map-presence";
-import { attachPoiLayer } from "./poi-layer";
-import { poiCategories, type PoiCategory, type MapPoi } from "./poi-data";
-import { IncidentIcon } from "../HudIcons";
+import "../MapTools.css";
 import {
-  missionPresentation,
   incidentColors,
   incidentKindNames,
+  missionPresentation,
 } from "../mission-presentation";
-import { fleetReadiness } from "../fleet-view";
-import { bt, vt } from "../catalog";
-import { vehiclePosition } from "../vehicle-position";
-import { volunteerMarkers } from "../simulation/volunteers";
-import { tripLabel } from "../travel";
-import { Operations } from "../Operations";
-import { useGame } from "../store";
-import { DRAG_THRESHOLD, wheelPixels } from "../map-camera";
 import type { Save } from "../model";
+import { openNavigation, searchNavigation } from "../navigation";
 import type { Friend } from "../network";
+import { Operations } from "../Operations";
+import { groupPresence, type PublicPlayer } from "../presence";
+import { volunteerMarkers } from "../simulation/volunteers";
+import { emit, useGame } from "../store";
+import { tripLabel } from "../travel";
+import { tutorialInteraction } from "../Tutorial";
+import { credits } from "../ui";
+import { vehicleMotion, vehiclePosition } from "../vehicle-position";
 import type { Point } from "../world";
-import { project, unproject, WORLD_CENTER, inBounds } from "./projection";
+import { groupGameMarkers, type MarkerData } from "./game-markers";
+import "./GermanyMap.css";
+import { mapInitializationMessage } from "./map-errors";
+import { attachTileLabels } from "./map-labels";
+import { clusterPresence } from "./map-presence";
 import {
+  GERMANY_BOUNDS,
   germanyStyle,
   loadGeoManifest,
   readGermanyCamera,
-  GERMANY_BOUNDS,
 } from "./map-style";
-import { attachTileLabels } from "./map-labels";
-import { mapInitializationMessage } from "./map-errors";
+import { poiCategories, type MapPoi, type PoiCategory } from "./poi-data";
+import { attachPoiLayer } from "./poi-layer";
+import { WORLD_CENTER, inBounds, project, unproject } from "./projection";
 
 maplibregl.setWorkerUrl(workerUrl);
 type SearchResult = {
@@ -384,6 +383,15 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         gl.on("move", changed);
         gl.on("resize", changed);
         gl.on("load", changed);
+        // Read-only rendering evidence alongside camera/bounds. Count the
+        // renderer's visible route features, not merely the supplied snapshot.
+        gl.on("idle", () => {
+          container.dataset.visibleRoutes = String(
+            gl.getLayer("dispatch-routes")
+              ? gl.queryRenderedFeatures({ layers: ["dispatch-routes"] }).length
+              : 0,
+          );
+        });
         const persist = () => {
           try {
             const c = gl.getCenter();
@@ -401,7 +409,14 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             /* Storage is optional. */
           }
         };
-        gl.on("moveend", persist);
+        container.dataset.cameraMoving = "false";
+        gl.on("movestart", () => {
+          container.dataset.cameraMoving = "true";
+        });
+        gl.on("moveend", () => {
+          persist();
+          container.dataset.cameraMoving = "false";
+        });
         let gesture: {
             id: number;
             x: number;
@@ -639,6 +654,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         window.addEventListener("pointerup", cancel);
         document.addEventListener("visibilitychange", hidden);
         cleanup = () => {
+          gl.stop();
+          persist();
           cancel();
           removeLabels();
           poiLayer.current?.destroy();
@@ -1612,6 +1629,10 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               {selectedVehicle.name}
             </strong>
             <span>{tripLabel(selectedVehicle, s.time)}</span>
+            <span>
+              {Math.round(vehicleMotion(selectedVehicle, s.time).kmh)} km/h
+              aktuell
+            </span>
             <span>
               {selectedVehicle.journey?.reason ||
                 "Fahrweg nach aktuellem Straßenmodell"}

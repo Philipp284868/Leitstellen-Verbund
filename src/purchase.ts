@@ -1,17 +1,15 @@
-import { vehicleHomeAllowed } from "./catalog";
+import { bt, extensions, vehicleHomeAllowed, vt } from "./catalog";
 import type { Save } from "./model";
-import { stationCapacity } from "./simulation/staffing";
 import { progress } from "./progression";
-import { IS_GERMANY } from "./world-choice";
-import { bt, vt, extensions } from "./catalog";
+import { stationCapacity } from "./simulation/staffing";
 import {
-  WORLD_WIDTH,
   WORLD_HEIGHT,
-  nodes,
-  nearest,
-  isWaterSite,
-  isLandSite,
+  WORLD_WIDTH,
   distance,
+  isLandSite,
+  isWaterSite,
+  nearest,
+  nodes,
   type Point,
 } from "./world";
 export function buildReason(s: Save, kind: string, pos?: Point) {
@@ -37,9 +35,7 @@ export function buildReason(s: Save, kind: string, pos?: Point) {
     if (s.buildings.some((b) => distance(b.pos, site) < 20))
       return "Bauplatz bereits belegt.";
     if (t.water && !isWaterSite(site))
-      return IS_GERMANY
-        ? "Wasserrettung benötigt einen bestätigten Straßenstandort mit Uferzugang (höchstens 60 m zum Gewässer)."
-        : "Wasserrettung benötigt einen markierten Hafenbauplatz.";
+      return "Wasserrettung benötigt einen bestätigten Straßenstandort mit Uferzugang (höchstens 60 m zum Gewässer).";
   }
   return "";
 }

@@ -1,19 +1,22 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { build } from "esbuild";
+import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { startServer } from "../server/index";
-import { Database, DATABASE_VERSION } from "../server/database";
+import { promisify } from "node:util";
+import { afterEach, describe, expect, it } from "vitest";
 import type { Config } from "../server/config";
+import { Database, DATABASE_VERSION } from "../server/database";
 import type { Mission } from "../src/model";
-import { stationProfile } from "../src/simulation/staffing";
-import { newStationProfile, personDuty } from "../src/simulation/staffing";
 import { postIncidentTick } from "../src/simulation/post-incident";
-import { historyFixture, activeMissionsFixture } from "./history-fixture";
+import {
+  newStationProfile,
+  personDuty,
+  stationProfile,
+} from "../src/simulation/staffing";
+import { startServer } from "./fixtures/germany/server";
+import "./fixtures/germany/session";
+import { activeMissionsFixture, historyFixture } from "./history-fixture";
 
 const password = "History-integration-password-284!";
 const execute = promisify(execFile);
@@ -141,19 +144,10 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
       .prepare("SELECT user_id,data FROM solo_saves ORDER BY user_id")
       .all();
     db.close();
-    const cli = resolve(`.tools/history-cli-${process.pid}/server/cli.js`);
-    await build({
-      entryPoints: ["server/cli.ts"],
-      outfile: cli,
-      bundle: true,
-      format: "esm",
-      platform: "node",
-      packages: "external",
-      define: { __LV_WORLD__: JSON.stringify("falkenried-2") },
-    });
+    const cli = resolve("dist/server/cli.js");
     const file = resolve(dir, "archived-save.json");
     const options = {
-      cwd: resolve(`.tools/history-cli-${process.pid}`),
+      cwd: resolve("."),
       env: {
         ...process.env,
         DATA_DIR: dir,

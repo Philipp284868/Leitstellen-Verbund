@@ -1,9 +1,9 @@
-import { test, expect, type Page } from "@playwright/test";
-import { createServer, type Server } from "node:http";
 import { build } from "esbuild";
 import { writeFile } from "node:fs/promises";
-import type { Cue, SoundGraph } from "../../src/audio/synth";
+import { createServer, type Server } from "node:http";
 import type { SoundPreferences } from "../../src/audio/preferences";
+import type { Cue, SoundGraph } from "../../src/audio/synth";
+import { expect, test, type Page } from "./test";
 type Lab = typeof import("./fixtures/audio/lab");
 declare global {
   interface Window {

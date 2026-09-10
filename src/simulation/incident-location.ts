@@ -1,18 +1,16 @@
-import type { Save } from "../model";
 import type { Template } from "../catalog";
 import { vt } from "../catalog";
-import { IS_GERMANY } from "../world-choice";
-import { nodes, docks, distance, type Point } from "../world";
-import { queryIncidentSites } from "../germany/world";
 import { GermanyRoutingError } from "../germany/errors";
-import { automaticRouting } from "./routing-context";
+import { queryIncidentSites } from "../germany/world";
+import type { Save } from "../model";
+import { distance, type Point } from "../world";
 import {
-  verifyIncidentLocation,
   LOCATION_POLICY,
+  verifyIncidentLocation,
 } from "./location-reachability";
 import { sample } from "./random";
-import { situationTemplateWeight, situationAffects } from "./world-situation";
-
+import { automaticRouting } from "./routing-context";
+import { situationAffects, situationTemplateWeight } from "./world-situation";
 /** null means a temporary routing outage; [] means no suitable geographic site. */
 export function generationLocations(
   s: Save,
@@ -61,7 +59,6 @@ export function generationLocations(
     return result;
   } catch (error) {
     if (
-      IS_GERMANY &&
       automaticRouting() &&
       error instanceof GermanyRoutingError &&
       error.code === "unavailable"
@@ -99,7 +96,6 @@ export function generationDeferred(
   s.missionWait = Math.max(s.missionWait, 60);
   s.nextMission = s.time + s.missionWait;
 }
-
 /** Local, reachable sites of the correct OSM land-use kind; never substitute a random road. */
 export function incidentLocations(s: Save, template: Template): Point[] {
   const relevantHomes = new Set(
@@ -113,7 +109,7 @@ export function incidentLocations(s: Save, template: Template): Point[] {
     (b) => b.ready <= s.time && relevantHomes.has(b.id),
   );
   const radius = s.vehicles.length <= 4 ? 180 : 400;
-  if (IS_GERMANY) {
+  {
     const kind =
       template.profile?.site ?? (template.water ? "water" : "street");
     return [
@@ -124,7 +120,4 @@ export function incidentLocations(s: Save, template: Template): Point[] {
       ).values(),
     ];
   }
-  return (template.water ? docks : nodes).filter((p) =>
-    bases.some((b) => distance(b.pos, p) <= radius),
-  );
 }

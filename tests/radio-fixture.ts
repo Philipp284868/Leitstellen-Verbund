@@ -1,7 +1,7 @@
-import { phaseFixture } from "./phase-fixture";
+import { tick } from "../src/engine";
 import { callAction } from "../src/simulation/calls";
 import { alarm } from "../src/simulation/dispatch";
-import { tick } from "../src/engine";
+import { phaseFixture } from "./dispatch-fixture";
 
 /** An actual accepted call, dispatch and journey ends at the first radio report. */
 export function radioFixture(owner: string) {

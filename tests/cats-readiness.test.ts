@@ -1,23 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { apply, readiness, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
-import { apply, tick, readiness } from "../src/engine";
 import { buildReason } from "../src/purchase";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+
+import { vt } from "../src/catalog";
 import { xpForLevel } from "../src/progression";
+import { attachIncident, callAction } from "../src/simulation/calls";
 import {
   civilProtectionCommand,
   civilProtectionTick,
   migrateCivilProtection,
   readinessRecommendation,
 } from "../src/simulation/civil-protection";
-import { crewSummary, planTurnout } from "../src/simulation/staffing";
-import { vt } from "../src/catalog";
-import { attachIncident, callAction } from "../src/simulation/calls";
-import { attachDynamics } from "../src/simulation/dynamics";
 import { alarm } from "../src/simulation/dispatch";
-import { radioAction } from "../src/simulation/incidents";
+import { attachDynamics } from "../src/simulation/dynamics";
 import { simId } from "../src/simulation/events";
-import { phaseFixture } from "./phase-fixture";
+import { radioAction } from "../src/simulation/incidents";
+import { crewSummary, planTurnout } from "../src/simulation/staffing";
+import { phaseFixture } from "./dispatch-fixture";
 function fixture() {
   const s = fresh("Test", "KatS", 1000);
   s.seed = 101;

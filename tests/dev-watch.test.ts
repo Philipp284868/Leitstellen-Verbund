@@ -1,18 +1,19 @@
-import { it, expect } from "vitest";
 import { fork, type ChildProcess } from "node:child_process";
 import {
-  mkdtemp,
-  mkdir,
-  cp,
-  symlink,
-  readFile,
-  writeFile,
-  rm,
   access,
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
 } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { createServer } from "node:net";
+import { expect, it } from "vitest";
+import "./fixtures/germany/session";
 async function port() {
   const server = createServer();
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
@@ -53,7 +54,7 @@ it("Dev erstellt eigene Daten, übernimmt Serveränderungen, erhält bei Compile
       execArgv: [],
       env: {
         ...process.env,
-        LV_BUILD_WORLD: "rivermere-1",
+
         DEV_DATA_DIR: data,
         DEV_PORT: String(frontend),
         DEV_API_PORT: String(backend),

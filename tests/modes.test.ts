@@ -1,16 +1,22 @@
-import { environmentAt } from "../src/simulation/weather";
-import { publicSave } from "../src/simulation/incidents";
-import { it, expect } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database, DATABASE_VERSION } from "../server/database";
+import { expect, it } from "vitest";
 import { Auth } from "../server/auth";
+import { Database, DATABASE_VERSION } from "../server/database";
 import { Game } from "../server/game";
+import { publicSave } from "../src/simulation/incidents";
+import { environmentAt } from "../src/simulation/weather";
 import { established } from "./e2e/fixtures";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { installLogicGeography } from "./fixtures/germany/logic-provider";
+import "./fixtures/germany/session";
+
+import { spawnSync } from "node:child_process";
+import { io, type Socket } from "socket.io-client";
 import { type Save } from "../src/model";
 import { euro } from "../src/money";
+import { startServer } from "./fixtures/germany/server";
 import { fundTestBudget } from "./money-fixture";
 const pass = "Separate-game-worlds-123!";
 const command = (action: unknown) => ({ id: crypto.randomUUID(), action });
@@ -162,9 +168,6 @@ it("Sicherungen enthalten beide Welten und private Spielfinanzen werden nicht ge
     db.close();
   }
 });
-import { startServer } from "../server/index";
-import { io, type Socket } from "socket.io-client";
-import { spawnSync } from "node:child_process";
 it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore bewahren das Archiv", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-mode-api-")),
     port = 23000 + Math.floor(Math.random() * 9000),
@@ -280,7 +283,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   const exported = spawnSync(
     process.execPath,
     [
-      ".tools/legacy-tests/server/cli.js",
+      "dist/server/cli.js",
       "archive-export",
       "--username",
       "modeapi",
@@ -307,13 +310,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
   });
   const result = spawnSync(
     process.execPath,
-    [
-      ".tools/legacy-tests/server/cli.js",
-      "restore",
-      "--file",
-      backup,
-      "--confirm",
-    ],
+    ["dist/server/cli.js", "restore", "--file", backup, "--confirm"],
     {
       encoding: "utf8",
       env: {
@@ -328,6 +325,7 @@ it("HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore be
     },
   );
   expect(result.status, result.stderr).toBe(0);
+  installLogicGeography();
   const restored = new Database(dir);
   try {
     expect(restored.all("single").get(user)!.money).toBe(euro(195000));

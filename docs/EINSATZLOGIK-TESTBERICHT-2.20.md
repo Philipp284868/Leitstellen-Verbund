@@ -40,7 +40,7 @@ Die neue versionierte Abnahme verwendet `scripts/incident-acceptance.mjs` mit `t
 
 Der Ablauf führt vom neutralen Notruf über Gespräch, TLF-Alarmierung, echte Straßenanfahrt und erste Lagemeldung zur endgültigen Brandlöschung. Eine separate technische Restaufgabe bleibt offen. Das TLF wird zurückgeschickt und während der Rückfahrt ohne neue Ausrückezeit erneut alarmiert. Ein kritischer medizinischer Einsatz bleibt grün. Eine kurze Störung wird automatisch behoben; Serverneustart und Wiederverbindung erhalten ihre Frist und Zuordnung.
 
-Der [strukturierte Deutschland-Messbeleg](quality-evidence/incident-real-2.20.json) enthält die tatsächlich gemessenen Routen, den Intensitätsverlauf bis null, identische Ausgangskoordinaten beim Folgealarm, null Sekunden erneute Ausrückezeit, sichtbare Notfallpriorität bei grünem Marker sowie die über den Serverneustart erhaltene 60-Sekunden-Störungsfrist. Es traten keine Browser-`pageerror`-Ereignisse auf. Das ist eine gezielt vorbereitete Einsatzfolge auf echten Geodaten; die Restaufgabe wird bewusst offen gelassen und ihr späterer Gesamtabschluss in getrennten Logik- und Browserfällen geprüft.
+Der [strukturierte Deutschland-Messbeleg](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/quality-evidence/incident-real-2.20.json) enthält die tatsächlich gemessenen Routen, den Intensitätsverlauf bis null, identische Ausgangskoordinaten beim Folgealarm, null Sekunden erneute Ausrückezeit, sichtbare Notfallpriorität bei grünem Marker sowie die über den Serverneustart erhaltene 60-Sekunden-Störungsfrist. Es traten keine Browser-`pageerror`-Ereignisse auf. Das ist eine gezielt vorbereitete Einsatzfolge auf echten Geodaten; die Restaufgabe wird bewusst offen gelassen und ihr späterer Gesamtabschluss in getrennten Logik- und Browserfällen geprüft.
 
 Der ursprüngliche breite Edge-Lauf und seine Fehlschläge bleiben dokumentiert: Zwei Fälle warteten auf einen inzwischen absichtlich verzögerten ersten Anruf; zwei erwarteten die abgeschaffte Rückfahrtsperre beziehungsweise einen manuellen Reparaturauftrag; vier Referenzgrößen suchten den nun vor Erkundung verborgenen echten Einsatznamen. Der anschließende Lauf aller vier betroffenen Dateien bestand mit 17/17 Fällen. Eine weitere Referenzprüfung bestand mit 6/6 Fällen. Die lokalen Läufe ersetzen keine vollständige grüne Prüfung eines einzelnen finalen Commits in der Linux-CI.
 
@@ -48,13 +48,13 @@ Die Sichtprüfung korrigierte zusätzlich einen veralteten Cache der Ausrückevo
 
 ### Aufnahmen aus der gestarteten Anwendung
 
-![Bestätigte Brandentwicklung mit tatsächlichen Serverwerten](screenshots/2.20/04-bestaetigte-brandentwicklung.png)
+![Bestätigte Brandentwicklung mit tatsächlichen Serverwerten](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20/04-bestaetigte-brandentwicklung.png)
 
-![Gelöschter Brand mit noch offener unabhängiger Restaufgabe](screenshots/2.20/05-feuer-geloescht-restaufgaben.png)
+![Gelöschter Brand mit noch offener unabhängiger Restaufgabe](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20/05-feuer-geloescht-restaufgaben.png)
 
-![Wieder alarmierbares TLF und weiter gebundene Drehleiter](screenshots/2.20/06-tlf-frei-restarbeiten-bleiben.png)
+![Wieder alarmierbares TLF und weiter gebundene Drehleiter](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20/06-tlf-frei-restarbeiten-bleiben.png)
 
-![Grüner medizinischer Marker mit gesonderter Notfallkennzeichnung](screenshots/2.20/08-medizinischer-einsatz-gruen.png)
+![Grüner medizinischer Marker mit gesonderter Notfallkennzeichnung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20/08-medizinischer-einsatz-gruen.png)
 
 Die vollständige Folge aus zehn Bildern liegt unter [screenshots/2.20](screenshots/2.20). Die Dateien stammen vom tatsächlichen lokalen Deutschland-Client; sie sind keine Entwürfe oder nachgezeichneten UI-Bilder.
 

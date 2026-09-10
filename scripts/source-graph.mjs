@@ -9,8 +9,9 @@ export function sourceGraph(entries, root = resolve(".")) {
   const visit = (file) => {
     if (seen.has(file)) return;
     seen.add(file);
+    // Non-code assets are terminal nodes but still participate in the hash.
+    if (!/\.(?:[cm]?[jt]sx?|css)$/.test(file)) return;
     const source = readFileSync(file, "utf8");
-    const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
     const dependencies = [];
     function walk(node) {
       if (
@@ -24,9 +25,29 @@ export function sourceGraph(entries, root = resolve(".")) {
         ts.isStringLiteral(node.arguments[0])
       )
         dependencies.push(node.arguments[0].text);
+      if (
+        ts.isNewExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "URL" &&
+        node.arguments?.length === 2 &&
+        ts.isStringLiteral(node.arguments[0]) &&
+        !node.arguments[0].text.endsWith("/") &&
+        node.arguments[1].getText() === "import.meta.url"
+      )
+        dependencies.push(node.arguments[0].text);
       ts.forEachChild(node, walk);
     }
-    walk(ast);
+    if (file.endsWith(".css")) {
+      for (const match of source.matchAll(
+        /@import\s+(?:url\(\s*)?["']([^"']+)["']/g,
+      ))
+        dependencies.push(match[1]);
+      for (const match of source.matchAll(
+        /url\(\s*["']?(\.[^\s"')]+)["']?\s*\)/g,
+      ))
+        dependencies.push(match[1]);
+    } else
+      walk(ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true));
     for (const specifier of dependencies) {
       if (!specifier.startsWith(".")) continue;
       const base = resolve(dirname(file), specifier.split("?")[0]);

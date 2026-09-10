@@ -17,7 +17,12 @@ export default defineConfig({
       },
     ],
   ],
-  use: { trace: "retain-on-failure", screenshot: "only-on-failure" },
+  use: {
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
+  },
   projects: [
     {
       name: "chromium",

@@ -18,10 +18,10 @@ Alle acht Aufnahmen wurden mit der gebauten Anwendung und isolierten Testkonten 
 
 | Größe | Hauptmenü | Spiel-HUD |
 |---|---|---|
-| 1920 × 1080 | [Menü](screenshots/2.14/menu-1920.png) | [HUD](screenshots/2.14/hud-1920.png) |
-| 2560 × 1440 | [Menü](screenshots/2.14/menu-2560.png) | [HUD](screenshots/2.14/hud-2560.png) |
-| 1366 × 768 | [Menü](screenshots/2.14/menu-1366.png) | [HUD](screenshots/2.14/hud-1366.png) |
-| 3440 × 1440 | [Menü](screenshots/2.14/menu-3440.png) | [HUD](screenshots/2.14/hud-3440.png) |
+| 1920 × 1080 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-1920.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-1920.png) |
+| 2560 × 1440 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-2560.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-2560.png) |
+| 1366 × 768 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-1366.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-1366.png) |
+| 3440 × 1440 | [Menü](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/menu-3440.png) | [HUD](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.14/hud-3440.png) |
 
 Die Referenzkomposition wird übernommen, die Karte bleibt eine gezeichnete fiktive Spielkarte. Sie ist keine fotorealistische Satellitenansicht. Die Einsatzdetails zeigen tatsächlich vorhandene Notruf-/AAO-Funktionen statt einer rein dekorativen Brandfotografie. Moderne Desktopbrowser sind Zielplattform; keine Windows-EXE und keine neue mobile Version.
 

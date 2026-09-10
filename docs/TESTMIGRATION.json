@@ -1,6 +1,6 @@
 {
   "baseline": "03e9878217292f1879d71a01a7722e87dc14eb1d",
-  "note": "Inventar vor Entfernung. A: entfallen, B: aktuelle Funktion, C: Formatbrücke. Endgültige Ersatznachweise werden mit der Umsetzung ergänzt.",
+  "note": "Inventar vor Entfernung; A: entfallen, B: aktuelle Funktion, C: Formatbrücke. Umbenennungen erhalten die fachlichen Regressionen. Maßgeblich für den aktuellen Erfolg ist die Abnahme des jeweiligen Commit, nicht ein alter Zähler.",
   "entries": [
     {
       "old": "tests/aid-wishes.test.ts",
@@ -524,7 +524,10 @@
         "großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bleibt bedienbar",
         "reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, kleine Desktopansicht und Wiederverbindung"
       ],
-      "replacement": "tests/e2e/progression-map.spec.ts",
+      "replacement": [
+        "tests/e2e/progression-map.spec.ts",
+        "tests/e2e/map-load.spec.ts"
+      ],
       "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
     },
     {
@@ -564,8 +567,13 @@
         "Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung",
         "Rivermere: gemessene Kartenbewegung"
       ],
-      "replacement": "tests/e2e/rivermere.spec.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "replacement": [
+        "tests/e2e/progression-map.spec.ts",
+        "tests/e2e/map-load.spec.ts",
+        "tests/e2e/map-input.spec.ts",
+        "tests/e2e/germany-map-controls.spec.ts"
+      ],
+      "disposition": "A: fiktive Ortsnamen und Rasterrenderer entfallen. B: Übersicht, Orts-/Fahrzeugsuche, Route, Wiederverbindung, Kartenbedienung und gemessene Bewegung mit 100 Wachen/500 Fahrzeugen/40 Einsätzen auf aktuellem Deutschland-Server übernommen. Lokale Edge-Nachweise: browser-map-final.json (2/2) und browser-mapinput.json (4/4); vollständige finale CI zusätzlich erforderlich."
     },
     {
       "old": "tests/e2e/settings-workstation.spec.ts",
@@ -721,7 +729,7 @@
         "lässt Rivermere weiterhin seine bisherige .env und Welt verwenden"
       ],
       "replacement": "tests/germany-config.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "disposition": "Deutschland ist das einzige aktive Produkt; der bisherige zweite Weltstart entfällt. Datenkennung, getrennte Pfade und Konfliktschutz bleiben geprüft."
     },
     {
       "old": "tests/germany-download.test.ts",
@@ -1444,7 +1452,7 @@
         "Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigeschalteter Kauf überstehen Neustart"
       ],
       "replacement": "tests/progression-motion.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "disposition": "XP-, Bewegungs-, Speicher- und Freischaltungsregressionen bleiben. Der 100-km-Generatorvergleich entfällt; Deutschlandprojektion wird in realtime/geography geprüft. Bekannte Verkehrswartezeit wird am belegten Abschnitt geprüft: Deutschland erfindet keine alternative Straße bei fehlender exakter Routerunterstützung."
     },
     {
       "old": "tests/project-news.test.ts",
@@ -1574,8 +1582,13 @@
         "weist eine fremde Welt vor Änderungen an SQLite ab",
         "erhält die neue Welt und laufende Anfahrt beim echten Serverneustart"
       ],
-      "replacement": "tests/rivermere.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "replacement": [
+        "tests/save-compatibility.test.ts",
+        "tests/germany-geography-sites.test.ts",
+        "tests/germany-provider.test.ts",
+        "tests/germany-simulation.test.ts"
+      ],
+      "disposition": "Generator, benannte Fantasieorte und Flussrenderer entfallen (A). Bebaubarkeit, belegte Routen, Welt-/Datensatzgrenzen, deterministische Wiederholung und laufende Fahrt über Serverneustart bleiben durch aktuelle Provider-, Geografie- und Simulationstests erhalten (B)."
     },
     {
       "old": "tests/runtime.test.ts",
@@ -1800,7 +1813,7 @@
     },
     {
       "old": "tests/world.test.ts",
-      "category": "C",
+      "category": "A+C",
       "requirements": [
         "verbindet sämtliche Straßen und Häfen mit kurzen, tatsächlich gezeichneten Fahrwegen",
         "zeichnet unverbundene Straßenkreuzungen ausdrücklich als Überführung",
@@ -1809,8 +1822,13 @@
         "rollt die Kartenmigration beider Tabellen bei einem beschädigten Einzelspielerstand zurück",
         "übernimmt Boote und Rückfahrten an die neuen Häfen ohne Verlust von Auftrag oder Fahrzeit"
       ],
-      "replacement": "tests/world.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "replacement": [
+        "tests/save-compatibility.test.ts",
+        "tests/germany-restore.test.ts",
+        "tests/germany-provider.test.ts",
+        "tests/germany-simulation.test.ts"
+      ],
+      "disposition": "Fiktive Straßentopologie, 117 Bauplätze und automatische Hafenverlegung entfallen (A). Ohne geografische Zuordnung werden diese Weltstände abgewiesen und vollständig unverändert exportiert (C). Aktuelle Wiederherstellung, Transportrouten, einmalige Auszahlung und Weltkonflikte prüfen die Deutschland-Tests."
     }
   ]
 }

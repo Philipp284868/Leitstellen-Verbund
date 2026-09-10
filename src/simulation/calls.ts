@@ -1,14 +1,19 @@
-import type { Save, Mission } from "../model";
 import { mt } from "../catalog";
-import { districtAt, roads, distance } from "../world";
+import { addressAt } from "../germany/world";
+import type { Mission, Save } from "../model";
+import { callerObservation, REPORTED_IDS, reportId } from "./call-observations";
 import { record, simId } from "./events";
-import type { Incident } from "./schema";
 import { CALL_PACING, mayReceiveAdditionalCall } from "./pacing";
-import { REPORTED_IDS, reportId, callerObservation } from "./call-observations";
+import type { Incident } from "./schema";
 // Meldebilder are scenario data; future hazard simulation can extend these profiles.
 export const scenarios: Record<
   string,
-  { report: string; people: string; hazard: string; detail: string }
+  {
+    report: string;
+    people: string;
+    hazard: string;
+    detail: string;
+  }
 > = {
   "bma-false": {
     report: "bma",
@@ -118,14 +123,6 @@ export function attachIncident(s: Save, m: Mission) {
     scenario = scenarios[m.template],
     t = mt(m.template),
     profile = t.profile;
-  const road = IS_GERMANY
-    ? null
-    : roads.reduce((a, b) =>
-        Math.min(...a.points.map((p) => distance(p, m.pos))) <
-        Math.min(...b.points.map((p) => distance(p, m.pos)))
-          ? a
-          : b,
-      );
   m.shared = false;
   m.control = {
     priority: "NORMAL",
@@ -142,9 +139,7 @@ export function attachIncident(s: Save, m: Mission) {
     secret: {
       seed,
       report: reportId(t),
-      address: IS_GERMANY
-        ? addressAt(m.pos)
-        : `${road!.name}, ${districtAt(m.pos)} · Lage an der markierten Position`,
+      address: addressAt(m.pos),
       people:
         profile?.people ??
         scenario?.people ??
@@ -476,5 +471,3 @@ export function callAction(
     actor,
   );
 }
-import { IS_GERMANY } from "../world-choice";
-import { addressAt } from "../germany/world";

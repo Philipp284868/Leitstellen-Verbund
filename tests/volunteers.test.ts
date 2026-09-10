@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { organizationFixture } from "./phase-three-fixture";
-import { apply, readiness, tick, recall } from "../src/engine";
+import { apply, readiness, recall, tick } from "../src/engine";
 import { validate } from "../src/model";
+import { xpForLevel } from "../src/progression";
 import { alarm } from "../src/simulation/dispatch";
 import { publicSave } from "../src/simulation/incidents";
 import { organizationCommand } from "../src/simulation/organizations";
 import {
   crewRequired,
-  crewSummary,
   crewSummaries,
+  crewSummary,
   newStationProfile,
   personDuty,
   planTurnout,
@@ -27,8 +27,8 @@ import {
   volunteerMarkers,
   volunteerPosition,
 } from "../src/simulation/volunteers";
-import { xpForLevel } from "../src/progression";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { organizationFixture } from "./mutual-aid-fixture";
 
 function ffFixture() {
   const s = organizationFixture("volunteer-test"),

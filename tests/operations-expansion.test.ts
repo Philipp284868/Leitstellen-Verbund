@@ -1,17 +1,17 @@
 import { expect, it } from "vitest";
-import { phaseFixture } from "./phase-fixture";
-import { organizationFixture, addAmbulance } from "./phase-three-fixture";
+import { commandSchema } from "../server/actions";
+import { readiness, tick } from "../src/engine";
+import { validate } from "../src/model";
+import { callAction, callsTick } from "../src/simulation/calls";
 import {
   civilProtectionCommand,
   civilProtectionTick,
 } from "../src/simulation/civil-protection";
-import { callAction, callsTick } from "../src/simulation/calls";
 import { deskCommand } from "../src/simulation/commands";
-import { publicSave } from "../src/simulation/incidents";
-import { readiness, tick } from "../src/engine";
 import { alarm, propose } from "../src/simulation/dispatch";
-import { validate } from "../src/model";
-import { commandSchema } from "../server/actions";
+import { publicSave } from "../src/simulation/incidents";
+import { phaseFixture } from "./dispatch-fixture";
+import { addAmbulance, organizationFixture } from "./mutual-aid-fixture";
 
 it("KatS-Bereitschaft lässt reguläre Alarmierung zu und beschleunigt professionelle Wachen nicht", () => {
   const s = organizationFixture("owner"),

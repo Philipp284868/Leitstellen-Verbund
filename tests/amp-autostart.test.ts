@@ -1,18 +1,19 @@
-import { it, expect } from "vitest";
-import {
-  mkdtemp,
-  mkdir,
-  cp,
-  symlink,
-  writeFile,
-  readFile,
-  access,
-} from "node:fs/promises";
-import { DatabaseSync } from "node:sqlite";
-import { tmpdir } from "node:os";
-import { resolve } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
+import {
+  access,
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { expect, it } from "vitest";
+import "./fixtures/germany/session";
 it("AMP startet ohne Admin-Erstellung und ignoriert frühere Admin-Dateien auch nach Neustart", async () => {
   const base = await mkdtemp(resolve(tmpdir(), "lv-no-bootstrap-")),
     program = resolve(base, "app"),

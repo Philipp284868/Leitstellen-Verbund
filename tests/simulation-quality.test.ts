@@ -1,26 +1,27 @@
-import { describe, it, expect } from "vitest";
-import { phaseFixture } from "./phase-fixture";
-import { mt, missions, vehicles } from "../src/catalog";
+import { describe, expect, it } from "vitest";
+import { missions, mt, vehicles } from "../src/catalog";
 import { tick } from "../src/engine";
 import { validate } from "../src/model";
+import { xpForLevel } from "../src/progression";
+import { callAction } from "../src/simulation/calls";
+import { alarm, propose } from "../src/simulation/dispatch";
 import {
   attachDynamics,
-  dynamicsTick,
   dynamicsComplete,
+  dynamicsTick,
   followupsTick,
 } from "../src/simulation/dynamics";
-import { callAction } from "../src/simulation/calls";
-import { radioAction, request } from "../src/simulation/incidents";
 import {
   canGenerate,
-  generationRequirements,
   capabilitiesUnlocked,
+  generationRequirements,
 } from "../src/simulation/feasibility";
-import { xpForLevel } from "../src/progression";
-import { alarm, propose } from "../src/simulation/dispatch";
 import { publicHospitalProfile } from "../src/simulation/hospital-profiles";
 import { assessHospitals } from "../src/simulation/hospitals";
-import { nodes } from "../src/world";
+import { radioAction, request } from "../src/simulation/incidents";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { taskTick } from "../src/simulation/mission-tasks";
 
 function dynamic(template = "field") {

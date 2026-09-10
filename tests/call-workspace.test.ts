@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
-import { phaseFixture } from "./phase-fixture";
-import { availableQuestions, callAction } from "../src/simulation/calls";
-import { publicSave } from "../src/simulation/incidents";
-import { alarm } from "../src/simulation/dispatch";
 import { validate } from "../src/model";
+import { availableQuestions, callAction } from "../src/simulation/calls";
+import { alarm } from "../src/simulation/dispatch";
+import { publicSave } from "../src/simulation/incidents";
+import { phaseFixture } from "./dispatch-fixture";
 
 it("fragt adaptiv, disponiert während des Gesprächs und erhält Quellen nach Wiederholung und Reload", () => {
   const s = phaseFixture("owner"),

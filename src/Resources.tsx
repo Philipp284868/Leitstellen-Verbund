@@ -1,42 +1,41 @@
-import { vehicleHomeAllowed } from "./catalog";
-import { StationGarage } from "./StationGarage";
-import { CivilStationSettings } from "./CivilProtection";
-import { VehicleIcon, BuildingIcon } from "./map-icons";
-import { buildReason, purchaseReason } from "./purchase";
-import {
-  StationSettings,
-  VehicleStaffing,
-  HospitalSettings,
-} from "./Organizations";
-import { tripLabel } from "./travel";
 import { useState } from "react";
 import {
-  buildings,
-  vehicles,
-  bt,
-  vt,
   BALANCE,
+  bt,
+  buildings,
   capabilities,
   extensions,
+  vehicleHomeAllowed,
+  vehicles,
+  vt,
 } from "./catalog";
-import { level, type Save, type Building } from "./model";
-import { command, useGame } from "./store";
-import { useCommandForm } from "./use-command-form";
+import { CivilStationSettings } from "./CivilProtection";
 import { requestDialogTransition } from "./dialog-state";
-import { buildingStaffingStatus } from "./simulation/building-staffing";
 import { saleValue } from "./economy/ledger";
-import { unproject } from "./germany/projection";
-import { IS_GERMANY } from "./world-choice";
 import { fleetReadiness } from "./fleet-view";
-import { stationCapacity } from "./simulation/staffing";
+import { unproject } from "./germany/projection";
+import { BuildingIcon, VehicleIcon } from "./map-icons";
+import { level, type Building, type Save } from "./model";
 import {
-  credits,
-  statuses,
-  Disclosure,
-  ConfirmAction,
-  RenameAction,
-} from "./ui";
+  HospitalSettings,
+  StationSettings,
+  VehicleStaffing,
+} from "./Organizations";
+import { buildReason, purchaseReason } from "./purchase";
+import { buildingStaffingStatus } from "./simulation/building-staffing";
 import { operativeCode } from "./simulation/fms";
+import { stationCapacity } from "./simulation/staffing";
+import { StationGarage } from "./StationGarage";
+import { command, useGame } from "./store";
+import { tripLabel } from "./travel";
+import {
+  ConfirmAction,
+  credits,
+  Disclosure,
+  RenameAction,
+  statuses,
+} from "./ui";
+import { useCommandForm } from "./use-command-form";
 export function BuildingShop({
   s,
   onPlace,
@@ -166,7 +165,7 @@ export function BuildingPanel({
           : s.money < upgradeCost
             ? "Budget reicht für diesen Ausbau nicht aus"
             : "";
-  const location = IS_GERMANY ? unproject(b.pos) : null;
+  const location = unproject(b.pos);
   const selectedPurchase = vehicles.find((v) => v.id === purchase);
   return (
     <section className="resource-panel" data-tutorial="building-details">

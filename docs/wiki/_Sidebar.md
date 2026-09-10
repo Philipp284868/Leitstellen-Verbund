@@ -20,4 +20,4 @@
 
 ### Historische Bestandswelt
 
-- [[Rivermere – Bestand und Migration|Rivermere]]
+- [[Historische Spielstände|Rivermere]]

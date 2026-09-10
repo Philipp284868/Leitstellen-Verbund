@@ -1,21 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { createServer } from "node:net";
 import {
-  mkdtemp,
-  mkdir,
-  writeFile,
-  readFile,
+  access,
   cp,
+  mkdir,
+  mkdtemp,
+  readFile,
   rm,
   symlink,
-  access,
+  writeFile,
 } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 let base: string, app: string, data: string, geo: string, harness: string;
 const owned = new Set<ChildProcess>();
@@ -91,7 +91,7 @@ function launch(extra: Record<string, string> = {}) {
   return { child, ended };
 }
 async function configBinary() {
-  const outfile = resolve(app, "dist/germany/server/config.mjs");
+  const outfile = resolve(app, "dist/server/config.mjs");
   await build({
     stdin: {
       contents:
@@ -102,7 +102,6 @@ async function configBinary() {
     bundle: true,
     platform: "node",
     format: "esm",
-    define: { __LV_WORLD__: JSON.stringify("germany-1") },
   });
   return (extra: Record<string, string> = {}) =>
     spawnSync(process.execPath, [outfile], {
@@ -118,7 +117,7 @@ beforeEach(async () => {
   data = resolve(base, "data");
   geo = resolve(base, "geo");
   for (const directory of [
-    resolve(app, "dist/germany/server"),
+    resolve(app, "dist/server"),
     resolve(app, "scripts/geodata"),
     data,
     geo,
@@ -136,7 +135,7 @@ beforeEach(async () => {
   );
   await writeFile(resolve(app, "package.json"), '{"type":"module"}');
   await writeFile(
-    resolve(app, "dist/germany/server/index.js"),
+    resolve(app, "dist/server/index.js"),
     `
     import {appendFileSync, writeFileSync} from 'node:fs';
     const log = (value) => appendFileSync(process.env.LV_FIXTURE_LOG, value+'\\n');
@@ -278,7 +277,7 @@ describe("Deutschland-Start und Bestandsschutz", () => {
         dataset: "f".repeat(64),
       }),
     );
-    await rm(resolve(app, "dist/germany/server/index.js"));
+    await rm(resolve(app, "dist/server/index.js"));
     run = launch();
     const result = await run.ended;
     expect(result.code).toBe(1);
@@ -404,9 +403,15 @@ describe("Deutschland-Start und Bestandsschutz", () => {
       "build-pipeline.mjs",
       "build-cache.mjs",
       "build-paths.mjs",
+      "source-graph.mjs",
       "clean.mjs",
     ])
       await cp(resolve("scripts", name), resolve(buildApp, "scripts", name));
+    await symlink(
+      resolve("node_modules"),
+      resolve(buildApp, "node_modules"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
     const result = spawnSync(process.execPath, ["scripts/build.mjs"], {
       cwd: buildApp,
       encoding: "utf8",

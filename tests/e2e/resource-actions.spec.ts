@@ -1,18 +1,19 @@
-import { test, expect, type Page, type Locator } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
-import { phaseFixture } from "../phase-fixture";
+import type { startServer } from "../../server/index";
 import { apply, tick } from "../../src/engine";
-import { nodes } from "../../src/world";
+import { phaseFixture } from "../dispatch-fixture";
+import { sites as nodes } from "../fixtures/germany/locations";
+import { expect, test, type Locator, type Page } from "./test";
+
 import { BALANCE, bt, extensions, vt } from "../../src/catalog";
 import { saleValue } from "../../src/economy/ledger";
 import { formatMoney } from "../../src/money";
 import { stationCapacity } from "../../src/simulation/staffing";
-import { listenBrowserServer } from "./server-helper";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { openPanel } from "./ui-navigation";
 
 const compiled = (await import(
@@ -69,7 +70,7 @@ test.beforeEach(async ({ page }) => {
   s.missions = [];
   s.missionWait = 1e9;
   // Only setup uses the deterministic fixture; subsequent mutations use the UI.
-  apply(s, { type: "build", kind: "fire", pos: nodes[150] });
+  apply(s, { type: "build", kind: "fire", pos: nodes[100] });
   tick(s, s.time + 31, {}, false, false);
   s.buildings[0].name = "Nordwache";
   s.buildings[1].name = "Südwache";
@@ -177,13 +178,17 @@ test("Versetzen, Fahrzeugverkauf und leerer Standortverkauf sind echte einmalige
     initial.vehicles.slice(1).map((v) => v.id),
   );
   await app.close();
-  app = compiled.startServer(config);
+  app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   await enter(page);
   await expect(page.locator(".hud-budget strong")).toHaveText(
     formatMoney(finalMoney),
   );
-  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await expect(
+    page.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(1);
   await openPanel(page, "Fuhrpark");
   await expect(card).toHaveCount(0);
   await expect(page.locator(".fleet-card")).toHaveCount(1);

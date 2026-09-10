@@ -13,6 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
+import "./check-build-provenance.mjs";
 import { cleanRuntimeBookkeeping } from "./runtime-dependencies.mjs";
 if (process.platform !== "linux")
   throw Error(
@@ -51,7 +52,8 @@ try {
     "docs/DEUTSCHLAND-ROUTING.md",
     "docs/DEUTSCHLAND-HOEHEN.md",
     "docs/DEUTSCHLAND-LASTPRUEFUNG.md",
-    "docs/DEUTSCHLAND-TESTBERICHT.md",
+    "docs/KOMPATIBILITAET.md",
+    "docs/HISTORIE.md",
     "scripts/start-germany.mjs",
     "scripts/geodata",
   ])
@@ -100,6 +102,8 @@ try {
       {
         version: pkg.version,
         commit,
+        product: "germany-1",
+        buildHash: info.outputs,
         node: "24.x",
         platform: "Linux server; desktop browser clients",
         files,

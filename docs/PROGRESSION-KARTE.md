@@ -44,7 +44,7 @@ Die folgenden Abschnitte bleiben als damals dokumentiertes Modell und technische
 
 ## Balancing: reproduzierbare Modellschätzung
 
-Ausführen mit `node scripts/progression-audit.mjs`. Vollständige Annahmen, Szenarienmischungen, Fahrzeuglisten, Fahrzeiten, Meilensteine und Messwerte stehen in [PROGRESSION-AUDIT.json](PROGRESSION-AUDIT.json).
+Ausführen mit `node scripts/progression-audit.mjs`. Vollständige Annahmen, Szenarienmischungen, Fahrzeuglisten, Fahrzeiten, Meilensteine und Messwerte stehen in [PROGRESSION-AUDIT.json](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/PROGRESSION-AUDIT.json).
 
 Die Schätzung verwendet 48 deterministisch ausgewählte lokale Fahrziele je Spielphase, echte Straßenrouten mit Beschleunigung/Bremsen, einen kleinen bis mittleren Fuhrpark und 1–1,7 effektiv parallel bearbeitete Einsätze bei höchstens zwei offenen Missionen. Die mittlere Anrufpause wird mit 150 Sekunden angesetzt. Die Rechnung enthält Hin- und Rückfahrt, 40 Sekunden für Notruf/Disposition/Ausrücken, ursprüngliche Einsatzarbeit, 30 Sekunden Erkundung sowie bei Patienten 150 Sekunden für Versorgung/Übergabe. Individuelle Patientenverläufe, vollständige taktische Fehlentscheidungen und das Wetter sind keine Vorhersagegrößen dieses Modells. Die Referenzbedingungen sind frei; reale Schlechtwetterlagen benötigen mehr Zeit.
 

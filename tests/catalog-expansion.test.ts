@@ -1,44 +1,45 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  missions,
-  vehicles,
   capabilities,
-  vt,
+  missions,
   mt,
+  vehicles,
+  vt,
   type Template,
 } from "../src/catalog";
-import { incidentTopics } from "../src/catalog/incident-topics";
-import { incidentVariants } from "../src/catalog/incident-variants";
 import {
   incidentProfileSchema,
   incidentSiteKind,
 } from "../src/catalog/incident-profile";
+import { incidentTopics } from "../src/catalog/incident-topics";
+import { incidentVariants } from "../src/catalog/incident-variants";
 import { fresh, validate, type Mission, type Vehicle } from "../src/model";
 import { attachIncident } from "../src/simulation/calls";
 import {
   attachDynamics,
-  dynamicsTick,
   dynamicsComplete,
+  dynamicsTick,
   followupsTick,
 } from "../src/simulation/dynamics";
-import { attachOrganizations } from "../src/simulation/organizations";
+import { record } from "../src/simulation/events";
 import { requirements } from "../src/simulation/hazards";
-import { weatherWeight, environmentAt } from "../src/simulation/weather";
 import { declareMajor, majorKind } from "../src/simulation/major-incidents";
+import { attachOrganizations } from "../src/simulation/organizations";
 import {
-  patientTransportReason,
   patientTick,
+  patientTransportReason,
 } from "../src/simulation/patients";
 import {
   incidentQuality,
   qualityFactor,
   reportUnit,
 } from "../src/simulation/reports";
-import { record } from "../src/simulation/events";
-import { nodes } from "../src/world";
-import { publicSave } from "../src/simulation/incidents";
+import { environmentAt, weatherWeight } from "../src/simulation/weather";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { breakVehicle } from "../src/simulation/faults";
-import { phaseFixture } from "./phase-fixture";
+import { publicSave } from "../src/simulation/incidents";
+import { phaseFixture } from "./dispatch-fixture";
 
 function incident(t: Template, seed = 100) {
   const s = fresh("Audit", "Katalogprüfung", Date.UTC(2026, 5, 15, 12) / 1000);

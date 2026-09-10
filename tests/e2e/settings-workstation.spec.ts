@@ -1,11 +1,11 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
-import { phaseFixture } from "../phase-fixture";
+import { phaseFixture } from "../dispatch-fixture";
 import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Locator, type Page } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -47,7 +47,9 @@ async function login(page: Page, play = false) {
   await expect(page.locator(".command-menu")).toBeVisible();
   if (play) {
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
-    await expect(page.locator("svg.map")).toBeVisible();
+    await expect(
+      page.locator("[data-testid=germany-map-viewport]"),
+    ).toBeVisible();
   }
   return owner;
 }
@@ -395,17 +397,18 @@ test("Tastenkonflikte, Fokusfalle und Escape schützen Entwürfe; Dialogaktionen
   page,
 }) => {
   const owner = await login(page, true),
-    map = page.locator("svg.map");
+    map = page.locator("[data-testid=germany-map-viewport]");
   const actions: string[] = [];
   page.on("request", (request) => {
     if (request.url().endsWith("/api/action"))
       actions.push(request.postData() ?? "");
   });
-  const original = await map.getAttribute("viewBox");
+  const original = await map.getAttribute("data-camera");
   await page.mouse.move(900, 400);
   await page.mouse.wheel(0, -360);
-  await expect.poll(() => map.getAttribute("viewBox")).not.toBe(original);
-  const camera = await map.getAttribute("viewBox");
+  await expect.poll(() => map.getAttribute("data-camera")).not.toBe(original);
+  await expect(map).toHaveAttribute("data-camera-moving", "false");
+  const camera = await map.getAttribute("data-camera");
   await map.evaluate((element) => {
     (
       window as typeof window & { settingsMapClicks: number }
@@ -466,7 +469,7 @@ test("Tastenkonflikte, Fokusfalle und Escape schützen Entwürfe; Dialogaktionen
   await guard.getByRole("button", { name: "Änderungen verwerfen" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(opener).toBeFocused();
-  await expect(map).toHaveAttribute("viewBox", camera!);
+  await expect(map).toHaveAttribute("data-camera", camera!);
   expect(
     await page.evaluate(
       () =>

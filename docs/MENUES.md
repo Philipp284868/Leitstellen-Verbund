@@ -1,4 +1,4 @@
-# Erreichbare Oberflächen nach Phase 0
+# Aktuelle Oberflächen des Deutschland-Produkts
 
 Die zentrale Registrierung in `src/navigation.ts` und die Aufrufe in `src/App.tsx`, `src/GameHud.tsx` und `src/Topbar.tsx` bestimmen die vorhandenen Zugänge. Alle folgenden Ansichten verwenden die bestehende serverseitige Fachlogik. Die frühere unaufgerufene Friends-Ansicht ist durch TeamPanel/NeighborDesk ersetzt; der alte SoundSettings-Einstieg durch die gemeinsamen Einstellungen.
 
@@ -35,6 +35,6 @@ Die zentrale Registrierung in `src/navigation.ts` und die Aufrufe in `src/App.ts
 | Informationen              | Neuigkeiten, Mitwirkende/Lizenzen, Datenschutz, Support/Diagnose/Kopieren, Sprache                                                         | Funktionsfähige vorhandene Wege, Kopier-/Offlinefehler sichtbar                        |
 | Übergreifend               | Ladezustand, Offline-Sperre/Wiederverbinden, Formularfehler, fehlender Standort, leere Filter, Bestätigungen, ungespeicherte Änderungen    | Gemeinsame Modal-/Aktionskomponenten; keine untere Parallel-Navigation                 |
 
-Die 58 automatisiert aufgenommenen Deutschlandzustände sind geöffnete und benutzte Ansichten, keine Behauptung, jede denkbare Kombination aller Dialogzweige visuell geprüft zu haben. Die breiteren Chromium-/Firefox-Suiten decken unter anderem Mehrspieler, Rechte, Transport, FMS, Audio, Wiederverbindung und tatsächliche Persistenz ab. Die ältere [ausführliche Funktionsmatrix](MENUE-MATRIX-2.21.md) enthält zusätzliche Zuordnungen zu Unteraktionen; [Phase 0](PHASE-0.md) benennt den tatsächlich geprüften Abschlussstand.
+Die 58 automatisiert aufgenommenen Deutschlandzustände sind geöffnete und benutzte Ansichten, keine Behauptung, jede denkbare Kombination aller Dialogzweige visuell geprüft zu haben. Die breiteren Chromium-/Firefox-Suiten decken unter anderem Mehrspieler, Rechte, Transport, FMS, Audio, Wiederverbindung und tatsächliche Persistenz ab. Die ältere [ausführliche Funktionsmatrix](MENUE-MATRIX-2.21.md) enthält zusätzliche Zuordnungen zu Unteraktionen; [Laufzeitbericht](TESTLAUFZEITEN.md) und die maschinenlesbare GitHub-Abnahme benennen den tatsächlich geprüften aktuellen Stand.
 
 Die neuen Folgefunktionen sind in [Notrufe, Einsatzlagen und Katastrophenbereitschaft](EINSATZARBEITSPLATZ.md) beschrieben. Die bisherigen Abnahmezahlen oben beziehen sich auf ihre historischen Prüfstände.

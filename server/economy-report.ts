@@ -1,19 +1,19 @@
 import {
   buildings,
-  vehicles,
-  extensions,
-  missions,
-  legacyMissionRewards,
   capabilities,
+  extensions,
+  legacyMissionRewards,
+  missions,
+  vehicles,
 } from "../src/catalog";
-import { priceEntries, ECONOMY_PRICES } from "../src/economy/prices";
+import { economyBalanceAudit } from "../src/economy/balancing";
 import {
   convertLegacyCredits,
   protectionRatio,
 } from "../src/economy/migration";
-import { economyBalanceAudit } from "../src/economy/balancing";
+import { ECONOMY_PRICES, priceEntries } from "../src/economy/prices";
 import { formatMoney } from "../src/money";
-import { WORLD_NAME } from "../src/world-choice";
+import { WORLD_NAME } from "../src/product";
 
 export function economyPriceReport() {
   const prices = priceEntries().map((p) => {

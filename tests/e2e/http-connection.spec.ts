@@ -1,15 +1,15 @@
-import { openPanel } from "./ui-navigation";
-import { listenBrowserServer } from "./server-helper";
-import { joinDesk } from "./desk-helpers";
-import { ECONOMY_PRICES } from "../../src/economy/prices";
-import { bt } from "../../src/catalog";
-import { formatMoney } from "../../src/money";
-import { test, expect, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { networkInterfaces, tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
+import { bt } from "../../src/catalog";
+import { ECONOMY_PRICES } from "../../src/economy/prices";
+import { formatMoney } from "../../src/money";
+import { joinDesk } from "./desk-helpers";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
+import { openPanel, showMapTools } from "./ui-navigation";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -98,6 +98,22 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     const legacy = await fetch(origin + "/socket.io/?EIO=4&transport=polling");
     expect(legacy.status).toBe(403);
     await expect(a.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
+    await showMapTools(a);
+    await a.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
+    await a
+      .locator(".map-search-results")
+      .getByRole("button", { name: "Straße des 17. Juni street", exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          JSON.parse(
+            (await a
+              .getByTestId("germany-map-viewport")
+              .getAttribute("data-camera"))!,
+          ).zoom,
+      )
+      .toBe(14);
     await openPanel(a, "Wachen");
     await a.getByRole("button", { name: "Wache bauen", exact: true }).click();
     await a
@@ -107,18 +123,28 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       })
       .getByRole("button", { name: "Platzieren" })
       .click();
-    const bounds = await a.locator("svg.map").boundingBox();
-    await a.locator("svg.map").click({
-      position: { x: bounds!.width * 0.3, y: bounds!.height * 0.55 },
+    const bounds = await a
+      .locator("[data-testid=germany-map-viewport]")
+      .boundingBox();
+    await a.locator("[data-testid=germany-map-viewport]").click({
+      position: { x: bounds!.width * 0.5, y: bounds!.height * 0.5 },
     });
     await a
       .getByRole("button", { name: "Bau bestätigen", exact: true })
       .click();
-    await expect(a.locator("svg.map [data-own-station]")).toHaveCount(1);
+    await expect(
+      a.locator(
+        "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+      ),
+    ).toHaveCount(1);
     await expect(a.locator(".hud-budget strong")).toHaveText(
       formatMoney(ECONOMY_PRICES.start - bt("fire").price),
     );
-    await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
+    await expect(
+      b.locator(
+        "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+      ),
+    ).toHaveCount(0);
     await expect(b.locator(".hud-budget strong")).toHaveText(
       formatMoney(ECONOMY_PRICES.start),
     );

@@ -5,15 +5,12 @@ import { context } from "esbuild";
 import { serverBuildOptions } from "./server-build-options.mjs";
 const frontend = Number(process.env.DEV_PORT || 5173),
   backend = Number(process.env.DEV_API_PORT || 4010);
-const world = process.env.LV_BUILD_WORLD || "germany-1";
-if (!["germany-1", "rivermere-1"].includes(world))
-  throw Error("Unbekannte Entwicklungswelt.");
-if (
-  world === "germany-1" &&
-  (!process.env.GEODATA_DIR || !process.env.GRAPHHOPPER_URL)
-)
+if (process.env.LV_BUILD_WORLD && process.env.LV_BUILD_WORLD !== "germany-1")
+  throw Error("Deutschland ist die einzige aktive Spielwelt.");
+const world = "germany-1";
+if (!process.env.GEODATA_DIR || !process.env.GRAPHHOPPER_URL)
   throw Error(
-    "Deutschland-Entwicklung benötigt GEODATA_DIR und GRAPHHOPPER_URL mit vorhandenen lokalen Daten. Kein Import beim Entwicklungsstart. Für Kompatibilitätstests: LV_BUILD_WORLD=rivermere-1.",
+    "Deutschland-Entwicklung benötigt GEODATA_DIR und GRAPHHOPPER_URL mit vorhandenen lokalen Daten. Kein Import beim Entwicklungsstart.",
   );
 // A dedicated development variable avoids accidentally opening a production DATA_DIR.
 const dataDir = resolve(
@@ -96,7 +93,7 @@ process.on("message", (m) => {
   if (m === "stop") void stop();
 });
 try {
-  const options = serverBuildOptions(world, outdir);
+  const options = serverBuildOptions(outdir);
   let previousOutput;
   compiler = await context({
     ...options,

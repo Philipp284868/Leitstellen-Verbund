@@ -1,49 +1,51 @@
-import { vehicleMotion } from "../src/vehicle-position";
-import { attachDynamics } from "../src/simulation/dynamics";
-import { updateWeather } from "../src/simulation/weather";
-import { legacyIncident } from "../src/simulation/incidents";
-import { syncFms } from "../src/simulation/fms";
-import { it, expect } from "vitest";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
+import { expect, it } from "vitest";
 import { Auth } from "../server/auth";
+import { Database } from "../server/database";
 import { Game } from "../server/game";
+import { beginTrip, generate } from "../src/engine";
+import { project, unproject } from "../src/germany/projection";
 import { fresh, validate } from "../src/model";
-import { established } from "./e2e/fixtures";
-import { generate, beginTrip } from "../src/engine";
-import { withoutLocationMigration } from "./helpers/location-migration-check";
+import { attachDynamics } from "../src/simulation/dynamics";
+import { syncFms } from "../src/simulation/fms";
+import { legacyIncident } from "../src/simulation/incidents";
+import { updateWeather } from "../src/simulation/weather";
+import { duration, trip } from "../src/travel";
+import { vehicleMotion } from "../src/vehicle-position";
 import {
-  nodes,
-  originalNodes,
-  WORLD_WIDTH,
-  WORLD_HEIGHT,
   distance,
   length,
+  METERS_PER_UNIT,
+  WORLD_HEIGHT,
+  WORLD_WIDTH,
 } from "../src/world";
-import { towns } from "../src/region";
-import { trip, duration } from "../src/travel";
+import { established } from "./e2e/fixtures";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { withoutLocationMigration } from "./helpers/location-migration-check";
 
-it("erweitert die Fläche auf exakt 100 × 100 km und erhält die ursprünglichen Straßenpunkte", () => {
-  expect(WORLD_WIDTH * 12).toBe(100000);
-  expect(WORLD_HEIGHT * 12).toBe(100000);
-  expect(towns).toHaveLength(10);
-  expect(nodes[0]).toEqual({ x: 340, y: 440 });
-  expect(originalNodes.length).toBeGreaterThan(600);
-  expect(nodes.length).toBeGreaterThan(originalNodes.length * 2);
-  for (const p of nodes) {
-    expect(p.x).toBeGreaterThanOrEqual(0);
-    expect(p.x).toBeLessThanOrEqual(WORLD_WIDTH);
-    expect(p.y).toBeGreaterThanOrEqual(0);
-    expect(p.y).toBeLessThanOrEqual(WORLD_HEIGHT);
+it("Deutschlandprojektion erhält geografische Punkte im landesweiten metrischen Gebiet", () => {
+  expect(WORLD_WIDTH * METERS_PER_UNIT).toBeGreaterThan(500000);
+  expect(WORLD_HEIGHT * METERS_PER_UNIT).toBeGreaterThan(800000);
+  for (const input of [
+    { lon: 13.405, lat: 52.52 },
+    { lon: 9.99, lat: 53.55 },
+    { lon: 11.58, lat: 48.14 },
+  ]) {
+    const point = project(input),
+      result = unproject(point);
+    expect(point.x).toBeGreaterThan(0);
+    expect(point.x).toBeLessThan(WORLD_WIDTH);
+    expect(point.y).toBeGreaterThan(0);
+    expect(point.y).toBeLessThan(WORLD_HEIGHT);
+    expect(result.lon).toBeCloseTo(input.lon, 8);
+    expect(result.lat).toBeCloseTo(input.lat, 8);
   }
 });
 it("erzeugt auch bei einer abgelegenen Wache ausschließlich lokale Einsätze", () => {
   const s = established("Regional");
-  const site = nodes.reduce((a, b) =>
-    distance(a, towns[9]) < distance(b, towns[9]) ? a : b,
-  );
+  const site = nodes.at(-1)!;
   s.buildings[0].pos = site;
   s.vehicles[0].path = [site];
   for (let i = 0; i < 100; i++) {

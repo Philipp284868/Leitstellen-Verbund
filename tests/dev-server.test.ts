@@ -1,9 +1,10 @@
-import { it, expect } from "vitest";
 import { fork, type ChildProcess } from "node:child_process";
-import { mkdtemp, access } from "node:fs/promises";
+import { access, mkdtemp } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { createServer } from "node:net";
+import { expect, it } from "vitest";
+import "./fixtures/germany/session";
 it("Entwicklungsserver stoppt per IPC und erhält Konto sowie Sperrfreiheit beim Neustart", async () => {
   const dataDir = await mkdtemp(resolve(tmpdir(), "lv-dev-ipc-"));
   const probe = createServer();

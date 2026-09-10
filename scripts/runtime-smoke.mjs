@@ -1,3 +1,5 @@
+import { build } from "esbuild";
+import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
@@ -15,6 +17,26 @@ const temporary = await mkdtemp(join(tmpdir(), "lv-runtime-smoke-"));
 const appDir = join(temporary, "app"),
   dataDir = join(temporary, "persistent-data");
 await mkdir(appDir);
+await mkdir(".tools/runtime-fixture", { recursive: true });
+await build({
+  entryPoints: ["tests/fixtures/germany/runtime.ts"],
+  outfile: ".tools/runtime-fixture/runtime.mjs",
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  packages: "external",
+});
+const { createGermanyRuntime } = await import(
+  pathToFileURL(resolve(".tools/runtime-fixture/runtime.mjs")).href
+);
+const runtime = await createGermanyRuntime();
+await build({
+  entryPoints: ["src/germany/projection.ts"],
+  outfile: ".tools/runtime-fixture/projection.mjs",
+  bundle: true,
+  platform: "node",
+  format: "esm",
+});
 let child, stopped;
 async function stop() {
   if (!child) return;
@@ -50,6 +72,9 @@ try {
         PUBLIC_URL: origin,
         DATA_DIR: dataDir,
         TRUSTED_PROXIES: "",
+        ALLOW_HTTP: "true",
+        GEODATA_DIR: runtime.geodataDir,
+        GRAPHHOPPER_URL: runtime.routerUrl,
       },
     });
     child.stdout.on("data", (b) => (output += b));
@@ -93,7 +118,39 @@ try {
     assert.equal(body.save.player.station, "Testleitstelle");
     return body;
   }
+  const me = await view();
+  const siteResponse = await fetch(
+    origin + "/api/geo/search?q=" + encodeURIComponent("Straße des 17. Juni"),
+    { headers: { Cookie: cookie } },
+  );
+  assert.equal(siteResponse.status, 200);
+  const site = await siteResponse.json();
+  assert.ok(JSON.stringify(site).includes("Straße des 17. Juni"));
+  const lon = 13.324,
+    lat = 52.5142;
+  const { project } = await import(
+    pathToFileURL(resolve(".tools/runtime-fixture/projection.mjs")).href
+  );
+  const pos = project({ lon, lat });
+  const action = {
+    id: crypto.randomUUID(),
+    action: { type: "build", kind: "fire", pos },
+  };
+  for (let i = 0; i < 2; i++) {
+    const r = await fetch(origin + "/api/action", {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        Cookie: cookie,
+        "Content-Type": "application/json",
+        "x-csrf-token": me.csrf,
+      },
+      body: JSON.stringify(action),
+    });
+    assert.equal(r.status, 200, await r.text());
+  }
   const before = await view();
+  assert.equal(before.save.buildings.length, 1);
   assert.equal(typeof before.save.money, "number");
   assert.ok(Array.isArray(before.save.buildings));
   await stop();
@@ -111,5 +168,6 @@ try {
     child.kill("SIGKILL");
     await stopped;
   }
+  await runtime.close();
   await rm(temporary, { recursive: true, force: true });
 }

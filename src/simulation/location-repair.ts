@@ -1,18 +1,16 @@
-import type { Save, Mission } from "../model";
 import { mt } from "../catalog";
-import { WORLD, distance, type Point } from "../world";
-import { IS_GERMANY } from "../world-choice";
-import { queryIncidentSites } from "../germany/world";
-import { GermanyRoutingError } from "../germany/errors";
-import { record, simId } from "./events";
 import { beginTrip, recall } from "../engine";
+import { GermanyRoutingError } from "../germany/errors";
+import { queryIncidentSites } from "../germany/world";
+import type { Mission, Save } from "../model";
+import { WORLD, distance, type Point } from "../world";
+import { record, simId } from "./events";
 import {
-  incidentSiteReference,
-  verifyIncidentLocation,
-  validIncidentPoint,
   LOCATION_POLICY,
+  incidentSiteReference,
+  validIncidentPoint,
+  verifyIncidentLocation,
 } from "./location-reachability";
-
 function technicalClose(s: Save, m: Mission, reason: string) {
   // A transport already carrying a patient keeps its assignment and hospital
   // handover. Its original incident can be archived only after that handover.
@@ -76,7 +74,7 @@ export function repairIncidentLocations(
     const t = mt(m.template),
       original = m.location?.original ?? m.pos;
     let target: Point | undefined = incidentSiteReference(t, original)?.access;
-    if (!target && IS_GERMANY && validIncidentPoint(original))
+    if (!target && validIncidentPoint(original))
       target = queryIncidentSites(
         original,
         LOCATION_POLICY.repairRadius,

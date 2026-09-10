@@ -1,17 +1,17 @@
 // Isolated acceptance harness. Commands arrive only over the parent process IPC channel.
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
-import { resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { Database } from "../../server/database";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 import { Auth } from "../../server/auth";
-import { startServer } from "../../server/index";
+import { Database } from "../../server/database";
 import { prepareGeography } from "../../server/germany/runtime";
-import { fresh, validate } from "../../src/model";
-import { apply, tick, generate } from "../../src/engine";
+import { startServer } from "../../server/index";
+import { mt } from "../../src/catalog";
+import { apply, generate, tick } from "../../src/engine";
 import { project } from "../../src/germany/projection";
+import { fresh, validate } from "../../src/model";
 import { xpForLevel } from "../../src/progression";
-import { vt, mt } from "../../src/catalog";
 import { attachIncident } from "../../src/simulation/calls";
 import { fundTestBudget } from "../money-fixture";
 mkdirSync(".tools/test-runs", { recursive: true });
@@ -87,14 +87,6 @@ for (let index = 0; index < 2; index++) {
     tick(s, home.ready + 1, {}, false, false);
     for (const type of types) {
       apply(s, { type: "buy", kind: type, home: home.id });
-      const v = s.vehicles.at(-1)!;
-      apply(s, { type: "hire", home: home.id, count: vt(type).crew });
-      if (vt(type).training)
-        for (const person of s.people.filter(
-          (p) => p.home === home.id && !p.vehicle,
-        ))
-          person.skills = [vt(type).training];
-      apply(s, { type: "assign", vehicle: v.id });
     }
   }
   tick(s, Date.now() / 1000, {}, false, false);
@@ -116,7 +108,7 @@ for (let index = 0; index < 2; index++) {
 }
 db.sql.prepare("INSERT INTO desk_members VALUES (?,?)").run(ids[2], ids[0]);
 db.close();
-let app = startServer(config, resolve("dist/germany/client"), geography);
+let app = startServer(config, resolve("dist/client"), geography);
 await app.listen();
 const address = app.http.address();
 if (!address || typeof address === "string") throw Error("No port");
@@ -170,7 +162,7 @@ process.on(
       if (message.type === "restart") {
         await app.close();
         geography = await prepareGeography(config);
-        app = startServer(config, resolve("dist/germany/client"), geography);
+        app = startServer(config, resolve("dist/client"), geography);
         await app.listen();
       }
       if (

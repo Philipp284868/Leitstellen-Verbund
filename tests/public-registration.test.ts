@@ -1,17 +1,17 @@
-import { attachDynamics } from "../src/simulation/dynamics";
-import { withoutLocationMigration } from "./helpers/location-migration-check";
-import { updateWeather } from "../src/simulation/weather";
-import { legacyIncident } from "../src/simulation/incidents";
-import { syncFms } from "../src/simulation/fms";
-import { it, expect, afterEach } from "vitest";
-import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, readdir } from "node:fs/promises";
-import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { Database } from "../server/database";
+import { resolve } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { afterEach, expect, it } from "vitest";
 import { Auth, passwordHash, verifyPassword } from "../server/auth";
-import { startServer } from "../server/index";
+import { Database } from "../server/database";
+import { attachDynamics } from "../src/simulation/dynamics";
+import { syncFms } from "../src/simulation/fms";
+import { legacyIncident } from "../src/simulation/incidents";
+import { updateWeather } from "../src/simulation/weather";
 import { established } from "./e2e/fixtures";
+import { startServer } from "./fixtures/germany/server";
+import { withoutLocationMigration } from "./helpers/location-migration-check";
 const password = "Normal-player-test-password!";
 const running: ReturnType<typeof startServer>[] = [];
 afterEach(async () => {

@@ -1,19 +1,21 @@
-import { it, expect } from "vitest";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { once } from "node:events";
 import {
-  mkdtemp,
-  mkdir,
+  access,
   cp,
+  mkdir,
+  mkdtemp,
   symlink,
   writeFile,
-  access,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { once } from "node:events";
-import { established } from "./e2e/fixtures";
+import { expect, it } from "vitest";
 import { exportText } from "../src/storage";
-import { nodes } from "../src/world";
+import { established } from "./e2e/fixtures";
+import { sites as nodes } from "./fixtures/germany/locations";
+import "./fixtures/germany/session";
+
 it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert nach Prozessneustart", async () => {
   const base = await mkdtemp(resolve(tmpdir(), "lv-runtime-")),
     program = resolve(base, "app"),
@@ -21,12 +23,6 @@ it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert n
   await mkdir(program);
   await mkdir(data);
   await cp(resolve("dist"), resolve(program, "dist"), { recursive: true });
-  // Historical restore fixture; the shipped Rivermere runtime is covered by AMP and E2E tests.
-  await cp(
-    resolve(".tools/legacy-tests/server"),
-    resolve(program, "dist/server"),
-    { recursive: true },
-  );
   await symlink(
     resolve("node_modules"),
     resolve(program, "node_modules"),
@@ -47,7 +43,7 @@ it("startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert n
     delete env[key];
   await writeFile(
     resolve(program, ".env"),
-    `HOST=127.0.0.1\nPORT=${port}\nPUBLIC_URL=${origin}\nDATA_DIR=${data.replaceAll("\\", "/")}\n`,
+    `HOST=127.0.0.1\nPORT=${port}\nPUBLIC_URL=${origin}\nDATA_DIR=${data.replaceAll("\\", "/")}\nALLOW_HTTP=true\n`,
   );
   const password = "Runtime-" + crypto.randomUUID();
   const cli = (args: string[], input?: string) =>

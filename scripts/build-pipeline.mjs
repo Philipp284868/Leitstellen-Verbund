@@ -5,16 +5,13 @@ import { resolve } from "node:path";
 import { fingerprint, cachedBuild } from "./build-cache.mjs";
 import { assertBuildPaths } from "./build-paths.mjs";
 import { clean } from "./clean.mjs";
+import { sourceGraph } from "./source-graph.mjs";
 
-export async function buildApplication({
-  worlds = ["rivermere-1", "germany-1"],
-  incremental = false,
-  skipTypecheck = false,
-} = {}) {
+export async function buildApplication({ incremental = false } = {}) {
   const root = resolve("."),
     started = performance.now(),
     results = [];
-  const run = (args, world) =>
+  const run = (args) =>
     new Promise((done, reject) => {
       const child = spawn(process.execPath, args, {
         stdio: "inherit",
@@ -22,7 +19,6 @@ export async function buildApplication({
         env: {
           ...process.env,
           NODE_ENV: "production",
-          LV_BUILD_WORLD: world ?? "rivermere-1",
         },
       });
       child.once("error", reject);
@@ -34,83 +30,90 @@ export async function buildApplication({
     });
   await assertBuildPaths(root, ["dist", ".tools/cache"]);
   if (existsSync("dist/worlds")) await clean(root, ["dist/worlds"], true);
+  if (existsSync("dist/germany")) await clean(root, ["dist/germany"], true);
   await mkdir(".tools/cache", { recursive: true });
-  const inputs = await fingerprint(root, [
-    "src",
-    "server",
-    "public",
-    "scripts",
+  const commonInputs = [
     "package.json",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "tsconfig.json",
-    "vite.config.ts",
-    "index.html",
+    "scripts/build-pipeline.mjs",
+    "scripts/build-cache.mjs",
+    "scripts/source-graph.mjs",
     ...[
       ".env",
       ".env.local",
       ".env.production",
       ".env.production.local",
     ].filter(existsSync),
-  ]);
+  ];
   const env = Object.fromEntries(
     Object.entries(process.env)
       .filter(([k]) => k.startsWith("VITE_"))
       .sort(([a], [b]) => a.localeCompare(b)),
   );
-  const tasks = skipTypecheck
-    ? []
-    : [
-        {
-          name: "types",
+  const tasks = [
+    {
+      name: "types",
+      run: () =>
+        run([
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          ...(incremental
+            ? [
+                "--incremental",
+                "--tsBuildInfoFile",
+                ".tools/cache/types.tsbuildinfo",
+              ]
+            : []),
+        ]),
+    },
+  ];
+  for (const kind of ["client", "server"]) {
+    const output = `dist/${kind}`;
+    const name = "germany-1-" + kind;
+    const inputs = await fingerprint(root, [
+      ...new Set([
+        ...commonInputs,
+        ...sourceGraph(
+          kind === "client"
+            ? ["src/main.tsx"]
+            : ["server/index.ts", "server/cli.ts", "server/lab-cli.ts"],
+        ),
+        ...(kind === "client"
+          ? ["public", "vite.config.ts", "index.html"]
+          : ["scripts/server-build-options.mjs", "scripts/build-server.mjs"]),
+      ]),
+    ]);
+    const key = JSON.stringify({
+      schema: 2,
+      inputs,
+      node: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      world: "germany-1",
+      kind,
+      env,
+    });
+    tasks.push({
+      name,
+      run: () =>
+        cachedBuild({
+          root,
+          name,
+          key,
+          outputs: [output],
+          exclude: [`${output}/project-news.json`],
+          reuse: incremental,
           run: () =>
-            run([
-              "node_modules/typescript/bin/tsc",
-              "--noEmit",
-              ...(incremental
-                ? [
-                    "--incremental",
-                    "--tsBuildInfoFile",
-                    ".tools/cache/types.tsbuildinfo",
-                  ]
-                : []),
-            ]),
-        },
-      ];
-  for (const world of worlds)
-    for (const kind of ["client", "server"]) {
-      const output = `dist/${world === "germany-1" ? "germany/" : ""}${kind}`;
-      const name = world + "-" + kind;
-      const key = JSON.stringify({
-        schema: 1,
-        inputs,
-        node: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        world,
-        kind,
-        env,
-      });
-      tasks.push({
-        name,
-        run: () =>
-          cachedBuild({
-            root,
-            name,
-            key,
-            outputs: [output],
-            exclude: [`${output}/project-news.json`],
-            reuse: incremental,
-            run: () =>
-              run(
-                kind === "client"
-                  ? ["node_modules/vite/bin/vite.js", "build"]
-                  : ["scripts/build-server.mjs"],
-                world,
-              ),
-          }),
-      });
-    }
+            run(
+              kind === "client"
+                ? ["node_modules/vite/bin/vite.js", "build"]
+                : ["scripts/build-server.mjs"],
+            ),
+        }),
+    });
+  }
   // At most two compilers including tsc, also on standard CI runners.
   // Drain running work on failure before returning a non-zero result.
   let next = 0,
@@ -139,7 +142,7 @@ export async function buildApplication({
   );
   if (!failure) {
     await run(["scripts/sync-project-news.mjs"]);
-    if (worlds.length === 2) await run(["scripts/check-bundles.mjs"]);
+    await run(["scripts/check-bundles.mjs"]);
     let commit = null,
       dirty = true;
     try {
@@ -157,7 +160,20 @@ export async function buildApplication({
     }
     await writeFile(
       "dist/build-info.json",
-      JSON.stringify({ commit, dirty, node: process.version }, null, 2) + "\n",
+      JSON.stringify(
+        {
+          schema: 2,
+          world: "germany-1",
+          commit,
+          dirty,
+          node: process.version,
+          platform: process.platform,
+          arch: process.arch,
+          outputs: await fingerprint(root, ["dist/client", "dist/server"]),
+        },
+        null,
+        2,
+      ) + "\n",
     );
   }
   await mkdir(".tools/test-runs", { recursive: true });

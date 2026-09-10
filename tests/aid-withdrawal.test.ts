@@ -1,13 +1,13 @@
-import { expect, it } from "vitest";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
-import { Auth } from "../server/auth";
-import { Game } from "../server/game";
+import { expect, it } from "vitest";
 import type { ServerAction } from "../server/actions";
-import { organizationFixture } from "./phase-three-fixture";
-import { atScene } from "./phase-four-fixture";
+import { Auth } from "../server/auth";
+import { Database } from "../server/database";
+import { Game } from "../server/game";
+import { atScene } from "./incident-dynamics-fixture";
+import { organizationFixture } from "./mutual-aid-fixture";
 
 it("verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatzkräfte die Besitzerlage decken", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-aid-withdraw-"));

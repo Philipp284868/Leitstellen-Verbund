@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
-import { fresh, validate } from "../src/model";
-import { advanceRadio, transmit } from "../src/simulation/transmissions";
-import { setFms } from "../src/simulation/fms";
 import { AudioEvents } from "../src/audio/events";
-import { phaseFixture } from "./phase-fixture";
-import { afterVehicles, radioAction } from "../src/simulation/incidents";
-import { alarm } from "../src/simulation/dispatch";
 import { tick } from "../src/engine";
+import { fresh, validate } from "../src/model";
+import { alarm } from "../src/simulation/dispatch";
+import { setFms } from "../src/simulation/fms";
+import { afterVehicles, radioAction } from "../src/simulation/incidents";
+import { advanceRadio, transmit } from "../src/simulation/transmissions";
+import { phaseFixture } from "./dispatch-fixture";
 
 function message(id: string, priority = 50, channel = "Feuerwehr") {
   return {

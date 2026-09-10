@@ -1,12 +1,11 @@
 import { resolve } from "node:path";
 import type { Config } from "../config";
-import { IS_GERMANY } from "../../src/world-choice";
-import { initializeGermany } from "./provider";
-import { GermanyMaps } from "./maps";
 import { assertGraphRuntimeIdentity } from "./identity";
-
-export async function prepareGeography(c: Config) {
-  if (!IS_GERMANY) return undefined;
+import { GermanyMaps } from "./maps";
+import { initializeGermany } from "./provider";
+export async function prepareGeography(
+  c: Pick<Config, "geodataDir" | "routerUrl">,
+) {
   if (!c.geodataDir) throw Error("GEODATA_DIR fehlt für Deutschland.");
   const maps = new GermanyMaps(c.geodataDir);
   try {

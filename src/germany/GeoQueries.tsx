@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { IS_GERMANY } from "../world-choice";
-import { approach } from "../travel";
+import type { Mission, Save, Vehicle } from "../model";
+import type { TravelMode } from "../simulation/dynamics-schema";
 import { hospitalOptions } from "../simulation/hospitals";
 import type { Alarm } from "../simulation/schema";
-import type { TravelMode } from "../simulation/dynamics-schema";
-import type { Mission, Save, Vehicle } from "../model";
+import { useGame } from "../store";
+import { approachContext } from "./approach-key";
 import type { Point } from "./projection";
 import { project, unproject } from "./projection";
-import { useGame } from "../store";
 import { GeoRequestCache, type QueryResult } from "./request-cache";
-import { approachContext } from "./approach-key";
-
 const cache = new GeoRequestCache();
 function useGeoQuery<T>(key: string, path: string, enabled: boolean) {
   const { mode } = useGame();
-  const [state, setState] = useState<QueryResult<T> & { key: string }>({
+  const [state, setState] = useState<
+    QueryResult<T> & {
+      key: string;
+    }
+  >({
     key: "",
     loading: true,
   });
@@ -55,7 +56,7 @@ export function ApproachText({
   const element = useRef<HTMLSpanElement>(null),
     [visible, setVisible] = useState(false);
   useEffect(() => {
-    if (!IS_GERMANY || !element.current) return;
+    if (!element.current) return;
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
       { rootMargin: "60px" },
@@ -72,12 +73,9 @@ export function ApproachText({
     ...(alarm ? { alarm } : {}),
   });
   const path = `/api/geo/approach?${params}`;
-  const result = useGeoQuery<{ text: string }>(
-    `${scope}:${path}:${approachContext(s, vehicle)}`,
-    path,
-    IS_GERMANY && visible,
-  );
-  if (!IS_GERMANY) return <>{approach(s, vehicle, target, mode, alarm)}</>;
+  const result = useGeoQuery<{
+    text: string;
+  }>(`${scope}:${path}:${approachContext(s, vehicle)}`, path, visible);
   return (
     <span ref={element} aria-busy={result.loading}>
       {result.error || result.data?.text || "Anfahrt wird berechnet …"}
@@ -101,26 +99,15 @@ export function useHospitalOptions(
       ...(vehicle ? { vehicle: vehicle.id } : {}),
     });
   const path = `/api/geo/hospitals?${params}`;
-  const result = useGeoQuery<{ options: ReturnType<typeof hospitalOptions> }>(
-    `${scope}:${path}`,
-    path,
-    IS_GERMANY && enabled,
-  );
-  return IS_GERMANY
-    ? {
-        options: result.data?.options ?? [],
-        loading: enabled && result.loading,
-        error: result.error,
-      }
-    : {
-        options: enabled
-          ? hospitalOptions(s, origin, seats, mission, vehicle)
-          : [],
-        loading: false,
-        error: undefined,
-      };
+  const result = useGeoQuery<{
+    options: ReturnType<typeof hospitalOptions>;
+  }>(`${scope}:${path}`, path, enabled);
+  return {
+    options: result.data?.options ?? [],
+    loading: enabled && result.loading,
+    error: result.error,
+  };
 }
-
 /** Stable OSM node IDs are resolved by the server, never indexed into a client graph. */
 export function DutyLocation({
   label,
@@ -136,7 +123,12 @@ export function DutyLocation({
   const { mode } = useGame();
   const [query, setQuery] = useState(""),
     [places, setPlaces] = useState<
-      { id: string; name: string; lon: number; lat: number }[]
+      {
+        id: string;
+        name: string;
+        lon: number;
+        lat: number;
+      }[]
     >([]);
   const [name, setName] = useState(`Standort ${nodeId}`),
     [error, setError] = useState(""),

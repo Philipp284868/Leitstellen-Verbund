@@ -1,20 +1,17 @@
-import { vehicleHomeAllowed } from "../catalog";
-import { presentAtStation } from "./staging";
-import type { Alarm } from "./schema";
-import type { Save, Vehicle, Building } from "../model";
-import { bt, vt, BALANCE, vehicles } from "../catalog";
+import { BALANCE, bt, vehicleHomeAllowed, vehicles, vt } from "../catalog";
 import { ECONOMY_PRICES } from "../economy/prices";
-import { nodes, nearest, distance } from "../world";
-import { setFms } from "./fms";
-import { record } from "./events";
-import { request } from "./incidents";
 import { recall } from "../engine";
-import type { Station, Duty } from "./organizations-schema";
-import { IS_GERMANY } from "../world-choice";
 import { querySites } from "../germany/world";
-import { volunteerArrival, volunteerAvailability } from "./volunteers";
+import type { Building, Save, Vehicle } from "../model";
+import { distance, nearest } from "../world";
+import { record } from "./events";
+import { setFms } from "./fms";
+import { request } from "./incidents";
+import type { Duty, Station } from "./organizations-schema";
 import { injuryReason } from "./responder-recovery";
-
+import type { Alarm } from "./schema";
+import { presentAtStation } from "./staging";
+import { volunteerArrival, volunteerAvailability } from "./volunteers";
 export const absenceNames = {
   none: "Verfügbar",
   vacation: "Urlaub",
@@ -35,7 +32,6 @@ export const PROFESSIONAL_FIRE = {
   seconds: BALANCE.upgradeSeconds * 3,
 } as const;
 type Person = Save["people"][number];
-
 /** Missing profiles are historical BF saves. New stations explicitly use newStationProfile. */
 export function stationProfile(b: Building): Station {
   return (
@@ -95,7 +91,7 @@ export function personDuty(s: Save, p: Person): Duty {
   if (p.duty) return p.duty;
   const b = s.buildings.find((b) => b.id === p.home)!,
     node = nearest(b.pos);
-  const local = IS_GERMANY ? querySites(b.pos, 250, 48) : [];
+  const local = querySites(b.pos, 250, 48);
   const localNode = (offset: number) =>
     local.length ? nearest(local[(key(p.id) + offset) % local.length]) : node;
   return {
@@ -105,12 +101,8 @@ export function personDuty(s: Save, p: Person): Duty {
     absence: "none",
     until: 0,
     reachability: 100,
-    homeNode: IS_GERMANY
-      ? localNode(0)
-      : Math.min(nodes.length - 1, node + 1 + (key(p.id) % 8)),
-    workNode: IS_GERMANY
-      ? localNode(17)
-      : Math.min(nodes.length - 1, node + 5 + (key(p.id) % 20)),
+    homeNode: localNode(0),
+    workNode: localNode(17),
     commute: "car",
     workdays: true,
     standby: false,
@@ -150,7 +142,11 @@ export function crewRequired(s: Save, v: Vehicle) {
     t = vt(v.type),
     profile = stationProfile(b);
   const minimum =
-    (t as typeof t & { crewMinimum?: number }).crewMinimum ??
+    (
+      t as typeof t & {
+        crewMinimum?: number;
+      }
+    ).crewMinimum ??
     (t.home === "fire" ? (t.crew >= 9 ? 6 : t.crew >= 6 ? 4 : t.crew) : t.crew);
   return t.home === "fire" &&
     profile.crew !== "full" &&
@@ -285,7 +281,6 @@ export function reserveWarning(s: Save, v: Vehicle) {
 export function checkReserveSelection(s: Save, vehicles: Vehicle[]) {
   return vehicles.map((v) => reserveWarning(s, v)).filter(Boolean);
 }
-
 export function planTurnout(s: Save, v: Vehicle, fallback: number) {
   const b = s.buildings.find((b) => b.id === v.home)!,
     profile = stationProfile(b),

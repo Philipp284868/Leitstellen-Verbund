@@ -43,7 +43,7 @@ assert.ok(
   info.ok,
   "GraphHopper muss bereits laufen; kein automatischer Import/Start.",
 );
-await readFile(resolve(root, "dist/germany/client/index.html"));
+await readFile(resolve(root, "dist/client/index.html"));
 await mkdir(output, { recursive: true });
 const outfile = resolve(root, `.tools/germany-load-server-${process.pid}.mjs`);
 await build({
@@ -53,17 +53,6 @@ await build({
   format: "esm",
   platform: "node",
   packages: "external",
-  define: { __LV_WORLD__: JSON.stringify("germany-1") },
-  plugins: [
-    {
-      name: "real-germany",
-      setup(b) {
-        b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-          path: resolve(root, "src/germany/world.ts"),
-        }));
-      },
-    },
-  ],
 });
 const child = fork(outfile, {
   cwd: root,

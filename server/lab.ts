@@ -1,25 +1,26 @@
 import { xpForLevel } from "../src/progression";
 // Offline developer sandbox. Never imported by the HTTP server or client.
-import { z } from "zod";
 import { createHash } from "node:crypto";
-import { fresh, validate, saveSchema, type Save } from "../src/model";
-import { apply, tick, readiness } from "../src/engine";
-import { nodes, nearest } from "../src/world";
+import { z } from "zod";
 import { mt } from "../src/catalog";
-import { simId, record } from "../src/simulation/events";
+import { apply, readiness, tick } from "../src/engine";
+import { WORLD_CENTER } from "../src/germany/projection";
+import { fresh, saveSchema, validate, type Save } from "../src/model";
 import { attachIncident, callAction } from "../src/simulation/calls";
-import { attachDynamics } from "../src/simulation/dynamics";
-import { attachOrganizations } from "../src/simulation/organizations";
 import { alarm } from "../src/simulation/dispatch";
-import { radioAction } from "../src/simulation/incidents";
-import { environmentAt } from "../src/simulation/weather";
+import { attachDynamics } from "../src/simulation/dynamics";
 import { weatherKinds } from "../src/simulation/dynamics-schema";
+import { record, simId } from "../src/simulation/events";
 import { breakVehicle, repairVehicle } from "../src/simulation/faults";
 import { setFms } from "../src/simulation/fms";
+import { radioAction } from "../src/simulation/incidents";
+import { declareMajor } from "../src/simulation/major-incidents";
+import { attachOrganizations } from "../src/simulation/organizations";
+import { newPatient } from "../src/simulation/patients";
 import { personDuty } from "../src/simulation/staffing";
 import { forceVolunteerAvailability } from "../src/simulation/volunteers";
-import { newPatient } from "../src/simulation/patients";
-import { declareMajor } from "../src/simulation/major-incidents";
+import { environmentAt } from "../src/simulation/weather";
+import { nearest, queryIncidentSites, querySites } from "../src/world";
 import { aidCommand } from "./aid";
 import { stepLaboratoryWorlds } from "./lab-worlds";
 const id = z.string().min(1).max(100);
@@ -127,15 +128,13 @@ export function createLab(seed: number): Lab {
   s.seed = seed;
   s.tutorial = 6;
   s.xp = xpForLevel(6);
-  apply(s, { type: "build", kind: "fire", pos: nodes[0] });
+  const site = querySites(WORLD_CENTER, 1000, 1)[0];
+  if (!site)
+    throw Error("Keine Deutschland-Straßendaten am Laborstandort vorhanden.");
+  apply(s, { type: "build", kind: "fire", pos: site });
   tick(s, s.time + 30, {}, false, false);
-  for (const [kind, count] of [
-    ["tsf", 6],
-    ["tlf", 3],
-  ] as const) {
+  for (const kind of ["tsf", "tlf"] as const) {
     apply(s, { type: "buy", kind, home: s.buildings[0].id });
-    apply(s, { type: "hire", count, home: s.buildings[0].id });
-    apply(s, { type: "assign", vehicle: s.vehicles.at(-1)!.id });
   }
   const objects = [...s.buildings, ...s.vehicles, ...s.people, ...s.journal];
   const ids = new Map(objects.map((o, i) => [o.id, `lab-${seed}-object-${i}`]));
@@ -173,11 +172,28 @@ export function runLab(source: Lab, input: unknown): Lab {
   if ("mission" in action && !mission) throw Error("Einsatz fehlt.");
   if ("vehicle" in action && !vehicle) throw Error("Fahrzeug fehlt.");
   if (action.type === "generate") {
-    mt(action.template);
+    const template = mt(action.template);
+    const location =
+      queryIncidentSites(
+        s.buildings[0].pos,
+        400,
+        template.profile?.site ?? "street",
+        8,
+      )[2] ??
+      queryIncidentSites(
+        s.buildings[0].pos,
+        400,
+        template.profile?.site ?? "street",
+        1,
+      )[0];
+    if (!location)
+      throw Error(
+        "Kein belegter Deutschland-Einsatzort für dieses Laborszenario vorhanden.",
+      );
     const m = {
       id: simId(s),
       template: action.template,
-      pos: nodes[2],
+      pos: location,
       progress: 0,
       phase: "offered" as const,
       created: s.time,

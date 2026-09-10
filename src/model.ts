@@ -1,64 +1,61 @@
-import { vehicleHomeAllowed } from "./catalog";
-import { worldSituationSchema } from "./simulation/world-situation";
-import {
-  incidentLocationSchema,
-  generationLogSchema,
-} from "./simulation/location-schema";
-import { radioNetworkSchema } from "./simulation/transmission-schema";
-import { civilProtectionSchema } from "./simulation/civil-protection-schema";
-import { readinessCoreSchema } from "./simulation/readiness-core";
-import { validateCivilProtection } from "./simulation/civil-protection";
+import { z } from "zod";
+import { BALANCE, bt, mt, vehicleHomeAllowed, vt } from "./catalog";
+import { assertSaveWorld } from "./compatibility/save-world";
 import {
   centsSchema,
-  signedCentsSchema,
   economySchema,
   newEconomy,
+  signedCentsSchema,
 } from "./economy/schema";
-import { staffingModelSchema } from "./simulation/building-staffing";
-import { WORLD_SEED } from "./region";
-import { responderInjurySchema } from "./simulation/responder-recovery";
-import { stationCapacity, validateStaffing } from "./simulation/staffing";
+import { WORLD_SEED } from "./product";
+import { progress, xpForLevel } from "./progression";
 import {
   availabilitySchema,
   postIncidentSchema,
 } from "./simulation/availability-schema";
-import { IS_GERMANY } from "./world-choice";
-import { migrateTravel } from "./travel-migration";
-import { progress, xpForLevel } from "./progression";
-import { majorSchema, operationsSchema } from "./simulation/major-schema";
-import {
-  reportSchema,
-  telemetrySchema,
-  statisticsSchema,
-} from "./simulation/report-schema";
-import {
-  stationSchema,
-  dutySchema,
-  turnoutSchema,
-  hospitalSchema,
-  organizationMissionSchema,
-  aidSchema,
-} from "./simulation/organizations-schema";
+import { staffingModelSchema } from "./simulation/building-staffing";
+import { validateCivilProtection } from "./simulation/civil-protection";
+import { civilProtectionSchema } from "./simulation/civil-protection-schema";
 import {
   dynamicsSchema,
   environmentSchema,
-  journeySchema,
   faultSchema,
+  journeySchema,
 } from "./simulation/dynamics-schema";
-import { deskSchema, incidentSchema } from "./simulation/schema";
+import {
+  generationLogSchema,
+  incidentLocationSchema,
+} from "./simulation/location-schema";
+import { majorSchema, operationsSchema } from "./simulation/major-schema";
 import { missionTaskStateSchema } from "./simulation/mission-task-schema";
-import { migrateMap, validLegacySite } from "./world-migration";
-import { z } from "zod";
-import { bt, vt, mt, BALANCE } from "./catalog";
+import {
+  aidSchema,
+  dutySchema,
+  hospitalSchema,
+  organizationMissionSchema,
+  stationSchema,
+  turnoutSchema,
+} from "./simulation/organizations-schema";
+import { readinessCoreSchema } from "./simulation/readiness-core";
+import {
+  reportSchema,
+  statisticsSchema,
+  telemetrySchema,
+} from "./simulation/report-schema";
+import { responderInjurySchema } from "./simulation/responder-recovery";
+import { deskSchema, incidentSchema } from "./simulation/schema";
+import { stationCapacity, validateStaffing } from "./simulation/staffing";
+import { radioNetworkSchema } from "./simulation/transmission-schema";
+import { worldSituationSchema } from "./simulation/world-situation";
+import { migrateTravel } from "./travel-migration";
 import {
   WORLD,
-  WORLD_WIDTH,
   WORLD_HEIGHT,
-  LEGACY_WORLD,
-  nodes,
-  nearest,
+  WORLD_WIDTH,
   distance,
   isWaterSite,
+  nearest,
+  nodes,
 } from "./world";
 const id = z.string().min(1).max(100),
   name = z.string().trim().min(1).max(48),
@@ -329,18 +326,8 @@ export function fresh(player: string, station: string, now: number): Save {
   });
 }
 export function validate(data: unknown): Save {
-  const legacy =
-    typeof data === "object" &&
-    data !== null &&
-    "world" in data &&
-    WORLD === "falkenried-2" &&
-    data.world === LEGACY_WORLD;
-  const s: Save = legacy
-    ? {
-        ...saveSchema.extend({ world: z.literal(LEGACY_WORLD) }).parse(data),
-        world: WORLD,
-      }
-    : saveSchema.parse(data);
+  assertSaveWorld(data);
+  const s: Save = saveSchema.parse(data);
   if (!s.progression) {
     const previousXp = s.xp,
       previousLevel = Math.min(10, 1 + Math.floor(previousXp / 150));
@@ -409,12 +396,12 @@ export function validate(data: unknown): Save {
   }
   for (const m of [...s.missions, ...s.archive]) mt(m.template);
   s.speed = 1; // Accept historical saves, but never restore acceleration.
-  validateReferences(s, legacy);
-  const mapped = legacy ? validateReferences(migrateMap(s)) : s;
+  validateReferences(s);
+  const mapped = s;
   migrateTravel(mapped);
   return mapped;
 }
-export function validateReferences(s: Save, legacy = false) {
+export function validateReferences(s: Save) {
   validateStaffing(s);
   validateCivilProtection(s);
   s.completed = Math.max(s.completed, s.archive.length);
@@ -426,10 +413,8 @@ export function validateReferences(s: Save, legacy = false) {
   for (const b of s.buildings) {
     const t = bt(b.type);
     if (
-      legacy
-        ? !validLegacySite(b.pos, !!t.water)
-        : distance(b.pos, nodes[nearest(b.pos)]) > 1 ||
-          (t.water && !isWaterSite(b.pos))
+      distance(b.pos, nodes[nearest(b.pos)]) > 1 ||
+      (t.water && !isWaterSite(b.pos))
     )
       throw Error("Ungültiger Bauplatz.");
     if (
@@ -475,7 +460,7 @@ export function validateReferences(s: Save, legacy = false) {
   for (const bed of s.beds)
     if (
       bed.home !== "public" &&
-      !(IS_GERMANY && /^public:(?:node|way|relation):[0-9]+$/.test(bed.home)) &&
+      !/^public:(?:node|way|relation):[0-9]+$/.test(bed.home) &&
       !s.buildings.some((b) => b.id === bed.home && b.type === "hospital")
     )
       throw Error("Patient ohne Krankenhaus.");

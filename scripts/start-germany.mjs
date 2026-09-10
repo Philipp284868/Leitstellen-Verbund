@@ -98,7 +98,7 @@ export async function runGermany({
     throw Error(
       "Deutschland-Datenpaket ist noch nicht vollständig freigegeben.",
     );
-  if (!existsSync(resolve(programRoot, "dist/germany/server/index.js")))
+  if (!existsSync(resolve(programRoot, "dist/server/index.js")))
     throw Error(
       "Deutschland-Serverbuild fehlt. Anwendung zuerst vollständig bauen.",
     );
@@ -206,7 +206,7 @@ export async function runGermany({
       }
       process.env.GRAPHHOPPER_URL = routerUrl;
     }
-    if (!stopping) spawnChild(["dist/germany/server/index.js"]);
+    if (!stopping) spawnChild(["dist/server/index.js"]);
   } catch (error) {
     if (!stopping) console.error(error.message);
     await stop(stopping ? 0 : 1);

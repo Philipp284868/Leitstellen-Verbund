@@ -1,8 +1,8 @@
-import { it, expect } from "vitest";
 import { mkdtemp } from "node:fs/promises";
-import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { startServer } from "../server/index";
+import { resolve } from "node:path";
+import { expect, it } from "vitest";
+import { startServer } from "./fixtures/germany/server";
 it("normale Spieler ändern nur ihr eigenes Passwort mit aktuellem Passwort und CSRF; alte Sitzungen verfallen", async () => {
   const dataDir = await mkdtemp(resolve(tmpdir(), "lv-player-password-")),
     port = 25000 + Math.floor(Math.random() * 5000),

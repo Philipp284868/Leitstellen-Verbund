@@ -1,13 +1,13 @@
-import { expect, it } from "vitest";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
+import { expect, it } from "vitest";
 import { Auth } from "../server/auth";
+import { Database } from "../server/database";
 import { Game } from "../server/game";
-import { phaseFixture } from "./phase-fixture";
-import { atScene } from "./phase-four-fixture";
 import { attachDynamics } from "../src/simulation/dynamics";
+import { phaseFixture } from "./dispatch-fixture";
+import { atScene } from "./incident-dynamics-fixture";
 
 it("prüft gemeinsamen Kräfteabzug erneut in der Transaktion, verweigert Fremdzugriff und erhält Replay nach Neustart", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-withdraw-server-"));

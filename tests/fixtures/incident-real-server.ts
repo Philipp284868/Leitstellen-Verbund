@@ -1,17 +1,16 @@
 // Isolated real-geography acceptance fixture. IPC controls only fixture events, time and restart.
-import { mkdtempSync } from "node:fs";
-import { resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { Database } from "../../server/database";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 import { Auth } from "../../server/auth";
-import { startServer } from "../../server/index";
+import { Database } from "../../server/database";
 import { prepareGeography } from "../../server/germany/runtime";
-import { fresh, validate, type Save, type Mission } from "../../src/model";
+import { startServer } from "../../server/index";
 import { apply, tick } from "../../src/engine";
 import { project } from "../../src/germany/projection";
+import { fresh, validate, type Mission, type Save } from "../../src/model";
 import { xpForLevel } from "../../src/progression";
-import { vt } from "../../src/catalog";
 import { attachIncident } from "../../src/simulation/calls";
 import { attachDynamics } from "../../src/simulation/dynamics";
 import { breakVehicle } from "../../src/simulation/faults";
@@ -79,13 +78,6 @@ for (const [kind, lon, lat, types] of [
   }
   for (const type of types) {
     apply(s, { type: "buy", kind: type, home: home.id });
-    const v = s.vehicles.at(-1)!;
-    apply(s, { type: "hire", home: home.id, count: vt(type).crew });
-    for (const person of s.people.filter(
-      (p) => p.home === home.id && !p.vehicle,
-    ))
-      if (vt(type).training) person.skills = [vt(type).training];
-    apply(s, { type: "assign", vehicle: v.id });
   }
 }
 tick(s, Date.now() / 1000, {}, false, false);
@@ -135,7 +127,7 @@ fundTestBudget(s, 842350);
 db.save(owner, validate(s));
 db.sql.prepare("INSERT INTO desk_members VALUES (?,?)").run(member, owner);
 db.close();
-let app = startServer(config, resolve("dist/germany/client"), geography);
+let app = startServer(config, resolve("dist/client"), geography);
 await app.listen();
 const address = app.http.address();
 if (!address || typeof address === "string") throw Error("No HTTP port");
@@ -184,7 +176,7 @@ process.on(
       if (message.type === "restart") {
         await app.close();
         geography = await prepareGeography(config);
-        app = startServer(config, resolve("dist/germany/client"), geography);
+        app = startServer(config, resolve("dist/client"), geography);
         await app.listen();
       }
       const save = app.db.all().get(owner)!;

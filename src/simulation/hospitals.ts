@@ -1,12 +1,13 @@
-import type { Save, Mission, Vehicle } from "../model";
-import { publicHospital, distance, type Point } from "../world";
-import { routePlan } from "./traffic";
-import { specialties } from "./organizations-schema";
-import { transportCandidates } from "./patients";
+import { germanyProvider } from "../germany/world";
+import type { Mission, Save, Vehicle } from "../model";
+import { distance, type Point } from "../world";
 import {
   publicHospitalProfile,
   type HospitalOption,
 } from "./hospital-profiles";
+import { specialties } from "./organizations-schema";
+import { transportCandidates } from "./patients";
+import { routePlan } from "./traffic";
 export function hospitalOptions(
   s: Save,
   origin: Point,
@@ -14,24 +15,20 @@ export function hospitalOptions(
   m?: Mission,
   vehicle?: Vehicle,
 ) {
-  const publicOptions = IS_GERMANY
-    ? germanyProvider().hospitals(origin, 20).map(publicHospitalProfile)
-    : [
-        {
-          id: "public",
-          name: "Regionalklinik",
-          pos: publicHospital,
-          capacity: 100,
-          open: true,
-          specialties: Object.keys(specialties),
-        },
-      ];
+  const publicOptions = germanyProvider()
+    .hospitals(origin, 20)
+    .map(publicHospitalProfile);
   return assessHospitals(
     s,
     [
       ...publicOptions,
       ...s.buildings
-        .filter((b) => b.type === "hospital" && b.ready <= s.time)
+        .filter(
+          (b) =>
+            b.owner === s.player.id &&
+            b.type === "hospital" &&
+            b.ready <= s.time,
+        )
         .map((b) => ({
           id: b.id,
           name: b.name,
@@ -47,7 +44,6 @@ export function hospitalOptions(
     vehicle,
   );
 }
-
 export function assessHospitals(
   s: Save,
   options: HospitalOption[],
@@ -121,7 +117,11 @@ export function selectHospital(
   const preference = m?.major
     ? transportCandidates(m)[0]?.hospital || m.organization?.hospital
     : m?.organization?.hospital;
-  return options.find((h) => h.id === preference) ?? options[0];
+  return (
+    options.find((h) =>
+      preference === "public"
+        ? h.id.startsWith("public:")
+        : h.id === preference,
+    ) ?? options[0]
+  );
 }
-import { IS_GERMANY } from "../world-choice";
-import { germanyProvider } from "../germany/world";

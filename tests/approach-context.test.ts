@@ -1,8 +1,9 @@
 import { expect, it } from "vitest";
-import { approachContext } from "../src/germany/approach-key";
-import { phaseFixture } from "./phase-fixture";
 import { recall } from "../src/engine";
-import { nodes } from "../src/world";
+import { approachContext } from "../src/germany/approach-key";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { approach } from "../src/travel";
 
 it("invalidates cached standby turnout after withdrawal and keeps moving requests stable within one interval", () => {

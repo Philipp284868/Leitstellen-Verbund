@@ -1,8 +1,7 @@
-import type { Save, Mission } from "./model";
 import { missionPresentation } from "./mission-presentation";
-import { distance, districtAt } from "./world";
-import { IS_GERMANY } from "./world-choice";
+import type { Mission, Save } from "./model";
 import { priorityRank } from "./simulation/priority";
+import { distance } from "./world";
 export const shortcutNames = {
   call: "Nächster Notruf",
   fms: "FMS",
@@ -105,9 +104,7 @@ export function missionList(
       return false;
     if (!needle) return true;
     const location = c?.locationKnown
-      ? IS_GERMANY
-        ? (c.facts.find((f) => f.key === "address")?.text ?? "")
-        : districtAt(m.pos)
+      ? (c.facts.find((f) => f.key === "address")?.text ?? "")
       : "";
     const text = `${m.id} ${missionPresentation(m).name} ${location} ${
       c?.facts

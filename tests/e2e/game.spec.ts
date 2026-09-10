@@ -1,16 +1,16 @@
-import { openPanel, showIncidents } from "./ui-navigation";
-import { listenBrowserServer } from "./server-helper";
-import { interviewUI, joinDesk } from "./desk-helpers";
-import { test, expect, type Page, type Browser } from "@playwright/test";
+import { spawnSync } from "node:child_process";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { spawnSync } from "node:child_process";
-import type { startServer } from "../../server/index";
 import type { Config } from "../../server/config";
+import type { startServer } from "../../server/index";
 import { ECONOMY_PRICES } from "../../src/economy/prices";
 import { formatMoney } from "../../src/money";
+import { interviewUI, joinDesk } from "./desk-helpers";
+import { createBrowserServer, listenBrowserServer } from "./server-helper";
+import { expect, test, type Browser, type Page } from "./test";
+import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -102,6 +102,16 @@ async function expectAlarmableFF(page: Page, owner: string) {
     );
 }
 async function resources(page: Page, username: string) {
+  await showMapTools(page);
+  await page.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
+  await page
+    .locator(".map-search-results")
+    .getByRole("button", { name: "Straße des 17. Juni street", exact: true })
+    .click();
+  await expect(page.getByTestId("germany-map-viewport")).toHaveAttribute(
+    "data-camera",
+    /"zoom":14/,
+  );
   await openPanel(page, "Wachen");
   await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
@@ -111,16 +121,27 @@ async function resources(page: Page, username: string) {
     })
     .getByRole("button", { name: "Platzieren" })
     .click();
-  const mapBounds = await page.locator("svg.map").boundingBox();
-  await page.locator("svg.map").click({
-    position: { x: mapBounds!.width * 0.3, y: mapBounds!.height * 0.55 },
+  const mapBounds = await page
+    .locator("[data-testid=germany-map-viewport]")
+    .boundingBox();
+  await page.locator("[data-testid=germany-map-viewport]").click({
+    position: { x: mapBounds!.width * 0.5, y: mapBounds!.height * 0.5 },
   });
   await page
     .getByRole("button", { name: "Bau bestätigen", exact: true })
     .click();
-  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await expect(
+    page.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(1);
   app.game.step(30); // Advance the test server clock, never a player-controlled speed.
-  await page.locator("svg.map [data-own-station]").first().click();
+  await page
+    .locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    )
+    .first()
+    .click();
   await expect(
     page.getByText("Betriebsbereit", { exact: true }).first(),
   ).toBeVisible();
@@ -203,7 +224,11 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   await expect(b.locator(".hud-budget strong")).toHaveText(
     formatMoney(ECONOMY_PRICES.start),
   );
-  await expect(b.locator("svg.map [data-own-station]")).toHaveCount(0);
+  await expect(
+    b.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(0);
   advanceToFirstCall(ua);
   await showIncidents(a);
   await a.locator(".mission-card").first().click();
@@ -252,7 +277,11 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   const money = await a.locator(".hud-budget strong").innerText();
   await enter(a, ua);
   await expect(a.locator(".hud-budget strong")).toHaveText(money);
-  await expect(a.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await expect(
+    a.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(1);
   await ca.close();
   await cb.close();
 });
@@ -332,7 +361,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   await ca.close();
   const backup = await app.db.backup();
   await app.close();
-  app = compiled.startServer(config);
+  app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   const restart = await browser.newContext(),
     rp = await restart.newPage();
@@ -348,6 +377,9 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
       env: {
         ...process.env,
         DATA_DIR: config.dataDir,
+        GEODATA_DIR: config.geodataDir,
+        GRAPHHOPPER_URL: config.routerUrl,
+        ALLOW_HTTP: "true",
         PUBLIC_URL: config.publicUrl,
         PORT: String(config.port),
         HOST: config.host,
@@ -355,13 +387,17 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     },
   );
   expect(restore.status, restore.stderr).toBe(0);
-  app = compiled.startServer(config);
+  app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   const restored = await browser.newContext(),
     page = await restored.newPage();
   await enter(page, ub);
   await expect(page.locator(".hud-budget strong")).toHaveText(bMoney);
-  await expect(page.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await expect(
+    page.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(1);
   await restored.close();
 });
 test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht bestätigt", async ({
@@ -379,7 +415,11 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await expect(second.locator(".hud-budget strong")).toHaveText(
     formatMoney(before),
   );
-  await expect(second.locator("svg.map [data-own-station]")).toHaveCount(1);
+  await expect(
+    second.locator(
+      "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
+    ),
+  ).toHaveCount(1);
   await openPanel(second, "Fuhrpark");
   await expect(second.locator(".fleet-card")).toHaveCount(1);
   await second.close();

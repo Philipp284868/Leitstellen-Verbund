@@ -2,6 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
+import { verifiedRelease } from "./release-verification.mjs";
 const repository = "Philipp284868/Leitstellen-Verbund";
 const sha = process.env.RELEASE_SHA;
 if (!/^[a-f0-9]{40}$/.test(sha || ""))
@@ -29,28 +30,7 @@ async function api(path, method = "GET", body) {
   if (!response.ok) throw Error(`GitHub ${method} ${path}: ${response.status}`);
   return response.status === 204 ? null : response.json();
 }
-async function verifiedMain() {
-  const main = await api("/branches/main");
-  if (main.commit.sha !== sha)
-    throw Error(
-      "main ist inzwischen weitergelaufen; diesen Commit zuerst vollständig prüfen.",
-    );
-  const runs = await api(`/actions/runs?head_sha=${sha}&per_page=100`);
-  for (const workflow of ["Prüfung", "Code-Sicherheit"]) {
-    const latest = runs.workflow_runs
-      .filter(
-        (r) =>
-          r.name === workflow &&
-          r.head_branch === "main" &&
-          r.event !== "pull_request",
-      )
-      .sort((a, b) => b.id - a.id)[0];
-    if (latest?.conclusion !== "success")
-      throw Error(
-        `Erfolgreiche ${workflow} für exakt diesen main-Commit fehlt.`,
-      );
-  }
-}
+const verifiedMain = () => verifiedRelease(api, token, repository, sha);
 await verifiedMain();
 if (process.argv.includes("--verify-only")) {
   console.log(
@@ -98,7 +78,7 @@ if (upload.origin !== "https://uploads.github.com")
 for (const name of (await readdir(".tools/releases")).sort()) {
   if (
     !name.endsWith(".tar.gz") &&
-    !["SHA256SUMS", "release.json"].includes(name)
+    !["SHA256SUMS", "release.json", "acceptance.json"].includes(name)
   )
     continue;
   const url = new URL(upload);

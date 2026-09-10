@@ -19,6 +19,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { createServer } from "node:net";
 import { hardReset, OBSOLETE_FILES } from "../scripts/hard-reset.mjs";
+import { germanyRuntime } from "./helpers/germany-runtime.mjs";
 
 function fixture(t) {
   const base = mkdtempSync(resolve(tmpdir(), "lv-reset-test-"));
@@ -243,6 +244,8 @@ test(
   },
   async (t) => {
     const f = fixture(t);
+    const geography = await germanyRuntime();
+    t.after(() => geography.close());
     for (const name of f.files) rmSync(resolve(f.data, name));
     for (const name of OBSOLETE_FILES) rmSync(resolve(f.app, name));
     cpSync(resolve("dist"), resolve(f.app, "dist"), { recursive: true });
@@ -267,7 +270,11 @@ test(
       resolve(f.app, ".env"),
       `HOST=127.0.0.1\nPORT=${port}\nPUBLIC_URL=${origin}\nDATA_DIR=${f.data.replaceAll("\\", "/")}\n`,
     );
-    const env = { ...process.env };
+    const env = {
+      ...process.env,
+      GEODATA_DIR: geography.geodataDir,
+      GRAPHHOPPER_URL: geography.routerUrl,
+    };
     for (const key of [
       "HOST",
       "PORT",
@@ -283,6 +290,7 @@ test(
       if (!child) return;
       const p = child;
       child = undefined;
+      if (p.exitCode !== null || p.signalCode !== null) return;
       const done = once(p, "exit");
       if (process.platform === "win32") p.send({ type: "shutdown" });
       else p.kill("SIGTERM");
@@ -291,14 +299,21 @@ test(
     };
     t.after(stop);
     const start = async () => {
+      let output = "";
       child = spawn(process.execPath, ["dist/server/index.js"], {
         cwd: f.app,
         env,
         stdio: ["ignore", "pipe", "pipe", "ipc"],
       });
+      child.stdout.on("data", (b) => {
+        output = (output + b).slice(-8000);
+      });
+      child.stderr.on("data", (b) => {
+        output = (output + b).slice(-8000);
+      });
       for (let i = 0; i < 150; i++) {
         if (child.exitCode !== null)
-          throw Error("Spielprozess vorzeitig beendet.");
+          throw Error("Spielprozess vorzeitig beendet: " + output);
         try {
           if ((await fetch(origin + "/api/health")).ok) return;
         } catch {

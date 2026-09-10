@@ -1,26 +1,26 @@
-import { afterEach, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, expect, it } from "vitest";
 import { Database } from "../server/database";
 import { historyPage } from "../server/history";
-import { phaseFixture } from "./phase-fixture";
-import { generate, recall, readiness, tick } from "../src/engine";
+import { vt } from "../src/catalog";
+import { generate, readiness, recall, tick } from "../src/engine";
 import { validate, type Save } from "../src/model";
-import { attachIncident, callsTick, callAction } from "../src/simulation/calls";
-import { publicSave } from "../src/simulation/incidents";
 import { vehicleAvailability } from "../src/simulation/availability";
-import { queuePostIncident } from "../src/simulation/post-incident";
 import { nextCallDelay } from "../src/simulation/balance";
+import { attachIncident, callAction, callsTick } from "../src/simulation/calls";
+import { forceRows, openForceLabels } from "../src/simulation/force-plan";
+import { publicSave } from "../src/simulation/incidents";
+import { queuePostIncident } from "../src/simulation/post-incident";
 import {
-  priorityRank,
   priorities,
+  priorityRank,
   visiblePriority,
 } from "../src/simulation/priority";
-import { forceRows, openForceLabels } from "../src/simulation/force-plan";
 import { missionList } from "../src/workspace";
-import { vt } from "../src/catalog";
-import { nodes } from "../src/world";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
 
 const paths: string[] = [];
 afterEach(() => {

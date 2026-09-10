@@ -1,14 +1,14 @@
-import { listenBrowserServer } from "./server-helper";
-import { established } from "./fixtures";
-import { generate } from "../../src/engine";
-import { test, expect, type Page } from "@playwright/test";
+import { build } from "esbuild";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { build } from "esbuild";
 import type { startServer } from "../../server/index";
 import type { Cue } from "../../src/audio/synth";
+import { generate } from "../../src/engine";
+import { established } from "./fixtures";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test, type Page } from "./test";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -262,7 +262,9 @@ test("fehlende Audio-Unterstützung blockiert das Spiel nicht", async ({
   );
   await page.getByRole("button", { name: "Verwerfen", exact: true }).click();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await expect(page.locator("svg.map")).toBeVisible();
+  await expect(
+    page.locator("[data-testid=germany-map-viewport]"),
+  ).toBeVisible();
 });
 test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async ({
   page,

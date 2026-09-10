@@ -1,18 +1,20 @@
-import { generate } from "../src/engine";
-import { describe, it, expect, afterEach } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { io as client, type Socket } from "socket.io-client";
-import { startServer } from "../server/index";
-import { Database, DATABASE_VERSION } from "../server/database";
+import { afterEach, describe, expect, it } from "vitest";
 import { Auth, hash } from "../server/auth";
+import { Database, DATABASE_VERSION } from "../server/database";
 import { Game } from "../server/game";
-import { nodes } from "../src/world";
+import { generate } from "../src/engine";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { startServer } from "./fixtures/germany/server";
+import { fundTestBudget } from "./money-fixture";
+
 import { mt } from "../src/catalog";
-import { established, emsProfile } from "./e2e/fixtures";
 import { euro } from "../src/money";
 import { expectCoopPaymentOnce } from "./coop-payment-fixture";
+import { emsProfile, established } from "./e2e/fixtures";
 const password = "Isolated-test-password-284!";
 const running: ReturnType<typeof startServer>[] = [];
 afterEach(async () => {
@@ -296,6 +298,7 @@ describe("Autoritativer Server", () => {
       s.missions[0].pos = nodes[2];
       // Cross a real funding boundary during the transport, independent of
       // random vehicle delays and the wall-clock phase of this fixture.
+      fundTestBudget(s, 1000000);
       s.economy!.fundingNextAt = s.time + 1;
       app.db.save(id, s);
     }

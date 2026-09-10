@@ -1,7 +1,7 @@
-import { test, expect } from "@playwright/test";
-import { createServer, type ViteDevServer } from "vite";
 import { resolve } from "node:path";
+import { createServer, type ViteDevServer } from "vite";
 import { project } from "../../src/germany/projection";
+import { expect, test } from "./test";
 let server: ViteDevServer, origin: string;
 const requests: string[] = [];
 test.use({ actionTimeout: 15000 });
@@ -12,7 +12,6 @@ test.beforeAll(async () => {
     configFile: false,
     root: resolve(),
     logLevel: "error",
-    define: { __LV_WORLD__: JSON.stringify("germany-1") },
     resolve: {
       alias: [
         {

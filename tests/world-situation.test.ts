@@ -1,27 +1,27 @@
-import { expect, it } from "vitest";
 import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { expect, it } from "vitest";
+import { Auth } from "../server/auth";
 import { Database } from "../server/database";
 import { Game } from "../server/game";
-import { Auth } from "../server/auth";
-import { phaseFixture } from "./phase-fixture";
-import {
-  createSituation,
-  advanceSituation,
-  situationDemand,
-  situationAffects,
-  situationTemplateWeight,
-  situationCategoryWeight,
-} from "../src/simulation/world-situation";
 import {
   readWorldSituation,
   writeWorldSituation,
 } from "../server/world-situation";
-import { updateWeather } from "../src/simulation/weather";
-import { pacedDelay } from "../src/simulation/pacing";
 import { mt } from "../src/catalog";
+import { pacedDelay } from "../src/simulation/pacing";
 import { travelFactor } from "../src/simulation/traffic";
+import { updateWeather } from "../src/simulation/weather";
+import {
+  advanceSituation,
+  createSituation,
+  situationAffects,
+  situationCategoryWeight,
+  situationDemand,
+  situationTemplateWeight,
+} from "../src/simulation/world-situation";
+import { phaseFixture } from "./dispatch-fixture";
 
 it("führt gemeinsame Phasen deterministisch weiter; Aufholzeit ist begrenzt und Schäden bleiben erhalten", () => {
   const initial = createSituation(43200, 123, "storm");

@@ -1,15 +1,14 @@
-import type { Save } from "../model";
-import { IS_GERMANY } from "../world-choice";
-import { projectRoad, querySites } from "../germany/world";
-import { edges, nodes, distance } from "../world";
-import { DYNAMICS, sample } from "./random";
-import { mt } from "../catalog";
 import type { z } from "zod";
+import { mt } from "../catalog";
+import { projectRoad, querySites } from "../germany/world";
+import type { Save } from "../model";
+import { nodes } from "../world";
 import type { environmentSchema } from "./dynamics-schema";
+import { DYNAMICS, sample } from "./random";
 import {
   localSituation,
-  situationAffects,
   SITUATION_POLICY,
+  situationAffects,
   type WorldSituation,
 } from "./world-situation";
 export const weatherNames = {
@@ -96,34 +95,6 @@ export function environmentAt(time: number): z.infer<typeof environmentSchema> {
             : summer
               ? 24
               : 15;
-  const eventKinds = [
-    "jam",
-    "construction",
-    "accident",
-    "closure",
-    "obstacle",
-    "crossing",
-    "flood",
-  ] as const;
-  const roads = Array.from({ length: IS_GERMANY ? 0 : 3 }, (_, n) => {
-    const kind =
-      eventKinds[
-        Math.floor(
-          sample(27082026, `road-kind-${n}`, period) * eventKinds.length,
-        )
-      ];
-    return {
-      id: `road-${period}-${n}`,
-      kind,
-      edge: edges[
-        Math.floor(sample(27082026, `road-edge-${n}`, period) * edges.length)
-      ],
-      start: period * DYNAMICS.weatherPeriod,
-      until: (period + 1) * DYNAMICS.weatherPeriod,
-      delay: kind === "crossing" ? 45 : 90,
-      blocked: kind === "closure" || kind === "flood",
-    };
-  });
   return {
     version: 1,
     period,
@@ -133,7 +104,7 @@ export function environmentAt(time: number): z.infer<typeof environmentSchema> {
     rain,
     visibility,
     density,
-    roads,
+    roads: [],
   };
 }
 export function updateWeather(s: Save) {
@@ -142,7 +113,7 @@ export function updateWeather(s: Save) {
     s.environment.period !== Math.floor(s.time / DYNAMICS.weatherPeriod);
   if (changed) {
     s.environment = environmentAt(s.time);
-    if (IS_GERMANY && s.buildings.length) {
+    if (s.buildings.length) {
       const bases = [...s.buildings].sort((a, b) => a.id.localeCompare(b.id));
       const period = s.environment.period;
       for (let n = 0; n < Math.min(3, bases.length); n++) {
@@ -199,11 +170,10 @@ export function updateWeather(s: Save) {
       )
     )
       continue;
-    let best = edges[0],
-      nearest = Infinity;
+    let best: [number, number];
     let roadId: string | undefined;
     let roadName: string | undefined;
-    if (IS_GERMANY) {
+    {
       try {
         const section = projectRoad(m.pos).section;
         best = [section.a, section.b];
@@ -211,14 +181,6 @@ export function updateWeather(s: Save) {
         roadName = section.name.slice(0, 256);
       } catch {
         continue;
-      }
-    }
-    for (const edge of IS_GERMANY ? [] : edges) {
-      const d =
-        distance(nodes[edge[0]], m.pos) + distance(nodes[edge[1]], m.pos);
-      if (d < nearest) {
-        best = edge;
-        nearest = d;
       }
     }
     s.environment.roads.push({
@@ -304,7 +266,13 @@ function situationWeather(
   return e;
 }
 /** Route legs use their physical region, including helpers arriving from outside. */
-export function weatherAtPoint(s: Save, point: { x: number; y: number }) {
+export function weatherAtPoint(
+  s: Save,
+  point: {
+    x: number;
+    y: number;
+  },
+) {
   if (!s.worldSituation || !s.environment) return s.environment;
   return situationWeather(
     s.environment,

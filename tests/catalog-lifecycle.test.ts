@@ -1,28 +1,29 @@
-import { it, expect } from "vitest";
-import { fresh, validate, type Mission } from "../src/model";
+import { expect, it } from "vitest";
 import { vehicles, vt, type Template } from "../src/catalog";
 import { incidentVariants } from "../src/catalog/incident-variants";
-import { nodes, nearest, publicHospital, docks } from "../src/world";
+import { capacity, missing, tick } from "../src/engine";
+import { fresh, validate, type Mission } from "../src/model";
 import { attachIncident } from "../src/simulation/calls";
 import { attachDynamics, dynamicsTick } from "../src/simulation/dynamics";
 import { dynamicsSchema } from "../src/simulation/dynamics-schema";
-import { attachOrganizations } from "../src/simulation/organizations";
-import { requirements } from "../src/simulation/hazards";
-import { tick, missing, capacity } from "../src/engine";
-import { addUnit, atScene } from "./phase-four-fixture";
-import { breakVehicle, repairVehicle } from "../src/simulation/faults";
-import { declareMajor } from "../src/simulation/major-incidents";
-import { sectionSkills } from "../src/simulation/major-resources";
 import { simId } from "../src/simulation/events";
+import { breakVehicle, repairVehicle } from "../src/simulation/faults";
+import { requirements } from "../src/simulation/hazards";
+import { declareMajor } from "../src/simulation/major-incidents";
+import {
+  effectiveSkills,
+  responseCrewAvailable,
+  sectionSkills,
+} from "../src/simulation/major-resources";
+import { attachOrganizations } from "../src/simulation/organizations";
 import {
   injuryReason,
   syncResponderRecovery,
 } from "../src/simulation/responder-recovery";
-import {
-  effectiveSkills,
-  responseCrewAvailable,
-} from "../src/simulation/major-resources";
 import { personAvailable } from "../src/simulation/staffing";
+import { hospitalAt } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { addUnit, atScene } from "./incident-dynamics-fixture";
 
 function setup(t: Template) {
   const s = fresh(
@@ -35,7 +36,10 @@ function setup(t: Template) {
   const m: Mission = {
     id: "incident",
     template: t.id,
-    pos: nodes[nearest(publicHospital)],
+    pos: (() => {
+      const p = hospitalAt(nodes[0]);
+      return { x: p.x, y: p.y };
+    })(),
     progress: 0,
     phase: "offered",
     created: s.time,
@@ -73,8 +77,6 @@ function setup(t: Template) {
         ),
     )[0];
     const unit = addUnit(s, best.id);
-    if (best.home === "water")
-      s.buildings.find((b) => b.id === unit.home)!.pos = docks[0];
     atScene(s, unit, m.id);
     for (const [k, n] of Object.entries(best.skills))
       supplied[k] = (supplied[k] || 0) + n;

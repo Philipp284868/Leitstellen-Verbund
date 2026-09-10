@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import {
   useEffect,
   useRef,
@@ -6,13 +7,9 @@ import {
   type RefObject,
 } from "react";
 import { DialogDrafts, registerDialogGuard } from "./dialog-state";
-import { X } from "lucide-react";
-import type { Mission } from "./model";
-import { missionPresentation } from "./mission-presentation";
-import { districtAt } from "./world";
-import { IS_GERMANY } from "./world-choice";
 import { IncidentIcon } from "./HudIcons";
-
+import { missionPresentation } from "./mission-presentation";
+import type { Mission } from "./model";
 export function IncidentDock({
   mission,
   dockRef,
@@ -33,7 +30,11 @@ export function IncidentDock({
   const entries = useRef(
     new Map<
       symbol,
-      { dirty: boolean; discard?: () => void; blocked?: boolean }
+      {
+        dirty: boolean;
+        discard?: () => void;
+        blocked?: boolean;
+      }
     >(),
   );
   const [pending, setPending] = useState<(() => void) | null>(null);
@@ -61,10 +62,8 @@ export function IncidentDock({
   const org = presentation?.org ?? "Unbekannt";
   const location =
     mission && (!mission.control || mission.control.locationKnown)
-      ? IS_GERMANY
-        ? mission.control?.facts.find((f) => f.key === "address")?.text ||
-          "Einsatzort auf der Deutschlandkarte"
-        : districtAt(mission.pos)
+      ? mission.control?.facts.find((f) => f.key === "address")?.text ||
+        "Einsatzort auf der Deutschlandkarte"
       : "Ort und Meldebild aufnehmen";
   return (
     <aside

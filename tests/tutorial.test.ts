@@ -1,13 +1,14 @@
-import { vehicleAvailability } from "../src/simulation/availability";
-import { describe, it, expect } from "vitest";
-import { Database } from "../server/database";
+import { describe, expect, it } from "vitest";
 import { Auth } from "../server/auth";
+import { Database } from "../server/database";
 import { TutorialService } from "../server/tutorial";
-import { nodes } from "../src/world";
+import { vehicleAvailability } from "../src/simulation/availability";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import type { ServerAction } from "../server/actions";
-import { newTutorial, tutorialReady } from "../src/tutorial-model";
-import { publicSave } from "../src/simulation/incidents";
 import { ledgerBalance } from "../src/economy/ledger";
+import { publicSave } from "../src/simulation/incidents";
+import { newTutorial, tutorialReady } from "../src/tutorial-model";
 
 async function setup() {
   const db = new Database("", { memory: true }),

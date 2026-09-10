@@ -36,7 +36,7 @@ export async function planClean(root, targets = CLEAN_TARGETS) {
     throw Error("Kein Leitstellen-Verbund-Projekt.");
   const plan = [];
   for (const name of targets)
-    if (![...CLEAN_TARGETS, "dist/worlds"].includes(name))
+    if (![...CLEAN_TARGETS, "dist/worlds", "dist/germany"].includes(name))
       throw Error(`Nicht freigegebenes Ausgabeziel: ${name}`);
   const selected = [...new Set(targets)].filter(
     (name) =>

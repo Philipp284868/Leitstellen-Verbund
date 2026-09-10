@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { apply, generate, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
-import { apply, tick, generate } from "../src/engine";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { BALANCE } from "../src/catalog";
 import { xpForLevel } from "../src/progression";
-import { reconcileReadinessCore } from "../src/simulation/readiness-core";
 import { attachIncident } from "../src/simulation/calls";
 import { alarm } from "../src/simulation/dispatch";
+import { reconcileReadinessCore } from "../src/simulation/readiness-core";
 import { crewSummary, turnoutEstimate } from "../src/simulation/staffing";
 
 function station(seed = 101) {

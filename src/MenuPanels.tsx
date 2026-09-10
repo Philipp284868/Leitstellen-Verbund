@@ -1,13 +1,13 @@
-import { ProjectNewsPanel } from "./ProjectNews";
 import { useMemo, useState } from "react";
-import { missions, capabilities } from "./catalog";
-import type { Save } from "./model";
-import { logout, useGame } from "./store";
-import { missionXp, progress } from "./progression";
-import { credits, ActionButton, Disclosure } from "./ui";
-import { IncidentIcon } from "./HudIcons";
-import { WORLD_NAME } from "./world-choice";
 import { version } from "../package.json";
+import { capabilities, missions } from "./catalog";
+import { IncidentIcon } from "./HudIcons";
+import type { Save } from "./model";
+import { WORLD_NAME } from "./product";
+import { missionXp, progress } from "./progression";
+import { ProjectNewsPanel } from "./ProjectNews";
+import { logout, useGame } from "./store";
+import { ActionButton, credits, Disclosure } from "./ui";
 
 export function ScenarioCatalog({
   s,

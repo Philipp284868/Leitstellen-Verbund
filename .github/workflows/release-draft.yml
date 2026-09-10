@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       commit:
-        description: Vollständiger bereits erfolgreich geprüfter main-Commit
+        description: Vollständiger bereits vollständig geprüfter main-Commit
         required: true
         type: string
 permissions:
@@ -26,30 +26,18 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
-      - name: Exakten geprüften main-Stand vor jedem Build bestätigen
+      - name: Exakten main-Stand, vollständige Abnahme, Sicherheit und Paketbytes prüfen
         run: node scripts/release-draft.mjs --verify-only
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Produktionspaket mit versionierten Projektmeldungen bauen
-        run: node scripts/amp-setup.mjs
-        env:
-          LV_OFFLINE_NEWS: "1"
-          NODE_ENV: production
-      - name: Paket reproduzieren und echte Installation prüfen
-        run: |
-          node scripts/package-runtime.mjs
-          cp .tools/releases/SHA256SUMS /tmp/first-runtime-sha
-          node scripts/package-runtime.mjs
-          cmp /tmp/first-runtime-sha .tools/releases/SHA256SUMS
-          node scripts/runtime-smoke.mjs .tools/releases/leitstellen-verbund-*-linux-runtime.tar.gz
-      - name: Nur einen Entwurf mit Artefakten anlegen
+      - name: Ausschließlich das bereits abgenommene Paket als Entwurf bereitstellen
         run: node scripts/release-draft.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: release-runtime
-          path: .tools/releases/
+          name: release-verification
+          path: .tools/release-verification/verification.json
           include-hidden-files: true
-          retention-days: 14
+          retention-days: 30

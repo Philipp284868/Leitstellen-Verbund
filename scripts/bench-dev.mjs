@@ -10,7 +10,7 @@ const args = process.argv.slice(2),
     args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 if (args.includes("--help")) {
   console.log(
-    "bench:dev [--world germany-1|rivermere-1] [--label name] [--channel msedge] [--cwd isolated-checkout]\nAlternativ: --command build|build:fast|test:quick|test:unit|test:ci|check:quick. Jeder Aufruf misst einen Lauf; Cachezustand im Bericht angeben. Kein Löschen von Caches, Daten oder vorhandenen Quellen.",
+    "bench:dev [--label name] [--channel msedge] [--cwd isolated-checkout]\nAlternativ: --command build|build:fast|test:quick|test:unit|test:ci|check:quick. Jeder Aufruf misst einen Lauf; Cachezustand im Bericht angeben. Kein Löschen von Caches, Daten oder vorhandenen Quellen.",
   );
   process.exit(0);
 }
@@ -83,8 +83,7 @@ if (args.includes("--command")) {
     return value;
   }
   const frontend = await port(),
-    backend = await port(),
-    world = value("--world", process.env.LV_BUILD_WORLD || "germany-1");
+    backend = await port();
   const browser = await chromium.launch({
     channel: value(
       "--channel",
@@ -103,7 +102,6 @@ if (args.includes("--command")) {
       cwd,
       env: {
         ...process.env,
-        LV_BUILD_WORLD: world,
         DEV_PORT: String(frontend),
         DEV_API_PORT: String(backend),
       },

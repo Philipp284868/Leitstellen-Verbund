@@ -1,13 +1,10 @@
-import { IS_GERMANY, IS_RIVERMERE, WORLD_NAME } from "../src/world-choice";
-import { existsSync, realpathSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { loadEnvFile } from "node:process";
-import { resolve, relative, isAbsolute, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
-
-export const root = resolve(
-  fileURLToPath(new URL(IS_GERMANY ? "../../../" : "../../", import.meta.url)),
-);
+import { WORLD_NAME } from "../src/product";
+export const root = resolve(fileURLToPath(new URL("../../", import.meta.url)));
 export interface Config {
   host: string;
   port: number;
@@ -20,11 +17,10 @@ export interface Config {
 }
 export function config(): Config {
   const germanyEnv = resolve(root, ".env.germany");
-  const env =
-    IS_GERMANY && existsSync(germanyEnv) ? germanyEnv : resolve(root, ".env");
+  const env = existsSync(germanyEnv) ? germanyEnv : resolve(root, ".env");
   if (existsSync(env)) {
     loadEnvFile(env);
-    if (IS_GERMANY && env === germanyEnv) {
+    if (env === germanyEnv) {
       const settings = parseEnv(readFileSync(germanyEnv, "utf8"));
       // The CLI and a directly started Germany binary must select the same
       // world as the launcher, even if AMP still exports legacy data paths.
@@ -62,7 +58,7 @@ export function config(): Config {
     throw Error(
       "Öffentlicher Betrieb benötigt HTTPS; ALLOW_HTTP=true ist nur für ein privates Testnetz.",
     );
-  if ((IS_RIVERMERE || IS_GERMANY) && !process.env.DATA_DIR)
+  if (!process.env.DATA_DIR)
     throw Error(
       `${WORLD_NAME} benötigt ein ausdrücklich gesetztes eigenes DATA_DIR. Bestehende Welten werden nicht umgestellt.`,
     );
@@ -74,11 +70,11 @@ export function config(): Config {
   const rel = relative(realpathSync(root), realpathSync(dataDir));
   if (!(rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)))
     throw Error("DATA_DIR muss außerhalb des Programmverzeichnisses liegen.");
-  if (IS_GERMANY && !process.env.GEODATA_DIR)
+  if (!process.env.GEODATA_DIR)
     throw Error(
       "Deutschland benötigt GEODATA_DIR mit einem fertig aufbereiteten Geodatenpaket. Anleitung: docs/DEUTSCHLAND-DATEN.md.",
     );
-  if (IS_GERMANY) {
+  {
     const geo = realpathSync(resolve(root, process.env.GEODATA_DIR!));
     const inside = (parent: string, child: string) => {
       const rel = relative(parent, child);
@@ -103,12 +99,10 @@ export function config(): Config {
     publicUrl: url.origin,
     dataDir,
     secure: url.protocol === "https:",
-    ...(IS_GERMANY
-      ? {
-          geodataDir: resolve(root, process.env.GEODATA_DIR!),
-          routerUrl: process.env.GRAPHHOPPER_URL || "http://127.0.0.1:8989",
-        }
-      : {}),
+    ...{
+      geodataDir: resolve(root, process.env.GEODATA_DIR!),
+      routerUrl: process.env.GRAPHHOPPER_URL || "http://127.0.0.1:8989",
+    },
     trustedProxies: (process.env.TRUSTED_PROXIES || "")
       .split(",")
       .map((s) => s.trim())

@@ -1,6 +1,4 @@
 import type { SVGProps } from "react";
-import { IS_GERMANY } from "./world-choice";
-
 // Original vector artwork. All symbols share a 32-unit canvas and 1.65-unit line.
 const truck =
   "M3 23V10h17v13M20 15h5l4 5v3h-3M3 23h3m5 0h10M21 15v5h7M8.5 21a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M23.5 21a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5";
@@ -126,7 +124,7 @@ export const vehicleIcons = {
   mzgw: "technical",
   tmtw: "commandVan",
   gww: "rescue",
-  boat: IS_GERMANY ? "boatTrailer" : "boat",
+  boat: "boatTrailer",
 } as const satisfies Record<string, MapGlyph>;
 export const buildingIcons: Record<string, MapGlyph> = {
   kats: "emsStation",
@@ -168,13 +166,18 @@ export function vehicleIconDefinition(type: string): MapGlyph {
 export function buildingIconDefinition(type: string): MapGlyph {
   return Object.hasOwn(buildingIcons, type) ? buildingIcons[type] : "unknown";
 }
-type IconProps = SVGProps<SVGSVGElement> & { size?: number; label?: string };
+type IconProps = SVGProps<SVGSVGElement> & {
+  size?: number;
+  label?: string;
+};
 export function MapIcon({
   glyph,
   size = 24,
   label,
   ...props
-}: IconProps & { glyph: MapGlyph }) {
+}: IconProps & {
+  glyph: MapGlyph;
+}) {
   return (
     <svg
       width={size}
@@ -197,9 +200,19 @@ export function MapIcon({
     </svg>
   );
 }
-export function VehicleIcon({ type, ...props }: IconProps & { type: string }) {
+export function VehicleIcon({
+  type,
+  ...props
+}: IconProps & {
+  type: string;
+}) {
   return <MapIcon glyph={vehicleIconDefinition(type)} {...props} />;
 }
-export function BuildingIcon({ type, ...props }: IconProps & { type: string }) {
+export function BuildingIcon({
+  type,
+  ...props
+}: IconProps & {
+  type: string;
+}) {
   return <MapIcon glyph={buildingIconDefinition(type)} {...props} />;
 }

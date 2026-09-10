@@ -1,11 +1,11 @@
-import { it, expect } from "vitest";
-import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
+import { DatabaseSync } from "node:sqlite";
+import { expect, it } from "vitest";
 import { Auth } from "../server/auth";
-import { startServer } from "../server/index";
+import { Database } from "../server/database";
+import { startServer } from "./fixtures/germany/server";
 it("erhält die alte Datenbank bei abgebrochener Migration und verweigert neuere Schemata", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-migration-")),
     path = resolve(dir, "game.sqlite");

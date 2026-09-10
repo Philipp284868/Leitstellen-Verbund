@@ -1,34 +1,34 @@
-import { requestDialogTransition } from "./dialog-state";
-import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  Radio,
-  Truck,
   Building2,
+  ChevronDown,
+  Clock,
   Layers,
-  Users,
+  Phone,
+  Radio,
   Search,
   Settings,
-  Phone,
-  Siren,
   Shield,
-  Clock,
-  Wallet,
+  Siren,
   TriangleAlert,
-  ChevronDown,
+  Truck,
+  Users,
+  Wallet,
   X,
 } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { requestDialogTransition } from "./dialog-state";
 import type { Save } from "./model";
-import { progress } from "./progression";
-import { credits } from "./ui";
-import { weatherNames } from "./simulation/weather";
-import { WORLD_NAME } from "./world-choice";
 import { useNetwork } from "./network";
-import { WorldSituationView, PublicAlarmList } from "./WorldSituationView";
+import { WORLD_NAME } from "./product";
+import { progress } from "./progression";
+import { weatherNames } from "./simulation/weather";
 import {
   situationNames,
   situationPhaseNames,
 } from "./simulation/world-situation";
+import { credits } from "./ui";
 import "./WorldSituation.css";
+import { PublicAlarmList, WorldSituationView } from "./WorldSituationView";
 
 export function Topbar({
   s,

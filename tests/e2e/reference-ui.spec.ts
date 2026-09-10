@@ -1,15 +1,15 @@
-import { showIncidents, showMapTools } from "./ui-navigation";
-import { test, expect } from "@playwright/test";
-import { mkdtemp, mkdir } from "node:fs/promises";
+import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
-import { listenBrowserServer } from "./server-helper";
-import { nodes, nearest } from "../../src/world";
-import { alarm } from "../../src/simulation/dispatch";
 import { tick } from "../../src/engine";
-import { phaseFixture } from "../phase-fixture";
+import { alarm } from "../../src/simulation/dispatch";
+import { phaseFixture } from "../dispatch-fixture";
+import { sites as nodes } from "../fixtures/germany/locations";
+import { listenBrowserServer } from "./server-helper";
+import { expect, test } from "./test";
+import { showIncidents, showMapTools } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -29,17 +29,17 @@ test.beforeAll(async () => {
     "reference",
     "Reference-password-123!",
     "Max Berger",
-    "Leitstelle Rivermere",
+    "Leitstelle Berlin",
   );
   const s = phaseFixture(owner);
   s.player.name = "Max Berger";
-  s.player.station = "Leitstelle Rivermere";
+  s.player.station = "Leitstelle Berlin";
   s.missionWait = 9999;
   const m = s.missions[0];
   m.control!.locationKnown = true;
   m.control!.reportedTemplate = m.template;
   m.control!.calls[0].state = "ended";
-  m.pos = nodes[nearest({ x: 4300, y: 3700 })];
+  m.pos = nodes[2];
   alarm(s, m, [s.vehicles[0].id], owner, "NORMAL", "station");
   tick(s, s.vehicles[0].depart + 40, {}, false, false);
   app.db.save(owner, s);
@@ -101,7 +101,9 @@ test("Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt", as
   );
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator("svg.map")).toBeVisible();
+  await expect(
+    page.locator("[data-testid=germany-map-viewport]"),
+  ).toBeVisible();
   await expect(page.locator(".mission-sidebar")).not.toBeVisible();
   await showIncidents(page);
   await expect(page.locator(".mission-card").first()).toBeVisible();
@@ -147,8 +149,8 @@ for (const size of [
       ).toEqual({ width: size.width, height: size.height });
     const folder = resolve(
       process.env.UPDATE_SCREENSHOTS === "1"
-        ? "docs/screenshots/2.14"
-        : ".tools/screenshots/2.14",
+        ? "docs/abnahme-deutschland"
+        : ".tools/screenshots/current-product",
     );
     await mkdir(folder, { recursive: true });
     if (info.project.name === "chromium")
@@ -168,10 +170,18 @@ for (const size of [
       "Brandverdacht gemeldet",
     );
     await expect(page.locator(".scrim")).toHaveCount(0);
-    await expect(
-      page.locator("svg.map polyline[vector-effect=non-scaling-stroke]"),
-    ).not.toHaveCount(0);
-    const box = await page.locator("svg.map").boundingBox();
+    await expect
+      .poll(async () =>
+        Number(
+          await page
+            .getByTestId("germany-map-viewport")
+            .getAttribute("data-visible-routes"),
+        ),
+      )
+      .toBeGreaterThan(0);
+    const box = await page
+      .locator("[data-testid=germany-map-viewport]")
+      .boundingBox();
     expect(box!.width).toBe(size.width);
     expect(box!.height).toBeGreaterThan(size.height * 0.7);
     expect(box!.y).toBeCloseTo(62, 0);
@@ -191,16 +201,21 @@ for (const size of [
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
     await expect(dock).toHaveCount(0);
     await page.getByRole("button", { name: "Karte", exact: true }).click();
-    await page.locator('svg.map [aria-label="Brandverdacht gemeldet"]').click();
+    await page
+      .locator(
+        '[data-testid=germany-map-viewport] [aria-label="Brandverdacht gemeldet"]',
+      )
+      .click();
     await expect(dock).toBeVisible();
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
     await showMapTools(page);
-    const before = await page.locator("svg.map").getAttribute("viewBox");
+    const before = await page
+      .locator("[data-testid=germany-map-viewport]")
+      .getAttribute("data-bounds");
     await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
-    await expect(page.locator("svg.map")).not.toHaveAttribute(
-      "viewBox",
-      before!,
-    );
+    await expect(
+      page.locator("[data-testid=germany-map-viewport]"),
+    ).not.toHaveAttribute("data-bounds", before!);
     await showMapTools(page);
     await expect(page.getByLabel("Karte durchsuchen")).toBeVisible();
     await page.getByLabel("Karte durchsuchen").fill("Rivermere");

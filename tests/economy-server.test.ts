@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { Database } from "../server/database";
 import { Game } from "../server/game";
 import { fresh } from "../src/model";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { bt, vt } from "../src/catalog";
 import { bookMoney, ledgerBalance } from "../src/economy/ledger";
 import { euro } from "../src/money";

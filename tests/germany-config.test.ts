@@ -1,4 +1,3 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { spawnSync } from "node:child_process";
 import {
@@ -11,8 +10,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { relative, resolve, sep } from "node:path";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-let germanyBinary: Uint8Array, legacyBinary: Uint8Array;
+let germanyBinary: Uint8Array;
 let base: string,
   app: string,
   data: string,
@@ -20,7 +20,7 @@ let base: string,
   oldData: string,
   oldGeo: string;
 beforeAll(async () => {
-  async function compile(world: string) {
+  async function compile() {
     const result = await build({
       stdin: {
         contents:
@@ -31,14 +31,10 @@ beforeAll(async () => {
       bundle: true,
       platform: "node",
       format: "esm",
-      define: { __LV_WORLD__: JSON.stringify(world) },
     });
     return result.outputFiles[0].contents;
   }
-  [germanyBinary, legacyBinary] = await Promise.all([
-    compile("germany-1"),
-    compile("rivermere-1"),
-  ]);
+  germanyBinary = await compile();
 });
 beforeEach(() => {
   base = mkdtempSync(resolve(tmpdir(), "lv-germany-config-"));
@@ -47,17 +43,10 @@ beforeEach(() => {
   geo = resolve(base, "germany-geo");
   oldData = resolve(base, "old-data");
   oldGeo = resolve(base, "old-geo");
-  for (const directory of [
-    resolve(app, "dist/germany/server"),
-    resolve(app, "dist/server"),
-    geo,
-    oldData,
-    oldGeo,
-  ])
+  for (const directory of [resolve(app, "dist/server"), geo, oldData, oldGeo])
     mkdirSync(directory, { recursive: true });
   writeFileSync(resolve(oldData, "old-save"), "unmodified-rivermere-save");
-  writeFileSync(resolve(app, "dist/germany/server/config.mjs"), germanyBinary);
-  writeFileSync(resolve(app, "dist/server/config.mjs"), legacyBinary);
+  writeFileSync(resolve(app, "dist/server/config.mjs"), germanyBinary);
   writeFileSync(
     resolve(app, ".env"),
     `HOST=127.0.0.1\nPORT=7777\nPUBLIC_URL=https://old.example\nDATA_DIR="${oldData}"\nGEODATA_DIR="${oldGeo}"\nGRAPHHOPPER_URL=http://127.0.0.1:8999\n`,
@@ -75,7 +64,7 @@ function configure(extra = "") {
     `HOST=0.0.0.0\nPORT=7788\nPUBLIC_URL=https://germany.example\nDATA_DIR="${data}"\nGEODATA_DIR="${geo}"\n${extra}`,
   );
 }
-function run(extra: Record<string, string> = {}, germany = true) {
+function run(extra: Record<string, string> = {}) {
   const env = { ...process.env };
   for (const key of [
     "HOST",
@@ -88,22 +77,13 @@ function run(extra: Record<string, string> = {}, germany = true) {
     "GRAPHHOPPER_URL",
   ])
     delete env[key];
-  return spawnSync(
-    process.execPath,
-    [
-      resolve(
-        app,
-        germany ? "dist/germany/server/config.mjs" : "dist/server/config.mjs",
-      ),
-    ],
-    {
-      cwd: base,
-      env: { ...env, ...extra },
-      encoding: "utf8",
-      timeout: 5000,
-      windowsHide: true,
-    },
-  );
+  return spawnSync(process.execPath, [resolve(app, "dist/server/config.mjs")], {
+    cwd: base,
+    env: { ...env, ...extra },
+    encoding: "utf8",
+    timeout: 5000,
+    windowsHide: true,
+  });
 }
 describe("Deutschland-Konfiguration für Server und CLI", () => {
   it("verwendet beim direkten Programmeinstieg die Deutschlanddatei und erhält den alten Spielstand", () => {
@@ -178,17 +158,5 @@ describe("Deutschland-Konfiguration für Server und CLI", () => {
       geodataDir: geo,
       publicUrl: "https://existing-germany.example",
     });
-  });
-  it("lässt Rivermere weiterhin seine bisherige .env und Welt verwenden", () => {
-    configure();
-    const result = run({}, false);
-    expect(result.status, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({
-      dataDir: oldData,
-      publicUrl: "https://old.example",
-      port: 7777,
-    });
-    expect(JSON.parse(result.stdout)).not.toHaveProperty("geodataDir");
-    expect(existsSync(data)).toBe(false);
   });
 });

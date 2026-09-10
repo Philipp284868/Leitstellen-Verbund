@@ -1,42 +1,41 @@
-import { TutorialService } from "./tutorial";
-import { mt } from "../src/catalog";
-import { deskOwner } from "./workspaces";
-import { historyPage, exportHistory } from "./history";
-import type { Save } from "../src/model";
-import { publicSave } from "../src/simulation/incidents";
-import { IS_GERMANY } from "../src/world-choice";
-import { prepareGeography, type Geography } from "./germany/runtime";
-import { germanyProvider } from "../src/germany/world";
-import { inBounds } from "../src/germany/projection";
-import { buildReason } from "../src/purchase";
-import { approach } from "../src/travel";
-import { hospitalOptions } from "../src/simulation/hospitals";
-import { alarmSchema } from "../src/simulation/schema";
+import { readFile } from "node:fs/promises";
 import {
   createServer,
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
-import { readFile } from "node:fs/promises";
-import { resolve, extname } from "node:path";
+import { extname, resolve } from "node:path";
 import { Server, type Socket } from "socket.io";
-import { RouteSnapshotEncoder } from "./germany/snapshots";
 import { z } from "zod";
-import { config, root, type Config } from "./config";
-import { Database } from "./database";
+import { mt } from "../src/catalog";
+import { inBounds } from "../src/germany/projection";
+import { germanyProvider } from "../src/germany/world";
+import { parseMode } from "../src/mode";
+import type { Save } from "../src/model";
+import type { PublicPlayer } from "../src/presence";
+import { buildReason } from "../src/purchase";
+import { hospitalOptions } from "../src/simulation/hospitals";
+import { publicSave } from "../src/simulation/incidents";
+import { alarmSchema } from "../src/simulation/schema";
+import { approach } from "../src/travel";
 import {
   Auth,
-  verifyPassword,
-  usernameSchema,
   passwordSchema,
   profileNameSchema,
+  usernameSchema,
+  verifyPassword,
 } from "./auth";
-import { parseMode } from "../src/mode";
+import { config, root, type Config } from "./config";
+import { Database } from "./database";
 import { Game } from "./game";
+import { prepareGeography, type Geography } from "./germany/runtime";
+import { RouteSnapshotEncoder } from "./germany/snapshots";
+import { exportHistory, historyPage } from "./history";
 import { acquireLock } from "./lock";
 import { WorldPresence, readPublicPresence } from "./presence";
-import type { PublicPlayer } from "../src/presence";
-
+import { TutorialService } from "./tutorial";
+import { deskOwner } from "./workspaces";
+export { prepareGeography } from "./germany/runtime";
 const loginSchema = z
   .object({ username: usernameSchema, password: passwordSchema })
   .strict();
@@ -57,10 +56,10 @@ async function body(req: IncomingMessage) {
 }
 export function startServer(
   c: Config,
-  clientDir = resolve(root, IS_GERMANY ? "dist/germany/client" : "dist/client"),
+  clientDir = resolve(root, "dist/client"),
   geography?: Geography,
 ) {
-  if (IS_GERMANY && !geography)
+  if (!geography)
     throw Error("Deutschland-Geodaten vor dem Serverstart initialisieren.");
   const release = acquireLock(c.dataDir);
   let db: Database;
@@ -221,7 +220,7 @@ export function startServer(
           return reply(res, 200, { ok: true });
         }
         if (!session) return reply(res, 401, { error: "Bitte anmelden." });
-        if (path.startsWith("/api/geo/") && IS_GERMANY) {
+        if (path.startsWith("/api/geo/")) {
           if (req.method !== "GET")
             return reply(res, 405, { error: "GET erforderlich." });
           auth.limit(`geo-player:${session.user_id}`, 120, 60000);
@@ -724,7 +723,7 @@ export function startServer(
     peers: Set<string>,
     view = viewForActor(socket.data.user, peers, socket.data.mode),
   ) {
-    if (IS_GERMANY && socket.handshake.auth.routeSnapshots === 1) {
+    if (socket.handshake.auth.routeSnapshots === 1) {
       let encoder = encoders.get(socket);
       if (!encoder) {
         encoder = new RouteSnapshotEncoder();

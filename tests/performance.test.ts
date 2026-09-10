@@ -1,8 +1,9 @@
-import { it, expect } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { fresh, uid, validate } from "../src/model";
+import { expect, it } from "vitest";
 import { tick } from "../src/engine";
-import { nodes } from "../src/world";
+import { fresh, uid, validate } from "../src/model";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 it("prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze", () => {
   const s = fresh("Lasttest", "Regionstest", 1000);
   for (let i = 0; i < 100; i++) {

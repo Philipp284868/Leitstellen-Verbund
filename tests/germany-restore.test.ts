@@ -31,23 +31,12 @@ let owner: string, cookie: string, backup: string;
 beforeAll(async () => {
   mkdirSync(".tools", { recursive: true });
   const fixture = resolve(`.tools/germany-restore-fixture-${process.pid}.mjs`);
-  cli = resolve(`.tools/germany-restore-${process.pid}/server/cli.js`);
+  cli = resolve("dist/server/cli.js");
   const common = {
     bundle: true,
     format: "esm" as const,
     platform: "node" as const,
     packages: "external" as const,
-    define: { __LV_WORLD__: JSON.stringify("germany-1") },
-    plugins: [
-      {
-        name: "germany-world",
-        setup(b: import("esbuild").PluginBuild) {
-          b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-            path: resolve("src/germany/world.ts"),
-          }));
-        },
-      },
-    ],
   };
   await Promise.all([
     build({
@@ -55,7 +44,6 @@ beforeAll(async () => {
       entryPoints: ["tests/germany-simulation-fixture.ts"],
       outfile: fixture,
     }),
-    build({ ...common, entryPoints: ["server/cli.ts"], outfile: cli }),
   ]);
   f = await import(pathToFileURL(fixture).href);
 }, 20000);

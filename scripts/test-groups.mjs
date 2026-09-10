@@ -44,8 +44,7 @@ export function testGroups(root = resolve(".")) {
     }
     visit(ast);
     // Runtime-generated imports of built binaries are intentionally integration.
-    if (/(?:dist[\/\\]|legacy-tests)/.test(source))
-      result.push("<compiled-server>");
+    if (/(?:dist[\/\\])/.test(source)) result.push("<compiled-server>");
     imports.set(file, result);
     return result;
   }

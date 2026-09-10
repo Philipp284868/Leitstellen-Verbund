@@ -1,22 +1,23 @@
-import { expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { startServer } from "../server/index";
+import { expect, it } from "vitest";
 import type { ServerAction } from "../server/actions";
+import type { TrainingView, TutorialView } from "../server/tutorial";
 import type { Save } from "../src/model";
-import type { TutorialView, TrainingView } from "../server/tutorial";
-import { nodes } from "../src/world";
-import { ledgerBalance } from "../src/economy/ledger";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { startServer } from "./fixtures/germany/server";
+
 import { bt, vt } from "../src/catalog";
+import { ledgerBalance } from "../src/economy/ledger";
 import { tick } from "../src/engine";
+import { euro } from "../src/money";
 import { withAutomaticRouting } from "../src/simulation/routing-context";
 import {
   newTutorial,
   tutorialReady,
   tutorialReinforcementComplete,
 } from "../src/tutorial-model";
-import { euro } from "../src/money";
 
 type View = {
   playContext: number;

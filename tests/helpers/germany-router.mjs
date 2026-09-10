@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 const runtimeIdentity = JSON.parse(
   readFileSync(
     new URL("../fixtures/germany-graph-runtime.json", import.meta.url),
@@ -59,6 +60,16 @@ const server = createServer(async (req, res) => {
     coords = [a, mid, b];
   const lengths = [meters(a, mid), meters(mid, b)],
     speeds = [30, 60];
+  // The shared browser fixture has several independent road segments. Reusing
+  // edge 12 for every route would let one flooded street close the entire map.
+  // Fixed IDs remain the default for the focused provider contract tests.
+  const edge = (from, to, fallback) =>
+    process.env.LV_FIXTURE_UNIQUE_EDGES === "1"
+      ? createHash("sha256")
+          .update([from.join(","), to.join(",")].sort().join(";"))
+          .digest()
+          .readUInt32BE(0) % 1000000000
+      : fallback;
   const adjusted = speeds;
   const times = lengths.map(
     (n, i) => (1000 * n) / (adjusted[i] / 3.6) + (i === 1 ? 5000 : 0),
@@ -73,8 +84,8 @@ const server = createServer(async (req, res) => {
           points: { type: "LineString", coordinates: coords },
           details: {
             edge_id: [
-              [0, 1, 12],
-              [1, 2, 13],
+              [0, 1, edge(a, mid, 12)],
+              [1, 2, edge(mid, b, 13)],
             ],
             time: [
               [0, 1, times[0]],

@@ -15,7 +15,7 @@ const limits = {
   application: 280000,
 };
 const results = [];
-for (const dir of ["dist/client/assets", "dist/germany/client/assets"]) {
+for (const dir of ["dist/client/assets"]) {
   let total = 0;
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".js"))) {
     const group = file.startsWith("maplibre-gl-worker-")
@@ -38,7 +38,7 @@ for (const dir of ["dist/client/assets", "dist/germany/client/assets"]) {
       group,
     });
   }
-  if (total > (dir.includes("germany") ? 2500000 : 1100000))
+  if (total > 2500000)
     throw Error(`Gesamt-JavaScript-Budget überschritten: ${dir}`);
 }
 mkdirSync(".tools/test-runs", { recursive: true });

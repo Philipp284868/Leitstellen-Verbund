@@ -13,17 +13,6 @@ await build({
   platform: "node",
   format: "esm",
   packages: "external",
-  define: { __LV_WORLD__: JSON.stringify("germany-1") },
-  plugins: [
-    {
-      name: "germany",
-      setup(b) {
-        b.onResolve({ filter: /(?:^|\/)world$/ }, () => ({
-          path: resolve("src/germany/world.ts"),
-        }));
-      },
-    },
-  ],
 });
 const child = fork(outfile, { stdio: ["ignore", "pipe", "pipe", "ipc"] });
 child.stdout.pipe(process.stdout);

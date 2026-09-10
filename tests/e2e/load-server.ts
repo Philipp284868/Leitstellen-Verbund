@@ -1,28 +1,43 @@
 import { build } from "esbuild";
 import { fork } from "node:child_process";
 import { resolve } from "node:path";
+// @ts-expect-error Node tooling shared with the normal build
+import { cachedBuild, fingerprint } from "../../scripts/build-cache.mjs";
+// @ts-expect-error Node tooling shared with the normal build
+import { sourceGraph } from "../../scripts/source-graph.mjs";
 
 // Production server and browser driver must not share an event loop. Otherwise
 // simulation work is counted as delayed Playwright commands, not browser input.
 export async function startOverviewLoadServer() {
-  const fixturePath = resolve(`.tools/overview-fixture-${process.pid}.mjs`);
-  await build({
-    entryPoints: ["tests/rivermere-fixture.ts"],
-    outfile: fixturePath,
-    bundle: true,
-    platform: "node",
-    format: "esm",
-    packages: "external",
-    define: { __LV_WORLD__: JSON.stringify("rivermere-1") },
+  const fixturePath = resolve(".tools/browser-load-fixture/server.mjs");
+  await cachedBuild({
+    root: resolve("."),
+    name: "browser-load-fixture",
+    reuse: true,
+    key: JSON.stringify({
+      node: process.version,
+      inputs: await fingerprint(resolve("."), [
+        ...sourceGraph(["tests/helpers/map-load-server.ts"]),
+        "pnpm-lock.yaml",
+      ]),
+    }),
+    outputs: [".tools/browser-load-fixture/server.mjs"],
+    run: () =>
+      build({
+        entryPoints: ["tests/helpers/map-load-server.ts"],
+        outfile: fixturePath,
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+      }),
   });
-  const child = fork(
-    resolve("tests/helpers/rivermere-load-server.mjs"),
-    [fixturePath, "overview"],
-    { stdio: ["ignore", "pipe", "pipe", "ipc"] },
-  );
+  const child = fork(fixturePath, [], {
+    stdio: ["ignore", "pipe", "pipe", "ipc"],
+  });
   let output = "";
   child.stderr?.on("data", (data) => {
-    output += String(data);
+    output = (output + String(data)).slice(-16000);
   });
   const ready = await new Promise<{
     origin: string;

@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
+import { buildings, extensions, missions, vehicles } from "../src/catalog";
+import { economyBalanceAudit } from "../src/economy/balancing";
+import {
+  bookMoney,
+  fundingTick,
+  ledgerBalance,
+  saleValue,
+} from "../src/economy/ledger";
+import {
+  convertLegacyCredits,
+  migrateEconomy,
+  protectionRatio,
+} from "../src/economy/migration";
+import { ECONOMY_PRICES, priceEntries } from "../src/economy/prices";
+import { apply, beginTrip, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
-import { buildings, vehicles, missions, extensions } from "../src/catalog";
 import {
   MAX_CENTS,
   checkedCents,
@@ -9,21 +23,7 @@ import {
   mulRatio,
   sumCents,
 } from "../src/money";
-import {
-  bookMoney,
-  fundingTick,
-  ledgerBalance,
-  saleValue,
-} from "../src/economy/ledger";
-import { ECONOMY_PRICES, priceEntries } from "../src/economy/prices";
-import {
-  convertLegacyCredits,
-  migrateEconomy,
-  protectionRatio,
-} from "../src/economy/migration";
-import { economyBalanceAudit } from "../src/economy/balancing";
-import { apply, tick, beginTrip } from "../src/engine";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
 
 describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {
   it("trägt sechs offengelegte Einstiegs-/Ausbau-/Abwesenheitsszenarien ohne mehr Notrufe oder schnellere Fahrten", () => {

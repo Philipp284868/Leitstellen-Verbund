@@ -1,12 +1,12 @@
-import { expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { startServer } from "../server/index";
-import { phaseFixture } from "./phase-fixture";
+import { expect, it } from "vitest";
 import { recall } from "../src/engine";
 import { vehiclePosition } from "../src/vehicle-position";
-import { nodes } from "../src/world";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
+import { startServer } from "./fixtures/germany/server";
 
 it("serializes two real dispatcher HTTP sessions on the same returning unit, rejects outsiders and replays the winning id once", async () => {
   const port = 28000 + Math.floor(Math.random() * 1500),

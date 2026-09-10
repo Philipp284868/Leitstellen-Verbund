@@ -1,13 +1,13 @@
-import { memo, useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import "./GermanyMap.css";
+import { memo, useEffect, useRef, useState } from "react";
 import type { Save } from "../model";
-import { unproject, WORLD_CENTER } from "./projection";
-import { germanyStyle, loadGeoManifest } from "./map-style";
-import { attachTileLabels } from "./map-labels";
+import "./GermanyMap.css";
 import { mapInitializationMessage } from "./map-errors";
+import { attachTileLabels } from "./map-labels";
+import { germanyStyle, loadGeoManifest } from "./map-style";
+import { unproject, WORLD_CENTER } from "./projection";
 
 maplibregl.setWorkerUrl(workerUrl);
 /** Menu and game use the same vector source and projection, with no backdrop image. */
@@ -95,4 +95,3 @@ export const GermanyScene = memo(function GermanyScene({
     </div>
   );
 });
-export const RegionScene = GermanyScene;

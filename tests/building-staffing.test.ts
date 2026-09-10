@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { apply, generate, recall, tick } from "../src/engine";
 import { fresh, validate, type Save } from "../src/model";
-import { apply, tick, generate, recall } from "../src/engine";
-import { nodes } from "../src/world";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { BALANCE, vt } from "../src/catalog";
 import { xpForLevel } from "../src/progression";
+import { vehicleAvailability } from "../src/simulation/availability";
+import {
+  buildingStaffingPlan,
+  buildingStaffingStatus,
+  migrateBuildingStaffing,
+  reconcileBuildingStaffing,
+} from "../src/simulation/building-staffing";
+import { attachIncident } from "../src/simulation/calls";
+import { alarm } from "../src/simulation/dispatch";
 import {
   crewAllocator,
   crewSummary,
@@ -13,16 +23,7 @@ import {
   stationCapacity,
   stationProfile,
 } from "../src/simulation/staffing";
-import {
-  buildingStaffingPlan,
-  buildingStaffingStatus,
-  migrateBuildingStaffing,
-  reconcileBuildingStaffing,
-} from "../src/simulation/building-staffing";
 import { volunteerAvailability } from "../src/simulation/volunteers";
-import { attachIncident } from "../src/simulation/calls";
-import { alarm } from "../src/simulation/dispatch";
-import { vehicleAvailability } from "../src/simulation/availability";
 import { vehiclePosition } from "../src/vehicle-position";
 
 function emptyDesk() {

@@ -1,8 +1,9 @@
 import { expect, it } from "vitest";
-import { phaseFixture } from "./phase-fixture";
+import { apply, recall } from "../src/engine";
 import { garageIndex } from "../src/simulation/garage";
-import { recall, apply } from "../src/engine";
-import { nodes } from "../src/world";
+import { phaseFixture } from "./dispatch-fixture";
+import { sites as nodes } from "./fixtures/germany/locations";
+
 import { setFms } from "../src/simulation/fms";
 it("Garagen zeigen reale Anwesenheit unabhängig von FMS und ordnen unterwegs befindliche Fahrzeuge getrennt zu", () => {
   const s = phaseFixture("garage"),

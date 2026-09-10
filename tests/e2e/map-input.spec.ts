@@ -1,260 +1,231 @@
-import { test, expect } from "@playwright/test";
-import { showIncidents } from "./ui-navigation";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../server/index";
+import { phaseFixture } from "../dispatch-fixture";
+import { sites } from "../fixtures/germany/locations";
 import { listenBrowserServer } from "./server-helper";
-import { nodes, nearest } from "../../src/world";
-import { alarm } from "../../src/simulation/dispatch";
-import { tick } from "../../src/engine";
-import { phaseFixture } from "../phase-fixture";
-test.use({ actionTimeout: 15000 });
+import { expect, test, type Page } from "./test";
+import { showIncidents, showMapTools } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
-let app: ReturnType<typeof startServer>, origin: string;
-test.beforeAll(async () => {
-  const config = {
+let app: ReturnType<typeof startServer>, origin: string, dir: string;
+test.use({ viewport: { width: 1920, height: 1080 }, actionTimeout: 15000 });
+test.beforeEach(async () => {
+  const c = {
     host: "127.0.0.1",
     port: 0,
     publicUrl: "http://127.0.0.1:0",
-    dataDir: await mkdtemp(resolve(tmpdir(), "lv-reference-")),
+    dataDir: (dir = await mkdtemp(resolve(tmpdir(), "lv-map-input-"))),
     secure: false,
     trustedProxies: [],
   };
-  app = await listenBrowserServer(compiled.startServer, config);
-  origin = config.publicUrl;
+  app = await listenBrowserServer(compiled.startServer, c);
+  origin = c.publicUrl;
   const owner = await app.auth.create(
-    "reference",
-    "Reference-password-123!",
-    "Max Berger",
-    "Leitstelle Rivermere",
+    "mapinput",
+    "Map-input-password-123!",
+    "Kartenprüfung",
+    "Berlin",
   );
   const s = phaseFixture(owner);
-  s.player.name = "Max Berger";
-  s.player.station = "Leitstelle Rivermere";
-  s.missionWait = 9999;
-  const m = s.missions[0];
-  m.control!.locationKnown = true;
-  m.control!.reportedTemplate = m.template;
-  m.control!.calls[0].state = "ended";
-  m.pos = nodes[nearest({ x: 4300, y: 3700 })];
-  alarm(s, m, [s.vehicles[0].id], owner, "NORMAL", "station");
-  tick(s, s.vehicles[0].depart + 40, {}, false, false);
+  s.missionWait = 99999;
+  s.nextMission = s.time + 99999;
   s.buildings.push({
     ...structuredClone(s.buildings[0]),
-    id: "input-empty-station",
+    id: "empty-station",
     name: "Testwache ohne Fahrzeuge",
-    pos: nodes[nearest({ x: 4400, y: 3600 })],
+    pos: sites[3],
   });
   app.db.save(owner, s);
 });
-test.afterAll(async () => {
-  await app.close();
+test.afterEach(async () => {
+  await app?.close();
+  await rm(dir, { recursive: true, force: true });
 });
-test("Kartenbeschriftung bleibt beim Ziehen unmarkiert", async ({ page }) => {
-  await page.setViewportSize({ width: 1920, height: 1080 });
+async function enter(page: Page) {
   await page.goto(origin);
-  await page.getByLabel("Benutzername", { exact: true }).fill("reference");
+  await page.getByLabel("Benutzername", { exact: true }).fill("mapinput");
   await page
     .getByLabel("Passwort", { exact: true })
-    .fill("Reference-password-123!");
+    .fill("Map-input-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  const map = page.locator("svg.map");
-  await expect(map).toBeVisible();
-  const label = map.locator("text").filter({ hasText: "Old Town" }).first();
-  const box = await label.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(
-    box!.x + box!.width / 2 + 180,
-    box!.y + box!.height / 2 + 70,
-    { steps: 16 },
+  await expect(page.getByTestId("germany-map-viewport")).toHaveAttribute(
+    "data-camera",
+    /zoom/,
   );
-  await page.mouse.up();
-  expect(
-    await page.evaluate(() => window.getSelection()?.toString() ?? ""),
-  ).toBe("");
-});
-
-test("Markerdrag, Folgeklick, Mausrad und Eingabefokus sind getrennt", async ({
+}
+const map = (page: Page) => page.getByTestId("germany-map-viewport");
+const focus = (page: Page) =>
+  page.getByLabel("Interaktive Karte von Deutschland", { exact: true }).focus();
+async function geoAt(page: Page, x: number, y: number) {
+  return map(page).evaluate(
+    (e, { x, y }) => {
+      const b = JSON.parse((e as HTMLElement).dataset.bounds!),
+        r = e.getBoundingClientRect();
+      const merc = (lat: number) =>
+        Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+      const north = merc(b[1][1]),
+        south = merc(b[0][1]);
+      return {
+        lon: b[0][0] + ((b[1][0] - b[0][0]) * (x - r.x)) / r.width,
+        lat:
+          ((2 *
+            Math.atan(
+              Math.exp(north + ((south - north) * (y - r.y)) / r.height),
+            ) -
+            Math.PI / 2) *
+            180) /
+          Math.PI,
+      };
+    },
+    { x, y },
+  );
+}
+test("Kartenbeschriftung bleibt beim Ziehen unmarkiert; Markerdrag löst keinen Objektklick aus", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.goto(origin);
-  await page.getByLabel("Benutzername", { exact: true }).fill("reference");
-  await page
-    .getByLabel("Passwort", { exact: true })
-    .fill("Reference-password-123!");
-  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  const map = page.locator("svg.map");
-  const marker = map.locator("[data-own-station]").last();
-  const before = await map.getAttribute("viewBox");
-  const box = await marker.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.move(box!.x + 15, box!.y + 15);
+  await enter(page);
+  const marker = page.getByRole("button", {
+    name: "Testwache ohne Fahrzeuge",
+    exact: true,
+  });
+  const b = (await marker.boundingBox())!,
+    before = await map(page).getAttribute("data-camera");
+  expect(b).not.toBeNull();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box!.x - 130, box!.y - 65, { steps: 12 });
+  await page.mouse.move(b.x + b.width / 2 - 120, b.y + b.height / 2 + 65, {
+    steps: 12,
+  });
   await page.mouse.up();
-  await expect(map).not.toHaveAttribute("viewBox", before!);
-  await expect(map).not.toHaveClass(/dragging/);
+  await expect(map(page)).not.toHaveAttribute("data-camera", before!);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(await page.evaluate(() => getSelection()?.toString())).toBe("");
-  await marker.click({ timeout: 10000 });
-  await expect(page.locator("[data-center-selection]")).toBeEnabled();
+  await marker.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  const selectedView = await map.getAttribute("viewBox");
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+});
+test("Mausrad erhält geografischen Anker; Texteingabe und HUD-Scroll verändern die Kamera nicht", async ({
+  page,
+}) => {
+  await enter(page);
+  await showMapTools(page);
   const search = page.getByLabel("Karte durchsuchen");
-  await search.fill("Old Town");
+  const before = await map(page).getAttribute("data-camera");
+  await search.fill("Berlin");
   await search.press("Control+a");
   expect(
     await search.evaluate(
       (e: HTMLInputElement) => e.selectionEnd! - e.selectionStart!,
     ),
-  ).toBe(8);
+  ).toBe(6);
   await search.press("ArrowLeft");
-  await expect(map).toHaveAttribute("viewBox", selectedView!);
+  await expect(map(page)).toHaveAttribute("data-camera", before!);
   await search.fill("");
   await page.mouse.move(900, 500);
-  const anchor = await map.evaluate((e: SVGSVGElement) => {
-    const p = e.createSVGPoint();
-    p.x = 900;
-    p.y = 500;
-    const q = p.matrixTransform(e.getScreenCTM()!.inverse());
-    return { x: q.x, y: q.y };
-  });
+  const anchor = await geoAt(page, 900, 500);
   await page.mouse.wheel(0, -120);
-  await expect(map).not.toHaveAttribute("viewBox", selectedView!);
-  const afterAnchor = await map.evaluate((e: SVGSVGElement) => {
-    const p = e.createSVGPoint();
-    p.x = 900;
-    p.y = 500;
-    const q = p.matrixTransform(e.getScreenCTM()!.inverse());
-    return { x: q.x, y: q.y };
-  });
-  expect(afterAnchor.x).toBeCloseTo(anchor.x, 1);
-  expect(afterAnchor.y).toBeCloseTo(anchor.y, 1);
-  const afterWheel = await map.getAttribute("viewBox");
+  await expect(map(page)).not.toHaveAttribute("data-camera", before!);
+  const after = await geoAt(page, 900, 500);
+  expect(after.lon).toBeCloseTo(anchor.lon, 6);
+  expect(after.lat).toBeCloseTo(anchor.lat, 6);
+  const wheel = await map(page).getAttribute("data-camera");
   await showIncidents(page);
   await page.locator(".mission-list").hover();
   await page.mouse.wheel(0, 800);
-  await expect(map).toHaveAttribute("viewBox", afterWheel!);
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
-  await map.focus();
+  await expect(map(page)).toHaveAttribute("data-camera", wheel!);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await focus(page);
   await page.keyboard.press("Control+-");
-  await expect(map).toHaveAttribute("viewBox", afterWheel!);
+  await expect(map(page)).toHaveAttribute("data-camera", wheel!);
 });
-
-test("Abbruch, HUD-Grenzen, Bauvorschau und erneutes Öffnen bleiben sicher", async ({
+test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Bauvorschau behalten sichere Grenzen", async ({
   page,
   context,
 }) => {
-  await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.goto(origin);
-  await page.getByLabel("Benutzername", { exact: true }).fill("reference");
-  await page
-    .getByLabel("Passwort", { exact: true })
-    .fill("Reference-password-123!");
-  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  const map = page.locator("svg.map");
-  await page.evaluate(() => {
+  await enter(page);
+  await page.evaluate(() =>
     document.addEventListener(
       "dragstart",
       () => (document.documentElement.dataset.nativeDrag = "yes"),
+    ),
+  );
+  for (const reason of ["blur", "cancel", "capture", "hidden"]) {
+    await map(page).evaluate((e) =>
+      e.addEventListener(
+        "pointerdown",
+        (event) =>
+          ((e as HTMLElement).dataset.testPointerId = String(
+            (event as PointerEvent).pointerId,
+          )),
+        { once: true },
+      ),
     );
-  });
-  await page.mouse.move(900, 500);
-  await page.mouse.down();
-  await page.mouse.move(100, 180, { steps: 20 });
-  await page.mouse.up();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(map).not.toHaveClass(/dragging/);
+    await page.mouse.move(900, 500);
+    await page.mouse.down();
+    await page.mouse.move(980, 550, { steps: 8 });
+    await expect(map(page)).toHaveClass(/dragging/);
+    if (reason === "blur")
+      await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+    if (reason === "cancel")
+      await map(page).evaluate((e) =>
+        e.dispatchEvent(
+          new PointerEvent("pointercancel", {
+            pointerId: Number((e as HTMLElement).dataset.testPointerId),
+          }),
+        ),
+      );
+    if (reason === "capture")
+      await map(page).evaluate((e) =>
+        e.releasePointerCapture(
+          Number((e as HTMLElement).dataset.testPointerId),
+        ),
+      );
+    if (reason === "hidden")
+      await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", {
+          configurable: true,
+          value: true,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+        Reflect.deleteProperty(document, "hidden");
+      });
+    await page.mouse.move(985, 555);
+    await expect(map(page)).not.toHaveClass(/dragging/);
+    await page.mouse.up();
+    const canceled = await map(page).getAttribute("data-camera");
+    await page.mouse.move(1200, 600);
+    await expect(map(page)).toHaveAttribute("data-camera", canceled!);
+  }
   expect(
     await page.evaluate(() => document.documentElement.dataset.nativeDrag),
   ).toBeUndefined();
   expect(await page.evaluate(() => getSelection()?.toString())).toBe("");
-  await page.mouse.move(900, 500);
-  await page.mouse.down();
-  await page.mouse.move(960, 540, { steps: 8 });
-  await expect(map).toHaveClass(/dragging/);
-  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
-  await expect(map).not.toHaveClass(/dragging/);
-  const canceled = await map.getAttribute("viewBox");
-  await page.mouse.up();
-  await page.mouse.move(1200, 600);
-  await expect(map).toHaveAttribute("viewBox", canceled!);
-  await page.mouse.move(900, 500);
-  await page.mouse.down();
-  await page.mouse.move(980, 570, { steps: 8 });
-  await map.dispatchEvent("pointercancel", { pointerId: 1 });
-  await page.mouse.up();
-  await expect(map).not.toHaveClass(/dragging/);
-  await map.evaluate((element: SVGSVGElement) => {
-    element.addEventListener(
-      "pointerdown",
-      (event) => {
-        element.dataset.testPointerId = String(event.pointerId);
-      },
-      { once: true },
-    );
-  });
-  await page.mouse.move(900, 500);
-  await page.mouse.down();
-  await page.mouse.move(960, 540, { steps: 8 });
-  await expect(map).toHaveClass(/dragging/);
-  await map.evaluate((element: SVGSVGElement) =>
-    element.releasePointerCapture(Number(element.dataset.testPointerId)),
-  );
-  await page.mouse.move(970, 550);
-  await expect(map).not.toHaveClass(/dragging/);
-  await page.mouse.up();
-  await page.mouse.move(900, 500);
-  await page.mouse.down();
-  await page.mouse.move(960, 540, { steps: 8 });
-  await expect(map).toHaveClass(/dragging/);
-  // Headless tabs do not reliably change OS visibility. Exercise the browser
-  // notification explicitly; this is not a claim of a physical Alt-Tab test.
-  await page.evaluate(() => {
-    Object.defineProperty(document, "hidden", {
-      configurable: true,
-      value: true,
-    });
-    document.dispatchEvent(new Event("visibilitychange"));
-    Reflect.deleteProperty(document, "hidden");
-  });
-  await expect(map).not.toHaveClass(/dragging/);
-  await page.mouse.up();
   const second = await context.newPage();
   await second.goto(origin);
   await second.getByRole("button", { name: "Spielen", exact: true }).click();
-  const other = await second.locator("svg.map").getAttribute("viewBox");
+  await expect(map(second)).toHaveAttribute("data-camera", /zoom/);
+  const other = await map(second).getAttribute("data-camera");
   await page.bringToFront();
-  await map.focus();
+  await focus(page);
   await page.keyboard.press("ArrowRight");
-  await expect(second.locator("svg.map")).toHaveAttribute("viewBox", other!);
+  await expect(map(second)).toHaveAttribute("data-camera", other!);
   await second.close();
-  const view = await map.getAttribute("viewBox");
+  const camera = await map(page).getAttribute("data-camera");
   await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(map).toHaveAttribute("viewBox", view!);
-  await map.focus();
+  await expect(map(page)).toHaveAttribute("data-camera", camera!);
+  await focus(page);
   await page.keyboard.press("ArrowRight");
-  const delta =
-    (await map.getAttribute("viewBox"))!.split(" ").map(Number)[0] -
-    view!.split(" ").map(Number)[0];
-  expect(delta).toBeCloseTo(60, 3);
+  await expect(map(page)).not.toHaveAttribute("data-camera", camera!);
   await page.getByRole("button", { name: "Wachen", exact: true }).click();
   await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
-  const shop = page.getByRole("dialog");
-  await expect(shop).toBeVisible();
-  await shop
+  await page
+    .getByRole("dialog")
     .getByRole("button", { name: "Platzieren", exact: true })
     .first()
     .click();
@@ -265,13 +236,12 @@ test("Abbruch, HUD-Grenzen, Bauvorschau und erneutes Öffnen bleiben sicher", as
   await expect(
     page.getByRole("button", { name: "Bau bestätigen", exact: true }),
   ).toHaveCount(0);
-  await map.focus();
+  await focus(page);
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Bau abbrechen", exact: true }),
   ).toHaveCount(0);
 });
-
 test("CSS-Pixelschwelle bleibt bei doppelter Pixeldichte korrekt", async ({
   browser,
 }) => {
@@ -281,31 +251,25 @@ test("CSS-Pixelschwelle bleibt bei doppelter Pixeldichte korrekt", async ({
   });
   try {
     const page = await context.newPage();
-    await page.goto(origin);
-    await page.getByLabel("Benutzername", { exact: true }).fill("reference");
-    await page
-      .getByLabel("Passwort", { exact: true })
-      .fill("Reference-password-123!");
-    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-    await page.getByRole("button", { name: "Spielen", exact: true }).click();
-    const map = page.locator("svg.map"),
-      before = await map.getAttribute("viewBox");
+    await enter(page);
+    const before = await map(page).getAttribute("data-camera");
+    const oldPoint = await geoAt(page, 950, 500);
     await page.mouse.move(950, 500);
     await page.mouse.down();
     await page.mouse.move(946, 500);
-    await expect(map).not.toHaveClass(/dragging/);
-    await expect(map).toHaveAttribute("viewBox", before!);
+    await expect(map(page)).not.toHaveClass(/dragging/);
+    await expect(map(page)).toHaveAttribute("data-camera", before!);
     await page.mouse.move(944, 500);
-    await expect(map).toHaveClass(/dragging/);
+    await expect(map(page)).toHaveClass(/dragging/);
     await page.mouse.up();
-    const after = (await map.getAttribute("viewBox"))!.split(" ").map(Number);
-    expect(after[0] - Number(before!.split(" ")[0])).toBeCloseTo(
-      (6 * 1300) / 1920,
-      2,
-    );
-    await map.focus();
+    await expect(map(page)).not.toHaveAttribute("data-camera", before!);
+    const newPoint = await geoAt(page, 944, 500);
+    expect(newPoint.lon).toBeCloseTo(oldPoint.lon, 7);
+    expect(newPoint.lat).toBeCloseTo(oldPoint.lat, 7);
+    const after = await map(page).getAttribute("data-camera");
+    await focus(page);
     await page.keyboard.press("Control+-");
-    await expect(map).toHaveAttribute("viewBox", after.join(" "));
+    await expect(map(page)).toHaveAttribute("data-camera", after!);
   } finally {
     await context.close();
   }

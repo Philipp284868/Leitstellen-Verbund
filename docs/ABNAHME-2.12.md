@@ -42,14 +42,14 @@ Der vollständige lokale Playwright-Lauf mit Edge (`PW_EDGE=1`, Projekt `chromiu
 
 Die Aufnahmen stammen aus dem lokal gestarteten Produktionsbuild mit echtem Server, SQLite, Anmeldung und Socket.IO. Es sind keine separat nachgebauten Vorschauen. Die Kartenprüfungen bedienen Gesamtübersicht, Ortssuche, Fahrzeugauswahl, Filter, Folgemodus, manuelle Navigation, Zoom, Offline-/Reconnect-Verhalten und Ansichten mit 1.600, 1.100 und 390 Pixeln Breite. Der helle Mobilmodus wird zusätzlich geprüft. Ein zwischenzeitlicher Lauf scheiterte am gleichzeitigen lokalen Neubau eines nachgeladenen Berichtsmoduls; ein weiterer zeigte einen überstehenden Statistikbereich. Der Neubau erfolgt nun vor dem Testlauf, und der Statistikbereich ist durch einen gezielten Layouttest abgesichert.
 
-- [Gesamte Region](screenshots/2.12/region-overview-1600.png)
-- [Neuer Ort Südbruck](screenshots/2.12/region-new-town.png)
-- [Ausgewähltes Fahrzeug mit Fahrtdaten](screenshots/2.12/region-vehicle-details.png)
-- [Ansicht mit 1.100 Pixeln](screenshots/2.12/region-1100.png)
-- [Mobile Karte und Fahrtdaten](screenshots/2.12/region-mobile-390.png)
-- [Heller Mobilmodus](screenshots/2.12/region-mobile-light.png)
-- [500 Fahrzeuge und 40 Einsätze](screenshots/2.12/region-large-fleet.png)
-- [Maschinenlesbare Browsermessung](screenshots/2.12/large-map-performance.json)
+- [Gesamte Region](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-overview-1600.png)
+- [Neuer Ort Südbruck](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-new-town.png)
+- [Ausgewähltes Fahrzeug mit Fahrtdaten](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-vehicle-details.png)
+- [Ansicht mit 1.100 Pixeln](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-1100.png)
+- [Mobile Karte und Fahrtdaten](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-mobile-390.png)
+- [Heller Mobilmodus](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-mobile-light.png)
+- [500 Fahrzeuge und 40 Einsätze](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/region-large-fleet.png)
+- [Maschinenlesbare Browsermessung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.12/large-map-performance.json)
 
 Der Browserbestand umfasst 100 Wachen, 500 Fahrzeuge, davon 100 aktive Fahrten, und 40 Einsätze. Die JSON-Datei protokolliert Anmeldung/Öffnen, Gesamtübersicht/Suche/Auswahl sowie die tatsächliche Zahl der SVG-Elemente. Das ist eine Bedienungsprüfung mit synthetischem großem Bestand, keine Messung beliebiger Mehrbenutzerlast. Die gespeicherten Testbestände verwenden ausschließlich temporäre lokale Datenbanken.
 
