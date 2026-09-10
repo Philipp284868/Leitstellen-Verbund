@@ -626,12 +626,21 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     expect(a.frames.at(-1)!.full).toBe(true);
   });
   it("verzögert automatische Wassereinsätze bei Routingausfall, hält Health und Fortschritt aktiv und versucht erneut", async () => {
-    const { seed, template, save: before } = waterGeneration();
-    await routerMode("unavailable");
-    const count = (await (await fetch(c.routerUrl + "/stats")).json()).requests;
-    // Provider setup yields to the live server timer. Restore the prepared draw
-    // immediately before the synchronous step so its full retry interval is measured.
-    app!.db.save(user.id, before);
+    // Pause only the periodic simulation calls during asynchronous fixture setup.
+    // Otherwise a live tick can consume the prepared draw and open the routing
+    // circuit before the request baseline is measured. The real clock resumes
+    // before the tested step and remains active for the health/progress checks.
+    const pause = vi.spyOn(app!.game, "step").mockImplementation(() => {});
+    let prepared: ReturnType<typeof waterGeneration>;
+    let count: number;
+    try {
+      prepared = waterGeneration();
+      await routerMode("unavailable");
+      count = (await (await fetch(c.routerUrl + "/stats")).json()).requests;
+    } finally {
+      pause.mockRestore();
+    }
+    const { seed, template, save: before } = prepared;
     expect(() => app!.game.step(1)).not.toThrow();
     const waiting = app!.db.all().get(user.id)!;
     expect(waiting.missions).toHaveLength(0);
