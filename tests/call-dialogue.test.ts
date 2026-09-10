@@ -22,6 +22,14 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { weatherWeight } from "../src/simulation/weather";
 import { majorCommand } from "../src/simulation/major-command";
+import { apply } from "../src/engine";
+
+function establishedDesk() {
+  const s = phaseFixture("pacing", "bin");
+  apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
+  s.completed = 3;
+  return s;
+}
 
 describe("Notruf 2.20: gemeldete Regressionen", () => {
   it("gewährt einer kleinen Startleitstelle mindestens fünf Minuten Abstand", () => {
@@ -30,7 +38,7 @@ describe("Notruf 2.20: gemeldete Regressionen", () => {
     expect(nextCallDelay(123, s)).toBeGreaterThanOrEqual(300);
   });
   it("verlängert künftige Wartezeiten bei unerledigter Last", () => {
-    const s = phaseFixture("pacing", "bin");
+    const s = establishedDesk();
     const without = { ...s, missions: [] };
     expect(nextCallDelay(123, s)).toBeGreaterThan(nextCallDelay(123, without));
   });
@@ -134,13 +142,13 @@ describe("Notruflast und Reproduzierbarkeit", () => {
     expect(s.missionWait).toBeGreaterThanOrEqual(300);
   });
   it("skaliert mit vorhandener einsatzfähiger Struktur ohne Levelsprung und zählt gebundene Mittel", () => {
-    const s = phaseFixture("pacing", "bin");
+    const s = establishedDesk();
     s.missions = [];
     const before = nextCallDelay(124, s);
     s.xp += 10000;
     expect(nextCallDelay(124, s)).toBe(before);
     s.vehicles[0].status = "scene";
-    expect(callLoad(s).busy).toBe(0.5);
+    expect(callLoad(s).busy).toBeCloseTo(1 / 3);
     expect(nextCallDelay(124, s)).toBeGreaterThan(before);
   });
   it("erzeugt nur einmal je Leitstelle, nie in ruhenden Mitgliedersaves und nie als Nachholstapel", () => {

@@ -692,13 +692,15 @@ export function Help() {
         <summary>Serverzeit und Verbindung</summary>
         <p>
           Das Spiel läuft fest in Echtzeit. Neue Notrufe treffen einzeln ein.
-          Eine kleine Leitstelle beginnt mit einem Grundintervall von 300–480
-          Sekunden; offene Gespräche, unerledigte Einsätze und gebundene
-          Fahrzeuge drosseln den Nachschub zusätzlich. Eine ausgebaute
-          Leitstelle kann mehr parallele Aufgaben erhalten. Der Server simuliert
-          deine Leitstelle auch bei geschlossenem Browser. Ohne Serververbindung
-          können keine Aktionen bestätigt werden. Nach Serverstillstand werden
-          höchstens vier Stunden nachberechnet.
+          Sobald deine erste Wache fertig und ein Fahrzeug alarmierbar ist,
+          beginnt der Einstieg mit fünf bis acht Minuten Abstand. Das gilt auch
+          nachts und bei ruhiger Weltlage. Die ersten drei Einsätze kommen
+          nacheinander; solange ein Einsatz offen oder kein Fahrzeug alarmierbar
+          ist, wartet der nächste Notruf. Eine ausgebaute Leitstelle kann mehr
+          parallele Aufgaben erhalten. Der Server simuliert deine Leitstelle
+          auch bei geschlossenem Browser. Ohne Serververbindung können keine
+          Aktionen bestätigt werden. Nach Serverstillstand werden höchstens vier
+          Stunden nachberechnet.
         </p>
       </details>
       <details>

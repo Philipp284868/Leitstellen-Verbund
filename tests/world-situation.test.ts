@@ -10,6 +10,7 @@ import {
   writeWorldSituation,
 } from "../server/world-situation";
 import { mt } from "../src/catalog";
+import { apply } from "../src/engine";
 import { pacedDelay } from "../src/simulation/pacing";
 import { travelFactor } from "../src/simulation/traffic";
 import { updateWeather } from "../src/simulation/weather";
@@ -87,6 +88,11 @@ it("steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberla
   s.worldSituation = advanceSituation(world, 2500);
   updateWeather(s);
   expect(situationDemand(s)).toBeLessThan(1);
+  expect(pacedDelay(123, s)).toBe(pacedDelay(123, normal));
+  for (const save of [s, normal]) {
+    save.completed = 3;
+    apply(save, { type: "buy", kind: "tsf", home: save.buildings[0].id });
+  }
   expect(pacedDelay(123, s)).toBeGreaterThan(pacedDelay(123, normal));
 });
 

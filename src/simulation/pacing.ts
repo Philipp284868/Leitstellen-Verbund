@@ -5,7 +5,7 @@ import { sample } from "./random";
 import { situationDemand } from "./world-situation";
 
 export const CALL_PACING = {
-  version: 1,
+  version: 2,
   initialMin: 300,
   initialMax: 480,
   minimum: 120,
@@ -65,12 +65,11 @@ export function pacedDelay(seed: number, s?: Save) {
       (CALL_PACING.initialMax - CALL_PACING.initialMin);
   if (!s) return Math.round(base);
   const load = callLoad(s);
-  // A beginner sees the same storm, with no acceleration until the desk has
-  // completed its first three incidents and has at least three usable vehicles.
-  const demand = Math.min(
-    situationDemand(s),
-    load.fleet < 3 || s.completed < 3 ? 1 : 1.8,
-  );
+  // Keep the advertised 5–8 minutes for a starter fleet, including quiet worlds
+  // and nights. Open calls and unavailable vehicles are already gated by
+  // mayCreateIncident; applying their load again can leave beginners idle for 20 min.
+  if (load.fleet < 3 || s.completed < 3) return Math.round(base);
+  const demand = Math.min(situationDemand(s), 1.8);
   const hour = new Date(s.time * 1000).getUTCHours();
   const night = hour < 6 || hour >= 23;
   const loadFactor =
@@ -93,7 +92,7 @@ export function pacedDelay(seed: number, s?: Save) {
   );
 }
 
-/** Optional v1 state is migrated once, conservatively, without editing any incident.
+/** Optional pacing state is migrated once, without editing any incident.
  * Absolute simulation deadlines survive reload/reconnect. Missed time is never replayed. */
 export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
   if (!s.callPacing) {
@@ -102,11 +101,22 @@ export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
       s.missions.reduce((last, m) => Math.max(last, m.created), 0),
     );
     s.callPacing = {
-      version: 1,
+      version: CALL_PACING.version,
       lastCreated,
       sequence: 0,
       notBefore: s.time + Math.max(s.missionWait, pacedDelay(s.seed, s)),
     };
+  }
+  if (s.callPacing.version === 1) {
+    const load = callLoad(s);
+    // Preserve elapsed wait, short deadlines, sequence and seed. Only shorten
+    // the excessive remaining wait of an old starter save, once, on the server.
+    if (load.fleet < 3 || s.completed < 3)
+      s.callPacing.notBefore = Math.min(
+        s.callPacing.notBefore,
+        s.time + pacedDelay(s.seed, s),
+      );
+    s.callPacing.version = CALL_PACING.version;
   }
   if (
     elapsed > 60 ||

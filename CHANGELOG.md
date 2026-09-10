@@ -1,5 +1,12 @@
 # Änderungen
 
+## Korrektur Notrufstart · 10.09.2026
+
+- Neue Leitstellen und Fuhrparks mit weniger als drei Fahrzeugen erhalten ein Notrufintervall von fünf bis acht Minuten, auch nachts sowie in ruhigen Welt- und Erholungsphasen. Die bisherige zusätzliche Drosselung konnte den ersten Einsatz über zehn Minuten und Folgeintervalle bis zu zwanzig Minuten verzögern. Die ersten drei Einsätze bleiben einzeln; laufende Einsätze und fehlende alarmierbare Fahrzeuge blockieren weiteren Nachschub weiterhin.
+- Gespeicherte Notrufplanung Version 1 wird beim nächsten Simulationsschritt zu Version 2 übernommen. Überlange verbleibende Anfängerfristen werden einmalig verkürzt; kurze Fristen, Zufallsstand, Zähler und Spielbesitz bleiben erhalten. Kein neues SQLite-Schema und kein Datenreset.
+- Die leere Einsatzliste unterscheidet vorhandene Bereitschaft von fehlenden Fahrzeugen und zeigt passende nächste Schritte.
+- Regressionstests decken den gewöhnlichen Start mit einer neuen FF und einem TSF-W, echte automatische Erzeugung, ruhige Intervalle, Migration, SQLite-Neustart, identische Wiederholung sowie Notrufannahme und Alarmierung im Browser ab.
+
 ## 2.22.0
 
 - Geordneter Funk pro Leitstelle/Kanal und eine hörbare Fahrzeugmeldung pro Arbeitsplatz, mit Prioritäten, Alterung, kontrollierter Unterbrechung, Watchdog und Historie. Musik und Telefon bleiben unabhängig. Wiederverbindung spielt keine historische Meldungswelle ab.

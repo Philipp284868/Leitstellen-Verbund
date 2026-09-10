@@ -224,7 +224,7 @@ export const saveSchema = z
     missionWait: num.default(0),
     callPacing: z
       .object({
-        version: z.literal(1),
+        version: z.union([z.literal(1), z.literal(2)]),
         notBefore: num,
         lastCreated: num,
         sequence: integer,

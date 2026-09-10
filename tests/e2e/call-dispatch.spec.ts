@@ -9,6 +9,9 @@ import { interviewUI } from "./desk-helpers";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test } from "./test";
 import { openPanel, showIncidents } from "./ui-navigation";
+import { fresh } from "../../src/model";
+import { apply, tick } from "../../src/engine";
+import { sites } from "../fixtures/germany/locations";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -31,6 +34,58 @@ test.beforeEach(async () => {
 test.afterEach(async () => {
   await app.close();
 });
+
+test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und Annahme", async ({
+  page,
+}, info) => {
+  const s = fresh("Disponent", "Nord", Date.UTC(2026, 8, 10, 12) / 1000);
+  s.player.id = owner;
+  s.seed = 123;
+  apply(s, { type: "build", kind: "fire", pos: sites[0] });
+  tick(s, s.time + 30, {}, false, false);
+  apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
+  app.db.save(owner, s);
+  app.game.step(1);
+  const initial = app.db.all().get(owner)!;
+  expect(initial.missions).toHaveLength(0);
+  expect(initial.callPacing!.notBefore - initial.time).toBeLessThanOrEqual(480);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(config.publicUrl);
+  await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
+  await page.getByLabel("Passwort", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await showIncidents(page);
+  await expect(
+    page.getByRole("heading", { name: "Warten auf Notruf" }),
+  ).toBeVisible();
+  await expect(page.locator(".mission-sidebar")).toContainText(
+    "fünf bis acht Minuten",
+  );
+  await page.screenshot({
+    path: info.outputPath("starter-waiting-for-call.png"),
+  });
+  // Advance the real server in ordinary ticks, never inject a test mission or bypass pacing.
+  for (let i = 0; i < 480; i++) app.game.step(1);
+  expect(app.db.all().get(owner)!.missions).toHaveLength(1);
+  await expect(page.locator(".mission-card")).toHaveCount(1);
+  await page.locator(".mission-card").click();
+  await interviewUI(page, app);
+  await expect(page.locator(".dispatch-list")).toContainText("TSF-W");
+  await page.locator(".dispatch-list input").first().check();
+  await page
+    .getByRole("button", { name: "Alarmieren (1)", exact: true })
+    .click();
+  await expect
+    .poll(() => app.db.all().get(owner)!.vehicles[0].status)
+    .toBe("alarmed");
+  await page.screenshot({
+    path: info.outputPath("starter-call-dispatched.png"),
+  });
+  expect(errors).toEqual([]);
+});
+
 for (const manual of [false, true])
   test(
     manual

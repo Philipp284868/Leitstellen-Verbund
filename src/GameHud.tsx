@@ -68,6 +68,11 @@ export function GameHud({
 }: Props) {
   const net = useNetwork(),
     user = { id: userId };
+  const hasStation = s.buildings.some((b) => b.owner === s.player.id);
+  const hasVehicle = s.vehicles.some((v) => v.owner === s.player.id);
+  const alarmable = s.vehicles.some(
+    (v) => v.owner === s.player.id && v.availability?.alarmable,
+  );
   const presence = usePresence();
   const [layers, setLayers] = useState(false);
   const [buildingBusy, setBuildingBusy] = useState(false);
@@ -447,14 +452,37 @@ export function GameHud({
             {!s.missions.length && (
               <div className="empty">
                 <Radio size={32} />
-                <h3>Bereitschaft herstellen</h3>
+                <h3>
+                  {alarmable ? "Warten auf Notruf" : "Bereitschaft herstellen"}
+                </h3>
                 <p>
-                  Mit geeigneten Fahrzeugen gehen hier automatisch passende
-                  Einsätze ein.
+                  {alarmable
+                    ? "Deine Fahrzeuge sind alarmierbar. Passende Notrufe treffen automatisch und einzeln ein. Beim Einstieg beträgt die Wartezeit fünf bis acht Minuten, auch bei ruhiger Weltlage."
+                    : hasVehicle
+                      ? "Aktuell ist kein Fahrzeug alarmierbar. Prüfe Status, Besatzung und Nachbereitung im Fuhrpark."
+                      : hasStation
+                        ? "Warte die Fertigstellung deiner Wache ab und kaufe dort ein geeignetes Fahrzeug, zum Beispiel ein TSF-W."
+                        : "Baue deine erste Wache und beschaffe ein geeignetes Fahrzeug. Danach treffen passende Notrufe automatisch ein."}
                 </p>
-                <button onClick={() => setModal("build")}>
-                  Erste Wache bauen
-                </button>
+                {!alarmable && (
+                  <button
+                    onClick={() =>
+                      setModal(
+                        hasVehicle
+                          ? "fleet"
+                          : hasStation
+                            ? "stations"
+                            : "build",
+                      )
+                    }
+                  >
+                    {hasVehicle
+                      ? "Fuhrpark öffnen"
+                      : hasStation
+                        ? "Wachen öffnen"
+                        : "Erste Wache bauen"}
+                  </button>
+                )}
               </div>
             )}
           </div>
