@@ -230,8 +230,8 @@ try {
   results.push("production-caddyfile-validate");
   const testConfig = template
     .replaceAll("gaminglive.mooo.com", "localhost")
-    .replace("18080", String(httpPort))
-    .replace("18443", String(tlsPort))
+    .replace("http_port 18080", `http_port ${httpPort}`)
+    .replace("https_port 18443", `https_port ${tlsPort}`)
     .replace("admin 127.0.0.1:2019", "admin off\n\tskip_install_trust")
     .replace("127.0.0.1:7777", `127.0.0.1:${port}`)
     .replace("https://localhost {", "https://localhost {\n\ttls internal");
@@ -290,7 +290,16 @@ try {
       req.end(body === undefined ? undefined : JSON.stringify(body));
     });
   }
-  const beforeStart = await request("/api/health");
+  let beforeStart;
+  await waitFor(async () => {
+    try {
+      beforeStart = await request("/api/health");
+      return true;
+    } catch (error) {
+      if (error.code !== "ECONNREFUSED") throw error;
+      return false;
+    }
+  }, "Caddy did not listen: " + proxy.output());
   assert.equal(beforeStart.status, 502);
   results.push("no-false-readiness");
   async function start() {

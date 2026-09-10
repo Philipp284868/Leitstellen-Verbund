@@ -15,6 +15,7 @@ import {
   regularFile,
   resolveConfiguration,
   validatePaths,
+  validateNetwork,
 } from "./configuration.mjs";
 import {
   atomicPrivate,
@@ -167,6 +168,14 @@ export function prepareInstallation({
     }
   }
   const id = identity?.id || randomUUID();
+  const storedSettings = {
+    ...settings,
+    ...config.current,
+    ...config.legacy,
+    DATA_DIR: settings.DATA_DIR,
+    GEODATA_DIR: settings.GEODATA_DIR,
+  };
+  validateNetwork(storedSettings);
   // All data/config validation above precedes backup publication or any editable-file change.
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   for (const file of [config.configFile, config.legacyFile])
@@ -184,13 +193,6 @@ export function prepareInstallation({
     !!recovery;
   // Retain comments/custom settings and byte identity on ordinary repeat setup.
   // Network environment overrides are reported and applied, but do not rewrite an existing file.
-  const storedSettings = {
-    ...settings,
-    ...config.current,
-    ...config.legacy,
-    DATA_DIR: settings.DATA_DIR,
-    GEODATA_DIR: settings.GEODATA_DIR,
-  };
   const bytes =
     missingFile && identity
       ? readFileSync(resolve(directory, identity.backup))
