@@ -377,6 +377,9 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               container.dataset.bounds = JSON.stringify(
                 gl.getBounds().toArray(),
               );
+              // Publish readiness together with the pose. moveend can fire
+              // before this scheduled render frame has exposed its final pose.
+              container.dataset.cameraMoving = String(gl.isMoving());
               setCameraTick((v) => v + 1);
             });
         };
@@ -415,7 +418,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         });
         gl.on("moveend", () => {
           persist();
-          container.dataset.cameraMoving = "false";
+          changed();
         });
         let gesture: {
             id: number;

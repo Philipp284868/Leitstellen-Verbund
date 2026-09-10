@@ -130,6 +130,7 @@ test("Mausrad erhält geografischen Anker; Texteingabe und HUD-Scroll verändern
   const anchor = await geoAt(page, 900, 500);
   await page.mouse.wheel(0, -120);
   await expect(map(page)).not.toHaveAttribute("data-camera", before!);
+  await expect(map(page)).toHaveAttribute("data-camera-moving", "false");
   const after = await geoAt(page, 900, 500);
   expect(after.lon).toBeCloseTo(anchor.lon, 6);
   expect(after.lat).toBeCloseTo(anchor.lat, 6);
@@ -197,6 +198,7 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Bauvorschau behalten si
     await page.mouse.move(985, 555);
     await expect(map(page)).not.toHaveClass(/dragging/);
     await page.mouse.up();
+    await expect(map(page)).toHaveAttribute("data-camera-moving", "false");
     const canceled = await map(page).getAttribute("data-camera");
     await page.mouse.move(1200, 600);
     await expect(map(page)).toHaveAttribute("data-camera", canceled!);
@@ -212,7 +214,12 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Bauvorschau behalten si
   const other = await map(second).getAttribute("data-camera");
   await page.bringToFront();
   await focus(page);
+  const beforePan = await map(page).getAttribute("data-camera");
   await page.keyboard.press("ArrowRight");
+  // Input handling and the published camera attribute finish in different
+  // animation frames. Capture the new camera only after its real movement.
+  await expect(map(page)).not.toHaveAttribute("data-camera", beforePan!);
+  await expect(map(page)).toHaveAttribute("data-camera-moving", "false");
   await expect(map(second)).toHaveAttribute("data-camera", other!);
   await second.close();
   const camera = await map(page).getAttribute("data-camera");
