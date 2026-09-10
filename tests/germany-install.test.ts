@@ -203,6 +203,23 @@ describe("AMP installation and recovery", () => {
       chmodSync(file, 0o600);
     },
   );
+  it.runIf(process.platform !== "win32" && process.geteuid?.() !== 0)(
+    "reports actual missing write permission before changing configuration or data",
+    () => {
+      const { data, geo } = game();
+      configFile(data, geo);
+      const before = snapshot(base);
+      chmodSync(data, 0o500);
+      try {
+        expect(() => configure()).toThrow(
+          /Rechtefehler.*Lese-\/Schreibzugriff/,
+        );
+        expect(snapshot(base)).toEqual(before);
+      } finally {
+        chmodSync(data, 0o700);
+      }
+    },
+  );
   it("migrates a legacy-only file without losing its data paths", () => {
     const { data, geo } = game();
     configFile(data, geo, ".env.germany");

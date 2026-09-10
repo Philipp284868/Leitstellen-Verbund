@@ -347,6 +347,19 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   await page
     .getByLabel("Bevorzugtes Krankenhaus")
     .selectOption("public:way:100000");
+  await expect
+    .poll(
+      () =>
+        app.db
+          .all()
+          .get(owner)!
+          .missions.find((entry) => entry.id === m.id)!.organization?.hospital,
+    )
+    .toBe("public:way:100000");
+  await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toBeEnabled();
+  await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(
+    "public:way:100000",
+  );
   await page
     .locator(".dispatch-list label")
     .filter({ hasText: "RTW" })
