@@ -6,10 +6,12 @@ const { mergeResults, assertJobs } = await import(
 );
 it("verlangt echte erfolgreiche Pflichtjobs und lässt nur geplante Jobs aus", () => {
   const jobs = Object.fromEntries(
-    ["prepare", "logic", "browser", "geodata", "endurance"].map((name) => [
-      name,
-      { result: name === "endurance" ? "skipped" : "success" },
-    ]),
+    ["prepare", "logic", "browser", "geodata", "endurance", "amp"].map(
+      (name) => [
+        name,
+        { result: name === "endurance" ? "skipped" : "success" },
+      ],
+    ),
   );
   expect(() => assertJobs({ profile: "full" }, jobs)).not.toThrow();
   for (const result of ["skipped", "failure", "cancelled", undefined])
@@ -26,6 +28,7 @@ it("verlangt echte erfolgreiche Pflichtjobs und lässt nur geplante Jobs aus", (
         browser: { result: "skipped" },
         geodata: { result: "skipped" },
         endurance: { result: "skipped" },
+        amp: { result: "skipped" },
       },
     ),
   ).not.toThrow();

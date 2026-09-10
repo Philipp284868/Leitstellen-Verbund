@@ -43,6 +43,9 @@ try {
     "package.json",
     "pnpm-lock.yaml",
     ".env.example",
+    "Caddyfile.example",
+    "docs/AMP-SCHNELLSTART.md",
+    "docs/AMP-TECHNIK.md",
     "docs/LIZENZEN.md",
     "docs/AMP.md",
     "docs/AMP-NEUINSTALLATION.md",
@@ -55,6 +58,11 @@ try {
     "docs/KOMPATIBILITAET.md",
     "docs/HISTORIE.md",
     "scripts/start-germany.mjs",
+    "scripts/configuration.mjs",
+    "scripts/installation-storage.mjs",
+    "scripts/installation.mjs",
+    "scripts/network-check.mjs",
+    "scripts/diagnose.mjs",
     "scripts/geodata",
   ])
     await cp(file, join(stage, file), {

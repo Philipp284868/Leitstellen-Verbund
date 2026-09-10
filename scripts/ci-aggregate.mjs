@@ -13,10 +13,17 @@ export function assertJobs(plan, jobs) {
   const required = [
     "prepare",
     ...(plan.profile === "docs" ? [] : ["logic", "browser"]),
-    ...(["full", "deep"].includes(plan.profile) ? ["geodata"] : []),
+    ...(["full", "deep"].includes(plan.profile) ? ["geodata", "amp"] : []),
     ...(plan.profile === "deep" ? ["endurance"] : []),
   ];
-  for (const name of ["prepare", "logic", "browser", "geodata", "endurance"]) {
+  for (const name of [
+    "prepare",
+    "logic",
+    "browser",
+    "geodata",
+    "endurance",
+    "amp",
+  ]) {
     const result = jobs[name]?.result;
     if (required.includes(name) ? result !== "success" : result !== "skipped")
       throw Error(

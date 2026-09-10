@@ -1,0 +1,19 @@
+# Betreiberbeispiel gaminglive.mooo.com: bei anderer Installation Domain ersetzen.
+# Profil: Spiel und Caddy teilen denselben Host-Netzwerkraum.
+# FRITZ!Box: öffentlich TCP 80 -> Caddy 18080; TCP 443 -> Caddy 18443.
+{
+	http_port 18080
+	https_port 18443
+	admin 127.0.0.1:2019
+	auto_https disable_redirects
+}
+
+http://gaminglive.mooo.com {
+	redir https://gaminglive.mooo.com{uri} permanent
+}
+
+https://gaminglive.mooo.com {
+	reverse_proxy 127.0.0.1:7777 {
+		header_up X-Real-IP {remote_host}
+	}
+}

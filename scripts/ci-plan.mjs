@@ -144,6 +144,7 @@ export async function makePlan({ head, base, paths, requested = "auto" }) {
         "runtime-start-restart",
       ];
       selected.audit = ["production-dependencies"];
+      selected.amp = ["debian-fresh-setup-recovery-caddy-tls"];
     }
     if (profile === "deep")
       selected.endurance = [

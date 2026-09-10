@@ -4,9 +4,9 @@ Das Linux-Runtime-Archiv enthält genau einen Deutschland-Client in `dist/client
 
 ## Installation
 
-Node.js 24 auf dem Linux-Server verwenden. `SHA256SUMS` prüfen und das Archiv in ein neues leeres Programmverzeichnis entpacken. Bestehende Datenordner nicht überschreiben. In `.env.germany` oder `.env` tatsächliche Adresse, Port, Proxy und getrennte externe Spiel-/Geodatenpfade konfigurieren. `node scripts/start-germany.mjs` startet genau das Deutschlandprodukt. Es benötigt keinen Build und kein npm-Install.
+Node.js 24 auf dem Linux-Server verwenden. `SHA256SUMS` prüfen und das Archiv in ein neues leeres Programmverzeichnis entpacken. Bestehende Datenordner nicht überschreiben. In `.env` tatsächliche Adresse, Port, Proxy und getrennte externe Spiel-/Geodatenpfade konfigurieren. `node scripts/start-germany.mjs` startet genau das Deutschlandprodukt. Es benötigt keinen Build und kein npm-Install.
 
-Das externe Geodatenpaket muss zum gespeicherten Datensatz passen. Für eine neue Installation aus einem Git-Checkout übernimmt `node scripts/install-germany.mjs` die vollständige Einrichtung. Im bereits gebauten Runtime-Paket nach ausdrücklicher Wahl der eigenen Datenpfade `node --env-file=.env.germany scripts/geodata/download-package.mjs` und anschließend `node --env-file=.env.germany scripts/geodata/pipeline.mjs tools` verwenden. [AMP-Anleitung](AMP.md) · [Deutschlanddaten](DEUTSCHLAND-DATEN.md).
+Das externe Geodatenpaket muss zum gespeicherten Datensatz passen. Für eine neue Installation aus einem Git-Checkout übernimmt `node scripts/install-germany.mjs` die vollständige Einrichtung. Im bereits gebauten Runtime-Paket nach ausdrücklicher Wahl der eigenen Datenpfade `node --env-file=.env scripts/geodata/download-package.mjs` und anschließend `node --env-file=.env scripts/geodata/pipeline.mjs tools` verwenden. [AMP-Anleitung](AMP.md) · [Deutschlanddaten](DEUTSCHLAND-DATEN.md).
 
 Die CLI `node dist/server/cli.js` verwendet denselben Konfigurationsvertrag. Fehlende Daten oder alte Weltkennung sind Fehler; es wird keine andere Spielwelt gestartet. Alte Bestände sind über die [Datenbrücke](KOMPATIBILITAET.md) unverändert exportierbar.
 

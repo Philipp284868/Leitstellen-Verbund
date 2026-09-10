@@ -14,9 +14,7 @@ Die geografische Karte verwendet das lokal installierte Deutschland-Datenpaket. 
 
 ## Aus GitHub installieren
 
-Für eine neue AMP-Instanz: Node.js **24**, Branch **main**, Setup **`node scripts/install-germany.mjs`**, App Name **`scripts/start-germany.mjs`**. Die ausdrücklich gewählte Erstinstallation lädt auch das große festgelegte Geodatenpaket und passende Routingwerkzeuge. [Vollständige Neuinstallation](docs/AMP-NEUINSTALLATION.md).
-
-Für einen vorhandenen Deutschlandbestand aktualisiert `node scripts/amp-setup.mjs` nur Programm und Abhängigkeiten. Ein gewöhnlicher Build lädt keine Deutschlanddaten. `PORT` muss dem echten AMP-Port entsprechen; `DATA_DIR` und `GEODATA_DIR` müssen getrennte dauerhafte Ordner außerhalb des Programmverzeichnisses sein. [Betrieb, Konfiguration, Sicherung](docs/AMP.md).
+**[AMP-Schnellstart](docs/AMP-SCHNELLSTART.md)** ist die verbindliche Anleitung für Neuinstallation, Updates, verlorene Konfiguration und Caddy. Node.js **24**, Branch **main**, ein Setup **`node scripts/install-germany.mjs`**, ein Start **`scripts/start-germany.mjs`**, eine aktive **`.env`**. Das Setup bezieht das feste Geodatenpaket automatisch und erhält geprüfte Bestände. Geschützte Instanzzuordnung und Konfigurationssicherung liegen außerhalb des Programmordners.
 
 Alle normalen Befehle verwenden denselben Produktpfad:
 

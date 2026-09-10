@@ -17,6 +17,7 @@ export const CI_CONTRACT = {
       "geodata",
       "package",
       "audit",
+      "amp",
     ],
     deep: [
       "structure",
@@ -28,6 +29,7 @@ export const CI_CONTRACT = {
       "geodata",
       "package",
       "audit",
+      "amp",
       "endurance",
     ],
   },

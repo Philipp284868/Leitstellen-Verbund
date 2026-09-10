@@ -126,6 +126,16 @@ export async function runGroup(group, part) {
         "python",
       );
       await run(["scripts/geodata/dem/test_dem.py"], undefined, "python");
+    } else if (group === "amp") {
+      await run(["scripts/amp-acceptance.mjs"]);
+      const report = read(".tools/amp-acceptance/result.json");
+      if (
+        report.status !== "success" ||
+        report.commit !== plan.head ||
+        !/VERSION_ID="13"/.test(report.os)
+      )
+        throw Error("AMP-Abnahme benötigt den aktuellen Commit und Debian 13.");
+      result.evidence = report;
     } else if (group === "audit")
       await pnpm("audit", "--prod", "--audit-level=high");
     else if (group === "package") {

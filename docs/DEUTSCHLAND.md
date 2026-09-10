@@ -8,7 +8,7 @@ Neue Git-/AMP-Installation: `node scripts/install-germany.mjs`. Dieser ausdrück
 
 Bereits vorhandene Deutschlanddaten: `node scripts/amp-setup.mjs` für Programmupdates, anschließend `npm start` oder `node scripts/start-germany.mjs`. Der gewöhnliche Build verarbeitet keine neuen Geodaten. Die laufende Website, Suche und Simulation benötigen das konfigurierte lokale Datenpaket und dessen Router.
 
-`.env.germany` hat Vorrang vor `.env`. `DATA_DIR` und `GEODATA_DIR` müssen getrennte externe dauerhafte Pfade sein. Tatsächlichen AMP-Port und öffentliche Adresse eintragen. [Konfiguration, Sicherung und Fehlerdiagnose](AMP.md).
+Eine aktive `.env` und eine gemeinsame Konfigurationsauswertung gelten für alle Einstiege. Alte Dateien werden kontrolliert migriert; Konflikte werden gemeldet. `DATA_DIR` und `GEODATA_DIR` müssen getrennte externe dauerhafte Pfade sein. Tatsächlichen AMP-Port und öffentliche Adresse eintragen. [Konfiguration, Sicherung und Fehlerdiagnose](AMP.md).
 
 ## Karte und Spiel
 
