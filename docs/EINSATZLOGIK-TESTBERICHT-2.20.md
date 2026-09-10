@@ -56,7 +56,7 @@ Die Sichtprüfung korrigierte zusätzlich einen veralteten Cache der Ausrückevo
 
 ![Grüner medizinischer Marker mit gesonderter Notfallkennzeichnung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20/08-medizinischer-einsatz-gruen.png)
 
-Die vollständige Folge aus zehn Bildern liegt unter [screenshots/2.20](screenshots/2.20). Die Dateien stammen vom tatsächlichen lokalen Deutschland-Client; sie sind keine Entwürfe oder nachgezeichneten UI-Bilder.
+Die vollständige Folge aus zehn Bildern liegt unter [screenshots/2.20](https://github.com/Philipp284868/Leitstellen-Verbund/tree/03e9878217292f1879d71a01a7722e87dc14eb1d/docs/screenshots/2.20). Die Dateien stammen vom tatsächlichen lokalen Deutschland-Client; sie sind keine Entwürfe oder nachgezeichneten UI-Bilder.
 
 ## Bestand und Veröffentlichung
 

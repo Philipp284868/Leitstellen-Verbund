@@ -1,6 +1,8 @@
 export { Database } from "../server/database";
 export { Game } from "../server/game";
 export { Auth } from "../server/auth";
+export { fundTestBudget } from "./money-fixture";
+export { fixtureMission } from "./fixtures/germany/mission";
 export { initializeGermany } from "../server/germany/provider";
 export { fresh, validate } from "../src/model";
 export {

@@ -100,7 +100,7 @@ try {
   s.player.id = owner;
   s.seed = 124;
   s.xp = f.xpForLevel(30);
-  s.money = 100000000;
+  f.fundTestBudget(s, 10000000);
   s.tutorial = 6;
   s.missionWait = 100000;
   const a = geo.provider
@@ -110,15 +110,18 @@ try {
   f.apply(s, { type: "build", kind: "fire", pos: { x: a.x, y: a.y } });
   f.tick(s, s.buildings[0].ready + 1, {}, false, false);
   const home = s.buildings[0].id;
+  s.buildings[0].organization = {
+    kind: "bf",
+    turnout: 30,
+    crew: "normal",
+    reserve: 0,
+  };
   for (const kind of ["hlf", "tlf"]) {
     f.apply(s, { type: "buy", kind, home });
   }
-  f.generate(s);
-  const mission = s.missions[0];
-  if (!mission) throw Error("Realer Einsatzgenerator lieferte keinen Einsatz.");
-  mission.template = "field";
   const b = geo.provider.nearest(f.project({ lon: 13.43, lat: 52.51 }));
-  mission.pos = { x: b.x, y: b.y };
+  const mission = f.fixtureMission(s, "field", { x: b.x, y: b.y });
+  s.missions = [mission];
   s.seed = 124;
   f.attachIncident(s, mission);
   s.missionWait = 100000;
@@ -174,9 +177,16 @@ try {
   const vehicle = (id) => snap().vehicles.find((v) => v.id === id);
   const incident = () => snap().missions.find((m) => m.id === mission.id);
   const button = (name) => page.getByRole("button", { name, exact: true });
+  async function showIncidents(target = page) {
+    const toggle = target.getByRole("button", {
+      name: /^Einsatzliste (aus|ein)klappen$/,
+    });
+    if ((await toggle.getAttribute("aria-expanded")) !== "true")
+      await toggle.click();
+  }
   async function mapTools(open) {
     const toggle = button("Karte");
-    if ((await toggle.getAttribute("aria-pressed")) !== String(open))
+    if ((await toggle.getAttribute("aria-expanded")) !== String(open))
       await toggle.click();
   }
   async function mapButton(name) {
@@ -208,7 +218,7 @@ try {
   await capture("01-hauptmenue");
   await expect(page.locator(".germany-scene-error")).toHaveCount(0);
   await button("Spielen").click();
-  await button("Einsätze").click();
+  await showIncidents();
   await expect(page.locator(".germany-map-message")).toHaveCount(0, {
     timeout: 60000,
   });
@@ -246,8 +256,10 @@ try {
   await capture("04-dorf-und-harz");
   await search("Berlin");
   await mapButton("Meine Wachen");
+  await mapTools(true);
   await page.getByLabel("Vergrößern", { exact: true }).click();
   await page.getByLabel("Vergrößern", { exact: true }).click();
+  await mapTools(false);
   await capture("05-strassendetail");
   const canvas = page.getByLabel("Interaktive Karte von Deutschland");
   await canvas.focus();
@@ -311,9 +323,7 @@ try {
   colleague.on("pageerror", (e) => report.pageErrors.push(e.message));
   await colleague.goto(c.publicUrl);
   await colleague.getByRole("button", { name: "Spielen", exact: true }).click();
-  await colleague
-    .getByRole("button", { name: "Einsätze", exact: true })
-    .click();
+  await showIncidents(colleague);
   await expect(colleague.locator(".germany-map-message")).toHaveCount(0, {
     timeout: 60000,
   });
@@ -342,7 +352,7 @@ try {
   expect(JSON.stringify(snap().vehicles[0].path)).toBe(pathBefore);
   await page.reload();
   await button("Spielen").click();
-  await button("Einsätze").click();
+  await showIncidents();
   await page.locator(".mission-card").first().click();
   state = snap();
   await advance(Math.max(0, state.vehicles[0].arrive - state.time) + 1);
@@ -388,7 +398,7 @@ try {
   );
   await button("Schließen").click();
   if (await button("Schließen").isVisible()) await button("Schließen").click();
-  await button("Gebäude").click();
+  await button("Wachen").click();
   await button("Wache bauen").click();
   await page
     .locator(".shop-card")
