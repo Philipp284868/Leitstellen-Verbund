@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
   statfsSync,
 } from "node:fs";
@@ -14,6 +15,7 @@ import {
   PATH_KEYS,
   present,
   readIdentity,
+  readConfiguration,
   regularFile,
   resolveConfiguration,
   validatePaths,
@@ -48,12 +50,38 @@ function serialize(settings) {
 }
 /** Only bounded, documented old per-instance locations; never enumerates disks or other instance mappings. */
 export function recoveryCandidates(programRoot) {
+  const directory = installationLocation(programRoot);
   const pairs = [
+    [resolve(directory, "game"), resolve(directory, "geodata")],
     ["../leitstellen-germany-data", "../leitstellen-germany-geodata"],
     ["../leitstellen-deutschland-data", "../leitstellen-deutschland-geodata"],
     ["../leitstellen-rivermere-data", "../leitstellen-germany-geodata"],
   ];
+  if (present(directory)) {
+    for (const name of readdirSync(directory)
+      .filter((name) => /^env-valid-[a-f0-9]{64}\.bak$/.test(name))
+      .sort()
+      .slice(-128)) {
+      const file = resolve(directory, name);
+      if (
+        !regularFile(file) ||
+        digest(readFileSync(file)) !== name.slice(10, -4)
+      )
+        continue;
+      const saved = readConfiguration(file);
+      if (saved.DATA_DIR && saved.GEODATA_DIR)
+        pairs.push([saved.DATA_DIR, saved.GEODATA_DIR]);
+    }
+  }
   return pairs
+    .filter(
+      (pair, index, all) =>
+        all.findIndex(
+          (p) =>
+            resolve(programRoot, p[0]) === resolve(programRoot, pair[0]) &&
+            resolve(programRoot, p[1]) === resolve(programRoot, pair[1]),
+        ) === index,
+    )
     .filter(([data]) => present(resolve(programRoot, data)))
     .map(([data, geo]) => {
       const paths = {
@@ -180,7 +208,16 @@ export function prepareInstallation({
         );
     }
   }
-  const id = identity?.id || randomUUID();
+  const markerFile = resolve(settings.DATA_DIR, ".leitstellen-instance.json");
+  const previousMarker = regularFile(markerFile)
+    ? JSON.parse(readFileSync(markerFile, "utf8"))
+    : undefined;
+  const id =
+    identity?.id ||
+    (previousMarker?.programRoot === config.programRoot &&
+    /^[a-f0-9-]{36}$/.test(previousMarker.id)
+      ? previousMarker.id
+      : randomUUID());
   const storedSettings = {
     ...settings,
     ...config.current,
@@ -272,4 +309,7 @@ export function recordDatabaseReady(programRoot) {
       2,
     ) + "\n",
   );
+}
+export function assertInstalledData(programRoot) {
+  return inspectInstallation(resolveConfiguration({ programRoot }));
 }

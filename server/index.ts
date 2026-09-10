@@ -26,7 +26,10 @@ import {
   verifyPassword,
 } from "./auth";
 import { config, root, type Config } from "./config";
-import { recordDatabaseReady } from "../scripts/installation.mjs";
+import {
+  recordDatabaseReady,
+  assertInstalledData,
+} from "../scripts/installation.mjs";
 import { Database } from "./database";
 import { Game } from "./game";
 import { prepareGeography, type Geography } from "./germany/runtime";
@@ -840,6 +843,7 @@ export function startServer(
   };
 }
 if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
+  assertInstalledData(root);
   const c = config(),
     geography = await prepareGeography(c);
   let app: ReturnType<typeof startServer>;

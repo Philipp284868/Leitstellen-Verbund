@@ -260,6 +260,10 @@ test(
       resolve("scripts/hard-reset.mjs"),
       resolve(f.app, "scripts/hard-reset.mjs"),
     );
+    cpSync(
+      resolve("scripts/configuration.mjs"),
+      resolve(f.app, "scripts/configuration.mjs"),
+    );
     const listener = createServer();
     listener.listen(0, "127.0.0.1");
     await once(listener, "listening");

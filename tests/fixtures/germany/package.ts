@@ -29,6 +29,7 @@ export function createGermanyPackage(dir: string) {
     }),
   );
   const db = new DatabaseSync(resolve(dir, "index.sqlite"));
+  db.exec("BEGIN");
   db.exec(`CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT);
     CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,name TEXT,road_class TEXT,bridge INTEGER,tunnel INTEGER,access TEXT);
     CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);
@@ -78,8 +79,10 @@ export function createGermanyPackage(dir: string) {
     );
   }
   db.exec("INSERT INTO places_fts(places_fts) VALUES('rebuild')");
+  db.exec("COMMIT");
   db.close();
   const tiles = new DatabaseSync(resolve(dir, "maps.mbtiles"));
+  tiles.exec("BEGIN");
   tiles.exec(
     "CREATE TABLE metadata(name TEXT PRIMARY KEY,value TEXT); CREATE TABLE tiles(zoom_level INTEGER,tile_column INTEGER,tile_row INTEGER,tile_data BLOB,PRIMARY KEY(zoom_level,tile_column,tile_row))",
   );
@@ -135,5 +138,6 @@ export function createGermanyPackage(dir: string) {
             .run(z, tx, n - 1 - ty, bytes);
         }
     }
+  tiles.exec("COMMIT");
   tiles.close();
 }

@@ -22,7 +22,8 @@ import {
 import { Auth } from "./auth";
 import { planCommunicationMigration } from "./communication-migration";
 import { exportRetiredDatabase } from "./compatibility/retired-database";
-import { config } from "./config";
+import { config, root } from "./config";
+import { assertInstalledData } from "../scripts/installation.mjs";
 import { assertWorldMetadata, Database, DATABASE_VERSION } from "./database";
 import { planEconomyMigration } from "./economy-migration";
 import { prepareGeography } from "./germany/runtime";
@@ -69,6 +70,7 @@ if (command === "retired-export") {
   process.exit(0);
 }
 const c = config();
+if (!["restore", "unlock"].includes(command)) assertInstalledData(root);
 if (command === "unlock") {
   if (!process.argv.includes("--confirm"))
     throw Error("Lock-Freigabe benötigt --confirm nach AMP-Stopp.");

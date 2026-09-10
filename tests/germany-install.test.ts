@@ -194,6 +194,31 @@ describe("AMP installation and recovery", () => {
     });
     expect(existsSync(resolve(app, ".env.germany"))).toBe(false);
   });
+  it("uses bounded verified backups to offer recovery when both config and identity are lost", () => {
+    const { data, geo } = game();
+    configFile(data, geo);
+    const original = configure();
+    rmSync(resolve(app, ".env"));
+    rmSync(resolve(installationLocation(app), "installation.json"));
+    const before = snapshot(base);
+    const report = diagnose({ programRoot: app, environment: {} });
+    expect(report.candidates).toContainEqual(
+      expect.objectContaining({
+        DATA_DIR: data,
+        GEODATA_DIR: geo,
+        status: "valid",
+      }),
+    );
+    expect(() => configure()).toThrow("Wiederherstellung erforderlich");
+    expect(snapshot(base)).toEqual(before);
+    const recovered = prepareGermanyConfiguration({
+      programRoot: app,
+      environment: {},
+      recovery: { data, geo, confirm: true },
+    });
+    expect(recovered.identity.id).toBe(original.identity.id);
+    expect(() => configure()).not.toThrow();
+  });
   it.each(["DATA_DIR", "GEODATA_DIR"])(
     "rejects silent AMP path changes for %s",
     (key) => {

@@ -267,7 +267,9 @@ jobs:
           path: /tmp/verified-build
       - run: tar -xzf /tmp/verified-build/verified-build.tgz
       - name: Frische Installation, Wiederherstellung und echter TLS-Proxy unter Debian 13
-        run: node scripts/ci-run.mjs amp
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/ci-run.mjs amp
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
