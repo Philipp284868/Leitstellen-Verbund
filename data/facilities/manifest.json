@@ -2,10 +2,10 @@
   "schema": 1,
   "dataset": "155596c0041a76f05d3b5fb03a36f2b9e26540b517fde8b4b9884c62c4fc1a90",
   "snapshot": "2026-09-07",
-  "sha256": "05fef855e5bb28c20951920731fb51815bc562020f73feee991f13da4cbb2489",
-  "bytes": 60563456,
+  "sha256": "178a9c93586462c9e5aeaa5d04e86a7cd4c94a9d55da741704fbbe38c853ad0f",
+  "bytes": 60559360,
   "total": 40034,
-  "usable": 4633,
+  "usable": 4630,
   "byKind": {
     "fire": 29024,
     "police": 3732,
@@ -218,6 +218,6 @@
   "license": "ODbL-1.0",
   "attribution": "© OpenStreetMap contributors",
   "source": "https://download.geofabrik.de/europe/germany.html",
-  "compressedBytes": 13883028,
-  "compressedSha256": "4c0dc540402b7d9a24df72a836d5328f4f5b611f32397a830f366a7d6d4fb773"
+  "compressedBytes": 13882985,
+  "compressedSha256": "a776346344c991a70573643564ba23bd435b7b57a8dab1c839c6b05d4866cdb5"
 }
