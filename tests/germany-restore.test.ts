@@ -16,6 +16,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { execFile, fork, type ChildProcess } from "node:child_process";
 import type * as Fixture from "./germany-simulation-fixture";
+import { createMap } from "./helpers/geography-tile";
 
 const dataset = "e".repeat(64);
 let f: typeof Fixture,
@@ -80,13 +81,23 @@ beforeEach(async () => {
     INSERT INTO anchors_rtree VALUES(16000000000,13.4,13.4,52.52,52.52);`);
   index.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
   index.close();
-  const tiles = new DatabaseSync(resolve(geodataDir, "maps.mbtiles"));
-  tiles.exec(
-    "CREATE TABLE metadata(name TEXT PRIMARY KEY,value TEXT); CREATE TABLE tiles(zoom_level INTEGER,tile_column INTEGER,tile_row INTEGER,tile_data BLOB)",
+  createMap(
+    resolve(geodataDir, "maps.mbtiles"),
+    [
+      {
+        layer: "transportation",
+        properties: { class: "minor", name: "Teststraße" },
+        type: 2,
+        parts: [
+          [
+            [100, 100],
+            [3900, 3900],
+          ],
+        ],
+      },
+    ],
+    dataset,
   );
-  tiles.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(dataset);
-  tiles.exec("INSERT INTO metadata VALUES('maxzoom','14')");
-  tiles.close();
   router = fork(resolve("tests/helpers/germany-router.mjs"), {
     stdio: ["ignore", "ignore", "ignore", "ipc"],
   });

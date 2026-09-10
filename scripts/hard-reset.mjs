@@ -350,7 +350,7 @@ if (invoked) {
     console.log(
       result.repeated
         ? "Dieser Reset ist bereits erledigt. Keine weiteren Daten gelöscht."
-        : `HARDRESET ERFOLGREICH: ${result.deletedFiles} bekannte Dateien entfernt. Beim nächsten Spielstart registrieren sich alle neu.`,
+        : `HARDRESET ERFOLGREICH: ${result.deletedFiles} bekannte Dateien entfernt. Eine leere Ersatzwelt wird beim Start nicht automatisch angelegt.`,
     );
     console.log(
       "In AMP App Name auf scripts/start-germany.mjs zurückstellen und App Command Line Arguments leeren. Geschützte Installationszuordnung vor einem ausdrücklich angeordneten neuen Spielstand betreut prüfen.",

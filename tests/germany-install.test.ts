@@ -69,6 +69,26 @@ function snapshot(root: string): Record<string, string> {
 }
 
 describe("AMP installation and recovery", () => {
+  it.each(["identity", "manifest", "binding"])(
+    "keeps broken private %s contents out of diagnostic errors",
+    (kind) => {
+      const { data, geo } = game();
+      configFile(data, geo);
+      configure();
+      const file =
+        kind === "identity"
+          ? resolve(installationLocation(app), "installation.json")
+          : kind === "manifest"
+            ? resolve(geo, "manifest.json")
+            : resolve(data, ".leitstellen-instance.json");
+      writeFileSync(file, "private-test-credential-invalid-json");
+      const before = snapshot(base);
+      const report = diagnose({ programRoot: app, environment: {} });
+      expect(report.problem).toContain("Beschädigte JSON-Daten");
+      expect(JSON.stringify(report)).not.toContain("private-test-credential");
+      expect(snapshot(base)).toEqual(before);
+    },
+  );
   it("creates one private .env and distinct persistent directories for each installation", () => {
     const first = configure();
     const bytes = contents();

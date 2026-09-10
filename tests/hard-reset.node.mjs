@@ -21,13 +21,12 @@ import { createServer } from "node:net";
 import { hardReset, OBSOLETE_FILES } from "../scripts/hard-reset.mjs";
 import { germanyRuntime } from "./helpers/germany-runtime.mjs";
 
-function fixture(t) {
+function fixture(t, { oldFiles = true } = {}) {
   const base = mkdtempSync(resolve(tmpdir(), "lv-reset-test-"));
   const app = resolve(base, "app"),
     data = resolve(base, "leitstellen-data");
   mkdirSync(app);
   mkdirSync(data);
-  mkdirSync(resolve(data, "backups"));
   writeFileSync(
     resolve(app, "package.json"),
     '{"name":"leitstellen-verbund","type":"module"}',
@@ -44,11 +43,14 @@ function fixture(t) {
     `restore-${id}.sqlite`,
     `backups/game-1700000000000-${id}.sqlite`,
   ];
-  for (const name of files) writeFileSync(resolve(data, name), `old:${name}`);
-  for (const name of OBSOLETE_FILES)
-    writeFileSync(resolve(app, name), `private:${name}`);
-  writeFileSync(resolve(data, "other.sqlite"), "unrelated data");
-  writeFileSync(resolve(data, "backups/notes.txt"), "keep");
+  if (oldFiles) {
+    mkdirSync(resolve(data, "backups"));
+    for (const name of files) writeFileSync(resolve(data, name), `old:${name}`);
+    for (const name of OBSOLETE_FILES)
+      writeFileSync(resolve(app, name), `private:${name}`);
+    writeFileSync(resolve(data, "other.sqlite"), "unrelated data");
+    writeFileSync(resolve(data, "backups/notes.txt"), "keep");
+  }
   mkdirSync(resolve(app, "node_modules"));
   writeFileSync(resolve(app, "node_modules/keep"), "dependency");
   t.after(() => rmSync(base, { recursive: true, force: true }));
@@ -237,17 +239,15 @@ test("leerer generierter Sicherungsordner wird entfernt", (t) => {
 });
 
 test(
-  "Node 24: echter Spielserver, zwei Konten, Reset-CLI, Neustart und erneute Registrierung",
+  "Node 24: echter Spielserver, zwei Konten, Reset ohne Ersatzwelt und bestätigte Wiederherstellung",
   {
     skip: Number(process.versions.node.split(".")[0]) !== 24,
     timeout: 30000,
   },
   async (t) => {
-    const f = fixture(t);
+    const f = fixture(t, { oldFiles: false });
     const geography = await germanyRuntime();
     t.after(() => geography.close());
-    for (const name of f.files) rmSync(resolve(f.data, name));
-    for (const name of OBSOLETE_FILES) rmSync(resolve(f.app, name));
     cpSync(resolve("dist"), resolve(f.app, "dist"), { recursive: true });
     rmSync(resolve(f.app, "node_modules"), { recursive: true });
     symlinkSync(
@@ -345,6 +345,8 @@ test(
         assert.equal(r.status, 200);
       }
       await stop();
+      const safeBackup = resolve(f.base, "operator-backup.sqlite");
+      cpSync(resolve(f.data, "game.sqlite"), safeBackup);
       for (const name of OBSOLETE_FILES)
         writeFileSync(resolve(f.app, name), "obsolete");
       const before = readFileSync(resolve(f.app, ".env"));
@@ -368,38 +370,24 @@ test(
         readdirSync(f.data).some((name) => name.startsWith("pre-migration-")),
         false,
       );
-      await start();
-      assert.equal(
-        (await request("login", { username: "old-player", password: pass }))
-          .status,
-        401,
+      await assert.rejects(start, /nichtleerer Spielordner/);
+      assert.equal(existsSync(resolve(f.data, "game.sqlite")), false);
+      child = undefined;
+      const restored = spawnSync(
+        process.execPath,
+        ["dist/server/cli.js", "restore", "--file", safeBackup, "--confirm"],
+        { cwd: f.app, env, encoding: "utf8" },
       );
-      assert.equal(
-        (await request("login", { username: "second-player", password: pass }))
-          .status,
-        401,
-      );
-      assert.equal(
-        (
-          await request("register", {
-            username: "old-player",
-            password: pass,
-            name: "Neu",
-            station: "Neu",
-          })
-        ).status,
-        200,
-      );
-      await stop();
+      assert.equal(restored.status, 0, restored.stderr);
       result = reset();
       assert.equal(result.status, 0, result.stderr);
       assert.match(result.stdout, /bereits erledigt/);
       await start();
-      assert.equal(
-        (await request("login", { username: "old-player", password: pass }))
-          .status,
-        200,
-      );
+      for (const username of ["old-player", "second-player"])
+        assert.equal(
+          (await request("login", { username, password: pass })).status,
+          200,
+        );
       await stop();
     } finally {
       await stop();

@@ -44,6 +44,8 @@ Die internen Portoptionen ändern keine öffentlichen Browserports. Sie sind fü
 
 ## Datenbanksicherung und Updates
 
+Ein ausdrücklich ausgeführter historischer Offline-Hardreset ist keine Konfigurationsreparatur. Seine Belege bleiben erhalten; der normale Start legt anschließend keine leere Ersatzwelt an. Einen erhaltenen Bestand mit dem dokumentierten Restore wiederherstellen. Eine absichtlich neue Welt benötigt eine bewusst getrennte Neuinstallation; gespeicherte Instanzzuordnungen nicht zur Umgehung löschen.
+
 Bei gestopptem Spiel und bereitgestelltem passendem Router: `node dist/server/cli.js backup`. `node dist/server/cli.js migration-preview` prüft eine anstehende Migration. Vor einem Schemawechsel erstellt die bestehende Datenbankmigration eine vollständige Sicherung; die Migration bleibt transaktional. Datenordner, Konfiguration, äußere Installationszuordnung und passendes Geodatenpaket getrennt vom Programm sichern.
 
 Wiederherstellung bei gestopptem Spiel: `node dist/server/cli.js restore --file /ABSOLUTE/SICHERUNG.sqlite --confirm`. Dabei gelten die bestehenden Welt-/Datensatzprüfungen und Sitzungswiderrufe. Eine Rückkehr zu älterem Programmcode ist nicht automatisch ein Datenbank-Downgrade: gegebenenfalls zusammengehörigen Code, Backup und Geodatenstand wiederherstellen. [Kompatibilität](KOMPATIBILITAET.md) · [Datenpaket](DEUTSCHLAND-DATEN.md).

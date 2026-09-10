@@ -58,6 +58,16 @@ export function installationLocation(programRoot) {
   const key = createHash("sha256").update(root).digest("hex").slice(0, 16);
   return resolve(root, "../.leitstellen-instances", `${basename(root)}-${key}`);
 }
+export function parseStoredJson(text, label) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // JSON parser errors can contain fragments of private settings or save data.
+    throw Error(
+      `Beschädigte JSON-Daten: ${label}. Bestand prüfen oder Sicherung wiederherstellen.`,
+    );
+  }
+}
 export function readIdentity(programRoot) {
   const directory = installationLocation(programRoot),
     file = resolve(directory, "installation.json");
@@ -71,7 +81,7 @@ export function readIdentity(programRoot) {
     throw Error(
       `Rechtefehler: Installationszuordnung benötigt Verzeichnisrechte 700 und Dateirechte 600: ${directory}`,
     );
-  const value = JSON.parse(readFileSync(file, "utf8"));
+  const value = parseStoredJson(readFileSync(file, "utf8"), file);
   if (
     value.schema !== 1 ||
     value.programRoot !== realpathSync(programRoot) ||

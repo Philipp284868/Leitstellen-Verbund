@@ -6,7 +6,7 @@ import type { ServerAction } from "../server/actions";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { startServer } from "./fixtures/germany/server";
 
-import { generate } from "../src/engine";
+import { fixtureMission } from "./fixtures/germany/mission";
 import { vehicleAvailability } from "../src/simulation/availability";
 import { attachIncident } from "../src/simulation/calls";
 
@@ -98,9 +98,8 @@ it("supplies staff through real build/buy sessions, serializes shared crews and 
     expect(
       save.vehicles.every((v) => vehicleAvailability(save, v).alarmable),
     ).toBe(true);
-    generate(save);
-    const mission = save.missions.at(-1)!;
-    mission.template = "field";
+    const mission = fixtureMission(save, "field");
+    save.missions.push(mission);
     mission.pos = nodes[2];
     attachIncident(save, mission);
     mission.control!.locationKnown = true;

@@ -17,7 +17,13 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { canonical, inside, present, regularFile } from "./configuration.mjs";
+import {
+  canonical,
+  inside,
+  present,
+  regularFile,
+  parseStoredJson,
+} from "./configuration.mjs";
 
 export const DATABASE_VERSION = 18;
 export const digest = (bytes) =>
@@ -109,7 +115,7 @@ export function inspectGeodata(directory) {
     throw Error(
       `Geodatenpaket unvollständig: ${file} fehlt. Vorhandenen Ordner erhalten.`,
     );
-  const manifest = JSON.parse(readFileSync(file, "utf8"));
+  const manifest = parseStoredJson(readFileSync(file, "utf8"), file);
   if (
     manifest.schema !== 1 ||
     manifest.status !== "ready" ||
@@ -185,7 +191,11 @@ export function inspectGame(directory, dataset) {
     const storedDataset = db
       .prepare("SELECT value FROM meta WHERE key='geodata-dataset-v1'")
       .get()?.value;
-    if (!identity || JSON.parse(identity.value).world !== "germany-1")
+    if (
+      !identity ||
+      parseStoredJson(identity.value, `Weltkennung in ${file}`).world !==
+        "germany-1"
+    )
       throw Error(
         `Weltkonflikt oder fehlende Weltkennung: ${file}. Bestehende Daten bleiben unverändert.`,
       );
@@ -200,7 +210,10 @@ export function inspectGame(directory, dataset) {
       tables.has(name),
     ))
       for (const row of db.prepare(`SELECT data FROM ${table}`).iterate())
-        if (JSON.parse(row.data).world !== "germany-1")
+        if (
+          parseStoredJson(row.data, `Spielstand in ${file}`).world !==
+          "germany-1"
+        )
           throw Error(`Weltkonflikt im gespeicherten Spielstand: ${file}`);
     return { status: "ready", schema: version, dataset: storedDataset };
   });
@@ -210,7 +223,7 @@ export function inspectInstallation(config, { allowMissingGeo = false } = {}) {
     geo = config.settings.GEODATA_DIR;
   const marker = resolve(data, ".leitstellen-instance.json");
   if (regularFile(marker)) {
-    const binding = JSON.parse(readFileSync(marker, "utf8"));
+    const binding = parseStoredJson(readFileSync(marker, "utf8"), marker);
     if (
       binding.programRoot !== config.programRoot ||
       (config.identity && binding.id !== config.identity.id)

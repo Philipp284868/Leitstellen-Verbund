@@ -133,7 +133,13 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
     const both = await Promise.all([action(0, mobilize), action(1, mobilize)]);
     expect(both.map((r) => r.status)).toEqual([200, 400]);
     const readyAt = state().buildings[0].civilProtection!.readyAt;
-    expect(state().buildings[0].civilProtection!.history).toHaveLength(2);
+    // The live server may already have logged that the professional crew arrived.
+    // Only the two accepted operator commands belong to the idempotency assertion.
+    expect(
+      state().buildings[0].civilProtection!.history.filter(
+        (entry) => entry.actor === owner,
+      ),
+    ).toHaveLength(2);
     expect(
       (
         await action(0, {
