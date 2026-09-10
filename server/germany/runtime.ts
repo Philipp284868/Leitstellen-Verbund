@@ -32,10 +32,13 @@ export async function prepareGeography(
       await provider.close();
       throw error;
     }
+    let closed = false;
     return {
       maps,
       provider,
       close: async () => {
+        if (closed) return;
+        closed = true;
         maps.close();
         await provider.close();
       },

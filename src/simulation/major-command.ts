@@ -1,3 +1,4 @@
+import { hospitalOptions } from "./hospitals";
 import type { Save, Vehicle } from "../model";
 import { vt } from "../catalog";
 import { declareMajor } from "./major-incidents";
@@ -130,9 +131,11 @@ export function majorCommand(
     if (
       a.hospital &&
       a.hospital !== "public" &&
-      !s.buildings.some((b) => b.id === a.hospital && b.type === "hospital")
+      !hospitalOptions(s, m.pos, 0).some((h) => h.id === a.hospital)
     )
-      throw Error("Eigenes Krankenhaus fehlt.");
+      throw Error(
+        "Eigenes Krankenhaus oder bestätigte öffentliche Klinik fehlt.",
+      );
     p.triage = a.category;
     p.priority = a.category === "I" ? "urgent" : "normal";
     p.hospital = a.hospital;

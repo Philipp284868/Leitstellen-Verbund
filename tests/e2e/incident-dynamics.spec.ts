@@ -1,3 +1,4 @@
+import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -133,7 +134,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   page,
 }) => {
   const s = majorFixture(owner, "crash");
-  app.db.save(owner, s);
+  replaceFixtureSave(app.db, owner, s);
   await enter(page);
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
@@ -176,7 +177,22 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
   app.game.step(180);
   const row = page.locator(".major-triage").first();
   await row.getByRole("combobox").nth(0).selectOption("I");
-  await row.getByRole("combobox").nth(1).selectOption("public");
+  // Select a real offered clinic away from the scene so restart is checked in flight.
+  await expect
+    .poll(() => row.getByRole("combobox").nth(1).locator("option").count())
+    .toBeGreaterThan(1);
+  const clinicChoice = await row
+    .getByRole("combobox")
+    .nth(1)
+    .locator("option")
+    .evaluateAll((options) =>
+      options
+        .filter((o) => o.textContent?.includes("Maximalversorgung"))
+        .at(-1)
+        ?.getAttribute("value"),
+    );
+  expect(clinicChoice).toBeTruthy();
+  await row.getByRole("combobox").nth(1).selectOption(clinicChoice!);
   await row
     .getByRole("button", { name: "Sichtung und Ziel bestätigen" })
     .click();
@@ -210,7 +226,7 @@ test("MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneust
     .get(owner)!
     .missions[0].dynamics!.patients.find((p) => p.id === patient)!;
   expect(restored.triage).toBe("I");
-  expect(restored.hospital).toBe("public");
+  expect(restored.hospital).toBe(clinicChoice);
   expect(restored.transport).toBe("aboard");
 });
 test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte Leitstellen", async ({
@@ -222,7 +238,7 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
   // An established dispatch may handle several reports. The first three
   // completed incidents intentionally keep a new player at one open case.
   established.completed = 30;
-  app.db.save(owner, established);
+  replaceFixtureSave(app.db, owner, established);
   const context = await browser.newContext(),
     other = await context.newPage();
   try {

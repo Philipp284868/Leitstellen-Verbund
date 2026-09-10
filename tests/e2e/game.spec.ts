@@ -113,22 +113,22 @@ async function resources(page: Page, username: string) {
     /"zoom":14/,
   );
   await openPanel(page, "Standorte");
-  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
   await page
-    .locator(".shop-card")
-    .filter({
-      has: page.getByRole("heading", { name: "Feuerwache", exact: true }),
-    })
-    .getByRole("button", { name: "Platzieren" })
+    .getByRole("button", { name: "Standort kaufen", exact: true })
     .click();
-  const mapBounds = await page
-    .locator("[data-testid=germany-map-viewport]")
-    .boundingBox();
-  await page.locator("[data-testid=germany-map-viewport]").click({
-    position: { x: mapBounds!.width * 0.5, y: mapBounds!.height * 0.5 },
-  });
   await page
-    .getByRole("button", { name: "Bau bestätigen", exact: true })
+    .getByLabel("Ort, Adresse oder Standortname")
+    .fill("Teststandort fire 0");
+  await page.locator(".facility-result").first().click();
+  await page.getByRole("button", { name: /^Kaufen ·/ }).click();
+  await page
+    .getByRole("button", { name: "Kauf verbindlich bestätigen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Verwalten", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Standorte direkt auf der Karte auswählen" })
     .click();
   await expect(
     page.locator(

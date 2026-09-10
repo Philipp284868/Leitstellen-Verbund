@@ -1,3 +1,4 @@
+import { replaceFixtureSave } from "./fixtures/germany/replace-save";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -207,6 +208,8 @@ it("Sichtung benötigt medizinische Kräfte und priorisiert geeignete Transporte
     t.progress = t.seconds;
   });
   majorCommand(s, action, "actor");
+  majorCommand(s, { ...action, hospital: "public:way:100000" }, "actor");
+  expect(p.hospital).toBe("public:way:100000");
   p.health = 85;
   p.treatment = 90;
   expect(transportCandidates(m)[0].id).toBe(p.id);
@@ -486,7 +489,7 @@ it("MANV läuft über Nacherkundung, wiederholte RTW-Fahrten und dynamische Vers
     w.game.command(w.owner, { id: crypto.randomUUID(), action });
   try {
     const initial = majorFixture(w.owner, "crash");
-    w.db.save(w.owner, initial);
+    replaceFixtureSave(w.db, w.owner, initial);
     const id = initial.missions[0].id;
     command({ type: "major-declare", mission: id });
     for (const section of w.db.all().get(w.owner)!.missions[0].major!.sections)
@@ -617,7 +620,7 @@ it("Nachbar-RTW baut den Behandlungsabschnitt auf und beginnt einen freigegebene
     });
     m.dynamics!.patients[0].health = 85;
     m.dynamics!.patients[0].treatment = 90;
-    w.db.save(w.owner, s);
+    replaceFixtureSave(w.db, w.owner, s);
     const v = w.db
       .all()
       .get(w.peer)!
@@ -684,7 +687,7 @@ it("Offline-Aufholen erzeugt keine Einsatzflut und ein voller Patientenbestand b
   try {
     const s = majorFixture(w.owner, "cellar");
     declareMajor(s, s.missions[0]);
-    w.db.save(w.owner, s);
+    replaceFixtureSave(w.db, w.owner, s);
     w.game.step(3600);
     expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
     for (let i = 0; i < 50; i++) w.game.step(5);

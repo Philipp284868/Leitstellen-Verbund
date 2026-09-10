@@ -629,6 +629,9 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     const { seed, template, save: before } = waterGeneration();
     await routerMode("unavailable");
     const count = (await (await fetch(c.routerUrl + "/stats")).json()).requests;
+    // Provider setup yields to the live server timer. Restore the prepared draw
+    // immediately before the synchronous step so its full retry interval is measured.
+    app!.db.save(user.id, before);
     expect(() => app!.game.step(1)).not.toThrow();
     const waiting = app!.db.all().get(user.id)!;
     expect(waiting.missions).toHaveLength(0);

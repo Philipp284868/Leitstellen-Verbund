@@ -64,7 +64,15 @@ export function OperationsOverview({
     </section>
   );
 }
-function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
+function TriageRow({
+  m,
+  p,
+  hospitals,
+}: {
+  m: Mission;
+  p: Patient;
+  hospitals: ReturnType<typeof useHospitalOptions>["options"];
+}) {
   const [draft, setDraft] = useState<{
     category: "I" | "II" | "III";
     hospital: string;
@@ -114,14 +122,18 @@ function TriageRow({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
           onChange={(e) => setDraft({ category, hospital: e.target.value })}
         >
           <option value="">Geeignete Klinik automatisch</option>
-          <option value="public">Regionalklinik</option>
-          {s.buildings
-            .filter((b) => b.type === "hospital")
-            .map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
+          {hospital === "public" && (
+            <option value="public">
+              Öffentliche Klinik automatisch (gespeicherte Auswahl)
+            </option>
+          )}
+          {hospitals.map((h) => (
+            <option key={h.id} value={h.id} disabled={!!h.reason}>
+              {h.name} ·{" "}
+              {h.reason ||
+                `${Math.max(0, h.capacity - h.occupied - h.reserved)} frei`}
+            </option>
+          ))}
         </select>
       </label>
       <button
@@ -371,7 +383,9 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
         <fieldset disabled={disabled || form.busy}>
           <legend>MANV · Sichtung und Klinikverteilung</legend>
           <details>
-            <summary>Aufnahmekapazitäten der eigenen Leitstelle</summary>
+            <summary>
+              Aufnahmekapazitäten der eigenen und öffentlichen Kliniken
+            </summary>
             {hospitals.loading && (
               <p role="status">Aufnahmekapazitäten werden geladen …</p>
             )}
@@ -415,7 +429,7 @@ export function MajorPanel({ s, m }: { s: Save; m: Mission }) {
               : "Priorisierte Transporte freigeben"}
           </button>
           {waiting.map((p) => (
-            <TriageRow key={p.id} s={s} m={m} p={p} />
+            <TriageRow key={p.id} m={m} p={p} hospitals={hospitals.options} />
           ))}
         </fieldset>
       )}

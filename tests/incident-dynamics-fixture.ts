@@ -6,6 +6,11 @@ import { distance } from "../src/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { fundTestBudget } from "./money-fixture";
 import { organizationFixture } from "./mutual-aid-fixture";
+import {
+  fixturePurchase,
+  logicFacilityCatalog,
+} from "./fixtures/germany/facilities";
+import { facilityBinding } from "../server/facilities/migration";
 export function majorFixture(
   owner = "north",
   template = "field",
@@ -52,6 +57,14 @@ export function addUnit(s: Save, kind: string) {
       level: 10,
       ready: 0,
       extensions: ["technical", "hazmat", "air", "doctor"],
+    };
+    home = {
+      ...home,
+      facility: facilityBinding(
+        logicFacilityCatalog.get(
+          fixturePurchase(type.home, home.pos).facility,
+        )!,
+      ),
     };
     s.buildings.push(home);
   }

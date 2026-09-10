@@ -1,3 +1,4 @@
+import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { fixturePurchase } from "../fixtures/germany/facilities";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -45,7 +46,7 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
   apply(s, fixturePurchase("fire", sites[0]));
   tick(s, s.time + 30, {}, false, false);
   apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
-  app.db.save(owner, s);
+  replaceFixtureSave(app.db, owner, s);
   app.game.step(1);
   const initial = app.db.all().get(owner)!;
   expect(initial.missions).toHaveLength(0);
@@ -286,7 +287,7 @@ test("FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wir
     .click();
   await page
     .getByRole("dialog")
-    .getByLabel("Feuerwache 1", { exact: false })
+    .getByLabel("Teststandort fire 0", { exact: false })
     .selectOption("station");
   await page
     .getByRole("button", { name: "Alarmierungsprofil übernehmen", exact: true })

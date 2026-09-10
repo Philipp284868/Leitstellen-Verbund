@@ -31,7 +31,7 @@ const defaultManifest = fileURLToPath(
 );
 const hashPattern = /^[a-f0-9]{64}$/;
 const allowedFiles =
-  /^(manifest\.json|maps\.mbtiles|index\.sqlite|boundary\.geojson|source-manifest\.json|graph-source\.json|graphhopper\.yml|dem\.mbtiles|dem-manifest\.json|dem-source-manifest\.json|dem-license\.pdf|dem-NOTICE\.txt|validation\.json|graph-cache\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)$/;
+  /^(manifest\.json|maps\.mbtiles|index\.sqlite|facilities\.sqlite|boundary\.geojson|source-manifest\.json|graph-source\.json|graphhopper\.yml|dem\.mbtiles|dem-manifest\.json|dem-source-manifest\.json|dem-license\.pdf|dem-NOTICE\.txt|validation\.json|graph-cache\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)$/;
 const within = (parent, child) => {
   const path = relative(parent, child);
   return (

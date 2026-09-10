@@ -4,6 +4,8 @@ import { fixtureMission } from "./mission";
 import { beginTrip } from "../../../src/engine";
 import { reconcileBuildingStaffing } from "../../../src/simulation/building-staffing";
 import { validate } from "../../../src/model";
+import { logicFacilityCatalog } from "./facilities";
+import { facilityBinding } from "../../../server/facilities/migration";
 
 /** A current populated save for UI load measurement. Purchasing and staffing
  * transactions have separate tests; automatic staffing provisions this fixture. */
@@ -26,6 +28,7 @@ export function loadFixture(owner: string) {
       id: `load-station-${i}`,
       name: `Regionswache ${i}`,
       pos,
+      facility: facilityBinding(logicFacilityCatalog.get(`fixture:fire:${i}`)!),
       level: 2,
     });
     for (let j = 0; j < 5; j++)

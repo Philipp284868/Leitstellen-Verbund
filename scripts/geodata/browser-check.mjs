@@ -407,83 +407,35 @@ try {
   );
   await button("Schließen").click();
   if (await button("Schließen").isVisible()) await button("Schließen").click();
-  await button("Wachen").click();
-  await button("Wache bauen").click();
+  await button("Standorte").click();
+  await button("Standort kaufen").click();
+  await page.getByLabel("Ort, Adresse oder Standortname").fill("Berlin");
   await page
-    .locator(".shop-card")
-    .filter({
-      has: page.getByRole("heading", { name: "Feuerwache", exact: true }),
-    })
-    .getByRole("button", { name: "Platzieren" })
-    .click();
-  await search("Berlin");
+    .getByLabel("Kaufstatus", { exact: true })
+    .selectOption("available");
   const count = snap().buildings.length;
-  // Convert unobscured canvas pixels using its public north-up Mercator camera.
-  // The authenticated server chooses the real nearby road node and validates it.
-  const pixels = await canvas.evaluate((element) => {
-    const box = element.getBoundingClientRect(),
-      camera = JSON.parse(element.closest(".germany-viewport").dataset.camera),
-      worldSize = 512 * 2 ** camera.zoom,
-      radians = Math.PI / 180,
-      centerX = (camera.lon + 180) / 360,
-      centerY =
-        (1 -
-          Math.log(Math.tan(Math.PI / 4 + (camera.lat * radians) / 2)) /
-            Math.PI) /
-        2,
-      candidates = [];
-    for (const fx of [0.6, 0.5, 0.7, 0.4, 0.8])
-      for (const fy of [0.55, 0.65, 0.45, 0.75, 0.35]) {
-        const x = box.width * fx,
-          y = box.height * fy;
-        if (document.elementFromPoint(box.left + x, box.top + y) !== element)
-          continue;
-        const mx = centerX + (x - box.width / 2) / worldSize,
-          my = centerY + (y - box.height / 2) / worldSize;
-        candidates.push({
-          x,
-          y,
-          lon: mx * 360 - 180,
-          lat: Math.atan(Math.sinh(Math.PI * (1 - 2 * my))) / radians,
-        });
-      }
-    return candidates;
-  });
-  let chosen;
-  for (const pixel of pixels) {
-    const p = f.project(pixel);
-    const response = await context.request.get(`${c.publicUrl}/api/geo/site`, {
-      params: { x: p.x, y: p.y, type: "fire" },
-      headers: { "x-game-mode": "multi" },
-    });
-    expect(response.ok()).toBe(true);
-    const site = await response.json();
-    if (!site.reason) {
-      chosen = { pixel, site };
-      break;
-    }
-  }
-  if (!chosen)
-    throw Error(
-      "Kein legaler freier Bauplatz im aktuellen Berliner Kartenausschnitt.",
-    );
-  await canvas.click({ position: { x: chosen.pixel.x, y: chosen.pixel.y } });
-  await expect(button("Bau bestätigen")).toBeEnabled();
-  await button("Bau bestätigen").click();
+  await page.locator(".facility-result").first().click();
+  const selectedName = await page
+    .getByRole("region", { name: "Standortdetails" })
+    .getByRole("heading")
+    .innerText();
+  await page.getByRole("button", { name: /^Kaufen ·/ }).click();
+  await button("Kauf verbindlich bestätigen").click();
   await expect.poll(() => snap().buildings.length).toBe(count + 1);
-  const built = snap().buildings.at(-1);
-  expect(
-    Math.hypot(
-      built.pos.x - chosen.site.point.x,
-      built.pos.y - chosen.site.point.y,
-    ),
-  ).toBeLessThan(1);
-  report.placement = {
-    clicked: chosen.pixel,
-    nodeId: chosen.site.nodeId,
-    built: built.pos,
+  const acquired = snap().buildings.at(-1);
+  expect(acquired.facility.id).toMatch(/^osm:/);
+  report.facilityPurchase = {
+    name: selectedName,
+    id: acquired.facility.id,
+    position: acquired.facility.position,
+    access: acquired.pos,
   };
-  report.checks.push("Realer Bauplatz über Karte geprüft und gekauft");
+  report.checks.push(
+    "Vorhandenen realen Standort gesucht, Preis bestätigt und erworben",
+  );
+  await page
+    .getByRole("button", { name: "Standorte direkt auf der Karte auswählen" })
+    .click();
   for (const [width, height] of [
     [1366, 768],
     [2560, 1440],

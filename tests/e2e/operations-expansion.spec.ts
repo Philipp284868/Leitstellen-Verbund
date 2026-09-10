@@ -1,3 +1,4 @@
+import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -542,7 +543,7 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
 }, info) => {
   const helper = await app.auth.create("helper", password, "Helfer", "West");
   const s = organizationFixture(owner, "field", "ops-browser-owner");
-  app.db.save(owner, s);
+  replaceFixtureSave(app.db, owner, s);
   app.db.save(
     helper,
     organizationFixture(helper, "field", "ops-browser-helper"),
@@ -599,7 +600,11 @@ test("freie Fahrzeugwünsche werden als privater Entwurf gespeichert, nach Versa
   browser,
 }, info) => {
   const helper = await app.auth.create("helper", password, "Helfer", "West");
-  app.db.save(owner, organizationFixture(owner, "field", "aid-wishes-owner"));
+  replaceFixtureSave(
+    app.db,
+    owner,
+    organizationFixture(owner, "field", "aid-wishes-owner"),
+  );
   app.db.save(
     helper,
     organizationFixture(helper, "field", "aid-wishes-helper"),

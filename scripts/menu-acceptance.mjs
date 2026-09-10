@@ -274,7 +274,7 @@ try {
     for (const title of [
       "Fuhrpark",
       "Wachen verwalten",
-      "Wache bauen",
+      "Standort kaufen",
       "Leitstellenverbund und Disponenten",
       "Alarm- und Ausrückeordnung",
       "FMS und Alarmierungsprofile",
@@ -478,17 +478,19 @@ try {
   await page.getByRole("button", { name: "Geldjournal", exact: true }).click();
   await snap("tutorial-eurobudget");
   await next(3);
-  await page.getByRole("button", { name: "Wachen", exact: true }).click();
-  await page.getByRole("button", { name: "Wache bauen", exact: true }).click();
-  await page.locator('[data-tutorial="build-fire"]').click();
-  await center();
-  await map.click({ position: { x: box.width / 2, y: box.height / 2 } });
-  await expect(
-    page.getByRole("button", { name: "Bau bestätigen", exact: true }),
-  ).toBeEnabled({ timeout: 20000 });
-  await snap("tutorial-bau-kosten");
+  await page.getByRole("button", { name: "Standorte", exact: true }).click();
   await page
-    .getByRole("button", { name: "Bau bestätigen", exact: true })
+    .getByRole("button", { name: "Standort kaufen", exact: true })
+    .click();
+  await page
+    .getByLabel("Kaufstatus", { exact: true })
+    .selectOption("available");
+  await page.getByLabel("Ort, Adresse oder Standortname").fill("Berlin");
+  await page.locator(".facility-result").first().click();
+  await page.getByRole("button", { name: /^Kaufen ·/ }).click();
+  await snap("tutorial-standort-kosten");
+  await page
+    .getByRole("button", { name: "Kauf verbindlich bestätigen", exact: true })
     .click();
   await expect
     .poll(async () => (await ipc("practice-save")).buildings.length)

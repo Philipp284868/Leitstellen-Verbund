@@ -47,6 +47,8 @@ test.beforeAll(async () => {
       );
       return;
     }
+    if (url.pathname === "/api/facilities")
+      return json({ snapshot: "fixture", clusters: [] });
     if (url.pathname === "/geo/manifest")
       return json({ bounds: [5.5, 47.1, 15.6, 55.2], minzoom: 0, maxzoom: 14 });
     if (url.pathname.startsWith("/geo/pois/"))
@@ -56,13 +58,13 @@ test.beforeAll(async () => {
         points: [
           {
             id: "index:fixture-hospital",
-            category: "hospital",
-            name: "Klinik aus POI-Testdaten",
+            category: "education",
+            name: "Schule aus POI-Testdaten",
             lon: 13.407,
             lat: 52.52,
             count: 1,
             source: "index",
-            kind: "hospital",
+            kind: "school",
           },
         ],
       });
@@ -195,38 +197,33 @@ test("Deutschland-Renderer: CSP-Worker, PC-Steuerung, Such-API und unabhängige 
   expect(errors).toEqual([]);
 });
 
-test("Deutschland-Bauvorschau: kein Kauf nach Drag und Spielmodus bei Serverprüfung", async ({
+test("Freie Kartenfläche erlaubt weder nach Ziehen noch nach Klick einen Gebäudekauf", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1600, height: 1080 });
   await page.goto(`${origin}/__controls`);
+  const map = page.getByLabel("Interaktive Karte von Deutschland", {
+    exact: true,
+  });
+  await expect(map).toBeVisible();
   await expect(
-    page.getByLabel("Interaktive Karte von Deutschland", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Testbau starten" }).click();
+    page.getByRole("button", { name: "Testbau starten" }),
+  ).toHaveCount(0);
   await page.mouse.move(1000, 450);
   await page.mouse.down();
   await page.mouse.move(1100, 480, { steps: 8 });
   await page.mouse.up();
-  await expect(
-    page.getByRole("button", { name: "Bau bestätigen" }),
-  ).toHaveCount(0);
   await page.mouse.click(1000, 450);
   await expect(
     page.getByRole("button", { name: "Bau bestätigen" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Kauf verbindlich bestätigen" }),
+  ).toHaveCount(0);
+  await expect(page.getByTestId("selection")).not.toHaveText("placed");
+  await expect(
+    page.getByLabel("Standorte nach Organisation filtern"),
   ).toBeVisible();
-  expect(requests).toContain("mode:multi");
-  await page.getByRole("button", { name: "Bau bestätigen" }).click();
-  await expect(page.getByTestId("selection")).toHaveText("placed");
-  await page.getByRole("button", { name: "Testbau starten" }).click();
-  const map = page.getByLabel("Interaktive Karte von Deutschland", {
-    exact: true,
-  });
-  await map.focus();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: "Bau abbrechen" })).toHaveCount(
-    0,
-  );
 });
 
 test("Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Filter und Kamerasprung", async ({
@@ -283,7 +280,7 @@ test("Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Fi
     name: "Geografische Einrichtung",
   });
   await expect(
-    detail.getByRole("heading", { name: "Klinik aus POI-Testdaten" }),
+    detail.getByRole("heading", { name: "Schule aus POI-Testdaten" }),
   ).toBeVisible();
   await expect(detail).toContainText("geografischer Karteneintrag");
   await expect(page.getByTestId("inspection-count")).toHaveText("2");
@@ -387,13 +384,13 @@ test("drei Einrichtungen an derselben Koordinate bleiben auch bei Zoom 18 vollst
         snapshot: "fixture",
         points: ["A", "B", "C"].map((letter) => ({
           id: `index:coincident-${letter}`,
-          category: "hospital",
-          name: `Klinik ${letter} am gemeinsamen Teststandort`,
+          category: "education",
+          name: `Schule ${letter} am gemeinsamen Teststandort`,
           lon: 13.407,
           lat: 52.52,
           count: 1,
           source: "index",
-          kind: "hospital",
+          kind: "school",
         })),
       },
     }),
@@ -445,12 +442,12 @@ test("drei Einrichtungen an derselben Koordinate bleiben auch bei Zoom 18 vollst
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await expect(group.locator(".map-object-list button")).toHaveCount(3);
     await group
-      .getByRole("button", { name: new RegExp(`Klinik ${letter} `) })
+      .getByRole("button", { name: new RegExp(`Schule ${letter} `) })
       .click();
     await expect(group).toHaveCount(0);
     await expect(
       detail.getByRole("heading", {
-        name: `Klinik ${letter} am gemeinsamen Teststandort`,
+        name: `Schule ${letter} am gemeinsamen Teststandort`,
         exact: true,
       }),
     ).toBeVisible();

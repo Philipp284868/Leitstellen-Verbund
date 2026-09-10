@@ -1,3 +1,4 @@
+import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { advanceUntil } from "../helpers/simulation-time";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -59,8 +60,15 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   page.on("pageerror", (e) => errors.push(e.message));
   const seed = phaseFixture(owner);
   seed.buildings[0].organization = newStationProfile("fire");
+  // This scenario needs both the permanent core and real volunteer journeys.
+  seed.buildings[0].readinessCore = {
+    version: 1,
+    count: 4,
+    created: seed.time,
+  };
   for (const [index, p] of seed.people.entries()) {
     p.vehicle = null;
+    delete p.professional;
     p.duty = {
       ...personDuty(seed, p),
       homeNode: index + 1,
@@ -68,7 +76,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
     };
   }
   forceVolunteerAvailability(seed, true, 7200);
-  app.db.save(owner, seed);
+  replaceFixtureSave(app.db, owner, seed);
   await enter(page);
   await page.getByRole("button", { name: "Standorte", exact: true }).click();
   await page.getByRole("dialog").locator(".station-card").first().click();
@@ -352,9 +360,18 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
     "Sichtung und Versorgung",
   );
   await page.getByRole("button", { name: "Beauftragen", exact: true }).click();
-  await page
+  // A different clinic with the full simulated profile leaves time to observe transport.
+  const clinicChoice = await page
     .getByLabel("Bevorzugtes Krankenhaus")
-    .selectOption("public:way:100000");
+    .locator("option")
+    .evaluateAll((options) =>
+      options
+        .filter((o) => o.textContent?.includes("Maximalversorgung"))
+        .at(-1)
+        ?.getAttribute("value"),
+    );
+  expect(clinicChoice).toBeTruthy();
+  await page.getByLabel("Bevorzugtes Krankenhaus").selectOption(clinicChoice!);
   await expect
     .poll(
       () =>
@@ -363,10 +380,10 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
           .get(owner)!
           .missions.find((entry) => entry.id === m.id)!.organization?.hospital,
     )
-    .toBe("public:way:100000");
+    .toBe(clinicChoice);
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toBeEnabled();
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(
-    "public:way:100000",
+    clinicChoice!,
   );
   const ambulanceChoice = page
     .locator(".dispatch-list label")
@@ -399,7 +416,7 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await expect(page.getByLabel("Bevorzugtes Krankenhaus")).toHaveValue(
-    "public:way:100000",
+    clinicChoice!,
   );
   await expect(page.getByLabel("Organisationsaufträge")).toContainText(
     "Beauftragt",
