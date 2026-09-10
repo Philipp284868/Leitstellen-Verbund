@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
+  accessSync,
+  constants,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -138,6 +140,17 @@ export function prepareInstallation({
     settings,
     environment: { ...environment, ...settings },
   };
+  for (const path of [config.programRoot, settings.DATA_DIR]) {
+    let parent = path;
+    while (!existsSync(parent)) parent = resolve(parent, "..");
+    try {
+      accessSync(parent, constants.R_OK | constants.W_OK | constants.X_OK);
+    } catch {
+      throw Error(
+        `Rechtefehler: AMP benötigt Lese-/Schreibzugriff auf ${parent}. Eigentümer und Volume-Rechte prüfen.`,
+      );
+    }
+  }
   const inspection = inspectInstallation(config, { allowMissingGeo: true });
   if (
     !identity &&

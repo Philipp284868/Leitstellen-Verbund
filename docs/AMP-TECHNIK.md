@@ -18,7 +18,7 @@ Linux-Verzeichnisse erhalten Modus 700, private Dateien 600. Auf Windows muss zu
 node scripts/diagnose.mjs
 ```
 
-Benötigt nur Node.js 24 und Repository-Skripte, keinen Build und keine `.env`. Zeigt notwendige Konfigurationsquellen, Pfade, Welt-/Datenstatus und nächsten Schritt. Beliebige Konfigurationswerte, Passwörter, Cookies oder Schlüssel werden nicht ausgegeben. Keine Migration, kein Entsperren, kein Reset. Bei einem WAL-Bestand ohne vorhandene SHM-Datei wird nicht versucht, SQLite-Koordinationsdateien anzulegen; Server sauber stoppen und Bestand prüfen.
+Benötigt nur Node.js 24 und Repository-Skripte, keinen Build und keine `.env`. Zeigt notwendige Konfigurationsquellen, Pfade, Welt-/Datenstatus, Werkzeugvorhandensein, TCP-/Router-Erreichbarkeit und nächsten Schritt. Beliebige Konfigurationswerte, Passwörter, Cookies oder Schlüssel werden nicht ausgegeben. Keine Migration, kein Entsperren, kein Reset. SQLite kann im WAL-Modus selbst bei schreibgeschützter Öffnung Koordinationsdateien erzeugen. Deshalb werden solche Bestände in einer privaten temporären Bytekopie geprüft; die Quellverzeichnisse bleiben unverändert. Während der Kopie veränderte Bestände werden abgelehnt und müssen bei gestopptem Server erneut geprüft werden.
 
 Eindeutig gebundene gültige Installation: denselben normalen Setup-Befehl ausführen. Für einen validierten älteren Bestand ohne vertrauenswürdige Zuordnung:
 

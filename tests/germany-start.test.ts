@@ -193,6 +193,21 @@ afterEach(async () => {
 });
 
 describe("Deutschland-Start und Bestandsschutz", () => {
+  it("reports an occupied game port before launching any child", async () => {
+    const server = createServer();
+    await new Promise<void>((done) =>
+      server.listen(gamePort, "127.0.0.1", done),
+    );
+    try {
+      const result = await launch().ended;
+      expect(result.code).toBe(1);
+      expect(result.output).toContain(`Spielport 127.0.0.1:${gamePort}`);
+      expect(result.output).toContain("bereits belegt");
+      expect(await events()).toBe("");
+    } finally {
+      await new Promise<void>((done) => server.close(() => done()));
+    }
+  });
   it("rejects competing legacy files instead of choosing another world", async () => {
     await writeFile(
       resolve(app, ".env"),

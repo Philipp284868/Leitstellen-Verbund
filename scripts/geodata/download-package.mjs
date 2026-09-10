@@ -24,6 +24,7 @@ import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { createGunzip } from "node:zlib";
+import { resolveConfiguration } from "../configuration.mjs";
 
 const defaultManifest = fileURLToPath(
   new URL("./download-manifest.json", import.meta.url),
@@ -402,7 +403,9 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   try {
-    await installGeodata({ target: process.env.GEODATA_DIR });
+    const programRoot = fileURLToPath(new URL("../../", import.meta.url));
+    const config = resolveConfiguration({ programRoot, requirePaths: false });
+    await installGeodata({ target: config.settings.GEODATA_DIR, programRoot });
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

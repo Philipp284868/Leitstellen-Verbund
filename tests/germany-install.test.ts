@@ -1,6 +1,8 @@
+import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   copyFileSync,
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -59,7 +61,9 @@ function snapshot(root: string): Record<string, string> {
   }))
     if (file.isFile()) {
       const path = resolve(file.parentPath, file.name);
-      result[path] = readFileSync(path).toString("base64");
+      result[path] = createHash("sha256")
+        .update(readFileSync(path))
+        .digest("hex");
     }
   return result;
 }
@@ -166,7 +170,29 @@ describe("AMP installation and recovery", () => {
       contents().replace("PORT=7777", "PORT=invalid"),
     );
     expect(() => configure()).toThrow("PORT");
+    expect(() => configure({ PORT: "7777" })).toThrow("PORT");
     expect(snapshot(directory)).toEqual(before);
+  });
+  it.runIf(process.platform !== "win32")(
+    "rejects publicly readable installation identity on Linux",
+    () => {
+      configure();
+      const file = resolve(installationLocation(app), "installation.json");
+      chmodSync(file, 0o644);
+      expect(() => configure()).toThrow("Rechtefehler");
+      chmodSync(file, 0o600);
+    },
+  );
+  it("migrates a legacy-only file without losing its data paths", () => {
+    const { data, geo } = game();
+    configFile(data, geo, ".env.germany");
+    const result = configure();
+    expect(result.migrated).toBe(true);
+    expect(parseEnv(contents())).toMatchObject({
+      DATA_DIR: data,
+      GEODATA_DIR: geo,
+    });
+    expect(existsSync(resolve(app, ".env.germany"))).toBe(false);
   });
   it.each(["DATA_DIR", "GEODATA_DIR"])(
     "rejects silent AMP path changes for %s",

@@ -2,16 +2,21 @@ import { DatabaseSync } from "node:sqlite";
 import { createHash, randomUUID } from "node:crypto";
 import {
   closeSync,
+  copyFileSync,
   existsSync,
   fsyncSync,
   mkdirSync,
+  mkdtempSync,
   openSync,
   readFileSync,
+  readSync,
   readdirSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { canonical, inside, present, regularFile } from "./configuration.mjs";
 
 export const DATABASE_VERSION = 18;
@@ -53,16 +58,46 @@ export function privateBackup(directory, name, bytes) {
 }
 function readDatabase(file, inspect) {
   if (!regularFile(file)) throw Error(`Daten fehlen: ${file}`);
-  // Do not let SQLite create shared-memory coordination files during diagnosis.
-  if (existsSync(file + "-wal") && !existsSync(file + "-shm"))
-    throw Error(
-      `Datenbank mit unvollständigem WAL-Zustand: ${file}. Server sauber stoppen und Sicherung prüfen; keine automatische Reparatur.`,
-    );
-  const db = new DatabaseSync(file, { readOnly: true });
+  // SQLite can create WAL/SHM files even on a read-only connection. Inspect WAL
+  // databases in a private, stable byte snapshot, never in the operator directory.
+  const fd = openSync(file, "r"),
+    header = Buffer.alloc(100);
   try {
+    readSync(fd, header, 0, 100, 0);
+  } finally {
+    closeSync(fd);
+  }
+  let temporary, db;
+  try {
+    let input = file;
+    if (header[18] === 2 || header[19] === 2 || existsSync(file + "-wal")) {
+      temporary = mkdtempSync(resolve(tmpdir(), "lv-readonly-inspection-"));
+      input = resolve(temporary, "snapshot.sqlite");
+      const signature = (path) => {
+        const entry = present(path);
+        return entry
+          ? `${entry.ino}:${entry.size}:${entry.mtimeMs}`
+          : "missing";
+      };
+      const before = [signature(file), signature(file + "-wal")];
+      copyFileSync(file, input);
+      if (before[1] !== "missing") {
+        regularFile(file + "-wal");
+        copyFileSync(file + "-wal", input + "-wal");
+      }
+      if (
+        JSON.stringify(before) !==
+        JSON.stringify([signature(file), signature(file + "-wal")])
+      )
+        throw Error(
+          "Spieldaten wurden während der Diagnose geändert. Server regulär stoppen und erneut prüfen.",
+        );
+    }
+    db = new DatabaseSync(input, { readOnly: true });
     return inspect(db);
   } finally {
-    db.close();
+    db?.close();
+    if (temporary) rmSync(temporary, { recursive: true, force: true });
   }
 }
 export function inspectGeodata(directory) {
@@ -134,6 +169,16 @@ export function inspectGame(directory, dataset) {
     for (const name of ["users", "saves", "meta", "sessions"])
       if (!tables.has(name))
         throw Error(`Fremde Datenbank, Tabelle ${name} fehlt: ${file}`);
+    for (const [table, columns] of [
+      ["users", "id,username,password,role,created"],
+      ["sessions", "hash,user_id,csrf,expires"],
+      ["saves", "user_id,data"],
+      ["actions", "user_id,id,fingerprint"],
+      ["rewards", "id,user_id,amount"],
+      ["limits", "key,count,until_at"],
+      ["audit", "id,at,actor,event"],
+    ])
+      db.prepare(`SELECT ${columns} FROM ${table} LIMIT 0`).all();
     const identity = db
       .prepare("SELECT value FROM meta WHERE key='world-identity-v1'")
       .get();

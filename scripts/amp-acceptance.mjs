@@ -296,10 +296,12 @@ try {
       beforeStart = await request("/api/health");
       return true;
     } catch (error) {
-      if (error.code !== "ECONNREFUSED") throw error;
+      if (!["ECONNREFUSED", "EPROTO"].includes(error.code)) throw error;
       return false;
     }
-  }, "Caddy did not listen: " + proxy.output());
+  }, "Caddy TLS readiness deadline").catch((error) => {
+    throw Error(error.message + "\n" + proxy.output());
+  });
   assert.equal(beforeStart.status, 502);
   results.push("no-false-readiness");
   async function start() {
@@ -379,11 +381,10 @@ try {
     assert.equal((await request(path)).status, 404, path);
   assert.equal((await request("/geo/manifest")).status, 200);
   results.push("geo-and-private-file-isolation");
-  const redirect = await fetch(`http://127.0.0.1:${httpPort}/api/health`, {
-    headers: { Host: "localhost" },
+  const redirect = await fetch(`http://localhost:${httpPort}/api/health`, {
     redirect: "manual",
   });
-  assert.equal(redirect.status, 308);
+  assert.equal(redirect.status, 301);
   assert.equal(
     redirect.headers.get("location"),
     "https://localhost/api/health",

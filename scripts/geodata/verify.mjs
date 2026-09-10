@@ -5,11 +5,18 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { build } from "esbuild";
+import { resolveConfiguration } from "../configuration.mjs";
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const configuration = resolveConfiguration({
+  programRoot: repo,
+  requirePaths: false,
+});
 const root = resolve(
-  process.env.GEODATA_DIR || join(repo, "../leitstellen-deutschland-geodata"),
+  repo,
+  configuration.settings.GEODATA_DIR || "../leitstellen-deutschland-geodata",
 );
-const origin = process.env.GRAPHHOPPER_URL || "http://127.0.0.1:8989";
+const origin =
+  configuration.settings.GRAPHHOPPER_URL || "http://127.0.0.1:8989";
 const adapterBuild = await build({
   entryPoints: [join(repo, "src/germany/route.ts")],
   bundle: true,
