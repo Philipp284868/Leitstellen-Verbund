@@ -1,6 +1,6 @@
 import { it, expect } from "vitest";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtemp, readdir } from "node:fs/promises";
+import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { Database } from "../server/database";
@@ -25,7 +25,11 @@ it("erhält die alte Datenbank bei abgebrochener Migration und verweigert neuere
   expect((await readdir(dir)).some((f) => f.startsWith("pre-migration-"))).toBe(
     true,
   );
+  const futureBytes = await readFile(path);
+  const futureFiles = await readdir(dir);
   expect(() => new Database(dir)).toThrow("neuer");
+  expect(await readFile(path)).toEqual(futureBytes);
+  expect(await readdir(dir)).toEqual(futureFiles);
   original = new DatabaseSync(path);
   expect(original.prepare("PRAGMA user_version").get()!.user_version).toBe(99);
   original.close();

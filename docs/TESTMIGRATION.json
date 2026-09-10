@@ -1,0 +1,1816 @@
+{
+  "baseline": "03e9878217292f1879d71a01a7722e87dc14eb1d",
+  "note": "Inventar vor Entfernung. A: entfallen, B: aktuelle Funktion, C: Formatbrücke. Endgültige Ersatznachweise werden mit der Umsetzung ergänzt.",
+  "entries": [
+    {
+      "old": "tests/aid-wishes.test.ts",
+      "category": "B",
+      "requirements": [
+        "freie Wünsche bleiben privat, werden übertragen und historisiert; geeignete Alternative bindet nur eigene stabile IDs",
+        "Wunschfeld akzeptiert höchstens 20 Texte mit 80 Zeichen und keine Kontrollzeichen"
+      ],
+      "replacement": "tests/aid-wishes.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/aid-withdrawal.test.ts",
+      "category": "B",
+      "requirements": [
+        "verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatzkräfte die Besitzerlage decken"
+      ],
+      "replacement": "tests/aid-withdrawal.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/amp-autostart.test.ts",
+      "category": "B",
+      "requirements": [
+        "AMP startet ohne Admin-Erstellung und ignoriert frühere Admin-Dateien auch nach Neustart"
+      ],
+      "replacement": "tests/amp-autostart.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/approach-context.test.ts",
+      "category": "B",
+      "requirements": [
+        "invalidates cached standby turnout after withdrawal and keeps moving requests stable within one interval"
+      ],
+      "replacement": "tests/approach-context.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/audio-local.test.ts",
+      "category": "B",
+      "requirements": [
+        "ausschließlich lokaler Audiospeicher",
+        "speichert lange große Dateien als Blob, liest nur Metadaten beim Start und kann ersetzen/löschen",
+        "migriert vorhandene v1-ArrayBuffer ohne Datei-/Einstellungsverlust",
+        "ein fehlgeschlagener atomarer Ersatz behält Datei und Metadaten",
+        "berücksichtigt reale Browserquota und erfindet bei fehlendem API keinen Grenzwert",
+        "lässt geschützte Kanäle auch über die Speicher-API nicht überschreiben",
+        "unterscheidet normale, Sprechwunsch-, Prioritäts- und Notfallkanäle und migriert Lautstärken",
+        "prüft passende WAV/MP3/OGG-Container ohne Größen-/Spieldauergrenze",
+        "probe reads only the header and releases its local URL on codec failure"
+      ],
+      "replacement": "tests/audio-local.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/audio-multichannel.test.ts",
+      "category": "B",
+      "requirements": [
+        "migriert lokale Regler v1 ohne eine explizite Stummschaltung aufzuheben und isoliert Gruppen",
+        "sichert ausschließlich lokale Audioeinstellungen und prüft Import/Migration ohne Speicherung",
+        "senkt bei überlappender Kommunikation bis zum letzten Ende ab und stellt den aktuellen Regler wieder her",
+        "übernimmt mehrere lokale Zuordnungen atomar und bewahrt beim Quota-Abbruch sämtliche Originale",
+        "Vorschau/Verwerfen/Übernehmen umfasst Regler UND Dateien, auch nach der ersten Übernahme",
+        "Speicherfehler werden gemeldet und bewahren Datei sowie gespeicherte Regler",
+        "eine verspätete Dateioperation kann nach Verwerfen keine lokale Datei ändern",
+        "koordiniert Mehrfachtabs je Konto und gibt beim Logout frei; gesperrter BroadcastChannel stört das Spiel nicht",
+        "initialisiert Audio auch ohne Secure-Context-randomUUID und benutzt die sichere vorhandene Zufallsquelle für Tabkennungen",
+        "liefert mehrere neue autorisierte Ereignisse einzeln und spielt bei Moduswechsel/Reload/offline keine Historie"
+      ],
+      "replacement": "tests/audio-multichannel.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/audio.test.ts",
+      "category": "B",
+      "requirements": [
+        "normalisiert beschädigte Lautstärken und behält explizite Stummschaltung",
+        "meldet neue Einsätze einmal und spielt beim Einstieg, Reload oder alten Snapshots nichts nach",
+        "isoliert Konto, Spielgeneration und Offline-Wiederverbindung",
+        "unterscheidet Alarmierung, Ankunft, Rückkehr, Bau und Erfolg, ohne Sammelmeldungen zu stapeln"
+      ],
+      "replacement": "tests/audio.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/availability-security.test.ts",
+      "category": "B",
+      "requirements": [
+        "rejects incomplete, impossible and misindexed persisted post-incident work",
+        "recovers queued work at station exactly once and keeps dispatch locked until every task ends",
+        "injury blocks both regular crews and volunteer overrides, including injuries during turnout"
+      ],
+      "replacement": "tests/availability-security.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/build-tools.test.ts",
+      "category": "B",
+      "requirements": [
+        "Bereinigung zeigt zuerst eine Vorschau und schützt Daten sowie verknüpfte Ausgaben",
+        "inkrementelle Artefakte sind an Eingaben gebunden und beschädigte/zusätzliche Ausgaben werden neu gebaut"
+      ],
+      "replacement": "tests/build-tools.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/building-staffing-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "supplies staff through real build/buy sessions, serializes shared crews and persists them across restart"
+      ],
+      "replacement": "tests/building-staffing-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/building-staffing-migration.test.ts",
+      "category": "B",
+      "requirements": [
+        "migriert den echten DB13-Bestand mit Rückfahrt, Verletzung und bezahltem Auftrag ohne Bindungsverlust"
+      ],
+      "replacement": "tests/building-staffing-migration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/building-staffing.test.ts",
+      "category": "B",
+      "requirements": [
+        "automatic building staffing",
+        "commissions a new station with real staff without a hire action",
+        "makes a permitted ambulance usable immediately after purchase without assignment",
+        "provisions all legal fire slots, with separate crews for one simultaneous alarm",
+        "keeps FF calendar and response time while guaranteeing ordinary baseline availability",
+        "does not introduce a roster absence for automatically covered professional stations",
+        "provides newly unlocked qualifications only with the actual completed building function",
+        "makes additional slots usable after an upgrade without a second recruitment delay",
+        "never adds a replacement to a transport or heals its injured bound crew",
+        "replaces an injured standby member within station capacity and retains the injury record",
+        "preserves a returning occupied crew and exact road position through provisioning and an upgrade",
+        "migrates paid training once and preserves profiles, original people and balance",
+        "finishes pending training in a cloned dry run without touching its source",
+        "does not materialize dispatch crews for real map POIs or infrastructure service buildings",
+        "treats repeated old hire and assign requests as free no-ops on a complete station"
+      ],
+      "replacement": "tests/building-staffing.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/call-workspace.test.ts",
+      "category": "B",
+      "requirements": [
+        "fragt adaptiv, disponiert während des Gesprächs und erhält Quellen nach Wiederholung und Reload",
+        "bewahrt bei Übergabe bekannte Angaben, beantwortet Ergänzungen und schützt fremde Bearbeitung"
+      ],
+      "replacement": "tests/call-workspace.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/capability-tasks.test.ts",
+      "category": "B",
+      "requirements": [
+        "fähigkeitsbasierte Disposition und tatsächliche Aufgaben",
+        "benötigt den tatsächlich geforderten Löschwassernachschub, bevor die Brandarbeit voranschreitet",
+        "wählt Fähigkeiten ohne Typvorgabe und ersetzt gesperrte Löschfahrzeuge durch geeignete Alternativen",
+        "respektiert explizite Typwünsche und verrät vor Erkundung keine Spezialanforderungen",
+        "erhält Spezialbedarf und lässt eine Crew Brand und technische Rettung nacheinander bearbeiten",
+        "meldet echte serverseitige Trends und kann einen erledigten Brand nicht durch Kräfteabzug neu starten",
+        "migriert nur additive Aufgaben, bewahrt Fortschritt und bereits erledigte Gefahren",
+        "eröffnet ein vollständig gelöschtes Feuer auch bei späterer Großlagenerklärung nicht erneut",
+        "erzwingt echte Arbeit für zusätzliche Rettungsaufgaben auch nach erledigtem Feuer",
+        "reproduziert Aufgaben, Brand und Abschlussdaten nach Speichern und Wiederaufnahme",
+        "atomarer bedarfsgerechter Kräfteabzug",
+        "indiziert 500 Einsatzfahrzeuge einmal je Snapshot statt für jede einzelne sichtbare Zeile erneut",
+        "lässt fertig arbeitende Feuerwehr abfahren, während Rettungsdienst und tatsächliche Patientenversorgung offen bleiben",
+        "weist gemeinsamen Abzug zurück, obwohl jedes einzelne Fahrzeug redundant wäre",
+        "gibt überschüssige Kräfte frei, protokolliert einmalig und weist Wiederholung oder Fremd-IDs zurück",
+        "bindet tatsächliche Patienten unabhängig von verfügbarer Ersatzkapazität",
+        "zählt verifizierte Helferressourcen einmal und lässt unerkundete Lagen nicht freigeben",
+        "bewahrt den vollständigen Originalstand, wenn erst die zweite Rückroute fehlschlägt",
+        "behält Kräfte in offenen Abschnitten und die tatsächlich benannte Abschnittsleitung",
+        "prüft Helferrückruf gegen die echte Besitzerlage ohne erfundene Besitzrechte oder doppelte Kräfte"
+      ],
+      "replacement": "tests/capability-tasks.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/catalog-expansion.test.ts",
+      "category": "B",
+      "requirements": [
+        "Vollständiger fachlicher Einsatzkatalog",
+        "misst Fahrzeugbindung bis zur tatsächlichen Freigabe und bewahrt mehr als 500 dokumentierte Einheiten",
+        "speichert eine neu entstandene Explosionsgefahr zusätzlich zu einem vollen Anfangsprofil",
+        "protokolliert Gefahren und Patientenzustandsübergänge einmalig statt pro Tick",
+        "deckt alle 206 Auftragsthemen ab, bewahrt die 41 alten IDs und erzeugt über 500 echte Situationen",
+        "hinterlegt echte Profilunterschiede statt nur andere Namen",
+        "validiert jedes persistierte Profil und jede Anforderung einschließlich Organisationsaufgaben",
+        "alle Situationen lassen sich mit ihren tatsächlich benötigten Kräften stabilisieren",
+        "bewahrt Profile bytegleich beim Wiederanbinden und stellt keine unerkannten Befunde öffentlich bereit",
+        "nutzt passende Patientenbefunde für Reanimation, Säuglinge, Blutung und Temperatur",
+        "unterscheidet reale Brennstoffe und Ausdehnung",
+        "ordnet Wasserlagen nur bestätigten Zugängen zu und kennzeichnet Bootsbedarf ausdrücklich",
+        "gewichtet Wetter, Berufsverkehr, Schule, Nacht und Jahreszeit tatsächlich",
+        "erzeugt MANV mit realen Abschnitten und patientenbezogenen Anforderungen",
+        "erzeugt kausale Folgeeinsätze auch bei bereits über 60 offenen Einsätzen",
+        "wiederholt die neue Simulation nach Speichern deterministisch",
+        "Spezialfahrzeuge und Bewertung",
+        "ergänzt FW/RD bei unverändertem Polizei-/THW-Fahrzeugset und echten Fähigkeiten",
+        "verhindert ungeeigneten Intensivtransport durch ein normales Rettungsmittel",
+        "hält Planfahrzeiten fest und bewertet lange pünktliche Deutschlandfahrten fair",
+        "verwendet tatsächliche Eskalationen statt anfänglicher Alarmstufe und erzeugt keine XP-Bonusfarm",
+        "ein Unfall auf Anfahrt immobilisiert am realen Fahrzeugort ohne Patiententeleport"
+      ],
+      "replacement": "tests/catalog-expansion.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/catalog-lifecycle.test.ts",
+      "category": "B",
+      "requirements": [
+        "hält auch mehr als 500 tatsächlich zugeordnete Einsatzkräfte im Roster und im Speicherschema",
+        "eine neue vollständige Fahrzeugbesatzung wird nicht durch eine alte verletzte Zuweisung blockiert",
+        "schließt %s mit Organisationsaufträgen und gegebenenfalls echten Klinikfahrten ab",
+        "schließt neue Großlage %s mit Führung, echten Abschnitten und gegebenenfalls Nacherkundung/Patientenübergaben ab",
+        "macht eine tatsächlich gefährdete Einsatzkraft zum Patienten, statt nur einen Text anzuzeigen",
+        "verletzte Besatzung bleibt nach Reparatur unwirksam und wird erst nach Übergabe und Genesung wieder verfügbar",
+        "der Tod einer realen Einsatzkraft kann nicht durch Einsatzabschluss oder Zeitablauf zurückgesetzt werden"
+      ],
+      "replacement": "tests/catalog-lifecycle.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/cats-readiness.test.ts",
+      "category": "B",
+      "requirements": [
+        "reale KatS-Bereitschaft",
+        "empfiehlt anhand kombinierter Last und hält verschiedene Ein-/Ausschaltschwellen ein",
+        "behandelt mit GW-SAN und transportiert mit NKTW bis zur echten Klinikübergabe und Nachbereitung",
+        "baut einen tatsächlichen Standort und alarmiert GW-SAN/NKTW ohne Katastrophenalarm",
+        "sammelt dieselben realen Kräfte, verkürzt nur erneutes Sammeln und überlebt einen Neustart",
+        "prüft Leitung, Mindestlaufzeit, Abklingzeit und erhält gebundene Personen beim Beenden",
+        "migriert Timerbereitschaft idempotent ohne falsche Anwesenheit oder Ressourcenänderung"
+      ],
+      "replacement": "tests/cats-readiness.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/communication-migration.test.ts",
+      "category": "B",
+      "requirements": [
+        "versioniert alte Anfragen ohne neue Fahrzeugzuweisung oder Funkwiederholung, Vorschau und Wiederholung bleiben sicher"
+      ],
+      "replacement": "tests/communication-migration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/dev-server.test.ts",
+      "category": "B",
+      "requirements": [
+        "Entwicklungsserver stoppt per IPC und erhält Konto sowie Sperrfreiheit beim Neustart"
+      ],
+      "replacement": "tests/dev-server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/dev-watch.test.ts",
+      "category": "B",
+      "requirements": [
+        "Dev erstellt eigene Daten, übernimmt Serveränderungen, erhält bei Compilerfehlern den letzten Server und stoppt alle Prozesse"
+      ],
+      "replacement": "tests/dev-watch.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/device-preferences.test.ts",
+      "category": "B",
+      "requirements": [
+        "versioned workstation settings",
+        "migrates local workspace without sharing it through the world",
+        "rejects unbounded values and detects duplicate draft shortcuts without deleting either assignment",
+        "finds existing menu and settings destinations without depending on hidden mission data"
+      ],
+      "replacement": "tests/device-preferences.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/dispatch-expansion.test.ts",
+      "category": "B",
+      "requirements": [
+        "generates and reloads more than 60 simultaneous incidents without a hidden count limit",
+        "normal calls receive no automatic duplicate, including legacy pending timers",
+        "major callers contribute different observations and incomplete lost calls can recover",
+        "real transport work blocks return with FMS 6, then home arrival starts persisted medical aftercare",
+        "server readiness overrides forged cached availability and manual FMS changes",
+        "unbounded history is persistent and paginated without leaking to other owners",
+        "six priorities preserve legacy values and sort high urgency first",
+        "vehicle requirements recognize equivalent equipment without raw skill names",
+        "arrival rate slows with an unresolved backlog and keeps the minimum in busy daytime conditions"
+      ],
+      "replacement": "tests/dispatch-expansion.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/account-support.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Passwortdialog verhindert Mismatch, erhält Eingaben bei falschem Altpasswort und widerruft beim erfolgreichen Wechsel alle alten Sitzungen",
+        "Passwortentwurf lässt sich weiter bearbeiten oder verwerfen; erneutes Öffnen enthält keine alten Geheimnisse",
+        "Support behandelt tatsächlich verweigerte Clipboard-Berechtigung mit manuellem Fallback und kopiert nach Freigabe erfolgreich",
+        "Support ohne Clipboard-API bietet weiterhin auswählbaren manuellen Text und löst keine Serveraktion aus",
+        "Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerruft nur diese Sitzung und erhält den Spielstand"
+      ],
+      "replacement": "tests/e2e/account-support.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/audio-custom.spec.ts",
+      "category": "B",
+      "requirements": [
+        "große lange WAV bleibt lokal, überlebt Reload und lässt sich zuweisen, deaktivieren, ersetzen, stoppen und löschen",
+        "Quota- und Codecfehler erhalten den alten Sound und Prioritäts-/Notfallton verdrängen eigene Aufnahmen",
+        "Tabwechsel und Abmeldung geben lokale Wiedergabequellen frei",
+        "Dateizuordnungen sind echte Entwürfe: Verwerfen und Schließen bewahren die gespeicherte Originaldatei"
+      ],
+      "replacement": "tests/e2e/audio-custom.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/audio-mixer.spec.ts",
+      "category": "B",
+      "requirements": [
+        "ein Kontext mischt Musik, Umgebung, Telefon und mehrere Instanzen derselben lokalen Datei; Aufnahme und Cleanup",
+        "sämtliche Fahrzeugkanäle laufen am Arbeitsplatz nacheinander; Notfall erhält unterbrochene Meldungen",
+        "überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und Szenenwechsel bleiben unabhängig",
+        "hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals eine Netzstimme",
+        "Hintergrundwahl und Mehrfachtab-Lease verhindern doppelte Ausgabe und geben Quellen beim Logout frei",
+        "beide vollständigen Musikarrangements und sämtliche Erzeuger liefern unterschiedliche, begrenzte Stereo-PCM-Ausgabe",
+        "fehlende Datei und abgelehnte Medienwiedergabe fallen hörbar auf Originale zurück; keine hängenden Blob-URLs"
+      ],
+      "replacement": "tests/e2e/audio-mixer.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/audio.spec.ts",
+      "category": "B",
+      "requirements": [
+        "echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und speichert getrennte Regler",
+        "nur der aktive Tab spielt und Abmeldung beendet die Ausgabe",
+        "fehlende Audio-Unterstützung blockiert das Spiel nicht",
+        "Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping",
+        "ein neuer bestätigter Servereinsatz löst ohne Bedienklick ein hörbares Signal aus",
+        "Audio-JSON-Sicherung exportiert gespeicherte Regler; Import ist eine verwerfbare, versionierte Vorschau"
+      ],
+      "replacement": "tests/e2e/audio.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/game.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponenten, Belohnung, Rückkehr und Reload",
+        "Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neustart und Wiederherstellung erhalten Besitz",
+        "Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht bestätigt",
+        "Export und validierte Altdateivorschau erlauben keine Übernahme fremden Guthabens",
+        "Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft die Sitzung",
+        "kleine Desktopansicht und notwendige Ressourcen bleiben auf demselben eigenen Server",
+        "amp-desktop-compact.png"
+      ],
+      "replacement": "tests/e2e/game.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/germany-map-controls.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Renderer: CSP-Worker, PC-Steuerung, Such-API und unabhängige Kameras (leere Testtiles)",
+        "Deutschland-Bauvorschau: kein Kauf nach Drag und Spielmodus bei Serverprüfung",
+        "Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Filter und Kamerasprung",
+        "Fahrzeuge mit identischen Koordinaten bleiben am Detailzoom einzeln erreichbar und verdecken die Wache nicht",
+        "drei Einrichtungen an derselben Koordinate bleiben auch bei Zoom 18 vollständig auswählbar"
+      ],
+      "replacement": "tests/e2e/germany-map-controls.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/history-expansion.spec.ts",
+      "category": "B",
+      "requirements": [
+        "73 aktive Einsätze, sechs Prioritäten, Reservehinweis und 137 dauerhaft paginierte Berichte"
+      ],
+      "replacement": "tests/e2e/history-expansion.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/http-connection.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller Reconnect ohne Lockerung des Servers"
+      ],
+      "replacement": "tests/e2e/http-connection.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/map-input.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Kartenbeschriftung bleibt beim Ziehen unmarkiert",
+        "Markerdrag, Folgeklick, Mausrad und Eingabefokus sind getrennt",
+        "Abbruch, HUD-Grenzen, Bauvorschau und erneutes Öffnen bleiben sicher",
+        "CSS-Pixelschwelle bleibt bei doppelter Pixeldichte korrekt"
+      ],
+      "replacement": "tests/e2e/map-input.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/menu-forms.spec.ts",
+      "category": "B",
+      "requirements": [
+        "AAO schützt Entwürfe, behält Fehler und sendet bei Doppelklick nur einen Auftrag",
+        "FMS-Definitionen und Alarmprofile übernehmen, verwerfen, Standard laden und nach Serverneustart erhalten",
+        "abgewiesene FMS-Korrektur behält Begründung, echte FMS6-Korrektur wird einmal gespeichert",
+        "Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher Alarm löscht nur den übertragenen Entwurf",
+        "Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbruch und Doppelbestellung",
+        "Fuhrpark verwirft Namensentwurf wirklich vor Filterwechsel und behält gespeicherten Namen"
+      ],
+      "replacement": "tests/e2e/menu-forms.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/modes.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe Serverwelt",
+        "Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat",
+        "HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per Tastatur bedienbar",
+        "große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in großen und kleinen Desktopfenstern"
+      ],
+      "replacement": "tests/e2e/modes.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/operations-expansion.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Garagen zeigen physische Anwesenheit und behalten ihren Klappzustand über Updates und Wiederverbindung",
+        "zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Alarmstellen nach späterem Login",
+        "gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Bereiche auf dem Desktop",
+        "zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, alarmieren und persistent abschließen",
+        "Lagebuch schützt Entwürfe und KatS- sowie Notrufansichten bleiben hell und auf kleinen Desktopfenstern bedienbar",
+        "gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher Zusage und Funkantwort bedienbar",
+        "freie Fahrzeugwünsche werden als privater Entwurf gespeichert, nach Versand beim Empfänger angezeigt und nach Neustart erhalten"
+      ],
+      "replacement": "tests/e2e/operations-expansion.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/phase-five.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht überstehen einen Serverneustart",
+        "Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Desktop und kleinem Desktopfenster",
+        "Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach Neuladen zurückgesetzt"
+      ],
+      "replacement": "tests/e2e/reports-replay.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/phase-four.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Großbrand ausrufen, frei alarmieren, Abschnitte und Leitung zuweisen und Historie prüfen",
+        "MANV-Sichtung und frühe Transporte bleiben über Browser- und Serverneustart erhalten",
+        "Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte Leitstellen"
+      ],
+      "replacement": "tests/e2e/incident-dynamics.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/phase-one.spec.ts",
+      "category": "B",
+      "requirements": [
+        "FMS-Definitionen, manuelle Sperre und Wachenprofil bleiben nach Reload wirksam"
+      ],
+      "replacement": "tests/e2e/call-dispatch.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/phase-three.spec.ts",
+      "category": "B",
+      "requirements": [
+        "FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neustart und Rückkehr",
+        "zwei Browser handeln eine Teilannahme aus, zeigen nur zugesagte Kräfte und setzen Hilfe nach Neustart fort",
+        "Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung wirksam"
+      ],
+      "replacement": "tests/e2e/mutual-aid.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/phase-two.spec.ts",
+      "category": "B",
+      "requirements": [
+        "dynamischer Brand, echte Fahrzeugpanne, automatische Behebung über Neustart, Taktik und Abschluss",
+        "Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und Krankenhausübergabe"
+      ],
+      "replacement": "tests/e2e/staffing-operations.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/presence.spec.ts",
+      "category": "B",
+      "requirements": [
+        "echte Präsenz: getrennte Konten, Standortsuche, Tabs, Grace, Berechtigungen und Neustart",
+        "vollständige Spielerübersicht bleibt bei vielen echten Verbindungen suchbar und blätterbar"
+      ],
+      "replacement": "tests/e2e/presence.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/progression-map.spec.ts",
+      "category": "B",
+      "requirements": [
+        "großer Browserbestand mit 100 Wachen, 500 Fahrzeugen und 40 Einsätzen bleibt bedienbar",
+        "reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, kleine Desktopansicht und Wiederverbindung"
+      ],
+      "replacement": "tests/e2e/progression-map.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/radio.spec.ts",
+      "category": "B",
+      "requirements": [
+        "zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und zum persistenten Archiv",
+        "Priorität, Kanal, Suche, eigene Übernahmen, Freigabe und leere Filter sind benutzbar"
+      ],
+      "replacement": "tests/e2e/radio.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/reference-ui.spec.ts",
+      "category": "B",
+      "requirements": [
+        "PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelden",
+        "Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt"
+      ],
+      "replacement": "tests/e2e/reference-ui.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/resource-actions.spec.ts",
+      "category": "B",
+      "requirements": [
+        "Versetzen, Fahrzeugverkauf und leerer Standortverkauf sind echte einmalige Buchungen und bleiben nach Neustart erhalten",
+        "Gebäudeausbau und technische Erweiterung warten den Bau ab und erlauben danach tatsächlich einen automatisch besetzten Rüstwagen"
+      ],
+      "replacement": "tests/e2e/resource-actions.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/rivermere.spec.ts",
+      "category": "A+B",
+      "requirements": [
+        "Rivermere: Region, Innenstadt, Außenorte, Anfahrt und Wiederverbindung",
+        "Rivermere: gemessene Kartenbewegung"
+      ],
+      "replacement": "tests/e2e/rivermere.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/settings-workstation.spec.ts",
+      "category": "B",
+      "requirements": [
+        "alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightmode bleibt mit festen Kategorien und Aktionen lesbar",
+        "Standardwerte und Arbeitsplatz-Reset sind verwerfbare Vorschauen; Audio bleibt innen scrollbar",
+        "Tastenkonflikte, Fokusfalle und Escape schützen Entwürfe; Dialogaktionen verändern weder Karte noch Spiel",
+        "lokale Speicherfehler bewahren alte Audio- und Geräteeinstellungen; Entwürfe bleiben korrigierbar"
+      ],
+      "replacement": "tests/e2e/settings-workstation.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/e2e/topbar-quality.spec.ts",
+      "category": "B",
+      "requirements": [
+        "kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei Menürückkehr",
+        "Fahrzeugname wird inline gespeichert; Abbrechen, Escape und Verkaufsabbruch ändern keine Daten",
+        "Tastatur erreicht die letzte Besatzungsdisclosure und bricht eine Verkaufsbestätigung ohne Dialogwechsel ab"
+      ],
+      "replacement": "tests/e2e/topbar-quality.spec.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/economy-migration.test.ts",
+      "category": "B",
+      "requirements": [
+        "Offline Euro-/Personal-Datenbankmigration 14",
+        "führt den tatsächlichen CLI-Dry-Run mit bytegleich erhaltener Datenbank aus",
+        "prüft ohne Änderung vorab und sichert alle alten Beträge vor der gemeinsamen Transaktion",
+        "bricht bei einem ungültigen Altbetrag ohne teilweise umgerechnete Konten ab",
+        "erkennt bereits in Cent gespeicherte Konten auch in gemischten Wartungsbeständen"
+      ],
+      "replacement": "tests/economy-migration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/economy-server.test.ts",
+      "category": "B",
+      "requirements": [
+        "Serverautoritatives Euro-Budget",
+        "verhindert doppelte Abbuchung und Doppelkäufe mehrerer Tabs mit einmaligen Aktionsbelegen",
+        "gibt beim Verkauf 60 Prozent des gespeicherten Kaufwerts und keine Neubewertungsgewinne",
+        "behandelt gewöhnliche Finanzierung über mehrere Serverobjekte einmalig und erlaubt keine alten Förderklicks"
+      ],
+      "replacement": "tests/economy-server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/economy.test.ts",
+      "category": "B",
+      "requirements": [
+        "Euro-Cent-Modell und vollständiger Preiskatalog",
+        "trägt sechs offengelegte Einstiegs-/Ausbau-/Abwesenheitsszenarien ohne mehr Notrufe oder schnellere Fahrten",
+        "bewahrt auch im großen sicheren Bereich den letzten Cent und rundet nur einmal",
+        "enthält jede reale Katalogposition und eine betriebsfähige erste Anschaffung mit Reserve",
+        "bucht atomar und einmalig; die gekürzte Journalansicht bleibt centgenau abstimmbar",
+        "finanziert geringe Einsatzdichte zeitbasiert ohne Login-/Übungsfarm oder Abwesenheitsschulden",
+        "trennt Währungsumrechnung, Kaufkraftausgleich und XP und wiederholt nichts",
+        "bewahrt rollende Fahrzeuge, Besatzungsbindungen und Seeds und übernimmt ursprüngliche Katalogbuchwerte",
+        "lehnt widersprüchliche Preisversion und schon vorhandenen Ausgleichsbeleg atomar ab"
+      ],
+      "replacement": "tests/economy.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/engine.test.ts",
+      "category": "B",
+      "requirements": [
+        "Kataloge und Erreichbarkeit",
+        "enthält den erweiterten Fahrzeug- und Einsatzkatalog mit unterschiedlichen Anforderungen",
+        "referenziert gültige Wachen und erfüllbare Fähigkeiten ohne Stufenzirkel",
+        "Wirtschaft, Besatzung und Fahrzeuge",
+        "finanziert Erstwache, zwei Basisfahrzeuge und Besatzung mit Reserve",
+        "verhindert negative und nicht endliche Beträge sowie doppelte Belege",
+        "prüft Personal, Ausbildung, Stellplätze und Stufen",
+        "alarmiert niemals dasselbe Fahrzeug zweimal und ruft kontrolliert zurück",
+        "verkauft keine belegte Wache und erhält Personal bei Fahrzeugverkauf",
+        "bearbeitet einen Solo-Einsatz, bucht genau einmal und kehrt zurück",
+        "Ausbildung blockiert Besatzung und schließt zeitbasiert ab",
+        "falsche Fahrzeuge erfüllen keine Brandanforderung",
+        "behandelt Patienten, fährt zum eigenen Krankenhaus und gibt Betten frei",
+        "Wege und Zeit",
+        "berechnet Straßenwege mit Zwischenknoten statt Luftlinie",
+        "trennt Wasser- und Flugwege",
+        "begrenzt Offlinezeit und erzeugt offline keine Einsätze",
+        "schließt gemeinsame Einsätze offline nicht ab",
+        "Import und Protokoll",
+        "exportiert und importiert einen vollständigen Spielstand",
+        "verwirft defekte, veraltete, zu große und inkonsistente Spielstände",
+        "weist fremde Kontostände und alte P2P-Pakete zurück"
+      ],
+      "replacement": "tests/engine.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/fleet-view.test.ts",
+      "category": "B",
+      "requirements": [
+        "Bereitschaftsindex unveränderlicher Client-Snapshots",
+        "entspricht den Serverregeln bei Besatzung, Ausbildung, FMS, Bindung, Defekt und Bau",
+        "sperrt trotz Reservehinweisen keine verfügbaren Fahrzeuge",
+        "erhält Schichtzeiten, Abwesenheiten und Mindestbesatzung",
+        "verwendet nach Wiederverbindung oder geändertem Snapshot einen neuen Index",
+        "begrenzt die Personalzugriffe bei 500 Fahrzeugen mit 4500 Personen"
+      ],
+      "replacement": "tests/fleet-view.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/garage.test.ts",
+      "category": "B",
+      "requirements": [
+        "Garagen zeigen reale Anwesenheit unabhängig von FMS und ordnen unterwegs befindliche Fahrzeuge getrennt zu"
+      ],
+      "replacement": "tests/garage.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-client-staffing.test.ts",
+      "category": "B",
+      "requirements": [
+        "öffnet ein älteres reguläres Personalprofil ohne Deutschland-Provider und ohne erfundene Privatknoten",
+        "stellt FF und Besatzungsbereitschaft ohne privaten Geo-Provider dar",
+        "liefert fehlende reguläre Standardprofile serverseitig ohne den Speicherstand zu verändern oder FF-Daten freizugeben"
+      ],
+      "replacement": "tests/germany-client-staffing.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-client.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Client ohne serverseitigen Geodatenprovider",
+        "importiert Kartendarstellung ohne alte Gelände- und Straßenabfragen",
+        "zeigt bekannte Einsätze und durchsucht deren übermittelte Adresse",
+        "macht die noch nicht erfragte Adresse auch über die Suche nicht sichtbar"
+      ],
+      "replacement": "tests/germany-client.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-config.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Konfiguration für Server und CLI",
+        "verwendet beim direkten Programmeinstieg die Deutschlanddatei und erhält den alten Spielstand",
+        "behält die vom Launcher verwaltete Routeradresse und ausdrückliche Netzwerk-Umgebungswerte",
+        "wendet einen ausdrücklich in Deutschland konfigurierten separaten Router an",
+        "fällt bei fehlendem %s nicht auf einen alten AMP-Pfad zurück",
+        "erhält die bisherige .env-Auswertung einer manuell eingerichteten Deutschlandwelt",
+        "lässt Rivermere weiterhin seine bisherige .env und Welt verwenden"
+      ],
+      "replacement": "tests/germany-config.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-download.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Downloadpaket: Integrität, Wiederaufnahme und Bestandsschutz",
+        "installiert echte gzip-Teile vollständig und benötigt beim zweiten Setup keinen Download",
+        "veröffentlicht bei einem Abbruch keinen halben Datensatz und verwendet geprüfte Teile erneut",
+        "setzt nach einem abrupt beendeten Node-Prozess mit verwaister lokaler Sperre fort",
+        "verwirft einen abgebrochenen HTTP-Body und lädt diesen Teil beim nächsten Versuch neu",
+        "lehnt einen fehlerhaften Download (%s) vor der Veröffentlichung ab",
+        "begrenzt die entpackte Größe auch bei gültiger komprimierter Prüfsumme",
+        "prüft zusätzlich die gesamte zusammengesetzte Datei",
+        "lässt ein vorhandenes fremdes Verzeichnis bytegleich bestehen",
+        "ersetzt auch keinen erst während des Downloads befüllten Zielordner",
+        "schreibt bei einer umgeleiteten wiederaufgenommenen Teilinstallation nicht in fremde Ordner",
+        "überschreibt keine nachträglich beschädigte Datei einer fertigen Installation",
+        "verweigert einen unerlaubten Zielpfad %s ohne Download",
+        "verweigert einen unerlaubten Asset-Namen %s",
+        "akzeptiert keinen fremden Ursprung bzw. Datensatz (%s)",
+        "verweigert doppelte Dateiziele",
+        "verweigert mehrfach verwendete Asset-Namen",
+        "verweigert einen Zielordner innerhalb des Programms",
+        "folgt weder einem verknüpften Ziel noch einem verknüpften übergeordneten Ordner",
+        "lässt nur eine gleichzeitige Installation in denselben Zielordner zu",
+        "kann bei gleichzeitiger Wiederaufnahme keine inzwischen aktive Sperre stehlen",
+        "veröffentlicht kein Paket mit einem fremden oder unfertigen inneren Manifest"
+      ],
+      "replacement": "tests/germany-download.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-geography-sites.test.ts",
+      "category": "B",
+      "requirements": [
+        "incident locations from local OSM MVT evidence",
+        "rejects excessive geometry commands before allocating decoded coordinate arrays",
+        "requires actual %s geometry and rejects an arbitrary urban road",
+        "accepts a genuine landward shore, rejects a lake interior, and preserves polygon islands",
+        "does not treat clipped tile boundaries through water as a shoreline",
+        "does not turn swimming pools, intermittent water or tunnel channels into open-water sites",
+        "uses river/rail/construction lines and public POIs without treating drains or tunnels as usable shores",
+        "rejects mismatched datasets and oversized compressed tiles before reading their BLOB",
+        "caches repeated spatial evidence, bounds tile memory, and gives the same evidence after reopen",
+        "provider incident access integration",
+        "verifies dataset-backed access and actual bounded road profiles before publishing German incident candidates",
+        "shares one routing deadline across consecutive unreachable shoreline candidates",
+        "passes actual catalog site kinds to the production location selector and never falls back to arbitrary roads",
+        "validates water station construction on the server and rejects arbitrary streets or bridge sites",
+        "uses connected road-side shores, excludes bridge/tunnel/motorway candidates and caches routes",
+        "does not invent access to an unreachable shore",
+        "does not cache routing outages as permanent geographic absence"
+      ],
+      "replacement": "tests/germany-geography-sites.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-geography.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Projektion und begrenzte Geodatenabfragen",
+        "erhält reale Koordinaten, rechteckige Ausdehnung und geodätische Entfernungen",
+        "sucht ausschließlich importierte Daten und behandelt Suchsyntax als Text",
+        "konvertiert XYZ nach TMS und begrenzt Kachelkoordinaten",
+        "findet exakte Orte auch hinter vielen Adresstreffern und begrenzt Vorschläge",
+        "öffnet kein unvollständiges Datenpaket",
+        "weist Karten und Suche aus unterschiedlichen Quellen zurück",
+        "liefert ein geprüftes optionales Höhenmodell getrennt von Vektorkacheln"
+      ],
+      "replacement": "tests/germany-geography.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)",
+        "liefert alte reguläre Wachenprofile vollständig aus dem Serverindex und hält FF-Tagesabläufe privat",
+        "trennt POI-Kacheln vom Suchbudget und begrenzt sie pro Konto statt pro gemeinsamem NAT",
+        "bereinigt abgelaufene Präsenz auch bei pausierter Simulation",
+        "zeigt die komplette authentifizierte Serverpräsenz unabhängig von privaten Snapshots und dedupliziert Tabs",
+        "aktualisiert echte Leitstellenzuordnungen sofort, zeigt Mitgliedernamen und widerruft ungültige Sitzungen",
+        "sendet ohne Authentifizierung keine Präsenz und erlaubt kein Setzen fremder Anwesenheit",
+        "verzögert automatische Wassereinsätze bei Routingausfall, hält Health und Fortschritt aktiv und versucht erneut",
+        "weist ungültige Routerverträge weiterhin sichtbar zurück und rollt Game.step zurück",
+        "prüft Wasserwachen am Ufer serverseitig, bucht wiederholte Käufe nur einmal und erhält sie nach Neustart",
+        "teilt pro Veröffentlichung den berechtigten View desselben Kontos zwischen Tabs und HTTP",
+        "belastet mit DEM-Kachelanfragen nicht das Kontingent der Ortssuche",
+        "liefert öffentliche Geodaten ohne Spielerdaten und schützt spielbezogene Karten-APIs",
+        "erlaubt berechtigte Disponenten derselben Leitstelle und lehnt den ausgeschalteten Einzelspielermodus ab",
+        "sendet initial vollständige Routendaten, danach Referenzen und nach Wiederverbindung erneut vollständig",
+        "öffnet Server und Geodaten erneut und erhält Sitzung, Besitz und Kartenstand"
+      ],
+      "replacement": "tests/germany-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-identity.test.ts",
+      "category": "B",
+      "requirements": [
+        "Gebundene Routing-Laufzeitidentität",
+        "erkennt denselben Import unabhängig von Objekt-Schlüsselreihenfolge",
+        "weist fehlende, fremde oder anders konfigurierte Routingimporte zurück"
+      ],
+      "replacement": "tests/germany-identity.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-install.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Neuinstallation über GitHub",
+        "übernimmt vorhandene Netzwerkwerte und lässt .env und alte Spieldaten bytegleich",
+        "legt ohne vorhandene Einstellungen nur eine sichere lokale Adresse an",
+        "erhält bestehende Deutschlandkonfiguration und Spielstände bei Wiederholung vollständig",
+        "nimmt ausschließlich ausdrücklich Deutschland zugewiesene Datenpfade an",
+        "überlagert keinen bestehenden Spielstand durch %s",
+        "verweigert einen unbekannten nichtleeren Deutschland-Spielordner",
+        "verweigert unsichere Pfadbeziehungen: %s",
+        "erkennt einen nach innen umgeleiteten Datenordner nach Symlink-Auflösung",
+        "ersetzt keine umgeleitete oder unvollständige Konfigurationsdatei",
+        "verhindert zusätzliche dotenv-Zeilen und aktiviert keine HTTP-Ausnahme",
+        "führt Build, geprüften Datenbezug und passende Plattformwerkzeuge in Reihenfolge aus",
+        "stoppt bei unvollständigen Downloads und erhält die Konfiguration für den nächsten Versuch",
+        "führt den echten CLI-Einstieg ohne installierte Projektabhängigkeiten mit isolierten Prozess-Fixtures aus",
+        "setzt einen abgebrochenen CLI-Schritt auch nach kooperativem Child-Exit 0 nicht fort"
+      ],
+      "replacement": "tests/germany-install.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-map-storage.test.ts",
+      "category": "B",
+      "requirements": [
+        "weist übergroße DEM-Kacheln zurück und lässt normale Vektorkacheln verwendbar",
+        "liefert DEM mit passendem Fingerprint und eigenem MIME-Typ, sperrt alte Clients",
+        "schließt alle Dateihandles nach abgelehntem DEM-Metadatenstand",
+        "übernimmt ein DEM ohne Freigabemanifest nicht still als einsatzbereit",
+        "folgt keinem DEM-Symlink aus dem freigegebenen Paket",
+        "liefert öffentliche POI-Kacheln mit Datasetbindung, vollständigen Punkten und klarer Koordinatenablehnung"
+      ],
+      "replacement": "tests/germany-map-storage.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-map.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschlandkamera",
+        "stellt nur gültige Koordinaten derselben Welt wieder her",
+        "behält zulässige hohe und niedrige Zoomstufen sowie den nördlichen Bereich",
+        "Deutschland-Vektorkartenstil",
+        "erfüllt den installierten MapLibre-Style-Spec und verwendet nur lokale Tiles"
+      ],
+      "replacement": "tests/germany-map.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-package.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Releasepaket",
+        "überträgt alle 22 freigegebenen Dateien vollständig mit Teil- und Dateiprüfsummen",
+        "erzeugt portable gzip-Header und bei frischer Wiederholung bytegleiche Assets und Kataloge",
+        "verifiziert vorhandene Teile bei Wiederaufnahme ohne sie neu zu schreiben",
+        "erkennt beschädigte komprimierte Teile und stellt genau die freigegebenen Bytes wieder her",
+        "baut fehlende Teile nach Abbruch neu und übernimmt keine unvollständige temporäre Datei",
+        "weist gleichlange veränderte Quellen vor Schreibzugriffen zurück und erhält das gültige Paket"
+      ],
+      "replacement": "tests/germany-package.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-pois.test.ts",
+      "category": "B",
+      "requirements": [
+        "klassifiziert nur tatsächliche OSM-Merkmale und keine suggestiven Namen oder fremden Objektfelder",
+        "de-dupliziert Index und Vektorkachel sowie gekaufte identische Spielgebäude ohne Besitz zu verändern",
+        "zeigt nahe getrennte Einrichtungen getrennt, bewahrt vollständige Clusterzahlen und die gewählte Einrichtung",
+        "erhält alle gleich platzierten Einrichtungen in der Trefferliste auch nach Auswahl eines einzelnen Markers",
+        "liefert 1300 indizierte Einrichtungen als vollständige räumliche Gruppen statt stillen LIMIT-Verlust",
+        "grenzt Kacheln halb offen ab, schließt Nicht-POIs aus und liefert Einzelstandorte ab Detailzoom",
+        "verankert echte Industrieflächen innerhalb ihrer Kontur und außerhalb von Polygonlöchern",
+        "kopiert ausschließlich passende Geografie vor dem Start in einen schreibgeschützten Speicherindex"
+      ],
+      "replacement": "tests/germany-pois.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-provider.test.ts",
+      "category": "B",
+      "requirements": [
+        "Germany provider contract (synthetic API fixtures, not nationwide geographic acceptance)",
+        "accepts the captured GH11 zero-route response without inventing an edge",
+        "retains the OSM hospital location and rejects a road access more than 300 meters away",
+        "keeps finite vehicle-limited speeds when the road has no encoded statutory limit",
+        "accepts GraphHopper road-environment enum values with either JSON casing",
+        "memoizes repeated spatial lookups without rereading SQLite or exposing its cached array",
+        "rejects a mismatched data fingerprint without writing the imported SQLite index",
+        "resolves sparse stable OSM IDs and real index search without allocating a country array",
+        "keeps section identity, legal speed, geometry distance and turn cost from the route response",
+        "fails closed for blocked real edges and unavailable waterways without an air fallback",
+        "reuses bounded route results but preserves stable IDs after reopening the index",
+        "bounds a hung local HTTP request while its worker event loop remains separate",
+        "rejects remote router endpoints and contradictory geometry"
+      ],
+      "replacement": "tests/germany-provider.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-queries.test.ts",
+      "category": "B",
+      "requirements": [
+        "gemeinsame serverseitige Geodatenabfragen",
+        "verwendet für Browser-fetch den globalen Empfänger statt des Cacheobjekts",
+        "teilt eine laufende Anfrage und bricht erst nach dem letzten Verbraucher ab",
+        "liefert gespeicherte Antworten nur innerhalb der TTL und trennt Benutzer-/Modusschlüssel",
+        "begrenzt parallele Routinganfragen und entfernt abgebrochene Warteschlangeneinträge"
+      ],
+      "replacement": "tests/germany-queries.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-restore.test.ts",
+      "category": "B",
+      "requirements": [
+        "Tatsächlicher Deutschland-CLI-Prozess: Restore und Datenidentität",
+        "weist migration-preview bei %s PBF-Metadaten schreibgeschützt zurück",
+        "liefert eine passende migration-preview ohne den Spielstand oder Sitzungen zu verändern",
+        "weist %s PBF-Metadaten vor jeder Änderung der Zielwelt zurück",
+        "stellt eine kompatible Sicherung wieder her und widerruft deren Sitzungen"
+      ],
+      "replacement": "tests/germany-restore.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-simulation.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Simulation mit echter SQLite und synthetischem Routingvertrag",
+        "redispatches a persisted return along its exact directed remainder after provider restart",
+        "automatically repairs a returning vehicle across SQLite/provider restart without moving it",
+        "persists a safe routing wait, advances the server, and resumes after a database/provider restart",
+        "rolls back a manual alarm during a router outage and accepts its id once after recovery",
+        "finishes an incident exactly once while its automatic return awaits the routing service",
+        "delivers a patient once when the automatic return from hospital has no router",
+        "does not conceal invalid router responses as temporary waits",
+        "keeps a repaired vehicle at its actual position until its route can resume",
+        "queues the return of an orphaned remote helper outside the individual engine tick",
+        "opens one circuit per provider instead of sending 100 routing requests during an outage",
+        "repeats the complete incident deterministically against the same fixed world data",
+        "spielt Bau, Personal, Notruf, Alarmierung, Neustart, Nachforderung und Historie ohne doppelte Aktionen",
+        "verbirgt Leitstellenobjekte und schützt eine fremde Welt vor schreibendem Öffnen",
+        "Deutschland: KatS-Mobilisierung erhält nach Neustart echte FF-Straßenanreise und dieselbe Besatzung"
+      ],
+      "replacement": "tests/germany-simulation.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-snapshots.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Routensnapshots",
+        "omits identical long geometry after the first frame and reconstructs every point",
+        "detects interior route and motion changes with unchanged endpoints and point counts",
+        "ignores duplicate and older frames, requires resync on a missing sequence and sends full on reconnect",
+        "resets on generation or desk change and never carries a route into another owner's vehicle",
+        "revokes helper geometry immediately and resends it only when it becomes authorized again",
+        "rejects missing references atomically and bounds cache entries without losing visible geometry"
+      ],
+      "replacement": "tests/germany-snapshots.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/germany-start.test.ts",
+      "category": "B",
+      "requirements": [
+        "Deutschland-Start und Bestandsschutz",
+        "verwendet die eigenen Deutschland-Daten und den eigenen Router aus .env.germany",
+        "übernimmt keinen alten GRAPHHOPPER_URL-Wert, wenn .env.germany den verwalteten Router nutzt",
+        "startet bei unvollständigen Daten oder fehlendem Spielbuild keinen schweren Routingprozess",
+        "beendet Spiel und eigenen Routing-Child vollständig per IPC",
+        "startet während eines Shutdowns in der Routing-Wartephase kein Spiel mehr",
+        "schließt nach verlorenem Eltern-IPC und beendet einen hängenden eigenen Child begrenzt",
+        "meldet einen vorzeitigen Spielabbruch als Fehler",
+        "lässt einen fremden TCP-Listener unverändert und startet keinen eigenen Dienst",
+        "lehnt fehlendes DATA_DIR auch beim direkten Deutschland-Binary ab",
+        "verhindert beide Verschachtelungsrichtungen von Spiel- und Geodaten",
+        "löst relative Datenpfade gegen das Programm und nicht den Start-CWD auf",
+        "löscht bei einem umgeleiteten Buildverzeichnis keine vorhandenen Daten"
+      ],
+      "replacement": "tests/germany-start.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/hard-reset.node.mjs",
+      "category": "B",
+      "requirements": [
+        "löscht nur eigene Spielstände, generierte Backups und drei alte Admin-Hilfsdateien",
+        "derselbe Auftrag löscht nach Wiederholung keine neue Spielwelt",
+        "ohne Bestätigung und mit Pfadtraversal-Kennung unverändert",
+        "lebender Prozess wird nicht beendet, seine Sperre und Daten bleiben",
+        "nachweislich beendeter Prozess erlaubt einmalige verwaiste Sperrfreigabe",
+        "beschädigte und ungültige PID-Sperren werden nicht blind entfernt",
+        "Symlink-Datenbank und fremdes Ziel bleiben unberührt",
+        "Symlink-Sicherungsordner und darin liegende Dateien bleiben unberührt",
+        "Symlink-Admin-Datei bricht vor jeder Datenlöschung ab",
+        "Hardlinks und ungewöhnliche Objekttypen werden nicht bereinigt",
+        "Programmordner, Vorfahren und Symlink-Datenordner sind gesperrt",
+        "unvollständiger oder gefälschter Reset-Beleg führt nicht zur Wiederholung",
+        "falsches Projekt wird nicht angefasst",
+        "fehlerhafter Abschluss behält Wartungssperre statt Teilreset als Erfolg auszugeben",
+        "leerer generierter Sicherungsordner wird entfernt",
+        "Node 24: echter Spielserver, zwei Konten, Reset-CLI, Neustart und erneute Registrierung"
+      ],
+      "replacement": "tests/hard-reset.node.mjs",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/history-integration.test.ts",
+      "category": "B",
+      "requirements": [
+        "Persistentes Archiv über authentifizierte HTTP-Sitzungen",
+        "exportiert über den echten Offline-CLI-Prozess alle Altberichte und überschreibt keine vorhandene Datei",
+        "exportiert alle aktuellen und stillgelegten Berichte mit korrekter Kontoabgrenzung für Disponenten",
+        "erhält den ältesten Bericht bis zum letzten Nachbereitungsereignis und aktualisiert dann das dauerhafte Archiv",
+        "liefert sämtliche 537 Berichte ohne Dopplung, filtert serverseitig und überlebt Neustart",
+        "isoliert fremde Leitstellen und widerruft Archivzugriff nach Ende der Mitgliedschaft",
+        "weist ungültige Seiten und Filtergrößen zurück",
+        "alarmiert bereite Rückkehrer, akzeptiert aber keine manipulierte Availability oder FMS als Umgehung echter Nachbereitung",
+        "migriert v12 mit unverändertem Vorher-Backup, BF-Bestand und allen alten Archiven"
+      ],
+      "replacement": "tests/history-integration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/ids.test.ts",
+      "category": "B",
+      "requirements": [
+        "verwendet vorhandenes natives randomUUID",
+        "setzt UUID-Version und Variante auch ohne randomUUID korrekt",
+        "nutzt im Fallback echte Zufallsbytes und liefert unterschiedliche Aktionskennungen",
+        "verweigert IDs ohne sichere Zufallsquelle statt Math.random zu verwenden",
+        "übergeht einen Fehler der Zufallsquelle nicht"
+      ],
+      "replacement": "tests/ids.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/incident-presentation.test.ts",
+      "category": "B",
+      "requirements": [
+        "öffentliche Notrufdarstellung",
+        "ein ungeklärter Notruf erbt keine Brandkategorie aus der ersten Katalogvorlage",
+        "gibt selbst aus einer internen Brandmission nur den erarbeiteten Wissensstand aus",
+        "ein bestätigter Brand mit Patienten bleibt Brand mit zusätzlicher medizinischer Kategorie",
+        "medizinische Cluster bleiben grün, auch bei Dringlichkeit und Auswahl; gemischte zeigen alle Kategorien",
+        "unbekannte Lage hat Telefonsymbol und keine Brandanzeige; Verdacht zeigt keine Messwerte",
+        "ein bestätigter Fehlalarm ohne Branddynamik fordert keine erneute Erkundung"
+      ],
+      "replacement": "tests/incident-presentation.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/incident-reachability.test.ts",
+      "category": "B",
+      "requirements": [
+        "eine begrenzte Bestandsprüfung darf nur bei vollständig geprüften %i Profilen Unrettbarkeit feststellen",
+        "prüft %i Straßenfahrsekunden ohne ETA-Abschneiden oder Katastrophenbonus",
+        "ein schneller Führungswagen und fremde oder unvollständige Wachen erweitern das Einsatzgebiet nicht",
+        "gebundene Fahrzeuge erhalten ihr Gebiet; veränderte Sperrungen machen den Routencache ungültig",
+        "prüft tatsächliche Straßenroute, verwirft Nullpunkte und verbirgt interne Ortsreferenzen bis zur Abfrage",
+        "hebt einen belegbar kaputten Altort einmalig ohne Geld-, XP- oder Statistikänderung auf",
+        "migriert Ortsprüfung wiederholbar mit unveränderten Patienten, Vermögen und Originalort",
+        "Bestandsprüfung erhält den Ort trotz inzwischen verkauftem Fachfahrzeug und pausiert technische Wartefälle ohne Vergütung"
+      ],
+      "replacement": "tests/incident-reachability.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/laboratory-coordinator.test.ts",
+      "category": "B",
+      "requirements": [
+        "keeps every laboratory world on the same clock while interviewing after a neighbor joined",
+        "does not allow one seed to create colliding identities across independent laboratory worlds",
+        "laboratory coordinator preserves complete archives and does not mutate input worlds",
+        "lets a busy laboratory neighbor decline another request without releasing already assigned units"
+      ],
+      "replacement": "tests/laboratory-coordinator.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/laboratory-expansion.test.ts",
+      "category": "B",
+      "requirements": [
+        "keeps all laboratory actions unavailable to normal server commands",
+        "creates patients, availability overrides and MANV through persisted deterministic lab commands",
+        "a real laboratory neighbor accepts aid and reaches the incident through the production coordinator",
+        "a laboratory neighbor can decline without assigning vehicles"
+      ],
+      "replacement": "tests/laboratory-expansion.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/map-camera.test.ts",
+      "category": "B",
+      "requirements": [
+        "lokale Kartenpräferenzen",
+        "verwirft fremde Welten, Seeds, ungültige Koordinaten und defekte Speicherung",
+        "normalisiert Mausradeinheiten unabhängig von Pixeldichte und Weltzoom"
+      ],
+      "replacement": "tests/map-camera.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/map-symbols.test.ts",
+      "category": "B",
+      "requirements": [
+        "ordnet jedem der 50 tatsächlichen Fahrzeugtypen ein explizites, renderbares Klassensymbol zu",
+        "unterscheidet fachliche Silhouetten und hat einen neutralen Fallback auch für Objektprototypnamen",
+        "gruppiert alle öffentlichen Spieler ohne private Daten und macht jede Leitstelle eines Clusters erreichbar",
+        "ignoriert ausschließlich Präsenz außerhalb des Ausschnitts oder ohne gültigen Standort",
+        "bewahrt auch am maximalen Zoom alle gleich platzierten Fahrzeuge und lässt die echte Wache getrennt"
+      ],
+      "replacement": "tests/map-symbols.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/mission-progress.test.ts",
+      "category": "B",
+      "requirements": [
+        "öffentlicher Einsatzaufgabenfortschritt",
+        "zeigt bei vollem altem Timer und offener Leiteraufgabe nur 2 von 3 erledigten Aufgaben",
+        "verrät vor Erkundung weder vorhandene Aufgaben noch den internen Timer",
+        "behält für bestätigte Altmissionen ohne Aufgaben den bisherigen Fortschritt",
+        "behauptet bei einem noch leeren Aufgabenstand keine erledigte Arbeit"
+      ],
+      "replacement": "tests/mission-progress.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/mission-status.test.ts",
+      "category": "B",
+      "requirements": [
+        "zeigt unbekannte neue Notrufe ohne disponierte Kräfte und kennt keine verborgene Lage",
+        "ein bloßer AAO-Vorschlag alarmiert noch keine Fahrzeuge",
+        "unterscheidet teilweise disponierte Kräfte anhand des bekannten Meldebildes",
+        "stellt die echte Fahrzeugphase %s dar, unabhängig von manuellem FMS",
+        "erkennt ausstehende erste Lagemeldungen vor normaler Einsatzstellenanzeige",
+        "zeigt offene Nachforderungen vorrangig, erledigte Anfragen aber nicht",
+        "zeigt Stabilisierung erst nach sichtbarer Erkundung und beherrschter Lage",
+        "behält den tatsächlichen Patiententransport als sichtbaren Folgezustand",
+        "abgeschlossene Einsätze haben Vorrang vor alten offenen Funkmeldungen",
+        "zurückgenommene oder ausgefallene Fahrzeuge gelten nicht als verfügbare Kräfte",
+        "berechtigte Unterstützung zählt nur für diesen Einsatz und seine aktuelle Runde",
+        "liest nur sichtbare Fakten und verändert weder Spielstand noch Einsatz"
+      ],
+      "replacement": "tests/mission-status.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/modes.test.ts",
+      "category": "B",
+      "requirements": [
+        "weist entfernte Modi ab und erhält das inaktive Archiv bytegleich nach Neustart",
+        "migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands",
+        "beginnt ruhig mit versetzten Mindestabständen und füllt unbearbeitete Leitstellen nicht weiter",
+        "Sicherungen enthalten beide Welten und private Spielfinanzen werden nicht geteilt",
+        "HTTP und Socket weisen alte Einzelspielereinstiege ab; Export und Restore bewahren das Archiv"
+      ],
+      "replacement": "tests/modes.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/notruf-2.20.test.ts",
+      "category": "B",
+      "requirements": [
+        "Notruf 2.20: gemeldete Regressionen",
+        "gewährt einer kleinen Startleitstelle mindestens fünf Minuten Abstand",
+        "verlängert künftige Wartezeiten bei unerledigter Last",
+        "überträgt vor einer Erkundung keine internen Ereignisse oder Telemetrie",
+        "liefert nach der Meldebildfrage Beobachtungen statt fertiger interner Vorlage",
+        "entfernt alte verborgene Vorlagentitel aus künftigen Antworten, erhält aber bereits erfragte Fakten",
+        "erhält bewusst gesetzte Disponentenpriorität vor Alarmierung, verbirgt aber automatische unbekannte Priorität",
+        "Notruflast und Reproduzierbarkeit",
+        "erhält Frist und vorhandene Einsätze bei Migration, Überlast und Wiederverbindung",
+        "skaliert mit vorhandener einsatzfähiger Struktur ohne Levelsprung und zählt gebundene Mittel",
+        "erzeugt nur einmal je Leitstelle, nie in ruhenden Mitgliedersaves und nie als Nachholstapel",
+        "gewichtet 10000 reproduzierbare Ziehungen zuerst nach Kategorie und hält Großlagen selten",
+        "mehr Brandvorlagen ändern bei identischen Ziehungen die Grundkategorie nicht"
+      ],
+      "replacement": "tests/call-dialogue.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/notruf-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notrufrate nicht; Geheimnisse bleiben serverseitig"
+      ],
+      "replacement": "tests/notruf-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/notruf-measurement.test.ts",
+      "category": "B",
+      "requirements": [
+        "erfasst reproduzierbares Aufkommen mit tatsächlichen Fahrten und einem idealen Disponenten"
+      ],
+      "replacement": "tests/notruf-measurement.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/operations-expansion-server.test.ts",
+      "category": "B",
+      "requirements": [
+        "HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung und Neustart erhalten; Rechte und Zusagen werden serverseitig geprüft"
+      ],
+      "replacement": "tests/operations-expansion-server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/operations-expansion.test.ts",
+      "category": "B",
+      "requirements": [
+        "KatS-Bereitschaft lässt reguläre Alarmierung zu und beschleunigt professionelle Wachen nicht",
+        "Wachen werden gemeinsam validiert; Bereitschaft umgeht weder FMS 6 noch echte Besatzungssperren",
+        "Bereitschaftsverlauf bleibt bei regulärer Rückumstellung erhalten und alte Stände behalten sämtliche Ressourcen",
+        "Notrufübergabe erhält Angaben, Dauer und Antwortsperre und erlaubt nur dem aktuellen Bearbeiter Änderungen",
+        "Übergabe verlängert den anstehenden Abbruch eines gestressten Anrufers nicht",
+        "Lagenotizen brauchen ein Meldebild, werden öffentlich ohne versteckte Fakten gezeigt und überdauern Serialisierung",
+        "gleiche Zeitfolge und Aktionen ergeben identische Notruf-, Lagebuch- und Bereitschaftsdaten"
+      ],
+      "replacement": "tests/operations-expansion.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/performance.test.ts",
+      "category": "B",
+      "requirements": [
+        "prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze"
+      ],
+      "replacement": "tests/performance.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-five.test.ts",
+      "category": "B",
+      "requirements": [
+        "automatische Brandmeldung wird erst durch Erkundung zum bestätigten Fehlalarm und geht in die Statistik ein",
+        "vollständiger Ablauf erzeugt unveränderliche Berichte, echte Zeiten, Buchungen und Fahrstrecken genau einmal",
+        "Kilometer zählen nur gefahrene Routenanteile einschließlich Rückweg, keine Standzeit oder doppelte Zeit",
+        "Archivmigration 9→10 ergänzt beide Modi, lässt Fakten und Geld bestehen und übersteht den zweiten Neustart",
+        "Berichte, Suche und lokale Exporte sind lesend und enthalten keine verborgenen Szenariodaten",
+        "Server trennt Statistiken nach Leitstelle und Modus; Client darf weder Messwerte noch Entwickleraktionen setzen",
+        "Entwicklerlabor wiederholt alle Aktionen deterministisch und erkennt manipulierte Zustände und Prüfsummen",
+        "CLI erstellt isolierte Labordateien, prüft Replay und überschreibt keine vorhandene Datei",
+        "Balancing prüft neun vollständige kleine Einsätze mit drei Seeds und deckt alle Katalogfähigkeiten ab",
+        "Arbeitsplatz und Hotkeys normalisieren kaputte Einstellungen, ignorieren Texteingabe und Doppelbelegungen",
+        "Filter verwenden nur freigegebene Informationen und verändern den Spielstand nicht",
+        "Kanalregler migrieren alte Audiowerte und dringender Funk gewinnt genau einmal gegen gewöhnliche Meldungen",
+        "Eigene Signale prüfen das Format und bleiben lokal mit rücksetzbaren Kanälen",
+        "verwendete AAO und Nachforderungen werden genau einmal ausgewertet, auch mit maximal langen AAO-Kennungen",
+        "Labor steuert Wetter, Uhrzeit, Gefahren, Fahrzeugdefekt, FMS und Patienten nur in seiner reproduzierbaren Kopie",
+        "Serverrhythmus bleibt unregelmäßig, begrenzt wartende Vorgänge und vermeidet Nachholstau"
+      ],
+      "replacement": "tests/reports-replay.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-four.test.ts",
+      "category": "B",
+      "requirements": [
+        "Massenereignis benötigt wirksame Besucherlenkung und Evakuierung auch nach dem Abschnittsaufbau",
+        "Großlage bleibt bis zur Erkundung verborgen, Altfälle erhalten keine Pflichtabschnitte",
+        "Bereitstellung hat keine operative Wirkung; Zuweisungen sind eindeutig und an die Alarmierung gebunden",
+        "Abschnitte brauchen echte Führung und Kräfte; Reservefreigabe ersetzt keine Abschnittszuweisung",
+        "Großbrand verbraucht Löschwasser; fehlender Nachschub mindert die tatsächliche Löschleistung",
+        "MANV-Nacherkundung erzeugt begrenzte Patientenwellen und identische Fortsetzung nach Speichern",
+        "Sichtung benötigt medizinische Kräfte und priorisiert geeignete Transporte samt Klinikverteilung",
+        "eine vollständig disponierte Großbrandlage erreicht Archiv und zahlt genau einmal",
+        "Flächenlage erzeugt einzeln versetzte Meldungen, hält das Zweierlimit ein und archiviert den Verbund",
+        "Hochwasser sperrt reale Straßen und gibt sie nach Gefahrenbeseitigung wieder frei",
+        "Großlagenzufall respektiert Flottenschwelle und Abklingzeit",
+        "Server schützt fremde und doppelte Großlagenaktionen und erhält sie über Neustart",
+        "Migration 8→9 bewahrt beide Spielstände und laufende Alarmierungen mit Originalbackup",
+        "angenommene Nachbarkräfte bleiben in Bereitstellung bis zur autorisierten Abschnittszuweisung",
+        "MANV läuft über Nacherkundung, wiederholte RTW-Fahrten und dynamische Versorgung bis zum einmaligen Abschluss",
+        "Nachbar-RTW baut den Behandlungsabschnitt auf und beginnt einen freigegebenen MANV-Transport vor Einsatzende",
+        "Offline-Aufholen erzeugt keine Einsatzflut und ein voller Patientenbestand blockiert keinen Abschluss dauerhaft",
+        "Abschnittsleitung fällt bei Rücknahme oder Defekt aus und kann bewusst neu vergeben werden",
+        "aktive Großlage übersteht echte CLI-Sicherung und Wiederherstellung mit identischer Fortsetzung"
+      ],
+      "replacement": "tests/incident-dynamics.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "HTTP, Export und Socket verbergen Szenariowissen; Teamzugriff und Funk enden mit dem Rechteentzug"
+      ],
+      "replacement": "tests/dispatch-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-one.test.ts",
+      "category": "B",
+      "requirements": [
+        "spielt Notruf, AAO, HLF, FMS, Lagemeldung, Nachforderung, TLF und Archiv deterministisch durch",
+        "ordnet mehrere Anrufe demselben Ereignis zu; Abbruch, Rückruf und Übernahme erhalten Angaben",
+        "liefert einen Folgeanruf wenn ein unvollständiges Gespräch ohne Rückruf abbricht",
+        "AAO und freie Disposition respektieren Sperren, Fehlbedarf und Wachenprofile",
+        "speichert AAO, Gespräche, Fahrt und Historie über Neustart; schützt fremde und doppelte Aktionen",
+        "migriert einen echten Schema-5-Bestand mit aktiver Anfahrt ohne Vermögens- oder Auftragsverlust",
+        "spielt Profilklänge und neue Kommunikationsereignisse nur einmal nach bestätigter Änderung",
+        "erhält den Patiententransport im neuen Ablauf mit FMS 7, 8 und einmaligem Abschluss",
+        "hält widersprüchliche Angaben verschiedener Anrufer als Widerspruch fest",
+        "Rückruf vor dem Ausrücken startet an der Wache und teleportiert nicht zur Einsatzstelle"
+      ],
+      "replacement": "tests/call-dispatch.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-three.test.ts",
+      "category": "B",
+      "requirements": [
+        "BF und Führungsfahrzeuge nutzen konfigurierte Ausrückzeiten ohne Tageszeitabzug",
+        "FF-Anreise ist individuell, reproduzierbar und nach Speichern unverändert",
+        "ausbleibende FF-Quittierung verhindert Ausrücken und fordert Ersatz an",
+        "automatische Besetzung überbrückt normale Schichten und Abwesenheit; Reserve warnt und echte Verletzung sperrt",
+        "Polizeisicherung schützt Rettungskräfte; THW-Aufträge brauchen echte Fähigkeiten",
+        "Krankenhäuser lehnen ungeeignete Patienten ab, reservieren Betten und lenken zum geeigneten Ziel um",
+        "Entwürfe sind privat; Versand gewährt nur der Ziel-Leitstelle die Anfrage; Fremdzugriff und Solo sind gesperrt",
+        "Rückfragen, Teilannahme, Idempotenz, exakte Fahrzeugbindung und Rückruf funktionieren ohne allgemeine Freigabe",
+        "abgelehnte und zurückgezogene Anfragen können nicht erneut angenommen werden",
+        "Nachbarhilfe erledigt Erkundung, dynamischen Brand und Belohnung über Serverneustart ohne Helferbrowser",
+        "fremder RTW übergibt Patienten vor Abschluss, auch bei technischer Ortsprüfung: %s",
+        "berechtigte Disponenten bearbeiten Anfragen derselben Leitstelle; Rechteentzug greift sofort",
+        "Migration 7→8 erhält beide Welten samt laufender Alarmierung byteinhaltlich und sichert die Originaldaten",
+        "Organisationsaufträge verraten vor der Erkundung weder verdeckte Polizei- noch Patientendaten",
+        "Gebietsreserve verhindert weder Mehrfachauswahl noch Hilfe; ungültige Aktionen bleiben atomar",
+        "fremde Defekte liefern keine Fähigkeiten und erzeugen einen Sprechwunsch beim anfragenden Disponenten",
+        "aktive Unterstützungsanfrage übersteht echte CLI-Wiederherstellung und spielt deterministisch weiter",
+        "historischer Schema-7-Stand ohne Phase-3-Felder erhält keine nachträglichen Organisationspflichten",
+        "erste Nachbarkräfte melden Fehlbedarf, FMS folgt dem Funkgespräch und AAO zählt später zugesagte Kräfte mit",
+        "mehrere FMS-Meldungen zwischen zwei Ticks bleiben im fremden Einsatzverlauf erhalten"
+      ],
+      "replacement": "tests/mutual-aid.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/phase-two.test.ts",
+      "category": "B",
+      "requirements": [
+        "bekämpft einen dynamischen Brand vollständig und bewahrt Verlauf, Transportfreiheit und Belohnung",
+        "eskaliert unversorgte Gefahren begrenzt, löst Brandübersprung aus und stabilisiert mit Verstärkung",
+        "Wetter beeinflusst Fahrzeiten, Nachtruhe und Berufsverkehr; Wetter ist zeitlich reproduzierbar",
+        "aufgehobene Eskalationsanforderungen blockieren den tatsächlichen Abschluss nicht",
+        "umfährt gesperrte Kanten oder wartet tatsächlich; Verkehrsmeldung teleportiert kein Fahrzeug",
+        "Defekt bindet Fahrzeug, verhindert Fähigkeiten und Ankunft, Reparatur ist wiederholbar und setzt Fahrt fort",
+        "einzelne Patienten verschlechtern sich, benötigen Notarzt, werden versorgt und transportiert",
+        "Reanimation kann reproduzierbar ROSC oder Tod ergeben; fehlende Kräfte werden nicht simuliert",
+        "weist einem defekten RTW keinen neuen Patienten zu",
+        "Versorgungsschwerpunkte wirken nur mit realen Kräften; Priorisierung verteilt knappe Versorgung",
+        "Wetterwechsel während einer Fahrt passt ETA ohne Positionssprung an",
+        "Folgeereignisse sind verknüpft und warten auf freien Platz sowie Mindestabstand",
+        "verbirgt Gefahren, Patienten und Zufall bis zur Erkundung; bewahrt deterministische Fortsetzung nach SQLite-Neustart",
+        "migriert Schema 6 ohne nachträgliche Gefahr oder Änderung laufender Fahrten und sichert Originaldaten",
+        "prüft fremde und doppelte Taktik-/Patienten-/Reparaturaktionen serverseitig"
+      ],
+      "replacement": "tests/staffing-operations.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/player-password.test.ts",
+      "category": "B",
+      "requirements": [
+        "normale Spieler ändern nur ihr eigenes Passwort mit aktuellem Passwort und CSRF; alte Sitzungen verfallen"
+      ],
+      "replacement": "tests/player-password.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/presence.test.ts",
+      "category": "B",
+      "requirements": [
+        "Öffentliche Spielerpräsenz",
+        "dedupliziert Tabs und beendet Präsenz erst nach dem letzten Socket",
+        "Reconnect ersetzt Grace ohne Duplikat, erzwungener Logout erhält keine Grace",
+        "Sitzungswiderruf schützt andere gültige Sitzungen und entfernt getrennte widerrufene Konten sofort",
+        "prüft abgelaufene aktive und getrennte Sitzungen ohne Simulation",
+        "projiziert nur erlaubte öffentliche Felder, Mitglieder verwenden den echten gemeinsamen Wachenpunkt",
+        "erfindet bei fehlendem oder ungültigem Standort keinen Punkt und ignoriert fremde oder Klinikgebäude",
+        "liefert auch mehr als 128 Spieler vollständig und atomar, kleine Änderungen werden nur als Delta gesendet",
+        "SQL-Abfrage behält alle Konten über Chunkgrenzen hinweg",
+        "lehnt fremde Welten, private Zusatzfelder und unterbrochene Übertragungen ab",
+        "Neustart und Resync ersetzen den vollständigen Zustand; alte Deltas überschreiben ihn nicht"
+      ],
+      "replacement": "tests/presence.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/progression-motion.test.ts",
+      "category": "B",
+      "requirements": [
+        "verarbeitet alle Schwellen, Rest-XP und mehrere Aufstiege bis weit über 100 ohne Tabelle",
+        "migriert gespeicherte XP ohne Verlust, Herabstufung oder doppelte Kompensation",
+        "definiert den vollständigen Katalog, nutzbare Organisationseinstiege und serverseitige Grenzen",
+        "bestätigt sämtliche konstanten Referenzfahrzeiten ohne Zusatzdynamik",
+        "erreicht 80, bremst vor 30 und bewahrt Fahrzeit bei technischer Segmentierung",
+        "wählt die längere schnellere zulässige Route; Richtung, Sperrung und Zeitkosten wirken",
+        "berücksichtigt bekannte Verzögerungen auch zwischen Endpunkten desselben Straßenabschnitts",
+        "wendet eine bekannte Wartezeit auch auf Teilstrecken innerhalb einer Straßenkante an",
+        "erweitert das metrische Gebiet und verbindet alle neuen Orte über echte Straßen",
+        "positioniert am tatsächlichen Profil und trifft innerhalb eines großen Ticks exakt ein",
+        "Vorschau und SQLite-Migration erhalten aktive Positionen, Konten und XP über erneutes Öffnen",
+        "leere und ausgeblendete Kartenausschnitte verursachen keine unbeschränkten Indexabfragen",
+        "Verkehrswarten findet am betroffenen Abschnitt statt und verbraucht keine Strecke",
+        "Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigeschalteter Kauf überstehen Neustart"
+      ],
+      "replacement": "tests/progression-motion.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/project-news.test.ts",
+      "category": "B",
+      "requirements": [
+        "übernimmt ausschließlich begrenzte freigegebene Repository-Metadaten als Klartext",
+        "weist fremde Ziele, Credentials, ausführbare URLs und beschädigte Daten ab"
+      ],
+      "replacement": "tests/project-news.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/public-registration.test.ts",
+      "category": "B",
+      "requirements": [
+        "startet ohne automatisch angelegtes Konto; auch der erste Registrierte wird nur Spieler",
+        "weist Rollen, Adminflags und Einladungsschlüssel in Registrierungen zurück",
+        "weist fehlende Namen, ungültige Benutzernamen und kurze Passwörter zurück",
+        "verhindert doppelte Konten auch bei paralleler Registrierung und unterschiedlicher Großschreibung",
+        "lässt Anmeldung ohne Sitzung nicht auf private Spielstände zugreifen",
+        "entfernt alle früheren Admin-Endpunkte statt ihre Rechte an normale Spieler weiterzugeben",
+        "begrenzt offene Registrierungen nach Quelle und insgesamt; gefälschte Header ändern die Quelle nicht",
+        "beachtet die erlaubte Origin auch bei öffentlicher Registrierung",
+        "wandelt bestehende Administratoren mit unveränderten IDs, Passwort-Hashes und Spielständen um",
+        "blockiert das Erstellen und Wiederhochsetzen von Adminrollen auf Datenbankebene",
+        "rollt eine gescheiterte Rollenumstellung samt Einladungsentfernung vollständig zurück"
+      ],
+      "replacement": "tests/public-registration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/radio-server.test.ts",
+      "category": "B",
+      "requirements": [
+        "HTTP und Socket: konkurrierende Übernahme, Identität, Wiederverbindung, Neustart, Ablauf und Rechteentzug"
+      ],
+      "replacement": "tests/radio-server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/radio.test.ts",
+      "category": "B",
+      "requirements": [
+        "reserviert atomar, lehnt fremde Bearbeitung unverändert ab und verlängert durch Wiederholung nicht",
+        "gibt eine Reservierung frei und lässt sie genau am serverseitigen Ablaufzeitpunkt übernehmen",
+        "die Übernahme verrät keine Lage und umgeht die verpflichtende erste Lagemeldung nicht",
+        "Rückfrage und Nachforderung nutzen den echten Kräftebedarf, bleiben nachvollziehbar und alarmieren nicht automatisch",
+        "additive Felder lassen alte Spielstände unverändert lesbar und neue Reservierungen serialisierbar",
+        "derselbe gespeicherte Stand und dieselbe Aktionsfolge ergeben exakt dieselben Funkdaten",
+        "der Einsatzabschluss beendet offene Reservierungen, der Funkverlauf bleibt im Archiv"
+      ],
+      "replacement": "tests/radio.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/readiness-core.test.ts",
+      "category": "B",
+      "requirements": [
+        "hauptamtlicher FFW-Bereitschaftskern",
+        "bestimmt vier bis sechs Personen erst bei Inbetriebnahme und würfelt nach Reload nicht neu",
+        "besetzt ein kleines Fahrzeug sofort, wartet beim zweiten echte Ergänzung ab und bindet niemanden doppelt",
+        "erhält stärkere Altbesetzung, Identitäten und gebundene Zuweisungen bei wiederholter Migration"
+      ],
+      "replacement": "tests/readiness-core.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/readiness-migration.test.ts",
+      "category": "B",
+      "requirements": [
+        "DB14-Migration besitzt eine bytegleiche Vorschau und Sicherung, erhält aktive Reisen und läuft nur einmal"
+      ],
+      "replacement": "tests/readiness-migration.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/realtime.test.ts",
+      "category": "B",
+      "requirements": [
+        "erweitert die Fläche auf exakt 100 × 100 km und erhält die ursprünglichen Straßenpunkte",
+        "erzeugt auch bei einer abgelegenen Wache ausschließlich lokale Einsätze",
+        "berechnet Fahrzeit und Reststrecke aus demselben tatsächlichen Straßenweg",
+        "übernimmt alte Tempi ohne Zeit- oder Besitzverlust und erzwingt Echtzeit und lässt das Einzelspielerarchiv ruhen"
+      ],
+      "replacement": "tests/realtime.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/return-faults.test.ts",
+      "category": "B",
+      "requirements": [
+        "return readiness and re-dispatch",
+        "keeps an empty %s ready and queues work only for an actual transport",
+        "preserves every shape vertex on the occupied directed edge and its partial distance",
+        "reassigns the same boarded crew from the exact current road section, with FMS 1→3 and no turnout",
+        "does not schedule generic medical aftercare for a nontransport NEF",
+        "blocks actual passengers independently of the movement label or cached DTO",
+        "persistent automatic short defect recovery",
+        "keeps passengers and their hospital destination through repair",
+        "preserves independent station aftercare and does not reroll faults during its grace period",
+        "automatically repairs without an order and resumes the same trip, crew and assignment",
+        "recovers legacy awaiting faults without resetting their persisted start time"
+      ],
+      "replacement": "tests/return-faults.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/return-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "serializes two real dispatcher HTTP sessions on the same returning unit, rejects outsiders and replays the winning id once"
+      ],
+      "replacement": "tests/return-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/rivermere.test.ts",
+      "category": "A+B",
+      "requirements": [
+        "Rivermere als eigenständige Serverwelt",
+        "liefert nur Rivermere am Standardprogrammziel und schützt alte Daten bytegleich",
+        "hat metrische 100 km, zentrale Großstadt und dieselben sichtbaren Routenabschnitte",
+        "verbindet jeden Ort und Stadtteil legal mit dem Zentrum ohne Straßen durch Seen",
+        "verwendet auch für Bootsfahrten den dargestellten Fluss statt gerader Landquerung",
+        "verhindert neue Wachen im Fluss und lässt markierte Uferbauplätze zu",
+        "lässt sich deterministisch erneut erzeugen und lehnt fremde Spielstände ab",
+        "weist eine fremde Welt vor Änderungen an SQLite ab",
+        "erhält die neue Welt und laufende Anfahrt beim echten Serverneustart"
+      ],
+      "replacement": "tests/rivermere.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/runtime.test.ts",
+      "category": "B",
+      "requirements": [
+        "startet gebaute Node-Datei mit .env, verwaltet nur Spieler und restauriert nach Prozessneustart"
+      ],
+      "replacement": "tests/runtime.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/server-security.test.ts",
+      "category": "B",
+      "requirements": [
+        "erhält die alte Datenbank bei abgebrochener Migration und verweigert neuere Schemata",
+        "behält Anmelde- und Registrierungsratenlimits nach echtem SQLite-Neuöffnen",
+        "setzt HTTPS-Sicherheitscookies, ignoriert gefälschte Proxyheader und verhindert zweite Instanz"
+      ],
+      "replacement": "tests/server-security.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/server.test.ts",
+      "category": "B",
+      "requirements": [
+        "Autoritativer Server",
+        "verbirgt neue Einsätze und Wachen vor unabhängigen Leitstellen",
+        "liefert Client und API auf einem Port, ohne private Caches oder externe Ressourcen",
+        "speichert gesalzene Passwort-Hashes und nur gehashte widerrufbare Sitzungstoken",
+        "registriert ohne Einladung nur Spieler und begrenzt wiederholte Anmeldung",
+        "verwirft fremde Origins, fehlenden CSRF-Token und frei vorgegebene Kontostände",
+        "verhindert wiederholten Kauf, Fremdbesitz und ID-Wiederverwendung mit anderer Bedeutung",
+        "nutzt echte authentifizierte Socket.IO-Verbindungen und widerruft offene Kanäle",
+        "behält Besitz, Aktionsbelege und laufende Zeit über Datenbankneustart und konsistente Sicherung",
+        "vollendet gemeinsamen Patiententransport ohne Browser und zahlt beide Konten genau einmal",
+        "ruft fremde Kräfte nach explizitem Kooperationsabbruch zurück und schützt Speicherfehler atomar"
+      ],
+      "replacement": "tests/server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/shutdown.test.ts",
+      "category": "B",
+      "requirements": [
+        "stoppt mit unvollständigen HTTP-Verbindungen begrenzt, idempotent und mit gesichertem Bestand"
+      ],
+      "replacement": "tests/shutdown.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/simulation-quality.test.ts",
+      "category": "B",
+      "requirements": [
+        "Fachliche Abschluss- und Informationsinvarianten",
+        "belohnt keinen Einsatz in der Transportphase mit einer noch offenen Gefahr",
+        "wartet auch nach beendetem Transport auf notwendige Organisationsaufgaben",
+        "beginnt die Nachkontrolle nach einer erneuten Gefahr vollständig neu",
+        "bestätigt die erste Lagemeldung nicht durch %s",
+        "bewahrt bestätigte Lageinformationen neben einer später erfragten unbestätigten Meldung",
+        "Ehrliche Klinikprofile und passende Aufnahme",
+        "bewahrt Klinikidentitäten und leitet unabhängig von Seed oder Name gekennzeichnete unterschiedliche Spielprofile ab",
+        "weist ein Kind mit Verbrennungen an ein passendes Profil statt an jeden geografischen Klinikpunkt",
+        "behält den Intensivbedarf eines schon stabilisierten Intensivtransportpatienten",
+        "Erfüllbare Generierung und gemeinsame Besatzungsplanung",
+        "fordert einen bereits beim ersten Befund nötigen Notarzt vor der Generierung als verfügbare Fähigkeit",
+        "berücksichtigt jede im Profil bereits vorhandene Gefahr bei der Generierung",
+        "behält einen noch nicht erfüllbaren Folgeeinsatz über Wiederherstellung bei, ohne andere zu blockieren",
+        "plant dieselben sechs Freiwilligen nicht gleichzeitig für zwei HLF ein",
+        "protokolliert den tatsächlichen Bruchteil einer Sekunde beim Ausrücken unabhängig von der Tickgrenze"
+      ],
+      "replacement": "tests/simulation-quality.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/snapshot-performance.test.ts",
+      "category": "B",
+      "requirements": [
+        "measures a real public snapshot with 500 vehicles, 4500 people and 200 running incidents"
+      ],
+      "replacement": "tests/snapshot-performance.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/socket-connection.test.ts",
+      "category": "B",
+      "requirements": [
+        "reproduziert den echten Transportabbruch durch zwei überlappende ungeschützte Namespace-Handshakes",
+        "verbindet bei überlappenden Online-/Retry-Anfragen genau einmal und nach explizitem Offline erneut"
+      ],
+      "replacement": "tests/socket-connection.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/source-graph.test.ts",
+      "category": "B",
+      "requirements": [
+        "trennt Client und Server und erfasst gemeinsame Typen sowie dynamische Importe"
+      ],
+      "replacement": "tests/source-graph.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/storage.test.ts",
+      "category": "B",
+      "requirements": [
+        "speichert den gesamten Stand transaktional und liest ihn validiert",
+        "lässt einen gültigen Stand bei abgelehnener Speicherung unverändert",
+        "verwendet Schema 2 beim Anlegen einer neuen Datenbank",
+        "migriert Schema 1 transaktional und ergänzt fehlende Kooperationsfelder",
+        "bricht eine ungültige Migration ohne Überschreiben des alten Stands ab",
+        "behält genau fünf rotierende Sicherungen und verhindert Zeitstempel-Kollisionen"
+      ],
+      "replacement": "tests/storage.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/store-context.test.ts",
+      "category": "B",
+      "requirements": [
+        "eine wiederholte Spielaktion behält Übungskennung, Spielkontext und Aktions-ID auch nach Stop",
+        "auch Trainings-Reset behält seinen ursprünglichen Kontext beim Retry nach zwischenzeitigem Stop",
+        "monotone Spielkontexte verhindern verspätetes /me und bewahren neuen CSRF-/Übungsstand",
+        "verspätete /action- und Socket-Antworten dürfen nach einem Reset keine alte Spielgeneration zurückholen",
+        "alte 401- und /me-Antworten nach Logout/Login löschen oder überschreiben keine neue Kontositzung",
+        "%s wird nach Kontowechsel nicht mit neuem Cookie/CSRF wiederholt"
+      ],
+      "replacement": "tests/store-context.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/transmissions.test.ts",
+      "category": "B",
+      "requirements": [
+        "eine zum Meldebild entsandte Besatzung meldet auch unerwarteten technischen Bedarf statt ohne Erstlage festzuhängen",
+        "nur das erste geeignete Führungsfahrzeug meldet die Erstlage; weitere Ankünfte duplizieren sie nicht",
+        "ordnet FIFO je Kanal, lässt andere Leitstellen und FMS unabhängig und überlebt gespeicherte Zustände",
+        "Notfall unterbricht kontrolliert, wiederholt die erhaltene Meldung und lässt normale Meldungen nicht verhungern",
+        "großer Zeitsprung spielt keinen verpassten Stapel ab, behält ihn aber nachvollziehbar im Verlauf",
+        "Live-Snapshots spielen nur neu begonnene Übertragungen; Reconnect, Offline, doppelte Revisionen bleiben stumm"
+      ],
+      "replacement": "tests/transmissions.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/tutorial-http.test.ts",
+      "category": "B",
+      "requirements": [
+        "authenticates practice requests and isolates two dispatchers of one real desk",
+        "upgrades an earlier practice envelope without changing assets, progress, seed or replay protection",
+        "serializes context switches and rejects stale controls without replaying reset or stop",
+        "keeps real call, dispatch, FMS, radio, rewards and export exclusively in the practice world",
+        "persists private progress, session and duplicate receipts through a real server restart"
+      ],
+      "replacement": "tests/tutorial-http.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/tutorial.test.ts",
+      "category": "B",
+      "requirements": [
+        "personal tutorial and authoritative practice",
+        "restarts completed chapters without resetting the world, while skip and resume keep progress",
+        "isolates purchases, duplicate actions, currency and experience from both real accounts",
+        "records personal steps only after actual evidence and rejects stale repeated advancement",
+        "uses real calls, dispatch, FMS, radio, completion and private financial receipts"
+      ],
+      "replacement": "tests/tutorial.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/volunteers.test.ts",
+      "category": "B",
+      "requirements": [
+        "Freiwillige Wachen, NPC-Anreise und BF-Fortschritt",
+        "neue Feuerwehr ist FF, bestehendes fehlendes Profil bleibt BF und Kapazitäten unterscheiden sich",
+        "Kalender berücksichtigt Wochenenden und nationale feste sowie bewegliche Feiertage",
+        "private Verfügbarkeit bleibt reproduzierbar und kann nicht über normale Dienst-Aktionen gesteuert werden",
+        "FF ist aus dem Wachenpool alarmierbar ohne vorab einzelne Kräfte fest zuzuweisen",
+        "ETA-Vorschau verändert weder Personal noch Alarmzusagen",
+        "gestaffelte echte NPC-Anreise bildet Besatzung, fährt erst danach aus und überlebt Speichern",
+        "gleichzeitige FF-Alarme teilen keine Einsatzkraft und nutzen verbleibende Kräfte für kleine Fahrzeuge",
+        "fehlende Quittierungen halten das Fahrzeug an der Wache und erzeugen eine Ersatzanforderung",
+        "Ausbildung bleibt Voraussetzung und unpassende Kräfte besetzen kein Sonderfahrzeug",
+        "FF-Privatdaten verschwinden aus Snapshots, sichtbare Anfahrten bleiben erhalten",
+        "Rückfahrt bleibt mit FMS1 alarmierbar und gibt erst an der Wache den FF-Pool frei",
+        "BF ist ein kostenpflichtiger späterer Ausbau ohne Umgehung über Profiländerungen",
+        "Reservewarnungen verbieten keine Alarmierung",
+        "Snapshot-Besatzungsindex verarbeitet 500 Fahrzeuge und 4500 Kräfte ohne erneute Bindungsscans pro Fahrzeug"
+      ],
+      "replacement": "tests/volunteers.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/withdrawal-server.test.ts",
+      "category": "B",
+      "requirements": [
+        "prüft gemeinsamen Kräfteabzug erneut in der Transaktion, verweigert Fremdzugriff und erhält Replay nach Neustart"
+      ],
+      "replacement": "tests/withdrawal-server.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/world-balancing.test.ts",
+      "category": "B",
+      "requirements": [
+        "misst ruhigen Einstieg, Normalbetrieb, steigenden Sturm, Hauptphase und Rückstauabbau mit festen Seeds"
+      ],
+      "replacement": "tests/world-balancing.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/world-situation.test.ts",
+      "category": "B",
+      "requirements": [
+        "führt gemeinsame Phasen deterministisch weiter; Aufholzeit ist begrenzt und Schäden bleiben erhalten",
+        "steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberlastung",
+        "liefert zwei unabhängigen Leitstellen und späterem Login dieselbe Lage und öffentliche Bereitschaft ohne private Einsatzdaten",
+        "migriert Weltmetadaten einmalig mit Sicherung und erhält den übrigen Spielstand"
+      ],
+      "replacement": "tests/world-situation.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    },
+    {
+      "old": "tests/world.test.ts",
+      "category": "C",
+      "requirements": [
+        "verbindet sämtliche Straßen und Häfen mit kurzen, tatsächlich gezeichneten Fahrwegen",
+        "zeichnet unverbundene Straßenkreuzungen ausdrücklich als Überführung",
+        "übernimmt alle 117 alten Bauplätze getrennt und migriert nur bekannte gültige Karten",
+        "migriert beide Welten samt aktivem Verbundtransport, sichert das Original und stellt alte Sicherungen per CLI wieder her",
+        "rollt die Kartenmigration beider Tabellen bei einem beschädigten Einzelspielerstand zurück",
+        "übernimmt Boote und Rückfahrten an die neuen Häfen ohne Verlust von Auftrag oder Fahrzeit"
+      ],
+      "replacement": "tests/world.test.ts",
+      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+    }
+  ]
+}

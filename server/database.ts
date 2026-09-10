@@ -9,7 +9,7 @@ import { updateWeather } from "../src/simulation/weather";
 import { legacyIncident } from "../src/simulation/incidents";
 import { syncFms } from "../src/simulation/fms";
 import { DatabaseSync, backup } from "node:sqlite";
-import { mkdirSync, existsSync } from "node:fs";
+import { mkdirSync, existsSync, openSync, readSync, closeSync } from "node:fs";
 import { resolve } from "node:path";
 import { validate, type Save } from "../src/model";
 import { applyReadinessMigration } from "./readiness-migration";
@@ -61,8 +61,36 @@ export class Database {
     this.path = options.memory ? ":memory:" : resolve(dir, "game.sqlite");
     const existed = !options.memory && existsSync(this.path);
     if (existed) {
+      // Reject a future checkpointed schema before SQLite can even create WAL
+      // coordination files. The read-only SQL check below also covers live WAL.
+      const descriptor = openSync(this.path, "r");
+      try {
+        const header = Buffer.alloc(100);
+        if (
+          readSync(descriptor, header, 0, 100, 0) !== 100 ||
+          header.subarray(0, 16).toString() !== "SQLite format 3\0"
+        )
+          throw Error(
+            "SQLite-Datenbankkopf ist beschädigt. Bestand unverändert erhalten.",
+          );
+        if (header.readUInt32BE(60) > DATABASE_VERSION)
+          throw Error(
+            "Datenbank ist neuer als dieser Server. Kein Downgrade möglich.",
+          );
+      } finally {
+        closeSync(descriptor);
+      }
       const check = new DatabaseSync(this.path, { readOnly: true });
       try {
+        const version = Number(
+          check.prepare("PRAGMA user_version").get()!.user_version,
+        );
+        if (version > DATABASE_VERSION)
+          throw Error(
+            "Datenbank ist neuer als dieser Server. Kein Downgrade möglich.",
+          );
+        if (check.prepare("PRAGMA quick_check").get()!.quick_check !== "ok")
+          throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
         assertWorldMetadata(check);
         for (const table of ["saves", "solo_saves"]) {
           if (
