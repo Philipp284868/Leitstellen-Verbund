@@ -57,7 +57,7 @@ describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {
     expect(() => convertLegacyCredits(1.1)).toThrow();
   });
   it("enthält jede reale Katalogposition und eine betriebsfähige erste Anschaffung mit Reserve", () => {
-    expect(vehicles).toHaveLength(50);
+    expect(vehicles).toHaveLength(57);
     expect(priceEntries()).toHaveLength(
       buildings.length + vehicles.length + extensions.length,
     );

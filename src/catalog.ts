@@ -148,6 +148,7 @@ export const buildings: BuildingType[] = [
   },
 ];
 export interface VehicleType {
+  stationKinds?: string[];
   id: string;
   name: string;
   home: string;
@@ -524,6 +525,75 @@ export const vehicles: VehicleType[] = [
     6,
     { care: 6, logistics: 3 },
     3,
+  ),
+  {
+    ...v(
+      "flf",
+      "Flugfeldlöschfahrzeug",
+      "fire",
+      900000,
+      3,
+      { fire: 5, water: 12, foam: 4, rescue: 2 },
+      24,
+    ),
+    stationKinds: ["airport"],
+  },
+  {
+    ...v(
+      "ulf",
+      "Universallöschfahrzeug",
+      "fire",
+      750000,
+      6,
+      { fire: 4, water: 6, foam: 3, hazmat: 2, air: 2 },
+      24,
+    ),
+    stationKinds: ["works", "company", "airport"],
+  },
+  v(
+    "thw-power",
+    "Fachgruppe Elektroversorgung",
+    "thw",
+    260000,
+    3,
+    { power: 5, lighting: 2, logistics: 1 },
+    18,
+  ),
+  v(
+    "thw-pump",
+    "Hochleistungspumpen-Modul",
+    "thw",
+    350000,
+    6,
+    { pump: 6, technical: 2, logistics: 2 },
+    18,
+  ),
+  v(
+    "thw-light",
+    "Beleuchtungsfahrzeug",
+    "thw",
+    220000,
+    3,
+    { lighting: 5, power: 2 },
+    15,
+  ),
+  v(
+    "kats-log",
+    "GW Logistik Katastrophenschutz",
+    "kats",
+    280000,
+    6,
+    { logistics: 5, care: 2, power: 1 },
+    12,
+  ),
+  v(
+    "dive-unit",
+    "Gerätewagen Taucher",
+    "water",
+    310000,
+    6,
+    { diver: 4, rescue: 2, medical: 1 },
+    22,
   ),
 ];
 for (const type of vehicles)

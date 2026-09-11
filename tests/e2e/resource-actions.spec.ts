@@ -16,6 +16,7 @@ import { formatMoney } from "../../src/money";
 import { stationCapacity } from "../../src/simulation/staffing";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { openPanel } from "./ui-navigation";
+import { equipmentPrice } from "../../src/simulation/vehicle-equipment";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -80,6 +81,60 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(async () => {
   await app.close();
+});
+
+test("konfiguriert einen wachenübergreifenden Warenkorb, kauft genau einmal und erhält ihn nach Neuladen", async ({
+  page,
+}, info) => {
+  const s = current();
+  s.buildings[0].level = 10;
+  apply(s, fixturePurchase("ems", nodes[1]));
+  s.buildings.at(-1)!.ready = s.time;
+  s.buildings.at(-1)!.name = "Rettungswache";
+  app.db.save(owner, s);
+  await page.reload();
+  await enter(page);
+  await station(page, "Nordwache");
+  await page
+    .getByRole("tab", { name: "Fahrzeuge & Vergleich", exact: true })
+    .click();
+  await page.locator('[data-tutorial="buy-lf"]').click();
+  await page.getByLabel(/Schlauchpaket/).check();
+  await page
+    .getByRole("button", { name: "In den Warenkorb", exact: true })
+    .click();
+  await page
+    .getByLabel("Bestellen für Wache", { exact: true })
+    .selectOption(s.buildings.at(-1)!.id);
+  await page.locator('[data-tutorial="buy-rtw"]').click();
+  await page
+    .getByRole("button", { name: "In den Warenkorb", exact: true })
+    .click();
+  const cart = page.getByRole("region", { name: "Fahrzeugwarenkorb" });
+  await expect(cart).toContainText("Nordwache");
+  await expect(cart).toContainText("Rettungswache");
+  await page.screenshot({
+    path: info.outputPath("warenkorb.png"),
+    fullPage: true,
+  });
+  const before = current().money,
+    count = current().vehicles.length;
+  await doubleClick(
+    cart.getByRole("button", {
+      name: "Bestellung verbindlich abschließen",
+      exact: true,
+    }),
+  );
+  await expect.poll(() => current().vehicles.length).toBe(count + 2);
+  expect(current().money).toBe(
+    before - equipmentPrice("lf", ["hose"]) - equipmentPrice("rtw"),
+  );
+  expect(current().vehicles.at(-2)!.equipment).toEqual(["hose"]);
+  await page.reload();
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
+  await page.getByLabel("Fahrzeugsortierung").selectOption("home");
+  await expect(page.locator(".fleet-card")).toHaveCount(count + 2);
 });
 
 test("Versetzen, Fahrzeugverkauf und leerer Standortverkauf sind echte einmalige Buchungen und bleiben nach Neustart erhalten", async ({

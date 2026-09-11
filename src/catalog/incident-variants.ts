@@ -54,6 +54,12 @@ const siteNames: Record<IncidentProfile["site"], string> = {
   public: "öffentlich zugänglicher Bereich",
   water: "bestätigter Gewässerzugang",
   construction: "Baustelle",
+  school: "Schule",
+  hospital: "Krankenhaus",
+  shopping: "Einkaufszentrum",
+  parking: "Parkhaus oder Parkplatz",
+  motorway: "Autobahn",
+  airport: "Flughafen",
 };
 export function buildIncidentVariant(
   topic: IncidentTopic,

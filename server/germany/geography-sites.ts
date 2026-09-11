@@ -126,6 +126,12 @@ const RANGE: Record<Exclude<IncidentSiteKind, "street">, number> = {
   public: 40,
   water: 60,
   construction: 40,
+  school: 40,
+  hospital: 40,
+  shopping: 40,
+  parking: 30,
+  motorway: 30,
+  airport: 60,
 };
 const WATER = new Set([
   "lake",
@@ -146,6 +152,22 @@ function kindsFor(
     sub = String(p.subclass || "");
   if (p.brunnel === "tunnel" || ["1", "true"].includes(String(p.intermittent)))
     return [];
+  if (["poi", "landuse", "aerodrome_label", "building"].includes(layer)) {
+    const tags = [c, sub, String(p.aeroway ?? ""), String(p.amenity ?? "")];
+    if (tags.some((t) => ["school", "college", "kindergarten"].includes(t)))
+      return ["public", "school"];
+    if (tags.includes("hospital")) return ["public", "hospital"];
+    if (tags.some((t) => ["mall", "shopping_centre"].includes(t)))
+      return ["commercial", "shopping"];
+    if (
+      tags.some((t) =>
+        ["parking", "parking_garage", "multi-storey"].includes(t),
+      )
+    )
+      return ["commercial", "parking"];
+    if (tags.some((t) => ["aerodrome", "airport"].includes(t)))
+      return ["airport"];
+  }
   if (layer === "water") return WATER.has(c) ? ["water"] : [];
   if (layer === "waterway")
     return c === "river" || c === "canal" ? ["water"] : [];
@@ -163,6 +185,7 @@ function kindsFor(
     if (PUBLIC.has(c)) return ["public"];
   }
   if (layer === "transportation") {
+    if (c === "motorway") return ["motorway"];
     if (c.endsWith("_construction") || c === "construction")
       return ["construction"];
     if (
@@ -296,6 +319,8 @@ export class GermanyIncidentGeography {
         "landuse",
         "transportation",
         "poi",
+        "building",
+        "aerodrome_label",
       ]) {
         const layer = tile.layers[name];
         if (!layer) continue;

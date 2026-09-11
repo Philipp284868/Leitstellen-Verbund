@@ -101,12 +101,10 @@
 }
 .facility-map-controls {
   position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 70px;
+  right: 12px;
   z-index: 5;
-  display: flex;
-  align-items: center;
+  max-width: 290px;
   gap: 8px;
   padding: 7px 10px;
   background: #0b1b24ee;
@@ -115,6 +113,11 @@
 }
 .facility-map-controls select {
   max-width: 175px;
+}
+.facility-map-controls[open] > label,
+.facility-map-controls[open] > small {
+  display: block;
+  margin-block: 8px;
 }
 .facility-map-canvas {
   position: absolute;
@@ -129,7 +132,7 @@
     grid-template-columns: 1fr;
   }
   .facility-map-controls {
-    top: 62px;
+    bottom: 70px;
   }
   .facility-map-panel {
     width: min(340px, 80vw);

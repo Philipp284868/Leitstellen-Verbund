@@ -27,7 +27,12 @@ import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "./product";
 import { RadioDesk } from "./RadioDesk";
 import { ReconnectSummary } from "./ReconnectSummary";
-import { BuildingPanel, Fleet } from "./Resources";
+const BuildingPanel = lazy(() =>
+  import("./Resources").then((m) => ({ default: m.BuildingPanel })),
+);
+const Fleet = lazy(() =>
+  import("./Resources").then((m) => ({ default: m.Fleet })),
+);
 import "./Settings.css";
 import { SituationDesk } from "./SituationDesk";
 import { AudioSession } from "./Sound";

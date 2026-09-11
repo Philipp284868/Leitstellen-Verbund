@@ -574,7 +574,11 @@ it.each([false, true])(
       expect(done.transports[0].owner).toBe(w.helper);
       if (technical) {
         expect(done.location!.state).toBe("technical-closure");
-        expect(w.db.all().get(w.owner)!.money).toBe(protectedMoney);
+        const result = w.db.all().get(w.owner)!;
+        expect(
+          result.money +
+            result.aid.reduce((n, r) => n + (r.billing?.paid ?? 0), 0),
+        ).toBe(protectedMoney);
         expect(w.db.all().get(w.owner)!.xp).toBe(protectedXp);
         expect(
           w.db.sql

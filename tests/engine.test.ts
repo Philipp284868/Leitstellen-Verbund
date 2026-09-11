@@ -28,7 +28,7 @@ function setup() {
 describe("Kataloge und Erreichbarkeit", () => {
   it("enthält den erweiterten Fahrzeug- und Einsatzkatalog mit unterschiedlichen Anforderungen", () => {
     expect(buildings).toHaveLength(9);
-    expect(vehicles).toHaveLength(50);
+    expect(vehicles).toHaveLength(57);
     expect(missions.length).toBeGreaterThan(600);
     expect(
       new Set(missions.map((m) => JSON.stringify(m.requirements))).size,

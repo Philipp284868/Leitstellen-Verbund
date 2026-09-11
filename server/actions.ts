@@ -6,6 +6,7 @@ import {
 } from "../src/simulation/organizations-schema";
 import { deskActions, dispatchOptions } from "../src/simulation/actions";
 import { z } from "zod";
+import { equipmentSchema } from "../src/simulation/vehicle-equipment";
 import { point } from "../src/model";
 const id = z.string().min(1).max(100),
   name = z.string().trim().min(1).max(48);
@@ -15,9 +16,41 @@ export const actionSchema = z.discriminatedUnion("type", [
   ...deskActions,
   ...organizationActions,
   ...aidActions,
+  z.object({ type: z.literal("vehicle-service"), vehicle: id }).strict(),
+  z
+    .object({
+      type: z.literal("water-source"),
+      mission: id,
+      source: z.enum(["tank", "hydrant", "open-water", "shuttle"]),
+    })
+    .strict(),
   z.object({ type: z.literal("build"), kind: id, pos: point }).strict(),
   z.object({ type: z.literal("purchase-facility"), facility: id }).strict(),
-  z.object({ type: z.literal("buy"), kind: id, home: id }).strict(),
+  z
+    .object({
+      type: z.literal("buy"),
+      kind: id,
+      home: id,
+      equipment: equipmentSchema.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("buy-batch"),
+      items: z
+        .array(
+          z
+            .object({
+              kind: id,
+              home: id,
+              equipment: equipmentSchema.optional(),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(30),
+    })
+    .strict(),
   z
     .object({
       type: z.literal("hire"),

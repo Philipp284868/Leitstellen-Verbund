@@ -14,6 +14,7 @@ import { mt, type Skills } from "../catalog";
 import { level } from "../model";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
 import { initialFire, fireTick } from "./fire";
+import { ensureWaterSupply, waterSupplyTick } from "./water-supply";
 import { ensureMissionTasks, taskTick, tasksComplete } from "./mission-tasks";
 import { newPatient, patientTick, patientsReady } from "./patients";
 import { record, simId } from "./events";
@@ -108,7 +109,7 @@ function responderTick(s: Save, m: Mission, skills: Skills) {
   if (!d.scenario) return;
   const sceneVehicles = new Map(
     s.vehicles
-      .filter((v) => v.mission === m.id && v.status === "scene")
+      .filter((v) => v.mission === m.id && v.status === "scene" && !v.waterTrip)
       .map((v) => [v.id, v]),
   );
   const people = sceneVehicles.size
@@ -363,14 +364,16 @@ function escalate(s: Save, m: Mission, skills: Skills) {
     d.events.length < DYNAMICS.maxEvents &&
     !d.parent &&
     !d.pending &&
-    !d.children.length &&
+    d.children.length < DYNAMICS.followups &&
     sample(seed, "secondary", n) <
       (d.scenario ? 0.45 : DYNAMICS.secondaryChance)
   ) {
-    const followup = d.scenario?.followups.find((f) =>
-      d.hazards.some(
-        (h) => h.kind === f.trigger && !h.resolved && h.value >= f.threshold,
-      ),
+    const followup = d.scenario?.followups.find(
+      (f) =>
+        !d.events.includes(`followup:${f.template}`) &&
+        d.hazards.some(
+          (h) => h.kind === f.trigger && !h.resolved && h.value >= f.threshold,
+        ),
     );
     if (d.scenario && !followup) return;
     d.pending = {
@@ -382,6 +385,7 @@ function escalate(s: Save, m: Mission, skills: Skills) {
       due: s.time + (followup?.delay ?? 120),
     };
     d.events.push("followup-pending");
+    d.events.push(`followup:${d.pending.template}`);
     announce(
       s,
       m,
@@ -433,10 +437,12 @@ export function dynamicsTick(
     if (d.tactic === "defensive") {
       skills.hazmat = Math.max(skills.hazmat || 0, (skills.fire || 0) * 0.5);
     }
+    ensureWaterSupply(s, m);
     majorTick(s, m, skills, DYNAMICS.quantum, remoteUnits);
     organizationsTick(s, m, skills, DYNAMICS.quantum);
     bystanderTick(s, m);
     responderTick(s, m, skills);
+    waterSupplyTick(s, m, skills, DYNAMICS.quantum, remoteUnits);
     hazardTick(s, m, skills, DYNAMICS.quantum);
     fireTick(s, m, skills, DYNAMICS.quantum);
     patientTick(s, m, skills, DYNAMICS.quantum, carriers);
@@ -524,55 +530,62 @@ export function followupsTick(s: Save) {
   // Time pacing is independent of the count of open incidents; no catch-up burst.
   if (s.missionWait > 0) return;
   const available = fleetCapabilities(s);
-  const parent = [...s.missions, ...s.archive].find(
+  const parents = [...s.missions, ...s.archive].filter(
     (m) =>
       m.dynamics?.pending &&
       m.dynamics.pending.due <= s.time &&
       m.dynamics.children.length < DYNAMICS.followups &&
       canGenerate(s, mt(m.dynamics.pending.template), available),
   );
-  if (!parent?.dynamics?.pending) return;
-  const d = parent.dynamics,
-    template = d.pending!.template;
-  const location = verifyIncidentLocation(s, mt(template), parent.pos);
-  if (!location) {
-    d.pending!.due = s.time + 60;
+  for (const parent of parents) {
+    if (!parent.dynamics?.pending) continue;
+    const d = parent.dynamics,
+      template = d.pending!.template;
+    const location = verifyIncidentLocation(
+      s,
+      mt(template),
+      parent.location?.original ?? parent.pos,
+    );
+    if (!location) {
+      d.pending!.due = s.time + 60;
+      continue;
+    }
+    const child: Mission = {
+      location,
+      id: simId(s),
+      template,
+      paymentCents: mt(template).reward,
+      pos: { ...location.access },
+      progress: 0,
+      phase: "offered",
+      created: s.time,
+      completed: 0,
+      shared: false,
+      round: simId(s),
+      contributors: [],
+      transports: [],
+    };
+    s.missions.push(child);
+    attachIncident(s, child);
+    attachDynamics(s, child);
+    attachOrganizations(child);
+    child.dynamics!.parent = parent.id;
+    d.children.push(child.id);
+    delete d.pending;
+    record(
+      s,
+      parent,
+      "FOLLOWUP_CREATED",
+      `Zugeordneter Folgeeinsatz ${child.id.slice(-8)} angelegt.`,
+    );
+    record(
+      s,
+      child,
+      "FOLLOWUP_LINKED",
+      `Folgeereignis zu Einsatz ${parent.id.slice(-8)}.`,
+    );
+    s.missionWait = 120;
     return;
   }
-  const child: Mission = {
-    location,
-    id: simId(s),
-    template,
-    paymentCents: mt(template).reward,
-    pos: { ...parent.pos },
-    progress: 0,
-    phase: "offered",
-    created: s.time,
-    completed: 0,
-    shared: false,
-    round: simId(s),
-    contributors: [],
-    transports: [],
-  };
-  s.missions.push(child);
-  attachIncident(s, child);
-  attachDynamics(s, child);
-  attachOrganizations(child);
-  child.dynamics!.parent = parent.id;
-  d.children.push(child.id);
-  delete d.pending;
-  record(
-    s,
-    parent,
-    "FOLLOWUP_CREATED",
-    `Zugeordneter Folgeeinsatz ${child.id.slice(-8)} angelegt.`,
-  );
-  record(
-    s,
-    child,
-    "FOLLOWUP_LINKED",
-    `Folgeereignis zu Einsatz ${parent.id.slice(-8)}.`,
-  );
-  s.missionWait = 120;
 }
 import { verifyIncidentLocation } from "./location-reachability";

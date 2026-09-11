@@ -21,13 +21,15 @@ function distance(a, b) {
 }
 function accessFor(site, index) {
   if (site.kind === "heli")
-    return {
-      lon: site.lon,
-      lat: site.lat,
-      source: site.source,
-      method: "air-base",
-    };
-  if (!index) return;
+    return [
+      {
+        lon: site.lon,
+        lat: site.lat,
+        source: site.source,
+        method: "air-base",
+      },
+    ];
+  if (!index) return [];
   const points = [site, ...(site.entrances || [])];
   const candidates = new Map();
   for (const p of points)
@@ -58,28 +60,37 @@ function accessFor(site, index) {
       (!site.tags.building || site.tags.building === "no") &&
       covers(site.geometry, a);
     const exactPoint = site.geometry.type === "Point" && distance(site, a) <= 8;
-    if (entry || onsite || exactPoint)
+    // A mapped service road directly beside a station is a routing candidate,
+    // not a fabricated entrance. Runtime checks land and both route directions.
+    const nearbyService =
+      a.road_class === "service" &&
+      !["no", "private"].includes(a.access) &&
+      distance(site, a) <= 40;
+    if (entry || onsite || exactPoint || nearbyService)
       ranked.push({
         lon: a.lon,
         lat: a.lat,
         source: entry
           ? `${entry.source};road-node:${a.id}`
           : `road-node:${a.id}`,
-        method: entry ? "entrance" : "onsite-road",
-        rank: (entry ? 0 : 1000) + distance(site, a),
+        method: entry
+          ? "entrance"
+          : onsite || exactPoint
+            ? "onsite-road"
+            : "nearby-service-road",
+        rank:
+          (entry ? 0 : onsite || exactPoint ? 1000 : 2000) + distance(site, a),
       });
   }
-  const best = ranked.sort(
-    (a, b) => a.rank - b.rank || a.source.localeCompare(b.source),
-  )[0];
-  if (best) {
-    return {
+  return ranked
+    .sort((a, b) => a.rank - b.rank || a.source.localeCompare(b.source))
+    .slice(0, 3)
+    .map((best) => ({
       lon: best.lon,
       lat: best.lat,
       source: best.source,
       method: best.method,
-    };
-  }
+    }));
 }
 export function normalizeFacilities(
   records,
@@ -268,7 +279,8 @@ export function writeFacilityCatalog(
     db.exec(CATALOG_SCHEMA);
     db.exec("BEGIN");
     for (const row of rows) {
-      const access = accessFor(row, index);
+      const accesses = accessFor(row, index);
+      const access = accesses[0];
       const address =
         [
           row.tags?.["addr:street"],
@@ -285,6 +297,7 @@ export function writeFacilityCatalog(
         name: row.tags?.["name:de"] || row.tags?.name || row.name || "",
         address,
         access: access || row.access,
+        accessAlternatives: accesses.slice(1),
         quality: [...row.quality],
       };
       if (!entry.access) entry.quality.push("Zufahrt nicht hinreichend belegt");

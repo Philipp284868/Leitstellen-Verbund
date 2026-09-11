@@ -1,3 +1,4 @@
+import { ensureWaterSupply } from "../src/simulation/water-supply";
 import { expect, it } from "vitest";
 import { vehicles, vt, type Template } from "../src/catalog";
 import { incidentVariants } from "../src/catalog/incident-variants";
@@ -81,6 +82,11 @@ function setup(t: Template) {
     for (const [k, n] of Object.entries(best.skills))
       supplied[k] = (supplied[k] || 0) + n;
     if (s.vehicles.length > 50) throw Error(`Unlösbare Kräfteauswahl: ${t.id}`);
+  }
+  if (m.dynamics?.fire) {
+    atScene(s, addUnit(s, "lf"), m.id);
+    atScene(s, addUnit(s, "tlf"), m.id);
+    ensureWaterSupply(s, m)!.source = "shuttle";
   }
   expect(missing(m, capacity(s, m.id))).toEqual([]);
   return { s, m };

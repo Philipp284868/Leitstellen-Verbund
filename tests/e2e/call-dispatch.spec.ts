@@ -14,6 +14,7 @@ import { openPanel, showIncidents } from "./ui-navigation";
 import { fresh } from "../../src/model";
 import { apply, tick } from "../../src/engine";
 import { sites } from "../fixtures/germany/locations";
+import { prepared } from "../helpers/patient-transport";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -37,6 +38,113 @@ test.afterEach(async () => {
   await app.close();
 });
 
+for (const [patients, ambulances] of [
+  [1, 1],
+  [3, 2],
+])
+  test(`Patientenanzeige: ${patients} Patienten mit ${ambulances} RTW, Übergabe und Archiv`, async ({
+    page,
+  }, info) => {
+    const { s, m } = prepared(patients, ambulances, owner);
+    // Drive the real server simulation explicitly so browser speed cannot skip
+    // the short boarding/handover states under observation.
+    const step = app.game.step.bind(app.game);
+    app.game.step = () => {};
+    m.control!.locationKnown = true;
+    m.control!.reportedTemplate = m.template;
+    replaceFixtureSave(app.db, owner, s);
+    await page.goto(config.publicUrl);
+    await page.getByLabel("Benutzername", { exact: true }).fill("dispatcher");
+    await page.getByLabel("Passwort", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+    await page.getByRole("button", { name: "Spielen", exact: true }).click();
+    await showIncidents(page);
+    await page.locator(".mission-card").first().click();
+    await expect(
+      page.locator('.patient-card[data-transport="scene"]'),
+    ).toHaveCount(patients);
+    const start = app.db.all().get(owner)!;
+    start.missions.find((x) => x.id === m.id)!.phase = "transport";
+    app.db.save(owner, start);
+    step(1, Date.now(), { generation: false });
+    await expect(
+      page.locator('.patient-card[data-transport="scene"]'),
+    ).toHaveCount(patients - ambulances);
+    await expect(
+      page.locator('.patient-card[data-transport="aboard"]'),
+    ).toHaveCount(ambulances);
+    await page.screenshot({
+      path: info.outputPath(`patienten-${patients}-unterwegs.png`),
+      fullPage: true,
+    });
+    const checkpointTime = Number(
+      app.db.sql.prepare("SELECT value FROM meta WHERE key='lastTick'").get()!
+        .value,
+    );
+    await app.close();
+    // A known 100 ms outage tests persistence while the separate long-outage
+    // tests exercise completed transports during offline catch-up.
+    const realNow = Date.now;
+    Date.now = () => checkpointTime + 100;
+    try {
+      app = await createBrowserServer(compiled.startServer, config);
+    } finally {
+      Date.now = realNow;
+    }
+    const resumedStep = app.game.step.bind(app.game);
+    app.game.step = () => {};
+    await app.listen();
+    await page.reload();
+    await page.getByRole("button", { name: "Spielen", exact: true }).click();
+    const resumed = app.db.all().get(owner)!;
+    const active = resumed.missions.find((x) => x.id === m.id);
+    if (active) {
+      await showIncidents(page);
+      await page.locator(".mission-card").first().click();
+      await expect(
+        page.locator('.patient-card[data-transport="scene"]'),
+      ).toHaveCount(
+        active.dynamics!.patients.filter((p) => p.transport === "scene").length,
+      );
+    } else {
+      expect(
+        resumed.archive
+          .find((x) => x.id === m.id)!
+          .dynamics!.patients.every((p) => p.transport === "delivered"),
+      ).toBe(true);
+      await openPanel(page, "Archiv");
+      await page
+        .getByRole("button", { name: "Verlauf ansehen", exact: true })
+        .first()
+        .click();
+    }
+    for (
+      let i = 0;
+      i < 600 &&
+      app.db
+        .all()
+        .get(owner)!
+        .missions.some((x) => x.id === m.id);
+      i++
+    )
+      resumedStep(5, Date.now(), { generation: false });
+    const done = app.db.all().get(owner)!;
+    expect(
+      done.archive
+        .find((x) => x.id === m.id)!
+        .dynamics!.patients.every((p) => p.transport === "delivered"),
+    ).toBe(true);
+    await expect(
+      page.locator('.patient-card[data-transport="scene"]'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('.patient-card[data-transport="delivered"]'),
+    ).toHaveCount(patients);
+    const money = done.money;
+    resumedStep(10, Date.now(), { generation: false });
+    expect(app.db.all().get(owner)!.money).toBe(money);
+  });
+
 test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und Annahme", async ({
   page,
 }, info) => {
@@ -50,7 +158,7 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
   app.game.step(1);
   const initial = app.db.all().get(owner)!;
   expect(initial.missions).toHaveLength(0);
-  expect(initial.callPacing!.notBefore - initial.time).toBeLessThanOrEqual(480);
+  expect(initial.callPacing!.notBefore - initial.time).toBeLessThanOrEqual(360);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(config.publicUrl);
@@ -63,13 +171,14 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
     page.getByRole("heading", { name: "Warten auf Notruf" }),
   ).toBeVisible();
   await expect(page.locator(".mission-sidebar")).toContainText(
-    "fünf bis acht Minuten",
+    "mehrere Einsätze können gleichzeitig laufen",
   );
   await page.screenshot({
     path: info.outputPath("starter-waiting-for-call.png"),
   });
   // Advance the real server in ordinary ticks, never inject a test mission or bypass pacing.
-  for (let i = 0; i < 480; i++) app.game.step(1);
+  for (let i = 0; i < 360 && !app.db.all().get(owner)!.missions.length; i++)
+    app.game.step(1);
   expect(app.db.all().get(owner)!.missions).toHaveLength(1);
   await expect(page.locator(".mission-card")).toHaveCount(1);
   await page.locator(".mission-card").click();

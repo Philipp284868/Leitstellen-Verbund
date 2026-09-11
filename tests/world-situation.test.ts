@@ -29,14 +29,14 @@ it("führt gemeinsame Phasen deterministisch weiter; Aufholzeit ist begrenzt und
   let stepped = initial;
   for (let i = 0; i < 720; i++) stepped = advanceSituation(stepped, 5);
   expect(stepped).toEqual(advanceSituation(initial, 3600));
-  expect(advanceSituation(initial, 700).phase).toBe("rising");
-  expect(advanceSituation(initial, 2000).phase).toBe("peak");
-  expect(advanceSituation(initial, 3500).phase).toBe("fading");
-  expect(advanceSituation(initial, 4500).phase).toBe("recovery");
+  expect(stepped.dynamic!.steps).toBeGreaterThan(8);
+  expect(stepped.dynamic!.pressure).toBeGreaterThanOrEqual(0);
+  expect(stepped.dynamic!.pressure).toBeLessThanOrEqual(1);
+  expect(stepped.dynamic!.nextAt).toBeGreaterThan(stepped.clock);
   const later = advanceSituation(initial, 100000);
   expect(later.clock - initial.clock).toBe(14400);
-  expect(later.history[0].id).toBe(initial.id);
-  expect(later.history.length).toBeLessThanOrEqual(3);
+  expect(later.history.every((h) => h.ended <= later.clock)).toBe(true);
+  expect(later.history.length).toBeLessThanOrEqual(24);
 });
 
 it("steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberlastung", () => {
@@ -44,15 +44,12 @@ it("steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberla
   s.missions = [];
   s.time = 43200;
   const b = s.buildings[0];
-  const world = advanceSituation(
-    createSituation(s.time, 123, "storm", {
-      kind: "circle",
-      name: "Testregion",
-      ...b.pos,
-      radius: 10,
-    }),
-    2000,
-  );
+  const world = createSituation(s.time, 123, "storm", {
+    kind: "circle",
+    name: "Testregion",
+    ...b.pos,
+    radius: 10,
+  });
   s.worldSituation = world;
   updateWeather(s);
   expect(s.environment!.kind).toBe("gale");
@@ -67,7 +64,7 @@ it("steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberla
   expect(travelFactor(s, s.vehicles[0], "priority")).toBeGreaterThan(
     travelFactor(normal, normal.vehicles[0], "priority"),
   );
-  expect(pacedDelay(123, s)).toBe(pacedDelay(123, normal));
+  expect(pacedDelay(123, s)).toBeLessThan(pacedDelay(123, normal));
   const outside = structuredClone(s);
   outside.buildings.forEach((b) => {
     b.pos.x += 100;
@@ -85,10 +82,10 @@ it("steuert echten Mix, Intervalle und Fahrwetter regional ohne Anfängerüberla
   ).toBeGreaterThan(
     travelFactor(normal, normal.vehicles[0], "priority", b.pos),
   );
-  s.worldSituation = advanceSituation(world, 2500);
+  s.worldSituation = createSituation(s.time, 123, "quiet");
   updateWeather(s);
   expect(situationDemand(s)).toBeLessThan(1);
-  expect(pacedDelay(123, s)).toBe(pacedDelay(123, normal));
+  expect(pacedDelay(123, s)).toBeGreaterThan(pacedDelay(123, normal));
   for (const save of [s, normal]) {
     save.completed = 3;
     apply(save, { type: "buy", kind: "tsf", home: save.buildings[0].id });
@@ -138,7 +135,7 @@ it("liefert zwei unabhängigen Leitstellen und späterem Login dieselbe Lage und
   const first = game.view(owner, new Set()),
     second = game.view(other, new Set());
   expect(first.save.worldSituation).toEqual(second.save.worldSituation);
-  expect(second.save.worldSituation!.phase).toBe("rising");
+  expect(second.save.worldSituation!.dynamic!.steps).toBeGreaterThan(0);
   expect(second.network.alarms).toMatchObject([
     { id: owner, name: "ILS Nord", stations: 1 },
   ]);

@@ -435,7 +435,7 @@ export function GameHud({
                 </h3>
                 <p>
                   {alarmable
-                    ? "Deine Fahrzeuge sind alarmierbar. Passende Notrufe treffen automatisch und einzeln ein. Beim Einstieg beträgt die Wartezeit fünf bis acht Minuten, auch bei ruhiger Weltlage."
+                    ? "Passende Notrufe treffen automatisch in wechselnden Abständen ein. Ausstattung, Wetter und Lage bestimmen das Aufkommen; mehrere Einsätze können gleichzeitig laufen."
                     : hasVehicle
                       ? "Aktuell ist kein Fahrzeug alarmierbar. Prüfe Status, Besatzung und Nachbereitung im Fuhrpark."
                       : hasStation

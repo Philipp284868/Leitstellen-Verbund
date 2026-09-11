@@ -22,7 +22,7 @@ import { applyReadinessMigration } from "./readiness-migration";
 import { ensureWorldSituation } from "./world-situation";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 19;
+export const DATABASE_VERSION = 20;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -398,6 +398,17 @@ export class Database {
           this.audit(
             "server-migration",
             "facility-rights-v19; geographic assignment requires explicit preview",
+          );
+        });
+      if (version < 20)
+        this.transaction(() => {
+          // New simulation fields are additive and initialized on validation/tick.
+          // Advance the storage boundary so an older binary cannot overwrite them.
+          // Preserve existing save JSON, identities, balances and geographic rights.
+          this.sql.exec("PRAGMA user_version=20");
+          this.audit(
+            "server-migration",
+            "simulation-overhaul-v20; additive state, no reset",
           );
         });
       this.sql

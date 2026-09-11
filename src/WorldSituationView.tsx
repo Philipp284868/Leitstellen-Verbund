@@ -2,8 +2,7 @@ import type { Save } from "./model";
 import type { PublicAlarm } from "./network";
 import {
   situationNames,
-  situationPhaseNames,
-  situationTimeline,
+  situationLevel,
   localSituation,
 } from "./simulation/world-situation";
 export function WorldSituationView({ s }: { s: Save }) {
@@ -12,7 +11,7 @@ export function WorldSituationView({ s }: { s: Save }) {
   return (
     <div className="world-situation-view">
       <h3>
-        {situationNames[state.profile]} · {situationPhaseNames[state.phase]}
+        {situationNames[state.profile]} · {situationLevel(state)}
       </h3>
       <p>
         {state.scope.name}
@@ -23,20 +22,32 @@ export function WorldSituationView({ s }: { s: Save }) {
           ? "Eigene Wachen liegen im betroffenen Gebiet."
           : "Die eigenen Wachen liegen außerhalb des betroffenen Gebiets."}
       </p>
-      <ol>
-        {situationTimeline(state).map((p) => (
-          <li
-            key={p.phase}
-            aria-current={p.phase === state.phase ? "step" : undefined}
-          >
-            {situationPhaseNames[p.phase]} ·{" "}
-            {new Date(p.start * 1000).toLocaleTimeString("de-DE", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </li>
-        ))}
-      </ol>
+      <p>
+        Entwicklung:{" "}
+        {state.dynamic?.trend === "rising"
+          ? "zunehmend"
+          : state.dynamic?.trend === "falling"
+            ? "nachlassend"
+            : "weitgehend stabil"}
+        . Weitere Veränderungen ergeben sich aus der laufenden Lage.
+      </p>
+      <details>
+        <summary>Bisheriger Lageverlauf</summary>
+        {state.history.length ? (
+          state.history
+            .slice()
+            .reverse()
+            .map((h) => (
+              <p key={h.id}>
+                {situationNames[h.profile]} ·{" "}
+                {new Date(h.started * 1000).toLocaleTimeString("de-DE")} –{" "}
+                {new Date(h.ended * 1000).toLocaleTimeString("de-DE")}
+              </p>
+            ))
+        ) : (
+          <p>Noch kein Lagewechsel aufgezeichnet.</p>
+        )}
+      </details>
       <p>
         Simulierte Lage. Neue Vorgänge berücksichtigen Ausstattung und
         Belastung; bestehende Schäden bleiben bis zur Bearbeitung erhalten.

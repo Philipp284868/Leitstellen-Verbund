@@ -31,7 +31,7 @@ export const travelNames = {
   emergency: "Notfallfahrt",
 };
 export const routeWeatherKey = (s: Save) =>
-  `weather-${s.environment?.period ?? 0}${s.worldSituation ? `-${s.worldSituation.id}-${s.worldSituation.phase}` : ""}`;
+  `weather-${s.environment?.period ?? 0}${s.worldSituation ? `-${s.worldSituation.id}-${s.worldSituation.phase}-${s.worldSituation.dynamic?.steps ?? 0}` : ""}`;
 export function travelFactor(
   s: Save,
   v: Pick<Vehicle, "type">,

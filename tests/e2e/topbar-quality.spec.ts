@@ -230,8 +230,14 @@ test("Tastatur erreicht die letzte Besatzungsdisclosure und bricht eine Verkaufs
   await opener.click();
   const dialog = page.getByRole("dialog", { name: "Fuhrpark", exact: true }),
     lastCard = dialog.locator(".fleet-card").last(),
-    summary = lastCard.locator("summary"),
-    disclosure = lastCard.locator("details"),
+    disclosure = lastCard.locator("details").filter({
+      has: page.getByText("Besatzung & Einsatzbereitschaft", { exact: true }),
+    }),
+    summary = disclosure.locator("summary"),
+    equipment = lastCard.locator("details").filter({
+      has: page.getByText("Ausrüstung und Fahrzeugzustand", { exact: true }),
+    }),
+    equipmentSummary = equipment.locator("summary"),
     close = dialog.getByRole("button", { name: "Schließen", exact: true }),
     sell = lastCard.getByRole("button", { name: "Verkaufen", exact: true });
   await sell.focus();
@@ -242,7 +248,15 @@ test("Tastatur erreicht die letzte Besatzungsdisclosure und bricht eine Verkaufs
   await page.keyboard.press("Space");
   await expect(disclosure).not.toHaveAttribute("open", "");
   await page.keyboard.press("Tab");
+  await expect(equipmentSummary).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(equipment).toHaveAttribute("open", "");
+  await page.keyboard.press("Space");
+  await expect(equipment).not.toHaveAttribute("open", "");
+  await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(equipmentSummary).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(summary).toBeFocused();
 

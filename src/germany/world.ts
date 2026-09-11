@@ -31,7 +31,14 @@ export type IncidentSiteKind =
   | "rail"
   | "public"
   | "water"
-  | "construction";
+  | "construction"
+  | "school"
+  | "hospital"
+  | "shopping"
+  | "parking"
+  | "motorway"
+  | "airport";
+// Geographic feature evidence is required for these more specific destinations.
 export type Hospital = Point & {
   id: string;
   name: string;

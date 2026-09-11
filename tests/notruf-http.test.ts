@@ -73,7 +73,7 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
     expect(app.db.all().get("owner")!.callPacing).toEqual(before);
     for (let i = 0; i < 21; i++) app.game.step(60, now);
     const owner = app.db.all().get("owner")!;
-    expect(owner.missions).toHaveLength(1);
+    expect(owner.missions.length).toBeGreaterThan(2);
     expect(app.db.all().get("member")!.missions).toHaveLength(0);
     const read = async (identity: (typeof identities)[number]) => {
       const response = await fetch(`${config.publicUrl}/api/me`, {
@@ -138,9 +138,19 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
     app = startServer(config);
     await app.listen();
     expect(app.db.all().get("owner")!.callPacing).toEqual(persisted);
-    expect(app.db.all().get("owner")!.missions).toHaveLength(1);
+    expect(
+      app.db
+        .all()
+        .get("owner")!
+        .missions.map((m) => m.id),
+    ).toEqual(owner.missions.map((m) => m.id));
     app.game.step(14400, now);
-    expect(app.db.all().get("owner")!.missions).toHaveLength(1);
+    expect(
+      app.db
+        .all()
+        .get("owner")!
+        .missions.map((m) => m.id),
+    ).toEqual(owner.missions.map((m) => m.id));
     expect(app.db.all().get("owner")!.missionWait).toBeGreaterThan(0);
   } finally {
     sockets.forEach((socket) => socket.disconnect());

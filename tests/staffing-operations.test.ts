@@ -1,3 +1,4 @@
+import { addUnit, atScene } from "./incident-dynamics-fixture";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -102,6 +103,7 @@ it("eskaliert unversorgte Gefahren begrenzt, löst Brandübersprung aus und stab
     return caseM.dynamics!.events.some((e) => e.startsWith("spread-"));
   });
   expect(spread.some(Boolean)).toBe(true);
+  for (let i = 0; i < 4; i++) atScene(s, addUnit(s, "tlf"), m.id);
   for (let n = 0; n < 60; n++) {
     s.time += 5;
     dynamicsTick(s, m, {

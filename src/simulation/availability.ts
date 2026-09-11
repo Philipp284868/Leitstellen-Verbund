@@ -19,7 +19,11 @@ export function vehicleAvailability(
     crewRequired: crew.required,
     crewCapacity: vt(v.type).crew,
   };
-  if (v.fault && v.fault.state !== "repaired") {
+  if ((v.maintenance?.until ?? 0) > s.time) {
+    result.state = "MAINTENANCE";
+    result.reason = "Werkstatt: Wartung läuft.";
+    result.until = v.maintenance!.until;
+  } else if (v.fault && v.fault.state !== "repaired") {
     result.state =
       v.fault.state === "repairing" ? "MAINTENANCE" : "UNAVAILABLE";
     result.reason = "Fahrzeugdefekt: automatische Behebung läuft.";

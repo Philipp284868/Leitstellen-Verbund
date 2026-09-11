@@ -20,11 +20,13 @@ export const alarmNames = {
   station: "Wachalarm",
 };
 export const operativeCode = (v: Vehicle) =>
-  v.postIncident
+  v.postIncident || (v.maintenance?.until ?? 0) > 0
     ? 6
-    : { ready: 2, alarmed: 9, travel: 3, scene: 4, transport: 7, return: 1 }[
-        v.status
-      ];
+    : v.waterTrip
+      ? { queued: 4, outbound: 7, refilling: 8, inbound: 3 }[v.waterTrip.stage]
+      : { ready: 2, alarmed: 9, travel: 3, scene: 4, transport: 7, return: 1 }[
+          v.status
+        ];
 export function fmsName(s: Save, v: Vehicle, code: number) {
   return (s.desk.definitions[bt(vt(v.type).home).org] ??
     s.desk.definitions.Alle ??
@@ -44,7 +46,12 @@ export function setFms(
     channel: bt(vt(v.type).home).org,
     history: [],
   });
-  if ((v.fault && v.fault.state !== "repaired") || v.postIncident) code = 6;
+  if (
+    (v.fault && v.fault.state !== "repaired") ||
+    v.postIncident ||
+    (v.maintenance?.until ?? 0) > s.time
+  )
+    code = 6;
   if (f.code === code && f.history.length) {
     f.operative = v.status;
     return;

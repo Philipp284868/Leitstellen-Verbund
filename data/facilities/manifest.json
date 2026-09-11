@@ -2,10 +2,10 @@
   "schema": 1,
   "dataset": "155596c0041a76f05d3b5fb03a36f2b9e26540b517fde8b4b9884c62c4fc1a90",
   "snapshot": "2026-09-07",
-  "sha256": "178a9c93586462c9e5aeaa5d04e86a7cd4c94a9d55da741704fbbe38c853ad0f",
-  "bytes": 60559360,
+  "sha256": "a9dba0085ecea4a53c7b7a58368ee2956f58cf8303f7ff8da1126665fba0758f",
+  "bytes": 67772416,
   "total": 40034,
-  "usable": 4630,
+  "usable": 22445,
   "byKind": {
     "fire": 29024,
     "police": 3732,
@@ -213,11 +213,11 @@
       "hospital": 14
     }
   },
-  "unknownSubtype": 39223,
-  "unresolvedAccess": 35271,
+  "unknownSubtype": 39189,
+  "unresolvedAccess": 17221,
   "license": "ODbL-1.0",
   "attribution": "© OpenStreetMap contributors",
   "source": "https://download.geofabrik.de/europe/germany.html",
-  "compressedBytes": 13882985,
-  "compressedSha256": "a776346344c991a70573643564ba23bd435b7b57a8dab1c839c6b05d4866cdb5"
+  "compressedBytes": 14953127,
+  "compressedSha256": "574cc8233c0ae82bb5fce294dbc23070c4e070dd86e1a1a65c0fe39fcfca1dc5"
 }

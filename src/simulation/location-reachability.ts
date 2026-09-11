@@ -1,3 +1,4 @@
+import { configuredSkills } from "./vehicle-equipment";
 import { vt, type Skills, type Template } from "../catalog";
 import { GermanyRoutingError } from "../germany/errors";
 import { germanyProvider } from "../germany/world";
@@ -93,8 +94,33 @@ export function verifyIncidentLocation(
   pos: Point,
   requireRange = true,
 ): IncidentLocation | undefined {
-  const site = incidentSiteReference(t, pos);
-  if (!site) return;
+  const sites = incidentSiteReferences(t, pos);
+  let disconnected = 0;
+  for (const site of sites) {
+    try {
+      const location = verifyAccess(s, t, pos, requireRange, site);
+      if (location) return location;
+    } catch (error) {
+      if (error instanceof GermanyRoutingError && error.code === "no-route") {
+        disconnected++;
+        continue;
+      }
+      throw error;
+    }
+  }
+  if (!requireRange && sites.length && disconnected === sites.length)
+    throw new GermanyRoutingError(
+      "Alle geprüften Zufahrten zum ursprünglichen Einsatzort sind unerreichbar.",
+      "no-route",
+    );
+}
+function verifyAccess(
+  s: Save,
+  t: Template,
+  pos: Point,
+  requireRange: boolean,
+  site: NonNullable<ReturnType<typeof incidentSiteReference>>,
+): IncidentLocation | undefined {
   const { access, kind, siteRef, roadRef } = site;
   const required = generationRequirements(t),
     coreKeys = Object.keys(t.requirements).filter(
@@ -120,7 +146,7 @@ export function verifyIncidentLocation(
       v.owner === s.player.id &&
       homes.some((b) => b.id === v.home) &&
       (requireRange
-        ? Object.keys(vt(v.type).skills).some((k) => required[k])
+        ? Object.keys(configuredSkills(v)).some((k) => required[k])
         : vt(v.type).mode === "road"),
   );
   const byProfile = [...new Set(units.map((v) => `${v.home}:${v.type}`))];
@@ -180,7 +206,7 @@ export function verifyIncidentLocation(
     );
   const supplied: Skills = {};
   for (const v of units.filter((v) => reached.has(`${v.home}:${v.type}`)))
-    for (const [k, n] of Object.entries(vt(v.type).skills))
+    for (const [k, n] of Object.entries(configuredSkills(v)))
       supplied[k] = (supplied[k] ?? 0) + n;
   if (requireRange && !covers(supplied, required)) return;
   const base = homes.find((b) => {
@@ -192,7 +218,7 @@ export function verifyIncidentLocation(
     );
     return !requireRange
       ? primary.length > 0
-      : primary.reduce((n, v) => n + (vt(v.type).skills[coreKey] ?? 0), 0) >=
+      : primary.reduce((n, v) => n + (configuredSkills(v)[coreKey] ?? 0), 0) >=
           Math.min(1, required[coreKey] ?? 1);
   });
   if (!base) return;
@@ -200,7 +226,7 @@ export function verifyIncidentLocation(
     (v) =>
       v.home === base.id &&
       vt(v.type).mode === "road" &&
-      (!requireRange || (vt(v.type).skills[coreKey] ?? 0) > 0) &&
+      (!requireRange || (configuredSkills(v)[coreKey] ?? 0) > 0) &&
       reached.has(`${v.home}:${v.type}`),
   );
   return {
@@ -229,30 +255,52 @@ export function verifyIncidentLocation(
   };
 }
 export function incidentSiteReference(t: Template, pos: Point) {
-  if (!validIncidentPoint(pos)) return;
-  const kind = t.profile?.site ?? (t.water ? "water" : "street");
-  let access = { ...pos },
-    siteRef: string,
+  return incidentSiteReferences(t, pos)[0];
+}
+export function incidentSiteReferences(t: Template, pos: Point) {
+  const result: {
+    kind: NonNullable<Template["profile"]>["site"];
+    siteRef: string;
     roadRef: string;
-  {
-    const provider = germanyProvider(),
-      evidence = provider.incidentEvidence?.(pos, kind);
-    if (!evidence) return;
-    let road;
+    access: Point;
+  }[] = [];
+  if (!validIncidentPoint(pos)) return result;
+  const kind = t.profile?.site ?? (t.water ? "water" : "street");
+  const provider = germanyProvider(),
+    evidence = provider.incidentEvidence?.(pos, kind);
+  if (!evidence) return result;
+  const points = [
+    pos,
+    ...provider
+      .querySites(pos, LOCATION_POLICY.repairRadius, 16)
+      .sort((a, b) => distance(pos, a) - distance(pos, b) || a.id - b.id),
+  ];
+  const used = new Set<string>();
+  for (const point of points) {
     try {
-      road = projectRoad(pos);
+      const road = projectRoad(point);
+      if (
+        distance(pos, road.point) > LOCATION_POLICY.repairRadius ||
+        !validIncidentPoint(road.point)
+      )
+        continue;
+      const key = `${road.section.id}:${road.point.x}:${road.point.y}`;
+      if (used.has(key)) continue;
+      used.add(key);
+      result.push({
+        kind,
+        siteRef: evidence.reference,
+        roadRef: road.section.id,
+        access: { ...road.point },
+      });
+      if (result.length === 3) break;
     } catch (error) {
       // A confirmed OSM place can still lack a usable road entrance. Skip
       // that candidate; outages and malformed provider responses remain errors.
       if (error instanceof GermanyRoutingError && error.code === "no-route")
-        return;
+        continue;
       throw error;
     }
-    if (road.distance > LOCATION_POLICY.repairRadius) return;
-    access = { ...road.point };
-    siteRef = evidence.reference;
-    roadRef = road.section.id;
   }
-  if (!validIncidentPoint(access)) return;
-  return { kind, siteRef, roadRef, access };
+  return result;
 }

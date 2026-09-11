@@ -11,11 +11,17 @@ export function classifyFacility(tags) {
   if (amenity === "fire_station") {
     kind = "fire";
     const team = tags["fire_station:team"] || tags["fire_station:type"];
-    subtype = ["professional", "occupation"].includes(team)
-      ? "BF"
-      : ["voluntary", "volunteer"].includes(team)
-        ? "FF"
-        : "unknown";
+    subtype = ["airport", "aerodrome"].includes(team)
+      ? "airport"
+      : ["industrial", "works"].includes(team)
+        ? "works"
+        : ["company", "concern"].includes(team)
+          ? "company"
+          : ["professional", "occupation"].includes(team)
+            ? "BF"
+            : ["voluntary", "volunteer"].includes(team)
+              ? "FF"
+              : "unknown";
   } else if (amenity === "hospital" || tags.healthcare === "hospital")
     kind = "hospital";
   else if (emergency === "ambulance_station") kind = "ems";

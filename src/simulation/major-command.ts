@@ -1,6 +1,6 @@
+import { configuredSkills } from "./vehicle-equipment";
 import { hospitalOptions } from "./hospitals";
 import type { Save, Vehicle } from "../model";
-import { vt } from "../catalog";
 import { declareMajor } from "./major-incidents";
 import { sectionNames, type MajorAction } from "./major-schema";
 import { sectionSkills, effectiveSkills, placement } from "./major-resources";
@@ -84,7 +84,7 @@ export function majorCommand(
     if (
       a.section !== "staging" &&
       (!g.sections.some((s) => s.kind === a.section) ||
-        !sectionSkills[a.section].some((k) => vt(v.type).skills[k]))
+        !sectionSkills[a.section].some((k) => configuredSkills(v)[k]))
     )
       throw Error("Fahrzeug passt nicht zum Abschnitt.");
     g.placements = g.placements.filter((p) => p.vehicle !== v.id);

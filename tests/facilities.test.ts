@@ -4,6 +4,8 @@ import { Game } from "../server/game";
 import { apply, tick } from "../src/engine";
 import { fresh, validate } from "../src/model";
 import { bt } from "../src/catalog";
+import { GermanyRoutingError } from "../src/germany/errors";
+import { assertFacilityAccess } from "../src/facilities/purchase";
 import { xpForLevel } from "../src/progression";
 import { bookMoney } from "../src/economy/ledger";
 import { hospitalOptions } from "../src/simulation/hospitals";
@@ -51,6 +53,41 @@ function setup() {
   };
 }
 describe("reale Standortkäufe und unveränderliche Identität", () => {
+  it("nutzt die nächste Standortzufahrt und erhält bei einem Routingausfall den unveränderten Besitz", () => {
+    const provider = germanyProvider();
+    const facility = structuredClone(
+      logicFacilityCatalog.get(fixturePurchase("fire", sites[0]).facility)!,
+    );
+    const first = facility.access!.pos;
+    facility.accessAlternatives = [{ ...facility.access!, pos: sites[1] }];
+    let rejected = 0;
+    installGermanyProvider({
+      ...provider,
+      route: (...args) => {
+        if (args[0].x === first.x && args[0].y === first.y) {
+          rejected++;
+          throw new GermanyRoutingError("Erste Zufahrt gesperrt", "no-route");
+        }
+        return provider.route(...args);
+      },
+    });
+    expect(assertFacilityAccess(facility)).toEqual(
+      facility.accessAlternatives[0],
+    );
+    expect(rejected).toBeGreaterThan(0);
+    installGermanyProvider({
+      ...provider,
+      route: () => {
+        throw new GermanyRoutingError(
+          "Routingserver nicht erreichbar",
+          "unavailable",
+        );
+      },
+    });
+    expect(() => assertFacilityAccess(facility)).toThrow(
+      "Routingserver nicht erreichbar",
+    );
+  });
   it("übernimmt Klinikpatienten und Transportreservierungen ohne Doppelzählung; öffentliche Behandlung bleibt ohne Kauf möglich", () => {
     const s = fresh("A", "B", 1000);
     s.xp = xpForLevel(30);

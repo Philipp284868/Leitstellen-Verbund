@@ -9,6 +9,8 @@ import { writeWorldSituation } from "../../server/world-situation";
 import {
   advanceSituation,
   createSituation,
+  situationLevel,
+  situationNames,
 } from "../../src/simulation/world-situation";
 import { phaseFixture } from "../dispatch-fixture";
 import { organizationFixture } from "../mutual-aid-fixture";
@@ -101,15 +103,16 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     );
     writeWorldSituation(app.db.sql, state);
     app.game.step(0, Date.now(), { generation: false });
+    const situationLabel = `Lage: ${situationNames[state.profile]} · ${situationLevel(state)}`;
     for (const p of [page, other])
       await expect(
         p.getByRole("button", {
-          name: "Lage: Sturm · Hauptphase",
+          name: situationLabel,
           exact: true,
         }),
       ).toBeVisible();
     await other
-      .getByRole("button", { name: "Lage: Sturm · Hauptphase", exact: true })
+      .getByRole("button", { name: situationLabel, exact: true })
       .click();
     await expect(other.locator(".world-situation-view")).toContainText(
       "Nordkreis",

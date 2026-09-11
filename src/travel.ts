@@ -56,11 +56,13 @@ export function tripLabel(v: Vehicle, time: number) {
     return v.fault.state === "repairing"
       ? `Fahrzeugdefekt · Reparatur noch ${duration(v.fault.repairAt - time)}`
       : "Fahrzeugdefekt · Reparatur erforderlich";
+  if (v.waterTrip?.stage === "refilling")
+    return `Wasserpendel: Nachfüllen · noch ${duration(v.waterTrip.readyAt - time)}`;
   if (v.status === "ready") return "An der Wache";
   if (v.journey?.blockedUntil)
     return `Wartet auf Freigabe · frühestens in ${duration(v.journey.blockedUntil - time)}`;
   if (!travelling(v))
     return v.status === "scene" ? "Am Einsatzort" : "Alarmierung läuft";
   const t = trip(v, time);
-  return `${kilometers(t.remaining)} verbleibend · ${duration(t.seconds)} bis Ziel · Strecke ${kilometers(t.total)}`;
+  return `${v.waterTrip ? "Wasserpendel · " : ""}${kilometers(t.remaining)} verbleibend · ${duration(t.seconds)} bis Ziel · Strecke ${kilometers(t.total)}`;
 }

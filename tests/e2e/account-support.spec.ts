@@ -79,6 +79,66 @@ const countSessions = () =>
       .get(owner)!.n,
   );
 
+for (const operation of ["reset", "delete"] as const)
+  test(`Kontoverwaltung: ${operation} mit Passwort, Vorschau, Text und widerrufener Sitzung`, async ({
+    page,
+  }, info) => {
+    await login(page);
+    const untrusted = await page.request.post(origin + "/api/account/prepare", {
+      headers: { origin, "x-csrf-token": "invalid-csrf" },
+      data: { operation, password },
+    });
+    expect(untrusted.status()).toBe(403);
+    expect(app.db.all().has(owner)).toBe(true);
+    const dialog = await account(page);
+    await dialog
+      .getByText("Spielstand zurücksetzen oder Konto löschen", { exact: true })
+      .click();
+    await dialog.getByLabel("Aktion", { exact: true }).selectOption(operation);
+    await dialog
+      .getByLabel("Passwort zur Identitätsprüfung", { exact: true })
+      .fill(password);
+    await dialog
+      .getByRole("button", { name: "Betroffene Daten prüfen", exact: true })
+      .click();
+    const final = dialog.getByRole("button", {
+      name: "Endgültig bestätigen",
+      exact: true,
+    });
+    await expect(final).toBeDisabled();
+    await dialog
+      .getByLabel(/Zur Bestätigung exakt eingeben/)
+      .fill(
+        `${operation === "reset" ? "ZURÜCKSETZEN" : "LÖSCHEN"} ${username}`,
+      );
+    await expect(final).toBeDisabled();
+    await dialog
+      .getByLabel(
+        "Ich habe den Umfang geprüft und möchte diese Daten endgültig entfernen.",
+        { exact: true },
+      )
+      .check();
+    await page.screenshot({
+      path: info.outputPath(`account-${operation}.png`),
+      fullPage: true,
+    });
+    await final.click();
+    await expect(
+      page.getByRole("button", { name: "Anmelden", exact: true }),
+    ).toBeVisible();
+    expect(countSessions()).toBe(0);
+    const row = app.db.sql
+      .prepare("SELECT id FROM users WHERE id=?")
+      .get(owner);
+    if (operation === "delete") expect(row).toBeUndefined();
+    else {
+      expect(row).toBeDefined();
+      expect(app.db.all().get(owner)!.vehicles).toEqual([]);
+      await login(page);
+      await expect(page.locator(".command-menu")).toBeVisible();
+    }
+  });
+
 test("Passwortdialog verhindert Mismatch, erhält Eingaben bei falschem Altpasswort und widerruft beim erfolgreichen Wechsel alle alten Sitzungen", async ({
   page,
   browser,

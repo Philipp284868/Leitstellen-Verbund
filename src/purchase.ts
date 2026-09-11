@@ -9,6 +9,8 @@ export function purchaseReason(s: Save, kind: string, home: string) {
     return `Freischaltung ab Stufe ${t.level}.`;
   if (!b || !vehicleHomeAllowed(t, b.type))
     return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;
+  if (t.stationKinds && !t.stationKinds.includes(b.organization?.kind ?? ""))
+    return "Benötigt eine passende Werk-, Betriebs- oder Flughafenfeuerwehr.";
   if (b.ready > s.time) return "Wache wird für den Betrieb vorbereitet.";
   if (
     s.vehicles.filter((v) => v.home === home).length >= stationCapacity(b).slots

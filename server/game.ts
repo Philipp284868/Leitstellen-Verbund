@@ -36,13 +36,14 @@ import {
   attachOrganizations,
 } from "../src/simulation/organizations";
 import { aidCommand, aidTick, aidView, authorizedHelper } from "./aid";
+import { patientTransportReason } from "../src/simulation/patients";
 import {
-  boardPatients,
-  deliverPatients,
-  patientSeats,
-  patientTransportReason,
-  transportCandidates,
-} from "../src/simulation/patients";
+  migratePatientTransports,
+  transportSeatsAvailable,
+  registerPatientTransport,
+  completePatientTransport,
+  transportIdentity,
+} from "../src/simulation/patient-transport";
 import { attachDynamics, followupsTick } from "../src/simulation/dynamics";
 import { deskOwner, workspace, membership } from "./workspaces";
 import { attachIncident } from "../src/simulation/calls";
@@ -437,6 +438,7 @@ export class Game {
         const skills: Record<string, Skills> = {};
         const units: Record<string, Vehicle[]> = {};
         for (const m of owner.missions) {
+          migratePatientTransports(m);
           const locationPending = m.location?.state === "repair-pending";
           if (!locationPending && m.dynamics?.active)
             remoteDynamic.add(`remote:${ownerId}:${m.id}`);
@@ -459,32 +461,29 @@ export class Game {
               if (
                 canTransport(m, v) &&
                 !patientTransportReason(m, v) &&
-                !m.transports.some((t) => t.assignment === v.assignment)
+                !m.transports.some(
+                  (t) =>
+                    t.assignment === v.assignment && t.status === "ordered",
+                )
               ) {
-                const remaining =
-                  (patientSeats(m) ?? mt(m.template).patients) -
-                  m.transports.reduce((a, t) => a + t.patients, 0);
-                const seats = Math.min(
-                  remaining,
-                  vt(v.type).capacity,
-                  m.major ? transportCandidates(m).length : Infinity,
-                );
+                const seats = transportSeatsAvailable(m, v);
                 if (
                   seats > 0 &&
                   hospital(helper, v.path.at(-1)!, seats, m, v)
                 ) {
                   transport(helper, v, seats, m);
-                  boardPatients(owner, m, v, seats);
                   const assignment = v.assignment!;
-                  m.transports.push({
-                    assignment,
-                    owner: helperId,
-                    vehicle: v.id,
-                    patients: seats,
-                    status: "ordered",
-                  });
+                  const order = registerPatientTransport(
+                    owner,
+                    m,
+                    v,
+                    seats,
+                    helperId,
+                  );
                   helper.transfers.push({
                     assignment,
+                    transportId: transportIdentity(order),
+                    hospital: v.destination,
                     peer: ownerId,
                     mission: m.id,
                     round: m.round,
@@ -506,14 +505,12 @@ export class Game {
             )) {
               if (
                 helper.transfers.some(
-                  (t) => t.assignment === order.assignment && t.delivered,
+                  (t) =>
+                    (t.transportId ?? t.assignment) ===
+                      transportIdentity(order) && t.delivered,
                 )
               ) {
-                order.status = "delivered";
-                const vehicle = helper.vehicles.find(
-                  (v) => v.id === order.vehicle,
-                );
-                if (vehicle) deliverPatients(owner, m, vehicle);
+                completePatientTransport(owner, m, order);
               }
             }
           }

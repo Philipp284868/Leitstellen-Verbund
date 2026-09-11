@@ -32,7 +32,7 @@ function starter() {
 }
 
 describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
-  it("hält fünf bis acht Minuten auch nachts sowie in Ruhe- und Erholungsphasen ein", () => {
+  it("variiert Last und Wetter innerhalb spielbarer Intervallgrenzen", () => {
     const s = starter();
     expect(callLoad(s).available).toBe(1);
     for (const hour of [0, 12, 23]) {
@@ -46,8 +46,8 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
           );
           for (let seed = 1; seed <= 100; seed++) {
             const delay = pacedDelay(seed, s);
-            expect(delay).toBeGreaterThanOrEqual(300);
-            expect(delay).toBeLessThanOrEqual(480);
+            expect(delay).toBeGreaterThanOrEqual(20);
+            expect(delay).toBeLessThanOrEqual(360);
           }
         }
       }
@@ -60,11 +60,11 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
     prepareCallPacing(s, 0);
     s.missions.push(fixtureMission(s, "bin"));
     recordIncidentCreated(s);
-    expect(s.missionWait).toBeGreaterThanOrEqual(300);
-    expect(s.missionWait).toBeLessThanOrEqual(480);
+    expect(s.missionWait).toBeGreaterThanOrEqual(20);
+    expect(s.missionWait).toBeLessThanOrEqual(360);
   });
 
-  it("liefert ohne Testeinsatz spätestens nach acht Minuten genau einen echten Notruf", () => {
+  it("liefert echte Notrufe und begrenzt eine neue Wache nicht auf einen Einsatz", () => {
     const s = starter();
     const db = new Database("", { memory: true });
     try {
@@ -77,17 +77,24 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
       const game = new Game(db);
       game.step(1);
       const start = db.all().get(s.player.id)!.time;
-      for (let i = 0; i < 480; i++) game.step(1);
+      for (
+        let i = 0;
+        i < 360 && !db.all().get(s.player.id)!.missions.length;
+        i++
+      )
+        game.step(1);
       const generated = db.all().get(s.player.id)!;
       expect(generated.missions).toHaveLength(1);
       const mission = generated.missions[0];
-      expect(mission.created - start).toBeGreaterThanOrEqual(300);
-      expect(mission.created - start).toBeLessThanOrEqual(480);
+      expect(mission.created - start).toBeGreaterThanOrEqual(20);
+      expect(mission.created - start).toBeLessThanOrEqual(360);
       expect(mission.location?.state).toBe("verified");
       expect(mission.control?.calls[0].state).toBe("ringing");
       for (let i = 0; i < 30; i++) game.step(60);
-      expect(db.all().get(s.player.id)!.missions).toHaveLength(1);
-      expect(db.all().get(s.player.id)!.callPacing!.sequence).toBe(1);
+      expect(db.all().get(s.player.id)!.missions.length).toBeGreaterThan(2);
+      expect(db.all().get(s.player.id)!.callPacing!.sequence).toBeGreaterThan(
+        2,
+      );
     } finally {
       db.close();
     }
@@ -105,9 +112,9 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
     s.worldSituation = createSituation(s.time, 123, "quiet");
     const original = structuredClone(s);
     prepareCallPacing(s, 1);
-    expect(s.callPacing.version).toBe(2);
-    expect(s.missionWait).toBeGreaterThanOrEqual(300);
-    expect(s.missionWait).toBeLessThanOrEqual(480);
+    expect(s.callPacing.version).toBe(3);
+    expect(s.missionWait).toBeGreaterThanOrEqual(20);
+    expect(s.missionWait).toBeLessThanOrEqual(360);
     const resumed = validate(JSON.parse(JSON.stringify(s)));
     for (let i = 0; i < 10; i++) prepareCallPacing(resumed, 0);
     expect(resumed.callPacing).toEqual(s.callPacing);
@@ -160,7 +167,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
       for (const game of [resumed, new Game(continuous)])
         for (let i = 0; i < 96; i++) game.step(5);
       const after = db.all().get(s.player.id)!;
-      expect(after.missions).toHaveLength(1);
+      expect(after.missions.length).toBeGreaterThanOrEqual(1);
       expect(after.missions).toEqual(
         continuous.all().get(s.player.id)!.missions,
       );

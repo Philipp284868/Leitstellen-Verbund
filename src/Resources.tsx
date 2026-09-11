@@ -1,4 +1,12 @@
 import { useState } from "react";
+import { VehicleConfiguration } from "./VehicleConfiguration";
+import { fleetSorts, sortFleet, type FleetSort } from "./fleet-sort";
+import { maintenanceCost, wear } from "./simulation/vehicle-maintenance";
+import {
+  equipmentPrice,
+  equipmentProfile,
+  type Equipment,
+} from "./simulation/vehicle-equipment";
 import {
   BALANCE,
   bt,
@@ -48,14 +56,28 @@ export function BuildingPanel({
   const [tab, setTab] = useState("overview"),
     [query, setQuery] = useState(""),
     [compare, setCompare] = useState<string[]>([]),
-    [purchase, setPurchase] = useState("");
-  const form = useCommandForm(!!purchase, () => setPurchase(""));
+    [purchase, setPurchase] = useState(""),
+    [shopHome, setShopHome] = useState(b.id),
+    [equipment, setEquipment] = useState<Equipment>([]),
+    [cart, setCart] = useState<
+      { kind: string; home: string; equipment: Equipment }[]
+    >([]);
+  const form = useCommandForm(!!purchase || cart.length > 0, () => {
+    setPurchase("");
+    setCart([]);
+  });
+  const purchasePrice = purchase ? equipmentPrice(purchase, equipment) : 0;
+  const cartPrice = cart.reduce(
+    (n, item) => n + equipmentPrice(item.kind, item.equipment),
+    0,
+  );
   const fleet = s.vehicles.filter((v) => v.home === b.id),
     cap = stationCapacity(b),
     automatic = buildingStaffingStatus(s, b);
+  const orderHome = s.buildings.find((home) => home.id === shopHome) ?? b;
   const available = vehicles.filter(
     (v) =>
-      vehicleHomeAllowed(v, b.type) &&
+      vehicleHomeAllowed(v, orderHome.type) &&
       `${v.name} ${Object.keys(v.skills)
         .map((k) => capabilities[k])
         .join(" ")}`
@@ -183,6 +205,28 @@ export function BuildingPanel({
               placeholder="TSF-W, Löschwasser, Bergung …"
             />
           </label>
+          <label>
+            Bestellen für Wache
+            <select
+              aria-label="Bestellen für Wache"
+              value={orderHome.id}
+              disabled={form.busy}
+              onChange={(e) => {
+                setShopHome(e.target.value);
+                setPurchase("");
+                setEquipment([]);
+                setCompare([]);
+              }}
+            >
+              {s.buildings
+                .filter((home) => bt(home.type).slots > 0)
+                .map((home) => (
+                  <option key={home.id} value={home.id}>
+                    {home.name}
+                  </option>
+                ))}
+            </select>
+          </label>
           {compare.length > 0 && (
             <div className="comparison-grid" aria-label="Fahrzeugvergleich">
               {compare
@@ -201,7 +245,7 @@ export function BuildingPanel({
                       <dt>Freischaltung</dt>
                       <dd>Stufe {v.level}</dd>
                       <dt>Laufende Kosten</dt>
-                      <dd>Keine</dd>
+                      <dd>Wartung und aktivierte Bereitschaft nach Nutzung</dd>
                     </dl>
                     <p>
                       {Object.entries(v.skills)
@@ -209,7 +253,8 @@ export function BuildingPanel({
                         .join(" · ")}
                     </p>
                     <p>
-                      {purchaseReason(s, v.id, b.id) || "Jetzt beschaffbar"}
+                      {purchaseReason(s, v.id, orderHome.id) ||
+                        "Jetzt beschaffbar"}
                     </p>
                     <button
                       onClick={() =>
@@ -230,26 +275,35 @@ export function BuildingPanel({
             >
               <h3>{selectedPurchase.name} beschaffen</h3>
               <p>
-                Standort: {b.name} · ein Stellplatz · automatische Besatzung
+                Standort: {orderHome.name} · ein Stellplatz · automatische
+                Besatzung
               </p>
               <p>
-                Kaufpreis <b>{credits(selectedPurchase.price)}</b> ·
-                Verbleibendes Budget{" "}
-                <b>{credits(s.money - selectedPurchase.price)}</b> · Laufende
-                Kosten: keine
+                Kaufpreis <b>{credits(purchasePrice)}</b> · Verbleibendes Budget{" "}
+                <b>{credits(s.money - purchasePrice)}</b> · Wartung nach Nutzung
               </p>
+              <VehicleConfiguration
+                kind={purchase}
+                value={equipment}
+                onChange={setEquipment}
+                disabled={readonly || form.busy}
+              />
               <div className="inline">
                 <button
                   className="primary"
                   disabled={
-                    readonly || form.busy || !!purchaseReason(s, purchase, b.id)
+                    readonly ||
+                    form.busy ||
+                    s.money < purchasePrice ||
+                    !!purchaseReason(s, purchase, orderHome.id)
                   }
                   onClick={() =>
                     void form.run(async () => {
                       await command({
                         type: "buy",
                         kind: purchase,
-                        home: b.id,
+                        home: orderHome.id,
+                        equipment,
                       });
                       setPurchase("");
                     })
@@ -259,14 +313,72 @@ export function BuildingPanel({
                     ? "Kauf wird bestätigt …"
                     : "Kauf verbindlich bestätigen"}
                 </button>
+                <button
+                  disabled={readonly || form.busy || cart.length >= 30}
+                  onClick={() => {
+                    setCart([
+                      ...cart,
+                      {
+                        kind: purchase,
+                        home: orderHome.id,
+                        equipment: [...equipment],
+                      },
+                    ]);
+                    setPurchase("");
+                    setEquipment([]);
+                  }}
+                >
+                  In den Warenkorb
+                </button>
                 <button disabled={form.busy} onClick={() => setPurchase("")}>
                   Abbrechen
                 </button>
               </div>
-              {purchaseReason(s, purchase, b.id) && (
-                <p role="alert">{purchaseReason(s, purchase, b.id)}</p>
+              {purchaseReason(s, purchase, orderHome.id) && (
+                <p role="alert">{purchaseReason(s, purchase, orderHome.id)}</p>
               )}
             </div>
+          )}
+          {cart.length > 0 && (
+            <section aria-label="Fahrzeugwarenkorb">
+              <h3>Warenkorb · {cart.length} Fahrzeuge</h3>
+              {cart.map((item, i) => (
+                <p key={i}>
+                  {vt(item.kind).name} ·{" "}
+                  {s.buildings.find((home) => home.id === item.home)?.name} ·{" "}
+                  {credits(equipmentPrice(item.kind, item.equipment))}{" "}
+                  <button
+                    disabled={form.busy}
+                    onClick={() =>
+                      setCart(cart.filter((_, index) => index !== i))
+                    }
+                    aria-label={`Position ${i + 1} entfernen`}
+                  >
+                    Entfernen
+                  </button>
+                </p>
+              ))}
+              <p>
+                Gesamtpreis: <b>{credits(cartPrice)}</b> · {cart.length}{" "}
+                Stellplätze erforderlich
+              </p>
+              <button
+                className="primary"
+                disabled={readonly || form.busy || cartPrice > s.money}
+                onClick={() =>
+                  void form.run(async () => {
+                    await command({ type: "buy-batch", items: cart });
+                    setCart([]);
+                  })
+                }
+              >
+                Bestellung verbindlich abschließen
+              </button>
+              <p>
+                Die gesamte Bestellung wird gemeinsam geprüft. Fehlen Budget
+                oder Stellplätze, erfolgt kein Teilkauf.
+              </p>
+            </section>
           )}
           <div className="vehicle-shop">
             {available.map((v) => (
@@ -282,7 +394,7 @@ export function BuildingPanel({
                   </small>
                   <p>
                     {credits(v.price)} ·{" "}
-                    {purchaseReason(s, v.id, b.id) || "Beschaffbar"}
+                    {purchaseReason(s, v.id, orderHome.id) || "Beschaffbar"}
                   </p>
                 </div>
                 <div className="inline">
@@ -302,10 +414,15 @@ export function BuildingPanel({
                   <button
                     data-tutorial={`buy-${v.id}`}
                     disabled={
-                      readonly || form.busy || !!purchaseReason(s, v.id, b.id)
+                      readonly ||
+                      form.busy ||
+                      !!purchaseReason(s, v.id, orderHome.id)
                     }
                     onClick={() =>
-                      requestDialogTransition(() => setPurchase(v.id))
+                      (() => {
+                        setEquipment([]);
+                        setPurchase(v.id);
+                      })()
                     }
                   >
                     Kauf prüfen
@@ -402,15 +519,23 @@ export function Fleet({
 }) {
   const [filter, setFilter] = useState(""),
     [favorite, setFavorite] = useState(false),
+    [sort, setSort] = useState<FleetSort>("type"),
+    [origin, setOrigin] = useState(s.buildings[0]?.id ?? ""),
     [page, setPage] = useState(0);
   const form = useCommandForm();
   const ready = fleetReadiness(s);
-  const matches = s.vehicles.filter(
-    (v) =>
-      (!favorite || v.favorite) &&
-      `${v.name} ${vt(v.type).name} ${s.buildings.find((b) => b.id === v.home)?.name ?? ""}`
-        .toLocaleLowerCase("de")
-        .includes(filter.toLocaleLowerCase("de")),
+  const matches = sortFleet(
+    s,
+    s.vehicles.filter(
+      (v) =>
+        (!favorite || v.favorite) &&
+        `${v.name} ${vt(v.type).name} ${s.buildings.find((b) => b.id === v.home)?.name ?? ""}`
+          .toLocaleLowerCase("de")
+          .includes(filter.toLocaleLowerCase("de")),
+    ),
+    sort,
+    s.buildings.find((b) => b.id === origin)?.pos,
+    ready,
   );
   const pages = Math.max(1, Math.ceil(matches.length / 50));
   const currentPage = Math.min(page, pages - 1);
@@ -449,6 +574,37 @@ export function Fleet({
             />{" "}
             Favoriten
           </label>
+          <label>
+            Fahrzeugsortierung
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value as FleetSort);
+                setPage(0);
+              }}
+            >
+              {Object.entries(fleetSorts).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {sort === "distance" && (
+            <label>
+              Entfernung von
+              <select
+                value={origin}
+                onChange={(e) => setOrigin(e.target.value)}
+              >
+                {s.buildings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
         <div className="vehicle-shop">
           {matches.slice(currentPage * 50, (currentPage + 1) * 50).map((v) => (
@@ -540,6 +696,35 @@ export function Fleet({
               <Disclosure title="Besatzung & Einsatzbereitschaft">
                 <VehicleStaffing s={s} v={v} />
               </Disclosure>
+              <details>
+                <summary>Ausrüstung und Fahrzeugzustand</summary>
+                <p>
+                  {((v.odometer ?? 0) / 1000).toFixed(1)} km · Verschleiß{" "}
+                  {wear(v).toFixed(1)} % · {v.maintenance?.services ?? 0}{" "}
+                  Wartungen
+                </p>
+                <p>
+                  Wasser{" "}
+                  {Math.floor(v.supplies?.water ?? equipmentProfile(v).water)}/
+                  {equipmentProfile(v).water} l · B {equipmentProfile(v).hoseB}{" "}
+                  m · C {equipmentProfile(v).hoseC} m · Atemschutz{" "}
+                  {equipmentProfile(v).breathing}
+                </p>
+                <p>{v.equipment?.join(", ") || "Standardbeladung"}</p>
+                <ConfirmAction
+                  disabled={
+                    v.status !== "ready" ||
+                    form.busy ||
+                    (v.maintenance?.until ?? 0) > s.time
+                  }
+                  message={`Wartung für ${credits(maintenanceCost(v))} beauftragen? Das Fahrzeug ist währenddessen nicht alarmierbar.`}
+                  onConfirm={() =>
+                    command({ type: "vehicle-service", vehicle: v.id })
+                  }
+                >
+                  Wartung · {credits(maintenanceCost(v))}
+                </ConfirmAction>
+              </details>
             </article>
           ))}
         </div>

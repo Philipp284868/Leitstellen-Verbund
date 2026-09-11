@@ -7,6 +7,7 @@ import { simId } from "../simulation/events";
 import { newStationProfile } from "../simulation/staffing";
 import { reconcileBuildingStaffing } from "../simulation/building-staffing";
 import type { Facility } from "./types";
+import { GermanyRoutingError } from "../germany/errors";
 
 export function facilityOffer(s: Save, facility: Facility) {
   const owned = s.buildings.find((b) => b.facility?.id === facility.id);
@@ -37,24 +38,65 @@ export function facilityOffer(s: Save, facility: Facility) {
   };
 }
 export function assertFacilityAccess(facility: Facility) {
-  const provider = germanyProvider(),
-    access = facility.access;
-  if (!access) throw Error("Zufahrt nicht hinreichend belegt.");
-  if (facility.kind !== "heli") {
-    if (!provider.isLandSite(access.pos))
-      throw Error("Zufahrt ist derzeit nicht für Straßenfahrzeuge nutzbar.");
-    if (facility.kind === "water" && !provider.isWaterSite?.(access.pos))
-      throw Error("Wasserrettungszugang ist noch nicht bestätigt.");
-    const neighbor = provider
+  const provider = germanyProvider();
+  if (!facility.access) throw Error("Zufahrt nicht hinreichend belegt.");
+  if (facility.kind === "heli") return facility.access;
+  let failure = "Keine geprüfte Zufahrt hat eine nutzbare Straßenverbindung.";
+  for (const access of [
+    facility.access,
+    ...(facility.accessAlternatives ?? []),
+  ].slice(0, 3)) {
+    if (!provider.isLandSite(access.pos)) continue;
+    if (
+      access.method === "nearby-service-road" &&
+      [0.25, 0.5, 0.75].some(
+        (t) =>
+          !provider.isLandSite({
+            x: facility.pos.x + (access.pos.x - facility.pos.x) * t,
+            y: facility.pos.y + (access.pos.y - facility.pos.y) * t,
+          }),
+      )
+    )
+      continue;
+    if (facility.kind === "water" && !provider.isWaterSite?.(access.pos)) {
+      failure = "Wasserrettungszugang ist noch nicht bestätigt.";
+      continue;
+    }
+    const neighbors = provider
       .querySites(access.pos, 100, 16)
-      .find((p) => Math.hypot(p.x - access.pos.x, p.y - access.pos.y) > 3);
-    if (!neighbor)
-      throw Error(
-        "Zufahrt hat keine nachgewiesene Verbindung zum Straßennetz.",
-      );
-    provider.route(access.pos, neighbor, "road", new Set(), 50, new Map(), 1);
-    provider.route(neighbor, access.pos, "road", new Set(), 50, new Map(), 1);
+      .filter((p) => Math.hypot(p.x - access.pos.x, p.y - access.pos.y) > 3)
+      .slice(0, 3);
+    for (const neighbor of neighbors)
+      try {
+        provider.route(
+          access.pos,
+          neighbor,
+          "road",
+          new Set(),
+          50,
+          new Map(),
+          1,
+        );
+        provider.route(
+          neighbor,
+          access.pos,
+          "road",
+          new Set(),
+          50,
+          new Map(),
+          1,
+        );
+        return access;
+      } catch (error) {
+        if (
+          !(error instanceof GermanyRoutingError) ||
+          error.code === "unavailable"
+        )
+          throw error;
+        failure = error.message;
+      }
   }
+  throw Error(`Keine erreichbare Zufahrt: ${failure}`);
 }
 export function purchaseFacility(s: Save, id: string) {
   const provider = germanyProvider();
@@ -65,8 +107,7 @@ export function purchaseFacility(s: Save, id: string) {
   if (s.buildings.some((b) => b.facility?.id === facility.id)) return;
   const offer = facilityOffer(s, facility);
   if (offer.reason) throw Error(offer.reason);
-  const access = facility.access!;
-  assertFacilityAccess(facility);
+  const access = assertFacilityAccess(facility);
   const buildingId = simId(s);
   bookMoney(
     s,
@@ -98,6 +139,14 @@ export function purchaseFacility(s: Save, id: string) {
   const building = s.buildings.at(-1)!;
   if (facility.subtype === "BF" && building.organization)
     building.organization.kind = "bf";
+  if (
+    building.organization &&
+    ["works", "company", "airport"].includes(facility.subtype)
+  )
+    building.organization.kind = facility.subtype as
+      | "works"
+      | "company"
+      | "airport";
   if (facility.kind === "hospital") {
     const previous = new Set([
       `public:${facility.id}`,

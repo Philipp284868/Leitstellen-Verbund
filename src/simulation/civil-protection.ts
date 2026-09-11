@@ -1,11 +1,17 @@
+import { configuredSkills } from "./vehicle-equipment";
 import type { Building, Save } from "../model";
 import type { CivilProtectionAction } from "./civil-protection-schema";
 import { isVolunteerStation, personDuty } from "./staffing";
 import { volunteerArrival } from "./volunteers";
 import { presentAtStation } from "./staging";
 import { sample } from "./random";
-import { vt, mt } from "../catalog";
+import { mt } from "../catalog";
 import { fleetReadiness } from "../fleet-view";
+import {
+  newOperatingBill,
+  operatingCostTick,
+  readinessHalfHour,
+} from "./operating-costs";
 
 export const civilStationTypes = ["fire", "ems", "thw", "kats"];
 export const READINESS_POLICY = {
@@ -93,6 +99,16 @@ export function civilProtectionTick(s: Save) {
   for (const b of s.buildings) {
     const c = b.civilProtection;
     if (!c) continue;
+    if (c.state !== "inactive") c.billing ??= newOperatingBill(s.time);
+    if (c.billing)
+      operatingCostTick(
+        s,
+        c.billing,
+        readinessHalfHour(s, b),
+        c.state !== "inactive",
+        b.id,
+        `Katastrophenbereitschaft: ${b.name}`,
+      );
     if (c.state !== "inactive") {
       gather(s, b);
       if (c.state === "mobilizing" && s.time >= c.readyAt) {
@@ -180,6 +196,9 @@ export function civilProtectionCommand(
       c.enabled = true;
       c.state = "mobilizing";
       c.started = s.time;
+      c.billing ??= newOperatingBill(s.time);
+      c.billing.lastAt = s.time;
+      c.billing.nextAt = s.time + 1800;
       c.actor = actor;
       c.reason = a.reason ?? "Erhöhtes Einsatzaufkommen";
       c.minimumUntil = s.time + READINESS_POLICY.minimum;
@@ -195,6 +214,24 @@ export function civilProtectionCommand(
       );
     } else {
       if (c.state === "inactive") continue;
+      if (c.billing) {
+        operatingCostTick(
+          s,
+          c.billing,
+          readinessHalfHour(s, b),
+          true,
+          b.id,
+          `Katastrophenbereitschaft: ${b.name}`,
+        );
+        operatingCostTick(
+          s,
+          c.billing,
+          readinessHalfHour(s, b),
+          false,
+          b.id,
+          `Katastrophenbereitschaft: ${b.name}`,
+        );
+      }
       c.state = "inactive";
       c.readyAt = 0;
       c.ended = s.time;
@@ -239,7 +276,7 @@ export function readinessRecommendation(s: Save) {
   const ready = fleetReadiness(s),
     skills: Record<string, number> = {};
   for (const v of fleet.filter((v) => !ready(v)))
-    for (const [k, n] of Object.entries(vt(v.type).skills))
+    for (const [k, n] of Object.entries(configuredSkills(v)))
       skills[k] = (skills[k] ?? 0) + n;
   const gaps = s.missions.filter(
     (m) =>

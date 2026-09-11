@@ -234,5 +234,5 @@ it("arrival rate slows with an unresolved backlog and keeps the minimum in busy 
   expect(nextCallDelay(120, s)).toBeGreaterThan(before);
   s.missions = [];
   s.time = 18 * 3600;
-  expect(nextCallDelay(120, s)).toBeGreaterThanOrEqual(260);
+  expect(nextCallDelay(120, s)).toBeGreaterThanOrEqual(20);
 });

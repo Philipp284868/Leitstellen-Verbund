@@ -50,6 +50,20 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       lon: data.lon,
       lat: data.lat,
       pos: project(data),
+      accessAlternatives: (data.accessAlternatives ?? [])
+        .slice(0, 2)
+        .map(
+          (access: {
+            lon: number;
+            lat: number;
+            source: string;
+            method: NonNullable<Facility["access"]>["method"];
+          }) => ({
+            pos: project(access),
+            source: access.source,
+            method: access.method,
+          }),
+        ),
       ...(data.access
         ? {
             access: {

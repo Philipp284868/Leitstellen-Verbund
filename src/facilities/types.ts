@@ -43,8 +43,9 @@ export type Facility = {
   access?: {
     pos: Point;
     source: string;
-    method: "entrance" | "onsite-road" | "air-base";
+    method: "entrance" | "onsite-road" | "air-base" | "nearby-service-road";
   };
+  accessAlternatives?: NonNullable<Facility["access"]>[];
 };
 export type FacilityQuery = {
   bbox?: [number, number, number, number];

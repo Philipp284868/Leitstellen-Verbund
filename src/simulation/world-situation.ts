@@ -51,6 +51,16 @@ export const situationScopeSchema = z.discriminatedUnion("kind", [
 export const worldSituationSchema = z
   .object({
     version: z.literal(1),
+    dynamic: z
+      .object({
+        version: z.literal(1),
+        nextAt: time,
+        steps: z.number().int().nonnegative(),
+        pressure: z.number().min(0).max(1),
+        trend: z.enum(["steady", "rising", "falling"]),
+      })
+      .strict()
+      .optional(),
     id: z.string().min(1).max(100),
     seed: z.number().int().nonnegative(),
     sequence: z.number().int().nonnegative(),
@@ -117,7 +127,7 @@ export function createSituation(
   },
   sequence = 0,
 ): WorldSituation {
-  return phaseAt({
+  const state = phaseAt({
     version: 1,
     id: `situation-${sequence}-${seed}`,
     seed,
@@ -132,26 +142,44 @@ export function createSituation(
     ends: clock,
     history: [],
   });
+  state.dynamic = {
+    version: 1,
+    nextAt:
+      clock +
+      180 +
+      Math.floor(sample(seed, "situation-change", sequence) * 241),
+    steps: 0,
+    pressure: profile === "quiet" ? 0.05 : profile === "normal" ? 0.2 : 0.7,
+    trend: "steady",
+  };
+  state.ends = state.dynamic.nextAt;
+  state.phase = profile === "quiet" ? "recovery" : "peak";
+  return state;
 }
 export function advanceSituation(input: WorldSituation, seconds: number) {
-  let state = structuredClone(input);
+  const state = structuredClone(input);
   const clock =
     state.clock +
     Math.min(SITUATION_POLICY.maximumCatchup, Math.max(0, seconds));
-  // At most three changes per allowed catch-up; never replay missed incident intervals.
-  while (clock >= state.ends) {
-    const history = [
-      ...state.history,
-      {
-        id: state.id,
-        profile: state.profile,
-        started: state.started,
-        ended: state.ends,
-        scope: state.scope,
-      },
-    ].slice(-24);
-    const sequence = state.sequence + 1;
-    const month = new Date(state.ends * 1000).getUTCMonth();
+  // Existing schedules are upgraded once at their saved clock. No old damage,
+  // mission or random seed is removed, and subsequent steps are partition-invariant.
+  state.dynamic ??= {
+    version: 1,
+    nextAt: state.clock + 300,
+    steps: 0,
+    pressure:
+      state.profile === "quiet"
+        ? 0.05
+        : state.profile === "normal"
+          ? 0.2
+          : situationStrength(state),
+    trend: "steady",
+  };
+  const dynamic = state.dynamic;
+  while (clock >= dynamic.nextAt) {
+    const at = dynamic.nextAt;
+    dynamic.steps++;
+    const month = new Date(at * 1000).getUTCMonth();
     const options: SituationProfile[] = [
       "normal",
       "normal",
@@ -160,25 +188,89 @@ export function advanceSituation(input: WorldSituation, seconds: number) {
       "rain",
       month < 2 || month > 10 ? "winter" : "heat",
     ];
-    // Every special event is followed by a quieter cycle, independent of player load.
-    const profile = ["quiet", "normal"].includes(state.profile)
-      ? options[
+    const previousPressure = dynamic.pressure;
+    // Persistent stochastic conditions: no mandatory five-phase cycle.
+    const draw = sample(state.seed, "dynamic-profile", dynamic.steps);
+    if (draw < 0.16) {
+      const profile =
+        options[
           Math.floor(
-            sample(state.seed, "next-situation", sequence) * options.length,
+            sample(state.seed, "dynamic-kind", dynamic.steps) * options.length,
           )
-        ]
-      : "quiet";
-    state = createSituation(
-      state.ends,
-      state.seed,
-      profile,
-      { kind: "world", name: "Gesamte Serverwelt" },
-      sequence,
-    );
-    state.history = history;
+        ];
+      if (profile !== state.profile) {
+        state.history.push({
+          id: state.id,
+          profile: state.profile,
+          started: state.started,
+          ended: at,
+          scope: state.scope,
+        });
+        state.history = state.history.slice(-24);
+        state.profile = profile;
+        state.started = at;
+        state.sequence++;
+        state.id = `situation-${state.sequence}-${state.seed}`;
+      }
+    }
+    const target =
+      state.profile === "quiet"
+        ? 0.05
+        : state.profile === "normal"
+          ? 0.2
+          : 0.65;
+    dynamic.pressure =
+      Math.round(
+        Math.max(
+          0,
+          Math.min(
+            1,
+            previousPressure +
+              (target - previousPressure) * 0.3 +
+              (sample(state.seed, "dynamic-pressure", dynamic.steps) - 0.5) *
+                0.35,
+          ),
+        ) * 1000,
+      ) / 1000;
+    dynamic.trend =
+      dynamic.pressure > previousPressure + 0.025
+        ? "rising"
+        : dynamic.pressure < previousPressure - 0.025
+          ? "falling"
+          : "steady";
+    state.intensity = 0.5 + dynamic.pressure * 0.5;
+    state.phase =
+      dynamic.trend === "rising"
+        ? "rising"
+        : dynamic.trend === "falling"
+          ? "fading"
+          : state.profile === "quiet"
+            ? "recovery"
+            : "peak";
+    state.phaseStarted = at;
+    dynamic.nextAt =
+      at +
+      180 +
+      Math.floor(sample(state.seed, "dynamic-spacing", dynamic.steps) * 241);
   }
   state.clock = clock;
-  return phaseAt(state);
+  state.ends = dynamic.nextAt;
+  return state;
+}
+export function situationStrength(state: WorldSituation) {
+  return state.dynamic
+    ? state.dynamic.pressure
+    : SITUATION_POLICY.phaseStrength[state.phase] * state.intensity;
+}
+export function situationLevel(state: WorldSituation) {
+  const pressure = situationStrength(state);
+  return pressure >= 0.85
+    ? "Großlage"
+    : pressure >= 0.6
+      ? "Schwere Lage"
+      : pressure >= 0.3
+        ? "Erhöhte Lage"
+        : "Normale Lage";
 }
 export function situationAffects(
   state: WorldSituation | undefined,
@@ -205,18 +297,15 @@ export function localSituation(s: Save) {
 export function situationDemand(s: Save) {
   const state = localSituation(s);
   if (!state) return 1;
-  if (state.phase === "recovery") return 0.45;
+  if (!state.dynamic && state.phase === "recovery") return 0.45;
   if (state.profile === "quiet") return 0.55;
   if (state.profile === "normal") return 1;
-  const strength =
-    SITUATION_POLICY.phaseStrength[state.phase] * state.intensity;
-  return 1 + strength * 0.8;
+  return 1 + situationStrength(state) * 3;
 }
 export function situationCategoryWeight(s: Save, category: string) {
   const state = localSituation(s);
   if (!state || ["quiet", "normal"].includes(state.profile)) return 1;
-  const strength =
-    SITUATION_POLICY.phaseStrength[state.phase] * state.intensity;
+  const strength = situationStrength(state);
   const favored =
     state.profile === "heat" ? ["medical", "fire"] : ["technical", "medical"];
   return favored.includes(category)
@@ -240,7 +329,5 @@ export function situationTemplateWeight(s: Save, t: Template) {
           : state.profile === "winter"
             ? family === "traffic" || tags.includes("cold")
             : false;
-  return match
-    ? 1 + SITUATION_POLICY.phaseStrength[state.phase] * state.intensity * 3
-    : 1;
+  return match ? 1 + situationStrength(state) * 3 : 1;
 }

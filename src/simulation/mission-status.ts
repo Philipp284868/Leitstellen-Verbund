@@ -1,5 +1,6 @@
+import { configuredSkills } from "./vehicle-equipment";
 import type { Save, Mission, Vehicle } from "../model";
-import { mt, vt, type Skills } from "../catalog";
+import { mt, type Skills } from "../catalog";
 import { requirements } from "./hazards";
 import { effectiveSkills } from "./major-resources";
 
@@ -119,7 +120,7 @@ export function missionStatus(
       for (const [k, n] of Object.entries(
         v.status === "scene" && revealed
           ? effectiveSkills(m, v)
-          : vt(v.type).skills,
+          : configuredSkills(v),
       ))
         supplied[k] = (supplied[k] || 0) + n;
     if (Object.entries(need).some(([k, n]) => (supplied[k] || 0) < n))

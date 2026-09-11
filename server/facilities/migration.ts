@@ -226,7 +226,7 @@ export function applyFacilityMigration(
       const b = s.buildings.find((b) => b.id === change.building)!,
         f = catalog.get(change.facility)!;
       b.facility = facilityBinding(f);
-      b.pos = { ...f.access!.pos };
+      b.pos = { ...assertFacilityAccess(f).pos };
       for (const v of s.vehicles.filter(
         (v) => v.home === b.id && v.status === "ready",
       ))

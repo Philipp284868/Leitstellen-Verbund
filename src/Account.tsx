@@ -1,4 +1,5 @@
 import { BrandMark } from "./BrandMark";
+import { AccountLifecycleControls } from "./AccountLifecycle";
 import { useDialogDirty } from "./dialog-state";
 import { ConfirmAction } from "./ui";
 import "./Account.css";
@@ -301,6 +302,7 @@ export function Account() {
           {error}
         </p>
       )}
+      <AccountLifecycleControls />
       <h3>Sitzungen</h3>
       <div className="inline">
         <ConfirmAction

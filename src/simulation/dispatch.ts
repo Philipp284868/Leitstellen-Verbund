@@ -77,7 +77,9 @@ export function propose(
       chosen.includes(v.id) || (v.mission === m.id && v.status === "scene"),
   ))
     for (const [k, n] of Object.entries(
-      chosen.includes(v.id) ? vt(v.type).skills : effectiveSkills(m, v),
+      chosen.includes(v.id)
+        ? effectiveSkills(undefined, v)
+        : effectiveSkills(m, v),
     ))
       skills[k] = (skills[k] || 0) + n;
   // Explicit vehicle preferences stay binding. Fill remaining capability gaps
@@ -93,7 +95,7 @@ export function propose(
             total +
             Math.min(
               Math.max(0, amount - (skills[key] || 0)),
-              vt(candidate.v.type).skills[key] || 0,
+              effectiveSkills(undefined, candidate.v)[key] || 0,
             ) /
               Math.max(1, amount),
           0,
@@ -113,7 +115,9 @@ export function propose(
     });
     if (!match) break;
     chosen.push(match.v.id);
-    for (const [key, amount] of Object.entries(vt(match.v.type).skills))
+    for (const [key, amount] of Object.entries(
+      effectiveSkills(undefined, match.v),
+    ))
       skills[key] = (skills[key] || 0) + amount;
   }
   deficit.push(...openForceLabels(required, skills));

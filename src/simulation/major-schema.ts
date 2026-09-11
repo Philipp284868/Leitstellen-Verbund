@@ -65,7 +65,7 @@ export const majorSchema = z
     transports: z.boolean(),
     evacuated: time.max(5000),
     evacuees: z.number().int().min(0).max(5000),
-    water: time.max(20000),
+    water: time.max(6000000),
     demand: time.max(1000),
     shortage: z.string().max(300),
     // Hidden future scenario state is stripped from regular client snapshots.

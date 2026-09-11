@@ -9,7 +9,7 @@ Eine Node-24-Instanz ist pro SQLite-Datenverzeichnis maßgeblich. Website, Spiel
 | src/money, src/economy             | Sichere Eurocentarithmetik, Preise, Buchungen, Finanzierung und versionierte Geldumstellung           |
 | src/simulation/building-staffing   | Automatische qualifizierte Wachbesetzung und bestandsschützende Personalübernahme                     |
 | server/config                      | Weltbezogene Konfiguration, Port, Origin, Datenpfade und Proxyvertrauen                               |
-| server/database, economy-migration | Schema 18, Welt-/Datensatzprüfung vor Schreibzugriff, Transaktionen, Vorabsicherung und Summenprüfung |
+| server/database, economy-migration | Schema 20, Welt-/Datensatzprüfung vor Schreibzugriff, Transaktionen, Vorabsicherung und Summenprüfung |
 | server/auth, actions, workspaces   | Anmeldung, strikte Aktionsschemas, Mitgliedschaft und Eigentumsprüfung                                |
 | server/game, aid                   | Autoritative Aktionen/Ticks, ausdrückliche Nachbarhilfe und Auszahlungsbelege                         |
 | server/tutorial                    | Persönlicher Lernfortschritt, isolierte Übungswelt und Spielkontextprüfung                            |
@@ -48,3 +48,13 @@ Deutschland verwendet eine lokal ausgelieferte MapLibre-Vektorkarte mit realen S
 Audio- und Anzeigeentwürfe werden erst mit Übernehmen lokal gespeichert. Audiodateien verlassen IndexedDB nicht; Serverbackups enthalten keine eigenen Sounds. Die Klangereignisse folgen ausschließlich freigegebenen aktuellen Ereignissen, nicht geheimer Lageinformation. [Audio](AUDIO.md).
 
 Private API-/Socketdaten, HTML und Kontoexporte werden nicht gecacht; gehashte öffentliche Assets dürfen gecacht werden. Offline bestätigt der Client keine neue Aktion und beginnt keine Ersatzsimulation. Ein einzelnes SQLite-Prozesslock ersetzt keinen Mehrservercluster. Lastmessungen und Browserabnahmen gelten nur für die tatsächlich dokumentierten Szenarien und Commits. Historische Phasenberichte bleiben Nachweise ihrer damaligen Version.
+
+## Simulation Overhaul 2.24
+
+`patient-transport` verwaltet Transportaufträge und Patientenreferenzen zentral für eigene und fremde RTW.
+`world-situation` und `pacing` steuern reproduzierbare gemeinsame Wetterentwicklung und leitstellenabhängige Notrufabstände.
+`vehicle-equipment`, `water-supply`, `vehicle-maintenance` und `operating-costs` enthalten die jeweilige Fachlogik;
+ihre reinen Speicherschemas sind von Laufzeitabhängigkeiten getrennt. `trip-start` nutzt unverändert die reguläre Straßenreise.
+`account-lifecycle` verarbeitet ausschließlich selbst bestätigte Kontovorgänge in einer Transaktion.
+Die SQLite-Grenze 20 schützt diese additiven Daten vor älteren Servern; das Upgrade schreibt bestehende Save-JSON-Daten nicht um.
+Details, Spielparameter und Bedienwege: [Simulation Overhaul](SIMULATION-OVERHAUL.md).

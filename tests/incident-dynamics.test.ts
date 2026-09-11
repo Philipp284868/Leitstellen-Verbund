@@ -4,7 +4,7 @@ import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import type { ServerAction } from "../server/actions";
 import { Auth } from "../server/auth";
 import { Database, DATABASE_VERSION } from "../server/database";
@@ -14,6 +14,7 @@ import { validate, type Save } from "../src/model";
 import { alarm } from "../src/simulation/dispatch";
 import { simId } from "../src/simulation/events";
 import { publicSave } from "../src/simulation/incidents";
+import * as reachability from "../src/simulation/location-reachability";
 import { majorCommand } from "../src/simulation/major-command";
 import {
   campaignTick,
@@ -252,7 +253,7 @@ it("eine vollständig disponierte Großbrandlage erreicht Archiv und zahlt genau
     true,
   );
 });
-it("Flächenlage erzeugt einzeln versetzte Meldungen, hält das Zweierlimit ein und archiviert den Verbund", () => {
+it("Flächenlage überspringt einen unbrauchbaren Ort, hält Zeitabstände ein und archiviert den Verbund", () => {
   const s = majorFixture("a", "cellar"),
     m = s.missions[0];
   declareMajor(s, m);
@@ -268,7 +269,16 @@ it("Flächenlage erzeugt einzeln versetzte Meldungen, hält das Zweierlimit ein 
   };
   s.time += 1000;
   s.missionWait = 0;
-  expect(campaignTick(s, create)).toBe(true);
+  const verify = vi
+    .spyOn(reachability, "verifyIncidentLocation")
+    .mockImplementationOnce(() => undefined);
+  try {
+    expect(campaignTick(s, create)).toBe(true);
+    expect(verify.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(verify.mock.calls[0][2]).not.toEqual(verify.mock.calls[1][2]);
+  } finally {
+    verify.mockRestore();
+  }
   expect(s.missions).toHaveLength(2);
   expect(campaignTick(s, create)).toBe(false);
   expect(s.operations.campaign!.remaining).toBe(3);
@@ -691,8 +701,12 @@ it("Offline-Aufholen erzeugt keine Einsatzflut und ein voller Patientenbestand b
     w.game.step(3600);
     expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
     for (let i = 0; i < 50; i++) w.game.step(5);
-    expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
-    expect(w.db.all().get(w.owner)!.operations.campaign!.remaining).toBe(4);
+    expect(w.db.all().get(w.owner)!.missions.length).toBeGreaterThan(1);
+    const ongoing = w.db.all().get(w.owner)!;
+    expect(
+      ongoing.operations.campaign!.remaining +
+        ongoing.operations.campaign!.missions.length,
+    ).toBe(5);
     const other = majorFixture("other", "crash"),
       m = other.missions[0];
     declareMajor(other, m);

@@ -3,7 +3,14 @@ import {
   classifyFacility,
   sameFacility,
 } from "../scripts/geodata/facility-classification.mjs";
-import { normalizeFacilities } from "../scripts/geodata/facility-catalog.mjs";
+import {
+  normalizeFacilities,
+  writeFacilityCatalog,
+} from "../scripts/geodata/facility-catalog.mjs";
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 
 const area = {
   source: "relation:1",
@@ -37,6 +44,74 @@ const point = {
   members: [],
 };
 describe("nachvollziehbarer Einrichtungskatalog", () => {
+  it("liefert bis zu drei kartierte Zufahrtskandidaten und verwendet keine gesperrte Privatstraße als Näherung", () => {
+    const dir = mkdtempSync(resolve(tmpdir(), "lv-access-candidates-"));
+    const index = new DatabaseSync(":memory:");
+    try {
+      index.exec(`CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,bridge INTEGER,tunnel INTEGER,road_class TEXT,access TEXT);
+        CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);`);
+      for (const [id, lon, access] of [
+        [1, 13.00501, "private"],
+        [2, 13.0051, ""],
+        [3, 13.0052, ""],
+        [4, 13.0053, ""],
+      ] as const) {
+        index
+          .prepare("INSERT INTO anchors VALUES(?,?,52.005,0,0,'service',?)")
+          .run(id, lon, access);
+        index
+          .prepare("INSERT INTO anchors_rtree VALUES(?,?,?,52.005,52.005)")
+          .run(id, lon, lon);
+      }
+      // Point lies next to (not on) the service road. Explicit source coordinates
+      // remain separate from candidates that still need a runtime route check.
+      const record = {
+        ...point,
+        lon: 13.005,
+        lat: 52.0052,
+        geometry: { type: "Point", coordinates: [13.005, 52.0052] },
+        tags: {
+          amenity: "fire_station",
+          "fire_station:type": "airport",
+          name: "Test",
+        },
+      };
+      const path = resolve(dir, "catalog.sqlite");
+      writeFacilityCatalog(
+        path,
+        normalizeFacilities([record], { snapshot: "fixture" }),
+        { index, dataset: "a".repeat(64), snapshot: "fixture" },
+      );
+      const db = new DatabaseSync(path, { readOnly: true });
+      try {
+        const data = JSON.parse(
+          String(db.prepare("SELECT data FROM facilities").get()!.data),
+        );
+        expect(data.access.method).toBe("nearby-service-road");
+        expect(
+          [data.access, ...data.accessAlternatives].map((a) => a.source),
+        ).toEqual(["road-node:2", "road-node:3", "road-node:4"]);
+        expect(data.lon).toBe(record.lon);
+        expect(data.lat).toBe(record.lat);
+      } finally {
+        db.close();
+      }
+    } finally {
+      index.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  it("erkennt ausdrücklich gekennzeichnete Flughafen- und Betriebsfeuerwehren ohne Namensraten", () => {
+    for (const [tag, subtype] of [
+      ["airport", "airport"],
+      ["concern", "company"],
+      ["works", "works"],
+    ])
+      expect(
+        classifyFacility({ amenity: "fire_station", "fire_station:type": tag })
+          ?.subtype,
+      ).toBe(subtype);
+  });
   it("vereinigt Krankenhauskennzeichnungen sowie Punkte, Flächen und Relationsmitglieder derselben Einrichtung", () => {
     const way = { ...area, source: "way:2", members: [] };
     const records = normalizeFacilities([point, way, area], {

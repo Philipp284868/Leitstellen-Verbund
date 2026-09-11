@@ -349,6 +349,7 @@ export function publicSave(source: Save): Save {
     );
   for (const m of [...s.missions, ...s.archive]) {
     if (!m.control?.briefed) {
+      delete m.waterSupply;
       delete m.major;
       delete m.paymentCents;
     } else if (m.major) delete m.major.pending;

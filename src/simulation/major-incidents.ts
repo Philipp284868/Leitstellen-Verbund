@@ -221,7 +221,7 @@ export function majorTick(
     if (section.kind === "evacuation")
       g.evacuated = Math.min(g.evacuees, g.evacuated + dt * power * 0.08);
   }
-  if (g.kind === "fire") {
+  if (g.kind === "fire" && !m.waterSupply) {
     const supply = groups.get("water") || {};
     const burning = m.dynamics.hazards.some(
       (h) => h.kind === "fire" && !h.resolved,
@@ -304,10 +304,20 @@ export function campaignTick(
   const near = sites.filter(
     (n) => distance(n, first.pos) < 200 && distance(n, first.pos) > 15,
   );
-  const pos = near[Math.floor(sample(s.seed, c.id, index) * near.length)];
-  if (!pos) return false;
-  const m = create(candidates[index], pos);
-  m.location = verifyIncidentLocation(s, mt(candidates[index]), pos);
+  if (!near.length) return false;
+  const offset = Math.floor(sample(s.seed, c.id, index) * near.length);
+  let location: ReturnType<typeof verifyIncidentLocation>;
+  for (let attempt = 0; attempt < Math.min(16, near.length); attempt++) {
+    location = verifyIncidentLocation(
+      s,
+      mt(candidates[index]),
+      near[(offset + attempt) % near.length],
+    );
+    if (location) break;
+  }
+  if (!location) return false;
+  const m = create(candidates[index], location.access);
+  m.location = location;
   c.missions.push(m.id);
   c.remaining--;
   c.next =

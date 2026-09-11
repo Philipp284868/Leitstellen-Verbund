@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { operatingBillSchema } from "./operating-cost-schema";
 import { turnoutSchema } from "./organizations-schema";
 
 const id = z.string().min(1).max(100);
@@ -6,6 +7,7 @@ const time = z.number().finite().nonnegative().max(1e12);
 export const civilProtectionSchema = z
   .object({
     version: z.literal(2).optional(),
+    billing: operatingBillSchema.optional(),
     started: time.optional(),
     actor: id.optional(),
     reason: z.string().trim().min(1).max(300).optional(),

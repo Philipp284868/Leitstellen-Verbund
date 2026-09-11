@@ -250,9 +250,24 @@ export function aidCommand(
     actor,
   );
 }
+import {
+  aidHalfHour,
+  newOperatingBill,
+  operatingCostTick,
+} from "../src/simulation/operating-costs";
 export function aidTick(saves: Map<string, Save>) {
   for (const owner of saves.values())
     for (const r of owner.aid) {
+      if (aidActive(r)) r.billing ??= newOperatingBill(owner.time);
+      if (r.billing)
+        operatingCostTick(
+          owner,
+          r.billing,
+          aidHalfHour(r),
+          aidActive(r),
+          r.id,
+          "Kosten externer Unterstützung",
+        );
       if (["DONE", "DECLINED", "CANCELLED"].includes(r.state)) continue;
       const m = owner.missions.find(
         (m) => m.id === r.mission && m.round === r.round,

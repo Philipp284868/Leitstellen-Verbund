@@ -1,3 +1,5 @@
+import { addUnit, atScene } from "./incident-dynamics-fixture";
+import { ensureWaterSupply } from "../src/simulation/water-supply";
 import { describe, expect, it } from "vitest";
 import {
   capabilities,
@@ -156,8 +158,8 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
       fire.m.control!.events.filter((e) => e.type === "HAZARD_ESCALATED"),
     ).toHaveLength(1);
   });
-  it("deckt alle 206 Auftragsthemen ab, bewahrt die 41 alten IDs und erzeugt über 500 echte Situationen", () => {
-    expect(incidentTopics).toHaveLength(206);
+  it("deckt alle 217 Auftragsthemen ab, bewahrt die 41 alten IDs und erzeugt über 500 echte Situationen", () => {
+    expect(incidentTopics).toHaveLength(217);
     expect(incidentVariants.length).toBeGreaterThan(500);
     expect(missions).toHaveLength(41 + incidentVariants.length);
     expect(new Set(missions.map((t) => t.id)).size).toBe(missions.length);
@@ -173,7 +175,7 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
       [3, 4, 5, 6, 7, 8, 9, 10].map(
         (n) => incidentTopics.filter((t) => t.section === n).length,
       ),
-    ).toEqual([55, 29, 21, 16, 18, 33, 24, 10]);
+    ).toEqual([61, 29, 22, 16, 18, 34, 24, 13]);
   });
   it("hinterlegt echte Profilunterschiede statt nur andere Namen", () => {
     for (const topic of new Map(
@@ -215,6 +217,10 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
       const { s, m } = incident(t);
       m.control!.briefed = true;
       m.organization!.tasks.forEach((task) => (task.ordered = true));
+      if (m.dynamics?.fire) {
+        for (let i = 0; i < 3; i++) atScene(s, addUnit(s, "tlf"), m.id);
+        ensureWaterSupply(s, m)!.source = "tank";
+      }
       const supplied = Object.fromEntries(
         Object.entries(requirements(m)).map(([k, n]) => [k, Math.max(n, 10)]),
       );
@@ -330,7 +336,7 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
 });
 
 describe("Spezialfahrzeuge und Bewertung", () => {
-  it("ergänzt FW/RD bei unverändertem Polizei-/THW-Fahrzeugset und echten Fähigkeiten", () => {
+  it("ergänzt FW/RD bei unverändertem Polizeiset und erweitertem THW-Fahrzeugset und echten Fähigkeiten", () => {
     expect(
       vehicles.filter((v) => v.home === "police").map((v) => v.id),
     ).toEqual(["fustw", "pmtw"]);
@@ -338,6 +344,9 @@ describe("Spezialfahrzeuge und Bewertung", () => {
       "gkw",
       "mzgw",
       "tmtw",
+      "thw-power",
+      "thw-pump",
+      "thw-light",
     ]);
     for (const id of [
       "lf10",

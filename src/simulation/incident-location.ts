@@ -1,5 +1,5 @@
+import { configuredSkills } from "./vehicle-equipment";
 import type { Template } from "../catalog";
-import { vt } from "../catalog";
 import { GermanyRoutingError } from "../germany/errors";
 import { queryIncidentSites } from "../germany/world";
 import type { Save } from "../model";
@@ -46,7 +46,9 @@ export function generationLocations(
     const result = [];
     for (const point of selected) {
       const location = verifyIncidentLocation(s, template, point);
-      if (location) result.push(location.access);
+      // Preserve the actual OSM site for later verification. Snapping it twice
+      // can lose its building/land-use evidence and silently discard the draw.
+      if (location) result.push(point);
       if (result.length >= 4) break;
     }
     if (!result.length)
@@ -101,7 +103,7 @@ export function incidentLocations(s: Save, template: Template): Point[] {
   const relevantHomes = new Set(
     s.vehicles
       .filter((v) =>
-        Object.keys(vt(v.type).skills).some((k) => template.requirements[k]),
+        Object.keys(configuredSkills(v)).some((k) => template.requirements[k]),
       )
       .map((v) => v.home),
   );

@@ -96,9 +96,11 @@ export function buildReport(m: Mission): Report {
     major: !!m.major,
     patients: {
       total: m.dynamics?.patients.length ?? mt(m.template).patients,
-      delivered: m.transports
-        .filter((t) => t.status === "delivered")
-        .reduce((n, t) => n + t.patients, 0),
+      delivered: m.dynamics?.active
+        ? m.dynamics.patients.filter((p) => p.transport === "delivered").length
+        : m.transports
+            .filter((t) => t.status === "delivered")
+            .reduce((n, t) => n + t.patients, 0),
       dead:
         m.dynamics?.patients.filter((p) => p.condition === "dead").length ?? 0,
     },

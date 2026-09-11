@@ -308,19 +308,36 @@ export function transportCandidates(m: Mission) {
         a.id.localeCompare(b.id),
     );
 }
-export function boardPatients(s: Save, m: Mission, v: Vehicle, count: number) {
+export function boardPatients(
+  s: Save,
+  m: Mission,
+  v: Vehicle,
+  count: number,
+  order?: string,
+) {
   if (!m.dynamics?.active) return;
   for (const p of transportCandidates(m).slice(0, count)) {
     p.transport = "aboard";
     p.vehicle = v.id;
+    p.transportOrder = order ?? v.assignment ?? undefined;
     note(s, m, p, `Transport mit ${v.name} begonnen.`);
   }
 }
-export function deliverPatients(s: Save, m: Mission, v: Vehicle) {
+export function deliverPatients(
+  s: Save,
+  m: Mission,
+  v: Pick<Vehicle, "id" | "name">,
+  order?: string,
+) {
   for (const p of m.dynamics?.patients.filter(
-    (p) => p.vehicle === v.id && p.transport === "aboard",
+    (p) =>
+      p.vehicle === v.id &&
+      p.transport === "aboard" &&
+      (!order || !p.transportOrder || p.transportOrder === order),
   ) || []) {
     p.transport = "delivered";
+    p.vehicle = "";
+    p.deliveredAt = s.time;
     note(s, m, p, `Im Krankenhaus übergeben (${v.name}).`);
   }
   syncResponderRecovery(s, m);

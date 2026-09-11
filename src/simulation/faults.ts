@@ -9,6 +9,7 @@ import { newPatient } from "./patients";
 import { injureResponder, injuryReason } from "./responder-recovery";
 import { FAULT_SECONDS, FAULT_RECOVERY_GRACE } from "./fault-config";
 import { crewSummary } from "./staffing";
+import { wear } from "./vehicle-maintenance";
 export const faultNames = {
   engine: "Motorschaden",
   tire: "Reifenproblem",
@@ -206,7 +207,7 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
   ].slice(-60);
   if (
     sample(s.seed, `fault-${v.id}-${v.assignment}`, bucket) >=
-    DYNAMICS.defectChance
+    DYNAMICS.defectChance * (1 + wear(v) / 25)
   )
     return;
   // Existing incidents retain the previous draw mapping when a catalog is upgraded.

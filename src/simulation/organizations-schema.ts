@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { operatingBillSchema } from "./operating-cost-schema";
 import { journeySchema } from "./dynamics-schema";
 import { prioritySchema } from "./schema";
 const id = z.string().min(1).max(100);
@@ -145,6 +146,7 @@ export const requestStates = {
 };
 export const aidSchema = z
   .object({
+    billing: operatingBillSchema.optional(),
     version: z.literal(2).optional(),
     vehicleWishes: z
       .array(

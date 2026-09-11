@@ -1,5 +1,19 @@
 # Änderungen
 
+## 2.24.0 · Simulation Overhaul · 11.09.2026
+
+- Eindeutige Patiententransporte für eigene und unterstützende RTW: individuelle Patienten-/Auftragsreferenzen, getrennte Anzeigen am Einsatzort und im Transport, Krankenhausübergabe, erneute lokale Abholung und einmaliger Abschluss.
+- Kein Ein-/Zwei-Einsatz-Limit mehr. Dynamische Notrufintervalle von 20 bis 360 Sekunden berücksichtigen Fuhrpark, Auslastung, Tageszeit und gemeinsame Wetterlage. Keine nachträgliche Notrufwelle nach einer Offlinepause.
+- Gemeinsame stochastische Wetter-/Lageentwicklung ersetzt den verpflichtenden Fünf-Phasen-Zyklus. Jahreszeit, Tageszeit, Varianten, Folgeereignisse und tatsächliche Nachforderungen verändern den Betrieb.
+- Alternative reale Zugangspunkte sowie weitere Standort-/Vorlagenkandidaten im selben Erzeugungsversuch. Der mitgelieferte Standortkatalog behält 40.034 stabile Einrichtungsidentitäten und ergänzt 28.186 alternative Zugangspunkte; nahe kartierte Zufahrtsstraßen werden vor Kauf zusätzlich auf Landlage und beidseitiges Routing geprüft.
+- Acht Beladungsoptionen mit tatsächlichen Fähigkeiten und Preisen; atomarer gemischter Fahrzeugwarenkorb über mehrere eigene Wachen. Physische Tankmengen, B-/C-Schlauchlängen, Verbrauch, Entnahme, Nachforderungen und Tankerpendel mit wirklichen Fahrten.
+- Sieben neue Spezialfahrzeugtypen, weitere Einsatzvarianten und nachgewiesene POI-Ortstypen. Sortierung nach Typ, Wache, Status, Organisation, Entfernung, Bindung, Verfügbarkeit, FMS und Favorit.
+- Kilometerabhängiger Verschleiß, Werkstattauftrag mit Kosten und FMS-Sperre sowie periodische KatS-/Nachbarhilfekosten. Bestehende Fahrzeuge erhalten keine rückwirkenden Wartungsstrafen.
+- Eigener Spielstandreset und Kontolöschung mit Passwort, gebundener Vorschau, Bestätigungstext und Checkbox. Laufende gemeinsame Bindungen sperren den Vorgang; unbestätigte fremde Anfragen werden atomar beendet.
+- Standortfilter kompakt am Kartenrand. SQLite 20 mit Vorabsicherung, additiven Speicherdaten und Schutz vor inkompatiblem Downgrade. Kein Produktionsrollout.
+
+[Bedienung, Migrationen, Parameter und Prüfnachweise](docs/SIMULATION-OVERHAUL.md).
+
 ## Korrektur Notrufstart · 10.09.2026
 
 - Neue Leitstellen und Fuhrparks mit weniger als drei Fahrzeugen erhalten ein Notrufintervall von fünf bis acht Minuten, auch nachts sowie in ruhigen Welt- und Erholungsphasen. Die bisherige zusätzliche Drosselung konnte den ersten Einsatz über zehn Minuten und Folgeintervalle bis zu zwanzig Minuten verzögern. Die ersten drei Einsätze bleiben einzeln; laufende Einsätze und fehlende alarmierbare Fahrzeuge blockieren weiteren Nachschub weiterhin.

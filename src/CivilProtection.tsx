@@ -9,6 +9,8 @@ import {
 } from "./simulation/civil-protection";
 import { fleetReadiness } from "./fleet-view";
 import "./RadioDesk.css";
+import { readinessHalfHour } from "./simulation/operating-costs";
+import { credits } from "./ui";
 
 export function CivilStationSettings({ s, b }: { s: Save; b: Building }) {
   const { readonly, workspace } = useGame();
@@ -31,6 +33,16 @@ export function CivilStationSettings({ s, b }: { s: Save; b: Building }) {
         </p>
       )}
       <p>{civilReadinessReason(s, b)}</p>
+      <p>
+        Bei aktivierter Bereitschaft: derzeit {credits(readinessHalfHour(s, b))}{" "}
+        je 30 Minuten, abhängig von Personal, Fahrzeugen und Einsatzbindung.
+      </p>
+      {!!c?.billing && (
+        <p>
+          Bereits abgerechnet: {credits(c.billing.paid)} · offene Kosten:{" "}
+          {credits(c.billing.due)}
+        </p>
+      )}
       {form.error && (
         <p role="alert" className="error">
           {form.error}
@@ -108,6 +120,16 @@ export function CivilProtectionDesk({
       <p role="status">
         {recommendation.recommended ? "Empfehlung: Bereitschaft prüfen. " : ""}
         {recommendation.reason}
+      </p>
+      <p>
+        Ausgewählte Wachen: derzeit{" "}
+        {credits(
+          s.buildings
+            .filter((b) => selected.includes(b.id))
+            .reduce((sum, b) => sum + readinessHalfHour(s, b), 0),
+        )}{" "}
+        je 30 Minuten. Gebundene und externe Fahrzeuge werden nach tatsächlichem
+        Einsatz abgerechnet.
       </p>
       <button onClick={onFacilities}>Realen Standort kaufen</button>
       {workspace?.canManage === false && (

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { AccountLifecycle } from "./account-lifecycle";
 import {
   createServer,
   type IncomingMessage,
@@ -106,6 +107,7 @@ export function startServer(
     release();
     throw e;
   }
+  const accountLifecycle = new AccountLifecycle(db);
   let failed = false,
     stopping = false;
   const online = () =>
@@ -370,6 +372,27 @@ export function startServer(
           refreshPresence();
           res.setHeader("Set-Cookie", cookie("", true));
           return reply(res, 200, { ok: true });
+        }
+        if (path === "/api/account/prepare" && req.method === "POST") {
+          auth.limit(`account:${session.user_id}`, 5);
+          return reply(
+            res,
+            200,
+            await accountLifecycle.prepare(session.user_id, await body(req)),
+          );
+        }
+        if (path === "/api/account/confirm" && req.method === "POST") {
+          auth.limit(`account-confirm:${session.user_id}`, 5);
+          const result = accountLifecycle.confirm(
+            session.user_id,
+            await body(req),
+          );
+          presence.revokeUser(session.user_id);
+          for (const socket of io.sockets.sockets.values())
+            if (socket.data.user === session.user_id) socket.disconnect(true);
+          refreshPresence();
+          res.setHeader("Set-Cookie", cookie("", true));
+          return reply(res, 200, result);
         }
         if (path === "/api/password" && req.method === "POST") {
           auth.limit(`password:${session.user_id}`, 5);

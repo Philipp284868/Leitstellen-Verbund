@@ -1,4 +1,5 @@
 import "./Dynamics.css";
+import { WaterSupplyControls } from "./WaterSupplyControls";
 import { MajorPanel } from "./Major";
 import type { Mission, Save } from "./model";
 import { OrganizationTasks } from "./Organizations";
@@ -91,7 +92,10 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
   const editable =
     m.phase !== "done" && p.condition !== "dead" && p.transport !== "delivered";
   return (
-    <article className={`patient-card condition-${p.condition}`}>
+    <article
+      className={`patient-card condition-${p.condition}`}
+      data-transport={p.transport}
+    >
       {form.error && (
         <p className="error" role="alert">
           {form.error}
@@ -332,6 +336,7 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
           </article>
         ))}
       </div>
+      <WaterSupplyControls m={m} />
       {d.fire && (
         <details>
           <summary>Brandentwicklung · {d.fire.fuel}</summary>
@@ -363,14 +368,30 @@ export function DynamicsPanel({ s, m }: { s: Save; m: Mission }) {
       )}
       {d.patients.length > 0 && (
         <div>
-          <h3>Patienten und Versorgung ({d.patients.length})</h3>
+          <h3>
+            Patienten am Einsatzort (
+            {d.patients.filter((p) => p.transport === "scene").length})
+          </h3>
           <p>
             Abstrahierte Spielsimulation. Vorhandene Kräfte führen die Maßnahmen
             aus; ein Schwerpunkt ersetzt keine fehlenden Rettungsmittel.
           </p>
-          {d.patients.map((p) => (
-            <PatientCard key={p.id} s={s} m={m} p={p} />
-          ))}
+          {d.patients
+            .filter((p) => p.transport === "scene")
+            .map((p) => (
+              <PatientCard key={p.id} s={s} m={m} p={p} />
+            ))}
+          <details open={d.patients.some((p) => p.transport === "aboard")}>
+            <summary>
+              Transporte und Übergaben (
+              {d.patients.filter((p) => p.transport !== "scene").length})
+            </summary>
+            {d.patients
+              .filter((p) => p.transport !== "scene")
+              .map((p) => (
+                <PatientCard key={p.id} s={s} m={m} p={p} />
+              ))}
+          </details>
         </div>
       )}
       <details>

@@ -1,3 +1,4 @@
+import { readinessHalfHour } from "../src/simulation/operating-costs";
 import { expect, it } from "vitest";
 import { commandSchema } from "../server/actions";
 import { readiness, tick } from "../src/engine";
@@ -169,7 +170,9 @@ it("Bereitschaftsverlauf bleibt bei regulärer Rückumstellung erhalten und alte
   const loaded = validate(JSON.parse(JSON.stringify(s)));
   expect(loaded.buildings[0].civilProtection!.history).toHaveLength(5);
   expect(readiness(loaded, loaded.vehicles[0])).toBe("");
-  expect(loaded.money).toBe(old.money);
+  const charged = Math.ceil(readinessHalfHour(s, s.buildings[0]) / 3);
+  expect(loaded.buildings[0].civilProtection!.billing!.paid).toBe(charged);
+  expect(loaded.money).toBe(old.money - charged);
   expect(loaded.vehicles).toEqual(old.vehicles);
 });
 

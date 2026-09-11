@@ -210,6 +210,8 @@ export const patientSchema = z
     nextCpr: time,
     transport: z.enum(["scene", "aboard", "delivered", "none"]),
     vehicle: z.string().max(100),
+    transportOrder: id.optional(),
+    deliveredAt: time.optional(),
     history: z
       .array(z.object({ at: time, text: z.string().max(180) }).strict())
       .max(100),

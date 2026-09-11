@@ -14,6 +14,13 @@ const euros = {
     heli: 980000,
   },
   vehicle: {
+    flf: 1250000,
+    ulf: 980000,
+    "thw-power": 340000,
+    "thw-pump": 460000,
+    "thw-light": 290000,
+    "kats-log": 380000,
+    "dive-unit": 410000,
     tsf: 180000,
     lf: 320000,
     hlf: 520000,

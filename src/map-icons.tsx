@@ -10,6 +10,9 @@ const bus =
   "M3 23V10h23l3 5v8h-3M3 23h3m5 0h10M3 17h26M9 11v6m6-6v6m6-6v6M8.5 21a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M23.5 21a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5";
 export const iconPaths = {
   engine: [truck, "M6 13h10m-10 3h10m-10 3h7M5 7h12M22 12h3"],
+  rescueEngine: [truck, "M6 13h5v7H6m9-7-3 7m0-7 3 7M5 7h12M22 12h3"],
+  compactEngine: [van, "M6 13h9m-9 3h9m-9 3h6M5 7h12M22 8h3"],
+  multipurposeTruck: [truck, "M5 13h13v6H5m3-6v6m4-6v6m4-6v6M5 7h12M22 12h3"],
   tanker: [truck, "M7 13h7a3 3 0 0 1 0 6H7a3 3 0 0 1 0-6M10 12v8M22 12h3"],
   ladder: [
     truck,
@@ -75,11 +78,18 @@ export const iconPaths = {
 } as const;
 export type MapGlyph = keyof typeof iconPaths;
 export const vehicleIcons = {
-  tsf: "engine",
+  flf: "tanker",
+  ulf: "rescueEngine",
+  "thw-power": "equipment",
+  "thw-pump": "tanker",
+  "thw-light": "measurement",
+  "kats-log": "multipurposeTruck",
+  "dive-unit": "rescue",
+  tsf: "compactEngine",
   lf: "engine",
-  hlf: "engine",
+  hlf: "rescueEngine",
   lf10: "engine",
-  hlf10: "engine",
+  hlf10: "rescueEngine",
   tlf: "tanker",
   tlf2000: "tanker",
   tlf3000: "tanker",
@@ -121,7 +131,7 @@ export const vehicleIcons = {
   fustw: "policeCar",
   pmtw: "policeVan",
   gkw: "technical",
-  mzgw: "technical",
+  mzgw: "multipurposeTruck",
   tmtw: "commandVan",
   gww: "rescue",
   boat: "boatTrailer",

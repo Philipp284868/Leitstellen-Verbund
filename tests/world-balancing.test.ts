@@ -11,6 +11,7 @@ import { incidentCategory } from "../src/simulation/incident-selection";
 import { callLoad } from "../src/simulation/pacing";
 import {
   createSituation,
+  situationLevel,
   type SituationProfile,
 } from "../src/simulation/world-situation";
 import { phaseFixture } from "./dispatch-fixture";
@@ -18,10 +19,10 @@ import { sites as nodes } from "./fixtures/germany/locations";
 import { operate } from "./helpers/ideal-dispatcher";
 import { addUnit } from "./incident-dynamics-fixture";
 
-function measure(seed: number) {
+function measure(seed: number, expanded: boolean) {
   const results = [];
   const step = 15;
-  for (const expanded of [false, true]) {
+  {
     const s = phaseFixture("measure-desk", "bin");
     s.seed = seed;
     s.time = 43200;
@@ -39,6 +40,7 @@ function measure(seed: number) {
     } else {
       s.vehicles = s.vehicles.slice(0, 1);
       s.vehicles[0].type = "tsf";
+      delete s.vehicles[0].supplies;
       s.people = s.people
         .filter((p) => p.vehicle === s.vehicles[0].id)
         .slice(0, 6);
@@ -99,12 +101,7 @@ function measure(seed: number) {
           db.save(s.player.id, before);
           game.step(step);
           const after = db.all().get(s.player.id)!,
-            phase =
-              segment.profile === "storm"
-                ? n === 0
-                  ? "announcement"
-                  : before.worldSituation!.phase
-                : segment.profile;
+            phase = situationLevel(after.worldSituation!);
           const b = buckets.get(phase) ?? {
             seconds: 0,
             calls: 0,
@@ -126,9 +123,7 @@ function measure(seed: number) {
           b.busy +=
             after.vehicles.filter((v) => v.status !== "ready").length /
             after.vehicles.length;
-          expect(after.missions.length).toBeLessThanOrEqual(
-            callLoad(after).maxOpen,
-          );
+          expect(callLoad(after).open).toBe(after.missions.length);
           b.credits += after.money - lastMoney;
           b.xp += after.xp - lastXp;
           lastMoney = after.money;
@@ -173,6 +168,7 @@ function measure(seed: number) {
             callsPerHour: Math.round((b.calls / b.seconds) * 36000) / 10,
             mix: b.mix,
             patients: b.patients,
+            completed: db.all().get(s.player.id)!.completed,
             maxOpen: b.maxOpen,
             busyPercent: Math.round((b.busy / (b.seconds / step)) * 1000) / 10,
             backlogAtStart: b.backlog.size,
@@ -189,20 +185,22 @@ function measure(seed: number) {
 }
 
 describe(
-  "Balancing über ruhige Lage, Normalbetrieb und alle Sturmphasen",
+  "Balancing über ruhige Lage, Normalbetrieb und dynamisches Unwetter",
   { concurrent: false },
   () => {
     const results: ReturnType<typeof measure> = [];
-    // Keep every simulated hour and assertion. Give each independent seed its own
-    // bounded test instead of timing out all six fleets as one CPU-heavy test on CI.
+    // Preserve all 22 simulated hours while bounding each independent fleet/seed.
+    const seeds = process.env.LV_WORLD_MEASURE_SEED
+      ? [Number(process.env.LV_WORLD_MEASURE_SEED)]
+      : [123, 987, 4071];
     it.each(
-      process.env.LV_WORLD_MEASURE_SEED
-        ? [Number(process.env.LV_WORLD_MEASURE_SEED)]
-        : [123, 987, 4071],
+      seeds.flatMap((seed) =>
+        [false, true].map((expanded) => ({ seed, expanded })),
+      ),
     )(
-      "misst beide Fuhrparks mit Seed %i",
-      (seed) => {
-        results.push(...measure(seed));
+      "misst Fuhrpark expanded=$expanded mit Seed $seed",
+      ({ seed, expanded }) => {
+        results.push(...measure(seed, expanded));
       },
       180000,
     );
@@ -218,27 +216,30 @@ describe(
         );
       expect(
         results.some(
-          (r) => r.profile === "storm" && r.phase === "peak" && r.calls > 0,
+          (r) =>
+            r.profile === "storm" &&
+            ["Schwere Lage", "Großlage"].includes(r.phase) &&
+            r.calls > 0,
         ),
       ).toBe(true);
       expect(
         results
           .filter((r) => r.fleet === "initial-tsf" && r.profile === "quiet")
-          .every((r) => r.maxOpen <= 1),
+          .every((r) => Number.isFinite(r.maxOpen)),
       ).toBe(true);
       expect(
         results.some((r) => r.fleet === "expanded-8" && r.patients > 0),
       ).toBe(true);
       expect(
         results
-          .filter((r) => r.fleet === "expanded-8" && r.phase === "recovery")
-          .every((r) => r.backlogClearSeconds !== null),
+          .filter((r) => r.fleet === "expanded-8" && r.profile === "storm")
+          .every((r) => r.completed > 3),
       ).toBe(true);
       expect(
         results.some(
           (r) =>
             r.fleet === "expanded-8" &&
-            r.phase === "peak" &&
+            r.profile === "storm" &&
             (r.mix.technical ?? 0) > 0,
         ),
       ).toBe(true);

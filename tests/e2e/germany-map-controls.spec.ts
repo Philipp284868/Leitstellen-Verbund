@@ -223,6 +223,10 @@ test("Freie Kartenfläche erlaubt weder nach Ziehen noch nach Klick einen Gebäu
   await expect(page.getByTestId("selection")).not.toHaveText("placed");
   await expect(
     page.getByLabel("Standorte nach Organisation filtern"),
+  ).toBeHidden();
+  await page.getByText("Standortfilter", { exact: true }).click();
+  await expect(
+    page.getByLabel("Standorte nach Organisation filtern"),
   ).toBeVisible();
 });
 

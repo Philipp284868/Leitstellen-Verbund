@@ -1,11 +1,12 @@
-import { bt, vt, vehicles, type Skills, type Template } from "../catalog";
+import { bt, vehicles, type Skills, type Template } from "../catalog";
+import { configuredSkills } from "./vehicle-equipment";
 import { level, type Save } from "../model";
 
 /** Strategic fleet capacity, including units temporarily busy with another call. */
 export function fleetCapabilities(s: Save): Skills {
   const result: Skills = {};
   for (const v of s.vehicles)
-    for (const [skill, amount] of Object.entries(vt(v.type).skills))
+    for (const [skill, amount] of Object.entries(configuredSkills(v)))
       result[skill] = (result[skill] || 0) + amount;
   return result;
 }

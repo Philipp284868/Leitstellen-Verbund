@@ -16,6 +16,7 @@ import { attachDynamics } from "../src/simulation/dynamics";
 import { publicSave } from "../src/simulation/incidents";
 import {
   clearReachabilityCache,
+  incidentSiteReferences,
   verifyIncidentLocation,
 } from "../src/simulation/location-reachability";
 import {
@@ -26,6 +27,31 @@ import * as traffic from "../src/simulation/traffic";
 afterEach(() => {
   vi.restoreAllMocks();
   clearReachabilityCache();
+});
+it("prüft die nächste belegte Zufahrt im selben Versuch, wenn die erste Straße nicht erreichbar ist", () => {
+  const s = phaseFixture("alternate", "bin"),
+    m = s.missions[0],
+    t = mt(m.template);
+  const sites = incidentSiteReferences(t, m.pos);
+  expect(sites.length).toBeGreaterThan(1);
+  const real = traffic.routePlan(
+    s,
+    s.vehicles[0],
+    s.buildings[0].pos,
+    sites[1].access,
+  );
+  const route = vi
+    .spyOn(traffic, "routePlan")
+    .mockImplementation((_s, _v, from, to) => {
+      if (to.x === sites[0].access.x && to.y === sites[0].access.y)
+        throw new GermanyRoutingError("Erste Zufahrt gesperrt", "no-route");
+      return { ...real, path: [from, to], seconds: 120, blockedUntil: 0 };
+    });
+  const result = verifyIncidentLocation(s, t, m.pos)!;
+  expect(result.access).toEqual(sites[1].access);
+  expect(result.original).toEqual(m.pos);
+  expect(route).toHaveBeenCalled();
+  expect(s.missions).toHaveLength(1);
 });
 it("verwirft belegte Orte ohne Straßenanbindung, verdeckt aber keine Routerausfälle oder kaputten Daten", () => {
   const s = phaseFixture("owner", "bin");
@@ -70,9 +96,9 @@ it.each([64, 65])(
     });
     const check = () =>
       verifyIncidentLocation(s, mt("bin"), s.missions[0].pos, false);
-    if (count === 64) expect(check).toThrow("Kein zulässiger Straßenweg");
+    if (count === 64) expect(check).toThrow("Alle geprüften Zufahrten");
     else expect(check()).toBeUndefined();
-    expect(route).toHaveBeenCalledTimes(64);
+    expect(route).toHaveBeenCalledTimes(64 * 3);
   },
 );
 

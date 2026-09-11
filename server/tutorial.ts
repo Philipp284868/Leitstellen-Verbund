@@ -385,6 +385,9 @@ export class TutorialService {
         [
           "purchase-facility",
           "buy",
+          "buy-batch",
+          "water-source",
+          "vehicle-service",
           "upgrade",
           "extension",
           "rename",

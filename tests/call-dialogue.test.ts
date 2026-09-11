@@ -32,10 +32,11 @@ function establishedDesk() {
 }
 
 describe("Notruf 2.20: gemeldete Regressionen", () => {
-  it("gewährt einer kleinen Startleitstelle mindestens fünf Minuten Abstand", () => {
+  it("gewährt auch einer kleinen Startleitstelle ein variables statt sofortiges Folgeintervall", () => {
     const s = phaseFixture("pacing", "bin");
     s.vehicles = s.vehicles.slice(0, 1);
-    expect(nextCallDelay(123, s)).toBeGreaterThanOrEqual(300);
+    expect(nextCallDelay(123, s)).toBeGreaterThanOrEqual(20);
+    expect(nextCallDelay(123, s)).toBeLessThanOrEqual(360);
   });
   it("verlängert künftige Wartezeiten bei unerledigter Last", () => {
     const s = establishedDesk();
@@ -129,17 +130,17 @@ describe("Notruflast und Reproduzierbarkeit", () => {
     expect(s.missions).toEqual(original);
     s.time = s.callPacing!.notBefore;
     prepareCallPacing(s, 1);
-    expect(mayCreateIncident(s)).toBe(false);
+    expect(mayCreateIncident(s)).toBe(true);
     s.missions = [];
     expect(mayCreateIncident(s)).toBe(true);
     recordIncidentCreated(s);
-    expect(s.callPacing!.notBefore - s.time).toBeGreaterThanOrEqual(300);
+    expect(s.callPacing!.notBefore - s.time).toBeGreaterThanOrEqual(20);
     const before = s.callPacing!.sequence;
     s.time += 14400;
     prepareCallPacing(s, 14400);
     expect(mayCreateIncident(s)).toBe(false);
     expect(s.callPacing!.sequence).toBe(before);
-    expect(s.missionWait).toBeGreaterThanOrEqual(300);
+    expect(s.missionWait).toBeGreaterThanOrEqual(20);
   });
   it("skaliert mit vorhandener einsatzfähiger Struktur ohne Levelsprung und zählt gebundene Mittel", () => {
     const s = establishedDesk();
@@ -179,14 +180,20 @@ describe("Notruflast und Reproduzierbarkeit", () => {
         game.step(60);
       }
       const active = db.all().get("owner")!;
-      expect(active.missions).toHaveLength(1);
+      expect(active.missions.length).toBeGreaterThan(1);
       expect(active.missions[0].created).toBeGreaterThanOrEqual(deadline);
       expect(db.all().get("member")!.missions).toHaveLength(0);
       expect(game.view("member", new Set()).save.missions).toEqual(
         game.view("owner", new Set()).save.missions,
       );
+      const beforeCatchup = active.missions.map((m) => m.id);
       game.step(14400);
-      expect(db.all().get("owner")!.missions).toHaveLength(1);
+      expect(
+        db
+          .all()
+          .get("owner")!
+          .missions.map((m) => m.id),
+      ).toEqual(beforeCatchup);
       expect(db.all().get("owner")!.missionWait).toBeGreaterThan(0);
     } finally {
       db.close();

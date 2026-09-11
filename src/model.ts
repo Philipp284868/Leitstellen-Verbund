@@ -1,4 +1,15 @@
 import { z } from "zod";
+import {
+  equipmentSchema,
+  equipmentPrice,
+  equipmentProfile,
+} from "./simulation/vehicle-equipment";
+import {
+  migratePatientTransports,
+  validatePatientTransports,
+} from "./simulation/patient-transport";
+import { waterSupplySchema, waterTripSchema } from "./simulation/water-schema";
+import { maintenanceSchema } from "./simulation/vehicle-maintenance-schema";
 import { facilityBindingSchema } from "./facilities/schema";
 import { BALANCE, bt, mt, vehicleHomeAllowed, vt } from "./catalog";
 import { assertSaveWorld } from "./compatibility/save-world";
@@ -105,6 +116,10 @@ export const personSchema = z
   .strict();
 export const vehicleSchema = z
   .object({
+    equipment: equipmentSchema.optional(),
+    waterTrip: waterTripSchema.optional(),
+    supplies: z.object({ water: num, refilledAt: num }).strict().optional(),
+    maintenance: maintenanceSchema.optional(),
     purchasePriceCents: centsSchema.optional(),
     odometer: num.optional(),
     turnout: turnoutSchema.optional(),
@@ -138,6 +153,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    waterSupply: waterSupplySchema.optional(),
     location: incidentLocationSchema.optional(),
     paymentCents: centsSchema.optional(),
     tasks: missionTaskStateSchema.optional(),
@@ -162,6 +178,10 @@ export const missionSchema = z
         z
           .object({
             assignment: id,
+            id: id.optional(),
+            patientIds: z.array(id).max(100).optional(),
+            hospital: id.optional(),
+            deliveredAt: num.optional(),
             owner: id,
             vehicle: id,
             patients: integer.min(1).max(100),
@@ -227,7 +247,7 @@ export const saveSchema = z
     missionWait: num.default(0),
     callPacing: z
       .object({
-        version: z.union([z.literal(1), z.literal(2)]),
+        version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
         notBefore: num,
         lastCreated: num,
         sequence: integer,
@@ -274,6 +294,8 @@ export const saveSchema = z
           .object({
             peer: id,
             assignment: id,
+            transportId: id.optional(),
+            hospital: id.optional(),
             round: id,
             mission: id,
             patients: integer.min(1).max(10),
@@ -380,6 +402,9 @@ export function validate(data: unknown): Save {
     if (b.owner !== s.player.id) throw Error("Fremder Gebäudebesitz.");
   }
   for (const v of s.vehicles) {
+    equipmentPrice(v.type, v.equipment ?? []);
+    if (v.supplies && v.supplies.water > equipmentProfile(v).water + 0.001)
+      throw Error("Tankinhalt überschreitet die Fahrzeugkapazität.");
     const t = vt(v.type);
     const home = s.buildings.find((b) => b.id === v.home);
     if (!home || !vehicleHomeAllowed(t, home.type) || v.owner !== s.player.id)
@@ -438,6 +463,8 @@ export function validateReferences(s: Save) {
       throw Error("Ungültiger Fahrzeugzustand.");
   }
   for (const m of [...s.missions, ...s.archive]) {
+    migratePatientTransports(m);
+    validatePatientTransports(m);
     const t = mt(m.template);
     if (
       m.major &&
@@ -450,8 +477,8 @@ export function validateReferences(s: Save) {
       throw Error("Ungültige Großlagenzuordnung.");
     if (
       m.progress > t.seconds ||
-      m.transports.reduce((n, t) => n + t.patients, 0) >
-        (m.dynamics?.active ? m.dynamics.patients.length : t.patients) ||
+      (!m.dynamics?.active &&
+        m.transports.reduce((n, t) => n + t.patients, 0) > t.patients) ||
       new Set(m.contributors).size !== m.contributors.length
     )
       throw Error("Ungültiger Einsatzfortschritt.");

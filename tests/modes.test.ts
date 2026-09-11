@@ -118,7 +118,7 @@ it("migriert Schema 2 ohne Änderung des bestehenden Multiplayer-Spielstands", a
     migrated.close();
   }
 });
-it("beginnt ruhig mit versetzten Mindestabständen und füllt unbearbeitete Leitstellen nicht weiter", async () => {
+it("beginnt ruhig mit versetzten Mindestabständen und erzeugt weitere Einsätze ohne starres Bestandslimit", async () => {
   const { db, game, a, b } = await fixture();
   try {
     const first = owned(established("Anna"), a),
@@ -133,8 +133,8 @@ it("beginnt ruhig mit versetzten Mindestabständen und füllt unbearbeitete Leit
     const s = db.all().get(a)!,
       t = db.all().get(b)!;
     expect(s.missions).toHaveLength(0);
-    expect(s.missionWait).toBeGreaterThanOrEqual(300);
-    expect(s.missionWait).toBeLessThanOrEqual(1200);
+    expect(s.missionWait).toBeGreaterThanOrEqual(90);
+    expect(s.missionWait).toBeLessThanOrEqual(360);
     expect(s.missionWait).not.toBe(t.missionWait);
     game.step(30);
     expect(db.all().get(a)!.missions).toHaveLength(0);
@@ -144,8 +144,8 @@ it("beginnt ruhig mit versetzten Mindestabständen und füllt unbearbeitete Leit
       game.step(30);
       expect(db.all().get(a)!.missions.length - before).toBeLessThanOrEqual(1);
     }
-    expect(db.all().get(a)!.missions).toHaveLength(1);
-    expect(db.all().get(b)!.missions).toHaveLength(1);
+    expect(db.all().get(a)!.missions.length).toBeGreaterThan(1);
+    expect(db.all().get(b)!.missions.length).toBeGreaterThan(1);
     expect(db.all().get(a)!.missions[0].shared).toBe(false);
     const existing = db.all().get(a)!;
     existing.missions = [];

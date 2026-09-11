@@ -14,8 +14,8 @@ import { groupGameMarkers, type MarkerData } from "../src/germany/game-markers";
 import { clusterPresence } from "../src/germany/map-presence";
 import { groupPresence, type PublicPlayer } from "../src/presence";
 
-it("ordnet jedem der 50 tatsächlichen Fahrzeugtypen ein explizites, renderbares Klassensymbol zu", () => {
-  expect(vehicles).toHaveLength(50);
+it("ordnet jedem der 57 tatsächlichen Fahrzeugtypen ein explizites, renderbares Klassensymbol zu", () => {
+  expect(vehicles).toHaveLength(57);
   expect(Object.keys(vehicleIcons).sort()).toEqual(
     vehicles.map((v) => v.id).sort(),
   );

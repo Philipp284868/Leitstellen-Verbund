@@ -22,10 +22,7 @@ import { useNetwork } from "./network";
 import { WORLD_NAME } from "./product";
 import { progress } from "./progression";
 import { weatherNames } from "./simulation/weather";
-import {
-  situationNames,
-  situationPhaseNames,
-} from "./simulation/world-situation";
+import { situationNames, situationLevel } from "./simulation/world-situation";
 import { credits } from "./ui";
 import "./WorldSituation.css";
 import { PublicAlarmList, WorldSituationView } from "./WorldSituationView";
@@ -276,7 +273,7 @@ export function Topbar({
         <div className="topbar-world-status">
           {popup(
             "world-situation",
-            `Lage: ${s.worldSituation ? situationNames[s.worldSituation.profile] : "wird geladen"}${s.worldSituation && !["quiet", "normal"].includes(s.worldSituation.profile) ? ` · ${situationPhaseNames[s.worldSituation.phase]}` : ""}`,
+            `Lage: ${s.worldSituation ? `${situationNames[s.worldSituation.profile]} · ${situationLevel(s.worldSituation)}` : "wird geladen"}`,
             null,
             <>
               <WorldSituationView s={s} />

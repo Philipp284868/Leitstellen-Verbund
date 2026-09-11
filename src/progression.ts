@@ -75,6 +75,13 @@ export const unlockLevels: Record<string, Record<string, number>> = {
     heli: 30,
   },
   vehicle: {
+    flf: 24,
+    ulf: 24,
+    "thw-power": 18,
+    "thw-pump": 18,
+    "thw-light": 15,
+    "kats-log": 12,
+    "dive-unit": 22,
     tsf: 1,
     lf: 2,
     tlf: 3,

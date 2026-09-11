@@ -7,7 +7,7 @@ import type { environmentSchema } from "./dynamics-schema";
 import { DYNAMICS, sample } from "./random";
 import {
   localSituation,
-  SITUATION_POLICY,
+  situationStrength,
   situationAffects,
   type WorldSituation,
 } from "./world-situation";
@@ -212,10 +212,7 @@ function applySituationWeather(s: Save) {
   )) {
     const point = r.position ?? nodes[r.edge[0]];
     const affected = point && situationAffects(s.worldSituation, point);
-    const strength = affected
-      ? SITUATION_POLICY.phaseStrength[s.worldSituation.phase] *
-        s.worldSituation.intensity
-      : 0;
+    const strength = affected ? situationStrength(s.worldSituation) : 0;
     r.delay =
       90 +
       Math.round(
@@ -237,10 +234,13 @@ function situationWeather(
   e.wind = 12;
   e.rain = 0;
   e.visibility = 15000;
-  e.temperature = 15;
+  const month = new Date(
+    (state?.clock ?? e.period * DYNAMICS.weatherPeriod) * 1000,
+  ).getUTCMonth();
+  e.temperature =
+    month < 2 || month > 10 ? 4 : month >= 5 && month <= 7 ? 24 : 15;
   if (!state) return e;
-  const strength =
-    SITUATION_POLICY.phaseStrength[state.phase] * state.intensity;
+  const strength = situationStrength(state);
   if (strength <= 0 || ["quiet", "normal"].includes(state.profile)) return e;
   if (state.profile === "storm") {
     e.kind = "gale";
@@ -336,6 +336,15 @@ export function weatherWeight(s: Save, template: string) {
       weight *= 2;
     if (has("children") && !weekend && hour >= 7 && hour < 16) weight *= 3;
     if (has("violence") && (hour >= 21 || hour < 5)) weight *= 2;
+    if (
+      (hour >= 22 || hour < 6) &&
+      (profile.family === "structure-fire" ||
+        profile.family === "medical" ||
+        has("burglary"))
+    )
+      weight *= 1.5;
+    if (month >= 2 && month <= 4 && (has("allergy") || has("spring")))
+      weight *= 2;
     if (
       profile.family === "traffic" &&
       ((hour >= 7 && hour < 9) || (hour >= 16 && hour < 19))

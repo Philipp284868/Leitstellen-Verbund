@@ -10,6 +10,8 @@ import { matchingAidType } from "./simulation/aid-matching";
 import { ApproachText } from "./germany/GeoQueries";
 import { duration } from "./travel";
 import "./Organizations.css";
+import { aidHalfHour } from "./simulation/operating-costs";
+import { credits } from "./ui";
 export function RequestCard({ r }: { r: AidView }) {
   const { save: s, readonly } = useGame(),
     [selected, setSelected] = useState<string[]>([]),
@@ -85,6 +87,18 @@ export function RequestCard({ r }: { r: AidView }) {
           </details>
         )}
         <p>Angefordert: {r.types.map((t) => vt(t).name).join(", ")}</p>
+        <p>
+          Externe Kräfte: 250 € je Fahrzeug plus 15 € je Besatzungsplatz pro 30
+          Minuten; Spezialfahrzeuge zusätzlich 150 €. Abrechnung zeitanteilig
+          nach tatsächlicher Zusage.
+        </p>
+        {!!r.assignments.length && (
+          <p>
+            Aktueller Satz: {credits(aidHalfHour(r))}/30 min · abgerechnet{" "}
+            {credits(r.billing?.paid ?? 0)} · offen{" "}
+            {credits(r.billing?.due ?? 0)}
+          </p>
+        )}
         <p>
           <b>
             {r.assignments.length} / {r.types.length} zugesagt

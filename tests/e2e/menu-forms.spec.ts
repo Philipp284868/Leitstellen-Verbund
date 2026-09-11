@@ -374,6 +374,7 @@ test("Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbr
     name: "Kauf verbindlich bestätigen",
     exact: true,
   });
+  await buy.scrollIntoViewIfNeeded();
   const box = await buy.boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, {

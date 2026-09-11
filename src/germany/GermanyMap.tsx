@@ -1665,7 +1665,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             </span>
           </div>
         )}
-      <div className="facility-map-controls">
+      <details className="facility-map-controls">
+        <summary>Standortfilter</summary>
         <label>
           <input
             type="checkbox"
@@ -1687,7 +1688,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           ))}
         </select>
         <small>+ erwerbbar · × Datenprüfung</small>
-      </div>
+      </details>
       {!inspectionsHidden && showFacilities && facilityId && (
         <div className="facility-map-panel">
           <FacilityDetails

@@ -1,4 +1,16 @@
+import { beginTrip } from "./simulation/trip-start";
+export { beginTrip } from "./simulation/trip-start";
 import { vehicleHomeAllowed } from "./catalog";
+import { setWaterSource, waterTripTick } from "./simulation/water-supply";
+import {
+  maintenanceTick,
+  serviceVehicle,
+} from "./simulation/vehicle-maintenance";
+import {
+  equipmentPrice,
+  equipmentProfile,
+  type Equipment,
+} from "./simulation/vehicle-equipment";
 import { bookMoney, fundingTick, saleValue } from "./economy/ledger";
 import { ECONOMY_PRICES } from "./economy/prices";
 import { mulRatio } from "./money";
@@ -12,7 +24,6 @@ import {
   startPostIncident,
   postIncidentTick,
 } from "./simulation/post-incident";
-import { vehiclePosition } from "./vehicle-position";
 import { addXp, missionXp } from "./progression";
 import { selectHospital } from "./simulation/hospitals";
 import { measureTravel, telemetry, qualityFactor } from "./simulation/reports";
@@ -22,19 +33,22 @@ import { requirements } from "./simulation/hazards";
 import { dynamicsTick, dynamicsComplete } from "./simulation/dynamics";
 import { tasksComplete } from "./simulation/mission-tasks";
 import {
-  patientSeats,
+  migratePatientTransports,
+  transportSeatsAvailable,
+  registerPatientTransport,
+  completePatientTransport,
+  patientTransportsComplete,
+} from "./simulation/patient-transport";
+import {
   patientTransportReason,
   transportCandidates,
-  boardPatients,
-  deliverPatients,
 } from "./simulation/patients";
 import { updateWeather } from "./simulation/weather";
 import { chooseIncidentTemplate } from "./simulation/incident-selection";
 import { withdraw } from "./simulation/withdrawal";
-import { routePlan, trafficTick, routeWeatherKey } from "./simulation/traffic";
+import { trafficTick } from "./simulation/traffic";
 import { withAutomaticRouting } from "./simulation/routing-context";
 import { faultsTick } from "./simulation/faults";
-import type { TravelMode } from "./simulation/dynamics-schema";
 import { setFms } from "./simulation/fms";
 import { beforeStep, afterVehicles, afterStep } from "./simulation/incidents";
 import { simId, record } from "./simulation/events";
@@ -50,9 +64,19 @@ import {
 import { level, type Save, type Mission, type Vehicle } from "./model";
 import { distance, type Point } from "./world";
 export type Action =
+  | { type: "vehicle-service"; vehicle: string }
+  | {
+      type: "water-source";
+      mission: string;
+      source: "tank" | "hydrant" | "open-water" | "shuttle";
+    }
   | { type: "purchase-facility"; facility: string }
   | { type: "build"; kind: string; pos: Point }
-  | { type: "buy"; kind: string; home: string }
+  | { type: "buy"; kind: string; home: string; equipment?: Equipment }
+  | {
+      type: "buy-batch";
+      items: { kind: string; home: string; equipment?: Equipment }[];
+    }
   | { type: "hire"; home: string; count: number }
   | { type: "assign"; vehicle: string }
   | { type: "unassign"; vehicle: string }
@@ -101,45 +125,8 @@ export function endCooperation(s: Save, id: string) {
     (t) => t.status === "delivered" || t.owner === s.player.id,
   );
 }
-export function beginTrip(
-  s: Save,
-  v: Vehicle,
-  target: Point,
-  status: Vehicle["status"],
-  mode: TravelMode = status === "return" ? "normal" : "priority",
-) {
-  const origin = ["travel", "return", "transport"].includes(v.status)
-    ? vehiclePosition(v, s.time)
-    : v.status === "alarmed"
-      ? v.path[0]
-      : (v.path.at(-1) ?? s.buildings.find((b) => b.id === v.home)!.pos);
-  const plan = routePlan(s, v, origin, target, mode);
-  v.path = plan.path;
-  v.depart = s.time;
-  v.arrive = s.time + plan.seconds;
-  v.journey = {
-    motion: plan.motion,
-    motionVersion: 1,
-    wait: plan.wait,
-    mode,
-    planned: plan.planned,
-    plannedSeconds: plan.plannedSeconds,
-    delay: plan.delay,
-    distanceDone: 0,
-    events: [...plan.events, routeWeatherKey(s)],
-    nextCheck: s.time + 60,
-    serial: 0,
-    target,
-    blockedUntil: plan.blockedUntil,
-    reason:
-      plan.reason ||
-      (plan.blockedUntil
-        ? "Fahrt wetter- oder verkehrsbedingt ausgesetzt; warte auf Freigabe"
-        : ""),
-  };
-  v.status = status;
-}
 export function recall(s: Save, v: Vehicle) {
+  delete v.waterTrip;
   if (v.fault && v.fault.state !== "repaired") return;
   if (v.patients > 0)
     throw Error(
@@ -225,6 +212,23 @@ export function apply(s: Save, a: Action) {
     case "purchase-facility":
       purchaseFacility(s, a.facility);
       break;
+    case "vehicle-service":
+      serviceVehicle(s, a.vehicle);
+      break;
+    case "water-source": {
+      const m = s.missions.find((m) => m.id === a.mission);
+      if (!m) throw Error("Einsatz fehlt.");
+      setWaterSource(s, m, a.source);
+      break;
+    }
+    case "buy-batch": {
+      if (!a.items.length || a.items.length > 30)
+        throw Error("Bestellung benötigt 1 bis 30 Fahrzeuge.");
+      const trial = structuredClone(s);
+      for (const item of a.items) apply(trial, { type: "buy", ...item });
+      Object.assign(s, trial);
+      break;
+    }
     case "buy": {
       const reason = purchaseReason(s, a.kind, a.home);
       if (reason) throw Error(reason);
@@ -244,12 +248,14 @@ export function apply(s: Save, a: Action) {
         stationCapacity(b).slots
       )
         throw Error("Keine freien Stellplätze.");
-      money(s, -t.price, `Kauf: ${t.name}`);
+      const price = equipmentPrice(t.id, a.equipment);
+      money(s, -price, `Kauf: ${t.name}`);
       s.vehicles.push({
         id: simId(s),
         owner: s.player.id,
         type: t.id,
-        purchasePriceCents: t.price,
+        purchasePriceCents: price,
+        ...(a.equipment?.length ? { equipment: [...a.equipment] } : {}),
         name:
           b.type === "kats"
             ? `KatS-${t.id === "ktwb" ? "NKTW" : t.id === "gwsan" ? "GW-SAN" : t.id.toUpperCase()}${String(s.vehicles.filter((v) => v.home === b.id && v.type === t.id).length + 1).padStart(2, "0")}`
@@ -264,6 +270,12 @@ export function apply(s: Save, a: Action) {
         arrive: s.time,
         patients: 0,
       });
+      const purchased = s.vehicles.at(-1)!;
+      maintenanceTick(s, purchased);
+      purchased.supplies = {
+        water: equipmentProfile(purchased).water,
+        refilledAt: s.time,
+      };
       s.tutorial = Math.max(2, s.tutorial);
       break;
     }
@@ -338,7 +350,7 @@ export function apply(s: Save, a: Action) {
     case "sell": {
       const v = s.vehicles.find((v) => v.id === a.id);
       if (v) {
-        if (v.status !== "ready")
+        if (v.status !== "ready" || (v.maintenance?.until ?? 0) > s.time)
           throw Error("Fahrzeug ist nicht an der Wache.");
         s.people
           .filter((p) => p.vehicle === v.id)
@@ -384,9 +396,12 @@ export function apply(s: Save, a: Action) {
       if (
         !v ||
         v.status !== "ready" ||
+        (v.maintenance?.until ?? 0) > s.time ||
         !b ||
         b.ready > s.time ||
         !vehicleHomeAllowed(vt(v.type), b.type) ||
+        (vt(v.type).stationKinds &&
+          !vt(v.type).stationKinds!.includes(b.organization?.kind ?? "")) ||
         s.vehicles.filter((v) => v.home === b.id).length >=
           stationCapacity(b).slots
       )
@@ -447,22 +462,40 @@ export function generate(s: Save) {
   const candidates = missions.filter((m) => canGenerate(s, m, available));
   if (!candidates.length) return;
   const previousSeed = s.seed;
+  const previousWait = s.missionWait;
   s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
-  const t = chooseIncidentTemplate(s, candidates);
-  s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
-  const sites = generationLocations(s, t);
-  if (sites === null) {
-    // Transient routing outages delay this draw without losing simulation progress
-    // or consuming its random choice. Existing persisted timers survive restart.
-    s.seed = previousSeed;
-    s.missionWait = Math.max(s.missionWait, 60);
-    s.nextMission = s.time + 60;
-    return;
+  let t = chooseIncidentTemplate(s, candidates);
+  let location: ReturnType<typeof verifyIncidentLocation>;
+  const remaining = [...candidates];
+  for (let attempt = 0; attempt < 8 && remaining.length; attempt++) {
+    if (attempt) t = chooseIncidentTemplate(s, remaining);
+    remaining.splice(
+      remaining.findIndex((candidate) => candidate.id === t.id),
+      1,
+    );
+    s.seed = (s.seed * 1664525 + 1013904223) >>> 0;
+    const sites = generationLocations(s, t);
+    if (sites === null) {
+      // Transient routing outages delay this draw without losing simulation progress
+      // or consuming its random choice. Existing persisted timers survive restart.
+      s.seed = previousSeed;
+      s.missionWait = Math.max(s.missionWait, 60);
+      s.nextMission = s.time + 60;
+      return;
+    }
+    for (let i = 0; i < sites.length; i++) {
+      location = verifyIncidentLocation(
+        s,
+        t,
+        sites[(s.seed + i) % sites.length],
+      );
+      if (location) break;
+    }
+    if (location) break;
   }
-  if (!sites.length) return;
-  const pos = sites[s.seed % sites.length];
-  const location = verifyIncidentLocation(s, t, pos);
   if (!location) return;
+  s.missionWait = previousWait;
+  const pos = location.access;
   s.missions.push({
     location,
     id: simId(s),
@@ -513,6 +546,7 @@ function tickState(
   remoteUnits: Record<string, Vehicle[]> = {},
   practice = false,
 ) {
+  for (const m of s.missions) migratePatientTransports(m);
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
   const end = s.time + delta;
   while (s.time < end - 1e-8) {
@@ -554,15 +588,18 @@ function tickState(
       return true;
     });
     for (const v of s.vehicles) {
+      maintenanceTick(s, v);
       postIncidentTick(s, v);
       measureTravel(s, v, s.time - dt);
       faultsTick(s, v, remoteDynamic.has(v.mission || ""));
       if (v.fault && v.fault.state !== "repaired") continue;
       trafficTick(s, v);
+      if (waterTripTick(s, v)) continue;
       if (v.journey?.blockedUntil || v.arrive > s.time) continue;
       if (v.status === "travel") v.status = "scene";
       else if (v.status === "return") {
         v.status = "ready";
+        v.supplies = { water: equipmentProfile(v).water, refilledAt: s.time };
         v.path = [s.buildings.find((b) => b.id === v.home)!.pos];
         releaseVolunteerCrew(s, v);
         startPostIncident(s, v);
@@ -581,9 +618,10 @@ function tickState(
           })),
         );
         const m = s.missions.find((m) => m.id === v.mission);
-        if (m) deliverPatients(s, m, v);
-        const order = m?.transports.find((t) => t.assignment === v.assignment);
-        if (order) order.status = "delivered";
+        const order = m?.transports.find(
+          (t) => t.assignment === v.assignment && t.status === "ordered",
+        );
+        if (m && order) completePatientTransport(s, m, order);
         setFms(
           s,
           v,
@@ -592,12 +630,23 @@ function tickState(
           "Transportziel erreicht und Patient übergeben",
         );
         for (const t of s.transfers.filter(
-          (t) => t.assignment === v.assignment,
+          (t) => t.assignment === v.assignment && !t.delivered,
         ))
           t.delivered = true;
-        queuePostIncident(s, v);
+        const repeat =
+          !!m &&
+          transportCandidates(m).length > 0 &&
+          !patientTransportReason(m, v);
+        if (!repeat) queuePostIncident(s, v);
         v.patients = 0;
-        recall(s, v);
+        if (m && repeat) {
+          beginTrip(s, v, m.location?.access ?? m.pos, "travel");
+          v.destination = undefined;
+          setFms(s, v, 3, "server", "Erneute Anfahrt für weitere Patienten");
+        } else {
+          queuePostIncident(s, v);
+          recall(s, v);
+        }
       }
     }
     for (const m of s.missions)
@@ -628,9 +677,6 @@ function tickState(
           m.phase = "transport";
       }
       if (m.phase === "transport" || canTransport(m)) {
-        let remaining =
-          (patientSeats(m) ?? t.patients) -
-          m.transports.reduce((n, t) => n + t.patients, 0);
         for (const v of s.vehicles.filter(
           (v) =>
             v.mission === m.id &&
@@ -638,36 +684,20 @@ function tickState(
             (!v.fault || v.fault.state === "repaired") &&
             canTransport(m, v) &&
             !patientTransportReason(m, v) &&
-            !m.transports.some((t) => t.assignment === v.assignment),
+            !m.transports.some(
+              (t) => t.assignment === v.assignment && t.status === "ordered",
+            ),
         )) {
-          const seats = Math.min(
-            remaining,
-            vt(v.type).capacity,
-            m.major ? transportCandidates(m).length : Infinity,
-          );
+          const seats = transportSeatsAvailable(m, v);
           if (!seats || !hospital(s, v.path.at(-1)!, seats, m, v)) continue;
           transport(s, v, seats, m);
-          boardPatients(s, m, v, seats);
-          m.transports.push({
-            assignment: v.assignment!,
-            owner: s.player.id,
-            vehicle: v.id,
-            patients: seats,
-            status: "ordered",
-          });
-          remaining -= seats;
+          registerPatientTransport(s, m, v, seats);
         }
         if (m.phase !== "transport") continue;
         // Transport can outlast the first stabilization. Re-check the current
         // scene, follow-up care and mandatory tasks before any final reward.
         if (!dynamicsComplete(m, s.time)) continue;
-        if (
-          m.transports
-            .filter((t) => t.status === "delivered")
-            .reduce((n, t) => n + t.patients, 0) <
-          (patientSeats(m) ?? t.patients)
-        )
-          continue;
+        if (!patientTransportsComplete(m)) continue;
         if (m.dynamics) m.dynamics.state = "resolved";
         m.phase = "done";
         m.completed = s.time;

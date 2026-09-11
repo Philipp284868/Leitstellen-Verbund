@@ -111,6 +111,12 @@ describe("incident locations from local OSM MVT evidence", () => {
     ["rail", "landuse", "railway"],
     ["public", "landuse", "school"],
     ["construction", "landuse", "construction"],
+    ["school", "poi", "school"],
+    ["hospital", "poi", "hospital"],
+    ["shopping", "landuse", "mall"],
+    ["parking", "poi", "parking"],
+    ["motorway", "transportation", "motorway"],
+    ["airport", "aerodrome_label", "airport"],
   ])(
     "requires actual %s geometry and rejects an arbitrary urban road",
     (kind, layer, featureClass) => {

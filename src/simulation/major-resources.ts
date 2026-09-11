@@ -2,6 +2,7 @@ import type { Mission, Vehicle } from "../model";
 import { vt, type Skills } from "../catalog";
 import type { SectionKind } from "./major-schema";
 import { taskRequirements } from "./mission-tasks";
+import { configuredSkills } from "./vehicle-equipment";
 export const sectionSkills: Record<SectionKind, string[]> = {
   command: ["command"],
   fire: ["fire", "air", "hazmat", "foam", "measure", "decon"],
@@ -59,14 +60,15 @@ export function effectiveSkills(m: Mission | undefined, v: Vehicle): Skills {
   if (
     (v.fault && v.fault.state !== "repaired") ||
     v.postIncident ||
+    v.waterTrip ||
     !responseCrewAvailable(m, v)
   )
     return {};
-  if (!m?.major) return vt(v.type).skills;
+  if (!m?.major) return configuredSkills(v);
   const section = placement(m, v);
   if (!m.major.sections.some((s) => s.kind === section && s.ordered)) return {};
   return Object.fromEntries(
-    Object.entries(vt(v.type).skills).filter(([k]) =>
+    Object.entries(configuredSkills(v)).filter(([k]) =>
       sectionSkills[section].includes(k),
     ),
   );
