@@ -163,6 +163,56 @@ try {
     import_date: live.import_date,
     data_date: live.data_date,
   };
+  const routeResponse = await fetch("http://127.0.0.1:8989/route", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profile: "car",
+      points: [
+        [13.4, 52.52],
+        [13.401, 52.521],
+      ],
+      points_encoded: false,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(routeResponse.status, 200);
+  const invalidRoute = await fetch("http://127.0.0.1:8989/route", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profile: "car",
+      points: [
+        [0, 0],
+        [0.001, 0.001],
+      ],
+    }),
+    signal: AbortSignal.timeout(5000),
+  });
+  assert.equal(
+    invalidRoute.status,
+    400,
+    "Unavailable connections remain rejected.",
+  );
+  await pause(250);
+  assert.doesNotMatch(
+    output,
+    /INFO\s+\[[^\]]+\]\s+com\.graphhopper\.(resources\.RouteResource|http\.MultiExceptionMapper)/,
+  );
+  assert.doesNotMatch(
+    output,
+    /"(?:GET|POST) \/(?:info|route)[^"\r\n]* HTTP\/1\.1"/,
+  );
+  assert.match(
+    output,
+    /org\.eclipse\.jetty\.server/,
+    "Lifecycle messages remain visible.",
+  );
+  report.quietRouting = {
+    successfulRoute: routeResponse.status,
+    rejectedRoute: invalidRoute.status,
+    lifecycleVisible: true,
+  };
   serverPid = JSON.parse(
     readFileSync(resolve(dataDir, "server.lock"), "utf8"),
   ).pid;

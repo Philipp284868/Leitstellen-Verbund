@@ -18,6 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { routerArguments } from "./router-arguments.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = resolve(
@@ -111,6 +112,20 @@ try {
   }
   await setupTools();
   await verifyJava();
+  // Validate the actual pinned GraphHopper/Dropwizard parser, not a mocked argument list.
+  const loggingConfig = resolve(fixture, "logging-check.yml");
+  const configBytes = "graphhopper: {}\nlogging:\n  level: INFO\n";
+  await writeFile(loggingConfig, configBytes);
+  await promisify(execFile)(
+    java,
+    routerArguments(
+      resolve(tools, "graphhopper-web-11.0.jar"),
+      loggingConfig,
+      "check",
+    ),
+    { windowsHide: true, timeout: 15000 },
+  );
+  assert.equal(await readFile(loggingConfig, "utf8"), configBytes);
   // Even after an earlier successful setup, a partial tool tree must be repaired.
   await unlink(resolve(jdk, "lib/modules"));
   await assert.rejects(stat(resolve(jdk, "lib/modules")), { code: "ENOENT" });

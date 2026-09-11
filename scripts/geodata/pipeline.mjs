@@ -16,6 +16,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { DatabaseSync } from "node:sqlite";
 import { resolveConfiguration } from "../configuration.mjs";
+import { routerArguments } from "./router-arguments.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const configuration = resolveConfiguration({
@@ -347,7 +348,7 @@ if (command === "prepare" || command === "tools") {
   await checkBuildInputs([downloads[1]]);
   await run(
     await javaPath(),
-    ["-Xmx6g", "-jar", gh, "server", graphConfig],
+    routerArguments(gh, graphConfig),
     "routing-server",
   );
 } else if (command === "tiles" || command === "assets") {

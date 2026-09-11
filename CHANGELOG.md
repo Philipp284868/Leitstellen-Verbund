@@ -1,5 +1,11 @@
 # Änderungen
 
+## Routing-Protokoll · 11.09.2026
+
+- Die AMP-Konsole protokolliert normale GraphHopper-Anfragen und erwartete nicht verbundene Straßenpunkte nicht mehr fortlaufend. Gezielte Laufzeit-Logger behalten Warnungen, Fehler und Start-/Stoppmeldungen bei.
+- Vorhandene geprüfte `graphhopper.yml`, Geodaten und Spielstände bleiben unverändert. Die Korrektur greift nach regulärem GitHub-Update und Neustart des verwalteten Routers.
+- Mit echtem GraphHopper 11 und dem vollständigen Deutschland-Datensatz geprüft: erfolgreiche Route (200), abgelehnte Route (400), ruhige Anfrageausgabe, sichtbare Lebenszyklusmeldungen und sauberer Stopp. Die CI-Werkzeugprüfung validiert die Startargumente zusätzlich mit dem tatsächlichen GraphHopper-Konfigurationsparser.
+
 ## 2.24.0 · Simulation Overhaul · 11.09.2026
 
 - Eindeutige Patiententransporte für eigene und unterstützende RTW: individuelle Patienten-/Auftragsreferenzen, getrennte Anzeigen am Einsatzort und im Transport, Krankenhausübergabe, erneute lokale Abholung und einmaliger Abschluss.

@@ -2,6 +2,14 @@
 
 Der aktive Einstieg für Betreiber ist [AMP-Schnellstart](AMP-SCHNELLSTART.md). Die folgenden Befehle sind für eine vorhandene Betriebssystem-Konsole beziehungsweise betreute Wartung gedacht; die AMP-Node-Konsole ist keine allgemeine Shell.
 
+## Routingmeldungen in der AMP-Konsole
+
+Der verwaltete GraphHopper startet mit gezielten Logger-Einstellungen: erfolgreiche Routen und erwartete abgelehnte Verbindungen werden nicht mehr für jede Anfrage in die Konsole geschrieben. Warnungen und Fehler bleiben erhalten, ebenso die Start-/Stoppmeldungen. Das interne HTTP-Zugriffsprotokoll verwendet den externen Jetty-Logger auf WARN; die beiden ausführlichen GraphHopper-Anfragelogger ebenfalls. Die normale Serverprotokollierung bleibt auf INFO.
+
+Die [Dropwizard-Laufzeitüberschreibungen](https://www.dropwizard.io/en/stable/manual/core.html#configuration) werden ausschließlich als JVM-Argumente übergeben. Die vorhandene `graphhopper.yml`, ihre Prüfsumme, Geodaten und Spielstände werden nicht verändert. Für eine bestehende AMP-Installation genügt **Stoppen → Update über GitHub → Starten**. Keine neue `.env` und kein erneuter Geodatenimport erforderlich. Bei einem ausdrücklich extern betriebenen `GRAPHHOPPER_URL` verwaltet dessen Betreiber die Protokollierung separat.
+
+Eine unterdrückte INFO-Zeile ändert kein Routenergebnis: unerreichbare Verbindungen liefern weiterhin eine Ablehnung. Diese Betriebskorrektur reduziert die Protokollausgabe, nicht die Anzahl der Routenberechnungen.
+
 ## Konfiguration und Identität
 
 `scripts/configuration.mjs` ist der gemeinsame schreibfreie Resolver für Setup, Launcher, Server, CLI und Diagnose. Pfade werden gegen die reale Programmwurzel aufgelöst, nicht gegen das aufrufende Arbeitsverzeichnis. Standardport ist 7777; es gibt keinen Ausweichport.
