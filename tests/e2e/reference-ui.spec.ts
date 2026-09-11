@@ -68,7 +68,14 @@ test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelde
   ]) {
     await page.getByRole("button", { name: entry, exact: true }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
+    // Lazy content changes the centered dialog's height and close-button position.
+    await expect(
+      page
+        .getByRole("dialog")
+        .getByText("Ansicht wird geladen …", { exact: true }),
+    ).toBeHidden();
     await page.getByRole("button", { name: "Schließen", exact: true }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
   }
   await page.setViewportSize({ width: 900, height: 600 });
   await expect(page.locator(".desktop-required")).toBeVisible();
