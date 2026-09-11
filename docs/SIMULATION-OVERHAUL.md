@@ -54,7 +54,7 @@ Kontolöschung betrifft die aktive Datenbank. Bereits angelegte Betreiberbackups
 
 ## Tatsächliche Prüfungen
 
-Lokale Prüfungen vom 11.09.2026 unter Windows mit Node.js 24.19.0. Der Linux-CI-Nachweis folgt auf dem veröffentlichten Commit; ein lokaler Erfolg ersetzt ihn nicht.
+Lokale Prüfungen vom 11.09.2026 unter Windows mit Node.js 24.19.0. Die ergänzenden Linux-Ergebnisse für den veröffentlichten Programmstand stehen anschließend separat.
 
 - Typecheck, ESLint, Format-/Projektprüfung bestanden; Produktionsbuild einschließlich bestehender Bundlebudgets bestanden.
 - Vitest: über den breiten Lauf und die erfolgreichen Nachprüfungen sind 1.310 aktuelle Testfälle abgedeckt; drei vorhandene Linux-Dateirechte-/Symlinkfälle werden unter Windows übersprungen. Der breite Lauf bestand zunächst mit 1.295 erfolgreichen Fällen und zwei Fehlern. Die sechs einstündigen Notrufmessungen wurden bei unveränderter Gesamtdauer in getrennte Tests mit eigenem Zeitlimit aufgeteilt; die Kostenprüfung erwartet jetzt die tatsächlich eingeführte anteilige Bereitschaftsabrechnung. Beide betroffenen Dateien bestehen mit 14 Tests. Die abschließende Zusatzprüfung für Großlagen, alternative Zufahrten und zehn parallele Einsätze besteht mit 33 Tests.
@@ -63,8 +63,29 @@ Lokale Prüfungen vom 11.09.2026 unter Windows mit Node.js 24.19.0. Der Linux-CI
 - Beide Patientenabläufe (ein Patient/ein RTW und drei Patienten/zwei RTW) im Browser mit Einladen, Anzeige, Serverneustart, Übergabe und Archiv erfolgreich. Der Neustart darf einen bereits kurzen Transport tatsächlich abschließen; die Prüfung kontrolliert deshalb den wirklichen Patienten- und Archivzustand statt eine künstliche Mindestdauer zu verlangen.
 - Kontoreset/-löschung, Passwortschutz, CSRF-Abweisung, widerrufene Sitzungen und atomarer Warenkorb im Browser erfolgreich.
 - Produktionsabhängigkeiten: `pnpm audit --prod --audit-level=high` ohne bekannte Schwachstellen.
-- Node-Dateisystemtests unter Windows: 14 bestanden; zwei Dateisymlink-Tests scheitern beim Anlegen des Testlinks an Windows `EPERM`. Diese beiden Tests brauchen den Linux-CI-Nachweis. Es wurde keine Schutzprüfung deaktiviert.
-- Lokaler Firefox-Download scheiterte an Netzwerkzeitüberschreitungen. Ein Linux-Firefox-Lauf wird durch CI geprüft; sein Erfolg ist hier noch nicht behauptet.
+- Node-Dateisystemtests unter Windows: 14 bestanden; zwei Dateisymlink-Tests scheitern beim Anlegen des Testlinks an Windows `EPERM`. Im anschließenden Linux-Lauf bestehen alle 16 einschließlich beider Symlink-Schutzfälle. Es wurde keine Schutzprüfung deaktiviert.
+- Lokaler Firefox-Download scheiterte an Netzwerkzeitüberschreitungen. Der vollständige Firefox-Nachweis wurde anschließend auf Linux erbracht.
+
+### GitHub Actions auf Linux
+
+Programmstand: [`199479d`](https://github.com/Philipp284868/Leitstellen-Verbund/commit/199479dc614ba781687b05a1b5275694bd57110f), [erfolgreiche vollständige Produktabnahme im Profil `deep`](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34638209966). Alle elf geplanten Prüfgruppen sind erfolgreich. Die heruntergeladene `acceptance.json` bestätigt für jede Gruppe null Fehler, null übersprungene Fälle und null instabile Wiederholungen. Nachfolgende Änderungen an diesem Bericht verändern den geprüften Programmcode nicht.
+
+| Prüfgruppe | Tatsächliches Ergebnis |
+| --- | --- |
+| Struktur, Format, Lint, Typecheck, Produktionsbuild und Bundlebudgets | Erfolgreich |
+| Logik und Integration | 1.313 bestanden, vollständiger gemeinsamer Lauf in 605 Sekunden |
+| Node-Dateisystemtests | 16 bestanden, einschließlich Symlink- und Wiederherstellungsschutz |
+| Reguläre Chromium-Browserabläufe | 99 bestanden (49 + 50), beide Jobs erfolgreich |
+| Reguläre Firefox-Browserabläufe | 98 bestanden (50 + 48), beide Jobs erfolgreich |
+| Zusätzliche Lastprüfung | 2 bestanden: Chromium und Firefox mit 100 Wachen, 500 Fahrzeugen, 40 Einsätzen und 100 Fahrten |
+| Geodatenprüfung | 5 Prüfungen erfolgreich |
+| AMP-Abnahme unter Debian 13 / Node 24.19.0 | Erfolgreich: frisches und wiederholtes Setup, Caddy-Konfiguration, tatsächliches TLS-Login, Cookies/Origin/WebSocket/Polling, Datei-/Geodatenisolation, verlorene Konfiguration, sauberer Stopp und persistenter Neustart |
+| Linux-Serverpaket | Erstellung, Prüfung und Paketstart erfolgreich; geprüfter Kandidat als CI-Artefakt vorhanden |
+| Produktionsabhängigkeiten | Audit erfolgreich, keine bekannten Schwachstellen gemeldet |
+
+Die AMP-Prüfung verwendet einen kleinen überprüften Deutschland-Testdatensatz und einen kontrollierten externen Routingvertrag. Sie führt Setup, Build, Server und Caddy/TLS tatsächlich aus; sie prüft weder öffentliches ACME noch die private AMP-Installation des Betreibers.
+
+Der [CodeQL-Lauf](https://github.com/Philipp284868/Leitstellen-Verbund/actions/runs/34638210013) ist erfolgreich. Zusätzlich wurde die Analyse für genau `199479d` kontrolliert: `results_count=0`, kein Analysefehler und keine offenen Code-Scanning-Befunde auf `main`.
 
 ## Betrieb
 
