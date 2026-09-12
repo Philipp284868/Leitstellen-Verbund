@@ -77,7 +77,7 @@ export const logicFacilityCatalog: FacilityCatalog = {
               .toLowerCase()
               .includes(q.search.toLowerCase())),
       )
-      .slice(0, q.limit || 80),
+      .slice(q.offset || 0, (q.offset || 0) + (q.limit || 80)),
   clusters: (bbox, _zoom, kind) =>
     logicFacilityCatalog.query({ bbox, kind, limit: 200 }).map((f) => ({
       id: f.id,

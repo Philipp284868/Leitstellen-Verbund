@@ -1,5 +1,10 @@
 # Änderungen
 
+## 2.26.1 · Standortkarte und Anfragebegrenzung · 13.09.2026
+
+- Getrennte Lesebudgets für Karte, Suche und Standortdetails; eindeutige Sperrantworten mit Wartezeit. Anmeldungen, Kontofunktionen und Spielaktionen behalten ihre Schutzregeln. Proxyadressen werden genau geprüft und normalisiert.
+- Standortcluster benötigen keine Gesamtansicht der Spielwelt. Angebote lesen nur den berechtigten Kaufkontext; räumliche Indizes, begrenzte Cluster-Caches, private HTTP-Caches und komprimierte Antworten entlasten den Server. Dichte Ausschnitte werden vollständig zusammengefasst; Suchergebnisse sind seitenweise erreichbar.
+
 ## 2.26.0 · Verwaltete AMP-Instanz und gesicherter Neustart · 12.09.2026
 
 - Getrennte Programmversionen, feste private Instanzkonfiguration und geschützte Update-/Resetjournale. Updates installieren geprüfte Pakete ohne lokalen Entwicklungsbuild.

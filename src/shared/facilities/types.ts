@@ -59,6 +59,7 @@ export type FacilityQuery = {
     available: boolean;
   };
   limit?: number;
+  offset?: number;
 };
 export type FacilityCluster = {
   lon: number;

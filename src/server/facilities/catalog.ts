@@ -1,4 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type StatementSync } from "node:sqlite";
 import type {
   Facility,
   FacilityCatalog,
@@ -12,6 +12,18 @@ import { project } from "../../shared/germany/projection";
 export class SqliteFacilityCatalog implements FacilityCatalog {
   readonly snapshot: string;
   private readonly db: DatabaseSync;
+  private statements = new Map<string, StatementSync>();
+  private clusterCache = new Map<string, FacilityCluster[]>();
+  private statement(sql: string) {
+    let prepared = this.statements.get(sql);
+    if (!prepared) {
+      prepared = this.db.prepare(sql);
+      this.statements.set(sql, prepared);
+      if (this.statements.size > 32)
+        this.statements.delete(this.statements.keys().next().value!);
+    }
+    return prepared;
+  }
   constructor(path: string, dataset: string) {
     this.db = new DatabaseSync(path, { readOnly: true });
     try {
@@ -126,11 +138,10 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       args.push(...ids);
     }
     const limit = Math.max(1, Math.min(200, query.limit || 80));
-    return this.db
-      .prepare(
-        `SELECT f.data FROM facilities f${joins}${where.length ? " WHERE " + where.join(" AND ") : ""} ORDER BY f.usable DESC,f.name,f.id LIMIT ?`,
-      )
-      .all(...args, limit)
+    return this.statement(
+      `SELECT f.data FROM facilities f${joins}${where.length ? " WHERE " + where.join(" AND ") : ""} ORDER BY f.usable DESC,f.name,f.id LIMIT ? OFFSET ?`,
+    )
+      .all(...args, limit, Math.max(0, Math.min(1000000, query.offset || 0)))
       .map((row) => this.read(row));
   }
   clusters(
@@ -139,34 +150,51 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
     kind?: FacilityKind,
   ): FacilityCluster[] {
     const [w, s, e, n] = bbox;
-    // At high zoom each real facility remains individually selectable. At lower zoom a bounded SQL grid summarizes the entire viewport.
-    const cell = 360 / 2 ** Math.min(18, Math.max(4, Math.floor(zoom))) / 8;
-    return this.db
-      .prepare(
-        `SELECT AVG(f.lon) lon,AVG(f.lat) lat,COUNT(*) count,MIN(f.id) id,MIN(f.kind) kind,MIN(f.name) name,MIN(f.usable) usable FROM facilities f JOIN facilities_rtree r ON r.rowid=f.rowid WHERE r.min_lon<=? AND r.max_lon>=? AND r.min_lat<=? AND r.max_lat>=? ${kind ? "AND f.kind=?" : ""} GROUP BY ${zoom >= 16 ? "f.id" : "CAST((f.lon+180)/? AS INTEGER),CAST((f.lat+90)/? AS INTEGER)"} LIMIT 2000`,
-      )
-      .all(
+    const key = JSON.stringify([this.snapshot, bbox, Math.floor(zoom), kind]);
+    const cached = this.clusterCache.get(key);
+    if (cached) return cached;
+    // Never discard the tail of dense viewports. Coarsen until every facility is represented.
+    let cell = Math.max(
+      360 / 2 ** Math.min(18, Math.max(4, Math.floor(zoom))) / 8,
+      (e - w) / 40,
+      (n - s) / 40,
+    );
+    let individual = zoom >= 16;
+    let rows: Record<string, unknown>[];
+    do {
+      rows = this.statement(
+        `SELECT AVG(f.lon) lon,AVG(f.lat) lat,COUNT(*) count,MIN(f.id) id,MIN(f.kind) kind,MIN(f.name) name,MIN(f.usable) usable FROM facilities f JOIN facilities_rtree r ON r.rowid=f.rowid WHERE r.min_lon<=? AND r.max_lon>=? AND r.min_lat<=? AND r.max_lat>=? ${kind ? "AND f.kind=?" : ""} GROUP BY ${individual ? "f.id" : "CAST((f.lon+180)/? AS INTEGER),CAST((f.lat+90)/? AS INTEGER)"} LIMIT 2001`,
+      ).all(
         e,
         w,
         n,
         s,
         ...(kind ? [kind] : []),
-        ...(zoom >= 16 ? [] : [cell, cell]),
-      )
-      .map((row) => ({
-        lon: Number(row.lon),
-        lat: Number(row.lat),
-        count: Number(row.count),
-        ...(Number(row.count) === 1
-          ? {
-              id: String(row.id),
-              kind: row.kind as FacilityKind,
-              name: String(row.name),
-              usable: !!row.usable,
-            }
-          : {}),
-      }));
+        ...(individual ? [] : [cell, cell]),
+      );
+      if (rows.length <= 2000) break;
+      individual = false;
+      cell *= 2;
+    } while (true);
+    const result = rows.map((row) => ({
+      lon: Number(row.lon),
+      lat: Number(row.lat),
+      count: Number(row.count),
+      ...(Number(row.count) === 1
+        ? {
+            id: String(row.id),
+            kind: row.kind as FacilityKind,
+            name: String(row.name),
+            usable: !!row.usable,
+          }
+        : {}),
+    }));
+    this.clusterCache.set(key, result);
+    if (this.clusterCache.size > 32)
+      this.clusterCache.delete(this.clusterCache.keys().next().value!);
+    return result;
   }
+
   close() {
     this.db.close();
   }

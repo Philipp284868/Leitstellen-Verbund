@@ -1,3 +1,4 @@
+import { RateLimitError, RateLimitLog, rateScope } from "./rate-limit";
 import { randomBytes, createHash, scrypt, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { Database } from "./database";
@@ -17,7 +18,7 @@ export const profileNameSchema = z.string().trim().min(1).max(48);
 let hashing = 0;
 async function derive(password: string, salt: string): Promise<Buffer> {
   if (hashing >= 4)
-    throw Error("Anmeldung ausgelastet. Bitte später erneut versuchen.");
+    throw new RateLimitError("authentication", Date.now() + 1000, 1);
   hashing++;
   try {
     return await new Promise((resolve, reject) =>
@@ -55,6 +56,7 @@ export interface Session {
 }
 export class Auth {
   constructor(public db: Database) {}
+  private rateLog = new RateLimitLog();
   limit(key: string, max = 10, window = 900000) {
     const now = Date.now(),
       k = hash(key);
@@ -62,8 +64,13 @@ export class Auth {
       .prepare("SELECT count,until_at FROM limits WHERE key=?")
       .get(k);
     if (row && Number(row.until_at) > now) {
-      if (Number(row.count) >= max)
-        throw Error("Zu viele Versuche. Bitte später erneut versuchen.");
+      if (Number(row.count) >= max) {
+        const scope = rateScope(key),
+          until = Number(row.until_at),
+          wait = Math.max(1, Math.ceil((until - now) / 1000));
+        this.rateLog.write(scope, k, max, window, wait);
+        throw new RateLimitError(scope, until, wait);
+      }
       this.db.sql.prepare("UPDATE limits SET count=count+1 WHERE key=?").run(k);
     } else {
       this.db.sql

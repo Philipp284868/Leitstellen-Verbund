@@ -9,7 +9,10 @@ import { reconcileBuildingStaffing } from "../../simulation/building-staffing";
 import type { Facility } from "./types";
 import { GermanyRoutingError } from "../germany/errors";
 
-export function facilityOffer(s: Save, facility: Facility) {
+export type PurchaseContext = Pick<Save, "money" | "xp"> & {
+  buildings: { id: string; facility?: { id: string } }[];
+};
+export function facilityOffer(s: PurchaseContext, facility: Facility) {
   const owned = s.buildings.find((b) => b.facility?.id === facility.id);
   const type = facility.kind === "other" ? undefined : bt(facility.kind);
   const reason = owned

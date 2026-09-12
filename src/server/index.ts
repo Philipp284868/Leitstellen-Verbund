@@ -1,3 +1,7 @@
+import { respondFacilities } from "./facilities/respond";
+import { RateLimitError } from "./rate-limit";
+import { clientAddress } from "./client-address";
+import { facilityContext } from "./facilities/context";
 import { BugReports } from "./bug-reports";
 import { leaderboard, recordPlayTime } from "./leaderboard";
 import { readFile } from "node:fs/promises";
@@ -154,13 +158,7 @@ export function startServer(
   };
   const cookie = (value: string, clear = false) =>
     `lv_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${clear ? 0 : 7 * 86400}${c.secure ? "; Secure" : ""}`;
-  function ip(req: IncomingMessage) {
-    const address = req.socket.remoteAddress || "",
-      real = req.headers["x-real-ip"];
-    return c.trustedProxies.includes(address) && typeof real === "string"
-      ? real
-      : address;
-  }
+  const ip = (req: IncomingMessage) => clientAddress(req, c.trustedProxies);
   const pendingHttp = new Set<Promise<void>>();
   const http = createServer((req, res) => {
     const task = handleHttp(req, res);
@@ -284,16 +282,30 @@ export function startServer(
           });
         }
         if (path === "/api/facilities" && req.method === "GET") {
-          auth.limit(`facilities:${session.user_id}`, 240, 60000);
-          return reply(
+          const params = requestUrl.searchParams;
+          const scope = params.has("id")
+            ? "facility-detail"
+            : params.get("clusters") === "1"
+              ? "facility-map"
+              : "facility-search";
+          // At most 120 viewport reads/minute per active layer; room for two normal tabs.
+          auth.limit(
+            `${scope}:${session.user_id}`,
+            scope === "facility-map" ? 240 : 120,
+            60000,
+          );
+          auth.limit(`facility-reads:${session.user_id}`, 480, 60000);
+          const data = facilityResponse(requestUrl, () =>
+            facilityContext(db, deskOwner(db, session.user_id, mode)),
+          );
+          return await respondFacilities(
+            req,
             res,
-            200,
-            facilityResponse(
-              requestUrl,
-              viewForActor(session.user_id, online(), mode).save,
-            ),
+            data,
+            scope === "facility-map",
           );
         }
+
         if (path.startsWith("/api/geo/")) {
           if (req.method !== "GET")
             return reply(res, 405, { error: "GET erforderlich." });
@@ -635,25 +647,27 @@ export function startServer(
       res.writeHead(200);
       res.end(req.method === "HEAD" ? undefined : content);
     } catch (e) {
+      if (e instanceof RateLimitError) {
+        res.setHeader("Retry-After", String(e.retryAfter));
+        return reply(res, 429, {
+          error: e.message,
+          code: e.code,
+          scope: e.scope,
+          expiresAt: e.expiresAt,
+          retryAfter: e.retryAfter,
+        });
+      }
       const message =
         e instanceof z.ZodError
           ? "Ungültige Eingabe."
           : e instanceof Error
             ? e.message
             : "Anfrage fehlgeschlagen.";
-      reply(
-        res,
-        /UNIQUE|constraint/i.test(message)
-          ? 409
-          : /Zu viele|ausgelastet/.test(message)
-            ? 429
-            : 400,
-        {
-          error: /SQL|constraint|UNIQUE|ENOENT/i.test(message)
-            ? "Anfrage konnte nicht übernommen werden."
-            : message,
-        },
-      );
+      reply(res, /UNIQUE|constraint/i.test(message) ? 409 : 400, {
+        error: /SQL|constraint|UNIQUE|ENOENT/i.test(message)
+          ? "Anfrage konnte nicht übernommen werden."
+          : message,
+      });
     }
   }
   const io = new Server(http, {

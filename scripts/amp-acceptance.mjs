@@ -17,7 +17,7 @@ import { resolve, join } from "node:path";
 import { request as httpsRequest } from "node:https";
 import { createServer } from "node:net";
 import { pathToFileURL } from "node:url";
-import { gzipSync } from "node:zlib";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { parseEnv } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { io } from "socket.io-client";
@@ -274,16 +274,22 @@ try {
           },
         },
         (res) => {
-          let text = "";
-          res.on("data", (b) => (text += b));
-          res.on("end", () =>
+          const chunks = [];
+          res.on("data", (b) => chunks.push(b));
+          res.on("end", () => {
+            const bytes = Buffer.concat(chunks);
+            const text = (
+              res.headers["content-encoding"] === "gzip"
+                ? gunzipSync(bytes)
+                : bytes
+            ).toString("utf8");
             done({
               status: res.statusCode,
               headers: res.headers,
               text,
               json: () => JSON.parse(text),
-            }),
-          );
+            });
+          });
         },
       );
       req.on("error", reject);
@@ -333,6 +339,21 @@ try {
   const me = await request("/api/me", undefined, { Cookie: cookie });
   assert.equal(me.status, 200);
   assert.equal(me.headers["cache-control"], "no-store");
+  const facilityPath = "/api/facilities?clusters=1&bbox=5,47,16,56&zoom=16";
+  const facilities = await request(facilityPath, undefined, {
+    Cookie: cookie,
+    "Accept-Encoding": "gzip",
+  });
+  assert.equal(facilities.status, 200);
+  assert.equal(facilities.headers["content-encoding"], "gzip");
+  assert.match(facilities.headers["cache-control"], /^private/);
+  assert.ok(facilities.json().clusters.length > 0);
+  const unchanged = await request(facilityPath, undefined, {
+    Cookie: cookie,
+    "If-None-Match": facilities.headers.etag,
+  });
+  assert.equal(unchanged.status, 304);
+  results.push("facility-private-cache-etag-gzip-through-caddy");
   const unauthorized = await request(
     "/api/login",
     { username: "ampcheck", password },
