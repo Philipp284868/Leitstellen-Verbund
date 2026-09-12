@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -148,9 +149,7 @@ async function login(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.locator(".command-menu").waitFor();
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page
     .getByRole("checkbox", { name: "Musik stummschalten", exact: true })
     .check();
@@ -317,9 +316,7 @@ test("große lange WAV bleibt lokal, überlebt Reload und lässt sich zuweisen, 
   expect(JSON.stringify(app.db.all().get(account.id))).not.toContain(name);
   await page.reload();
   await page.locator(".command-menu").waitFor();
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();
@@ -508,9 +505,7 @@ test("Dateizuordnungen sind echte Entwürfe: Verwerfen und Schließen bewahren d
   await page
     .getByRole("button", { name: "Änderungen verwerfen", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
     .click();

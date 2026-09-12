@@ -96,7 +96,7 @@ describe("Deutschland-Vektorkartenstil", () => {
         layers.indexOf("landcover"),
       );
       expect(layers.indexOf("terrain-relief")).toBeLessThan(
-        layers.indexOf("roads"),
+        layers.indexOf("transport-surface-0-road"),
       );
       expect(style.layers.map((layer) => layer.id)).toEqual(
         expect.arrayContaining([
@@ -105,7 +105,7 @@ describe("Deutschland-Vektorkartenstil", () => {
           "landcover",
           "landuse",
           "buildings",
-          "roads",
+          "transport-surface-0-road",
           "national-boundary",
           "state-boundary",
           "labels-place",

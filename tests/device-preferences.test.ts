@@ -11,8 +11,8 @@ describe("versioned workstation settings", () => {
       null,
       JSON.stringify({ side: "right", width: 380, keys: { call: "b" } }),
     );
-    expect(p.workspace.side).toBe("right");
-    expect(p.workspace.width).toBe(380);
+    expect(p.workspace.side).toBe("left");
+    expect(p.workspace.width).toBe(320);
     expect(p.workspace.keys.call).toBe("b");
     expect(p.version).toBe(2);
   });

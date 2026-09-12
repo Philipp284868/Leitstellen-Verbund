@@ -1,3 +1,4 @@
+import { diagnostics } from "../diagnostics";
 import { DatabaseSync } from "node:sqlite";
 import { SqliteFacilityCatalog } from "../facilities/catalog";
 import { resolve, dirname } from "node:path";
@@ -328,12 +329,25 @@ export class LocalGermanyProvider implements GermanyProvider {
       this.remember(cached);
       return cached;
     }
-    const raw = this.bridge.request(
-      "/route",
-      graphHopperRequest(unproject(a), unproject(b), maxSpeed),
-      budget,
-    );
-    const result = adaptGraphHopperRoute(raw, this.dataset, maxSpeed);
+    let result: GermanyRoute;
+    try {
+      const raw = this.bridge.request(
+        "/route",
+        graphHopperRequest(unproject(a), unproject(b), maxSpeed),
+        budget,
+      );
+      result = adaptGraphHopperRoute(raw, this.dataset, maxSpeed);
+    } catch (error) {
+      diagnostics.log(
+        "routing",
+        error instanceof GermanyRoutingError && error.code === "no-route"
+          ? "ROUTE_UNAVAILABLE"
+          : "ROUTING_REQUEST_FAILED",
+        "warn",
+        { errorType: error instanceof Error ? error.name : "UnknownError" },
+      );
+      throw error;
+    }
     if (meters(a, result.path[0]) > 20 || meters(b, result.path.at(-1)!) > 20)
       throw new GermanyRoutingError(
         "Standort hat keine passende Straßenanbindung; Routing darf ihn nicht versetzen.",

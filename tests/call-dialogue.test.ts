@@ -170,7 +170,7 @@ describe("Notruflast und Reproduzierbarkeit", () => {
       db.sql
         .prepare("INSERT INTO desk_members VALUES (?,?)")
         .run("member", "owner");
-      const game = new Game(db);
+      const game = new Game(db, () => true);
       game.step(1);
       expect(db.all().get("owner")!.missions).toHaveLength(0);
       const deadline = db.all().get("owner")!.callPacing!.notBefore;

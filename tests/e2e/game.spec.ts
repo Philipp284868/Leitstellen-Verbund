@@ -50,12 +50,18 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page.getByRole("button", { name: "Spielen", exact: false }).click();
-  await expect(page.locator(".hud-budget strong")).toHaveText(
+  await expect(page.locator(".money-tile strong")).toHaveText(
     formatMoney(ECONOMY_PRICES.start),
   );
-  await expect(page.locator(".hud-notice")).toContainText(
-    "Mit Spielserver verbunden",
-  );
+  await expect(
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
   expect(
     app.db.sql.prepare("SELECT role FROM users WHERE username=?").get(username)!
       .role,
@@ -148,7 +154,10 @@ async function resources(page: Page, username: string) {
   await page
     .getByRole("tab", { name: "Fahrzeuge & Vergleich", exact: true })
     .click();
-  await page.locator('[data-tutorial="buy-tsf"]').click();
+  await page
+    .locator('[data-vehicle-type=\"tsf\"]')
+    .getByRole("button", { name: "Kauf prüfen", exact: true })
+    .click();
   await page
     .getByRole("region", { name: "Fahrzeugkauf bestätigen", exact: true })
     .getByRole("button", { name: "Kauf verbindlich bestätigen", exact: true })
@@ -156,7 +165,7 @@ async function resources(page: Page, username: string) {
   const owner = ownerOf(username);
   await expect.poll(() => app.db.all().get(owner)!.vehicles.length).toBe(1);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   const s = app.db.all().get(owner)!;
   expect(s.buildings[0].organization?.kind).toBe("ff");
   expect(s.staffing?.version).toBe(1);
@@ -212,7 +221,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   browser,
 }) => {
   const { ca, cb, a, b, ua } = await pair(browser);
-  await a.getByRole("button", { name: "Einstellungen", exact: true }).click();
+  await openPanel(a, "Einstellungen");
   await expect(
     a.getByRole("heading", { name: "Serververwaltung" }),
   ).toHaveCount(0);
@@ -221,7 +230,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   ).toHaveCount(0);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
   await resources(a, ua);
-  await expect(b.locator(".hud-budget strong")).toHaveText(
+  await expect(b.locator(".money-tile strong")).toHaveText(
     formatMoney(ECONOMY_PRICES.start),
   );
   await expect(
@@ -265,7 +274,7 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  await a.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(a, "Fuhrpark");
   advanceSimulation(() =>
     app.db
       .all()
@@ -274,9 +283,9 @@ test("Freie Registrierung, getrennte Spielerkonten, Einsatz mit einem Disponente
   );
   await expectAlarmableFF(a, owner);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  const money = await a.locator(".hud-budget strong").innerText();
+  const money = await a.locator(".money-tile strong").innerText();
   await enter(a, ua);
-  await expect(a.locator(".hud-budget strong")).toHaveText(money);
+  await expect(a.locator(".money-tile strong")).toHaveText(money);
   await expect(
     a.locator(
       "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
@@ -351,11 +360,11 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     a.getByText("Dieser Einsatz ist abgeschlossen.", { exact: false }),
   ).toBeVisible({ timeout: 100000 });
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  const aMoney = await a.locator(".hud-budget strong").innerText(),
+  const aMoney = await a.locator(".money-tile strong").innerText(),
     c = await browser.newContext(),
     p = await c.newPage();
   await enter(p, ub);
-  const bMoney = await p.locator(".hud-budget strong").innerText();
+  const bMoney = await p.locator(".money-tile strong").innerText();
   expect(bMoney).toBe(aMoney);
   await c.close();
   await ca.close();
@@ -366,7 +375,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   const restart = await browser.newContext(),
     rp = await restart.newPage();
   await enter(rp, ua);
-  await expect(rp.locator(".hud-budget strong")).toHaveText(aMoney);
+  await expect(rp.locator(".money-tile strong")).toHaveText(aMoney);
   await restart.close();
   await app.close();
   const restore = spawnSync(
@@ -392,7 +401,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   const restored = await browser.newContext(),
     page = await restored.newPage();
   await enter(page, ub);
-  await expect(page.locator(".hud-budget strong")).toHaveText(bMoney);
+  await expect(page.locator(".money-tile strong")).toHaveText(bMoney);
   await expect(
     page.locator(
       "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
@@ -412,7 +421,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
     before = app.db.all().get(owner)!.money,
     vehicle = app.db.all().get(owner)!.vehicles[0];
   expect(before).toBeLessThan(ECONOMY_PRICES.start);
-  await expect(second.locator(".hud-budget strong")).toHaveText(
+  await expect(second.locator(".money-tile strong")).toHaveText(
     formatMoney(before),
   );
   await expect(
@@ -425,8 +434,8 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await second.close();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.locator(".banner")).toContainText(
-    "Serververbindung unterbrochen",
+  await expect(page.locator(".critical-events")).toContainText(
+    "Serververbindung verloren.",
   );
   await openPanel(page, "Fuhrpark");
   await page
@@ -435,7 +444,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await expect(page.getByRole("alert")).toContainText("Keine Serververbindung");
   expect(app.db.all().get(owner)!.vehicles[0].favorite).not.toBe(true);
   expect(app.db.all().get(owner)!.money).toBe(before);
-  await expect(page.locator(".hud-budget strong")).toHaveText(
+  await expect(page.locator(".money-tile strong")).toHaveText(
     formatMoney(before),
   );
   // A real online event and a retry can arrive while the transport is already
@@ -454,7 +463,11 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
     window.dispatchEvent(new Event("online"));
   });
   handshake.resume!();
-  await expect(page.locator(".banner")).toHaveCount(0);
+  await expect(
+    page
+      .locator(".critical-events article")
+      .filter({ hasText: "Serververbindung verloren." }),
+  ).toHaveCount(0);
   await page
     .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
     .click();
@@ -482,7 +495,7 @@ test("Export und validierte Altdateivorschau erlauben keine Übernahme fremden G
   await expect(
     page.getByRole("button", { name: "Geprüften Spielstand übernehmen" }),
   ).toHaveCount(0);
-  await expect(page.locator(".hud-budget strong")).toHaveText(
+  await expect(page.locator(".money-tile strong")).toHaveText(
     formatMoney(ECONOMY_PRICES.start),
   );
   await page.getByLabel("Spielstanddatei importieren").setInputFiles({
@@ -504,7 +517,7 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
   await expect(b.locator(".chat-log")).toContainText("<b>Nur Text</b>");
   await expect(b.locator(".chat-log b")).toHaveText(ua);
   await a.getByRole("button", { name: "Schließen", exact: true }).click();
-  await a.getByRole("button", { name: "Einstellungen", exact: true }).click();
+  await openPanel(a, "Einstellungen");
   await a.getByRole("tab", { name: "Hinweise & Hilfe", exact: true }).click();
   await a
     .getByRole("button", { name: "Konto & Sicherheit", exact: true })
@@ -514,7 +527,7 @@ test("Serverchat bleibt Klartext; Abmeldung entfernt private Daten und widerruft
     .click();
   await a.getByRole("button", { name: "Bestätigen", exact: true }).click();
   await expect(a.getByLabel("Benutzername", { exact: true })).toBeVisible();
-  await expect(a.locator(".hud-budget")).toHaveCount(0);
+  await expect(a.locator(".money-tile")).toHaveCount(0);
   await enter(a, ua);
   await expect(a.locator(".chat-log")).toHaveCount(0);
   await ca.close();
@@ -532,7 +545,7 @@ test("kleine Desktopansicht und notwendige Ressourcen bleiben auf demselben eige
   await page.setViewportSize({ width: 1366, height: 768 });
   await register(page, "Mobil");
   await expect(
-    page.getByRole("button", { name: "Karte", exact: true }),
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(

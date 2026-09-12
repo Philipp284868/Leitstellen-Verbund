@@ -1,3 +1,4 @@
+import { transportLayers } from "./transport-style";
 import type { LayerSpecification, StyleSpecification } from "maplibre-gl";
 
 export const GERMANY_BOUNDS: [number, number, number, number] = [
@@ -93,7 +94,7 @@ export function germanyStyle(manifest: GeoManifest): StyleSpecification {
       {
         id: "background",
         type: "background",
-        paint: { "background-color": "#35433e" },
+        paint: { "background-color": "#3e5045" },
       },
       {
         id: "landcover",
@@ -134,7 +135,7 @@ export function germanyStyle(manifest: GeoManifest): StyleSpecification {
             "commercial",
             "#565654",
             "railway",
-            "#43494a",
+            "#515153",
             "farmland",
             "#586344",
             "cemetery",
@@ -193,75 +194,7 @@ export function germanyStyle(manifest: GeoManifest): StyleSpecification {
           "fill-opacity": 0.72,
         },
       },
-      {
-        id: "road-case",
-        type: "line",
-        source: "germany",
-        "source-layer": "transportation",
-        minzoom: 5,
-        filter: ["!in", "class", "rail", "transit", "path"],
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: {
-          "line-color": "#202d30",
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            5,
-            0.8,
-            10,
-            2.6,
-            16,
-            10,
-          ],
-        },
-      },
-      {
-        id: "roads",
-        type: "line",
-        source: "germany",
-        "source-layer": "transportation",
-        minzoom: 5,
-        filter: ["!in", "class", "rail", "transit", "path"],
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: {
-          "line-color": [
-            "match",
-            ["get", "class"],
-            "motorway",
-            "#bcb18a",
-            "trunk",
-            "#b2ad8f",
-            "primary",
-            "#a6ac9a",
-            "#7a8a85",
-          ],
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            5,
-            0.4,
-            10,
-            1.2,
-            16,
-            6,
-          ],
-        },
-      },
-      {
-        id: "rail",
-        type: "line",
-        source: "germany",
-        "source-layer": "transportation",
-        minzoom: 9,
-        filter: ["==", "class", "rail"],
-        paint: {
-          "line-color": "#939b94",
-          "line-width": 1,
-          "line-dasharray": [2, 3],
-        },
-      },
+      ...transportLayers(),
       {
         id: "state-boundary",
         type: "line",
@@ -290,13 +223,6 @@ export function germanyStyle(manifest: GeoManifest): StyleSpecification {
       },
       // The feature layers below make local tile labels available to the canvas
       // overlay. System fonts avoid external glyph requests and font accounts.
-      ...["poi", "aerodrome_label"].map((sourceLayer) => ({
-        id: `facilities-${sourceLayer}`,
-        type: "circle" as const,
-        source: "germany",
-        "source-layer": sourceLayer,
-        paint: { "circle-radius": 0, "circle-opacity": 0 },
-      })),
       ...["place", "water_name", "mountain_peak"].map((sourceLayer) => ({
         id: `labels-${sourceLayer}`,
         type: "circle" as const,

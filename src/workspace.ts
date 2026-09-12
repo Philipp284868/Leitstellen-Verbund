@@ -45,10 +45,10 @@ export function parseWorkspace(raw: string | null): WorkspacePreferences {
     }
     return {
       side: "left",
-      width: [280, 320, 380].includes(v.width) ? v.width : 320,
+      width: 320,
       compact: v.compact === true,
-      queueBottom: v.queueBottom === true,
-      stationsTop: v.stationsTop === true,
+      queueBottom: false,
+      stationsTop: false,
       keys,
     };
   } catch {

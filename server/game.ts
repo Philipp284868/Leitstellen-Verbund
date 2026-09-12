@@ -1,3 +1,4 @@
+import { recordActivity } from "./leaderboard";
 import {
   civilProtectionActions,
   type CivilProtectionAction,
@@ -364,6 +365,7 @@ export class Game {
           ))
             p.duty = personDuty(s, p);
       }
+      recordActivity(this.db.sql, s, user, action, id);
       for (const [id, value] of saves) {
         value.revision++;
         this.db.save(id, value, mode);

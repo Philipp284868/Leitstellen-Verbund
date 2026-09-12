@@ -4,6 +4,11 @@ import { App } from "./App";
 import { start, state as gameState } from "./store";
 import { BackupPanel } from "./Panels";
 import { download } from "./storage";
+import {
+  recordClientDiagnostic,
+  clientDiagnostics,
+} from "./client-diagnostics";
+import { localEvent } from "./event-store";
 import "./style.css";
 import "./HudTheme.css";
 import "./MapTheme.css";
@@ -12,6 +17,7 @@ import "./ControlRoom.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
+    recordClientDiagnostic("UI_RENDER_FAILED");
     return { failed: true };
   }
   render() {
@@ -32,6 +38,7 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
                 app: "leitstellen-verbund",
                 renderError: true,
                 hasConfirmedSave: !!gameState(),
+                diagnostics: clientDiagnostics(),
               }),
             )
           }
@@ -44,6 +51,22 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
     );
   }
 }
+const captureClientError = (code: string) => {
+  try {
+    recordClientDiagnostic(code);
+    localEvent(
+      "Technischer Fehler in der Oberfläche. Bitte Support öffnen und bei Bedarf die bereinigte Diagnose exportieren.",
+      "Systemfehler",
+      true,
+    );
+  } catch {
+    /* Reporting must never recursively report itself. */
+  }
+};
+window.addEventListener("error", () => captureClientError("UI_SCRIPT_FAILED"));
+window.addEventListener("unhandledrejection", () =>
+  captureClientError("UI_PROMISE_FAILED"),
+);
 start();
 createRoot(document.getElementById("root")!).render(
   <Boundary>

@@ -11,6 +11,7 @@ const groups = [
   [
     "Disposition",
     [
+      ["calls", "Notrufarbeitsplatz"],
       ["fleet", "Fuhrpark"],
       ["facilities", "Standorte kaufen"],
       ["stations", "Standorte verwalten"],
@@ -189,6 +190,7 @@ export function Topbar({
       </button>
       <div className="status-tile situation-tile">
         <button
+          aria-label={`Welt- & Wetterlage ${s.worldSituation ? situationNames[s.worldSituation.profile] : "Wird geladen"} ${s.worldSituation ? situationLevel(s.worldSituation) : ""}`.trim()}
           aria-expanded={popup === "situation"}
           onClick={() => toggle("situation")}
         >

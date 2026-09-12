@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { pathToFileURL } from "node:url";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -50,9 +51,7 @@ test("zwei Leitstellen erwerben denselben festen Standort unabhängig; Bestätig
     const original = app.db.all().get(a)!.money,
       facility = fixtureFacilities.find((f) => f.kind === "fire")!;
     const choose = async (page: Page) => {
-      await page
-        .getByRole("button", { name: "Standorte", exact: true })
-        .click();
+      await openPanel(page, "Standorte verwalten");
       await page
         .getByRole("button", { name: "Standort kaufen", exact: true })
         .click();
@@ -122,14 +121,12 @@ test("zwei Leitstellen erwerben denselben festen Standort unabhängig; Bestätig
       .getByRole("button", { name: "Verwalten", exact: true })
       .click();
     await expect(
-      pages[0].locator('[data-tutorial="building-details"]'),
+      pages[0].getByRole("tablist", { name: "Wachenbereiche" }),
     ).toBeVisible();
     await app.close();
     app = await listenBrowserServer(compiled.startServer, config);
     await enter(pages[0], "site-owner");
-    await pages[0]
-      .getByRole("button", { name: "Standorte", exact: true })
-      .click();
+    await openPanel(pages[0], "Standorte verwalten");
     await expect(pages[0].locator(".station-card")).toContainText(
       facility.name,
     );

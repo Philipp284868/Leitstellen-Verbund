@@ -1,3 +1,5 @@
+> Historisches Dokument zu 2.21. Tutorial und damalige Menüführung sind seit 2.25 abgelöst. [Aktuelle Bedienung](HUD-UND-SERVER.md).
+
 # Menüinventur und Bedienprüfung 2.21
 
 Diese Matrix erfasst die erreichbaren Ansichten des vorhandenen Spiels anhand von `App.tsx`, `navigation.ts` und ihren tatsächlichen Komponenten. Ein Eintrag „Codeinventur“ bestätigt Aufrufpfad, Datenquelle und vorhandene Aktion im Quellcode; er behauptet keine bestandene Browserprüfung. Die tatsächliche Deutschland-Abnahme und die gezielten Browsernachweise sind den einzelnen Ansichten zugeordnet; reine Codeinventur bleibt ausdrücklich als solche erkennbar.

@@ -78,7 +78,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   forceVolunteerAvailability(seed, true, 7200);
   replaceFixtureSave(app.db, owner, seed);
   await enter(page);
-  await page.getByRole("button", { name: "Standorte", exact: true }).click();
+  await openPanel(page, "Standorte verwalten");
   await page.getByRole("dialog").locator(".station-card").first().click();
   await page.locator(".org-settings > summary").click();
   await expect(page.getByRole("dialog")).toContainText("Freiwillige Feuerwehr");
@@ -86,7 +86,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   await expect(page.getByLabel("Wohnort", { exact: true })).toHaveCount(0);
   await expect(page.locator(".person-settings")).toHaveCount(0);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   const fleet = page.locator(".fleet-card").first(),
     reserve = fleet.getByLabel("Als Reserve vormerken (nur Hinweis)");
   await fleet
@@ -128,7 +128,13 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   );
   app.game.step(Math.max(0, moving.depart! - current.time + 2));
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await expect(page.getByTestId("map-volunteer").first()).toBeVisible();
+  await expect(page.getByTestId("map-volunteer")).toHaveCount(0);
+  expect(
+    app.db
+      .all()
+      .get(owner)!
+      .vehicles[0].turnout!.arrivals.some((a) => a.depart !== undefined),
+  ).toBe(true);
   await page.screenshot({
     path: info.outputPath("phase3-ff-anreise.png"),
     fullPage: true,
@@ -138,7 +144,7 @@ test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neust
   await app.listen();
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   await page
     .getByText("Besatzung & Einsatzbereitschaft", { exact: true })
     .first()
@@ -487,7 +493,7 @@ test("Organisationsaufträge und Krankenhauswahl bleiben nach Wiederverbindung w
   expect(restored.postIncident).toEqual(savedPost);
   await page.reload();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   await expect(
     page.locator(".fleet-card").filter({ hasText: "RTW" }).first(),
   ).toContainText("Desinfektion läuft");

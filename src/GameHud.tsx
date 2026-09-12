@@ -47,6 +47,7 @@ export function GameHud({
   detail,
   showDetail,
   onCloseDetail,
+  onCloseDetailKeepSelection,
   search,
   setSearch,
   filter,
@@ -91,11 +92,7 @@ export function GameHud({
         setLayers(false);
         setListOpen(false);
         document
-          .querySelector<HTMLElement>(
-            layers
-              ? '.topbar [aria-label="Karte"]'
-              : '.topbar [aria-label^="Einsatzliste"]',
-          )
+          .querySelector<HTMLElement>('.topbar [aria-label="Leitstellenmenü"]')
           ?.focus();
       }
     };
@@ -156,7 +153,7 @@ export function GameHud({
         onSearch={() => {
           setLayers(true);
           setListOpen(false);
-          onCloseDetail();
+          onCloseDetailKeepSelection();
           requestAnimationFrame(() =>
             document
               .querySelector<HTMLInputElement>(
@@ -485,7 +482,7 @@ export function GameHud({
           {detail}
         </IncidentDock>
       )}
-      {!listOpen && !working && (
+      {!listOpen && !working && !layers && (
         <button className="worklist-toggle" onClick={() => setListOpen(true)}>
           Einsätze {s.missions.length} · Notrufe {calls.length}
         </button>

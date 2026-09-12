@@ -10,7 +10,7 @@ import { attachDynamics } from "../../src/simulation/dynamics";
 import { completedSave } from "../reports-replay-fixture";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
-import { enterGame, showIncidents } from "./ui-navigation";
+import { openPanel, enterGame, showIncidents } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -126,7 +126,10 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await app.listen();
   await page.goto(config.publicUrl);
   await enterGame(page);
-  await expect(page.locator(".reconnect-summary")).toContainText("1 Notrufe");
+  await expect(page.locator(".event-log")).toContainText(
+    "Neuer Notruf eingegangen.",
+  );
+  await expect(page.locator(".reconnect-summary")).toHaveCount(0);
   expect(app.db.all().get(owner)!.archive[0].report).toEqual(savedReport);
   expect(errors).toEqual([]);
 });
@@ -141,14 +144,11 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   attachIncident(s, s.missions[0]);
   app.db.save(owner, s);
   await enter(page);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page.getByRole("tab", { name: "Steuerung", exact: true }).click();
-  await page.getByLabel("Einsatzspalte", { exact: true }).selectOption("right");
-  await page
-    .getByLabel("Breite der Einsatzspalte", { exact: true })
-    .selectOption("380");
+  await expect(page.getByLabel("Einsatzspalte", { exact: true })).toHaveCount(
+    0,
+  );
   await page.getByLabel("Kompakte Einsatzkarten", { exact: true }).check();
   await page
     .getByLabel("Taste: Archiv und Statistik", { exact: true })
@@ -164,7 +164,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   const side = await page.locator(".mission-sidebar").boundingBox(),
     map = await page.locator(".map-column").boundingBox();
   expect(side!.x).toBeGreaterThan(map!.x);
-  expect(side!.width).toBeCloseTo(380, 0);
+  expect(side!.width).toBeCloseTo(310, 0);
   expect(
     (await page.locator("[data-testid=germany-map-viewport]").boundingBox())!
       .height,
@@ -202,7 +202,7 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   });
   await page.reload();
   await enterGame(page);
-  await expect(page.locator(".app")).toHaveAttribute("data-sidebar", "right");
+  await expect(page.locator(".app")).toHaveAttribute("data-sidebar", "left");
   await page.keyboard.press("z");
   await expect(
     page.getByRole("button", { name: "Statistiken", exact: true }),
@@ -228,9 +228,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
     };
   });
   await enter(page);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page.getByRole("tab", { name: "Audio", exact: true }).click();
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })
@@ -310,9 +308,7 @@ test("Eigene Audiodatei wird wirklich abgespielt, explizit gespeichert und nach 
   });
   await page.reload();
   await enterGame(page);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page.getByRole("tab", { name: "Audio", exact: true }).click();
   await page
     .getByText("Signalregler und eigene Soundprofile", { exact: true })

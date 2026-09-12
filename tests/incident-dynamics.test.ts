@@ -700,7 +700,8 @@ it("Offline-Aufholen erzeugt keine Einsatzflut und ein voller Patientenbestand b
     replaceFixtureSave(w.db, w.owner, s);
     w.game.step(3600);
     expect(w.db.all().get(w.owner)!.missions).toHaveLength(1);
-    for (let i = 0; i < 50; i++) w.game.step(5);
+    const activeGame = new Game(w.db, () => true);
+    for (let i = 0; i < 50; i++) activeGame.step(5);
     expect(w.db.all().get(w.owner)!.missions.length).toBeGreaterThan(1);
     const ongoing = w.db.all().get(w.owner)!;
     expect(

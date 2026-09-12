@@ -28,7 +28,7 @@ it("simuliert über zehn parallele Einsätze während einer Wetterlage ohne Best
       .run(s.player.id, "wave", "unused", "player", 0);
     db.save(s.player.id, s);
     writeWorldSituation(db.sql, createSituation(s.time, 123, "storm"));
-    const game = new Game(db);
+    const game = new Game(db, () => true);
     for (let i = 0; i < 120; i++) game.step(30);
     const active = db.all().get(s.player.id)!;
     expect(active.missions.length).toBeGreaterThanOrEqual(10);
@@ -46,7 +46,9 @@ it("simuliert über zehn parallele Einsätze während einer Wetterlage ohne Best
     );
     const ids = active.missions.map((m) => m.id);
     expect(
-      new Game(db).view(s.player.id, new Set()).save.missions.map((m) => m.id),
+      new Game(db, () => true)
+        .view(s.player.id, new Set())
+        .save.missions.map((m) => m.id),
     ).toEqual(ids);
     game.step(10, Date.now(), { generation: false });
     expect(

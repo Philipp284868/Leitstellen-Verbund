@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -46,9 +47,7 @@ async function login(page: Page, secret = password) {
   await expect(page.locator(".command-menu")).toBeVisible();
 }
 async function account(page: Page) {
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   const settings = page.getByRole("dialog", {
     name: "Einstellungen",
     exact: true,
@@ -300,10 +299,10 @@ test("Support ohne Clipboard-API bietet weiterhin auswählbaren manuellen Text u
     dialog.getByRole("textbox", { name: "Technische Angaben", exact: true }),
   ).toHaveValue(/Leitstellen-Verbund/);
   await expect(
-    dialog.getByRole("link", { name: "Fehler im Projekt melden", exact: true }),
+    dialog.getByRole("link", { name: "Normaler GitHub-Meldeweg", exact: true }),
   ).toHaveAttribute(
     "href",
-    "https://github.com/Philipp284868/Leitstellen-Verbund/issues",
+    "https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose",
   );
   expect(actions).toEqual([]);
 });
@@ -340,7 +339,7 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
       .toBe(true);
     await expect(map).toHaveAttribute("data-camera-moving", "false");
     const camera = await map.getAttribute("data-camera");
-    await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
+    await openPanel(page, "Zurück zum Hauptmenü");
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
     const exit = page.getByRole("dialog", {
       name: "Spiel verlassen",
@@ -361,7 +360,7 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
       buildings: before.buildings,
       vehicles: before.vehicles,
     };
-    await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
+    await openPanel(page, "Zurück zum Hauptmenü");
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
     await page.screenshot({ path: info.outputPath("exit-confirmation.png") });
     await exit
@@ -375,7 +374,7 @@ test("Spiel verlassen kann zur Karte zurückkehren; bestätigte Abmeldung widerr
     ).toBeVisible();
     await expect(
       page.locator(
-        ".command-menu, .hud-budget, [data-testid=germany-map-viewport]",
+        ".command-menu, .money-tile, [data-testid=germany-map-viewport]",
       ),
     ).toHaveCount(0);
     expect(app.auth.session(firstCookie)).toBeNull();

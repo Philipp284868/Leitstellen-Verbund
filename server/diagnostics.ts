@@ -5,6 +5,7 @@ type Fields = {
   count?: number;
   active?: boolean;
   status?: number;
+  port?: number;
   errorType?: string;
 };
 /** Only allowlisted scalar metadata crosses this boundary. Never serialize requests/errors/saves. */
@@ -23,7 +24,7 @@ export class Diagnostics {
     code: string,
     level: Level = "info",
     fields: Fields = {},
-    correlation = randomUUID(),
+    correlation: string = randomUUID(),
   ) {
     const now = this.now(),
       key = `${component}:${code}`,
@@ -35,7 +36,7 @@ export class Diagnostics {
     if (this.recent.size >= 256)
       this.recent.delete(this.recent.keys().next().value!);
     const clean: Fields = {};
-    for (const name of ["count", "status"] as const)
+    for (const name of ["count", "status", "port"] as const)
       if (Number.isFinite(fields[name])) clean[name] = fields[name];
     if (typeof fields.active === "boolean") clean.active = fields.active;
     if (

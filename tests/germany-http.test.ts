@@ -626,6 +626,11 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     expect(a.frames.at(-1)!.full).toBe(true);
   });
   it("verzögert automatische Wassereinsätze bei Routingausfall, hält Health und Fortschritt aktiv und versucht erneut", async () => {
+    const playing = presenceClient(user);
+    await vi.waitFor(() => expect(playing.socket.connected).toBe(true));
+    await new Promise<void>((done) =>
+      playing.socket.emit("play:presence", { active: true }, () => done()),
+    );
     // Pause only the periodic simulation calls during asynchronous fixture setup.
     // Otherwise a live tick can consume the prepared draw and open the routing
     // circuit before the request baseline is measured. The real clock resumes
@@ -686,6 +691,11 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
   }, 20000);
   it("weist ungültige Routerverträge weiterhin sichtbar zurück und rollt Game.step zurück", async () => {
     waterGeneration();
+    const playing = presenceClient(user);
+    await vi.waitFor(() => expect(playing.socket.connected).toBe(true));
+    await new Promise<void>((done) =>
+      playing.socket.emit("play:presence", { active: true }, () => done()),
+    );
     await routerMode("invalid");
     const before = app!.db.all().get(user.id)!;
     expect(() => app!.game.step(1)).toThrow();

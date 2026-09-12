@@ -40,6 +40,9 @@ export async function buildApplication({ incremental = false } = {}) {
     "scripts/build-pipeline.mjs",
     "scripts/build-cache.mjs",
     "scripts/source-graph.mjs",
+    "CHANGELOG.md",
+    "src/changelog.ts",
+    "scripts/build-changelog.mjs",
     ...[
       ".env",
       ".env.local",
@@ -146,7 +149,7 @@ export async function buildApplication({ incremental = false } = {}) {
     }),
   );
   if (!failure) {
-    await run(["scripts/sync-project-news.mjs"]);
+    await run(["scripts/build-changelog.mjs"]);
     await run(["scripts/check-bundles.mjs"]);
     let commit = null,
       dirty = true;

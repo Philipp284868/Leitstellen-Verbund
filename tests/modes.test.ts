@@ -32,7 +32,7 @@ async function fixture() {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-modes-"));
   const db = new Database(dir),
     auth = new Auth(db),
-    game = new Game(db);
+    game = new Game(db, () => true);
   const a = await auth.create("anna", pass, "Anna", "Nord");
   const b = await auth.create("ben", pass, "Ben", "Süd");
   return { dir, db, game, a, b };

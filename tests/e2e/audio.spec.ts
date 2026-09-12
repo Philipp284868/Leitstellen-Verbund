@@ -1,3 +1,4 @@
+import { openPanel, toggleMapTools } from "./ui-navigation";
 import { build } from "esbuild";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -99,9 +100,9 @@ async function login(page: Page, ready = false) {
 }
 async function play(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator(".hud-notice")).toContainText(
-    "Mit Spielserver verbunden",
-  );
+  await expect(
+    page.getByRole("region", { name: "Funk und Ereignisse" }),
+  ).toBeVisible();
 }
 async function logoutFromSettings(page: Page) {
   await page.getByRole("button", { name: "Übernehmen", exact: true }).click();
@@ -128,9 +129,7 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   await expect
     .poll(async () => (await levels(page)).rms)
     .toBeGreaterThan(0.0001);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page
     .getByRole("checkbox", { name: "Alles stummschalten", exact: true })
     .check();
@@ -183,9 +182,7 @@ test("echte Audioausgabe startet nach Interaktion, lässt sich stummschalten und
   );
   await page.reload();
   await page.locator(".command-menu").waitFor();
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await expect(
     page.getByRole("slider", { name: "Musiklautstärke" }),
   ).toHaveValue("0");
@@ -210,12 +207,10 @@ test("nur der aktive Tab spielt und Abmeldung beendet die Ausgabe", async ({
     .toMatchObject({ state: "running" });
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await page.bringToFront();
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await toggleMapTools(page);
   await expect.poll(async () => (await levels(other)).state).toBe("suspended");
   await expect.poll(async () => (await levels(page)).state).toBe("running");
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await logoutFromSettings(page);
   await expect.poll(async () => (await levels(page)).state).toBe("suspended");
   await other.close();
@@ -239,9 +234,7 @@ test("fehlende Audio-Unterstützung blockiert das Spiel nicht", async ({
   });
   await login(page);
   await play(page);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await expect(page.locator(".sound-status")).toContainText("nicht starten");
   await page.evaluate(() => {
     Object.defineProperty(Storage.prototype, "setItem", {
@@ -407,9 +400,7 @@ test("ein neuer bestätigter Servereinsatz löst ohne Bedienklick ein hörbares 
   await expect
     .poll(async () => (await levels(page)).rms)
     .toBeGreaterThan(0.0001);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page
     .getByRole("checkbox", { name: "Musik stummschalten", exact: true })
     .check();
@@ -437,9 +428,7 @@ test("Audio-JSON-Sicherung exportiert gespeicherte Regler; Import ist eine verwe
   page,
 }, info) => {
   await login(page);
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await page.getByText("Audioeinstellungen sichern", { exact: true }).click();
   const pending = page.waitForEvent("download");
   await page
@@ -514,9 +503,7 @@ test("Audio-JSON-Sicherung exportiert gespeicherte Regler; Import ist eine verwe
   ).toBe(2);
   await page.reload();
   await page.locator(".command-menu").waitFor();
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   await expect(
     page.getByRole("slider", { name: "Musiklautstärke", exact: true }),
   ).toHaveValue("12");

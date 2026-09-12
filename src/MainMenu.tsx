@@ -132,7 +132,7 @@ export function MainMenu({
         </button>
         <section className="menu-panel">
           <h2>
-            Verbundener Server <ChevronRight size={16} />
+            Deine Spielwelt <ChevronRight size={16} />
           </h2>
           <button className="last-save" onClick={onPlay}>
             <div className="save-preview">
@@ -140,7 +140,6 @@ export function MainMenu({
             </div>
             <div>
               <strong>{s.player.station}</strong>
-              <small>{window.location.host}</small>
               <span>
                 <Clock size={14} />
                 Stand{" "}

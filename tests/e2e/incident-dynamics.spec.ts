@@ -10,7 +10,7 @@ import type { SectionKind } from "../../src/simulation/major-schema";
 import { atScene, majorFixture } from "../incident-dynamics-fixture";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
-import { showIncidents } from "./ui-navigation";
+import { openPanel, showIncidents } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -281,14 +281,24 @@ test("Hochwasserführung zeigt versetzte Meldungen, Priorisierung und getrennte 
     await expect
       .poll(() => page.locator(".mission-card").count())
       .toBeGreaterThanOrEqual(2);
+    await openPanel(page, "Gemeinsame Einsatzlagen");
+    await page
+      .getByRole("button", { name: "Groß- und Flächenlagen", exact: true })
+      .click();
     await expect(
       page.getByRole("region", { name: "Großlagenübersicht" }),
     ).toContainText("2 Meldungen bisher");
+    await openPanel(other, "Gemeinsame Einsatzlagen");
+    await other
+      .getByRole("button", { name: "Groß- und Flächenlagen", exact: true })
+      .click();
     await expect(
       other.getByRole("region", { name: "Großlagenübersicht" }),
     ).toHaveCount(0);
+    await page.getByRole("button", { name: "Schließen", exact: true }).click();
     expect(app.game.view(peer, new Set()).network.requests).toHaveLength(0);
     expect(app.game.view(peer, new Set()).network.friends).toHaveLength(0);
+    await showIncidents(page);
     const first = app.db.all().get(owner)!.operations.campaign!.missions[0];
     await page
       .locator(".mission-card")

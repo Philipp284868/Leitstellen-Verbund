@@ -8,7 +8,12 @@ import { interviewUI } from "./desk-helpers";
 import { established } from "./fixtures";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
-import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
+import {
+  toggleMapTools,
+  openPanel,
+  showIncidents,
+  showMapTools,
+} from "./ui-navigation";
 
 import { generate } from "../../src/engine";
 import { attachIncident } from "../../src/simulation/calls";
@@ -75,9 +80,15 @@ async function login(page: Page, username: string) {
 }
 async function play(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator(".hud-notice")).toContainText(
-    "Mit Spielserver verbunden",
-  );
+  await expect(
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
 }
 test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe Serverwelt", async ({
   page,
@@ -98,7 +109,7 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
   await second.goto(origin);
   await play(second);
   for (const p of [page, second]) {
-    await expect(p.locator(".hud-identity")).toContainText("Verbunden");
+    await expect(p.locator(".hud-identity")).toContainText("Leitstelle Berlin");
     await expect(
       p.getByRole("button", { name: "Einzelspieler", exact: true }),
     ).toHaveCount(0);
@@ -135,7 +146,7 @@ test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat
     b.getByText("Neue Einsätze werden nicht automatisch", { exact: false }),
   ).toBeVisible();
   await b.getByRole("button", { name: "Schließen", exact: true }).click();
-  await b.getByRole("button", { name: "Hauptmenü", exact: true }).click();
+  await openPanel(b, "Zurück zum Hauptmenü");
   await ca.close();
   await cb.close();
 });
@@ -148,7 +159,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   const mapArea = await page
     .locator("[data-testid=germany-map-viewport]")
     .boundingBox();
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await toggleMapTools(page);
   const toolsArea = await page.locator(".map-layers").boundingBox();
   const scale = page.locator(".maplibregl-ctrl-scale");
   const legendArea = await scale.boundingBox();
@@ -193,9 +204,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
     path: info.outputPath("hud-desktop.png"),
     fullPage: true,
   });
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   // Display preferences are now a local, explicit draft. Closing must preserve
   // the preview until the user decides, and Apply persists it on this device.
   await page.getByRole("tab", { name: "Anzeige & Karte", exact: true }).click();
@@ -236,7 +245,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   ).toBe(true);
   await showIncidents(page);
   await expect(page.locator(".mission-sidebar")).toBeVisible();
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await toggleMapTools(page);
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),
   ).toBeVisible();
@@ -249,8 +258,8 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
   const { id } = await account(page, true);
   await play(page);
   await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
-  await expect(page.locator(".hud-clock")).toHaveAttribute("title", /Echtzeit/);
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await expect(page.locator(".time-tile time")).toBeVisible();
+  await toggleMapTools(page);
   await page
     .getByRole("button", { name: "Ganz Deutschland", exact: true })
     .click();

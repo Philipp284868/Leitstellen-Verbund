@@ -342,6 +342,10 @@ export async function command(action: ServerAction | Action) {
       throw Error(
         "Konto wurde gewechselt. Die alte Aktion wird nicht wiederholt.",
       );
+    if (snapshot.readonly || !socket?.connected)
+      throw Error(
+        "Serververbindung verloren. Aktion wird nicht automatisch wiederholt.",
+      );
     result = await api("action", { id, action }, mode, context);
   }
   if (context.epoch !== clientEpoch) return;

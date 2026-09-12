@@ -1,3 +1,4 @@
+import { PRE_RECON_EVENTS } from "./incident-visibility";
 import { civilProtectionTick } from "./civil-protection";
 import { advanceRadio } from "./transmissions";
 import { turnoutReady } from "./staffing";
@@ -408,33 +409,3 @@ export function publicSave(source: Save): Save {
   return s;
 }
 import { REPORTED_IDS, reportId } from "./call-observations";
-const PRE_RECON_EVENTS = new Set([
-  "LOCATION_TECHNICAL_CLOSURE",
-  "LOCATION_REPAIRED",
-  "LOCATION_VERIFIED",
-  "AID_VEHICLE_WISH",
-  "AID_UPDATED",
-  "RADIO_CLAIMED",
-  "RADIO_RELEASED",
-  "MISSION_CREATED",
-  "CALL_RECEIVED",
-  "CALL_ACCEPTED",
-  "CALL_HANDED_OVER",
-  "SITUATION_NOTE",
-  "CALL_UPDATED",
-  "CALL_ENDED",
-  "AAO_PROPOSED",
-  "ALARM_STARTED",
-  "VEHICLE_DISPATCHED",
-  "VEHICLE_DEPARTED",
-  "VEHICLE_ARRIVED",
-  "DISPATCH_COMPLETED",
-  "DISPATCH_PRIORITY",
-  "FMS_CHANGED",
-  "TRAFFIC_DELAY",
-  "SPEAK_REQUESTED",
-  "SPEAK_HANDLED",
-  "VEHICLE_RECALLED",
-  "TURNOUT_UPDATED",
-  "TURNOUT_DELAYED",
-]);

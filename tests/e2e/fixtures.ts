@@ -39,7 +39,7 @@ export function emsProfile(name: string) {
 }
 export function largeProfile() {
   const s = fresh("Lasttest", "Große Leitstelle", 1000);
-  s.tutorial = 6;
+
   for (let i = 0; i < 100; i++) {
     const home = uid();
     s.buildings.push({

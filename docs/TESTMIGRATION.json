@@ -337,7 +337,7 @@
         "ein Kontext mischt Musik, Umgebung, Telefon und mehrere Instanzen derselben lokalen Datei; Aufnahme und Cleanup",
         "sämtliche Fahrzeugkanäle laufen am Arbeitsplatz nacheinander; Notfall erhält unterbrochene Meldungen",
         "überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und Szenenwechsel bleiben unabhängig",
-        "hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals eine Netzstimme",
+        "Funk verwendet auch bei vorhandener Browser-Sprachfunktion ausschließlich Signaltöne",
         "Hintergrundwahl und Mehrfachtab-Lease verhindern doppelte Ausgabe und geben Quellen beim Logout frei",
         "beide vollständigen Musikarrangements und sämtliche Erzeuger liefern unterschiedliche, begrenzte Stereo-PCM-Ausgabe",
         "fehlende Datei und abgelehnte Medienwiedergabe fallen hörbar auf Originale zurück; keine hängenden Blob-URLs"
@@ -1746,7 +1746,7 @@
         "persists private progress, session and duplicate receipts through a real server restart"
       ],
       "replacement": "tests/tutorial-retirement.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "disposition": "Anforderung durch ausdrücklichen Auftrag vom 12.09.2026 aufgehoben: Tutorial vollständig entfernt. Ersatz prüft Abweisung alter Endpunkte und Migration bei erhaltenem echten Besitz."
     },
     {
       "old": "tests/tutorial.test.ts",
@@ -1759,7 +1759,7 @@
         "uses real calls, dispatch, FMS, radio, completion and private financial receipts"
       ],
       "replacement": "tests/tutorial-retirement.test.ts",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "disposition": "Anforderung durch ausdrücklichen Auftrag vom 12.09.2026 aufgehoben: Tutorial vollständig entfernt. Ersatz prüft Abweisung alter Endpunkte und Migration bei erhaltenem echten Besitz."
     },
     {
       "old": "tests/volunteers.test.ts",

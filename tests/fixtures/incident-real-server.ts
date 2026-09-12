@@ -57,7 +57,7 @@ s.generation = "a2200000-1111-4222-8333-444444444444";
 s.seed = 124;
 s.xp = xpForLevel(30);
 fundTestBudget(s, 10000000);
-s.tutorial = 6;
+
 s.missionWait = 100000;
 for (const [kind, lon, lat, types] of [
   ["fire", 13.405, 52.52, ["tlf", "dlk", "hlf"]],

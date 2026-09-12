@@ -51,7 +51,7 @@ function measure(seed: number, expanded: boolean) {
         .prepare("INSERT INTO users VALUES(?,?,?,?,?)")
         .run(s.player.id, "measure", "unused-test-account", "player", 0);
       db.save(s.player.id, s);
-      const game = new Game(db);
+      const game = new Game(db, () => true);
       for (const segment of [
         { profile: "quiet", seconds: 3600 },
         { profile: "normal", seconds: 3600 },

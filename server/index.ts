@@ -1,3 +1,5 @@
+import { BugReports } from "./bug-reports";
+import { leaderboard, recordPlayTime } from "./leaderboard";
 import { readFile } from "node:fs/promises";
 import { AccountLifecycle } from "./account-lifecycle";
 import { diagnostics } from "./diagnostics";
@@ -90,7 +92,7 @@ export function startServer(
         (session, user) =>
           !!db.sql
             .prepare(
-              "SELECT 1 FROM sessions WHERE hash=? AND user_id=? AND expires>?",
+              "SELECT 1 FROM sessions JOIN users ON users.id=sessions.user_id WHERE hash=? AND user_id=? AND expires>? AND role='player'",
             )
             .get(session, user, Date.now()),
         (user) => deskOwner(db, user, "multi"),
@@ -104,7 +106,8 @@ export function startServer(
   ) => ({
     ...game.view(user, peers, mode),
     playContext: 0,
-    events: eventsPage(db.sql, deskOwner(db, user, mode)).events,
+    events: eventsPage(db.sql, deskOwner(db, user, mode), undefined, user)
+      .events,
   });
   const prior = db.sql
     .prepare("SELECT value FROM meta WHERE key=?")
@@ -124,6 +127,11 @@ export function startServer(
     throw e;
   }
   const accountLifecycle = new AccountLifecycle(db);
+  const bugReports = new BugReports(db.sql, c.githubIssuesToken);
+  diagnostics.log(
+    "reports",
+    bugReports.configured() ? "REPORTING_CONFIGURED" : "REPORTING_DISABLED",
+  );
   let failed = false,
     stopping = false;
   const online = () =>
@@ -413,6 +421,33 @@ export function startServer(
           res.setHeader("Set-Cookie", cookie("", true));
           return reply(res, 200, { ok: true });
         }
+        if (path === "/api/reports" && req.method === "GET") {
+          auth.limit(`report-read:${session.user_id}`, 30, 60000);
+          return reply(res, 200, {
+            configured: bugReports.configured(),
+            reports: bugReports.list(session.user_id),
+          });
+        }
+        if (path === "/api/reports/preview" && req.method === "POST") {
+          auth.limit(`report-prepare:${session.user_id}`, 10, 3600000);
+          return reply(
+            res,
+            200,
+            bugReports.prepare(session.user_id, await body(req)),
+          );
+        }
+        if (path === "/api/reports/submit" && req.method === "POST") {
+          auth.limit(`report-send:${session.user_id}`, 10, 3600000);
+          const report = z
+            .object({ id: z.uuid(), publish: z.literal(true) })
+            .strict()
+            .parse(await body(req));
+          return reply(
+            res,
+            200,
+            await bugReports.submit(session.user_id, report.id),
+          );
+        }
         if (path === "/api/action" && req.method === "POST") {
           if (failed)
             return reply(res, 503, {
@@ -433,6 +468,22 @@ export function startServer(
           const publishedView = publish();
           return reply(res, 200, publishedView(session.user_id, mode));
         }
+        if (path === "/api/leaderboard" && req.method === "GET") {
+          auth.limit(`leaderboard:${session.user_id}`, 30, 60000);
+          const q = z
+            .object({
+              q: z.string().max(100).default(""),
+              page: z.coerce.number().int().min(0).max(100000).default(0),
+              sort: z.enum(["xp", "name", "calls"]).default("xp"),
+            })
+            .strict()
+            .parse(Object.fromEntries(requestUrl.searchParams));
+          return reply(
+            res,
+            200,
+            leaderboard(db.sql, session.user_id, q.q, q.page, q.sort),
+          );
+        }
         if (path === "/api/events" && req.method === "GET") {
           const before = requestUrl.searchParams.has("at")
             ? z
@@ -448,7 +499,12 @@ export function startServer(
           return reply(
             res,
             200,
-            eventsPage(db.sql, deskOwner(db, session.user_id, mode), before),
+            eventsPage(
+              db.sql,
+              deskOwner(db, session.user_id, mode),
+              before,
+              session.user_id,
+            ),
           );
         }
         if (path === "/api/history" && req.method === "GET") {
@@ -527,7 +583,7 @@ export function startServer(
         !(
           relative === "index.html" ||
           relative === "icon.svg" ||
-          relative === "project-news.json" ||
+          relative === "changelog.json" ||
           relative === "manifest.webmanifest" ||
           relative === "sw.js" ||
           /^assets\/[a-zA-Z0-9_.-]+$/.test(relative)
@@ -816,6 +872,20 @@ export function startServer(
     const now = Date.now();
     try {
       game.step(Math.max(0, (now - last) / 1000), now);
+      recordPlayTime(
+        db.sql,
+        presence.activeUsers(
+          now,
+          (session, user) =>
+            !!db.sql
+              .prepare(
+                "SELECT 1 FROM sessions JOIN users ON users.id=sessions.user_id WHERE hash=? AND user_id=? AND expires>? AND role='player'",
+              )
+              .get(session, user, now),
+          (user) => deskOwner(db, user, "multi"),
+        ),
+        Math.max(0, (now - last) / 1000),
+      );
       last = now;
       publish();
     } catch {
@@ -833,16 +903,14 @@ export function startServer(
     try {
       refreshPresence();
     } catch {
-      console.error(
-        "Öffentliche Spielerpräsenz konnte nicht aktualisiert werden.",
-      );
+      diagnostics.log("presence", "PRESENCE_REFRESH_FAILED", "error");
     }
   }, 1000);
   let backupJob: Promise<unknown> = Promise.resolve();
   const backupTimer = setInterval(() => {
     backupJob = backupJob
       .then(() => db.backup())
-      .catch(() => console.error("Automatische Sicherung fehlgeschlagen."));
+      .catch(() => diagnostics.log("storage", "BACKUP_FAILED", "error"));
   }, 3600000);
   let closePromise: Promise<void> | undefined;
   return {
@@ -859,6 +927,7 @@ export function startServer(
     close: () =>
       (closePromise ??= (async () => {
         stopping = true;
+        diagnostics.log("server", "SERVER_STOPPING");
         clearInterval(timer);
         clearInterval(presenceTimer);
         clearInterval(backupTimer);
@@ -882,14 +951,19 @@ export function startServer(
           db.close();
           release();
           await geography?.close();
+          diagnostics.log("server", "SERVER_STOPPED");
         }
       })()),
   };
 }
 if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
   assertInstalledData(root);
-  const c = config(),
-    geography = await prepareGeography(c);
+  diagnostics.log("server", "BUILD_AND_DATA_VALIDATED");
+  const c = config();
+  diagnostics.log("server", "CONFIGURATION_VALIDATED", "info", {
+    port: c.port,
+  });
+  const geography = await prepareGeography(c);
   let app: ReturnType<typeof startServer>;
   try {
     app = startServer(c, undefined, geography);
@@ -904,9 +978,7 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
     await app.close();
     throw e;
   }
-  console.log(
-    `Leitstellen-Verbund bereit: ${c.host}:${c.port} · ${c.publicUrl} · Freie Registrierung, nur Spielerkonten.`,
-  );
+  diagnostics.log("server", "SERVER_READY", "info", { port: c.port });
   if (process.connected)
     process.send?.({ type: "ready", host: c.host, port: c.port });
   let closing = false;
@@ -917,7 +989,7 @@ if (process.argv[1] && /(?:^|[\\/])index\.js$/.test(process.argv[1])) {
       .close()
       .then(() => process.exit(0))
       .catch(() => {
-        console.error("Sauberes Beenden fehlgeschlagen. Daten nicht löschen.");
+        diagnostics.log("server", "SERVER_STOP_FAILED", "error");
         process.exit(1);
       });
   };

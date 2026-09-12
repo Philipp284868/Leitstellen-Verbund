@@ -382,7 +382,7 @@ export function BuildingPanel({
           )}
           <div className="vehicle-shop">
             {available.map((v) => (
-              <article key={v.id}>
+              <article key={v.id} data-vehicle-type={v.id}>
                 <div>
                   <h3>
                     <VehicleIcon type={v.id} /> {v.name}

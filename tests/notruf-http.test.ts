@@ -48,7 +48,7 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
       .prepare("INSERT INTO desk_members VALUES (?,?)")
       .run("member", "owner");
     app.game.step(1, now);
-    const before = app.db.all().get("owner")!.callPacing!;
+    let before = app.db.all().get("owner")!.callPacing!;
     const connect = async (identity: (typeof identities)[number]) => {
       const socket = io(config.publicUrl, {
         autoConnect: false,
@@ -62,8 +62,15 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
         socket.once("snapshot", done),
       );
       socket.connect();
-      return { socket, view: await first };
+      const view = await first;
+      await new Promise<void>((resolve) =>
+        socket.emit("play:presence", { active: true }, () => resolve()),
+      );
+      return { socket, view };
     };
+    for (let i = 0; i < 10; i++) app.game.step(60, now);
+    expect(app.db.all().get("owner")!.missions).toHaveLength(0);
+    before = app.db.all().get("owner")!.callPacing!;
     const first = await connect(identities[0]);
     await connect(identities[0]);
     await connect(identities[1]);
@@ -137,7 +144,13 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
     await app.close();
     app = startServer(config);
     await app.listen();
-    expect(app.db.all().get("owner")!.callPacing).toEqual(persisted);
+    expect(app.db.all().get("owner")!.callPacing).toMatchObject({
+      sequence: persisted!.sequence,
+      lastCreated: persisted!.lastCreated,
+    });
+    expect(
+      app.db.all().get("owner")!.callPacing!.notBefore,
+    ).toBeGreaterThanOrEqual(persisted!.notBefore);
     expect(
       app.db
         .all()

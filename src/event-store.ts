@@ -8,13 +8,36 @@ let entries: GameEvent[] = [],
 export function eventSnapshot() {
   return entries;
 }
-export function mergeEvents(incoming: GameEvent[]) {
-  const merged = new Map(entries.map((e) => [e.id, e]));
+export function mergeEvents(incoming: GameEvent[], complete = false) {
+  const merged = new Map(
+    entries.filter((e) => e.id !== "local:overflow").map((e) => [e.id, e]),
+  );
   for (const e of incoming) merged.set(e.id, e);
   const all = [...merged.values()].sort(
     (a, b) => a.at - b.at || a.id.localeCompare(b.id),
   );
-  const pinned = all.filter((e) => e.unresolved);
+  const unresolved = all
+    .filter((e) => e.unresolved)
+    .sort(
+      (a, b) =>
+        Number(!!b.connection) - Number(!!a.connection) ||
+        Number(b.priority === "critical") - Number(a.priority === "critical") ||
+        b.at - a.at,
+    );
+  const pinned = unresolved.slice(0, 1000);
+  if (
+    unresolved.length > 1000 ||
+    (!complete && entries.some((e) => e.id === "local:overflow"))
+  )
+    pinned.push({
+      id: "local:overflow",
+      at: all.at(-1)!.at,
+      sender: "System",
+      type: "Offene Meldungen",
+      priority: "critical",
+      unresolved: true,
+      text: "Weitere offene Meldungen. Im Einsatz bearbeiten oder im älteren Verlauf nachladen.",
+    });
   const recent = all.filter((e) => !e.unresolved).slice(-600);
   entries = [...pinned, ...recent].sort(
     (a, b) => a.at - b.at || a.id.localeCompare(b.id),
@@ -26,7 +49,7 @@ export function observeEvents(save: Save) {
     owner = save.player.id + save.generation;
     entries = [];
   }
-  mergeEvents(projectEvents(save));
+  mergeEvents(projectEvents(save), true);
 }
 export function localEvent(
   text: string,

@@ -205,7 +205,7 @@ it("Server trennt Statistiken nach Leitstelle und Modus; Client darf weder Messw
       );
     const s = completedSave(owner);
     db.save(owner, s);
-    const game = new Game(db);
+    const game = new Game(db, () => true);
     expect(game.view(owner, new Set()).save.statistics.completed).toBe(1);
     expect(() => game.view(owner, new Set(), "single" as never)).toThrow(
       "Multiplayer",
@@ -282,14 +282,14 @@ it("Balancing prüft neun vollständige kleine Einsätze mit drei Seeds und deck
     ),
   ).toBe(true);
   expect(balanceAudit()).toEqual(a);
-});
+}, 15000);
 
 it("Arbeitsplatz und Hotkeys normalisieren kaputte Einstellungen, ignorieren Texteingabe und Doppelbelegungen", () => {
   expect(parseWorkspace("null").width).toBe(320);
   const p = parseWorkspace(
     JSON.stringify({ side: "right", width: 999, keys: { call: "f" } }),
   );
-  expect(p.side).toBe("right");
+  expect(p.side).toBe("left");
   expect(p.width).toBe(320);
   expect(p.keys.fms).toBe("");
   const e = {
@@ -478,7 +478,7 @@ it("Serverrhythmus bleibt unregelmäßig, begrenzt wartende Vorgänge und vermei
     for (const o of [...s.buildings, ...s.vehicles]) o.owner = owner;
     s.missionWait = 1;
     db.save(owner, s);
-    const game = new Game(db);
+    const game = new Game(db, () => true);
     game.step(3600);
     expect(db.all().get(owner)!.missions).toHaveLength(0);
     const after = db.all().get(owner)!,

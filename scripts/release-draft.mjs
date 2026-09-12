@@ -1,3 +1,4 @@
+import { parseChangelog } from "../src/changelog.ts";
 // Only called by the manual, same-repository release workflow. No token enters client files.
 import { execFileSync } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
@@ -47,10 +48,10 @@ const pkg = JSON.parse(await readFile("package.json", "utf8")),
   tag = `v${pkg.version}`;
 if (!/^\d+\.\d+\.\d+$/.test(pkg.version))
   throw Error("Gültige Releaseversion erforderlich.");
-const notes = await readFile(
-  `docs/RELEASE-${pkg.version.split(".").slice(0, 2).join(".")}.md`,
-  "utf8",
-);
+const changes = parseChangelog(await readFile("CHANGELOG.md", "utf8"));
+const releaseEntry = changes.find((x) => x.version === pkg.version);
+if (!releaseEntry) throw Error("Versionsnotizen fehlen in CHANGELOG.md");
+const notes = releaseEntry.title + "\n\n" + releaseEntry.body;
 const releases = await api("/releases?per_page=100");
 if (releases.some((r) => r.tag_name === tag))
   throw Error(

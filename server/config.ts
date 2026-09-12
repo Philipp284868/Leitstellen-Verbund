@@ -1,8 +1,10 @@
+import { reportToken } from "./bug-reports";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveConfiguration } from "../scripts/configuration.mjs";
 export const root = resolve(fileURLToPath(new URL("../../", import.meta.url)));
 export interface Config {
+  githubIssuesToken?: string;
   host: string;
   port: number;
   publicUrl: string;
@@ -18,6 +20,9 @@ export function config(): Config {
   const { settings } = resolveConfiguration({ programRoot: root });
   const url = new URL(settings.PUBLIC_URL);
   return {
+    githubIssuesToken: reportToken(
+      process.env.GITHUB_ISSUES_TOKEN ?? settings.GITHUB_ISSUES_TOKEN,
+    ),
     host: settings.HOST,
     port: Number(settings.PORT),
     publicUrl: url.origin,

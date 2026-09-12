@@ -98,7 +98,10 @@ test("konfiguriert einen wachenübergreifenden Warenkorb, kauft genau einmal und
   await page
     .getByRole("tab", { name: "Fahrzeuge & Vergleich", exact: true })
     .click();
-  await page.locator('[data-tutorial="buy-lf"]').click();
+  await page
+    .locator('[data-vehicle-type=\"lf\"]')
+    .getByRole("button", { name: "Kauf prüfen", exact: true })
+    .click();
   await page.getByLabel(/Schlauchpaket/).check();
   await page
     .getByRole("button", { name: "In den Warenkorb", exact: true })
@@ -106,7 +109,10 @@ test("konfiguriert einen wachenübergreifenden Warenkorb, kauft genau einmal und
   await page
     .getByLabel("Bestellen für Wache", { exact: true })
     .selectOption(s.buildings.at(-1)!.id);
-  await page.locator('[data-tutorial="buy-rtw"]').click();
+  await page
+    .locator('[data-vehicle-type=\"rtw\"]')
+    .getByRole("button", { name: "Kauf prüfen", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "In den Warenkorb", exact: true })
     .click();
@@ -237,7 +243,7 @@ test("Versetzen, Fahrzeugverkauf und leerer Standortverkauf sind echte einmalige
   app = await createBrowserServer(compiled.startServer, config);
   await app.listen();
   await enter(page);
-  await expect(page.locator(".hud-budget strong")).toHaveText(
+  await expect(page.locator(".money-tile strong")).toHaveText(
     formatMoney(finalMoney),
   );
   await expect(
@@ -323,7 +329,9 @@ test("Gebäudeausbau und technische Erweiterung warten den Bau ab und erlauben d
   await page
     .getByRole("tab", { name: "Fahrzeuge & Vergleich", exact: true })
     .click();
-  const buy = page.locator('[data-tutorial="buy-rw"]');
+  const buy = page
+    .locator('[data-vehicle-type=\"rw\"]')
+    .getByRole("button", { name: "Kauf prüfen", exact: true });
   await expect(buy).toBeDisabled();
   app.game.step(BALANCE.upgradeSeconds + 1);
   await expect(buy).toBeEnabled();

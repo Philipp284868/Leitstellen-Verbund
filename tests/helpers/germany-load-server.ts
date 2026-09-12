@@ -210,7 +210,7 @@ try {
   s.seed = 124;
   fundTestBudget(s, 10000000000);
   s.xp = xpForLevel(30);
-  s.tutorial = 6;
+
   s.missionWait = 100000;
   status(
     "Erwerbe 20 reale Wachen im Berliner Umland und erweitere regulär auf Stufe 8.",

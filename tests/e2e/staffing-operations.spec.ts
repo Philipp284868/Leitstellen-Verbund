@@ -12,7 +12,7 @@ import { interviewUI } from "./desk-helpers";
 import { emsProfile } from "./fixtures";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
-import { showIncidents, showMapTools } from "./ui-navigation";
+import { toggleMapTools, showIncidents, showMapTools } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -78,7 +78,7 @@ test("dynamischer Brand, echte Fahrzeugpanne, automatische Behebung über Neusta
   breakVehicle(saved, saved.vehicles[0], "engine");
   app.db.save(owner, saved);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await toggleMapTools(page);
   await expect(page.locator(".fault-card")).toContainText("Motorschaden");
   await expect(
     page.getByRole("button", { name: "Reparatur beauftragen", exact: true }),

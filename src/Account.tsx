@@ -1,3 +1,4 @@
+import { LegalInfo } from "./LegalInfo";
 import { BrandMark } from "./BrandMark";
 import { AccountLifecycleControls } from "./AccountLifecycle";
 import { useDialogDirty } from "./dialog-state";
@@ -76,6 +77,7 @@ export function AuthScreen() {
             Verbindung prüfen
           </button>
         </div>
+        <LegalInfo />
         <form
           className="start-actions"
           onSubmit={async (e) => {

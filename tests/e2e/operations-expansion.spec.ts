@@ -103,7 +103,7 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     );
     writeWorldSituation(app.db.sql, state);
     app.game.step(0, Date.now(), { generation: false });
-    const situationLabel = `Lage: ${situationNames[state.profile]} · ${situationLevel(state)}`;
+    const situationLabel = `Welt- & Wetterlage ${situationNames[state.profile]} ${situationLevel(state)}`;
     for (const p of [page, other])
       await expect(
         p.getByRole("button", {
@@ -123,9 +123,7 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     await other.screenshot({
       path: info.outputPath("gemeinsame-regionale-lage.png"),
     });
-    await other
-      .getByRole("button", { name: "Anzeige schließen", exact: true })
-      .click();
+    await other.keyboard.press("Escape");
     app.game.command(owner, {
       id: crypto.randomUUID(),
       action: {
@@ -138,12 +136,12 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     const name = save.player.station;
     await expect(
       other.getByRole("button", {
-        name: `Katastrophenalarm: ${name}`,
+        name: `Katastrophenalarm ${name}`,
         exact: true,
       }),
     ).toBeVisible();
     await other
-      .getByRole("button", { name: `Katastrophenalarm: ${name}`, exact: true })
+      .getByRole("button", { name: `Katastrophenalarm ${name}`, exact: true })
       .click();
     await expect(other.locator(".public-alarm-list")).toContainText(name);
     expect(
@@ -161,7 +159,7 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     await enterGame(other);
     await expect(
       other.getByRole("button", {
-        name: `Katastrophenalarm: ${name}`,
+        name: `Katastrophenalarm ${name}`,
         exact: true,
       }),
     ).toBeVisible();
@@ -189,8 +187,7 @@ async function openOperations(page: Page, name: string) {
       .click();
     await expect(dialog).toHaveCount(0);
   }
-  await page.getByRole("button", { name: "Funk", exact: true }).click();
-  await page.getByRole("button", { name, exact: true }).click();
+  await openPanel(page, name);
 }
 
 test("gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Bereiche auf dem Desktop", async ({
@@ -198,7 +195,7 @@ test("gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Ber
 }, info) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await login(page);
-  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await openPanel(page, "Notrufarbeitsplatz");
   const desk = page.getByRole("region", {
     name: "Notrufarbeitsplatz",
     exact: true,
@@ -267,7 +264,7 @@ test("gemeinsamer Notrufarbeitsplatz alarmiert früh und zeigt vier nutzbare Ber
   }
   await page.reload();
   await enterGame(page);
-  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await openPanel(page, "Notrufarbeitsplatz");
   await expect(desk.locator(".radio-message")).toHaveCount(3);
   await expect(
     desk.getByRole("button", { name: "Gespräch beenden", exact: true }),
@@ -289,8 +286,7 @@ test("zwei Disponenten: Notruf übergeben, KatS mobilisieren, Lagebuch teilen, a
       p.on("pageerror", (e) => errors.push(e.message));
     await login(page);
     await login(other, "bravo");
-    for (const p of [page, other])
-      await p.getByRole("button", { name: /^Notrufe \(/ }).click();
+    for (const p of [page, other]) await openPanel(p, "Notrufarbeitsplatz");
     const desk = page.getByRole("region", {
         name: "Notrufarbeitsplatz",
         exact: true,
@@ -499,7 +495,7 @@ test("Lagebuch schützt Entwürfe und KatS- sowie Notrufansichten bleiben hell u
     .getByRole("dialog")
     .getByRole("button", { name: "Schließen", exact: true })
     .click();
-  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await openPanel(page, "Notrufarbeitsplatz");
   await page.getByLabel("Notruf suchen", { exact: true }).fill("kein-treffer");
   await expect(
     page.getByRole("region", { name: "Notrufliste", exact: true }),

@@ -8,7 +8,7 @@ import { request } from "../../src/simulation/incidents";
 import { radioFixture } from "../radio-fixture";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
-import { enterGame, openPanel } from "./ui-navigation";
+import { enterGame, openPanel, showIncidents } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -50,12 +50,11 @@ async function login(page: Page, username = "alpha") {
   await enterGame(page);
 }
 async function radio(page: Page) {
-  await page.getByRole("button", { name: "Funk", exact: true }).click();
-  await page.getByRole("button", { name: /^Sprechwünsche \d+$/ }).click();
-  await expect(
-    page.getByRole("heading", { name: "Funkarbeitsplatz", exact: true }),
-  ).toBeVisible();
+  await showIncidents(page);
+  await page.locator(".mission-card").first().click();
+  await expect(page.locator(".radio-queue")).toBeVisible();
 }
+
 test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und zum persistenten Archiv", async ({
   page,
   browser,
@@ -73,8 +72,8 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     await login(other, "bravo");
     await radio(page);
     await radio(other);
-    const desk = page.locator(".radio-workspace"),
-      otherDesk = other.locator(".radio-workspace");
+    const desk = page.locator(".radio-queue"),
+      otherDesk = other.locator(".radio-queue");
     await desk
       .getByRole("button", { name: "Sprechwunsch übernehmen", exact: true })
       .click();
@@ -91,16 +90,6 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
         name: "Nachforderung bearbeiten",
         exact: true,
       }),
-    ).toBeDisabled();
-    await otherDesk
-      .getByRole("button", {
-        name: "Einsatz öffnen / weitere Kräfte disponieren",
-      })
-      .click();
-    await expect(
-      other
-        .locator(".radio-queue")
-        .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true }),
     ).toBeDisabled();
     const lease = app.db.all().get(owner)!.missions[0].control!.radio[0]
       .handling;
@@ -125,14 +114,10 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     await desk
       .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
       .click();
-    await expect(desk.locator(".radio-conversation")).toContainText(
-      "Erledigt von dir",
-    );
+    await expect
+      .poll(() => app.db.all().get(owner)!.missions[0].control!.radio[0].state)
+      .toBe("handled");
     app.game.step(5);
-    await desk
-      .locator(".radio-row")
-      .filter({ hasText: "Nachforderung" })
-      .click();
     await desk
       .getByRole("button", { name: "Sprechwunsch übernehmen", exact: true })
       .click();
@@ -143,19 +128,21 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     await desk
       .getByRole("button", { name: "Nachforderung bearbeiten", exact: true })
       .click();
-    await expect(desk.locator(".radio-conversation")).toContainText(
-      "Erledigt von dir",
-    );
+    await expect
+      .poll(
+        () =>
+          app.db
+            .all()
+            .get(owner)!
+            .missions[0].control!.radio.filter((r) => r.state === "open")
+            .length,
+      )
+      .toBe(0);
     expect(app.db.all().get(owner)!.vehicles[1].status).toBe("ready");
     await page.screenshot({
       path: info.outputPath("radio-nachforderung-1366.png"),
       fullPage: true,
     });
-    await desk
-      .getByRole("button", {
-        name: "Einsatz öffnen / weitere Kräfte disponieren",
-      })
-      .click();
     await page
       .locator(".dispatch-list label")
       .filter({ hasText: "TLF 4000" })
@@ -203,7 +190,7 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     await second.close();
   }
 });
-test("Priorität, Kanal, Suche, eigene Übernahmen, Freigabe und leere Filter sind benutzbar", async ({
+test("Kritischer Textfunk bleibt sichtbar; Lesen quittiert nicht; Übernahme und Freigabe erfolgen im Einsatz", async ({
   page,
 }, info) => {
   const s = app.db.all().get(owner)!,
@@ -213,44 +200,47 @@ test("Priorität, Kanal, Suche, eigene Übernahmen, Freigabe und leere Filter si
     m,
     s.vehicles[1].id,
     "arrival",
-    "Erste Erkundung abgeschlossen.",
+    "Dringende Erkundung abgeschlossen.",
     "NOTFALL",
   );
-  // Public FMS channel labels are existing per-vehicle data.
   s.desk.fleet[s.vehicles[1].id].channel = "Feuerwehr Süd";
   app.db.save(owner, s);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await login(page);
-  await radio(page);
-  const desk = page.locator(".radio-workspace"),
-    rows = desk.locator(".radio-row");
-  await expect(rows).toHaveCount(2);
-  await expect(rows.first()).toContainText("NOTFALL");
-  await expect(rows.first()).toContainText("FMS 0");
-  await desk
-    .getByLabel("Funkkanal", { exact: true })
-    .selectOption("Feuerwehr Süd");
-  await expect(rows).toHaveCount(1);
-  await desk
+  const log = page.getByRole("region", { name: "Funk und Ereignisse" });
+  await expect(log.locator(".critical-events")).toContainText(
+    "Erste Erkundung abgeschlossen.",
+  );
+  await expect(log.locator("input,textarea")).toHaveCount(0);
+  await log
+    .locator(".critical-events")
+    .getByRole("button", {
+      name: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
+      exact: true,
+    })
+    .click();
+  const requestRow = page
+    .locator(".radio-queue article")
+    .filter({ hasText: "NOTFALL" });
+  await expect(requestRow).toBeVisible();
+  expect(
+    app.db
+      .all()
+      .get(owner)!
+      .missions[0].control!.radio.filter((r) => r.state === "open"),
+  ).toHaveLength(2);
+  await requestRow
     .getByRole("button", { name: "Sprechwunsch übernehmen", exact: true })
     .click();
-  await desk.getByLabel("Bearbeitungsstand").selectOption("mine");
-  await expect(rows).toHaveCount(1);
-  await page.screenshot({
-    path: info.outputPath("radio-arbeitsplatz-1920.png"),
-    fullPage: true,
-  });
-  await desk
+  await expect(requestRow).toContainText("In Bearbeitung bei dir");
+  await requestRow
     .getByRole("button", { name: "Bearbeitung freigeben", exact: true })
     .click();
-  await expect(rows).toHaveCount(0);
-  await desk.getByLabel("Bearbeitungsstand").selectOption("free");
-  await expect(rows).toHaveCount(1);
-  await desk.getByLabel("Sprechwunsch suchen").fill("kein-passender-funk");
-  await expect(desk).toContainText("Keine Sprechwünsche für diese Auswahl.");
-  await expect(rows).toHaveCount(0);
-  await desk.getByLabel("Sprechwunsch suchen").clear();
-  await expect(rows).toHaveCount(1);
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(requestRow).toContainText("Offen · zur Übernahme verfügbar");
+  await expect(log.locator(".critical-events")).toContainText(
+    "Erste Erkundung abgeschlossen.",
+  );
+  await page.screenshot({
+    path: info.outputPath("textfunk-und-einsatz-1920.png"),
+  });
 });

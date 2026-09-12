@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -9,17 +10,14 @@ import { fmsDefaults } from "../../src/simulation/fms";
 import { phaseFixture } from "../dispatch-fixture";
 import { interviewUI } from "./desk-helpers";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
-import { expect, test, type Page } from "./test";
+import { expect, test } from "./test";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
 let app: ReturnType<typeof startServer>, config: Config, owner: string;
 const password = "Menu-form-test-password-123!";
-async function openForm(page: Page, name: string) {
-  await page.getByRole("button", { name: "Funk", exact: true }).click();
-  await page.getByRole("button", { name, exact: true }).click();
-}
+const openForm = openPanel;
 test.beforeEach(async ({ page }) => {
   config = {
     host: "127.0.0.1",
@@ -257,7 +255,7 @@ test("abgewiesene FMS-Korrektur behält Begründung, echte FMS6-Korrektur wird e
 test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher Alarm löscht nur den übertragenen Entwurf", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: /^Notrufe \(/ }).click();
+  await openPanel(page, "Notrufarbeitsplatz");
   await interviewUI(page, app);
   const selected = page.locator(".dispatch-list input").first();
   await selected.check();
@@ -317,7 +315,7 @@ test("Disposition behält Auswahl bei Navigation und Serverfehler; erfolgreicher
 test("Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbruch und Doppelbestellung", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Standorte", exact: true }).click();
+  await openPanel(page, "Standorte verwalten");
   await page.locator(".station-card").first().click();
   await page.locator(".org-settings > summary").first().click();
   await page
@@ -341,7 +339,10 @@ test("Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbr
     .getByRole("button", { name: "Änderungen verwerfen", exact: true })
     .click();
   expect(app.db.all().get(owner)!.buildings[0].organization!.turnout).toBe(30);
-  await page.locator('[data-tutorial="buy-tsf"]').click();
+  await page
+    .locator('[data-vehicle-type=\"tsf\"]')
+    .getByRole("button", { name: "Kauf prüfen", exact: true })
+    .click();
   await page
     .getByRole("tab", { name: "Übersicht & Betrieb", exact: true })
     .click();
@@ -398,7 +399,7 @@ test("Wachenreiter bewahrt Betriebsentwurf und Kaufabsicht; Kauf-ACK sperrt Abbr
 test("Fuhrpark verwirft Namensentwurf wirklich vor Filterwechsel und behält gespeicherten Namen", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   const row = page.locator(".fleet-card").first(),
     original = app.db.all().get(owner)!.vehicles[0].name;
   await row.getByRole("button", { name: "Name", exact: true }).click();

@@ -1,3 +1,4 @@
+import { toggleMapTools } from "./ui-navigation";
 import { test, expect } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 import { startOverviewLoadServer } from "./load-server";
@@ -26,7 +27,7 @@ test(
         .fill("Germany-load-password-123!");
       await page.getByRole("button", { name: "Anmelden", exact: true }).click();
       await page.getByRole("button", { name: "Spielen", exact: true }).click();
-      await page.getByRole("button", { name: "Karte", exact: true }).click();
+      await toggleMapTools(page);
       await expect(
         page.getByText("Deutschland · reale Geografie", { exact: true }),
       ).toBeVisible();
@@ -37,7 +38,7 @@ test(
           .getByRole("button", { name: "Karte", exact: true })
           .getAttribute("aria-expanded")) !== "true"
       )
-        await page.getByRole("button", { name: "Karte", exact: true }).click();
+        await toggleMapTools(page);
       await page
         .getByRole("button", { name: "Ganz Deutschland", exact: true })
         .click();

@@ -1,12 +1,11 @@
+import { SupportPanel } from "./Support";
 import { useMemo, useState } from "react";
-import { version } from "../package.json";
 import { capabilities, missions } from "./catalog";
 import { IncidentIcon } from "./HudIcons";
 import type { Save } from "./model";
-import { WORLD_NAME } from "./product";
 import { missionXp, progress } from "./progression";
 import { ProjectNewsPanel } from "./ProjectNews";
-import { logout, useGame } from "./store";
+import { logout } from "./store";
 import { ActionButton, credits, Disclosure } from "./ui";
 
 export function ScenarioCatalog({
@@ -185,64 +184,6 @@ export function ScenarioCatalog({
     </section>
   );
 }
-function SupportPanel({ onOpen }: { onOpen: (panel: string) => void }) {
-  const { readonly } = useGame();
-  const [message, setMessage] = useState("");
-  const info = `Leitstellen-Verbund ${version}\nWelt: ${WORLD_NAME}\nVerbindung: ${readonly ? "unterbrochen / letzter bestätigter Stand" : "verbunden"}\nBrowser: ${navigator.userAgent}\nZeitpunkt: ${new Date().toISOString()}`;
-  return (
-    <section className="menu-flow">
-      <h3>Hilfe zur Leitstelle</h3>
-      <p>
-        Für Bedienfragen stehen Spielanleitung und Support bereit. Bei einem
-        Fehler sind die letzte Aktion, die genaue Fehlermeldung und die
-        folgenden technischen Angaben hilfreich.
-      </p>
-      <div className="inline">
-        <button onClick={() => onOpen("help")}>Spielanleitung öffnen</button>
-      </div>
-      <label>
-        Technische Angaben
-        <textarea readOnly value={info} rows={6} />
-      </label>
-      <ActionButton
-        action={async () => {
-          setMessage("");
-          if (!navigator.clipboard)
-            throw Error(
-              "Kopieren ist hier nicht verfügbar. Markiere die Angaben im Textfeld und kopiere sie mit Strg+C.",
-            );
-          try {
-            await navigator.clipboard.writeText(info);
-          } catch {
-            throw Error(
-              "Die Angaben konnten nicht in die Zwischenablage kopiert werden. Markiere die Angaben im Textfeld und kopiere sie mit Strg+C.",
-            );
-          }
-          setMessage("Technische Angaben kopiert.");
-        }}
-      >
-        Angaben kopieren
-      </ActionButton>
-      {message && <p role="status">{message}</p>}
-      <p>
-        <a
-          href="https://github.com/Philipp284868/Leitstellen-Verbund/issues"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Fehler im Projekt melden
-        </a>
-      </p>
-      <small>
-        Die Angaben enthalten weder Kontokennung noch Einsatzstandorte. Ergänze
-        keine Passwörter, Sitzungsdaten oder privaten Spielstände in einer
-        öffentlichen Meldung. Bei Problemen der Erreichbarkeit hilft zuerst der
-        Betreiber dieses Spielservers.
-      </small>
-    </section>
-  );
-}
-
 export function MenuPanels({
   panel,
   s,

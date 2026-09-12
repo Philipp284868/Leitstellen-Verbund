@@ -8,9 +8,11 @@ Es gibt ein aktives Produkt: Deutschland. Kein Einzelspielerbetrieb, keine Smart
 
 Notruf annehmen → Angaben erfragen → AAO oder Fahrzeuge auswählen → alarmieren → Ausrücken und Anfahrt verfolgen → FMS, Sprechwünsche und Lagemeldungen bearbeiten → Kräfte nachfordern → Einsatz abschließen → Historie ansehen.
 
-Erhalten sind persönliche Tutorials und getrennte Übungsdaten, automatische Wachbesetzung, FF-Anreisen, BF-Ausbau, reale Straßenfahrten mit ETA und Geschwindigkeit, Fahrzeugdefekte und Nachbereitung, Funkdisziplin, gemeinsame Einsatzlagen, Katastrophenschutz, Euro-Wirtschaft, Fortschritt, Audio und eigene lokale Sounds. Unterschiedliche Leitstellen erhalten neue Einsätze nicht automatisch. Zusammenarbeit erfolgt über berechtigte Disponenten derselben Leitstelle und ausdrückliche Nachbarhilfe.
+Erhalten sind automatische Wachbesetzung, FF-Anreisen, BF-Ausbau, reale Straßenfahrten mit ETA und Geschwindigkeit, Fahrzeugdefekte und Nachbereitung, Funkdisziplin, gemeinsame Einsatzlagen, Katastrophenschutz, Euro-Wirtschaft, Fortschritt, Audio und eigene lokale Sounds. Unterschiedliche Leitstellen erhalten neue Einsätze nicht automatisch. Zusammenarbeit erfolgt über berechtigte Disponenten derselben Leitstelle und ausdrückliche Nachbarhilfe.
 
-Wachen und Kliniken werden an festen realen Standorten erworben: **Standorte → Standort kaufen** oder einen Kartenmarker wählen. Freies Bauen und Verschieben sind abgeschaltet. [Katalog, Bedienung und notwendige Altstand-Migration](docs/STANDORTE.md).
+Ab 2.25 liegen Einsätze/Notrufe links, Textfunk unten links und sämtliche Arbeitsbereiche im Menü rechts neben dem Leitstellennamen. Tutorial und wiederkehrende kommunale Grundzahlung entfallen; neue Notrufe entstehen nur bei aktiver Spielansicht. [Bedienung, Rangliste, Migrationen und optionaler GitHub-Support](docs/HUD-UND-SERVER.md).
+
+Wachen und Kliniken werden an festen realen Standorten erworben: **Menü → Standorte kaufen** oder einen Kartenmarker wählen. Freies Bauen und Verschieben sind abgeschaltet. [Katalog, Bedienung und notwendige Altstand-Migration](docs/STANDORTE.md).
 
 Die geografische Karte verwendet das lokal installierte Deutschland-Datenpaket. Karteneinträge sind keine automatisch verfügbaren Spielgebäude; reale Personalstärken und Klinikkapazitäten werden nicht aus Kartenmarkern behauptet.
 
@@ -40,7 +42,7 @@ Ein Release benötigt vollständige Abnahme, Sicherheit und passende Build-/Pake
 - [Menüs und Bedienwege](docs/MENUES.md) · [Spielanleitung](docs/SPIELANLEITUNG.md)
 - [Deutschlandkarte](docs/DEUTSCHLAND.md) · [Geodaten](docs/DEUTSCHLAND-DATEN.md) · [Routing](docs/DEUTSCHLAND-ROUTING.md)
 - [Einsatzarbeitsplatz](docs/EINSATZARBEITSPLATZ.md) · [Funk](docs/FUNK.md) · [Weltlagen und Einsatzorte](docs/WELTLAGEN-UND-EINSATZORTE.md)
-- [Euro-Wirtschaft](docs/EURO-WIRTSCHAFT.md) · [Wachbesetzung](docs/GEBAEUDEBESETZUNG-2.21.md) · [Tutorial](docs/TUTORIAL-2.21.md) · [Audio](docs/AUDIO.md)
+- [Euro-Wirtschaft](docs/EURO-WIRTSCHAFT.md) · [Wachbesetzung](docs/GEBAEUDEBESETZUNG-2.21.md) · [Audio](docs/AUDIO.md)
 - [Sicherheit](SECURITY.md) · [Lizenzen](docs/LIZENZEN.md) · [Historische Berichte und Bilder](docs/HISTORIE.md)
 - [Fehler melden](https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose) · [Community](https://github.com/Philipp284868/Leitstellen-Verbund/discussions) · [Releases](https://github.com/Philipp284868/Leitstellen-Verbund/releases)
 

@@ -1,4 +1,5 @@
 import type { Save } from "./model";
+import { PRE_RECON_EVENTS } from "./simulation/incident-visibility";
 
 export type GameEvent = {
   id: string;
@@ -16,22 +17,34 @@ export type GameEvent = {
 /** One projection for live UI and durable server history; never exposes an entire save. */
 export function projectEvents(s: Save): GameEvent[] {
   const out: GameEvent[] = [],
-    eventTypes = new Map<string, string>();
+    eventTypes = new Map<string, string>(),
+    hidden = new Set<string>(),
+    fmsIds = new Map<string, string>();
   for (const m of [...s.missions, ...s.archive]) {
-    for (const e of m.control?.events ?? []) eventTypes.set(e.id, e.type);
+    const beforeReport = !!m.control && !m.control.briefed && !m.control.legacy;
+    if (beforeReport) hidden.add(m.id);
+    for (const e of m.control?.events ?? []) {
+      eventTypes.set(e.id, e.type);
+      if (e.type === "FMS_CHANGED")
+        fmsIds.set(`${m.id}:${e.at}:${e.vehicle}:${e.text}`, e.id);
+    }
     for (const r of m.control?.radio ?? [])
-      out.push({
-        id: r.id,
-        at: r.created,
-        sender:
-          s.vehicles.find((v) => v.id === r.vehicle)?.name ?? "Einsatzmittel",
-        type: "Sprechwunsch",
-        priority: r.priority === "NOTFALL" ? "critical" : "important",
-        text: r.details,
-        mission: m.id,
-        unresolved: r.state === "open",
-      });
+      if (!beforeReport || r.reason === "arrival")
+        out.push({
+          id: r.id,
+          at: r.created,
+          sender:
+            s.vehicles.find((v) => v.id === r.vehicle)?.name ?? "Einsatzmittel",
+          type: "Sprechwunsch",
+          priority: r.priority === "NOTFALL" ? "critical" : "important",
+          text: beforeReport
+            ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
+            : r.details,
+          mission: m.id,
+          unresolved: r.state === "open",
+        });
     for (const e of (m.control?.events ?? []).slice(-150)) {
+      if (beforeReport && !PRE_RECON_EVENTS.has(e.type)) continue;
       if (
         [
           "SPEAK_REQUESTED",
@@ -62,14 +75,18 @@ export function projectEvents(s: Save): GameEvent[] {
     }
   }
   for (const e of s.radioNetwork?.entries ?? []) {
+    const source = e.id.replace(/^tx:/, ""),
+      type = eventTypes.get(source),
+      fms = fmsIds.get(`${e.mission}:${e.created}:${e.vehicle}:${e.text}`);
     if (
       e.state === "queued" ||
-      eventTypes.get(e.id.replace(/^tx:/, "")) === "SPEAK_REQUESTED"
+      type === "SPEAK_REQUESTED" ||
+      (hidden.has(e.mission) && !fms && (!type || !PRE_RECON_EVENTS.has(type)))
     )
       continue;
     out.push({
-      id: e.id,
-      at: e.started ?? e.created,
+      id: fms ?? source,
+      at: e.created,
       sender: e.sender,
       type: "Funk",
       priority:
@@ -91,5 +108,7 @@ export function projectEvents(s: Save): GameEvent[] {
       priority: "normal",
       text: j.text,
     });
-  return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+  return [...new Map(out.map((e) => [e.id, e])).values()].sort(
+    (a, b) => a.at - b.at || a.id.localeCompare(b.id),
+  );
 }

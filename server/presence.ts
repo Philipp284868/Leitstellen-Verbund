@@ -122,6 +122,24 @@ export class WorldPresence {
         owner(c.user) === desk,
     );
   }
+  activeUsers(
+    now: number,
+    valid: (session: string, user: string) => boolean,
+    owner: (user: string) => string,
+  ) {
+    return [
+      ...new Set(
+        [...this.connections.values()]
+          .filter(
+            (c) =>
+              (c.playingUntil ?? 0) > now &&
+              c.desk === owner(c.user) &&
+              valid(c.session, c.user),
+          )
+          .map((c) => c.user),
+      ),
+    ];
+  }
   disconnect(id: string, now: number, immediate = false) {
     const connection = this.connections.get(id);
     if (!connection) return;

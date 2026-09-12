@@ -9,7 +9,7 @@ import { phaseFixture } from "../dispatch-fixture";
 import { sites as nodes } from "../fixtures/germany/locations";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test } from "./test";
-import { showMapTools } from "./ui-navigation";
+import { toggleMapTools, showMapTools } from "./ui-navigation";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -58,16 +58,10 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     .fill("Map-browser-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await page.getByRole("button", { name: "Karte", exact: true }).click();
+  await toggleMapTools(page);
   await expect(
     page.getByText("Deutschland · reale Geografie", { exact: true }),
   ).toBeVisible();
-  if (
-    (await page
-      .getByRole("button", { name: "Karte", exact: true })
-      .getAttribute("aria-expanded")) !== "true"
-  )
-    await page.getByRole("button", { name: "Karte", exact: true }).click();
   await page
     .getByRole("button", { name: "Ganz Deutschland", exact: true })
     .click();
@@ -135,6 +129,14 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
       .getByRole("button", { name: vehicleName, exact: true }),
   ).toHaveCount(0);
   await page.getByLabel("Organisation auf Karte").selectOption("Alle");
+  // The real server keeps the return trip moving while the browser renders.
+  // After testing manual pan, recenter/follow before checking visible markers.
+  await page
+    .getByRole("button", { name: "Auswahl zentrieren", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Fahrzeug folgen", exact: true })
+    .click();
   await expect(
     page
       .locator("[data-testid=germany-map-viewport]")
@@ -146,15 +148,18 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
   });
   await context.setOffline(true);
   await expect(
-    page.getByText("Verbindung fehlt · letzter bestätigter Spielstand", {
-      exact: true,
-    }),
+    page.getByText(
+      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await context.setOffline(false);
   await expect(
-    page.getByText("Verbindung fehlt · letzter bestätigter Spielstand", {
-      exact: true,
-    }),
+    page
+      .locator(".critical-events article")
+      .filter({ hasText: "Serververbindung verloren." }),
   ).toHaveCount(0);
   await expect(
     page

@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -54,9 +55,7 @@ async function login(page: Page, play = false) {
   return owner;
 }
 async function settings(page: Page) {
-  await page
-    .getByRole("button", { name: "Einstellungen", exact: true })
-    .click();
+  await openPanel(page, "Einstellungen");
   const dialog = page.getByRole("dialog", {
     name: "Einstellungen",
     exact: true,
@@ -120,8 +119,6 @@ const checks = [
   "Bewegung reduzieren",
   "Ortsbeschriftungen",
   "Fahrwege anzeigen",
-  "Geografische Einrichtungen",
-  "Andere Leitstellen anzeigen",
   "Freigegebene Verbundobjekte",
 ] as const;
 const keyLabels = [
@@ -208,21 +205,6 @@ test("alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightm
       exact: true,
     })
     .check();
-  await dialog
-    .getByLabel("Einsatzspalte", { exact: true })
-    .selectOption("right");
-  await dialog
-    .getByLabel("Breite der Einsatzspalte", { exact: true })
-    .selectOption("380");
-  await dialog
-    .getByRole("checkbox", { name: "Kompakte Einsatzkarten", exact: true })
-    .check();
-  await dialog
-    .getByRole("checkbox", {
-      name: "Notruf- und Funkübersicht unter der Einsatzliste",
-      exact: true,
-    })
-    .check();
   for (const [i, name] of keyLabels.entries())
     await dialog.getByLabel(`Taste: ${name}`, { exact: true }).fill(String(i));
   await dialog
@@ -233,15 +215,9 @@ test("alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightm
     path: info.outputPath("settings-controls-light-120.png"),
   });
   await dialog.getByRole("tab", { name: "Hinweise & Hilfe" }).click();
-  await dialog
-    .getByRole("checkbox", { name: "Tutorialhinweise einblenden", exact: true })
-    .uncheck();
-  await dialog
-    .getByRole("checkbox", {
-      name: "Zusammenfassung nach Wiederverbindung",
-      exact: true,
-    })
-    .uncheck();
+  await expect(
+    dialog.getByText("Tutorialhinweise einblenden", { exact: true }),
+  ).toHaveCount(0);
   expect((await stored(page)).device).toBeNull();
   await dialog.getByRole("button", { name: "Übernehmen", exact: true }).click();
   await expect(dialog.locator(".settings-view > [role=status]")).toContainText(
@@ -261,13 +237,8 @@ test("alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightm
     friends: false,
     zoomSensitivity: 150,
     follow: true,
-    tutorialHints: false,
-    reconnectSummary: false,
     workspace: {
-      side: "right",
-      width: 380,
-      compact: true,
-      queueBottom: true,
+      side: "left",
       keys: {
         call: "0",
         fms: "1",
@@ -296,17 +267,9 @@ test("alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightm
       checked: ["Helle Oberfläche", "Bewegung reduzieren"].includes(label),
     });
   await dialog.getByRole("tab", { name: "Steuerung", exact: true }).click();
-  for (const [label, value] of [
-    ["Mausrad-Empfindlichkeit", "150"],
-    ["Einsatzspalte", "right"],
-    ["Breite der Einsatzspalte", "380"],
-  ])
+  for (const [label, value] of [["Mausrad-Empfindlichkeit", "150"]])
     await expect(dialog.getByLabel(label, { exact: true })).toHaveValue(value);
-  for (const label of [
-    "Ausgewähltem Fahrzeug folgen",
-    "Kompakte Einsatzkarten",
-    "Notruf- und Funkübersicht unter der Einsatzliste",
-  ])
+  for (const label of ["Ausgewähltem Fahrzeug folgen"])
     await expect(
       dialog.getByRole("checkbox", { name: label, exact: true }),
     ).toBeChecked();
@@ -320,13 +283,13 @@ test("alle Anzeige-, Steuerungs- und Hinweisfelder speichern; 120-Prozent-Lightm
       name: "Tutorialhinweise einblenden",
       exact: true,
     }),
-  ).not.toBeChecked();
+  ).toHaveCount(0);
   await expect(
     dialog.getByRole("checkbox", {
       name: "Zusammenfassung nach Wiederverbindung",
       exact: true,
     }),
-  ).not.toBeChecked();
+  ).toHaveCount(0);
   await pinned(dialog);
   expect((await stored(page)).device).toBe(persisted);
 });
@@ -343,8 +306,8 @@ test("Standardwerte und Arbeitsplatz-Reset sind verwerfbare Vorschauen; Audio bl
   await dialog.getByLabel("Kartensymbole", { exact: true }).selectOption("140");
   await dialog.getByRole("tab", { name: "Steuerung", exact: true }).click();
   await dialog
-    .getByLabel("Einsatzspalte", { exact: true })
-    .selectOption("right");
+    .getByLabel("Taste: Archiv und Statistik", { exact: true })
+    .fill("9");
   await dialog.getByRole("button", { name: "Übernehmen", exact: true }).click();
   await expect(dialog.locator(".settings-view > [role=status]")).toContainText(
     "Alle Änderungen gespeichert",
@@ -353,13 +316,13 @@ test("Standardwerte und Arbeitsplatz-Reset sind verwerfbare Vorschauen; Audio bl
   await dialog
     .getByRole("button", { name: "Arbeitsplatz zurücksetzen", exact: true })
     .click();
-  await expect(dialog.getByLabel("Einsatzspalte", { exact: true })).toHaveValue(
-    "left",
-  );
+  await expect(
+    dialog.getByLabel("Taste: Archiv und Statistik", { exact: true }),
+  ).toHaveValue("h");
   await dialog.getByRole("button", { name: "Verwerfen", exact: true }).click();
-  await expect(dialog.getByLabel("Einsatzspalte", { exact: true })).toHaveValue(
-    "right",
-  );
+  await expect(
+    dialog.getByLabel("Taste: Archiv und Statistik", { exact: true }),
+  ).toHaveValue("9");
   await dialog
     .getByRole("button", { name: "Standardwerte", exact: true })
     .click();
@@ -427,7 +390,7 @@ test("Tastenkonflikte, Fokusfalle und Escape schützen Entwürfe; Dialogaktionen
       buildings: initial.buildings.length,
     };
   const opener = page.getByRole("button", {
-    name: "Einstellungen",
+    name: "Leitstellenmenü",
     exact: true,
   });
   const dialog = await settings(page);

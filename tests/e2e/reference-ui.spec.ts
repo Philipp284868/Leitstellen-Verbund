@@ -9,7 +9,7 @@ import { phaseFixture } from "../dispatch-fixture";
 import { sites as nodes } from "../fixtures/germany/locations";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test } from "./test";
-import { showIncidents, showMapTools } from "./ui-navigation";
+import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -61,9 +61,9 @@ test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelde
       page.getByRole("button", { name: old, exact: true }),
     ).toHaveCount(0);
   for (const entry of [
-    "Leitstellen",
-    "Hilfe / Wiki",
-    "Neuigkeiten",
+    "Leaderboard",
+    "Support",
+    "Changelogs",
     "Einstellungen",
   ]) {
     await page.getByRole("button", { name: entry, exact: true }).click();
@@ -92,26 +92,21 @@ test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelde
 test("Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt", async ({
   page,
 }) => {
-  await page.route("**/project-news.json", (route) => route.abort("failed"));
+  await page.route("**/changelog.json", (route) => route.abort("failed"));
   await page.goto(origin);
   await page.getByLabel("Benutzername", { exact: true }).fill("reference");
   await page
     .getByLabel("Passwort", { exact: true })
     .fill("Reference-password-123!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await page.getByRole("button", { name: "Neuigkeiten", exact: true }).click();
-  await expect(
-    page.getByRole("link", { name: "Original auf GitHub" }),
-  ).toHaveAttribute(
-    "href",
-    "https://github.com/Philipp284868/Leitstellen-Verbund/discussions/23",
-  );
+  await page.getByRole("button", { name: "Changelogs", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("erreichbar");
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),
   ).toBeVisible();
-  await expect(page.locator(".mission-sidebar")).not.toBeVisible();
+  await expect(page.locator(".mission-sidebar")).toBeVisible();
   await showIncidents(page);
   await expect(page.locator(".mission-card").first()).toBeVisible();
 });
@@ -138,9 +133,9 @@ for (const size of [
     ).toBeVisible();
     await expect(page.locator(".menu-intel")).toContainText("Max Berger");
     for (const name of [
-      "Leitstellen",
-      "Hilfe / Wiki",
-      "Neuigkeiten",
+      "Leaderboard",
+      "Support",
+      "Changelogs",
       "Einstellungen",
       "Abmelden",
     ])
@@ -191,7 +186,7 @@ for (const size of [
       .boundingBox();
     expect(box!.width).toBe(size.width);
     expect(box!.height).toBeGreaterThan(size.height * 0.7);
-    expect(box!.y).toBeCloseTo(62, 0);
+    expect(box!.y).toBeCloseTo(76, 0);
     expect(box!.y + box!.height).toBeCloseTo(size.height, 0);
     await expect(page.locator(".bottom-toolbar, .radio-bar")).toHaveCount(0);
     const sidebar = await dock.boundingBox();
@@ -207,7 +202,7 @@ for (const size of [
     await expect(page.locator(".dispatch-list")).toBeVisible();
     await dock.getByRole("button", { name: "Schließen", exact: true }).click();
     await expect(dock).toHaveCount(0);
-    await page.getByRole("button", { name: "Karte", exact: true }).click();
+    await page.keyboard.press("Escape");
     await page
       .locator(
         '[data-testid=germany-map-viewport] [aria-label="Brandverdacht gemeldet"]',
@@ -227,10 +222,8 @@ for (const size of [
     await expect(page.getByLabel("Karte durchsuchen")).toBeVisible();
     await page.getByLabel("Karte durchsuchen").fill("Rivermere");
     await expect(page.locator(".map-search-results")).toBeVisible();
-    await page.getByRole("button", { name: "Karte", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Einstellungen", exact: true })
-      .click();
+    await page.keyboard.press("Escape");
+    await openPanel(page, "Einstellungen");
     await page
       .getByRole("tab", { name: "Hinweise & Hilfe", exact: true })
       .click();

@@ -52,7 +52,7 @@ for (let index = 0; index < 2; index++) {
   s.seed = 124;
   s.xp = xpForLevel(30);
   fundTestBudget(s, 10000000);
-  s.tutorial = 6;
+
   s.missionWait = 100000;
   for (const [kind, lon, lat, types] of (index === 0
     ? [

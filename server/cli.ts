@@ -46,6 +46,7 @@ const command = process.argv[2];
 if (
   ![
     "player-create",
+    "leaderboard-exclude",
     "backup",
     "archive-export",
     "restore",
@@ -59,7 +60,7 @@ if (
   ].includes(command)
 ) {
   throw Error(
-    "Befehle: player-create, backup, restore, migration-preview, facilities-preview, facilities-migrate, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
+    "Befehle: player-create, leaderboard-exclude, world-situation, backup, restore, migration-preview, facilities-preview, facilities-migrate, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
   );
 }
 const arg = (key: string) => {
@@ -336,6 +337,18 @@ try {
           });
           console.log(JSON.stringify(next, null, 2));
         }
+      } else if (command === "leaderboard-exclude") {
+        const excluded = arg("excluded");
+        if (!["true", "false"].includes(excluded))
+          throw Error("--excluded true oder false erforderlich.");
+        const result = db.sql
+          .prepare(
+            "UPDATE player_metrics SET excluded=? WHERE user_id=(SELECT id FROM users WHERE username=?)",
+          )
+          .run(excluded === "true" ? 1 : 0, arg("username"));
+        if (!result.changes) throw Error("Spielerkonto nicht gefunden.");
+        db.audit("host-cli", "leaderboard-eligibility-updated");
+        console.log("Wertungsberechtigung aktualisiert.");
       } else if (command === "player-create") {
         if (!process.argv.includes("--password-stdin"))
           throw Error(

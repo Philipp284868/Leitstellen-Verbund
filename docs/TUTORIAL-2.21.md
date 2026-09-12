@@ -1,3 +1,5 @@
+> Historisches Dokument zu 2.21. Tutorial und damalige Menüführung sind seit 2.25 abgelöst. [Aktuelle Bedienung](HUD-UND-SERVER.md).
+
 # Persönliche Einführung und Serverübung · 2.21
 
 Die Einführung begleitet die normalen Spielansichten. Eine zusätzliche persönliche Serverübung verwendet denselben Einsatz-, Dispositions-, FMS-, Routing-, Personal-, Aufgaben- und Abrechnungscode wie das eigentliche Spiel. Die Übung besitzt einen eigenen Spielstand; sie ersetzt keine produktive Leitstelle.

@@ -1,3 +1,4 @@
+import { REPORTS_SCHEMA } from "./bug-reports";
 import { closeSync, existsSync, mkdirSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import { DatabaseSync, backup } from "node:sqlite";
@@ -21,9 +22,10 @@ import { applyLocationMigration } from "./location-migration";
 import { applyReadinessMigration } from "./readiness-migration";
 import { ensureWorldSituation } from "./world-situation";
 import { EVENTS_SCHEMA, persistGameEvents } from "./game-events";
+import { LEADERBOARD_SCHEMA, persistMetrics } from "./leaderboard";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 23;
+export const DATABASE_VERSION = 25;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -55,6 +57,7 @@ export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
 }
 export class Database {
   private eventKnown = new Map<string, Map<string, string>>();
+  private metricsKnown = new Map<string, Set<string>>();
   sql: DatabaseSync;
   path: string;
   constructor(
@@ -460,6 +463,23 @@ export class Database {
           this.sql.exec("PRAGMA user_version=23");
           this.audit("server-migration", "persistent-operational-events-v23");
         });
+      if (version < 24)
+        this.transaction(() => {
+          this.sql.exec(LEADERBOARD_SCHEMA);
+          for (const save of this.all().values())
+            persistMetrics(this.sql, save);
+          this.sql.exec("PRAGMA user_version=24");
+          this.audit(
+            "server-migration",
+            "public-metrics-v24; historical account XP retained separately",
+          );
+        });
+      if (version < 25)
+        this.transaction(() => {
+          this.sql.exec(REPORTS_SCHEMA);
+          this.sql.exec("PRAGMA user_version=25");
+          this.audit("server-migration", "manual-bugreports-v25");
+        });
       this.sql
         .prepare(
           "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
@@ -479,6 +499,7 @@ export class Database {
     } catch (e) {
       this.sql.exec("ROLLBACK");
       this.eventKnown.clear();
+      this.metricsKnown.clear();
       throw e;
     }
   }
@@ -523,6 +544,19 @@ export class Database {
         this.eventKnown.set(id, known);
       }
       persistGameEvents(this.sql, checked, known);
+    }
+    if (
+      mode === "multi" &&
+      this.sql
+        .prepare("SELECT 1 FROM sqlite_master WHERE name='player_metrics'")
+        .get()
+    ) {
+      let known = this.metricsKnown.get(id);
+      if (!known) {
+        known = new Set();
+        this.metricsKnown.set(id, known);
+      }
+      persistMetrics(this.sql, checked, known);
     }
     for (const v of checked.vehicles) delete v.availability;
     this.sql

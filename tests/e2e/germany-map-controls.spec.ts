@@ -51,7 +51,8 @@ test.beforeAll(async () => {
       return json({ snapshot: "fixture", clusters: [] });
     if (url.pathname === "/geo/manifest")
       return json({ bounds: [5.5, 47.1, 15.6, 55.2], minzoom: 0, maxzoom: 14 });
-    if (url.pathname.startsWith("/geo/pois/"))
+    if (url.pathname.startsWith("/geo/pois/")) {
+      requests.push(url.pathname);
       return json({
         dataset: "",
         snapshot: "fixture",
@@ -68,6 +69,7 @@ test.beforeAll(async () => {
           },
         ],
       });
+    }
     if (url.pathname.startsWith("/geo/tiles/")) {
       requests.push(url.pathname);
       res.statusCode = 204;
@@ -221,44 +223,20 @@ test("Freie Kartenfläche erlaubt weder nach Ziehen noch nach Klick einen Gebäu
     page.getByRole("button", { name: "Kauf verbindlich bestätigen" }),
   ).toHaveCount(0);
   await expect(page.getByTestId("selection")).not.toHaveText("placed");
-  await expect(
-    page.getByLabel("Standorte nach Organisation filtern"),
-  ).toBeHidden();
-  await page.getByText("Standortfilter", { exact: true }).click();
-  await expect(
-    page.getByLabel("Standorte nach Organisation filtern"),
-  ).toBeVisible();
-});
-
-test("Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Filter und Kamerasprung", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await page.setViewportSize({ width: 1600, height: 1080 });
-  await page.goto(`${origin}/__controls?presence=1`);
-  const marker = page.getByTestId("map-presence");
-  await expect(marker).toHaveCount(1);
-  await expect(marker).toHaveAttribute("aria-label", /3 Spieler/);
-  await marker.click();
-  const popup = page.getByRole("complementary", {
-    name: "Spieler am Kartenstandort",
-  });
-  await expect(popup.getByText("Anna", { exact: false })).toBeVisible();
-  await expect(popup.getByText("Ben", { exact: false })).toBeVisible();
-  await expect(popup.getByText("Clara", { exact: false })).toBeVisible();
-  await expect(
-    popup.getByText("Verbindet erneut", { exact: true }),
-  ).toBeVisible();
-  await expect(popup.getByText("Ohne Standort", { exact: true })).toHaveCount(
+  await expect(page.getByText("Standortfilter", { exact: true })).toHaveCount(
     0,
   );
-  await expect(page.getByTestId("inspection-count")).toHaveText("1");
-  await page.keyboard.press("Escape");
-  await expect(popup).toHaveCount(0);
-  const poiResponse = page.waitForResponse((r) =>
-    r.url().includes("/geo/pois/"),
-  );
+});
+
+test("Entfernte POI- und Spieler-Pins kehren auch mit Altdaten nicht zurück; keine POI-Abfragen", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().includes("/geo/pois/")) calls.push(r.url());
+  });
+  await page.goto(`${origin}/__controls?presence=1`);
+  await expect(page.getByTestId("germany-map-viewport")).toBeVisible();
   await page.evaluate(
     (point) =>
       window.dispatchEvent(
@@ -276,38 +254,14 @@ test("Karten-POIs und öffentliche Spieler: echte Auswahl, Gruppenauflösung, Fi
         ).zoom,
     )
     .toBeCloseTo(15, 1);
-  // Wait for the asynchronous viewport POI request, then click the geographic center.
-  await poiResponse;
-  const view = await page.getByTestId("germany-map-viewport").boundingBox();
-  await page.mouse.click(view!.x + view!.width / 2, view!.y + view!.height / 2);
-  const detail = page.getByRole("complementary", {
-    name: "Geografische Einrichtung",
-  });
+  await expect(page.getByTestId("map-presence")).toHaveCount(0);
   await expect(
-    detail.getByRole("heading", { name: "Schule aus POI-Testdaten" }),
-  ).toBeVisible();
-  await expect(detail).toContainText("geografischer Karteneintrag");
-  await expect(page.getByTestId("inspection-count")).toHaveText("2");
-  await page.keyboard.press("Escape");
-  await expect(detail).toHaveCount(0);
-  await page.mouse.click(view!.x + view!.width / 2, view!.y + view!.height / 2);
-  await expect(detail).toBeVisible();
-  await page
-    .getByText("Einrichtungen & Kartenlegende", { exact: true })
-    .click();
-  await page
-    .getByLabel("Geografische Einrichtungen", { exact: true })
-    .uncheck();
-  await expect(detail).toHaveCount(0);
-  await expect(
-    page.getByRole("complementary", { name: "Kartenwerkzeuge" }),
-  ).toHaveCount(1);
-  await expect(
-    page
-      .getByRole("complementary", { name: "Kartenwerkzeuge" })
-      .getByLabel("Zoomsteuerung"),
-  ).toBeVisible();
-  expect(errors).toEqual([]);
+    page.getByRole("complementary", { name: "Geografische Einrichtung" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Standortfilter", { exact: true })).toHaveCount(
+    0,
+  );
+  expect(calls).toEqual([]);
 });
 
 test("Fahrzeuge mit identischen Koordinaten bleiben am Detailzoom einzeln erreichbar und verdecken die Wache nicht", async ({
@@ -372,97 +326,5 @@ test("Fahrzeuge mit identischen Koordinaten bleiben am Detailzoom einzeln erreic
     page.getByLabel("Ausgewähltes Fahrzeug", { exact: true }),
   ).toHaveCount(0);
   await expect(page.getByTestId("selection")).toHaveText("");
-  expect(errors).toEqual([]);
-});
-
-test("drei Einrichtungen an derselben Koordinate bleiben auch bei Zoom 18 vollständig auswählbar", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.setViewportSize({ width: 1600, height: 1080 });
-  await page.route("**/geo/pois/**", (route) =>
-    route.fulfill({
-      json: {
-        dataset: "",
-        snapshot: "fixture",
-        points: ["A", "B", "C"].map((letter) => ({
-          id: `index:coincident-${letter}`,
-          category: "education",
-          name: `Schule ${letter} am gemeinsamen Teststandort`,
-          lon: 13.407,
-          lat: 52.52,
-          count: 1,
-          source: "index",
-          kind: "school",
-        })),
-      },
-    }),
-  );
-  await page.goto(`${origin}/__controls`);
-  await expect(page.getByText("Deutschlandkarte wird geladen …")).toHaveCount(
-    0,
-  );
-  await page.evaluate(
-    (point) =>
-      window.dispatchEvent(
-        new CustomEvent("lv:map-focus", { detail: { point, zoom: 18 } }),
-      ),
-    project({ lon: 13.407, lat: 52.52 }),
-  );
-  const viewport = page.getByTestId("germany-map-viewport");
-  await expect
-    .poll(
-      async () =>
-        JSON.parse((await viewport.getAttribute("data-camera"))!).zoom,
-    )
-    .toBeCloseTo(18, 1);
-  // The marker canvas is asynchronous; wait for its center hit area to be painted.
-  await expect
-    .poll(() =>
-      page.locator("canvas.germany-pois").evaluate((element) => {
-        const canvas = element as HTMLCanvasElement;
-        return canvas
-          .getContext("2d")!
-          .getImageData(
-            Math.floor(canvas.width / 2),
-            Math.floor(canvas.height / 2),
-            1,
-            1,
-          ).data[3];
-      }),
-    )
-    .toBeGreaterThan(0);
-  const box = (await viewport.boundingBox())!,
-    group = page.getByRole("complementary", {
-      name: "Geografische Einrichtungen am Kartenstandort",
-      exact: true,
-    }),
-    detail = page.getByRole("complementary", {
-      name: "Geografische Einrichtung",
-      exact: true,
-    });
-  for (const letter of ["A", "B", "C"]) {
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-    await expect(group.locator(".map-object-list button")).toHaveCount(3);
-    await group
-      .getByRole("button", { name: new RegExp(`Schule ${letter} `) })
-      .click();
-    await expect(group).toHaveCount(0);
-    await expect(
-      detail.getByRole("heading", {
-        name: `Schule ${letter} am gemeinsamen Teststandort`,
-        exact: true,
-      }),
-    ).toBeVisible();
-  }
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(group).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(group).toHaveCount(0);
-  await expect(detail).toHaveCount(0);
-  await expect(
-    page.getByLabel("Interaktive Karte von Deutschland", { exact: true }),
-  ).toBeFocused();
   expect(errors).toEqual([]);
 });

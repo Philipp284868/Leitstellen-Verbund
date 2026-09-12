@@ -50,6 +50,7 @@ jobs:
           path: .tools/ci/plan.json
           include-hidden-files: true
           retention-days: 14
+      - run: node scripts/check-changelog.mjs
       - run: node scripts/ci-run.mjs structure
       - name: Ein Deutschland-Build einschließlich Typen und Bundlebudgets
         if: steps.plan.outputs.profile != 'docs'

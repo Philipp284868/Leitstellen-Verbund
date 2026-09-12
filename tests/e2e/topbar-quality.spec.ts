@@ -1,3 +1,4 @@
+import { openPanel, showMapTools } from "./ui-navigation";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -67,13 +68,13 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
     box = await map.boundingBox();
   expect(top).not.toBeNull();
   expect(box).not.toBeNull();
-  expect(top!.height).toBe(62);
+  expect(top!.height).toBe(76);
   expect(top!.y).toBe(0);
   expect(box!.x).toBe(0);
-  expect(box!.y).toBe(62);
+  expect(box!.y).toBe(76);
   expect(box!.width).toBe(1600);
-  expect(box!.height).toBe(938);
-  await expect(page.locator(".mission-sidebar")).toBeHidden();
+  expect(box!.height).toBe(924);
+  await expect(page.locator(".mission-sidebar")).toBeVisible();
   await expect(tools).toBeHidden();
   await expect(
     page.getByRole("button", { name: "Personal", exact: true }),
@@ -85,23 +86,21 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   });
   if (await notice.isVisible()) await notice.click();
   await page.screenshot({ path: info.outputPath("topbar-idle-full-map.png") });
-  const mapButton = page.getByRole("button", { name: "Karte", exact: true });
-  await mapButton.click();
+  const menu = page.getByRole("button", {
+    name: "Leitstellenmenü",
+    exact: true,
+  });
+  await showMapTools(page);
   await expect(tools).toBeVisible();
-  await expect(mapButton).toHaveAttribute("aria-expanded", "true");
-  await mapButton.click();
-  await expect(tools).toBeHidden();
-  await page.getByRole("button", { name: "Kartensuche", exact: true }).click();
   const search = page.getByLabel("Karte durchsuchen", { exact: true });
   await expect(search).toBeFocused();
   await search.fill("Nord");
   await page.keyboard.press("Escape");
   await expect(tools).toBeHidden();
-  await expect(mapButton).toBeFocused();
-  const radio = page.getByRole("button", { name: "Funk", exact: true });
+  await expect(menu).toBeFocused();
   const before = await map.getAttribute("data-camera");
-  await radio.click();
-  const popup = page.locator("#topbar-radio");
+  await menu.click();
+  const popup = page.locator("#control-menu");
   await expect(popup).toBeVisible();
   const choices = popup.getByRole("button");
   await expect(choices.nth(0)).toBeFocused();
@@ -113,7 +112,7 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await expect(choices.first()).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(popup).toHaveCount(0);
-  await expect(radio).toBeFocused();
+  await expect(menu).toBeFocused();
   expect(await map.getAttribute("data-camera")).toBe(before);
   await page.mouse.move(1050, 500);
   await page.mouse.wheel(0, -360);
@@ -125,11 +124,13 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await page.mouse.up();
   await expect.poll(() => map.getAttribute("data-camera")).not.toBe(zoomed);
   const camera = await map.getAttribute("data-camera");
-  await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
+  await openPanel(page, "Zurück zum Hauptmenü");
   await expect(page.locator(".command-menu")).toBeVisible();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(map).toHaveAttribute("data-camera", camera!);
   await expect(page.locator(".mission-sidebar")).toBeHidden();
+  await page.getByRole("button", { name: /Einsätze.*Notrufe/ }).click();
+  await expect(page.locator(".mission-sidebar")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -144,7 +145,7 @@ test("Fahrzeugname wird inline gespeichert; Abbrechen, Escape und Verkaufsabbruc
     if (request.url().endsWith("/api/action"))
       actions.push(request.postData() || "");
   });
-  await page.getByRole("button", { name: "Fuhrpark", exact: true }).click();
+  await openPanel(page, "Fuhrpark");
   const dialog = page.getByRole("dialog", { name: "Fuhrpark", exact: true }),
     card = dialog.locator(".fleet-card").first();
   await card.getByRole("button", { name: "Name", exact: true }).click();
@@ -213,7 +214,7 @@ test("Fahrzeugname wird inline gespeichert; Abbrechen, Escape und Verkaufsabbruc
   );
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Fuhrpark", exact: true }),
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
   ).toBeFocused();
 });
 
@@ -226,8 +227,11 @@ test("Tastatur erreicht die letzte Besatzungsdisclosure und bricht eine Verkaufs
     if (request.url().endsWith("/api/action"))
       actions.push(request.postData() || "");
   });
-  const opener = page.getByRole("button", { name: "Fuhrpark", exact: true });
-  await opener.click();
+  const opener = page.getByRole("button", {
+    name: "Leitstellenmenü",
+    exact: true,
+  });
+  await openPanel(page, "Fuhrpark");
   const dialog = page.getByRole("dialog", { name: "Fuhrpark", exact: true }),
     lastCard = dialog.locator(".fleet-card").last(),
     disclosure = lastCard.locator("details").filter({

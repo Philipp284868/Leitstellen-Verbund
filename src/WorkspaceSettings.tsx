@@ -19,31 +19,10 @@ export function WorkspaceSettings({
         keine Fahrzeuge. In Eingabefeldern bleiben die Tasten normale
         Texteingaben.
       </p>
-      <label>
-        Einsatzspalte
-        <select
-          aria-label="Einsatzspalte"
-          value={p.side}
-          onChange={(e) => change({ ...p, side: e.target.value })}
-        >
-          <option value="left">Links von der Karte</option>
-          <option value="right">Rechts von der Karte</option>
-        </select>
-      </label>
-      <label>
-        Breite der Einsatzspalte
-        <select
-          aria-label="Breite der Einsatzspalte"
-          value={p.width}
-          onChange={(e) => change({ ...p, width: Number(e.target.value) })}
-        >
-          {[280, 320, 380].map((n) => (
-            <option key={n} value={n}>
-              {n} Pixel
-            </option>
-          ))}
-        </select>
-      </label>
+      <p>
+        Einsätze und Notrufe liegen links, das Textprotokoll bleibt unten links.
+        Die Größe folgt der Oberflächenskalierung.
+      </p>
       <label>
         <input
           type="checkbox"
@@ -51,14 +30,6 @@ export function WorkspaceSettings({
           onChange={(e) => change({ ...p, compact: e.target.checked })}
         />{" "}
         Kompakte Einsatzkarten
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={p.queueBottom}
-          onChange={(e) => change({ ...p, queueBottom: e.target.checked })}
-        />{" "}
-        Notruf- und Funkübersicht unter der Einsatzliste
       </label>
       <div className="shortcut-grid">
         {Object.entries(shortcutNames).map(([id, name]) => (

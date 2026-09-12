@@ -16,7 +16,7 @@ export function phaseFixture(owner: string, template = "field"): Save {
   bookMoney(s, euro(100000000) - s.money, "Entwickler-Testbudget");
   // Mission suites isolate payouts; recurring financing has dedicated economy-server tests.
   s.xp = xpForLevel(30);
-  s.tutorial = 6;
+
   apply(s, fixturePurchase("fire", nodes[0]));
   // Existing phase suites model an established professional station. Volunteer starts have their own suite.
   s.buildings[0].organization = {

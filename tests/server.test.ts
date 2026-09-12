@@ -77,7 +77,8 @@ describe("Autoritativer Server", () => {
     app.db.save(a, s);
     app.game.step(5);
     expect(app.db.all().get(a)!.missions).toHaveLength(0);
-    for (let i = 0; i < 20; i++) app.game.step(60);
+    const activeGame = new Game(app.db, () => true);
+    for (let i = 0; i < 20; i++) activeGame.step(60);
     const m = app.db.all().get(a)!.missions[0];
     expect(m.shared).toBe(false);
     expect(m.control!.calls).toHaveLength(1);
@@ -270,7 +271,7 @@ describe("Autoritativer Server", () => {
     };
     game.command(id, command);
     game.step(900);
-    expect(db.all().get(id)!.money).toBe(euro(780000));
+    expect(db.all().get(id)!.money).toBe(euro(750000));
     const file = await db.backup();
     expect((await readFile(file)).subarray(0, 15).toString()).toBe(
       "SQLite format 3",
@@ -279,7 +280,7 @@ describe("Autoritativer Server", () => {
     db = new Database(dir);
     new Game(db).command(id, command);
     new Game(db).step(125);
-    expect(db.all().get(id)!.money).toBe(euro(780000));
+    expect(db.all().get(id)!.money).toBe(euro(750000));
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );

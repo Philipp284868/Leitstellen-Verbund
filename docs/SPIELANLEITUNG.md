@@ -1,20 +1,18 @@
-# Die Leitstelle übernehmen · Version 2.23
+# Die Leitstelle übernehmen · Version 2.25
 
-Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder anmelden. Es gibt keine Admin-Spielkonten und keine Registrierungseinladung. Ein einzelner Spieler darf allein auf dem Multiplayer-Server disponieren. Gemeinsame Disponenten derselben Leitstelle werden ausdrücklich eingeladen; unabhängige Leitstellen teilen ihre Einsätze nicht automatisch. Die persönliche Übungswelt ist ein getrennter Lernbereich, kein wieder eingeführter Einzelspieler-Modus.
+Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder anmelden. Es gibt keine Admin-Spielkonten und keine Registrierungseinladung. Ein einzelner Spieler darf allein auf dem Multiplayer-Server disponieren. Gemeinsame Disponenten derselben Leitstelle werden ausdrücklich eingeladen; unabhängige Leitstellen teilen ihre Einsätze nicht automatisch.
 
-## Einstieg und Tutorial
+## Einstieg
 
-Im Hauptmenü **Spielen** öffnet die berechtigte Leitstelle. Der Tutorialknopf darunter bietet Einstieg, Fortsetzung oder Wiederholung. Das Tutorial führt in 16 Kapiteln durch tatsächliche Menüs, Standortkauf, Fahrzeugkauf, Notruf, Disposition, FMS, Lage, Nachforderung und Archiv. Bereits erfüllte Voraussetzungen im vorhandenen Spielstand werden berücksichtigt; dort sind keine unnötigen erneuten Käufe erforderlich.
+**Spielen** öffnet die berechtigte Leitstelle. Tutorial und separate Übungswelt entfallen. Mit dem einmaligen Startgeld kaufst du einen freigeschalteten realen Standort und ein passendes Fahrzeug. Hilfe bleibt unter Support erreichbar. Neue Notrufe entstehen nur, solange mindestens ein berechtigter Disponent in der Spielansicht ist; Anmeldung und Hauptmenü genügen nicht. Bestehende Einsätze und Transporte laufen weiter.
 
-Für einen geschützten vollständigen Lernablauf **Persönliche Übung** verwenden. Diese serverseitig gespeicherte Welt hat eigenes Budget, Fahrzeuge und Einsätze. Sie beginnt auf Stufe 2 mit 1.400.000,00 €. Eine Feuerwache für 650.000,00 € und ein LF 20 für 320.000,00 € lassen 430.000,00 € Reserve. Zuerst wird ein Keller unter Wasser bearbeitet. Die anschließende Flächenbrandübung benötigt zusätzliches Löschwasser: LF anfahren lassen, erste Lage aufnehmen, die echte Nachforderung bearbeiten und beispielsweise ein TSF-W für 180.000,00 € nachalarmieren. Ein bloß angeklickter Hinweis ersetzt diese Schritte nicht.
-
-Übungsbudget, XP und Erlöse gelangen nicht in die normale Leitstelle. Verlassen pausiert die Übung; ein Neustart erhält sie. **Übung zurücksetzen** ersetzt nur diese persönliche Welt. **Tutorial wiederholen** startet nach vollständigem Abschluss die Kapitel erneut, ohne Welt oder Budget zurückzusetzen. [Tutorial, Kapitel und Grenzen](TUTORIAL-2.21.md).
+**Menü** rechts neben dem Leitstellennamen bündelt Verwaltung, Notrufarbeitsplatz, Kooperation, Auswertung und Support. Links stehen Einsätze/Notrufe, darunter das reine Textprotokoll. Fachliche Sprechwünsche bearbeitest du im Einsatz. [Bedienung und Betriebsgrenzen ab 2.25](HUD-UND-SERVER.md).
 
 ## Budget und Wachen
 
 Neue normale Leitstellen starten auf Stufe 1 mit 1.400.000,00 €. Feuerwache und TSF-W kosten zusammen 830.000,00 €; 570.000,00 € bleiben übrig. Das LF 20 ist ab Stufe 2 kaufbar. Geld allein überspringt weder Stufen noch erforderliche Gebäudefunktionen. Standortdetails und Kaufbestätigung zeigen tatsächlichen Preis, Voraussetzungen und verbleibendes Budget.
 
-Unter **Standorte → Standort kaufen** einen realen vorhandenen Standort wählen und den Kauf ausdrücklich bestätigen. Auf der Deutschlandkarte muss die echte Zufahrt geprüft werden können; Wasserrettung benötigt einen geeigneten Uferzugang. Nach der Inbetriebnahme stellt die Wache ihre zulässigen Fahrzeugfunktionen mit passender Besetzung und Qualifikation automatisch bereit. Es gibt keine zusätzlichen Rekrutierungs- oder Ausbildungsgebühren und keinen manuellen Pflichtschritt „Besetzen“.
+Unter **Menü → Standorte kaufen** einen realen vorhandenen Standort wählen und den Kauf ausdrücklich bestätigen. Auf der Deutschlandkarte muss die echte Zufahrt geprüft werden können; Wasserrettung benötigt einen geeigneten Uferzugang. Nach der Inbetriebnahme stellt die Wache ihre zulässigen Fahrzeugfunktionen mit passender Besetzung und Qualifikation automatisch bereit. Es gibt keine zusätzlichen Rekrutierungs- oder Ausbildungsgebühren und keinen manuellen Pflichtschritt „Besetzen“.
 
 Neue Feuerwachen sind Freiwillige Feuerwehren. Nach einer Alarmierung kommen die benötigten Kräfte zeitlich versetzt auf tatsächlichen Straßen zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Die Automatik beseitigt keine Verletzungen, laufenden Bindungen, Defekte oder Übergaben. Eine Person wird nicht gleichzeitig mehreren Fahrzeugen zugesagt. Ab Stufe 6 ist die Umstellung zur Berufsfeuerwehr für 1.350.000,00 € möglich. Historische Berufsfeuerwehren bleiben bestehen. [Wachbetrieb und Bestandsschutz](GEBAEUDEBESETZUNG-2.21.md).
 
@@ -46,7 +44,7 @@ Ausbau kostet 110.000,00 € × bisherige Gebäudestufe; Voraussetzungen und tat
 
 XP stammen aus tatsächlichen Abschlüssen und qualifizierter Zusammenarbeit. Es gibt keine Level-10-Grenze. Euro und XP sind getrennte Größen; zusätzliche Fahrzeuge, absichtliches Warten und Aktionswiederholung erhöhen die feste Einsatzvergütung nicht. [Fortschrittsregeln](PROGRESSION-KARTE.md) und [vollständige Preise/Freischaltungen](EURO-PREISE.md) zeigen die Werte.
 
-Es entstehen keine laufenden Personalrechnungen oder Abwesenheitsstrafen. Die normale Leitstelle erhält automatisch 30.000,00 € je 15 Minuten serverseitiger Weltzeit, bis das Guthaben 2.500.000,00 € erreicht. Oberhalb der Grenze bleiben Einsatzerlöse und geschütztes Altguthaben erhalten; ausgefallene Förderintervalle werden später nicht nachgezahlt. Der wiederholbare Bereitschaftsdienstknopf entfällt. Die persönliche Übung erhält keine laufende Förderung. [Sechs Wirtschaftsszenarien und Migration](EURO-WIRTSCHAFT.md).
+Wiederkehrende kommunale Grundzahlungen entfallen. Startgeld und reguläre Einsatz-/Kooperationsvergütungen bleiben; historische Guthaben und Journaleinträge werden nicht rückwirkend entfernt. Bestehende Wartungs- und Bereitschaftskosten gelten weiterhin. [Wirtschaft](EURO-WIRTSCHAFT.md).
 
 ## Einstellungen, Audio und Speichern
 
@@ -56,6 +54,6 @@ Musik, Umgebung, Telefon, Funk, Alarmierung und UI lassen sich getrennt regeln. 
 
 Im Spiel bleibt die Karte unter der oberen Hauptleiste frei. Einsatzliste, Disposition und Kartenwerkzeuge öffnen bei Bedarf. Ziehen verschiebt, Mausrad und Zoomknöpfe ändern den Maßstab. Tab/Enter bedienen fokussierbare Elemente; Escape schließt die aktuelle Ansicht beziehungsweise zuerst ihren Entwurf. Tastenkürzel sind in den Einstellungen einsehbar und anpassbar. Unter 1100×650 erscheint ein Desktop-Hinweis, keine Smartphone-Oberfläche.
 
-Bestätigte Spielaktionen werden auf dem Server gespeichert. Ohne Verbindung bleiben Aktionen gesperrt; es startet keine lokale Ersatzsimulation. Die normale Welt läuft ohne offenen Browser weiter, nach Serverstillstand werden höchstens vier Stunden nachberechnet. Persönliches Tutorial und Übung überstehen Wiederverbindung und Neustart. Kontoexporte und freiwillige lokale Kopien stehen unter **Spielstände & Sicherungen** bereit; eine Vorschau importiert keinen Besitz. Vollständige Wiederherstellung bleibt eine ausdrückliche Wartungsaufgabe des Betreibers. [Daten und Sicherungen](DATEN.md) · [AMP-Betrieb](AMP.md).
+Bestätigte Spielaktionen werden auf dem Server gespeichert. Ohne Verbindung bleiben Aktionen gesperrt; es startet keine lokale Ersatzsimulation. Die normale Welt läuft ohne offenen Browser weiter, nach Serverstillstand werden höchstens vier Stunden nachberechnet. Neue Notrufe werden während Abwesenheit und Nachlauf unterdrückt; es entsteht kein Nachholschwall. Kontoexporte und freiwillige lokale Kopien stehen unter **Menü → Sicherungen** bereit; eine Vorschau importiert keinen Besitz. Vollständige Wiederherstellung bleibt eine ausdrückliche Wartungsaufgabe des Betreibers. [Daten und Sicherungen](DATEN.md) · [AMP-Betrieb](AMP.md).
 
 Die vollständige Standortlogik, Datenabdeckung und Bestandsmigration stehen unter [Reale Standorte](STANDORTE.md). Freie Platzierung ist nicht mehr möglich.

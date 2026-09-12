@@ -306,49 +306,20 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
   });
 });
 describe("sichere Standortmigration", () => {
-  it("erhält auch persönliche Übungswelten und hält ihre Standortrechte vom Livebestand getrennt", () => {
+  it("ignoriert stillgelegte Übungswelten bei der Standortmigration", () => {
     const { db, run } = setup();
     run("owner", fixturePurchase("fire", sites[0]));
-    const s = structuredClone(db.all().get("owner")!);
-    delete s.buildings[0].facility;
-    const envelope = {
-      version: 1,
-      active: false,
-      session: crypto.randomUUID(),
-      save: s,
-      commands: {},
-      scenarios: [],
-      contextRevision: 3,
-      controlCommands: {},
-    };
     db.sql
       .prepare("INSERT INTO training_worlds VALUES(?,?,?)")
-      .run("owner", JSON.stringify(envelope), 123);
-    const live = JSON.stringify(db.all().get("owner"));
-    const plan = planFacilityMigration(db.sql, logicFacilityCatalog);
-    expect(plan).toMatchObject({
-      ready: true,
-      changes: [{ owner: "practice:owner" }],
-    });
-    expect(() => assertFacilityMigration(db.sql)).toThrow(/practice:owner/);
-    db.transaction(() => applyFacilityMigration(db.sql, logicFacilityCatalog));
-    const restored = JSON.parse(
-      String(
-        db.sql
-          .prepare("SELECT payload FROM training_worlds WHERE user_id='owner'")
-          .get()!.payload,
-      ),
+      .run(
+        "owner",
+        JSON.stringify({ save: { buildings: [{ id: "retired" }] } }),
+        123,
+      );
+    expect(planFacilityMigration(db.sql, logicFacilityCatalog).changes).toEqual(
+      [],
     );
-    expect(restored.session).toBe(envelope.session);
-    expect(restored.contextRevision).toBe(3);
-    expect(restored.save.money).toBe(s.money);
-    expect(restored.save.buildings[0].facility.id).toBe(
-      fixturePurchase("fire", sites[0]).facility,
-    );
-    expect(JSON.stringify(db.all().get("owner"))).toBe(live);
-    expect(
-      planFacilityMigration(db.sql, logicFacilityCatalog).changes,
-    ).toHaveLength(0);
+    expect(() => assertFacilityMigration(db.sql)).not.toThrow();
   });
   it("ordnet ausschließlich eindeutigen Bestand zu und erhält Referenzen, bezahlte Werte, AAO und Personal", () => {
     const { db } = setup(),

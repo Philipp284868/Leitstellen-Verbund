@@ -63,10 +63,20 @@ async function register(page: Page, label: string) {
     .getByRole("button", { name: "Konto erstellen", exact: true })
     .click();
   await page.getByRole("button", { name: "Spielen", exact: false }).click();
-  await expect(page.locator(".hud-notice")).toContainText(
-    "Mit Spielserver verbunden",
-  );
-  await expect(page.locator(".banner")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .locator(".critical-events article")
+      .filter({ hasText: "Serververbindung verloren." }),
+  ).toHaveCount(0);
 }
 
 test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller Reconnect ohne Lockerung des Servers", async ({
@@ -134,7 +144,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
         "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
       ),
     ).toHaveCount(1);
-    await expect(a.locator(".hud-budget strong")).toHaveText(
+    await expect(a.locator(".money-tile strong")).toHaveText(
       formatMoney(ECONOMY_PRICES.start - bt("fire").price),
     );
     await expect(
@@ -142,7 +152,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
         "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
       ),
     ).toHaveCount(0);
-    await expect(b.locator(".hud-budget strong")).toHaveText(
+    await expect(b.locator(".money-tile strong")).toHaveText(
       formatMoney(ECONOMY_PRICES.start),
     );
 
@@ -163,7 +173,9 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
 
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
-    await expect(a.locator(".banner")).toBeVisible();
+    await expect(a.locator(".critical-events")).toContainText(
+      "Serververbindung verloren.",
+    );
     await openPanel(a, "Standorte");
     await a.locator(".station-card").click();
     const ownerState = () =>
@@ -184,13 +196,24 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       .last()
       .click();
     await a
-      .getByRole("button", { name: "Server erneut verbinden", exact: true })
+      .getByRole("button", { name: "Seite neu laden", exact: true })
       .click();
-    await expect(a.locator(".banner")).toHaveCount(0);
-    await expect(a.locator(".hud-notice")).toContainText(
-      "Mit Spielserver verbunden",
-    );
-    await expect(a.locator(".hud-clock")).toHaveAttribute("title", /Echtzeit/);
+    await a.getByRole("button", { name: "Spielen", exact: true }).click();
+    await expect(
+      a
+        .locator(".critical-events article")
+        .filter({ hasText: "Serververbindung verloren." }),
+    ).toHaveCount(0);
+    await expect(
+      a.getByRole("button", { name: "Leitstellenmenü", exact: true }),
+    ).toBeVisible();
+    await expect(
+      a.getByText(
+        "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+        { exact: true },
+      ),
+    ).toHaveCount(0);
+    await expect(a.locator(".control-topbar time")).toBeVisible();
     await expect
       .poll(
         () =>

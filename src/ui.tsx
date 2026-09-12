@@ -73,7 +73,23 @@ export function Modal({
     ref.current?.focus({ preventScroll: true });
     return () => {
       for (const [element, wasInert] of inert) element.inert = wasInert;
-      if (previous?.isConnected) previous.focus({ preventScroll: true });
+      queueMicrotask(() => {
+        if (document.querySelector('[role="dialog"][aria-modal="true"]'))
+          return;
+        if (
+          previous?.isConnected &&
+          previous !== document.body &&
+          previous.getClientRects().length &&
+          !previous.closest("[inert]")
+        )
+          previous.focus({ preventScroll: true });
+        else
+          document
+            .querySelector<HTMLButtonElement>(
+              'button[aria-label="Leitstellenmenü"]',
+            )
+            ?.focus({ preventScroll: true });
+      });
     };
   }, []);
   useEffect(() => {

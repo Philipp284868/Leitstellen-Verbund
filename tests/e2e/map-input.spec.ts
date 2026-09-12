@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -221,13 +222,13 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Standortauswahl behalte
   await expect(map(second)).toHaveAttribute("data-camera", other!);
   await second.close();
   const camera = await map(page).getAttribute("data-camera");
-  await page.getByRole("button", { name: "Hauptmenü", exact: true }).click();
+  await openPanel(page, "Zurück zum Hauptmenü");
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(map(page)).toHaveAttribute("data-camera", camera!);
   await focus(page);
   await page.keyboard.press("ArrowRight");
   await expect(map(page)).not.toHaveAttribute("data-camera", camera!);
-  await page.getByRole("button", { name: "Standorte", exact: true }).click();
+  await openPanel(page, "Standorte verwalten");
   await page
     .getByRole("button", { name: "Standort kaufen", exact: true })
     .click();

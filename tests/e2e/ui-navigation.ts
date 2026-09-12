@@ -1,59 +1,69 @@
 import { expect, type Page } from "@playwright/test";
 export async function enterGame(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  // A hidden app shell may already have attributes while its lazy HUD suspends.
-  // Keyboard input has no locator auto-wait: require the actual visible UI.
   await expect(
-    page.getByRole("navigation", { name: "Spielbereiche" }),
+    page.getByRole("button", { name: "Leitstellenmenü", exact: true }),
   ).toBeVisible();
 }
-
 export async function openPanel(page: Page, name: string) {
   const modal = page.getByRole("dialog");
   if (await modal.isVisible()) {
     await modal.getByRole("button", { name: "Schließen", exact: true }).click();
-    // Never discard data on behalf of a test. A still-dirty form must be handled
-    // explicitly by the test that created its draft.
     await expect(modal).toHaveCount(0);
   }
-  const radio: Record<string, string> = {
-    AAO: "AAO verwalten",
-    FMS: "FMS & Alarmierungsprofile",
-    Freunde: "Verbund & Leitstellenfunk",
+  const names: Record<string, string> = {
+    AAO: "AAO",
+    "AAO verwalten": "AAO",
+    FMS: "FMS & Alarmierung",
+    "FMS & Alarmierungsprofile": "FMS & Alarmierung",
+    Freunde: "Kooperation & Disponenten",
+    "Verbund & Leitstellenfunk": "Kooperation & Disponenten",
+    Archiv: "Archiv & Statistik",
+    Fahrzeuge: "Fuhrpark",
+    Wachen: "Standorte verwalten",
+    Standorte: "Standorte verwalten",
+    "Katastrophenbereitschaft & KatS-Wachen": "Katastrophenbereitschaft",
+    Gebäude: "Standorte verwalten",
   };
-  if (name in radio) {
-    await page.getByRole("button", { name: "Funk", exact: true }).click();
-    await page
-      .getByRole("button", {
-        name: new RegExp(
-          `^${radio[name].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\d+)?$`,
-        ),
-      })
-      .click();
+  const menu = page.getByRole("button", {
+    name: "Leitstellenmenü",
+    exact: true,
+  });
+  if (
+    !(await menu.isVisible()) &&
+    (await page.getByRole("button", { name, exact: true }).isVisible())
+  ) {
+    await page.getByRole("button", { name, exact: true }).click();
     return;
   }
-  if (name === "Archiv") await showIncidents(page);
-  if (name === "Sicherungen") {
-    await page
-      .getByRole("button", { name: "Einstellungen", exact: true })
-      .click();
-    await page
-      .getByRole("tab", { name: "Hinweise & Hilfe", exact: true })
-      .click();
-  }
-  await page.getByRole("button", { name, exact: true }).click();
+  await expect(menu).toBeVisible();
+  if ((await menu.getAttribute("aria-expanded")) !== "true") await menu.click();
+  await page
+    .getByRole("navigation", { name: "Leitstellenmenü", exact: true })
+    .getByRole("button", { name: names[name] ?? name, exact: true })
+    .click();
 }
 export async function showIncidents(page: Page) {
-  const button = page.getByRole("button", {
-    name: /^Einsatzliste (aus|ein)klappen$/,
-  });
-  await expect(button).toBeVisible();
-  if ((await button.getAttribute("aria-expanded")) !== "true")
-    await button.click();
+  if (
+    await page
+      .getByRole("complementary", { name: "Kartenwerkzeuge", exact: true })
+      .isVisible()
+  )
+    await page.keyboard.press("Escape");
+  const collapsed = page.getByRole("button", { name: /Einsätze.*Notrufe/ });
+  if (await collapsed.isVisible()) await collapsed.click();
+  await expect(page.getByRole("tab", { name: /Einsätze/ })).toBeVisible();
+  await page.getByRole("tab", { name: /Einsätze/ }).click();
 }
 export async function showMapTools(page: Page) {
-  const button = page.getByRole("button", { name: "Karte", exact: true });
-  await expect(button).toBeVisible();
-  if ((await button.getAttribute("aria-expanded")) !== "true")
-    await button.click();
+  await openPanel(page, "Suche");
+}
+
+export async function toggleMapTools(page: Page) {
+  const tools = page.getByRole("complementary", {
+    name: "Kartenwerkzeuge",
+    exact: true,
+  });
+  if (await tools.isVisible()) await page.keyboard.press("Escape");
+  else await showMapTools(page);
 }

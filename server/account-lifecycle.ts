@@ -126,6 +126,24 @@ export class AccountLifecycle {
       this.db.sql
         .prepare("DELETE FROM desk_members WHERE user_id=? OR owner_id=?")
         .run(user, user);
+      for (const table of [
+        "game_events",
+        "event_cursors",
+        "desk_metrics",
+        "ranked_missions",
+      ])
+        this.db.sql.prepare(`DELETE FROM ${table} WHERE owner=?`).run(user);
+      this.db.sql
+        .prepare("DELETE FROM player_activity WHERE owner=? OR actor=?")
+        .run(user, user);
+      const excluded = Number(
+        this.db.sql
+          .prepare("SELECT excluded FROM player_metrics WHERE user_id=?")
+          .get(user)?.excluded ?? 0,
+      );
+      this.db.sql
+        .prepare("DELETE FROM player_metrics WHERE user_id=?")
+        .run(user);
       if (pending.operation === "reset") {
         const next = fresh(
           s?.player.name ?? pending.username,
@@ -134,6 +152,9 @@ export class AccountLifecycle {
         );
         next.player.id = user;
         this.db.save(user, next);
+        this.db.sql
+          .prepare("UPDATE player_metrics SET excluded=? WHERE user_id=?")
+          .run(excluded, user);
         this.db.audit(user, "personal-world-reset");
       } else {
         this.db.sql.prepare("DELETE FROM audit WHERE actor=?").run(user);

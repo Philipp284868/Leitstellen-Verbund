@@ -1,5 +1,17 @@
 # Änderungen
 
+## 2.25.0 · Leitstellenarbeitsplatz und Serverbetrieb · 12.09.2026
+
+- Aktive Spielanwesenheit für neue Notrufe; keine passive Grundfinanzierung. Tutorial und isolierte Übungswelten stillgelegt, reale Konten und Besitz erhalten.
+- Linke Einsatz-/Notrufliste, permanentes Textprotokoll und Sammelmenü neben dem Leitstellennamen. Hauptmenü bereinigt, Discord-Kachel ergänzt; keine Funk-Sprachausgabe.
+- Allgemeine POI-/Spieler-/Personal-Pins entfernt. Lokale Straßen, Bahn und Straßenbahn mit Brücken-/Tunnel-/Ebenenunterscheidung.
+- Serverrangliste einschließlich Offline-Spielern, eindeutige persönliche Aktions- und Beteiligungszähler sowie getrennte gemeinsame Leitstellenmesswerte. Historische Lücken sind bezeichnet.
+- Vollständiger ausgelieferter Versionsverlauf aus dieser Datei. Support mit Datenschutz-/Lizenzhinweisen ohne Login, bereinigten Entwürfen/Exporten sowie optionalem bewusst bestätigtem GitHub-Versand. Persistente Berichts-IDs, begrenzte Versuche und Abgleich unklarer Ausgänge.
+- SQLite 21–25, strukturierte gedrosselte Betriebsdiagnose. AMP-Netzwerk- und Datenpfade bleiben bestehen.
+- Kartensuche, Großlagenübersicht und Notrufarbeitsplatz bleiben über die neue Navigation erreichbar. Eingeklappte Listen verdecken keine Kartenwerkzeuge.
+- Ereignisprotokoll respektiert die erste Erkundung auch beim Lesen alter Einträge und führt FMS-Doppelbelege zusammen. Ein begrenztes Fenster verhindert wiederholtes Schreiben unveränderter Historien; ältere Seiten bleiben getrennt lesbar.
+- Bereinigte technische Angaben lassen sich kopieren oder exportieren. Lokale Skript-/Darstellungsfehler werden ohne Rohtexte oder Zugangsdaten gesammelt; fehlender Versionsverlauf erhält eine verständliche Fehlermeldung.
+
 ## Textprotokoll und Leitstellenmenü · 12.09.2026
 
 - Einsatz-/Notrufreiter links, dauerhafter Textverlauf unten links und Sammelmenü unmittelbar am Leitstellennamen ersetzen die untere Navigationsleiste. Hauptmenü mit Spielen, Leaderboard-Zugang, Changelogs, Einstellungen, Support, Abmeldung und Gaminglive-Discord.

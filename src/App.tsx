@@ -20,11 +20,9 @@ import { DynamicsPanel } from "./Dynamics";
 import { MainMenu } from "./MainMenu";
 import { BuildingIcon } from "./map-icons";
 import { navigation } from "./navigation";
-import { usePresence } from "./network";
 import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "./product";
 import { EventLog } from "./EventLog";
-import "./ControlRoom.css";
 const BuildingPanel = lazy(() =>
   import("./Resources").then((m) => ({ default: m.BuildingPanel })),
 );
@@ -89,7 +87,6 @@ export function App() {
 }
 function GameApp() {
   const { save: s, loading, readonly, error, notice, user } = useGame();
-  const presence = usePresence();
   const [screen, setScreen] = useState("start"),
     [modal, setModalRaw] = useState(""),
     [selected, setSelected] = useState("");
@@ -522,23 +519,7 @@ function GameApp() {
                     </>
                   )}
                 {modal === "friends" && <TeamPanel />}
-                {modal === "players" && (
-                  <Players
-                    players={presence.players}
-                    ownUserId={user?.id ?? ""}
-                    ownDeskId={s.player.id}
-                    connected={presence.connected}
-                    ready={presence.ready}
-                    onJump={(point) => {
-                      setModal("");
-                      setListOpen(false);
-                      setSelected("");
-                      window.dispatchEvent(
-                        new CustomEvent("lv:map-focus", { detail: { point } }),
-                      );
-                    }}
-                  />
-                )}
+                {modal === "players" && <Players />}
                 {modal === "aaos" && <AAOPanel s={s} />}
                 {modal === "fms" && <FMSPanel s={s} />}
                 {modal === "progress" && (
