@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { fresh, type Save } from "../src/model";
-import { readiness } from "../src/engine";
-import { fleetReadiness } from "../src/fleet-view";
+import { fresh, type Save } from "../src/shared/model";
+import { readiness } from "../src/shared/engine";
+import { fleetReadiness } from "../src/shared/fleet-view";
 
 function roster(stations = 3, units = 4, crew = 6) {
   const s = fresh("Test", "Leitstelle", 9 * 3600);

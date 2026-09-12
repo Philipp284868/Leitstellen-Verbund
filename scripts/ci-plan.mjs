@@ -52,7 +52,7 @@ export function classify(paths, requested = "auto") {
     return "docs";
   if (
     paths.some((p) =>
-      /^(src\/germany\/(GermanyMap|game-markers)|server\/germany\/|src\/motion|tests\/e2e\/map-load|scripts\/geodata\/)/.test(
+      /^(src\/client\/germany\/(GermanyMap|game-markers)|src\/server\/germany\/|src\/shared\/motion|tests\/e2e\/map-load|scripts\/geodata\/)/.test(
         p,
       ),
     )
@@ -60,7 +60,7 @@ export function classify(paths, requested = "auto") {
     return "deep";
   if (requested === "full") return "full";
   const narrow =
-    /^(src\/audio\/|src\/(?:audio|device-preferences|money|fleet-view|map-symbols)\.ts$|tests\/(?:audio[^/]*|device-preferences|economy|fleet-view|map-symbols)\.test\.ts$|tests\/e2e\/(?:audio[^/]*|settings-workstation)\.spec\.ts$)/;
+    /^(src\/client\/audio\/|src\/(?:client|shared)\/(?:audio|device-preferences|money|fleet-view|map-symbols)\.ts$|tests\/(?:audio[^/]*|device-preferences|economy|fleet-view|map-symbols)\.test\.ts$|tests\/e2e\/(?:audio[^/]*|settings-workstation)\.spec\.ts$)/;
   return paths.every((p) => narrow.test(p) && existsSync(p)) ? "fast" : "full";
 }
 // Longest processing time first, using measured per-engine file costs. Files
@@ -94,7 +94,7 @@ export async function makePlan({ head, base, paths, requested = "auto" }) {
     partitions = {};
   if (profile !== "docs") {
     const { testGroups } = await import("./test-groups.mjs");
-    const { sourceGraph } = await import("./source-graph.mjs");
+    const { sourceGraph } = await import("./build/source-graph.mjs");
     const groups = testGroups();
     const browser = readdirSync("tests/e2e", { recursive: true })
       .filter((f) => f.endsWith(".spec.ts") && !f.endsWith("map-load.spec.ts"))

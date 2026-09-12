@@ -1,6 +1,6 @@
 import { taskSkills } from "./organizations";
-import type { Mission, Save } from "../model";
-import { mt, type Skills } from "../catalog";
+import type { Mission, Save } from "../shared/model";
+import { mt, type Skills } from "../shared/catalog";
 import { hazardKinds, type Hazard } from "./dynamics-schema";
 import { record } from "./events";
 import { clamp } from "./random";

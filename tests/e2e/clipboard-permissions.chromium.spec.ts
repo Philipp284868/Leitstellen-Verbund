@@ -3,7 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
+import type { startServer } from "../../src/server/index";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
 

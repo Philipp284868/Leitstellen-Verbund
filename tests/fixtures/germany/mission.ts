@@ -1,6 +1,6 @@
-import type { Save, Mission } from "../../../src/model";
+import type { Save, Mission } from "../../../src/shared/model";
 import { simId } from "../../../src/simulation/events";
-import { mt } from "../../../src/catalog";
+import { mt } from "../../../src/shared/catalog";
 import { sites } from "./locations";
 
 // Explicit scenario precondition; generator decisions are tested separately.

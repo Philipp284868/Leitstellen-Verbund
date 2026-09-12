@@ -1,5 +1,5 @@
-import type { Save, Vehicle } from "../model";
-import { vt } from "../catalog";
+import type { Save, Vehicle } from "../shared/model";
+import { vt } from "../shared/catalog";
 import { record } from "./events";
 import { setFms } from "./fms";
 

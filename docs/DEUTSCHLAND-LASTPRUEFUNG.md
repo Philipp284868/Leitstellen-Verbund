@@ -95,7 +95,7 @@ wurden; `failed` bedeutet eine unvollständige oder fehlgeschlagene Prüfung.
 
 ## Historischer Vergleichslauf vom 9. September 2026
 
-Der neue Deutschland-only-Lauf vom 10.09.2026 ist in der [aktuellen Abnahme einschließlich gemessener Leistungsgrenzen](ABNAHME-DEUTSCHLAND-ONLY.md#grenzen-des-zusätzlichen-extremtests) dokumentiert. Er verwendet zwölf vorbereitete Einsätze, automatische Besetzung und vorab bestätigte reale Verbindungen auf einem größeren Berliner Wachenring. Die folgenden Werte bleiben der ausdrücklich ältere Vergleichsstand.
+Der neue Deutschland-only-Lauf vom 10.09.2026 ist in der [aktuellen Abnahme einschließlich gemessener Leistungsgrenzen](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/ABNAHME-DEUTSCHLAND-ONLY.md#grenzen-des-zusätzlichen-extremtests) dokumentiert. Er verwendet zwölf vorbereitete Einsätze, automatische Besetzung und vorab bestätigte reale Verbindungen auf einem größeren Berliner Wachenring. Die folgenden Werte bleiben der ausdrücklich ältere Vergleichsstand.
 
 Die reale Messung `deutschland-last-1788909022429` wurde ohne CPU-Profiler auf
 Windows mit Node 24.19.0, Edge 152.0.4191.66, Intel Core i7-13700K,

@@ -8,14 +8,19 @@ import {
   vehicles,
   vt,
   type Template,
-} from "../src/catalog";
+} from "../src/shared/catalog";
 import {
   incidentProfileSchema,
   incidentSiteKind,
-} from "../src/catalog/incident-profile";
-import { incidentTopics } from "../src/catalog/incident-topics";
-import { incidentVariants } from "../src/catalog/incident-variants";
-import { fresh, validate, type Mission, type Vehicle } from "../src/model";
+} from "../src/shared/catalog/incident-profile";
+import { incidentTopics } from "../src/shared/catalog/incident-topics";
+import { incidentVariants } from "../src/shared/catalog/incident-variants";
+import {
+  fresh,
+  validate,
+  type Mission,
+  type Vehicle,
+} from "../src/shared/model";
 import { attachIncident } from "../src/simulation/calls";
 import {
   attachDynamics,

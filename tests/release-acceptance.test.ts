@@ -34,7 +34,7 @@ it("verlangt echte erfolgreiche Pflichtjobs und lässt nur geplante Jobs aus", (
   ).not.toThrow();
 });
 const { releaseRun, verifyCoverage } = await import(
-  pathToFileURL(resolve("scripts/release-verification.mjs")).href
+  pathToFileURL(resolve("scripts/release/release-verification.mjs")).href
 );
 const { makePlan } = await import(
   pathToFileURL(resolve("scripts/ci-plan.mjs")).href

@@ -1,9 +1,9 @@
 import { ensureWaterSupply } from "../src/simulation/water-supply";
 import { expect, it } from "vitest";
-import { vehicles, vt, type Template } from "../src/catalog";
-import { incidentVariants } from "../src/catalog/incident-variants";
-import { capacity, missing, tick } from "../src/engine";
-import { fresh, validate, type Mission } from "../src/model";
+import { vehicles, vt, type Template } from "../src/shared/catalog";
+import { incidentVariants } from "../src/shared/catalog/incident-variants";
+import { capacity, missing, tick } from "../src/shared/engine";
+import { fresh, validate, type Mission } from "../src/shared/model";
 import { attachIncident } from "../src/simulation/calls";
 import { attachDynamics, dynamicsTick } from "../src/simulation/dynamics";
 import { dynamicsSchema } from "../src/simulation/dynamics-schema";
@@ -22,7 +22,7 @@ import {
   syncResponderRecovery,
 } from "../src/simulation/responder-recovery";
 import { personAvailable } from "../src/simulation/staffing";
-import { hospitalAt } from "../src/world";
+import { hospitalAt } from "../src/shared/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { addUnit, atScene } from "./incident-dynamics-fixture";
 

@@ -1,10 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { useState } from "react";
-import { GermanyMap } from "../../src/germany/GermanyMap";
-import { project } from "../../src/germany/projection";
-import type { Save } from "../../src/model";
-import { emit } from "../../src/store";
-import { ECONOMY_PRICES } from "../../src/economy/prices";
+import { GermanyMap } from "../../src/client/germany/GermanyMap";
+import { project } from "../../src/shared/germany/projection";
+import type { Save } from "../../src/shared/model";
+import { emit } from "../../src/client/store";
+import { ECONOMY_PRICES } from "../../src/shared/economy/prices";
 
 // Deliberately minimal UI contract fixture. Empty map tiles are supplied by the
 // test server; this is not real-world geographical or routing acceptance.

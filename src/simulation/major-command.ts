@@ -1,6 +1,6 @@
 import { configuredSkills } from "./vehicle-equipment";
 import { hospitalOptions } from "./hospitals";
-import type { Save, Vehicle } from "../model";
+import type { Save, Vehicle } from "../shared/model";
 import { declareMajor } from "./major-incidents";
 import { sectionNames, type MajorAction } from "./major-schema";
 import { sectionSkills, effectiveSkills, placement } from "./major-resources";

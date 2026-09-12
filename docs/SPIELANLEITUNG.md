@@ -1,12 +1,12 @@
 # Die Leitstelle übernehmen · Version 2.25
 
-Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder anmelden. Es gibt keine Admin-Spielkonten und keine Registrierungseinladung. Ein einzelner Spieler darf allein auf dem Multiplayer-Server disponieren. Gemeinsame Disponenten derselben Leitstelle werden ausdrücklich eingeladen; unabhängige Leitstellen teilen ihre Einsätze nicht automatisch.
+Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst auf der Spielwebsite **Neues Konto erstellen** wählen oder anmelden. Öffentliche Registrierung erzeugt ausschließlich Spielerkonten; ein Spieladministrator benötigt die getrennte Freigabe des Betreibers. Eine Registrierungseinladung ist nicht nötig. Ein einzelner Spieler darf allein auf dem Multiplayer-Server disponieren. Gemeinsame Disponenten derselben Leitstelle werden ausdrücklich eingeladen; unabhängige Leitstellen teilen ihre Einsätze nicht automatisch.
 
 ## Einstieg
 
 **Spielen** öffnet die berechtigte Leitstelle. Tutorial und separate Übungswelt entfallen. Mit dem einmaligen Startgeld kaufst du einen freigeschalteten realen Standort und ein passendes Fahrzeug. Hilfe bleibt unter Support erreichbar. Neue Notrufe entstehen nur, solange mindestens ein berechtigter Disponent in der Spielansicht ist; Anmeldung und Hauptmenü genügen nicht. Bestehende Einsätze und Transporte laufen weiter.
 
-**Menü** rechts neben dem Leitstellennamen bündelt Verwaltung, Notrufarbeitsplatz, Kooperation, Auswertung und Support. Links stehen Einsätze/Notrufe, darunter das reine Textprotokoll. Fachliche Sprechwünsche bearbeitest du im Einsatz. [Bedienung und Betriebsgrenzen ab 2.25](HUD-UND-SERVER.md).
+**Menü** rechts neben dem Leitstellennamen bündelt Verwaltung, Notrufarbeitsplatz, Kooperation, Auswertung und Support. Links stehen Einsätze/Notrufe, darunter das reine Textprotokoll. Fachliche Sprechwünsche bearbeitest du im Einsatz. [Bedienung und Betriebsgrenzen ab 2.25](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/HUD-UND-SERVER.md).
 
 ## Budget und Wachen
 
@@ -14,7 +14,7 @@ Neue normale Leitstellen starten auf Stufe 1 mit 1.400.000,00 €. Feuerwache un
 
 Unter **Menü → Standorte kaufen** einen realen vorhandenen Standort wählen und den Kauf ausdrücklich bestätigen. Auf der Deutschlandkarte muss die echte Zufahrt geprüft werden können; Wasserrettung benötigt einen geeigneten Uferzugang. Nach der Inbetriebnahme stellt die Wache ihre zulässigen Fahrzeugfunktionen mit passender Besetzung und Qualifikation automatisch bereit. Es gibt keine zusätzlichen Rekrutierungs- oder Ausbildungsgebühren und keinen manuellen Pflichtschritt „Besetzen“.
 
-Neue Feuerwachen sind Freiwillige Feuerwehren. Nach einer Alarmierung kommen die benötigten Kräfte zeitlich versetzt auf tatsächlichen Straßen zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Die Automatik beseitigt keine Verletzungen, laufenden Bindungen, Defekte oder Übergaben. Eine Person wird nicht gleichzeitig mehreren Fahrzeugen zugesagt. Ab Stufe 6 ist die Umstellung zur Berufsfeuerwehr für 1.350.000,00 € möglich. Historische Berufsfeuerwehren bleiben bestehen. [Wachbetrieb und Bestandsschutz](GEBAEUDEBESETZUNG-2.21.md).
+Neue Feuerwachen sind Freiwillige Feuerwehren. Nach einer Alarmierung kommen die benötigten Kräfte zeitlich versetzt auf tatsächlichen Straßen zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Die Automatik beseitigt keine Verletzungen, laufenden Bindungen, Defekte oder Übergaben. Eine Person wird nicht gleichzeitig mehreren Fahrzeugen zugesagt. Ab Stufe 6 ist die Umstellung zur Berufsfeuerwehr für 1.350.000,00 € möglich. Historische Berufsfeuerwehren bleiben bestehen. [Wachbetrieb und Bestandsschutz](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/GEBAEUDEBESETZUNG-2.21.md).
 
 ## Notruf bis Einsatzabschluss
 
@@ -32,7 +32,7 @@ Neue Feuerwachen sind Freiwillige Feuerwehren. Nach einer Alarmierung kommen die
 
 Notrufe kommen einzeln und zeitlich versetzt. Der Einstieg nutzt 300–480 Simulationssekunden als Grundspanne; Nacht, offene Gespräche, laufende Einsätze, freie Fahrzeuge und Ausbau verändern das tatsächliche Aufkommen. Es gibt keine pauschale Regel „höchstens zwei Einsätze“ mehr. Bestehende Fälle werden nicht gelöscht. Weitere Disponenten, Tabs oder Wiederverbindungen erzeugen keine Startwelle. Technische Hilfe ist der Schwerpunkt; der Generator berücksichtigt freigeschaltete und grundsätzlich vorhandene Fähigkeiten.
 
-Die Welt läuft fest in Echtzeit 1×. In Deutschland stammen Straßen und Entfernungen aus dem lokalen Geodatenpaket; Limits, Wetter, Verkehr und Sperrungen beeinflussen Route und ETA. Luftrettung verwendet den eigenen Flugweg. Das deutsche MZB ist eine vollständige Kombination aus Zugfahrzeug und Boot: Es fährt auf Straßen zu einem geprüften Uferzugang, von dem die Wasserrettungsaufgabe erfolgt. Eine freie Wasserroute wird nicht vorgetäuscht. Der historische Rivermere-Bootbetrieb verwendet seinen eigenen Wassergraphen.
+Die Welt läuft fest in Echtzeit 1×. In Deutschland stammen Straßen und Entfernungen aus dem lokalen Geodatenpaket; Limits, Wetter, Verkehr und Sperrungen beeinflussen Route und ETA. Luftrettung verwendet den eigenen Flugweg. Das deutsche MZB ist eine vollständige Kombination aus Zugfahrzeug und Boot: Es fährt auf Straßen zu einem geprüften Uferzugang, von dem die Wasserrettungsaufgabe erfolgt. Eine freie Wasserroute wird nicht vorgetäuscht.
 
 Ein besetztes, leeres und einsatzbereites Fahrzeug auf Rückfahrt kann direkt vom tatsächlichen Straßenabschnitt erneut alarmiert werden. Patienten an Bord, Übergabe, notwendige Nachbereitung und Defekte bleiben konkrete Sperren. Gewöhnliche zufällige Fahrzeugstörungen enden nach gespeicherter Frist automatisch; kein Reparaturklick ist nötig. Eine manuelle FMS-Korrektur mit Begründung ändert den Funkstatus, keine Route oder Patientenbindung. Definitionen 0–9 und Alarmprofile stehen unter **Funk → FMS und Alarmierungsprofile** in eigenen Reitern.
 

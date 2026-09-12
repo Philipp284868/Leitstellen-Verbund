@@ -3,7 +3,7 @@ import { phaseFixture } from "./dispatch-fixture";
 import { nextCallDelay } from "../src/simulation/balance";
 import { callAction, questionsFor } from "../src/simulation/calls";
 import { publicSave } from "../src/simulation/incidents";
-import { missions } from "../src/catalog";
+import { missions } from "../src/shared/catalog";
 import {
   chooseIncidentTemplate,
   incidentCategory,
@@ -15,14 +15,14 @@ import {
   recordIncidentCreated,
   callLoad,
 } from "../src/simulation/pacing";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { weatherWeight } from "../src/simulation/weather";
 import { majorCommand } from "../src/simulation/major-command";
-import { apply } from "../src/engine";
+import { apply } from "../src/shared/engine";
 
 function establishedDesk() {
   const s = phaseFixture("pacing", "bin");

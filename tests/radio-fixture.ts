@@ -1,4 +1,4 @@
-import { tick } from "../src/engine";
+import { tick } from "../src/shared/engine";
 import { callAction } from "../src/simulation/calls";
 import { alarm } from "../src/simulation/dispatch";
 import { phaseFixture } from "./dispatch-fixture";

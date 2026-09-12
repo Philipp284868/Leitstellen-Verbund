@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { Save } from "../model";
-import type { Template } from "../catalog";
+import type { Save } from "../shared/model";
+import type { Template } from "../shared/catalog";
 import { sample } from "./random";
 
 export const situationProfiles = [

@@ -1,5 +1,5 @@
-import type { Mission, Save } from "../model";
-import { mt, type Skills } from "../catalog";
+import type { Mission, Save } from "../shared/model";
+import { mt, type Skills } from "../shared/catalog";
 import type { MissionTaskState } from "./mission-task-schema";
 import { record } from "./events";
 

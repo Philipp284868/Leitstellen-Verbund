@@ -1,5 +1,5 @@
 import { expect } from "vitest";
-import type { Save } from "../../src/model";
+import type { Save } from "../../src/shared/model";
 /** Assert the added migration metadata, then compare the protected payload
  * separately. No field of the original mission/player/fleet is ignored. */
 export function withoutLocationMigration(actual: Save, before: Save) {

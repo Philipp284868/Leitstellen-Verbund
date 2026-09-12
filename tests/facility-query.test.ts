@@ -3,12 +3,15 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { SqliteFacilityCatalog } from "../server/facilities/catalog";
-import { facilityResponse } from "../server/facilities/http";
-import { fresh } from "../src/model";
-import { apply } from "../src/engine";
-import { bookMoney } from "../src/economy/ledger";
-import { germanyProvider, installGermanyProvider } from "../src/germany/world";
+import { SqliteFacilityCatalog } from "../src/server/facilities/catalog";
+import { facilityResponse } from "../src/server/facilities/http";
+import { fresh } from "../src/shared/model";
+import { apply } from "../src/shared/engine";
+import { bookMoney } from "../src/shared/economy/ledger";
+import {
+  germanyProvider,
+  installGermanyProvider,
+} from "../src/shared/germany/world";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { sites, fixtureDataset } from "./fixtures/germany/locations";
 

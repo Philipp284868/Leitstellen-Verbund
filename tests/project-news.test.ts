@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { parseProjectNews } from "../src/project-news";
+import { parseProjectNews } from "../src/client/project-news";
 const item = {
   title: "Freigegeben",
   summary: "<script>kein HTML</script>",

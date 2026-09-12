@@ -1,16 +1,25 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { buildings, extensions, missions, vehicles } from "../src/catalog";
-import { economyBalanceAudit } from "../src/economy/balancing";
-import { bookMoney, ledgerBalance, saleValue } from "../src/economy/ledger";
+import {
+  buildings,
+  extensions,
+  missions,
+  vehicles,
+} from "../src/shared/catalog";
+import { economyBalanceAudit } from "../src/shared/economy/balancing";
+import {
+  bookMoney,
+  ledgerBalance,
+  saleValue,
+} from "../src/shared/economy/ledger";
 import {
   convertLegacyCredits,
   migrateEconomy,
   protectionRatio,
-} from "../src/economy/migration";
-import { ECONOMY_PRICES, priceEntries } from "../src/economy/prices";
-import { apply, beginTrip, tick } from "../src/engine";
-import { fresh, validate } from "../src/model";
+} from "../src/shared/economy/migration";
+import { ECONOMY_PRICES, priceEntries } from "../src/shared/economy/prices";
+import { apply, beginTrip, tick } from "../src/shared/engine";
+import { fresh, validate } from "../src/shared/model";
 import {
   MAX_CENTS,
   checkedCents,
@@ -18,7 +27,7 @@ import {
   formatMoney,
   mulRatio,
   sumCents,
-} from "../src/money";
+} from "../src/shared/money";
 import { sites as nodes } from "./fixtures/germany/locations";
 
 describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {

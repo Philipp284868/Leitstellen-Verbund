@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GeoRequestCache } from "../src/germany/request-cache";
+import { GeoRequestCache } from "../src/client/germany/request-cache";
 const flush = async () => {
   for (let i = 0; i < 12; i++) await Promise.resolve();
 };

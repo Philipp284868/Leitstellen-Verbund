@@ -1,0 +1,43 @@
+[
+  {
+    "UpdateStageName": "Stabilen Starter beziehen",
+    "UpdateSourcePlatform": "Linux",
+    "UpdateSource": "FetchURL",
+    "UpdateSourceData": "https://github.com/Philipp284868/Leitstellen-Verbund/releases/download/v2.26.0/amp-bootstrap.tar.gz",
+    "UpdateSourceTarget": "{{$FullRootDir}}",
+    "UnzipUpdateSource": true,
+    "OverwriteExistingFiles": false,
+    "SkipOnFailure": false
+  },
+  {
+    "UpdateStageName": "Node ausführbar machen",
+    "UpdateSourcePlatform": "Linux",
+    "UpdateSource": "SetExecutableFlag",
+    "UpdateSourceArgs": "{{$FullRootDir}}node/bin/node",
+    "SkipOnFailure": false
+  },
+  {
+    "UpdateStageName": "Geprüfte Programmversion installieren",
+    "UpdateSourcePlatform": "Linux",
+    "UpdateSource": "Executable",
+    "UpdateSourceData": "{{$FullRootDir}}node/bin/node",
+    "UpdateSourceArgs": "\"{{$FullRootDir}}launcher/runtime.mjs\" setup",
+    "SkipOnFailure": false
+  },
+  {
+    "UpdateStageName": "Über AMP starten",
+    "UpdateSourcePlatform": "Linux",
+    "UpdateSource": "StartApplication",
+    "UpdateSourceConditionSetting": "StartAfterUpdate",
+    "UpdateSourceConditionValue": "true",
+    "SkipOnFailure": false
+  },
+  {
+    "UpdateStageName": "Spielbereitschaft abwarten",
+    "UpdateSourcePlatform": "Linux",
+    "UpdateSource": "WaitForStartupComplete",
+    "UpdateSourceConditionSetting": "StartAfterUpdate",
+    "UpdateSourceConditionValue": "true",
+    "SkipOnFailure": false
+  }
+]

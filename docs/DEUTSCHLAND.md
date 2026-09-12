@@ -4,7 +4,7 @@ Deutschland ist die einzige aktive Spielwelt. Der Build erzeugt `dist/client/` u
 
 ## Einrichten und starten
 
-Neue Git-/AMP-Installation: `node scripts/install-germany.mjs`. Dieser ausdrückliche Einrichtungsschritt installiert das Spiel, das festgelegte vollständige Geodatenpaket und die dazu passenden lokalen Werkzeuge. [AMP-Neuinstallation](AMP-NEUINSTALLATION.md).
+Neue Git-/AMP-Installation: `node scripts/install-germany.mjs`. Dieser ausdrückliche Einrichtungsschritt installiert das Spiel, das festgelegte vollständige Geodatenpaket und die dazu passenden lokalen Werkzeuge. [AMP-Neuinstallation](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/AMP-NEUINSTALLATION.md).
 
 Bereits vorhandene Deutschlanddaten: `node scripts/amp-setup.mjs` für Programmupdates, anschließend `npm start` oder `node scripts/start-germany.mjs`. Der gewöhnliche Build verarbeitet keine neuen Geodaten. Die laufende Website, Suche und Simulation benötigen das konfigurierte lokale Datenpaket und dessen Router.
 
@@ -29,6 +29,6 @@ Weltkennung `germany-1`, Datensatz und Schema werden vor schreibenden Änderunge
 - [Höhenmodell](DEUTSCHLAND-HOEHEN.md)
 - [Umfangreiche Datensatz-/Lastprüfungen](DEUTSCHLAND-LASTPRUEFUNG.md)
 - [Aktuelle Entwicklungs- und Abnahmeprofile](ENTWICKLUNG.md)
-- [Historische Messungen und frühere Produktstände](HISTORIE.md)
+- [Historische Messungen und frühere Produktstände](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/HISTORIE.md)
 
 Die kleinen automatisierten Deutschland-Fixtures sind technische Daten für wiederholbare Regressionen. Sie ersetzen weder den echten Deutschlanddatensatz noch die gesonderten Parser-/Routing-/DEM-Prüfungen und werden nicht als Spielwelt ausgeliefert.

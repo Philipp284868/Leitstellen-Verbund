@@ -2,11 +2,11 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { historyPage } from "../server/history";
-import { vt } from "../src/catalog";
-import { apply, generate, readiness, recall, tick } from "../src/engine";
-import { validate, type Save } from "../src/model";
+import { Database } from "../src/server/database";
+import { historyPage } from "../src/server/history";
+import { vt } from "../src/shared/catalog";
+import { apply, generate, readiness, recall, tick } from "../src/shared/engine";
+import { validate, type Save } from "../src/shared/model";
 import { vehicleAvailability } from "../src/simulation/availability";
 import { nextCallDelay } from "../src/simulation/balance";
 import { attachIncident, callAction, callsTick } from "../src/simulation/calls";
@@ -18,7 +18,7 @@ import {
   priorityRank,
   visiblePriority,
 } from "../src/simulation/priority";
-import { missionList } from "../src/workspace";
+import { missionList } from "../src/client/workspace";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 

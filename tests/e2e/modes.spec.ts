@@ -2,7 +2,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
+import type { startServer } from "../../src/server/index";
 import { sites as nodes } from "../fixtures/germany/locations";
 import { interviewUI } from "./desk-helpers";
 import { established } from "./fixtures";
@@ -15,7 +15,7 @@ import {
   showMapTools,
 } from "./ui-navigation";
 
-import { generate } from "../../src/engine";
+import { generate } from "../../src/shared/engine";
 import { attachIncident } from "../../src/simulation/calls";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href

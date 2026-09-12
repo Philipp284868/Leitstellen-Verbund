@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { tick } from "../src/engine";
-import { validate } from "../src/model";
+import { tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
 import { prepared } from "./helpers/patient-transport";
 import {
   migratePatientTransports,

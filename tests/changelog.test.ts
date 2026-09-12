@@ -1,6 +1,6 @@
 import { it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseChangelog } from "../src/changelog";
+import { parseChangelog } from "../src/client/changelog";
 import { requireChangeNotes } from "../scripts/check-changelog.mjs";
 import { version } from "../package.json";
 it("liefert sämtliche tatsächlichen Versionen und erfindet keine Datumsangaben", () => {
@@ -22,26 +22,26 @@ it("liefert sämtliche tatsächlichen Versionen und erfindet keine Datumsangaben
   ]);
 });
 it("CI verlangt echte Notizen und erlaubt nur begründete Wartungsausnahmen", () => {
-  expect(() => requireChangeNotes(["src/App.tsx"])).toThrow();
+  expect(() => requireChangeNotes(["src/client/App.tsx"])).toThrow();
   expect(() =>
-    requireChangeNotes(["src/App.tsx", "CHANGELOG.md"]),
+    requireChangeNotes(["src/client/App.tsx", "CHANGELOG.md"]),
   ).not.toThrow();
   expect(() =>
     requireChangeNotes(
-      ["scripts/build.mjs", "docs/CHANGELOG-AUSNAHME.md"],
+      ["scripts/build/build.mjs", "docs/CHANGELOG-AUSNAHME.md"],
       "Begründete Wartung: " +
         "nur interne Formatierung und Prüfmittel. ".repeat(3),
     ),
   ).not.toThrow();
   expect(() =>
     requireChangeNotes(
-      ["src/App.tsx", "docs/CHANGELOG-AUSNAHME.md"],
+      ["src/client/App.tsx", "docs/CHANGELOG-AUSNAHME.md"],
       "x".repeat(100),
     ),
   ).toThrow();
   expect(() =>
     requireChangeNotes(
-      ["scripts/build.mjs", "docs/CHANGELOG-AUSNAHME.md"],
+      ["scripts/build/build.mjs", "docs/CHANGELOG-AUSNAHME.md"],
       "kurz",
     ),
   ).toThrow();

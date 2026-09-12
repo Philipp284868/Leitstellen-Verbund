@@ -3,9 +3,9 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Config } from "../../server/config";
-import type { startServer } from "../../server/index";
-import { writeWorldSituation } from "../../server/world-situation";
+import type { Config } from "../../src/server/config";
+import type { startServer } from "../../src/server/index";
+import { writeWorldSituation } from "../../src/server/world-situation";
 import {
   advanceSituation,
   createSituation,

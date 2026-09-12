@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { apply, recall } from "../src/engine";
+import { apply, recall } from "../src/shared/engine";
 import { garageIndex } from "../src/simulation/garage";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";

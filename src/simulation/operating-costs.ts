@@ -1,8 +1,8 @@
 import type { OperatingBill } from "./operating-cost-schema";
-import { vt } from "../catalog";
-import { euro } from "../money";
-import { bookMoney } from "../economy/ledger";
-import type { Building, Save } from "../model";
+import { vt } from "../shared/catalog";
+import { euro } from "../shared/money";
+import { bookMoney } from "../shared/economy/ledger";
+import type { Building, Save } from "../shared/model";
 import type { AidRequest } from "./organizations-schema";
 export function newOperatingBill(at: number): OperatingBill {
   return {

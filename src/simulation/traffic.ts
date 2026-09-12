@@ -1,15 +1,15 @@
-import { vt } from "../catalog";
-import { GermanyRoutingError } from "../germany/errors";
-import type { Save, Vehicle } from "../model";
-import { motionProfile } from "../motion";
-import { vehicleMotion, vehiclePosition } from "../vehicle-position";
+import { vt } from "../shared/catalog";
+import { GermanyRoutingError } from "../shared/germany/errors";
+import type { Save, Vehicle } from "../shared/model";
+import { motionProfile } from "../shared/motion";
+import { vehicleMotion, vehiclePosition } from "../shared/vehicle-position";
 import {
   distance,
   METERS_PER_UNIT,
   roadSectionBetween,
   route,
   type Point,
-} from "../world";
+} from "../shared/world";
 import type { TravelMode } from "./dynamics-schema";
 import { record } from "./events";
 import { DYNAMICS } from "./random";

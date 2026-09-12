@@ -8,15 +8,15 @@ import {
   soundStorage,
   soundError,
   inspectSound,
-} from "../src/audio/custom";
+} from "../src/client/audio/custom";
 import {
   channelFor,
   customChannel,
   defaultChannels,
   type CustomChannel,
-} from "../src/audio/profiles";
-import { parseSound } from "../src/audio/controller";
-import { priorityTone } from "../src/audio/events";
+} from "../src/client/audio/profiles";
+import { parseSound } from "../src/client/audio/controller";
+import { priorityTone } from "../src/client/audio/events";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => {

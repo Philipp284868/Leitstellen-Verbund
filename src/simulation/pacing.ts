@@ -1,4 +1,4 @@
-import type { Save } from "../model";
+import type { Save } from "../shared/model";
 import { callGenerationAllowed } from "./call-generation";
 import { crewSummaries } from "./staffing";
 import { vehicleAvailability } from "./availability";

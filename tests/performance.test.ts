@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { tick } from "../src/engine";
-import { fresh, uid, validate } from "../src/model";
+import { tick } from "../src/shared/engine";
+import { fresh, uid, validate } from "../src/shared/model";
 import { sites as nodes } from "./fixtures/germany/locations";
 
 it("prüft und simuliert 100 Gebäude, 300 Fahrzeuge und 50 Einsätze", () => {

@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 import { Server } from "socket.io";
 import { io, type Socket } from "socket.io-client";
 import { afterEach, expect, it } from "vitest";
-import { ensureSocketConnection } from "../src/socket-connection";
+import { ensureSocketConnection } from "../src/client/socket-connection";
 
 const cleanup: (() => Promise<void>)[] = [];
 afterEach(async () => {

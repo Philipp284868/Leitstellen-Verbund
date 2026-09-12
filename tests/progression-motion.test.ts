@@ -1,19 +1,19 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
-import { vehicleHomeAllowed } from "../src/catalog";
-import { euro } from "../src/money";
-import { SpatialIndex } from "../src/spatial";
+import { vehicleHomeAllowed } from "../src/shared/catalog";
+import { euro } from "../src/shared/money";
+import { SpatialIndex } from "../src/client/spatial";
 import "./fixtures/germany/session";
 import { fundTestBudget } from "./money-fixture";
 
 import { expect, it } from "vitest";
-import { apply, beginTrip, tick } from "../src/engine";
-import { fresh, level, validate } from "../src/model";
+import { apply, beginTrip, tick } from "../src/shared/engine";
+import { fresh, level, validate } from "../src/shared/model";
 import {
   constantSeconds,
   motionAt,
   motionProfile,
   type MotionLeg,
-} from "../src/motion";
+} from "../src/shared/motion";
 import {
   addXp,
   MAX_XP,
@@ -21,28 +21,28 @@ import {
   progress,
   unlockLevel,
   xpForLevel,
-} from "../src/progression";
-import { fastestPath, type Link } from "../src/routing";
+} from "../src/shared/progression";
+import { fastestPath, type Link } from "../src/client/routing";
 import {
   along,
   distance,
   roadSectionBetween,
   route,
   WORLD_WIDTH,
-} from "../src/world";
+} from "../src/shared/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Auth } from "../server/auth";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { createLab, runLab, type LabAction } from "../server/lab";
-import { buildings, extensions, mt, vehicles } from "../src/catalog";
+import { Auth } from "../src/server/auth";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { createLab, runLab, type LabAction } from "../src/server/lab";
+import { buildings, extensions, mt, vehicles } from "../src/shared/catalog";
 import { routePlan } from "../src/simulation/traffic";
-import { vehicleMotion, vehiclePosition } from "../src/vehicle-position";
+import { vehicleMotion, vehiclePosition } from "../src/shared/vehicle-position";
 import { established } from "./e2e/fixtures";
 
 it("verarbeitet alle Schwellen, Rest-XP und mehrere Aufstiege bis weit über 100 ohne Tabelle", () => {

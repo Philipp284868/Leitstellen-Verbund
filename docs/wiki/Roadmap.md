@@ -4,7 +4,7 @@
 - Noch kein freigegebenes Deutschland-Bootsnetz und keine kantengenaue Umfahrung dynamischer Straßensperren; siehe [[Deutschland]].
 - Kein globaler Serverbrowser; Beitritt über die Adresse des Betreibers.
 - Keine frei konfigurierbare Hierarchie feiner Disponentenrollen; Inhaber/Mitglieder gemäß aktuellem Modell.
-- Kein beliebig frei startbarer Szenario-Spielmodus; der Einsatzkatalog ist eine Informationsansicht. Das persönliche [[Tutorial]] bietet dagegen eine konkret geführte technische und Brandübung in einer getrennten Serverwelt.
+- Kein beliebig frei startbarer Szenario-Spielmodus; der Einsatzkatalog ist eine Informationsansicht. Das persönliche [[Einsatzablauf]] bietet dagegen eine konkret geführte technische und Brandübung in einer getrennten Serverwelt.
 - Keine Smartphone-/Tablet-Produktoberfläche, keine lokale Offline-Simulation.
 
 Die deutsche Wiki ist veröffentlicht. Das [Entwicklungsboard](https://github.com/users/Philipp284868/projects/1) ist mit dem Repository verbunden und enthält die vorhandenen Issues, sechs Status sowie eine Tabelle mit Bereichs-/Prioritätsfiltern. Es ist privat und für den Inhaber beziehungsweise berechtigte Personen zugänglich. Die Einrichtung erfolgte über die angemeldete Browsersitzung ohne zusätzliche API-Scopes.

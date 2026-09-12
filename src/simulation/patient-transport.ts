@@ -1,5 +1,5 @@
-import type { Mission, Save, Vehicle } from "../model";
-import { mt, vt } from "../catalog";
+import type { Mission, Save, Vehicle } from "../shared/model";
+import { mt, vt } from "../shared/catalog";
 import { simId } from "./events";
 import {
   boardPatients,

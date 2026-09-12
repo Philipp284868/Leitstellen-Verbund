@@ -1,9 +1,9 @@
 import { configuredSkills } from "./vehicle-equipment";
-import type { Template } from "../catalog";
-import { GermanyRoutingError } from "../germany/errors";
-import { queryIncidentSites } from "../germany/world";
-import type { Save } from "../model";
-import { distance, type Point } from "../world";
+import type { Template } from "../shared/catalog";
+import { GermanyRoutingError } from "../shared/germany/errors";
+import { queryIncidentSites } from "../shared/germany/world";
+import type { Save } from "../shared/model";
+import { distance, type Point } from "../shared/world";
 import {
   LOCATION_POLICY,
   verifyIncidentLocation,

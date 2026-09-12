@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   copyFileSync,
+  cpSync,
   chmodSync,
   existsSync,
   mkdirSync,
@@ -390,6 +391,7 @@ describe("AMP installation and recovery", () => {
   });
   it("runs diagnosis from an unrelated cwd without project dependencies or build", () => {
     mkdirSync(resolve(app, "scripts"));
+    cpSync(resolve("ops"), resolve(app, "ops"), { recursive: true });
     for (const name of [
       "configuration.mjs",
       "installation.mjs",

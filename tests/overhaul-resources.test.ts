@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { apply, tick } from "../src/engine";
-import { validate } from "../src/model";
+import { apply, tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
 import {
   equipmentPrice,
   equipmentProfile,

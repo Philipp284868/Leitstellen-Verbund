@@ -1,6 +1,6 @@
-import type { Save } from "../src/model";
-import { bookMoney } from "../src/economy/ledger";
-import { euro } from "../src/money";
+import type { Save } from "../src/shared/model";
+import { bookMoney } from "../src/shared/economy/ledger";
+import { euro } from "../src/shared/money";
 
 /** Explicit developer funding, preserving the real euro journal reconciliation. */
 export function fundTestBudget(s: Save, wholeEuros: number) {

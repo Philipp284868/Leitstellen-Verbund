@@ -1,4 +1,4 @@
-import { centsSchema } from "../economy/schema";
+import { centsSchema } from "../shared/economy/schema";
 import { z } from "zod";
 const n = z.number().finite().nonnegative().max(1e12);
 const label = z.string().max(100);

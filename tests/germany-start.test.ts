@@ -104,7 +104,7 @@ async function configBinary() {
   await build({
     stdin: {
       contents:
-        'import {config} from "./server/config"; try { console.log(JSON.stringify(config())); } catch(error) { console.error(error.message); process.exitCode=1; }',
+        'import {config} from "./src/server/config"; try { console.log(JSON.stringify(config())); } catch(error) { console.error(error.message); process.exitCode=1; }',
       resolveDir: resolve("."),
     },
     outfile,
@@ -484,21 +484,19 @@ describe("Deutschland-Start und Bestandsschutz", () => {
     );
     // The production entry now shares its pipeline and path checks. Copy the
     // actual dependency set so this still reaches the guard before any build.
-    for (const name of [
-      "build.mjs",
-      "build-pipeline.mjs",
-      "build-cache.mjs",
-      "build-paths.mjs",
-      "source-graph.mjs",
-      "clean.mjs",
-    ])
-      await cp(resolve("scripts", name), resolve(buildApp, "scripts", name));
+    await cp(resolve("scripts/build"), resolve(buildApp, "scripts/build"), {
+      recursive: true,
+    });
+    await cp(
+      resolve("scripts/clean.mjs"),
+      resolve(buildApp, "scripts/clean.mjs"),
+    );
     await symlink(
       resolve("node_modules"),
       resolve(buildApp, "node_modules"),
       process.platform === "win32" ? "junction" : "dir",
     );
-    const result = spawnSync(process.execPath, ["scripts/build.mjs"], {
+    const result = spawnSync(process.execPath, ["scripts/build/build.mjs"], {
       cwd: buildApp,
       encoding: "utf8",
       windowsHide: true,

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { eventSchema } from "./schema";
-import type { Save, Mission } from "../model";
+import type { Save, Mission } from "../shared/model";
 import { telemetry } from "./reports";
 import { transmit } from "./transmissions";
 export const simId = (s: Save) => `${s.generation}-${++s.desk.sequence}`;

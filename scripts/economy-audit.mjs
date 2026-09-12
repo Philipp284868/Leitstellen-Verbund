@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 const temp = await mkdtemp(resolve(tmpdir(), "lv-economy-audit-"));
 const file = resolve(temp, "report.mjs");
 await build({
-  entryPoints: ["server/economy-report.ts"],
+  entryPoints: ["src/server/economy-report.ts"],
   outfile: file,
   bundle: true,
   platform: "node",

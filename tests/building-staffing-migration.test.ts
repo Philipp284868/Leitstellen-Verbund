@@ -3,14 +3,14 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it } from "vitest";
-import { Database, DATABASE_VERSION } from "../server/database";
-import { planEconomyMigration } from "../server/economy-migration";
-import { recall } from "../src/engine";
+import { Database, DATABASE_VERSION } from "../src/server/database";
+import { planEconomyMigration } from "../src/server/economy-migration";
+import { recall } from "../src/shared/engine";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 
 import { stationProfile } from "../src/simulation/staffing";
-import { vehiclePosition } from "../src/vehicle-position";
+import { vehiclePosition } from "../src/shared/vehicle-position";
 
 const dirs: string[] = [];
 afterEach(() => {

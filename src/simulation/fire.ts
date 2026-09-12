@@ -1,5 +1,5 @@
-import type { Mission, Save } from "../model";
-import { mt, type Skills } from "../catalog";
+import type { Mission, Save } from "../shared/model";
+import { mt, type Skills } from "../shared/catalog";
 import type { Dynamics } from "./dynamics-schema";
 import { clamp } from "./random";
 import { fireExtinguished } from "./mission-tasks";

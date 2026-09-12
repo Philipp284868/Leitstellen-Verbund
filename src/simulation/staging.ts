@@ -1,4 +1,4 @@
-import type { Save } from "../model";
+import type { Save } from "../shared/model";
 
 /** A staged person is at the station only after their actual journey. Vehicle
  * bindings are checked by the roster allocator, never replaced by this flag. */

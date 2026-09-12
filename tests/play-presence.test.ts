@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { WorldPresence, PLAY_LEASE_MS } from "../server/presence";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { fresh } from "../src/model";
-import { apply, tick } from "../src/engine";
+import { WorldPresence, PLAY_LEASE_MS } from "../src/server/presence";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { fresh } from "../src/shared/model";
+import { apply, tick } from "../src/shared/engine";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { sites } from "./fixtures/germany/locations";
-import { Diagnostics } from "../server/diagnostics";
+import { Diagnostics } from "../src/server/diagnostics";
 
 describe("Authentifizierte Spielanwesenheit", () => {
   it("trennt Menü, mehrere Tabs, Frist, Widerruf und geänderte Mitgliedschaft", () => {

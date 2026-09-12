@@ -16,6 +16,7 @@ import {
 } from "node:path";
 import { isIP } from "node:net";
 import { parseEnv } from "node:util";
+import { instance } from "../ops/runtime/instance.mjs";
 
 export const NETWORK_KEYS = [
   "HOST",
@@ -185,6 +186,40 @@ export function resolveConfiguration({
   preferLegacy = false,
 } = {}) {
   programRoot = realpathSync(programRoot);
+  if (environment.LV_INSTANCE_ROOT) {
+    const managed = instance(environment.LV_INSTANCE_ROOT);
+    const settings = Object.fromEntries(
+      Object.entries(managed.env).filter(([key]) =>
+        [
+          ...NETWORK_KEYS,
+          ...PATH_KEYS,
+          "GRAPHHOPPER_URL",
+          "GITHUB_ISSUES_TOKEN",
+        ].includes(key),
+      ),
+    );
+    const sources = Object.fromEntries(
+      Object.keys(settings).map((key) => [key, "Instanzkonfiguration"]),
+    );
+    for (const key of [...NETWORK_KEYS, "GRAPHHOPPER_URL"])
+      if (environment[key] !== undefined) {
+        settings[key] = environment[key];
+        sources[key] = "AMP-Umgebung";
+      }
+    validateNetwork(settings);
+    Object.assign(settings, validatePaths(programRoot, settings));
+    return {
+      programRoot,
+      configFile: resolve(managed.root, "shared/config/.env"),
+      legacyFile: "",
+      current: settings,
+      legacy: {},
+      identity: undefined,
+      settings,
+      sources,
+      environment: { ...environment, ...settings },
+    };
+  }
   const file = resolve(programRoot, ".env"),
     legacyFile = resolve(programRoot, ".env.germany");
   const current = readConfiguration(file),

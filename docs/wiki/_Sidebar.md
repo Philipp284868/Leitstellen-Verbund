@@ -7,7 +7,7 @@
 - [[Hauptleiste und Bedienung|Bedienung]]
 - [[Einsatzablauf]]
 - [[Weltlagen und Katastrophenschutz|Weltlagen-und-Katastrophenschutz]]
-- [[Tutorial]]
+- [[Einsatzablauf]]
 - [[Wirtschaft]]
 - [[Wachen und Personal|Wachen-und-Personal]]
 - [[Audio und Einstellungen|Audio-und-Einstellungen]]
@@ -20,4 +20,4 @@
 
 ### Historische Bestandswelt
 
-- [[Historische Spielstände|Rivermere]]
+- [[Deutschland]]

@@ -1,12 +1,12 @@
 import { it, expect } from "vitest";
-import { Database } from "../server/database";
+import { Database } from "../src/server/database";
 import { phaseFixture } from "./dispatch-fixture";
 import {
   leaderboard,
   recordActivity,
   persistMetrics,
   recordPlayTime,
-} from "../server/leaderboard";
+} from "../src/server/leaderboard";
 import { buildReport, telemetry } from "../src/simulation/reports";
 it("wertet Offline-Spieler, echte persönliche Beteiligung und gemeinsamen Besitz getrennt; keine Mehrfachpunkte", () => {
   const db = new Database("", { memory: true });

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { validate } from "../src/model";
+import { validate } from "../src/shared/model";
 import { availableQuestions, callAction } from "../src/simulation/calls";
 import { alarm } from "../src/simulation/dispatch";
 import { publicSave } from "../src/simulation/incidents";

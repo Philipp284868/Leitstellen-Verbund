@@ -4,9 +4,9 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
-import type { Cue } from "../../src/audio/synth";
-import { generate } from "../../src/engine";
+import type { startServer } from "../../src/server/index";
+import type { Cue } from "../../src/client/audio/synth";
+import { generate } from "../../src/shared/engine";
 import { established } from "./fixtures";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
@@ -263,7 +263,7 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
   page,
 }, info) => {
   const result = await build({
-    entryPoints: ["src/audio/synth.ts"],
+    entryPoints: ["src/client/audio/synth.ts"],
     bundle: true,
     write: false,
     format: "iife",
@@ -275,7 +275,7 @@ test("Musik und alle Effekte erzeugen messbaren Stereo-Ton ohne Clipping", async
   const rendered = await page.evaluate(async () => {
     const lib = (
       window as typeof window & {
-        AudioRender: typeof import("../../src/audio/synth");
+        AudioRender: typeof import("../../src/client/audio/synth");
       }
     ).AudioRender;
     const c = new OfflineAudioContext(

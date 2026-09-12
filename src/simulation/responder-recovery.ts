@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Save, Mission } from "../model";
+import type { Save, Mission } from "../shared/model";
 import type { Patient } from "./dynamics-schema";
 import { record } from "./events";
 

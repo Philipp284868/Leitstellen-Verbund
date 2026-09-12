@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { mt } from "../src/catalog";
+import { mt } from "../src/shared/catalog";
 import {
   missionPresentation,
   incidentColors,
-} from "../src/mission-presentation";
-import type { Mission } from "../src/model";
-import { groupGameMarkers, type MarkerData } from "../src/germany/game-markers";
+} from "../src/client/mission-presentation";
+import type { Mission } from "../src/shared/model";
+import {
+  groupGameMarkers,
+  type MarkerData,
+} from "../src/client/germany/game-markers";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { IncidentIcon } from "../src/HudIcons";
-import { FireLiveStatus } from "../src/FireLiveStatus";
+import { IncidentIcon } from "../src/client/HudIcons";
+import { FireLiveStatus } from "../src/client/FireLiveStatus";
 
 describe("öffentliche Notrufdarstellung", () => {
   it("ein ungeklärter Notruf erbt keine Brandkategorie aus der ersten Katalogvorlage", () => {

@@ -32,7 +32,7 @@ Damit gilt **204 × 3 + 41 = 653**. Es wurden keine doppelten Karten angelegt, n
 
 Die Varianten unterscheiden sich in Serverparametern; der Name allein steuert keine Berechnung. Der Test vergleicht Anforderungen, Bearbeitungsdauer, Patienten, Gefahren und Brandzustände für jedes Thema. Fachlich verwandte Themen teilen bewusst Mechanismen, etwa zwei kleine Behälterbrände, statt für jeden Namen eine eigene Engine zu duplizieren.
 
-Die 15 Familien liegen in `src/catalog/incident-variants.ts`. Explizite Themen und Zusatzmerkmale liegen in `src/catalog/incident-topics.ts`; das validierte Profil in `src/catalog/incident-profile.ts`.
+Die 15 Familien liegen in `src/shared/catalog/incident-variants.ts`. Explizite Themen und Zusatzmerkmale liegen in `src/shared/catalog/incident-topics.ts`; das validierte Profil in `src/shared/catalog/incident-profile.ts`.
 
 | Familie        | Neue Situationen |
 | -------------- | ---------------: |

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { capacity, tick } from "../src/engine";
-import { validate } from "../src/model";
+import { capacity, tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
 import { alarm, propose } from "../src/simulation/dispatch";
 import { attachDynamics, dynamicsTick } from "../src/simulation/dynamics";
 import { fireFeedback, fireTick } from "../src/simulation/fire";

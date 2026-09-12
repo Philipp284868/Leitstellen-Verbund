@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { publicSave } from "../src/simulation/incidents";
 import { personDuty } from "../src/simulation/staffing";
-import { validate } from "../src/model";
+import { validate } from "../src/shared/model";
 import { activeMissionsFixture } from "./history-fixture";
 
 it("measures a real public snapshot with 500 vehicles, 4500 people and 200 running incidents", () => {

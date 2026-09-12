@@ -1,8 +1,8 @@
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { it, expect, afterEach } from "vitest";
-import { fresh } from "../src/model";
-import { db, persist, read, backups, Database } from "../src/storage";
+import { fresh } from "../src/shared/model";
+import { db, persist, read, backups, Database } from "../src/client/storage";
 afterEach(async () => {
   await db.saves.clear();
 });

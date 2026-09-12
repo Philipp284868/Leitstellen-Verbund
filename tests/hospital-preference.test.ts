@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import { phaseFixture } from "./dispatch-fixture";
 import { organizationCommand } from "../src/simulation/organizations";
 import { selectHospital } from "../src/simulation/hospitals";
-import { validate } from "../src/model";
+import { validate } from "../src/shared/model";
 it("speichert eine bestätigte Deutschland-Klinik, weist erfundene und fremde Ziele ab und erhält die alte öffentliche Auswahl", () => {
   const s = phaseFixture("owner", "sick"),
     m = s.missions[0];

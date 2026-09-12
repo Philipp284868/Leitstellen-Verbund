@@ -1,8 +1,8 @@
-import { vt } from "../src/catalog";
-import { validate, type Save, type Vehicle } from "../src/model";
-import { xpForLevel } from "../src/progression";
+import { vt } from "../src/shared/catalog";
+import { validate, type Save, type Vehicle } from "../src/shared/model";
+import { xpForLevel } from "../src/shared/progression";
 import { simId } from "../src/simulation/events";
-import { distance } from "../src/world";
+import { distance } from "../src/shared/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { fundTestBudget } from "./money-fixture";
 import { organizationFixture } from "./mutual-aid-fixture";
@@ -10,7 +10,7 @@ import {
   fixturePurchase,
   logicFacilityCatalog,
 } from "./fixtures/germany/facilities";
-import { facilityBinding } from "../server/facilities/migration";
+import { facilityBinding } from "../src/server/facilities/migration";
 export function majorFixture(
   owner = "north",
   template = "field",

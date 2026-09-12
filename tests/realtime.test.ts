@@ -2,25 +2,25 @@ import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { Auth } from "../server/auth";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { beginTrip, generate } from "../src/engine";
-import { project, unproject } from "../src/germany/projection";
-import { fresh, validate } from "../src/model";
+import { Auth } from "../src/server/auth";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { beginTrip, generate } from "../src/shared/engine";
+import { project, unproject } from "../src/shared/germany/projection";
+import { fresh, validate } from "../src/shared/model";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { syncFms } from "../src/simulation/fms";
 import { legacyIncident } from "../src/simulation/incidents";
 import { updateWeather } from "../src/simulation/weather";
-import { duration, trip } from "../src/travel";
-import { vehicleMotion } from "../src/vehicle-position";
+import { duration, trip } from "../src/shared/travel";
+import { vehicleMotion } from "../src/shared/vehicle-position";
 import {
   distance,
   length,
   METERS_PER_UNIT,
   WORLD_HEIGHT,
   WORLD_WIDTH,
-} from "../src/world";
+} from "../src/shared/world";
 import { established } from "./e2e/fixtures";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { withoutLocationMigration } from "./helpers/location-migration-check";

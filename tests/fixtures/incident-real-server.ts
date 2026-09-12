@@ -4,18 +4,23 @@ import { randomUUID } from "node:crypto";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Auth } from "../../server/auth";
-import { Database } from "../../server/database";
-import { prepareGeography } from "../../server/germany/runtime";
-import { startServer } from "../../server/index";
-import { apply, tick } from "../../src/engine";
-import { project } from "../../src/germany/projection";
-import { fresh, validate, type Mission, type Save } from "../../src/model";
-import { xpForLevel } from "../../src/progression";
+import { Auth } from "../../src/server/auth";
+import { Database } from "../../src/server/database";
+import { prepareGeography } from "../../src/server/germany/runtime";
+import { startServer } from "../../src/server/index";
+import { apply, tick } from "../../src/shared/engine";
+import { project } from "../../src/shared/germany/projection";
+import {
+  fresh,
+  validate,
+  type Mission,
+  type Save,
+} from "../../src/shared/model";
+import { xpForLevel } from "../../src/shared/progression";
 import { attachIncident } from "../../src/simulation/calls";
 import { attachDynamics } from "../../src/simulation/dynamics";
 import { breakVehicle } from "../../src/simulation/faults";
-import { vehiclePosition } from "../../src/vehicle-position";
+import { vehiclePosition } from "../../src/shared/vehicle-position";
 import { fundTestBudget } from "../money-fixture";
 
 const dataDir = mkdtempSync(resolve(tmpdir(), "lv-incident-real-"));

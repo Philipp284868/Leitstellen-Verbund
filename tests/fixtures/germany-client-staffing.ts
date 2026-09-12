@@ -3,5 +3,5 @@ export {
   PersonSettings,
   VehicleStaffing,
   StationSettings,
-} from "../../src/Organizations";
-export { germanyProvider } from "../../src/germany/world";
+} from "../../src/client/Organizations";
+export { germanyProvider } from "../../src/shared/germany/world";

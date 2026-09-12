@@ -1,7 +1,13 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { commandSchema } from "../server/actions";
-import { BALANCE, buildings, missions, mt, vehicles } from "../src/catalog";
+import { commandSchema } from "../src/server/actions";
+import {
+  BALANCE,
+  buildings,
+  missions,
+  mt,
+  vehicles,
+} from "../src/shared/catalog";
 import {
   apply,
   capacity,
@@ -10,12 +16,17 @@ import {
   money,
   readiness,
   tick,
-} from "../src/engine";
-import { achievementProgress, fresh, level, validate } from "../src/model";
-import { euro } from "../src/money";
-import { xpForLevel } from "../src/progression";
-import { exportText, parseImport } from "../src/storage";
-import { along, length, roadSectionBetween, route } from "../src/world";
+} from "../src/shared/engine";
+import {
+  achievementProgress,
+  fresh,
+  level,
+  validate,
+} from "../src/shared/model";
+import { euro } from "../src/shared/money";
+import { xpForLevel } from "../src/shared/progression";
+import { exportText, parseImport } from "../src/client/storage";
+import { along, length, roadSectionBetween, route } from "../src/shared/world";
 import { sites as nodes } from "./fixtures/germany/locations";
 function setup() {
   const s = fresh("Anna", "Leitstelle Nord", 1000);

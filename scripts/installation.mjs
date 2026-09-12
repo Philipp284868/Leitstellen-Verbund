@@ -29,6 +29,7 @@ import {
   inspectInstallation,
   privateBackup,
 } from "./installation-storage.mjs";
+import { instance, assertGeneration } from "../ops/runtime/instance.mjs";
 
 function dotenv(value) {
   if (/[\r\n\0]/.test(value))
@@ -295,6 +296,7 @@ export function prepareInstallation({
   };
 }
 export function recordDatabaseReady(programRoot) {
+  if (process.env.LV_INSTANCE_ROOT) return;
   const identity = readIdentity(programRoot);
   if (!identity) return; // Explicit developer/maintenance environments need not create an installation.
   const config = resolveConfiguration({ programRoot });
@@ -311,5 +313,7 @@ export function recordDatabaseReady(programRoot) {
   );
 }
 export function assertInstalledData(programRoot) {
+  if (process.env.LV_INSTANCE_ROOT)
+    assertGeneration(instance(process.env.LV_INSTANCE_ROOT));
   return inspectInstallation(resolveConfiguration({ programRoot }));
 }

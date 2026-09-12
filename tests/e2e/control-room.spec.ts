@@ -2,7 +2,7 @@ import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { startServer } from "../../server/index";
+import type { startServer } from "../../src/server/index";
 import { phaseFixture } from "../dispatch-fixture";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect } from "./test";

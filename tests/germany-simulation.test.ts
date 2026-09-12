@@ -1,6 +1,6 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
-import { project } from "../src/germany/projection";
+import { project } from "../src/shared/germany/projection";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { fundTestBudget } from "./money-fixture";
@@ -11,8 +11,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fork, type ChildProcess } from "node:child_process";
 import type * as Fixture from "./germany-simulation-fixture";
-import type { Save, Mission } from "../src/model";
-import type { ServerAction } from "../server/actions";
+import type { Save, Mission } from "../src/shared/model";
+import type { ServerAction } from "../src/server/actions";
 
 let fixture: typeof Fixture;
 const dataset = "c".repeat(64),

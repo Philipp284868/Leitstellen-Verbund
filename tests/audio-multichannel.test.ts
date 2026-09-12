@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb";
-import { AudioController } from "../src/audio/controller";
-import { AudioMixer } from "../src/audio/mixer";
-import { AudioOwnership } from "../src/audio/ownership";
+import { AudioController } from "../src/client/audio/controller";
+import { AudioMixer } from "../src/client/audio/mixer";
+import { AudioOwnership } from "../src/client/audio/ownership";
 import {
   defaultSound,
   groupLevel,
@@ -10,10 +10,10 @@ import {
   AUDIO_SETTINGS_KEY,
   importSoundPreferences,
   exportSoundPreferences,
-} from "../src/audio/preferences";
-import { storeSound, loadSound, storeSounds } from "../src/audio/custom";
-import { AudioEvents } from "../src/audio/events";
-import { fresh, type Mission } from "../src/model";
+} from "../src/client/audio/preferences";
+import { storeSound, loadSound, storeSounds } from "../src/client/audio/custom";
+import { AudioEvents } from "../src/client/audio/events";
+import { fresh, type Mission } from "../src/shared/model";
 import { legacyIncident } from "../src/simulation/incidents";
 
 beforeEach(() => {

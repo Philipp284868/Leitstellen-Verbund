@@ -1,11 +1,11 @@
-import type { Mission, Save, Vehicle } from "../model";
-import type { Skills } from "../catalog";
-import { mt } from "../catalog";
+import type { Mission, Save, Vehicle } from "../shared/model";
+import type { Skills } from "../shared/catalog";
+import { mt } from "../shared/catalog";
 import { equipmentProfile } from "./vehicle-equipment";
 import { request } from "./incidents";
 import { beginTrip } from "./trip-start";
 import { setFms } from "./fms";
-import { germanyProvider, distance } from "../germany/world";
+import { germanyProvider, distance } from "../shared/germany/world";
 
 /** Uses the regular road journey, traffic and mileage machinery. A tanker stays
  * bound to its incident and cannot count as suppression while refilling. */

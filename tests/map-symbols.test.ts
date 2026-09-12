@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { vehicles } from "../src/catalog";
+import { vehicles } from "../src/shared/catalog";
 import {
   VehicleIcon,
   BuildingIcon,
@@ -9,10 +9,13 @@ import {
   vehicleIcons,
   vehicleIconDefinition,
   buildingIconDefinition,
-} from "../src/map-icons";
-import { groupGameMarkers, type MarkerData } from "../src/germany/game-markers";
-import { clusterPresence } from "../src/germany/map-presence";
-import { groupPresence, type PublicPlayer } from "../src/presence";
+} from "../src/shared/map-icons";
+import {
+  groupGameMarkers,
+  type MarkerData,
+} from "../src/client/germany/game-markers";
+import { clusterPresence } from "../src/client/germany/map-presence";
+import { groupPresence, type PublicPlayer } from "../src/shared/presence";
 
 it("ordnet jedem der 57 tatsächlichen Fahrzeugtypen ein explizites, renderbares Klassensymbol zu", () => {
   expect(vehicles).toHaveLength(57);

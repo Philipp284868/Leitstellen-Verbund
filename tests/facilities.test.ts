@@ -1,26 +1,29 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { apply, tick } from "../src/engine";
-import { fresh, validate } from "../src/model";
-import { bt } from "../src/catalog";
-import { GermanyRoutingError } from "../src/germany/errors";
-import { assertFacilityAccess } from "../src/facilities/purchase";
-import { xpForLevel } from "../src/progression";
-import { bookMoney } from "../src/economy/ledger";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { apply, tick } from "../src/shared/engine";
+import { fresh, validate } from "../src/shared/model";
+import { bt } from "../src/shared/catalog";
+import { GermanyRoutingError } from "../src/shared/germany/errors";
+import { assertFacilityAccess } from "../src/shared/facilities/purchase";
+import { xpForLevel } from "../src/shared/progression";
+import { bookMoney } from "../src/shared/economy/ledger";
 import { hospitalOptions } from "../src/simulation/hospitals";
 import {
   fixturePurchase,
   logicFacilityCatalog,
 } from "./fixtures/germany/facilities";
 import { sites } from "./fixtures/germany/locations";
-import { installGermanyProvider, germanyProvider } from "../src/germany/world";
+import {
+  installGermanyProvider,
+  germanyProvider,
+} from "../src/shared/germany/world";
 import {
   applyFacilityMigration,
   assertFacilityMigration,
   planFacilityMigration,
-} from "../server/facilities/migration";
-import { facilityResponse } from "../server/facilities/http";
+} from "../src/server/facilities/migration";
+import { facilityResponse } from "../src/server/facilities/http";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";

@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fork } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
-import { motionAt } from "../src/motion.ts";
+import { motionAt } from "../src/shared/motion.ts";
 
 const dir = resolve(
   process.env.INCIDENT_SCREENSHOT_DIR || "docs/screenshots/2.20",

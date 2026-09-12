@@ -24,7 +24,7 @@ beforeAll(async () => {
     const result = await build({
       stdin: {
         contents:
-          'import {config} from "./server/config"; try { console.log(JSON.stringify(config())); } catch(error) { console.error(error.message); process.exitCode=1; }',
+          'import {config} from "./src/server/config"; try { console.log(JSON.stringify(config())); } catch(error) { console.error(error.message); process.exitCode=1; }',
         resolveDir: resolve("."),
       },
       write: false,

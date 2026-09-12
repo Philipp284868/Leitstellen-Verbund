@@ -1,9 +1,9 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { apply, tick } from "../src/engine";
-import { fresh, validate } from "../src/model";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { apply, tick } from "../src/shared/engine";
+import { fresh, validate } from "../src/shared/model";
 import {
   callLoad,
   pacedDelay,

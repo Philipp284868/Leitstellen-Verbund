@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { writeWorldSituation } from "../server/world-situation";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { writeWorldSituation } from "../src/server/world-situation";
 import { createSituation } from "../src/simulation/world-situation";
 import { phaseFixture } from "./dispatch-fixture";
 import { addUnit } from "./incident-dynamics-fixture";

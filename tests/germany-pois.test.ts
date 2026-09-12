@@ -4,16 +4,19 @@ import {
   poiTileBounds,
   indexedPoiTile,
   createPoiIndex,
-} from "../server/germany/poi-index";
+} from "../src/server/germany/poi-index";
 import {
   polygonLabelPoint,
   deduplicatePois,
   poiCategory,
   tilePoi,
   type MapPoi,
-} from "../src/germany/poi-data";
-import { project } from "../src/germany/projection";
-import { clusterPoiPixels, hitPoiClusters } from "../src/germany/poi-layer";
+} from "../src/shared/germany/poi-data";
+import { project } from "../src/shared/germany/projection";
+import {
+  clusterPoiPixels,
+  hitPoiClusters,
+} from "../src/client/germany/poi-layer";
 
 const point = (id: string, extra: Partial<MapPoi> = {}): MapPoi => ({
   id,

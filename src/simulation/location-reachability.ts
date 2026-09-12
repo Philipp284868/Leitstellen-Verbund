@@ -1,15 +1,15 @@
 import { configuredSkills } from "./vehicle-equipment";
-import { vt, type Skills, type Template } from "../catalog";
-import { GermanyRoutingError } from "../germany/errors";
-import { germanyProvider } from "../germany/world";
-import type { Save } from "../model";
+import { vt, type Skills, type Template } from "../shared/catalog";
+import { GermanyRoutingError } from "../shared/germany/errors";
+import { germanyProvider } from "../shared/germany/world";
+import type { Save } from "../shared/model";
 import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
   distance,
   projectRoad,
   type Point,
-} from "../world";
+} from "../shared/world";
 import { generationRequirements } from "./feasibility";
 import type { IncidentLocation } from "./location-schema";
 import { routePlan } from "./traffic";

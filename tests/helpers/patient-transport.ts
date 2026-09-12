@@ -1,5 +1,5 @@
-import { apply } from "../../src/engine";
-import { mt } from "../../src/catalog";
+import { apply } from "../../src/shared/engine";
+import { mt } from "../../src/shared/catalog";
 import { attachDynamics } from "../../src/simulation/dynamics";
 import { newPatient } from "../../src/simulation/patients";
 import { ensureMissionTasks } from "../../src/simulation/mission-tasks";

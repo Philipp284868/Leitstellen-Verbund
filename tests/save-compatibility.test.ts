@@ -3,12 +3,12 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, readFile, rm, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
-import { validate } from "../src/model";
+import { Database } from "../src/server/database";
+import { validate } from "../src/shared/model";
 import {
   exportRetiredDatabase,
   RETIRED_FORMAT,
-} from "../server/compatibility/retired-database";
+} from "../src/server/compatibility/retired-database";
 
 it.each(RETIRED_FORMAT.worlds)(
   "bewahrt %s mit Konten, Vermögen, Archiv und aktiven Aufgaben ohne geografische Umdeutung",

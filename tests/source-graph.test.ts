@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
 // @ts-expect-error Node build tool
-import { sourceGraph } from "../scripts/source-graph.mjs";
+import { sourceGraph } from "../scripts/build/source-graph.mjs";
 
 it("trennt Client und Server und erfasst gemeinsame Typen sowie dynamische Importe", async () => {
   const root = await mkdtemp(resolve(tmpdir(), "lv-source-graph-"));

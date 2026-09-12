@@ -36,7 +36,7 @@ const started = performance.now(),
   results = [];
 try {
   if (stage === "full") {
-    results.push(await runCommand(["scripts/build.mjs"]));
+    results.push(await runCommand(["scripts/build/build.mjs"]));
     results.push(
       await runCommand([".tools/pnpm-11.19.0/bin/pnpm.cjs", "check:project"]),
     );
@@ -57,7 +57,7 @@ try {
       ]),
     );
   if (["ci", "full", "integration"].includes(stage))
-    results.push(await runCommand(["--test", "tests/hard-reset.node.mjs"]));
+    results.push(await runCommand(["--test", "tests/operations.node.mjs"]));
   if (stage === "full") {
     results.push(
       await runCommand([".tools/pnpm-11.19.0/bin/pnpm.cjs", "test:security"]),

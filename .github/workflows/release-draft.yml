@@ -1,4 +1,4 @@
-name: Release-Entwurf
+name: Geprüftes Release
 on:
   workflow_dispatch:
     inputs:
@@ -6,6 +6,10 @@ on:
         description: Vollständiger bereits vollständig geprüfter main-Commit
         required: true
         type: string
+      publish:
+        description: Geprüfte Paketbytes nach allen Kontrollen öffentlich freigeben
+        type: boolean
+        default: false
       verify_only:
         description: Nur Freigabe und Paketbytes prüfen, keinen Release-Entwurf erstellen
         type: boolean
@@ -31,7 +35,7 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - name: Exakten main-Stand, vollständige Abnahme, Sicherheit und Paketbytes prüfen
-        run: node scripts/release-draft.mjs --verify-only
+        run: node scripts/release/release-draft.mjs --verify-only
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -60,6 +64,6 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - name: Freigabe erneut prüfen und ausschließlich getestete Paketbytes als Entwurf bereitstellen
-        run: node scripts/release-draft.mjs
+        run: node scripts/release/release-draft.mjs ${{ inputs.publish && '--publish' || '' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}

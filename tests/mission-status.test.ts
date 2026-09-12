@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { fresh, type Mission, type Vehicle } from "../src/model";
+import { fresh, type Mission, type Vehicle } from "../src/shared/model";
 import { attachIncident } from "../src/simulation/calls";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { missionStatus } from "../src/simulation/mission-status";

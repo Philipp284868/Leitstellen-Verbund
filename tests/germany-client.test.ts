@@ -3,8 +3,8 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
-import type { Save } from "../src/model";
-import type { missionList as MissionList } from "../src/workspace";
+import type { Save } from "../src/shared/model";
+import type { missionList as MissionList } from "../src/client/workspace";
 
 let client: {
   missionList: typeof MissionList;
@@ -14,7 +14,7 @@ beforeAll(async () => {
   const outfile = resolve(`.tools/germany-client-${process.pid}.mjs`);
   await build({
     stdin: {
-      contents: "export {missionList} from './src/workspace';",
+      contents: "export {missionList} from './src/client/workspace';",
       resolveDir: process.cwd(),
     },
     outfile,

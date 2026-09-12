@@ -1,8 +1,8 @@
-import { vehicleHomeAllowed } from "../catalog";
+import { vehicleHomeAllowed } from "../shared/catalog";
 import { z } from "zod";
-import type { Building, Save, Vehicle } from "../model";
-import { extensions, vehicles, vt } from "../catalog";
-import { progress } from "../progression";
+import type { Building, Save, Vehicle } from "../shared/model";
+import { extensions, vehicles, vt } from "../shared/catalog";
+import { progress } from "../shared/progression";
 import {
   crewSummary,
   personAvailable,

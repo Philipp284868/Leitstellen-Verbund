@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Building, Save } from "../model";
+import type { Building, Save } from "../shared/model";
 import { sample } from "./random";
 
 export const readinessCoreSchema = z

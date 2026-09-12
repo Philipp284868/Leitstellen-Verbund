@@ -1,5 +1,5 @@
-import type { Mission, Vehicle } from "../model";
-import { vt, type Skills } from "../catalog";
+import type { Mission, Vehicle } from "../shared/model";
+import { vt, type Skills } from "../shared/catalog";
 import type { SectionKind } from "./major-schema";
 import { taskRequirements } from "./mission-tasks";
 import { configuredSkills } from "./vehicle-equipment";

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { bt, vt, type Skills } from "../catalog";
-import { euro } from "../money";
-import type { Vehicle } from "../model";
+import { bt, vt, type Skills } from "../shared/catalog";
+import { euro } from "../shared/money";
+import type { Vehicle } from "../shared/model";
 
 export const equipmentKeys = [
   "water",

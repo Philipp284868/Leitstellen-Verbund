@@ -1,6 +1,6 @@
-import type { Save, Vehicle } from "../model";
-import { euro } from "../money";
-import { bookMoney } from "../economy/ledger";
+import type { Save, Vehicle } from "../shared/model";
+import { euro } from "../shared/money";
+import { bookMoney } from "../shared/economy/ledger";
 import { setFms } from "./fms";
 export function wear(v: Vehicle) {
   // Old kilometers remain real kilometers, but the first workshop interval

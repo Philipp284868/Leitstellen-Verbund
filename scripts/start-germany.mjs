@@ -61,6 +61,7 @@ export async function runGermany({
   startupTimeoutMs = 120000,
   shutdownTimeoutMs = 30000,
   maintenanceArgs,
+  onReady,
 } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw Error("Node.js 24 erforderlich.");
@@ -195,12 +196,32 @@ export async function runGermany({
         void stop(1);
       }, startupTimeoutMs);
       child.once("exit", () => clearTimeout(timer));
-      child.on("message", (message) => {
+      let expectedActivation;
+      const announce = () => {
+        clearTimeout(timer);
+        console.log(
+          `Spiel bereit: ${env.HOST}:${env.PORT}; Browseradresse: ${env.PUBLIC_URL}. Öffentliche HTTPS-Erreichbarkeit separat prüfen.`,
+        );
+      };
+      child.on("message", async (message) => {
+        if (
+          expectedActivation &&
+          message?.type === "activated" &&
+          message.token === expectedActivation
+        ) {
+          expectedActivation = undefined;
+          announce();
+        }
         if (message?.type === "ready" && message.port === Number(env.PORT)) {
-          clearTimeout(timer);
-          console.log(
-            `Spiel bereit: ${env.HOST}:${env.PORT}; Browseradresse: ${env.PUBLIC_URL}. Öffentliche HTTPS-Erreichbarkeit separat prüfen.`,
-          );
+          try {
+            if (onReady) await onReady(message);
+            expectedActivation = message.token;
+            child.send({ type: "activate", token: message.token });
+            if (!message.token) announce();
+          } catch (error) {
+            console.error(error.message);
+            await stop(1);
+          }
         }
       });
     }

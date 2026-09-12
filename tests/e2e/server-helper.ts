@@ -1,12 +1,12 @@
 import { createServer } from "node:net";
 import { resolve as resolvePath } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Config } from "../../server/config";
-import type { startServer } from "../../server/index";
+import type { Config } from "../../src/server/config";
+import type { startServer } from "../../src/server/index";
 import { browserGeography } from "./test";
 const product = (await import(
   pathToFileURL(resolvePath("dist/server/index.js")).href
-)) as typeof import("../../server/index");
+)) as typeof import("../../src/server/index");
 
 export async function createBrowserServer(
   start: typeof startServer,

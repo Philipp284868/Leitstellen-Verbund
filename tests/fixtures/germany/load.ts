@@ -1,11 +1,11 @@
 import { phaseFixture } from "../../dispatch-fixture";
 import { sites } from "./locations";
 import { fixtureMission } from "./mission";
-import { beginTrip } from "../../../src/engine";
+import { beginTrip } from "../../../src/shared/engine";
 import { reconcileBuildingStaffing } from "../../../src/simulation/building-staffing";
-import { validate } from "../../../src/model";
+import { validate } from "../../../src/shared/model";
 import { logicFacilityCatalog } from "./facilities";
-import { facilityBinding } from "../../../server/facilities/migration";
+import { facilityBinding } from "../../../src/server/facilities/migration";
 
 /** A current populated save for UI load measurement. Purchasing and staffing
  * transactions have separate tests; automatic staffing provisions this fixture. */

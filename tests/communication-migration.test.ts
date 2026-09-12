@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import {
   applyCommunicationMigration,
   planCommunicationMigration,
-} from "../server/communication-migration";
+} from "../src/server/communication-migration";
 import { transmit } from "../src/simulation/transmissions";
 import { phaseFixture } from "./dispatch-fixture";
 it("versioniert alte Anfragen ohne neue Fahrzeugzuweisung oder Funkwiederholung, Vorschau und Wiederholung bleiben sicher", () => {

@@ -1,4 +1,4 @@
-import { project } from "../../../src/germany/projection";
+import { project } from "../../../src/shared/germany/projection";
 
 /** Small, fixed Berlin corridor for technical fixtures, never a playable map.
  * Endpoints follow Straße des 17. Juni; intermediate anchors exercise spatial

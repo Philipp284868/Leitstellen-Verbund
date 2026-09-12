@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { Database, DATABASE_VERSION } from "../server/database";
+import { Database, DATABASE_VERSION } from "../src/server/database";
 import { phaseFixture } from "./dispatch-fixture";
 
 it("sichert DB19 vor der additiven Speichergrenze und erhält Eigentum, Geld, Reisen und historische JSON-Daten", () => {

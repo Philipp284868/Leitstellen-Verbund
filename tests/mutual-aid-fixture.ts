@@ -1,8 +1,8 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
-import { bookMoney } from "../src/economy/ledger";
-import { apply, tick } from "../src/engine";
-import { validate, type Save } from "../src/model";
-import { euro } from "../src/money";
+import { bookMoney } from "../src/shared/economy/ledger";
+import { apply, tick } from "../src/shared/engine";
+import { validate, type Save } from "../src/shared/model";
+import { euro } from "../src/shared/money";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { attachOrganizations } from "../src/simulation/organizations";
 import { sites as nodes } from "./fixtures/germany/locations";

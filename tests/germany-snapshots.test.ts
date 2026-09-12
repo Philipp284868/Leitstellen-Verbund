@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { RouteSnapshotEncoder } from "../server/germany/snapshots";
+import { RouteSnapshotEncoder } from "../src/server/germany/snapshots";
 import {
   RouteSnapshotDecoder,
   SnapshotResyncError,
   type SnapshotDocument,
-} from "../src/germany/snapshot";
+} from "../src/shared/germany/snapshot";
 
 function snapshot(points = 3): SnapshotDocument {
   const path = Array.from({ length: points }, (_, i) => ({

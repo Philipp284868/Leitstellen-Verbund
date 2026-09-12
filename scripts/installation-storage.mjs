@@ -25,7 +25,7 @@ import {
   parseStoredJson,
 } from "./configuration.mjs";
 
-export const DATABASE_VERSION = 25;
+export const DATABASE_VERSION = 26;
 export const digest = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
 export function atomicPrivate(file, bytes) {
@@ -221,6 +221,10 @@ export function inspectGame(directory, dataset) {
 export function inspectInstallation(config, { allowMissingGeo = false } = {}) {
   const data = config.settings.DATA_DIR,
     geo = config.settings.GEODATA_DIR;
+  if (present(resolve(data, "managed-instance.json")))
+    throw Error(
+      "Diese Spielwelt wurde in die verwaltete Instanz übernommen. Alten Starter nicht mehr verwenden.",
+    );
   const marker = resolve(data, ".leitstellen-instance.json");
   if (regularFile(marker)) {
     const binding = parseStoredJson(readFileSync(marker, "utf8"), marker);

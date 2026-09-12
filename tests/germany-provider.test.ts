@@ -7,14 +7,14 @@ import { DatabaseSync } from "node:sqlite";
 import {
   LocalGermanyProvider,
   initializeGermany,
-} from "../server/germany/provider";
-import { RoutingBridge } from "../server/germany/bridge";
-import { project, meters } from "../src/germany/projection";
+} from "../src/server/germany/provider";
+import { RoutingBridge } from "../src/server/germany/bridge";
+import { project, meters } from "../src/shared/germany/projection";
 import {
   adaptGraphHopperRoute,
   graphHopperRequest,
-} from "../src/germany/route";
-import { nodes, nearest, germanyProvider } from "../src/germany/world";
+} from "../src/shared/germany/route";
+import { nodes, nearest, germanyProvider } from "../src/shared/germany/world";
 
 const a = project({ lon: 13.4, lat: 52.52 }),
   b = project({ lon: 13.401, lat: 52.521 });

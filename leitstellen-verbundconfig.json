@@ -1,0 +1,57 @@
+[
+  {
+    "DisplayName": "Öffentliche Adresse",
+    "Category": "Leitstellen-Verbund",
+    "FieldName": "PublicUrl",
+    "ParamFieldName": "PublicUrl",
+    "InputType": "text",
+    "DefaultValue": "https://gaminglive.mooo.com",
+    "Required": true,
+    "Description": "Tatsächliche HTTPS-Adresse; Caddy bleibt separat."
+  },
+  {
+    "DisplayName": "Nach Update starten",
+    "Category": "Leitstellen-Verbund",
+    "FieldName": "StartAfterUpdate",
+    "ParamFieldName": "StartAfterUpdate",
+    "InputType": "checkbox",
+    "DefaultValue": "false",
+    "Description": "AMP startet nach erfolgreichem Update die Anwendung und wartet auf Bereitschaft."
+  },
+  {
+    "DisplayName": "Betriebsaktion",
+    "Category": "Leitstellen-Verbund:settings",
+    "Subcategory": "Wartung",
+    "FieldName": "Operation",
+    "ParamFieldName": "Operation",
+    "InputType": "enum",
+    "DefaultValue": "start",
+    "EnumValues": {
+      "start": "Spiel starten",
+      "diagnose": "Instanz anzeigen",
+      "reset-preview": "Reset-Vorschau",
+      "reset-confirm": "Bestätigten Resetauftrag ausführen",
+      "grant-operator": "Spieladministrator freigeben"
+    }
+  },
+  {
+    "DisplayName": "Reset-ID",
+    "Category": "Leitstellen-Verbund:settings",
+    "Subcategory": "Wartung",
+    "FieldName": "ResetRequest",
+    "ParamFieldName": "ResetRequest",
+    "InputType": "text",
+    "DefaultValue": "operator-reset-1",
+    "Description": "Eindeutige Kennung der Vorschau. Bestätigung erfolgt separat in shared/config/reset-request.json."
+  },
+  {
+    "DisplayName": "Bisheriger Programmordner",
+    "Category": "Leitstellen-Verbund:settings",
+    "Subcategory": "Einmalige Übernahme",
+    "FieldName": "LegacySource",
+    "ParamFieldName": "LegacySource",
+    "InputType": "text",
+    "DefaultValue": "",
+    "Description": "Nur bei Übernahme: tatsächlicher absoluter alter Programmordner im selben Dateisystem. Alte Instanz zuerst stoppen. Leer = neue eigenständige Instanz."
+  }
+]

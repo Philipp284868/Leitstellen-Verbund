@@ -1,9 +1,9 @@
-import { mt, vt, type Skills } from "../catalog";
-import { money } from "../engine";
-import { isLandSite } from "../germany/world";
-import type { Mission, Save } from "../model";
-import { level } from "../model";
-import { nodes } from "../world";
+import { mt, vt, type Skills } from "../shared/catalog";
+import { money } from "../shared/engine";
+import { isLandSite } from "../shared/germany/world";
+import type { Mission, Save } from "../shared/model";
+import { level } from "../shared/model";
+import { nodes } from "../shared/world";
 import { record, writable } from "./events";
 import { hospitalOptions } from "./hospitals";
 import { taskNames, type OrganizationAction } from "./organizations-schema";

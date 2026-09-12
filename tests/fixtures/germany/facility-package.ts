@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
 import { CATALOG_SCHEMA } from "../../../scripts/geodata/facility-catalog.mjs";
-import { unproject, type Point } from "../../../src/germany/projection";
+import { unproject, type Point } from "../../../src/shared/germany/projection";
 import { fixtureDataset } from "./locations";
 import { facilitiesAt, fixtureFacilities } from "./facilities";
 export function createFacilityFixture(

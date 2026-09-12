@@ -2,18 +2,18 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { Database } from "../server/database";
+import { Database } from "../src/server/database";
 import {
   WorldPresence,
   readPublicPresence,
   PRESENCE_GRACE_MS,
-} from "../server/presence";
+} from "../src/server/presence";
 import {
   PresenceDecoder,
   groupPresence,
   PRESENCE_CHUNK,
   type PublicPlayer,
-} from "../src/presence";
+} from "../src/shared/presence";
 
 const valid = () => true;
 const player = (id: string): PublicPlayer => ({

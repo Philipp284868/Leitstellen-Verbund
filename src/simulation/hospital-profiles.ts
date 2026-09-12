@@ -1,5 +1,5 @@
-import type { Hospital } from "../germany/world";
-import type { Point } from "../world";
+import type { Hospital } from "../shared/germany/world";
+import type { Point } from "../shared/world";
 import { specialties } from "./organizations-schema";
 
 export type HospitalOption = {

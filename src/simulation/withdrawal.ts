@@ -1,6 +1,6 @@
-import type { Mission, Save, Vehicle } from "../model";
-import type { Skills } from "../catalog";
-import { recall } from "../engine";
+import type { Mission, Save, Vehicle } from "../shared/model";
+import type { Skills } from "../shared/catalog";
+import { recall } from "../shared/engine";
 import { requirements } from "./hazards";
 import { effectiveSkills, placement } from "./major-resources";
 import { sectionNames } from "./major-schema";

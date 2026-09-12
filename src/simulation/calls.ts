@@ -1,6 +1,6 @@
-import { mt } from "../catalog";
-import { addressAt } from "../germany/world";
-import type { Mission, Save } from "../model";
+import { mt } from "../shared/catalog";
+import { addressAt } from "../shared/germany/world";
+import type { Mission, Save } from "../shared/model";
 import { callerObservation, REPORTED_IDS, reportId } from "./call-observations";
 import { record, simId } from "./events";
 import { CALL_PACING, mayReceiveAdditionalCall } from "./pacing";

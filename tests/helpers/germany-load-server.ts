@@ -6,28 +6,28 @@ import { cpus, tmpdir, totalmem } from "node:os";
 import { resolve } from "node:path";
 import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 import { setImmediate as yieldNode } from "node:timers/promises";
-import { Auth } from "../../server/auth";
-import type { Config } from "../../server/config";
-import { Database } from "../../server/database";
-import { Game } from "../../server/game";
-import { prepareGeography } from "../../server/germany/runtime";
-import { RouteSnapshotEncoder } from "../../server/germany/snapshots";
-import { startServer } from "../../server/index";
-import { apply, tick } from "../../src/engine";
-import { project, unproject } from "../../src/germany/projection";
+import { Auth } from "../../src/server/auth";
+import type { Config } from "../../src/server/config";
+import { Database } from "../../src/server/database";
+import { Game } from "../../src/server/game";
+import { prepareGeography } from "../../src/server/germany/runtime";
+import { RouteSnapshotEncoder } from "../../src/server/germany/snapshots";
+import { startServer } from "../../src/server/index";
+import { apply, tick } from "../../src/shared/engine";
+import { project, unproject } from "../../src/shared/germany/projection";
 import type {
   RouteSnapshotFrame,
   SnapshotDocument,
-} from "../../src/germany/snapshot";
-import { fresh, validate } from "../../src/model";
-import { xpForLevel } from "../../src/progression";
+} from "../../src/shared/germany/snapshot";
+import { fresh, validate } from "../../src/shared/model";
+import { xpForLevel } from "../../src/shared/progression";
 import { attachIncident, callAction } from "../../src/simulation/calls";
 import { alarm } from "../../src/simulation/dispatch";
 import { personDuty } from "../../src/simulation/staffing";
-import { vehiclePosition } from "../../src/vehicle-position";
+import { vehiclePosition } from "../../src/shared/vehicle-position";
 import { fundTestBudget } from "../money-fixture";
 import { fixtureMission } from "../fixtures/germany/mission";
-import { GermanyRoutingError } from "../../src/germany/errors";
+import { GermanyRoutingError } from "../../src/shared/germany/errors";
 
 const projectRoot = resolve(process.env.LV_BENCH_PROJECT || ".");
 const output = resolve(process.env.LV_BENCH_OUTPUT!);

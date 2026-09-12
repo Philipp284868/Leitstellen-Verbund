@@ -4,6 +4,6 @@ Benötigt werden ein Desktop-PC, Maus/Tastatur, ein aktueller Chromium- oder Fir
 
 Der Browser installiert keinen eigenen Spielserver. Ein Betreiber stellt Node.js 24 und eine dauerhafte SQLite-Datenablage bereit. Ein einzelner Disponent darf allein auf diesem Multiplayer-Server spielen. GitHub-Konto, Kartenabonnement und externer Audiodienst werden zum Spielen nicht benötigt.
 
-Nach Anmeldung **Spielen** öffnen oder den Tutorialknopf im Hauptmenü verwenden. Neue normale Leitstellen starten auf Stufe 1 mit 1.400.000,00 €. Feuerwache und TSF-W kosten zusammen 830.000,00 € einschließlich automatischer Wachbesetzung. Die persönliche Übungswelt beginnt getrennt auf Stufe 2 und führt mit LF 20 durch einen technischen Einsatz und eine echte Brand-Nachforderung. Ihre Erlöse und XP werden nicht in die normale Leitstelle übernommen. [[Tutorial]] · [[Wirtschaft]] · [[Wachen-und-Personal]].
+Nach Anmeldung **Spielen** öffnen. Zuerst einen verfügbaren realen Standort kaufen und ein dort geeignetes freigeschaltetes Fahrzeug erwerben. Die Wache stellt ihre passende Besetzung automatisch bereit. [[Einsatzablauf]] erklärt Notruf und Disposition; [[Wirtschaft]] erläutert das Spielbudget.
 
 Es handelt sich um eine fiktive Simulation, nicht um reale Einsatzplanung.

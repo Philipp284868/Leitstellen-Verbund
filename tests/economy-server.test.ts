@@ -1,13 +1,13 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { fresh } from "../src/model";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { fresh } from "../src/shared/model";
 import { sites as nodes } from "./fixtures/germany/locations";
 
-import { bt, vt } from "../src/catalog";
-import { bookMoney, ledgerBalance } from "../src/economy/ledger";
-import { euro } from "../src/money";
+import { bt, vt } from "../src/shared/catalog";
+import { bookMoney, ledgerBalance } from "../src/shared/economy/ledger";
+import { euro } from "../src/shared/money";
 
 function world() {
   const db = new Database("euro-test", { memory: true }),

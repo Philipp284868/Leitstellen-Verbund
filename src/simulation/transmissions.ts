@@ -1,4 +1,4 @@
-import type { Save } from "../model";
+import type { Save } from "../shared/model";
 import type { Transmission } from "./transmission-schema";
 
 export const RADIO_POLICY = {

@@ -3,15 +3,15 @@ import {
   organizationsComplete,
   attachOrganizations,
 } from "./organizations";
-import type { Save, Mission, Vehicle } from "../model";
+import type { Save, Mission, Vehicle } from "../shared/model";
 import { majorTick } from "./major-incidents";
 import {
   majorComplete,
   effectiveSkills,
   workingSkills,
 } from "./major-resources";
-import { mt, type Skills } from "../catalog";
-import { level } from "../model";
+import { mt, type Skills } from "../shared/catalog";
+import { level } from "../shared/model";
 import { initialHazards, hazardTick, hazardNames, hazard } from "./hazards";
 import { initialFire, fireTick } from "./fire";
 import { ensureWaterSupply, waterSupplyTick } from "./water-supply";

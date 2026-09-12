@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { createServer, type ViteDevServer } from "vite";
-import { project } from "../../src/germany/projection";
+import { project } from "../../src/shared/germany/projection";
 import { expect, test } from "./test";
 let server: ViteDevServer, origin: string;
 const requests: string[] = [];
@@ -16,15 +16,15 @@ test.beforeAll(async () => {
       alias: [
         {
           find: /^(.*[\\/])?world$/,
-          replacement: resolve("src/germany/world.ts"),
+          replacement: resolve("src/shared/germany/world.ts"),
         },
         {
           find: /^(.*[\\/])?Map$/,
-          replacement: resolve("src/germany/GermanyMap.tsx"),
+          replacement: resolve("src/client/germany/GermanyMap.tsx"),
         },
         {
           find: /^(.*[\\/])?RegionScene$/,
-          replacement: resolve("src/germany/GermanyScene.tsx"),
+          replacement: resolve("src/client/germany/GermanyScene.tsx"),
         },
       ],
     },

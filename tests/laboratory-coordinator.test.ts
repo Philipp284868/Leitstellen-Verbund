@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { createLab, runLab, verifyLab } from "../server/lab";
-import { stepLaboratoryWorlds } from "../server/lab-worlds";
+import { createLab, runLab, verifyLab } from "../src/server/lab";
+import { stepLaboratoryWorlds } from "../src/server/lab-worlds";
 import { historyFixture } from "./history-fixture";
 
 it("keeps every laboratory world on the same clock while interviewing after a neighbor joined", () => {

@@ -1,6 +1,6 @@
-import { bt, vehicles, type Skills, type Template } from "../catalog";
+import { bt, vehicles, type Skills, type Template } from "../shared/catalog";
 import { configuredSkills } from "./vehicle-equipment";
-import { level, type Save } from "../model";
+import { level, type Save } from "../shared/model";
 
 /** Strategic fleet capacity, including units temporarily busy with another call. */
 export function fleetCapabilities(s: Save): Skills {

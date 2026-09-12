@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { vt } from "../src/catalog";
-import { beginTrip, readiness, recall, tick } from "../src/engine";
-import { validate } from "../src/model";
-import { motionProfile } from "../src/motion";
+import { vt } from "../src/shared/catalog";
+import { beginTrip, readiness, recall, tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
+import { motionProfile } from "../src/shared/motion";
 import { vehicleAvailability } from "../src/simulation/availability";
 import { alarm } from "../src/simulation/dispatch";
 import { FAULT_RECOVERY_GRACE } from "../src/simulation/fault-config";
@@ -16,8 +16,8 @@ import {
 import * as random from "../src/simulation/random";
 import { remainingRoadLegs } from "../src/simulation/road-continuation";
 import { turnoutEstimate } from "../src/simulation/staffing";
-import { vehiclePosition } from "../src/vehicle-position";
-import { distance } from "../src/world";
+import { vehiclePosition } from "../src/shared/vehicle-position";
+import { distance } from "../src/shared/world";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 

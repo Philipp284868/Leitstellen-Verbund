@@ -1,4 +1,4 @@
-import { Database } from "../../server/database";
+import { Database } from "../../src/server/database";
 import { mkdirSync } from "node:fs";
 import { fixtureDataset } from "./germany/locations";
 export function installationDatabase(

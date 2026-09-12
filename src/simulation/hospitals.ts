@@ -1,6 +1,6 @@
-import { germanyProvider } from "../germany/world";
-import type { Mission, Save, Vehicle } from "../model";
-import { distance, type Point } from "../world";
+import { germanyProvider } from "../shared/germany/world";
+import type { Mission, Save, Vehicle } from "../shared/model";
+import { distance, type Point } from "../shared/world";
 import {
   publicHospitalProfile,
   type HospitalOption,

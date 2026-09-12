@@ -10,8 +10,8 @@ import {
   radioHandler,
   RADIO_LEASE_SECONDS,
 } from "../src/simulation/radio-state";
-import { validate } from "../src/model";
-import { tick } from "../src/engine";
+import { validate } from "../src/shared/model";
+import { tick } from "../src/shared/engine";
 
 function setup() {
   const s = radioFixture("alpha"),

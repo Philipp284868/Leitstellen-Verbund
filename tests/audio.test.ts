@@ -1,10 +1,10 @@
-import { xpForLevel, progress } from "../src/progression";
+import { xpForLevel, progress } from "../src/shared/progression";
 import { it, expect } from "vitest";
-import { AudioEvents } from "../src/audio/events";
-import { fresh, type Save } from "../src/model";
+import { AudioEvents } from "../src/client/audio/events";
+import { fresh, type Save } from "../src/shared/model";
 import { phaseFixture } from "./dispatch-fixture";
 import { fixtureMission } from "./fixtures/germany/mission";
-import { parseSound, defaultSound } from "../src/audio/controller";
+import { parseSound, defaultSound } from "../src/client/audio/controller";
 // Audio observes accepted snapshots. Generator selection is covered separately;
 // this fixture supplies current staffed vehicles without generating an incident.
 const audioSnapshot = () => {

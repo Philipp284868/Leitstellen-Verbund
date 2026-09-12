@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
-import { recall } from "../src/engine";
-import { approachContext } from "../src/germany/approach-key";
+import { recall } from "../src/shared/engine";
+import { approachContext } from "../src/client/germany/approach-key";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 
-import { approach } from "../src/travel";
+import { approach } from "../src/shared/travel";
 
 it("invalidates cached standby turnout after withdrawal and keeps moving requests stable within one interval", () => {
   const s = phaseFixture("preview-owner"),

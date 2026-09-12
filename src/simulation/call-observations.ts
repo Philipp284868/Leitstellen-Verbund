@@ -1,4 +1,4 @@
-import type { Template } from "../catalog";
+import type { Template } from "../shared/catalog";
 import { incidentCategory } from "./incident-selection";
 
 export const REPORTED_IDS = new Set([

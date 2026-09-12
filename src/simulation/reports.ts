@@ -1,7 +1,7 @@
-import { sumCents } from "../money";
-import type { Save, Mission, Vehicle } from "../model";
-import { mt, vt } from "../catalog";
-import { vehicleMotion } from "../vehicle-position";
+import { sumCents } from "../shared/money";
+import type { Save, Mission, Vehicle } from "../shared/model";
+import { mt, vt } from "../shared/catalog";
+import { vehicleMotion } from "../shared/vehicle-position";
 import { timingKeys, type Report } from "./report-schema";
 
 export function telemetry(s: Save, m: Mission) {

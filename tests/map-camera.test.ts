@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { readCamera, wheelPixels, DRAG_THRESHOLD } from "../src/map-camera";
+import {
+  readCamera,
+  wheelPixels,
+  DRAG_THRESHOLD,
+} from "../src/client/map-camera";
 describe("lokale Kartenpräferenzen", () => {
   it("verwirft fremde Welten, Seeds, ungültige Koordinaten und defekte Speicherung", () => {
     const c = {

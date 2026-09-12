@@ -1,6 +1,6 @@
-import type { Save, Vehicle } from "../model";
+import type { Save, Vehicle } from "../shared/model";
 import { withdraw } from "./withdrawal";
-import { vt, capabilities } from "../catalog";
+import { vt, capabilities } from "../shared/catalog";
 import { callAction } from "./calls";
 import { propose } from "./dispatch";
 import { radioAction } from "./incidents";

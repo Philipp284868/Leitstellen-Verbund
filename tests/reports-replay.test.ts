@@ -5,18 +5,22 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { commandSchema } from "../server/actions";
-import { Auth } from "../server/auth";
-import { balanceAudit } from "../server/balance";
-import { Database, DATABASE_VERSION } from "../server/database";
-import { Game } from "../server/game";
-import { createLab, runLab, stateHash, verifyLab } from "../server/lab";
-import { parseSound } from "../src/audio/controller";
-import { checkSoundFile, customSounds, storeSound } from "../src/audio/custom";
-import { AudioEvents } from "../src/audio/events";
-import { tick } from "../src/engine";
-import { validate } from "../src/model";
-import { reportDocument, reportsCSV } from "../src/reports/export";
+import { commandSchema } from "../src/server/actions";
+import { Auth } from "../src/server/auth";
+import { balanceAudit } from "../src/server/balance";
+import { Database, DATABASE_VERSION } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { createLab, runLab, stateHash, verifyLab } from "../src/server/lab";
+import { parseSound } from "../src/client/audio/controller";
+import {
+  checkSoundFile,
+  customSounds,
+  storeSound,
+} from "../src/client/audio/custom";
+import { AudioEvents } from "../src/client/audio/events";
+import { tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
+import { reportDocument, reportsCSV } from "../src/client/reports/export";
 import { nextCallDelay } from "../src/simulation/balance";
 import { alarm, propose } from "../src/simulation/dispatch";
 import { record } from "../src/simulation/events";
@@ -27,8 +31,12 @@ import {
   measureTravel,
   migrateReports,
 } from "../src/simulation/reports";
-import { missionList, parseWorkspace, shortcutFor } from "../src/workspace";
-import { length, METERS_PER_UNIT } from "../src/world";
+import {
+  missionList,
+  parseWorkspace,
+  shortcutFor,
+} from "../src/client/workspace";
+import { length, METERS_PER_UNIT } from "../src/shared/world";
 import "./fixtures/germany/session";
 import { completedLab, completedSave } from "./reports-replay-fixture";
 

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { io, type Socket } from "socket.io-client";
 import { expect, it, vi } from "vitest";
-import { type Save } from "../src/model";
+import { type Save } from "../src/shared/model";
 import { phaseFixture } from "./dispatch-fixture";
 import { startServer } from "./fixtures/germany/server";
 

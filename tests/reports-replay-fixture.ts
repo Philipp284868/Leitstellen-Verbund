@@ -1,4 +1,4 @@
-import { createLab, runLab, type LabAction } from "../server/lab";
+import { createLab, runLab, type LabAction } from "../src/server/lab";
 export function completedLab(seed = 124, template = "bin") {
   let lab = createLab(seed);
   const step = (a: LabAction) => {

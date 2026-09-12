@@ -1,11 +1,11 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { apply, generate, recall, tick } from "../src/engine";
-import { fresh, validate, type Save } from "../src/model";
+import { apply, generate, recall, tick } from "../src/shared/engine";
+import { fresh, validate, type Save } from "../src/shared/model";
 import { sites as nodes } from "./fixtures/germany/locations";
 
-import { BALANCE, vt } from "../src/catalog";
-import { xpForLevel } from "../src/progression";
+import { BALANCE, vt } from "../src/shared/catalog";
+import { xpForLevel } from "../src/shared/progression";
 import { vehicleAvailability } from "../src/simulation/availability";
 import {
   buildingStaffingPlan,
@@ -25,7 +25,7 @@ import {
   stationProfile,
 } from "../src/simulation/staffing";
 import { volunteerAvailability } from "../src/simulation/volunteers";
-import { vehiclePosition } from "../src/vehicle-position";
+import { vehiclePosition } from "../src/shared/vehicle-position";
 
 function emptyDesk() {
   const s = fresh("Automatik", "Testwache", 1000);

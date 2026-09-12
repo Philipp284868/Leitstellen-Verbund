@@ -1,5 +1,5 @@
-import type { Mission, Save, Vehicle } from "../model";
-import { vt, mt, type Skills } from "../catalog";
+import type { Mission, Save, Vehicle } from "../shared/model";
+import { vt, mt, type Skills } from "../shared/catalog";
 import type { Patient } from "./dynamics-schema";
 import { clamp, sample } from "./random";
 import { simId, record } from "./events";

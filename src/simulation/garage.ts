@@ -1,6 +1,6 @@
-import type { Save, Vehicle } from "../model";
-import { vehiclePosition } from "../vehicle-position";
-import { distance } from "../world";
+import type { Save, Vehicle } from "../shared/model";
+import { vehiclePosition } from "../shared/vehicle-position";
+import { distance } from "../shared/world";
 /** Physical presence, independently of the announced FMS or home assignment. */
 export function garageIndex(s: Save) {
   const index = new Map(

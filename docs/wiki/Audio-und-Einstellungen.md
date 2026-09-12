@@ -22,6 +22,6 @@ Die JSON-Audiosicherung enthält Regler und Mutes, keine Originaldateien. Import
 
 ## Anzeige und Steuerung
 
-Reduzierte Bewegung, Kartenmarker, Beschriftung, Arbeitsplatzdarstellung und Tastenkürzel betreffen die lokale Bedienung. Konflikte bei Tastenbelegung werden angezeigt. Diese Einstellungen verändern keine Serverzeit, Preise, Besitzerrechte oder Einsatzentscheidungen. [[Bedienung]] beschreibt die Arbeitsbereiche, [[Tutorial]] den geführten Einstieg.
+Reduzierte Bewegung, Kartenmarker, Beschriftung, Arbeitsplatzdarstellung und Tastenkürzel betreffen die lokale Bedienung. Konflikte bei Tastenbelegung werden angezeigt. Diese Einstellungen verändern keine Serverzeit, Preise, Besitzerrechte oder Einsatzentscheidungen. [[Bedienung]] beschreibt die Arbeitsbereiche, [[Einsatzablauf]] den geführten Einstieg.
 
 [Audioquellen, Mischregeln, lokale Migration und tatsächliche Abnahme](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/AUDIO.md).

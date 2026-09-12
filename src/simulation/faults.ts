@@ -1,6 +1,6 @@
-import { vehiclePosition } from "../vehicle-position";
-import type { Save, Vehicle } from "../model";
-import { beginTrip, recall } from "../engine";
+import { vehiclePosition } from "../shared/vehicle-position";
+import type { Save, Vehicle } from "../shared/model";
+import { beginTrip, recall } from "../shared/engine";
 import { setFms, operativeCode } from "./fms";
 import { request } from "./incidents";
 import { record } from "./events";

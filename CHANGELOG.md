@@ -1,5 +1,12 @@
 # Änderungen
 
+## 2.26.0 · Verwaltete AMP-Instanz und gesicherter Neustart · 12.09.2026
+
+- Getrennte Programmversionen, feste private Instanzkonfiguration und geschützte Update-/Resetjournale. Updates installieren geprüfte Pakete ohne lokalen Entwicklungsbuild.
+- Einmaliger Reset mit konkreter Vorschau, Instanzbestätigung, geprüfter SQLite-Sicherung und neuer Weltgeneration. Kein Reset beim normalen Start oder Update; alte Sitzungen und Spielcaches werden ungültig.
+- Gemeinsame Wartungssperre, bestätigte Bereitschaft vor Spielerzugriff, begrenzter Rückfall auf kompatible Programmversionen und eigene AMP-Vorlage.
+- Client, Server und gemeinsame Modelle getrennt; Build und Releasewerkzeuge geordnet. Historische Testberichte und alte ungesicherte Resetlogik entfernt; Regressionen bleiben in CI.
+
 ## 2.25.0 · Leitstellenarbeitsplatz und Serverbetrieb · 12.09.2026
 
 - Aktive Spielanwesenheit für neue Notrufe; keine passive Grundfinanzierung. Tutorial und isolierte Übungswelten stillgelegt, reale Konten und Besitz erhalten.

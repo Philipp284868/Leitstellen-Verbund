@@ -39,7 +39,7 @@ Unabhängige Leitstellen erhalten keine automatischen Einsatzfreigaben. `server/
 
 Jeder Benutzer besitzt persönlichen Fortschritt und optional eine eigene serverseitige Übungswelt in separaten Tabellen. Die Übung benutzt dieselbe Engine, vorhandene Kataloge und echte Routen. Ihr Budget, XP, Aktionsbelege und Archiv gelangen nicht in die normale Leitstelle; laufende Grundfinanzierung bleibt dort aus. Verlassen pausiert die Übung.
 
-Eine persistente monotone `playContext`-Revision und eine zusätzliche Übungssitzung schützen Kontextwechsel. Aktionen, Tutorialkontrollen und Übungssteuerung müssen den aktuellen Kontext senden. Start/Stop/Reset verwenden gespeicherte Belege mit ID und Fingerprint; Replay wirkt nicht doppelt. Der Browser verwirft verspätete Antworten nach Konto-/Kontextwechsel und bindet Wiederholungen an die ursprüngliche Anfrage. [Vollständiger Vertrag und Tests](TUTORIAL-2.21.md).
+Eine persistente monotone `playContext`-Revision und eine zusätzliche Übungssitzung schützen Kontextwechsel. Aktionen, Tutorialkontrollen und Übungssteuerung müssen den aktuellen Kontext senden. Start/Stop/Reset verwenden gespeicherte Belege mit ID und Fingerprint; Replay wirkt nicht doppelt. Der Browser verwirft verspätete Antworten nach Konto-/Kontextwechsel und bindet Wiederholungen an die ursprüngliche Anfrage. [Vollständiger Vertrag und Tests](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/TUTORIAL-2.21.md).
 
 ## Darstellung, lokale Daten und Grenzen
 
@@ -57,4 +57,4 @@ Private API-/Socketdaten, HTML und Kontoexporte werden nicht gecacht; gehashte �
 ihre reinen Speicherschemas sind von Laufzeitabhängigkeiten getrennt. `trip-start` nutzt unverändert die reguläre Straßenreise.
 `account-lifecycle` verarbeitet ausschließlich selbst bestätigte Kontovorgänge in einer Transaktion.
 Die SQLite-Grenze 20 schützt diese additiven Daten vor älteren Servern; das Upgrade schreibt bestehende Save-JSON-Daten nicht um.
-Details, Spielparameter und Bedienwege: [Simulation Overhaul](SIMULATION-OVERHAUL.md).
+Details, Spielparameter und Bedienwege: [Simulation Overhaul](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/SIMULATION-OVERHAUL.md).

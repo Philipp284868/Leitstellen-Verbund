@@ -105,20 +105,20 @@ it("wählt bei unbekannter Basis, gemeinsamen Grundlagen, Löschung und neuen We
   for (const paths of [
     null,
     [],
-    ["src/engine.ts"],
-    ["server/auth.ts"],
-    ["scripts/release-draft.mjs"],
+    ["src/shared/engine.ts"],
+    ["src/server/auth.ts"],
+    ["scripts/release/release-draft.mjs"],
     ["tests/fixtures/germany/server.ts"],
     ["src/audio/deleted.ts"],
     ["unknown"],
   ])
     expect(classify(paths)).toBe("full");
-  expect(classify(["src/audio/events.ts"])).toBe("fast");
+  expect(classify(["src/client/audio/events.ts"])).toBe("fast");
   expect(classify(["docs/MENUES.md"])).toBe("docs");
   expect(classify(["docs/MENUES.md"], "full")).toBe("full");
   expect(classify(["docs/TESTMIGRATION.json"])).toBe("full");
-  expect(classify(["src/germany/GermanyMap.tsx"])).toBe("deep");
-  expect(classify(["src/engine.ts"], "fast")).toBe("full");
+  expect(classify(["src/client/germany/GermanyMap.tsx"])).toBe("deep");
+  expect(classify(["src/shared/engine.ts"], "fast")).toBe("full");
 });
 it("erfasst echte umbenannte und gelöschte Gitpfade einschließlich vorherigem Namen", () => {
   const root = mkdtempSync(resolve(tmpdir(), "lv-ci-diff-"));

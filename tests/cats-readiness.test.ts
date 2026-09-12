@@ -1,11 +1,11 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
-import { apply, readiness, tick } from "../src/engine";
-import { fresh, validate } from "../src/model";
+import { apply, readiness, tick } from "../src/shared/engine";
+import { fresh, validate } from "../src/shared/model";
 import { sites as nodes } from "./fixtures/germany/locations";
 
-import { vt } from "../src/catalog";
-import { xpForLevel } from "../src/progression";
+import { vt } from "../src/shared/catalog";
+import { xpForLevel } from "../src/shared/progression";
 import { attachIncident, callAction } from "../src/simulation/calls";
 import {
   civilProtectionCommand,

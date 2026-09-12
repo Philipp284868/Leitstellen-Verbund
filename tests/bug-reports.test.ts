@@ -1,8 +1,8 @@
 import { it, expect } from "vitest";
-import { Database } from "../server/database";
-import { fresh } from "../src/model";
-import { BugReports, reportToken } from "../server/bug-reports";
-import { cleanReport } from "../src/bug-report";
+import { Database } from "../src/server/database";
+import { fresh } from "../src/shared/model";
+import { BugReports, reportToken } from "../src/server/bug-reports";
+import { cleanReport } from "../src/shared/bug-report";
 const input = {
   title: "Fahrzeuganzeige bleibt stehen",
   description: "Nach der Disposition bleibt die Anzeige stehen.",

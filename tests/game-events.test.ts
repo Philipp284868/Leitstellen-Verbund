@@ -1,12 +1,12 @@
 import { radioFixture } from "./radio-fixture";
-import { projectEvents } from "../src/game-events";
+import { projectEvents } from "../src/shared/game-events";
 import { publicSave } from "../src/simulation/incidents";
 import { it, expect } from "vitest";
-import { Database } from "../server/database";
-import { fresh } from "../src/model";
-import { eventsPage, persistGameEvents } from "../server/game-events";
-import { bookMoney } from "../src/economy/ledger";
-import { xpForLevel } from "../src/progression";
+import { Database } from "../src/server/database";
+import { fresh } from "../src/shared/model";
+import { eventsPage, persistGameEvents } from "../src/server/game-events";
+import { bookMoney } from "../src/shared/economy/ledger";
+import { xpForLevel } from "../src/shared/progression";
 it("speichert Ereignisse idempotent, paginiert privat und übersteht Rollback", () => {
   const db = new Database("", { memory: true });
   try {

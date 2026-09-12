@@ -4,7 +4,7 @@ import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { Database } from "../server/database";
+import { Database } from "../src/server/database";
 import { installLogicGeography } from "./fixtures/germany/logic-provider";
 import { startServer } from "./fixtures/germany/server";
 import "./fixtures/germany/session";

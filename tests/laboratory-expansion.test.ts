@@ -1,6 +1,11 @@
 import { expect, it } from "vitest";
-import { createLab, runLab, verifyLab, type LabAction } from "../server/lab";
-import { commandSchema } from "../server/actions";
+import {
+  createLab,
+  runLab,
+  verifyLab,
+  type LabAction,
+} from "../src/server/lab";
+import { commandSchema } from "../src/server/actions";
 
 it("keeps all laboratory actions unavailable to normal server commands", () => {
   for (const action of [

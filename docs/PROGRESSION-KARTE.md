@@ -8,7 +8,7 @@ Alle Straßenfahrzeugtypen hatten zuvor 60 km/h als Fahrzeugwert. Streckenlänge
 
 ## Gemeinsame Progression
 
-`src/progression.ts` enthält kumulative, ganzzahlige XP-Schwellen. Die Kosten für den Übergang von Stufe L auf L+1 sind:
+`src/shared/progression.ts` enthält kumulative, ganzzahlige XP-Schwellen. Die Kosten für den Übergang von Stufe L auf L+1 sind:
 
 | Stufe L | Erforderliche XP für den nächsten Aufstieg |
 | ------- | ------------------------------------------ |
@@ -26,7 +26,7 @@ Eine erfolgreiche Mission verwendet `100 + min(60, floor(Grunddauer / 30) × 10)
 
 Die vollständige aus den aktuellen Katalogen erzeugte [Euro-Preisliste](EURO-PREISE.md) enthält alle **50 Fahrzeugtypen, acht Gebäudetypen und vier Erweiterungen**, ihre Freischaltstufen und Voraussetzungen. Sie ersetzt die frühere unvollständige 20-Fahrzeug-/Credit-Tabelle dieser Anleitung. Der Erzeuger `node scripts/economy-audit.mjs --write` schreibt zugleich [EURO-PREISE.json](EURO-PREISE.json).
 
-Neukäufe benötigen ausreichend Euro, Spielerlevel, fertige passende Wache, Stellplatz und gegebenenfalls Erweiterung. Ab 2.21 stellt die fertiggestellte freigeschaltete Gebäudefunktion passende Besetzung und Qualifikation automatisch bereit. Ein Ausbildungszentrum ist kein zusätzlicher Pflichtkauf für jede Fahrzeugbesatzung. Verletzungen, aktive Bindungen und tatsächliche FF-Anreise bleiben wirksam. [Automatische Wachbesetzung](GEBAEUDEBESETZUNG-2.21.md).
+Neukäufe benötigen ausreichend Euro, Spielerlevel, fertige passende Wache, Stellplatz und gegebenenfalls Erweiterung. Ab 2.21 stellt die fertiggestellte freigeschaltete Gebäudefunktion passende Besetzung und Qualifikation automatisch bereit. Ein Ausbildungszentrum ist kein zusätzlicher Pflichtkauf für jede Fahrzeugbesatzung. Verletzungen, aktive Bindungen und tatsächliche FF-Anreise bleiben wirksam. [Automatische Wachbesetzung](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/GEBAEUDEBESETZUNG-2.21.md).
 
 Gebäudeausbau benötigt mindestens die Gebäudefreischaltung und das Doppelte der bisherigen Gebäudestufe. Die maximale Gebäudestufe 10 ist unabhängig vom unbegrenzten Spielerfortschritt. Bestehende Fahrzeuge werden nicht durch spätere Stufengrenzen eingezogen.
 
@@ -103,7 +103,7 @@ AAO-Vorschläge berücksichtigen Fahrzeit und geschätztes Ausrücken. Die Oberf
 
 ## Nachweise und Grenzen
 
-Automatisierte Prüfungen decken Referenzfahrzeiten 30/50/60/80/100/120 km/h, die gemischten 864 Sekunden, echte 80 km/h, vorausgehendes Bremsen, Segment- und Tickgrößen, gerichtete schnelle Umwege, Sperren, Wartephasen, Migration, Pannen, persistente Käufe und Levelübergänge ab. Bestehende Logik-, Server-, Sicherheits-, Wiederverbindungs-, Kooperations-, CLI- und Browserprüfungen werden weiter ausgeführt. Den final tatsächlich ausgeführten Stand dokumentiert [ABNAHME-2.12.md](ABNAHME-2.12.md).
+Automatisierte Prüfungen decken Referenzfahrzeiten 30/50/60/80/100/120 km/h, die gemischten 864 Sekunden, echte 80 km/h, vorausgehendes Bremsen, Segment- und Tickgrößen, gerichtete schnelle Umwege, Sperren, Wartephasen, Migration, Pannen, persistente Käufe und Levelübergänge ab. Bestehende Logik-, Server-, Sicherheits-, Wiederverbindungs-, Kooperations-, CLI- und Browserprüfungen werden weiter ausgeführt. Den final tatsächlich ausgeführten Stand dokumentiert [ABNAHME-2.12.md](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/ABNAHME-2.12.md).
 
 Der zusätzliche Rechnerbenchmark verwendet 500 Fahrzeuge, davon 120 lange Fahrten, 120 Routensuchen und 100 Positionsläufe. Der Browserbenchmark verwendet 100 Wachen, 500 Fahrzeuge, 100 aktive Fahrten und 40 Einsätze. Messungen sind lokale Ergebnisse eines Windows-Rechners mit i7-13700K und Node 24.19.0, keine Zusicherung für beliebige AMP-Hardware. Große vollständige Zustandsnachrichten bleiben umfangreich; WebSocket-Kompression ist aktiviert, eine komplette Umstellung des bestehenden Übertragungsprotokolls auf Delta-Nachrichten ist nicht Bestandteil dieser Änderung.
 

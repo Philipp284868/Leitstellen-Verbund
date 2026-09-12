@@ -5,9 +5,9 @@ import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Config } from "../server/config";
-import { Database, DATABASE_VERSION } from "../server/database";
-import type { Mission } from "../src/model";
+import type { Config } from "../src/server/config";
+import { Database, DATABASE_VERSION } from "../src/server/database";
+import type { Mission } from "../src/shared/model";
 import { postIncidentTick } from "../src/simulation/post-incident";
 import {
   newStationProfile,

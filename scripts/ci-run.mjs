@@ -64,8 +64,8 @@ export async function runGroup(group, part) {
       await run(["scripts/check-format.mjs"]);
       if (selected.includes("lint")) await pnpm("lint");
     } else if (group === "build") {
-      await run(["scripts/build.mjs"]);
-      await run(["scripts/check-build-provenance.mjs"]);
+      await run(["scripts/build/build.mjs"]);
+      await run(["scripts/build/check-build-provenance.mjs"]);
       result.outputHash = read("dist/build-info.json").outputs;
     } else if (group === "logic") {
       const output = ".tools/test-runs/logic.json";
@@ -140,19 +140,24 @@ export async function runGroup(group, part) {
     } else if (group === "audit")
       await pnpm("audit", "--prod", "--audit-level=high");
     else if (group === "package") {
-      await run(["scripts/check-build-provenance.mjs"]);
-      await run(["scripts/package-runtime.mjs"]);
+      await run(["scripts/build/check-build-provenance.mjs"]);
+      await run(["scripts/build/package-runtime.mjs"]);
       const first = readFileSync(".tools/releases/SHA256SUMS", "utf8");
-      await run(["scripts/package-runtime.mjs"]);
+      await run(["scripts/build/package-runtime.mjs"]);
       if (first !== readFileSync(".tools/releases/SHA256SUMS", "utf8"))
         throw Error("Paket nicht reproduzierbar.");
-      const archives = readdirSync(".tools/releases").filter((f) =>
-        f.endsWith(".tar.gz"),
+      const archives = readdirSync(".tools/releases").filter(
+        (f) => f.startsWith("leitstellen-verbund-") && f.endsWith(".tar.gz"),
       );
       if (archives.length !== 1)
         throw Error("Genau ein Runtime-Paket erforderlich.");
       const archive = ".tools/releases/" + archives[0];
-      await run(["scripts/runtime-smoke.mjs", archive]);
+      await run(["scripts/build/runtime-smoke.mjs", archive]);
+      await run(["scripts/build/package-bootstrap.mjs"]);
+      await run(["scripts/build/operations-smoke.mjs", archive]);
+      result.bootstrapHash = createHash("sha256")
+        .update(readFileSync(".tools/releases/amp-bootstrap.tar.gz"))
+        .digest("hex");
       result.archiveHash = createHash("sha256")
         .update(readFileSync(archive))
         .digest("hex");

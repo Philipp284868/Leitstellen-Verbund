@@ -36,7 +36,7 @@ Wasserrettung in Deutschland verwendet eine vollständige Kombination aus Zugfah
 
 ## Historischer Bestand
 
-Die historische fiktive Region ist aus dem aktiven Produkt entfernt. [[Rivermere]] beschreibt ausschließlich den Bestandsschutz und verweist auf den schreibgeschützten Export.
+Die historische fiktive Region ist aus dem aktiven Produkt entfernt. [[Deutschland]] beschreibt ausschließlich den Bestandsschutz und verweist auf den schreibgeschützten Export.
 
 ## Einsatzorte ab 2.22
 

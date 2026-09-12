@@ -10,18 +10,18 @@ import {
 import { build } from "esbuild";
 import { pathToFileURL } from "node:url";
 import type * as LocationFixture from "./helpers/incident-location-fixture";
-import type { Save } from "../src/model";
+import type { Save } from "../src/shared/model";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fork, type ChildProcess } from "node:child_process";
-import { GermanyIncidentGeography } from "../server/germany/geography-sites";
-import { LocalGermanyProvider } from "../server/germany/provider";
-import { RoutingBridge } from "../server/germany/bridge";
-import { GermanyRoutingError } from "../src/germany/errors";
-import { unproject } from "../src/germany/projection";
-import type { IncidentSiteKind } from "../src/germany/world";
+import { GermanyIncidentGeography } from "../src/server/germany/geography-sites";
+import { LocalGermanyProvider } from "../src/server/germany/provider";
+import { RoutingBridge } from "../src/server/germany/bridge";
+import { GermanyRoutingError } from "../src/shared/germany/errors";
+import { unproject } from "../src/shared/germany/projection";
+import type { IncidentSiteKind } from "../src/shared/germany/world";
 import {
   createMap,
   encodeTile,

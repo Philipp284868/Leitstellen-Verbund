@@ -1,6 +1,6 @@
 import { configuredSkills } from "./vehicle-equipment";
-import type { Save, Mission, Vehicle } from "../model";
-import { mt, type Skills } from "../catalog";
+import type { Save, Mission, Vehicle } from "../shared/model";
+import { mt, type Skills } from "../shared/catalog";
 import { requirements } from "./hazards";
 import { effectiveSkills } from "./major-resources";
 

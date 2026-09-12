@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 import { testGroups } from "./test-groups.mjs";
 
 const errors = [];
-const sources = ["src", "server"].flatMap((dir) =>
+const sources = ["src"].flatMap((dir) =>
   readdirSync(dir, { recursive: true })
     .filter((f) => /\.(ts|tsx)$/.test(f))
     .map((f) => dir + "/" + f.replaceAll("\\", "/")),
@@ -51,10 +51,10 @@ for (const file of sources) {
         );
       if (
         !typesOnly &&
-        file.startsWith("src/") &&
+        !file.startsWith("src/server/") &&
         (specifier.startsWith("node:") ||
           resolve(dirname(file), specifier).startsWith(
-            resolve("server") + (process.platform === "win32" ? "\\" : "/"),
+            resolve("src/server") + (process.platform === "win32" ? "\\" : "/"),
           ))
       )
         errors.push(

@@ -2,7 +2,7 @@ import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
 import { fundTestBudget } from "./money-fixture";
-import { euro } from "../src/money";
+import { euro } from "../src/shared/money";
 import { DatabaseSync } from "node:sqlite";
 import {
   mkdirSync,

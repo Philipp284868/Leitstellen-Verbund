@@ -2,7 +2,7 @@
 
 Der Deutschland-Generator nutzt `incidentLocations()` und `queryIncidentSites(center, radius, profile.site)`. Der Server sucht reale motorisierte OSM-Straßenstandorte und prüft die zum Einsatzprofil passende Nutzung in den **lokalen** Detailkacheln von `maps.mbtiles`. Es gibt keine Online-Ortsabfragen und keine Übertragung von Spielständen an Kartendienste.
 
-`server/germany/geography-sites.ts` liest dieselbe OSM-Datenversion wie der Straßenindex; `source_sha256` muss übereinstimmen. `prepareGeography()` übergibt die vorhandene Karte ausdrücklich an den Provider. Das vorhandene Deutschland-Datenpaket muss weder neu importiert noch neu veröffentlicht werden. Die Detailkacheln müssen Zoomstufe 14 enthalten; fehlende oder nicht passende Geometrie wird nicht durch erfundene Standorte ersetzt.
+`src/server/germany/geography-sites.ts` liest dieselbe OSM-Datenversion wie der Straßenindex; `source_sha256` muss übereinstimmen. `prepareGeography()` übergibt die vorhandene Karte ausdrücklich an den Provider. Das vorhandene Deutschland-Datenpaket muss weder neu importiert noch neu veröffentlicht werden. Die Detailkacheln müssen Zoomstufe 14 enthalten; fehlende oder nicht passende Geometrie wird nicht durch erfundene Standorte ersetzt.
 
 ## Eignung je Einsatzprofil
 

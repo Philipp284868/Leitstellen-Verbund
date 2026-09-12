@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { Auth } from "../server/auth";
-import { Database } from "../server/database";
+import { Auth } from "../src/server/auth";
+import { Database } from "../src/server/database";
 import { startServer } from "./fixtures/germany/server";
 it("erhält die alte Datenbank bei abgebrochener Migration und verweigert neuere Schemata", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-migration-")),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertGraphRuntimeIdentity } from "../server/germany/identity";
+import { assertGraphRuntimeIdentity } from "../src/server/germany/identity";
 const identity = {
   version: "11.0",
   import_date: "2026-09-08T22:27:30Z",

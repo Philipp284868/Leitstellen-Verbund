@@ -1,8 +1,8 @@
-import { startServer as productServer } from "../../../server/index";
-import { GermanyMaps } from "../../../server/germany/maps";
-import { LocalGermanyProvider } from "../../../server/germany/provider";
-import { assertGraphRuntimeIdentity } from "../../../server/germany/identity";
-import { installGermanyProvider } from "../../../src/germany/world";
+import { startServer as productServer } from "../../../src/server/index";
+import { GermanyMaps } from "../../../src/server/germany/maps";
+import { LocalGermanyProvider } from "../../../src/server/germany/provider";
+import { assertGraphRuntimeIdentity } from "../../../src/server/germany/identity";
+import { installGermanyProvider } from "../../../src/shared/germany/world";
 import { runtime } from "./session";
 import { fixtureDataset } from "./locations";
 import { resolve } from "node:path";

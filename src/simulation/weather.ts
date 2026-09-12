@@ -1,8 +1,8 @@
 import type { z } from "zod";
-import { mt } from "../catalog";
-import { projectRoad, querySites } from "../germany/world";
-import type { Save } from "../model";
-import { nodes } from "../world";
+import { mt } from "../shared/catalog";
+import { projectRoad, querySites } from "../shared/germany/world";
+import type { Save } from "../shared/model";
+import { nodes } from "../shared/world";
 import type { environmentSchema } from "./dynamics-schema";
 import { DYNAMICS, sample } from "./random";
 import {

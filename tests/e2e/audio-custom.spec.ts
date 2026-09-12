@@ -3,13 +3,13 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { fresh, type Mission } from "../../src/model";
+import { fresh, type Mission } from "../../src/shared/model";
 import { legacyIncident } from "../../src/simulation/incidents";
 import { sites as nodes } from "../fixtures/germany/locations";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
 
-import type { startServer } from "../../server/index";
+import type { startServer } from "../../src/server/index";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href

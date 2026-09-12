@@ -1,6 +1,6 @@
 import { expect } from "vitest";
-import type { Database } from "../server/database";
-import type { Save } from "../src/model";
+import type { Database } from "../src/server/database";
+import type { Save } from "../src/shared/model";
 
 /** Check both independent income streams, not just a permissive balance delta. */
 export function expectCoopPaymentOnce(

@@ -29,17 +29,17 @@ import { io, type Socket } from "socket.io-client";
 import {
   RouteSnapshotDecoder,
   type RouteSnapshotFrame,
-} from "../src/germany/snapshot";
+} from "../src/shared/germany/snapshot";
 import type * as Fixture from "./germany-simulation-fixture";
-import type { Config } from "../server/config";
-import type { ServerAction } from "../server/actions";
-import type { Mission, Save } from "../src/model";
-import { project, unproject } from "../src/germany/projection";
+import type { Config } from "../src/server/config";
+import type { ServerAction } from "../src/server/actions";
+import type { Mission, Save } from "../src/shared/model";
+import { project, unproject } from "../src/shared/germany/projection";
 import {
   PresenceDecoder,
   type PublicPlayer,
   type PresenceFrame,
-} from "../src/presence";
+} from "../src/shared/presence";
 import {
   encodeTile,
   rectangle,

@@ -2,9 +2,9 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { type Save } from "../src/model";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { type Save } from "../src/shared/model";
 import { phaseFixture } from "./dispatch-fixture";
 import { operate } from "./helpers/ideal-dispatcher";
 

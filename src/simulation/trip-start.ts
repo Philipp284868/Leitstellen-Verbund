@@ -1,7 +1,7 @@
-import type { Save, Vehicle } from "../model";
-import type { Point } from "../world";
+import type { Save, Vehicle } from "../shared/model";
+import type { Point } from "../shared/world";
 import type { TravelMode } from "./dynamics-schema";
-import { vehiclePosition } from "../vehicle-position";
+import { vehiclePosition } from "../shared/vehicle-position";
 import { routePlan, routeWeatherKey } from "./traffic";
 export function beginTrip(
   s: Save,

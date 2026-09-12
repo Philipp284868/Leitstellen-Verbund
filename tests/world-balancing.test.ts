@@ -2,11 +2,11 @@ import { fixturePurchase } from "./fixtures/germany/facilities";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { writeWorldSituation } from "../server/world-situation";
-import { mt } from "../src/catalog";
-import { apply } from "../src/engine";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { writeWorldSituation } from "../src/server/world-situation";
+import { mt } from "../src/shared/catalog";
+import { apply } from "../src/shared/engine";
 import { incidentCategory } from "../src/simulation/incident-selection";
 import { callLoad } from "../src/simulation/pacing";
 import {

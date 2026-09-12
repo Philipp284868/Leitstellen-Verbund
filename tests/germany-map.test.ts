@@ -4,7 +4,7 @@ import {
   readGermanyCamera,
   germanyStyle,
   GERMANY_BOUNDS,
-} from "../src/germany/map-style";
+} from "../src/client/germany/map-style";
 
 describe("Deutschlandkamera", () => {
   const camera = {

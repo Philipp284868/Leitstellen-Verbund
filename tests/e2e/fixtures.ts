@@ -1,9 +1,9 @@
 import { logicFacilityCatalog } from "../fixtures/germany/facilities";
-import { facilityBinding } from "../../server/facilities/migration";
+import { facilityBinding } from "../../src/server/facilities/migration";
 import { fixturePurchase } from "../fixtures/germany/facilities";
-import { apply, tick } from "../../src/engine";
-import { fresh, uid, type Save } from "../../src/model";
-import { xpForLevel } from "../../src/progression";
+import { apply, tick } from "../../src/shared/engine";
+import { fresh, uid, type Save } from "../../src/shared/model";
+import { xpForLevel } from "../../src/shared/progression";
 import { fixtureTime, sites as nodes } from "../fixtures/germany/locations";
 import { fixtureMission } from "../fixtures/germany/mission";
 import { fundTestBudget } from "../money-fixture";

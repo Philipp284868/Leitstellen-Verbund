@@ -6,9 +6,9 @@ export {
   verifyIncidentLocation,
   clearReachabilityCache,
 } from "../../src/simulation/location-reachability";
-export { fresh } from "../../src/model";
-export { missions, vehicles } from "../../src/catalog";
+export { fresh } from "../../src/shared/model";
+export { missions, vehicles } from "../../src/shared/catalog";
 export {
   installGermanyProvider,
   clearGermanyProvider,
-} from "../../src/germany/world";
+} from "../../src/shared/germany/world";

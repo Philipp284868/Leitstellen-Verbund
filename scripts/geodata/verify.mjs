@@ -18,7 +18,7 @@ const root = resolve(
 const origin =
   configuration.settings.GRAPHHOPPER_URL || "http://127.0.0.1:8989";
 const adapterBuild = await build({
-  entryPoints: [join(repo, "src/germany/route.ts")],
+  entryPoints: [join(repo, "src/shared/germany/route.ts")],
   bundle: true,
   write: false,
   platform: "node",

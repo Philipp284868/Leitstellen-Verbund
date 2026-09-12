@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
-import { AudioEvents } from "../src/audio/events";
-import { tick } from "../src/engine";
-import { fresh, validate } from "../src/model";
+import { AudioEvents } from "../src/client/audio/events";
+import { tick } from "../src/shared/engine";
+import { fresh, validate } from "../src/shared/model";
 import { alarm } from "../src/simulation/dispatch";
 import { setFms } from "../src/simulation/fms";
 import { afterVehicles, radioAction } from "../src/simulation/incidents";

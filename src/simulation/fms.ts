@@ -1,5 +1,5 @@
-import type { Save, Vehicle } from "../model";
-import { bt, vt } from "../catalog";
+import type { Save, Vehicle } from "../shared/model";
+import { bt, vt } from "../shared/catalog";
 import { record, simId } from "./events";
 import { transmit } from "./transmissions";
 export const fmsDefaults = [

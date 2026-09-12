@@ -1048,8 +1048,8 @@
         "leerer generierter Sicherungsordner wird entfernt",
         "Node 24: echter Spielserver, zwei Konten, Reset-CLI, Neustart und erneute Registrierung"
       ],
-      "replacement": "tests/hard-reset.node.mjs",
-      "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
+      "replacement": "tests/operations.node.mjs",
+      "disposition": "replaced by confirmed, backed-up generation reset; old destructive semantics removed"
     },
     {
       "old": "tests/history-integration.test.ts",

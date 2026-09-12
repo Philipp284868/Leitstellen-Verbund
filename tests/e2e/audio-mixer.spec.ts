@@ -1,8 +1,8 @@
 import { build } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
-import type { SoundPreferences } from "../../src/audio/preferences";
-import type { Cue, SoundGraph } from "../../src/audio/synth";
+import type { SoundPreferences } from "../../src/client/audio/preferences";
+import type { Cue, SoundGraph } from "../../src/client/audio/synth";
 import { expect, test, type Page } from "./test";
 type Lab = typeof import("./fixtures/audio/lab");
 declare global {

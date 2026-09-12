@@ -13,7 +13,7 @@ import { resolve } from "node:path";
 // @ts-expect-error JavaScript tool module
 import { clean } from "../scripts/clean.mjs";
 // @ts-expect-error JavaScript tool module
-import { cachedBuild, fingerprint } from "../scripts/build-cache.mjs";
+import { cachedBuild, fingerprint } from "../scripts/build/build-cache.mjs";
 
 it("Bereinigung zeigt zuerst eine Vorschau und schützt Daten sowie verknüpfte Ausgaben", async () => {
   const root = await mkdtemp(resolve(tmpdir(), "lv-clean-"));

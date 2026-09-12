@@ -2,9 +2,9 @@ import { build } from "esbuild";
 import { fork } from "node:child_process";
 import { resolve } from "node:path";
 // @ts-expect-error Node tooling shared with the normal build
-import { cachedBuild, fingerprint } from "../../scripts/build-cache.mjs";
+import { cachedBuild, fingerprint } from "../../scripts/build/build-cache.mjs";
 // @ts-expect-error Node tooling shared with the normal build
-import { sourceGraph } from "../../scripts/source-graph.mjs";
+import { sourceGraph } from "../../scripts/build/source-graph.mjs";
 
 // Production server and browser driver must not share an event loop. Otherwise
 // simulation work is counted as delayed Playwright commands, not browser input.

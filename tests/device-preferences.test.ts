@@ -3,8 +3,8 @@ import {
   parseDevice,
   shortcutConflicts,
   defaultDevice,
-} from "../src/device-preferences";
-import { searchNavigation } from "../src/navigation";
+} from "../src/client/device-preferences";
+import { searchNavigation } from "../src/client/navigation";
 describe("versioned workstation settings", () => {
   it("migrates local workspace without sharing it through the world", () => {
     const p = parseDevice(

@@ -97,7 +97,7 @@ try {
   let previousOutput;
   compiler = await context({
     ...options,
-    entryPoints: ["server/dev-entry.ts"],
+    entryPoints: ["src/server/dev-entry.ts"],
     plugins: [
       ...options.plugins,
       {

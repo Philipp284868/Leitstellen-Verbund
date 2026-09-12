@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import {
   clientDiagnostics,
   recordClientDiagnostic,
-} from "../src/client-diagnostics";
+} from "../src/client/client-diagnostics";
 it("hält lokale Fehlercodes begrenzt, fasst Wiederholungen zusammen und nimmt keine Rohdaten an", () => {
   recordClientDiagnostic("UI_SCRIPT_FAILED", 100000);
   recordClientDiagnostic("UI_SCRIPT_FAILED", 101000);

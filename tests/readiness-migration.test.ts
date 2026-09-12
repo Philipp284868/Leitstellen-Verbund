@@ -3,9 +3,9 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it } from "vitest";
-import { Database, DATABASE_VERSION } from "../server/database";
-import { planReadinessMigration } from "../server/readiness-migration";
-import { recall } from "../src/engine";
+import { Database, DATABASE_VERSION } from "../src/server/database";
+import { planReadinessMigration } from "../src/server/readiness-migration";
+import { recall } from "../src/shared/engine";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 

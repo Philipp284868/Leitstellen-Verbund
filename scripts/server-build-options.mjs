@@ -1,6 +1,10 @@
 export function serverBuildOptions(outdir) {
   return {
-    entryPoints: ["server/index.ts", "server/cli.ts", "server/lab-cli.ts"],
+    entryPoints: [
+      "src/server/index.ts",
+      "src/server/cli.ts",
+      "src/server/lab-cli.ts",
+    ],
     outdir,
     plugins: [],
     bundle: true,

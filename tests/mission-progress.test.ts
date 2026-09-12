@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { mt } from "../src/catalog";
-import type { Mission } from "../src/model";
-import { missionProgress } from "../src/mission-presentation";
+import { mt } from "../src/shared/catalog";
+import type { Mission } from "../src/shared/model";
+import { missionProgress } from "../src/client/mission-presentation";
 
 function mission(): Mission {
   return {

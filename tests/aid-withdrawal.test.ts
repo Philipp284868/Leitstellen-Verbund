@@ -2,10 +2,10 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import type { ServerAction } from "../server/actions";
-import { Auth } from "../server/auth";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
+import type { ServerAction } from "../src/server/actions";
+import { Auth } from "../src/server/auth";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
 import { atScene } from "./incident-dynamics-fixture";
 import { organizationFixture } from "./mutual-aid-fixture";
 

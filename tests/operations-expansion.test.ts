@@ -1,8 +1,8 @@
 import { readinessHalfHour } from "../src/simulation/operating-costs";
 import { expect, it } from "vitest";
-import { commandSchema } from "../server/actions";
-import { readiness, tick } from "../src/engine";
-import { validate } from "../src/model";
+import { commandSchema } from "../src/server/actions";
+import { readiness, tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
 import { callAction, callsTick } from "../src/simulation/calls";
 import {
   civilProtectionCommand,

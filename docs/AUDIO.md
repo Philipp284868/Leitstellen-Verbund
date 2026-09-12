@@ -1,6 +1,6 @@
 # Musik, Kommunikation und Mehrkanalton
 
-Stand: 9. September 2026. Diese Beschreibung bezieht sich auf die gemeinsame Audioimplementierung in `src/audio/`. Der verbindliche Stand einer Veröffentlichung ergibt sich aus deren Commit und CI; lokale Prüfergebnisse stehen im Abschnitt Abnahme.
+Stand: 9. September 2026. Diese Beschreibung bezieht sich auf die gemeinsame Audioimplementierung in `src/client/audio/`. Der verbindliche Stand einer Veröffentlichung ergibt sich aus deren Commit und CI; lokale Prüfergebnisse stehen im Abschnitt Abnahme.
 
 ## Bedienung und lokale Einstellungen
 
@@ -16,7 +16,7 @@ Die Einstellungen liegen versioniert im lokalen Schlüssel `lv-audio-v1` mit `ve
 
 Die Ausgabe verwendet die Perspektive eines Leitstellenarbeitsplatzes. Kommunikation und Alarmierung sind zentral hörbar. Kamerabewegungen beeinflussen Bürotelefon und Funk nicht; es gibt keine weltweite Geräuschkulisse aller Fahrzeuge. Unbekannte Notrufe verwenden neutrale Signale. Weder Musik noch Umgebung hängen von einer geheimen Einsatzart ab.
 
-Alle folgenden Produktionsklänge werden aus eigenem Quellcode in `src/audio/synth.ts` erzeugt. Es werden **keine fremden Aufnahmen, Musikstreams, Sprachdienste oder vertraulichen Notruf-/BOS-Aufnahmen** geladen. Für die selbst erzeugten Klänge ist keine zusätzliche fremde Namensnennung nötig. Die Nutzung des Projektquellcodes richtet sich nach den Bedingungen des Repositories; diese Dokumentation erteilt keine zusätzliche Lizenz für fremde Dateien.
+Alle folgenden Produktionsklänge werden aus eigenem Quellcode in `src/client/audio/synth.ts` erzeugt. Es werden **keine fremden Aufnahmen, Musikstreams, Sprachdienste oder vertraulichen Notruf-/BOS-Aufnahmen** geladen. Für die selbst erzeugten Klänge ist keine zusätzliche fremde Namensnennung nötig. Die Nutzung des Projektquellcodes richtet sich nach den Bedingungen des Repositories; diese Dokumentation erteilt keine zusätzliche Lizenz für fremde Dateien.
 
 | Erzeuger / verwendete Ereignisse                      | Eigene Klanggestaltung und Quelle                                                                                                                                                                                          |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,0 +1,543 @@
+import { FacilityBrowser } from "./facilities/FacilityBrowser";
+import { ChevronRight, Radio } from "lucide-react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+} from "react";
+import { Account, AuthScreen } from "./Account";
+import { audio } from "./audio/controller";
+import { CallDesk } from "./CallDesk";
+import { bt } from "../shared/catalog";
+import { CivilProtectionDesk } from "./CivilProtection";
+import { AAOPanel, FMSPanel, History, IncidentPanel, TeamPanel } from "./Desk";
+import { useDevicePreferences } from "./device-preferences";
+import { requestDialogTransition } from "./dialog-state";
+import { DynamicsPanel } from "./Dynamics";
+import { MainMenu } from "./MainMenu";
+import { BuildingIcon } from "../shared/map-icons";
+import { navigation } from "./navigation";
+import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
+import { WORLD_NAME } from "../shared/product";
+import { EventLog } from "./EventLog";
+const BuildingPanel = lazy(() =>
+  import("./Resources").then((m) => ({ default: m.BuildingPanel })),
+);
+const Fleet = lazy(() =>
+  import("./Resources").then((m) => ({ default: m.Fleet })),
+);
+import "./Settings.css";
+import { SituationDesk } from "./SituationDesk";
+import { AudioSession } from "./Sound";
+import { garageIndex, StationGarage } from "./StationGarage";
+import { emit, retryStorage, useGame, setPlaying } from "./store";
+import { Modal } from "./ui";
+import { shortcutFor } from "./workspace";
+import "./Workspace.css";
+const Progression = lazy(() =>
+  import("./ProgressionPanel").then((m) => ({ default: m.Progression })),
+);
+const GameHud = lazy(() =>
+  import("./GameHud").then((m) => ({ default: m.GameHud })),
+);
+const MenuPanels = lazy(() =>
+  import("./MenuPanels").then((m) => ({ default: m.MenuPanels })),
+);
+const Settings = lazy(() =>
+  import("./Settings").then((m) => ({ default: m.Settings })),
+);
+const Players = lazy(() =>
+  import("./Players").then((m) => ({ default: m.Players })),
+);
+const ArchivePanel = lazy(() =>
+  import("./Reports").then((m) => ({ default: m.ArchivePanel })),
+);
+const ReportPanel = lazy(() =>
+  import("./Reports").then((m) => ({ default: m.ReportPanel })),
+);
+export function App() {
+  useEffect(() => {
+    document.title = `${WORLD_NAME} · Leitstellen-Verbund`;
+  }, []);
+  return (
+    <>
+      <AudioSession />
+      <div className="desktop-required" role="status">
+        <h1>Leitstellen-Verbund für PC</h1>
+        <p>
+          Bitte das Browserfenster auf mindestens 1100 × 650 Pixel vergrößern
+          oder den Browser-Zoom verkleinern. Maus und Tastatur werden empfohlen.
+        </p>
+        <p>Der Server läuft weiter. Deine Daten bleiben erhalten.</p>
+      </div>
+      <Suspense
+        fallback={
+          <div className="loading" role="status">
+            Leitstelle wird geladen …
+          </div>
+        }
+      >
+        <GameApp />
+      </Suspense>
+    </>
+  );
+}
+function GameApp() {
+  const { save: s, loading, readonly, error, notice, user } = useGame();
+  const [screen, setScreen] = useState("start"),
+    [modal, setModalRaw] = useState(""),
+    [selected, setSelected] = useState("");
+  const setModal = useCallback(
+    (id: string) => requestDialogTransition(() => setModalRaw(id)),
+    [],
+  );
+  const preferences = useDevicePreferences();
+  const layout = preferences.workspace;
+  const [listOpen, setListOpen] = useState(true);
+  const [settingsTab, setSettingsTab] = useState<
+    "audio" | "display" | "controls" | "help"
+  >("audio");
+  useEffect(() => {
+    const navigate = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!detail || !navigation.some((item) => item.id === detail.id)) return;
+      requestDialogTransition(() => {
+        if (["audio", "display", "controls", "help"].includes(detail.tab))
+          setSettingsTab(detail.tab);
+        setModalRaw(detail.id);
+      });
+    };
+    window.addEventListener("lv:open-panel", navigate);
+    return () => window.removeEventListener("lv:open-panel", navigate);
+  }, []);
+  useEffect(() => {
+    audio.scene(screen === "game");
+    setPlaying(screen === "game" && !!user);
+    return () => setPlaying(false);
+  }, [screen, user?.id]);
+  const [search, setSearch] = useState(""),
+    [filter, setFilter] = useState("all"),
+    [sort, setSort] = useState("priority");
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!s || screen !== "game" || e.defaultPrevented) return;
+      const editing =
+        e.target instanceof Element &&
+        !!e.target.closest("input,textarea,select,[contenteditable=true]");
+      if (e.key === "Escape" && !editing) {
+        if (!modal && !selected) return;
+        e.preventDefault();
+        if (modal) {
+          requestDialogTransition(() => {
+            setModalRaw("");
+            setSelected("");
+          });
+        } else if (selected) setSelected("");
+        return;
+      }
+      if (modal) return;
+      const action = shortcutFor(e, layout.keys, editing);
+      if (!action) return;
+      e.preventDefault();
+      if (action === "police" || action === "ems") {
+        setFilter(action === "police" ? "Polizei" : "Rettungsdienst");
+        setModal("");
+        setListOpen(true);
+      } else if (action === "missions") {
+        setFilter("all");
+        setModal("");
+        setListOpen(true);
+      } else if (action === "call") {
+        setModal("calls");
+      } else if (action === "alarm") {
+        const mission =
+          s.missions.find((m) => m.id === selected) ?? s.missions[0];
+        if (mission) {
+          setSelected(mission.id);
+          setModal("mission");
+        }
+      } else setModal(action);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [s, screen, selected, layout.keys, modal]);
+  useEffect(() => {
+    setSelected("");
+    setModalRaw("");
+  }, [s?.generation]);
+  if (loading)
+    return (
+      <div className="loading">
+        <Radio size={40} />
+        <h1>Leitstelle wird geöffnet …</h1>
+      </div>
+    );
+  if (!s && user && error)
+    return (
+      <main className="loading">
+        <h1>Spielwelt konnte nicht geladen werden</h1>
+        <p role="alert">{error}</p>
+        <button
+          onClick={() =>
+            void retryStorage().catch((e) => emit({ error: String(e) }))
+          }
+        >
+          Erneut verbinden
+        </button>
+      </main>
+    );
+  if (!s) return <AuthScreen />;
+  const garages = modal === "stations" ? garageIndex(s) : null;
+  const open = (id: string) =>
+    requestDialogTransition(() => {
+      if (id === "friends") {
+        setModalRaw("friends");
+        return;
+      }
+      setSelected(id);
+      if (s?.buildings.some((b) => b.id === id)) setModalRaw("building");
+      else if (s?.vehicles.some((v) => v.id === id)) setModalRaw("");
+      else setModalRaw("mission");
+    });
+  return (
+    <div
+      style={
+        {
+          "--desk-width": `${layout.width}px`,
+          "--ui-scale": preferences.scale / 100,
+          "--marker-scale": preferences.markerSize / 100,
+        } as CSSProperties
+      }
+      data-sidebar="left"
+      data-compact={layout.compact}
+      data-queue-bottom={layout.queueBottom}
+      data-stations-top={layout.stationsTop}
+      className={`app command-hud ${screen === "game" ? "in-game" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
+    >
+      {screen === "start" ? (
+        <MainMenu
+          save={s}
+          readonly={readonly}
+          onPlay={() => setScreen("game")}
+          onOpen={setModal}
+        />
+      ) : (
+        <GameHud
+          s={s}
+          selected={selected}
+          open={open}
+          setModal={setModal}
+          readonly={readonly}
+          notice={notice}
+          onMenu={() => setScreen("start")}
+          showDetail={modal === "mission"}
+          onCloseDetailKeepSelection={() => setModal("")}
+          onCloseDetail={() =>
+            requestDialogTransition(() => {
+              setModalRaw("");
+              setSelected("");
+            })
+          }
+          search={search}
+          setSearch={setSearch}
+          filter={filter}
+          setFilter={setFilter}
+          sort={sort}
+          setSort={setSort}
+          userId={user?.id}
+          listOpen={listOpen}
+          setListOpen={setListOpen}
+          activePanel={modal}
+          detail={
+            s.missions.find((m) => m.id === selected) ? (
+              s.missions.find((m) => m.id === selected)!.control ? (
+                <IncidentPanel
+                  key={selected}
+                  s={s}
+                  m={s.missions.find((m) => m.id === selected)!}
+                />
+              ) : (
+                <MissionPanel
+                  key={selected}
+                  s={s}
+                  m={s.missions.find((m) => m.id === selected)!}
+                />
+              )
+            ) : (
+              <>
+                <p>
+                  {s.archive.find((m) => m.id === selected)?.location?.state ===
+                  "technical-closure"
+                    ? "Dieser Einsatz wurde wegen eines technischen Ortsfehlers ohne Vergütung und Wertung aufgehoben."
+                    : "Dieser Einsatz ist abgeschlossen. Die Belohnung steht im Geldjournal."}
+                </p>
+                {s.archive
+                  .filter((m) => m.id === selected)
+                  .map((m) => (
+                    <div key={m.id}>
+                      <Suspense fallback={<p>Bericht wird geladen …</p>}>
+                        <ReportPanel m={m} />
+                      </Suspense>
+                      <DynamicsPanel s={s} m={m} />
+                      <History s={s} m={m} />
+                    </div>
+                  ))}
+              </>
+            )
+          }
+        />
+      )}
+      {screen === "start" && readonly && (
+        <EventLog open={open} panel={setModal} />
+      )}
+      {modal && !(screen === "game" && modal === "mission") && (
+        <Modal
+          title={
+            (
+              {
+                catalog: "Einsatzkatalog",
+                exit: "Spiel verlassen",
+                news: "Changelogs",
+                credits: "Mitwirkende",
+                account: "Konto & Sicherheit",
+                privacy: "Datenschutz im Spiel",
+                support: "Support",
+                language: "Sprache",
+                players: "Leaderboard",
+                facilities: "Standorte kaufen",
+                stations: "Wachen verwalten",
+                building: "Wachendetails",
+                fleet: "Fuhrpark",
+                mission: "Einsatzdisposition",
+                friends: "Leitstellenverbund und Disponenten",
+                aaos: "Alarm- und Ausrückeordnung",
+                radio: "Funk und Ereignisse",
+                calls: "Notrufarbeitsplatz",
+                situation: "Gemeinsame Einsatzlagen",
+                civil: "Katastrophenbereitschaft und KatS-Wachen",
+                fms: "FMS und Alarmierungsprofile",
+                backups: "Spielstände und Sicherungen",
+                progress: "Fortschritt und Erfolge",
+                archive: "Einsatzarchiv und Geldjournal",
+                help: "Spielanleitung",
+                settings: "Einstellungen",
+              } as Record<string, string>
+            )[modal]
+          }
+          onClose={() =>
+            requestDialogTransition(() => {
+              setModalRaw("");
+              setSelected("");
+            })
+          }
+        >
+          <Suspense
+            fallback={
+              <p className="view-intro" role="status">
+                Ansicht wird geladen …
+              </p>
+            }
+          >
+            <MenuPanels
+              panel={modal}
+              s={s}
+              onOpen={setModal}
+              onPlay={() => {
+                setScreen("game");
+                setModal("");
+              }}
+            />
+            {modal === "help" && (
+              <>
+                <p>
+                  <a
+                    href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Wiki öffnen
+                  </a>
+                </p>
+                <button onClick={() => setModal("catalog")}>
+                  Einsatzkatalog
+                </button>
+                <div className="action-grid">
+                  <button onClick={() => setModal("aaos")}>
+                    AAO verwalten
+                  </button>
+                  <button onClick={() => setModal("fms")}>
+                    FMS & Alarmierung
+                  </button>
+                  <button onClick={() => setModal("account")}>
+                    Konto & Sicherheit
+                  </button>
+                </div>
+                <Help />
+              </>
+            )}
+            {modal === "backups" && <BackupPanel s={s} />}
+            {modal === "settings" && (
+              <Settings onOpen={setModal} initialTab={settingsTab} />
+            )}
+            {modal === "account" && <Account />}
+            {s && (
+              <>
+                {modal === "calls" && <CallDesk s={s} />}
+                {modal === "civil" && (
+                  <CivilProtectionDesk
+                    s={s}
+                    onOpen={open}
+                    onFacilities={() => setModal("facilities")}
+                  />
+                )}
+                {modal === "situation" && (
+                  <SituationDesk s={s} onOpen={open} onPanel={setModal} />
+                )}
+                {modal === "radio" && (
+                  <EventLog open={open} panel={setModal} expanded />
+                )}
+                {modal === "facilities" && (
+                  <FacilityBrowser
+                    s={s}
+                    readonly={readonly}
+                    onManage={open}
+                    onMap={() => {
+                      setModal("");
+                      setScreen("game");
+                    }}
+                  />
+                )}
+                {modal === "stations" && (
+                  <>
+                    <button
+                      className="primary"
+                      onClick={() => setModal("facilities")}
+                    >
+                      Standort kaufen
+                    </button>
+                    {s.buildings.map((b) => (
+                      <article key={b.id}>
+                        <button
+                          className="station-card"
+                          key={b.id}
+                          onClick={() => open(b.id)}
+                        >
+                          <BuildingIcon type={b.type} />
+                          <div>
+                            <b>{b.name}</b>
+                            <small>
+                              {bt(b.type).name} · Stufe {b.level}
+                            </small>
+                          </div>
+                          <ChevronRight />
+                        </button>
+                        <StationGarage
+                          s={s}
+                          b={b}
+                          group={garages?.get(b.id)}
+                          onOpen={(id) => {
+                            setSelected(id);
+                            setModal("");
+                          }}
+                        />
+                      </article>
+                    ))}
+                  </>
+                )}
+                {modal === "building" &&
+                  s.buildings.find((b) => b.id === selected) && (
+                    <BuildingPanel
+                      key={selected}
+                      s={s}
+                      b={s.buildings.find((b) => b.id === selected)!}
+                      onOpenVehicle={(id) => {
+                        setSelected(id);
+                        setModal("");
+                      }}
+                    />
+                  )}
+                {modal === "building" &&
+                  !s.buildings.some((b) => b.id === selected) && (
+                    <section className="empty-state">
+                      <h3>Standort nicht mehr vorhanden</h3>
+                      <p>
+                        Der Standort wurde verkauft oder gehört nicht mehr zur
+                        geöffneten Leitstelle.
+                      </p>
+                      <button onClick={() => setModal("stations")}>
+                        Wachenübersicht öffnen
+                      </button>
+                    </section>
+                  )}
+                {modal === "fleet" && (
+                  <Fleet
+                    s={s}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      setModal("");
+                    }}
+                  />
+                )}
+                {modal === "mission" &&
+                  s.missions.find((m) => m.id === selected) &&
+                  (s.missions.find((m) => m.id === selected)!.control ? (
+                    <IncidentPanel
+                      key={selected}
+                      s={s}
+                      m={s.missions.find((m) => m.id === selected)!}
+                    />
+                  ) : (
+                    <MissionPanel
+                      key={selected}
+                      s={s}
+                      m={s.missions.find((m) => m.id === selected)!}
+                    />
+                  ))}
+                {modal === "mission" &&
+                  !s.missions.some((m) => m.id === selected) && (
+                    <>
+                      <p>
+                        {s.archive.find((m) => m.id === selected)?.location
+                          ?.state === "technical-closure"
+                          ? "Dieser Einsatz wurde wegen eines technischen Ortsfehlers ohne Vergütung und Wertung aufgehoben."
+                          : "Dieser Einsatz ist abgeschlossen. Die Belohnung steht im Geldjournal."}
+                      </p>
+                      {s.archive
+                        .filter((m) => m.id === selected)
+                        .map((m) => (
+                          <div key={m.id}>
+                            <Suspense fallback={<p>Bericht wird geladen …</p>}>
+                              <ReportPanel m={m} />
+                            </Suspense>
+                            <DynamicsPanel s={s} m={m} />
+                            <History s={s} m={m} />
+                          </div>
+                        ))}
+                    </>
+                  )}
+                {modal === "friends" && <TeamPanel />}
+                {modal === "players" && <Players />}
+                {modal === "aaos" && <AAOPanel s={s} />}
+                {modal === "fms" && <FMSPanel s={s} />}
+                {modal === "progress" && (
+                  <>
+                    <Progression s={s} />
+                    <ProgressPanel s={s} />
+                  </>
+                )}
+                {modal === "archive" && (
+                  <Suspense fallback={<p>Auswertung wird geladen …</p>}>
+                    <ArchivePanel s={s} open={open} />
+                  </Suspense>
+                )}
+              </>
+            )}
+          </Suspense>
+        </Modal>
+      )}
+    </div>
+  );
+}

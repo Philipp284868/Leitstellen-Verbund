@@ -1,6 +1,6 @@
-import type { Save, Mission, Vehicle } from "../model";
-import { mt, vt, type Skills } from "../catalog";
-import { distance } from "../world";
+import type { Save, Mission, Vehicle } from "../shared/model";
+import { mt, vt, type Skills } from "../shared/catalog";
+import { distance } from "../shared/world";
 import { record, simId } from "./events";
 import { sample } from "./random";
 import { newPatient } from "./patients";

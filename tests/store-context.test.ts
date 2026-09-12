@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { fresh } from "../src/model";
+import { fresh } from "../src/shared/model";
 
 const sockets = vi.hoisted(() => ({
   all: [] as {
@@ -21,7 +21,7 @@ const network = vi.hoisted(() => ({
   presenceConnection: vi.fn(),
   receivePresence: vi.fn(() => true),
 }));
-vi.mock("../src/network", () => network);
+vi.mock("../src/client/network", () => network);
 vi.mock("react", () => ({
   useSyncExternalStore: (_subscribe: unknown, get: () => unknown) => get(),
 }));
@@ -59,7 +59,7 @@ vi.mock("socket.io-client", () => ({
     return socket;
   },
 }));
-let store: typeof import("../src/store"),
+let store: typeof import("../src/client/store"),
   fetcher: ReturnType<typeof vi.fn<typeof fetch>>;
 function packet(
   context = 0,
@@ -115,7 +115,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   fetcher = vi.fn<typeof fetch>();
   vi.stubGlobal("fetch", fetcher);
-  store = await import("../src/store");
+  store = await import("../src/client/store");
 });
 afterEach(() => {
   vi.unstubAllGlobals();

@@ -6,7 +6,7 @@ Deutschland ist die einzige aktive Welt. PC-Multiplayer verwendet denselben serv
 
 Node.js 24 und pnpm 11.19.0 sind festgelegt. `node scripts/amp-setup.mjs` installiert den lokal geprüften Paketmanager, die Lockfile-Abhängigkeiten und baut das Produkt. `--install-only` bereitet ausschließlich Werkzeuge vor. Der Archivhash des Paketmanagers ist im Repository fixiert; ein beschädigter Cache wird erkannt.
 
-Für ein neues vollständig eingerichtetes Spiel aus GitHub gilt [AMP-Neuinstallation](AMP-NEUINSTALLATION.md): `node scripts/install-germany.mjs` lädt ausdrücklich das große Geodatenpaket. Normale Builds und UI-Entwicklung laden keine Deutschlanddaten.
+Für AMP gilt die [Paketinstallation](AMP.md). Der getrennte Entwicklerweg `node scripts/install-germany.mjs` lädt ausdrücklich das große Geodatenpaket; normale Builds und UI-Entwicklung laden keine Deutschlanddaten.
 
 `npm run dev` verwendet vorhandenes `GEODATA_DIR` und einen passenden lokalen Router in `GRAPHHOPPER_URL`. `DEV_DATA_DIR` bezeichnet einen getrennten Entwicklungsstand; das normale `DATA_DIR` wird nicht übernommen. Vite liefert Hot Reload, der Server wird nach tatsächlich betroffenen Importänderungen inkrementell neu übersetzt und sauber neu gestartet. Ports: `DEV_PORT` 5173, `DEV_API_PORT` 4010. Strg+C beendet die Prozesse und gibt SQLite frei.
 
@@ -51,8 +51,8 @@ Browserdateien bleiben intern seriell. Zwei Worker verarbeiten unabhängige Date
 
 Die zusätzliche Prüfung verweigerter Clipboard-Berechtigungen verwendet das ausschließlich in Chromium verfügbare CDP-Protokoll. Sie steht ausdrücklich in `clipboard-permissions.chromium.spec.ts`; Plan, Playwright und Releaseprüfung stimmen über diesen Engineumfang überein. Der normale Supportdialog, Datenschutz und der Fallback bei fehlender Clipboard-API laufen in beiden Engines. Es gibt dafür keinen zur Laufzeit übersprungenen Firefox-Fall.
 
-[Zuordnung alter und neuer Prüfanforderungen](TESTMIGRATION.json) · [Datenbrücken](KOMPATIBILITAET.md) · [Laufzeitmessungen](TESTLAUFZEITEN.md) · [Historische Nachweise](HISTORIE.md)
+[Zuordnung alter und neuer Prüfanforderungen](TESTMIGRATION.json) · [Datenbrücken](KOMPATIBILITAET.md) · [Laufzeitmessungen](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/TESTLAUFZEITEN.md) · [Historische Nachweise](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/HISTORIE.md)
 
 ## Repository-Prozess
 
-Direkt auf `main` arbeiten, fremde Änderungen erhalten, abgeschlossene geprüfte Teilschritte committen und pushen. Kein Force-Push, Datenreset, Produktionsupdate oder automatischer stabiler Release. Ein privater Server wird durch einen Git-Push nicht verändert.
+Direkt auf `main` arbeiten, fremde Änderungen erhalten, abgeschlossene geprüfte Teilschritte committen und pushen. Kein Force-Push und kein automatisches privates Produktionsupdate. Reset und stabile Veröffentlichung benötigen ihre eigene ausdrückliche Freigabe. Ein privater Server wird durch einen Git-Push nicht verändert.

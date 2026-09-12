@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile, rename, lstat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { gunzipSync } from "node:zlib";
-import { assertBuildPaths } from "./build-paths.mjs";
+import { assertBuildPaths } from "./build/build-paths.mjs";
 
 // Registry integrity verified when updating the pinned package manager. A local
 // cache cannot replace this expected digest with its own claim.

@@ -5,13 +5,13 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { test, expect, type Page } from "./test";
 import { listenBrowserServer } from "./server-helper";
-import type { Config } from "../../server/config";
+import type { Config } from "../../src/server/config";
 import { fixtureFacilities } from "../fixtures/germany/facilities";
-import { bt } from "../../src/catalog";
+import { bt } from "../../src/shared/catalog";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
-)) as typeof import("../../server/index");
+)) as typeof import("../../src/server/index");
 test("zwei Leitstellen erwerben denselben festen Standort unabhängig; Bestätigung, Karte, Reconnect und Neustart bleiben konsistent", async ({
   browser,
 }) => {

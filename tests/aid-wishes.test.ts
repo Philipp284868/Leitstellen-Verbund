@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
-import { commandSchema, type ServerAction } from "../server/actions";
-import { Auth } from "../server/auth";
-import { Database } from "../server/database";
-import { Game } from "../server/game";
-import { validate } from "../src/model";
+import { commandSchema, type ServerAction } from "../src/server/actions";
+import { Auth } from "../src/server/auth";
+import { Database } from "../src/server/database";
+import { Game } from "../src/server/game";
+import { validate } from "../src/shared/model";
 import { matchingAidType } from "../src/simulation/aid-matching";
 import { organizationFixture } from "./mutual-aid-fixture";
 

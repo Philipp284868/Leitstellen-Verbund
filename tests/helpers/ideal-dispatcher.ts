@@ -1,9 +1,9 @@
-import type { Save } from "../../src/model";
-import { mt, vt } from "../../src/catalog";
+import type { Save } from "../../src/shared/model";
+import { mt, vt } from "../../src/shared/catalog";
 import { callAction } from "../../src/simulation/calls";
 import { radioAction } from "../../src/simulation/incidents";
 import { alarm } from "../../src/simulation/dispatch";
-import { readiness } from "../../src/engine";
+import { readiness } from "../../src/shared/engine";
 import { requirements } from "../../src/simulation/hazards";
 import { organizationCommand } from "../../src/simulation/organizations";
 /** Reproducible ideal single dispatcher, using the real call, alarm and report

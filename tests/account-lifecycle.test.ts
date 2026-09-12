@@ -1,10 +1,10 @@
 import { afterEach, expect, it } from "vitest";
-import { Database } from "../server/database";
-import { Auth } from "../server/auth";
-import { AccountLifecycle } from "../server/account-lifecycle";
-import { fresh } from "../src/model";
+import { Database } from "../src/server/database";
+import { Auth } from "../src/server/auth";
+import { AccountLifecycle } from "../src/server/account-lifecycle";
+import { fresh } from "../src/shared/model";
 import { phaseFixture } from "./dispatch-fixture";
-import { Game } from "../server/game";
+import { Game } from "../src/server/game";
 const resources: Database[] = [];
 afterEach(() => {
   for (const db of resources.splice(0)) db.close();

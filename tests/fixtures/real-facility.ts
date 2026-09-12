@@ -1,8 +1,12 @@
-import { germanyProvider } from "../../src/germany/world";
-import { apply } from "../../src/engine";
-import type { Save } from "../../src/model";
-import type { FacilityKind } from "../../src/facilities/types";
-import { meters, unproject, type Point } from "../../src/germany/projection";
+import { germanyProvider } from "../../src/shared/germany/world";
+import { apply } from "../../src/shared/engine";
+import type { Save } from "../../src/shared/model";
+import type { FacilityKind } from "../../src/shared/facilities/types";
+import {
+  meters,
+  unproject,
+  type Point,
+} from "../../src/shared/germany/projection";
 
 /** Acceptance fixtures buy documented catalog entries through the production action. */
 export function buyRealFacility(s: Save, kind: string, origin: Point) {

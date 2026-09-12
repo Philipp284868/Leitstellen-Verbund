@@ -8,7 +8,7 @@ execFileSync(
     "--cache-location",
     ".tools/cache/prettier",
     "src/**/*.{ts,tsx,css}",
-    "server/**/*.ts",
+    "ops/**/*.mjs",
     "scripts/**/*.mjs",
     "tests/**/*.{ts,tsx,mjs}",
     "*.ts",

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { exportText } from "../src/storage";
+import { exportText } from "../src/client/storage";
 import { established } from "./e2e/fixtures";
 import { sites as nodes } from "./fixtures/germany/locations";
 import "./fixtures/germany/session";

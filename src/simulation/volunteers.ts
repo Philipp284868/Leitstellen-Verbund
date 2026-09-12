@@ -1,4 +1,4 @@
-import type { Save, Vehicle, Building } from "../model";
+import type { Save, Vehicle, Building } from "../shared/model";
 import {
   along,
   distance,
@@ -7,8 +7,8 @@ import {
   route,
   roadSectionBetween,
   type Point,
-} from "../world";
-import { motionAt, motionProfile } from "../motion";
+} from "../shared/world";
+import { motionAt, motionProfile } from "../shared/motion";
 import { sample } from "./random";
 import { injuryReason } from "./responder-recovery";
 import type { Duty } from "./organizations-schema";

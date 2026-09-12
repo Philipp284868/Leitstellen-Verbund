@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { apply, readiness, recall, tick } from "../src/engine";
-import { validate } from "../src/model";
-import { xpForLevel } from "../src/progression";
+import { apply, readiness, recall, tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
+import { xpForLevel } from "../src/shared/progression";
 import { alarm } from "../src/simulation/dispatch";
 import { publicSave } from "../src/simulation/incidents";
 import { organizationCommand } from "../src/simulation/organizations";

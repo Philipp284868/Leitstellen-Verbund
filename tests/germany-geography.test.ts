@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { gzipSync } from "node:zlib";
-import { GermanyMaps } from "../server/germany/maps";
+import { GermanyMaps } from "../src/server/germany/maps";
 import {
   project,
   unproject,
@@ -12,7 +12,7 @@ import {
   WORLD_WIDTH,
   WORLD_HEIGHT,
   inBounds,
-} from "../src/germany/projection";
+} from "../src/shared/germany/projection";
 
 const folders: string[] = [];
 afterEach(() => {

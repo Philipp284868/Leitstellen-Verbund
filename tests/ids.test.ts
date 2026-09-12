@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { webcrypto } from "node:crypto";
-import { createId } from "../src/ids";
+import { createId } from "../src/client/ids";
 
 afterEach(() => vi.unstubAllGlobals());
 const format =

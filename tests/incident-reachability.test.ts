@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { mt } from "../src/catalog";
+import { mt } from "../src/shared/catalog";
 import { phaseFixture } from "./dispatch-fixture";
 import { sites as nodes } from "./fixtures/germany/locations";
 
@@ -7,11 +7,11 @@ import { DatabaseSync } from "node:sqlite";
 import {
   applyLocationMigration,
   planLocationMigration,
-} from "../server/location-migration";
-import { tick } from "../src/engine";
-import { GermanyRoutingError } from "../src/germany/errors";
-import { germanyProvider } from "../src/germany/world";
-import { validate } from "../src/model";
+} from "../src/server/location-migration";
+import { tick } from "../src/shared/engine";
+import { GermanyRoutingError } from "../src/shared/germany/errors";
+import { germanyProvider } from "../src/shared/germany/world";
+import { validate } from "../src/shared/model";
 import { attachDynamics } from "../src/simulation/dynamics";
 import { publicSave } from "../src/simulation/incidents";
 import {

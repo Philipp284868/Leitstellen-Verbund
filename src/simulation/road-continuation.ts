@@ -1,7 +1,7 @@
-import type { Save, Vehicle } from "../model";
-import type { MotionLeg } from "../motion";
-import { vt } from "../catalog";
-import { distance, type Point } from "../world";
+import type { Save, Vehicle } from "../shared/model";
+import type { MotionLeg } from "../shared/motion";
+import { vt } from "../shared/catalog";
+import { distance, type Point } from "../shared/world";
 
 /** Retain the remainder of the occupied directed edge, including all its shape vertices.
  * A router may choose a new route only after that edge's endpoint. This avoids snaps to

@@ -6,11 +6,11 @@ import {
 } from "./staffing";
 import { reportUnit, telemetry } from "./reports";
 import { effectiveSkills } from "./major-resources";
-import type { Save, Mission } from "../model";
-import { bt, vt, mt } from "../catalog";
+import type { Save, Mission } from "../shared/model";
+import { bt, vt, mt } from "../shared/catalog";
 import { openForceLabels } from "./force-plan";
-import { readiness, beginTrip } from "../engine";
-import { vehiclePosition } from "../vehicle-position";
+import { readiness, beginTrip } from "../shared/engine";
+import { vehiclePosition } from "../shared/vehicle-position";
 import { routePlan } from "./traffic";
 import { requirements } from "./hazards";
 import type { TravelMode } from "./dynamics-schema";

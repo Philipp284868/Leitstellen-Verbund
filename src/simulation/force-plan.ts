@@ -3,7 +3,7 @@ import {
   vehicles,
   type Skills,
   type VehicleType,
-} from "../catalog";
+} from "../shared/catalog";
 
 type Allocation = { type: VehicleType; skills: Skills };
 export type ForceRow = {

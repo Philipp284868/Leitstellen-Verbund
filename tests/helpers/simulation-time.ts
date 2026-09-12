@@ -1,4 +1,4 @@
-import type { Game } from "../../server/game";
+import type { Game } from "../../src/server/game";
 
 /** Advance through intermediate simulation events, with a bounded failure if
  * the intended observable state is never reached. No wall-clock sleeps. */

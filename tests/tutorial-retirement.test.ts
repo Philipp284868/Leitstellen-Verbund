@@ -2,8 +2,8 @@ import { it, expect } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Database } from "../server/database";
-import { fresh } from "../src/model";
+import { Database } from "../src/server/database";
+import { fresh } from "../src/shared/model";
 import { startServer } from "./fixtures/germany/server";
 it("migriert alte isolierte Tutorialdaten ohne echte Objekte oder Guthaben zu ändern", () => {
   const dir = mkdtempSync(join(tmpdir(), "lv-retired-training-"));

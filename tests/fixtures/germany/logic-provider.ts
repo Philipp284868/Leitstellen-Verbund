@@ -1,14 +1,14 @@
 import { sites, fixtureDataset } from "./locations";
 import { logicFacilityCatalog } from "./facilities";
-import { meters, inBounds } from "../../../src/germany/projection";
+import { meters, inBounds } from "../../../src/shared/germany/projection";
 import {
   installGermanyProvider,
   type GermanyProvider,
   type Point,
   type RoadSection,
   type Anchor,
-} from "../../../src/germany/world";
-import { GermanyRoutingError } from "../../../src/germany/errors";
+} from "../../../src/shared/germany/world";
+import { GermanyRoutingError } from "../../../src/shared/germany/errors";
 
 /** Consumer-contract fixture for simulation tests. Production simulation, auth,
  * SQLite and routing-plan logic run unchanged. This is explicitly not evidence

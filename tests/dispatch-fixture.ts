@@ -1,9 +1,9 @@
 import { fixturePurchase } from "./fixtures/germany/facilities";
-import { bookMoney } from "../src/economy/ledger";
-import { apply, tick } from "../src/engine";
-import { fresh, type Save } from "../src/model";
-import { euro } from "../src/money";
-import { xpForLevel } from "../src/progression";
+import { bookMoney } from "../src/shared/economy/ledger";
+import { apply, tick } from "../src/shared/engine";
+import { fresh, type Save } from "../src/shared/model";
+import { euro } from "../src/shared/money";
+import { xpForLevel } from "../src/shared/progression";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { fixtureMission } from "./fixtures/germany/mission";
 

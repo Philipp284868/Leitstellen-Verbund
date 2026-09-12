@@ -1,7 +1,7 @@
 import { PbfWriter } from "pbf";
 import { gzipSync } from "node:zlib";
 import { DatabaseSync } from "node:sqlite";
-import { project } from "../../src/germany/projection";
+import { project } from "../../src/shared/germany/projection";
 
 export const tile = { x: 8802, y: 5373, z: 14, extent: 4096 };
 export const fixtureDataset = "a".repeat(64);

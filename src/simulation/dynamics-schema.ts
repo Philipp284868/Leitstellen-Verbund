@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { incidentProfileSchema } from "../catalog/incident-profile";
-import { WORLD_HEIGHT, WORLD_WIDTH } from "../germany/projection";
+import { incidentProfileSchema } from "../shared/catalog/incident-profile";
+import { WORLD_HEIGHT, WORLD_WIDTH } from "../shared/germany/projection";
 const time = z.number().finite().nonnegative();
 const value = z.number().finite().min(0).max(100);
 const id = z.string().min(1).max(100);

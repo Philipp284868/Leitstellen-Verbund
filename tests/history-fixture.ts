@@ -1,4 +1,4 @@
-import type { Mission, Save } from "../src/model";
+import type { Mission, Save } from "../src/shared/model";
 import { priorities } from "../src/simulation/priority";
 import { organizationFixture } from "./mutual-aid-fixture";
 

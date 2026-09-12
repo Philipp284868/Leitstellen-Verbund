@@ -1,4 +1,4 @@
-import { vt } from "../catalog";
+import { vt } from "../shared/catalog";
 
 /** A free-text name never participates in authorization or vehicle matching. */
 export function matchingAidType(requested: string[], candidate: string) {

@@ -1,6 +1,6 @@
 import { createServer } from "node:net";
-import type { Config } from "../../server/config";
-import type { startServer } from "../../server/index";
+import type { Config } from "../../src/server/config";
+import type { startServer } from "../../src/server/index";
 
 export async function listenServer(start: typeof startServer, c: Config) {
   for (let attempt = 0; attempt < 5; attempt++) {

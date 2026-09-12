@@ -1,4 +1,4 @@
-import type { Save, Mission } from "../model";
+import type { Save, Mission } from "../shared/model";
 import { record } from "./events";
 import {
   radioHandler,

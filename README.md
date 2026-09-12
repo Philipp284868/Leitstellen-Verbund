@@ -1,51 +1,30 @@
 # Leitstellen-Verbund
 
-Eine Leitstellen-Simulation für **PC-Multiplayer auf der Deutschlandkarte**. Website, API, Socket.IO und Simulation laufen auf demselben Node.js-Server. Konten, Geld, Besitz, Fahrzeuge, Einsätze und Historie werden verbindlich in SQLite verwaltet. Der Server arbeitet auch bei geschlossenem Browser weiter.
+Kooperative Leitstellensimulation auf der Deutschlandkarte. Konten, Besitz und Simulation werden auf einem Node-24-Server mit SQLite verwaltet. Die Anwendung benötigt geprüfte Deutschland-Geodaten und einen passenden GraphHopper-Router.
 
-Es gibt ein aktives Produkt: Deutschland. Kein Einzelspielerbetrieb, keine Smartphone-Oberfläche und keine alte Karte als Ausweichlösung. Die obere Hauptleiste öffnet die benötigten Arbeitsbereiche; eine untere Dauernavigation gibt es nicht.
+- **Serverbetreiber:** [AMP-Installation, einmaliger Reset und normale Updates](docs/AMP.md).
+- **Spieler:** [Spielanleitung](docs/wiki/Home.md).
+- **Versionsverlauf:** [vollständiger Changelog](CHANGELOG.md).
+- **Quellen und Rechte:** [Lizenz-/Datenhinweise](docs/LIZENZEN.md), [Sicherheit](SECURITY.md).
 
-## Spielen
+## Quellcode
 
-Notruf annehmen → Angaben erfragen → AAO oder Fahrzeuge auswählen → alarmieren → Ausrücken und Anfahrt verfolgen → FMS, Sprechwünsche und Lagemeldungen bearbeiten → Kräfte nachfordern → Einsatz abschließen → Historie ansehen.
+| Ordner                               | Aufgabe                                                  |
+| ------------------------------------ | -------------------------------------------------------- |
+| `src/client/`                        | Oberfläche, Karte, Audio und Browserzustand              |
+| `src/server/`                        | Authentifizierung, API, Echtzeit und Speicherung         |
+| `src/shared/`                        | Gemeinsame Modelle, Protokolle und geografische Verträge |
+| `src/simulation/`                    | Fachliche Einsatz- und Fahrzeugabläufe                   |
+| `ops/runtime/`                       | Instanzverwaltung, Start, Update und bestätigter Reset   |
+| `scripts/build/`, `scripts/release/` | Build, Paketierung und Freigabe                          |
+| `scripts/geodata/`                   | Daten-/Katalogwerkzeuge                                  |
+| `public/`, `data/`, `config/`        | Aktuelle Assets, Datenkataloge und Vorlagen              |
+| `tests/`, `.github/`                 | Gezielte Regressionen und CI; nicht im Serverpaket       |
 
-Erhalten sind automatische Wachbesetzung, FF-Anreisen, BF-Ausbau, reale Straßenfahrten mit ETA und Geschwindigkeit, Fahrzeugdefekte und Nachbereitung, Funkdisziplin, gemeinsame Einsatzlagen, Katastrophenschutz, Euro-Wirtschaft, Fortschritt, Audio und eigene lokale Sounds. Unterschiedliche Leitstellen erhalten neue Einsätze nicht automatisch. Zusammenarbeit erfolgt über berechtigte Disponenten derselben Leitstelle und ausdrückliche Nachbarhilfe.
+Die AMP-Vorlage und ihre JSON-Manifeste liegen für die automatische AMP-Erkennung in der Repositorywurzel. Das Produktionspaket enthält fertige Client-/Serverdateien, benötigte Laufzeitabhängigkeiten und Betriebswerkzeuge; es ist kein Git-Checkout.
 
-Ab 2.25 liegen Einsätze/Notrufe links, Textfunk unten links und sämtliche Arbeitsbereiche im Menü rechts neben dem Leitstellennamen. Tutorial und wiederkehrende kommunale Grundzahlung entfallen; neue Notrufe entstehen nur bei aktiver Spielansicht. [Bedienung, Rangliste, Migrationen und optionaler GitHub-Support](docs/HUD-UND-SERVER.md).
+## Entwicklung
 
-[Abnahme 2.25: Umfang, Migrationen, tatsächlich ausgeführte Tests und Betriebsgrenzen](docs/ABNAHME-2.25.md).
+Node 24 verwenden. Einmal `node scripts/amp-setup.mjs --install-only`, anschließend `node scripts/build/build.mjs`. Die lokale Entwicklerumgebung startet mit `node scripts/dev.mjs`. `pnpm check:quick`, `pnpm test:quick` und gezielte Integrationstests vor Änderungen; vollständige Produktprüfung und Paketabnahme laufen in GitHub. [Entwicklungsdetails](docs/ENTWICKLUNG.md).
 
-Wachen und Kliniken werden an festen realen Standorten erworben: **Menü → Standorte kaufen** oder einen Kartenmarker wählen. Freies Bauen und Verschieben sind abgeschaltet. [Katalog, Bedienung und notwendige Altstand-Migration](docs/STANDORTE.md).
-
-Die geografische Karte verwendet das lokal installierte Deutschland-Datenpaket. Karteneinträge sind keine automatisch verfügbaren Spielgebäude; reale Personalstärken und Klinikkapazitäten werden nicht aus Kartenmarkern behauptet.
-
-## Aus GitHub installieren
-
-**[AMP-Schnellstart](docs/AMP-SCHNELLSTART.md)** ist die verbindliche Anleitung für Neuinstallation, Updates, verlorene Konfiguration und Caddy. Node.js **24**, Branch **main**, ein Setup **`node scripts/install-germany.mjs`**, ein Start **`scripts/start-germany.mjs`**, eine aktive **`.env`**. Das Setup bezieht das feste Geodatenpaket automatisch und erhält geprüfte Bestände. Geschützte Instanzzuordnung und Konfigurationssicherung liegen außerhalb des Programmordners.
-
-Alle normalen Befehle verwenden denselben Produktpfad:
-
-- `npm run build`: `dist/client/` und `dist/server/`, einschließlich Typprüfung und Bundlebudgets.
-- `npm start` / `npm run preview`: Deutschland samt passend konfiguriertem lokalen Router.
-- `npm run dev`: Hot Reload und inkrementeller Serverbuild mit getrennten Entwicklungsdaten.
-- `node dist/server/cli.js`: Wartung derselben Deutschlandinstallation.
-
-Fehlende Daten, falsche Welt oder unpassender Datensatz führen zu einem Fehler. Alte fiktive Koordinaten werden nicht umgedeutet. Falkenried-/Rivermere-Bestände bleiben vollständig und unverändert [exportierbar](docs/KOMPATIBILITAET.md); das aktuelle Produkt baut keine alten Spielwelten.
-
-## Entwicklung und Abnahme
-
-Direkt auf `main` in geprüften Schritten arbeiten; fremde Änderungen und Schutzregeln respektieren. Kein Force-Push, Datenreset oder Produktionsupdate durch einen Push. [Beitragsregeln](CONTRIBUTING.md) · [Entwicklungsanleitung](docs/ENTWICKLUNG.md).
-
-GitHub wählt anhand klarer Ausgangs-/Zielcommits zwischen Dokumentationsprüfung, schneller Rückmeldung, vollständiger Abnahme und vertiefter Lastprüfung. Gemeinsame Grundlagen und unbekannte Änderungen erhalten die volle Prüfung. Beide Browserengines bleiben unterstützt. Fehlende Pflichtjobs oder Testdateien verhindern den Gesamtstatus.
-
-Ein Release benötigt vollständige Abnahme, Sicherheit und passende Build-/Paketprüfsummen für exakt den aktuellen main-Commit. Eine Schnellprüfung genügt nicht. Der manuelle Releaseworkflow prüft standardmäßig nur die Freigabe; ein Entwurf übernimmt nach ausdrücklicher Auswahl das tatsächlich geprüfte Runtime-Paket. [Aktueller Umbau und Abnahme](docs/ABNAHME-DEUTSCHLAND-ONLY.md) · [Runtime-Vertrag](docs/RUNTIME-PAKET.md) · [Messungen](docs/TESTLAUFZEITEN.md) · [Zuordnung der Testanforderungen](docs/TESTMIGRATION.json).
-
-## Anleitungen
-
-- [Menüs und Bedienwege](docs/MENUES.md) · [Spielanleitung](docs/SPIELANLEITUNG.md)
-- [Deutschlandkarte](docs/DEUTSCHLAND.md) · [Geodaten](docs/DEUTSCHLAND-DATEN.md) · [Routing](docs/DEUTSCHLAND-ROUTING.md)
-- [Einsatzarbeitsplatz](docs/EINSATZARBEITSPLATZ.md) · [Funk](docs/FUNK.md) · [Weltlagen und Einsatzorte](docs/WELTLAGEN-UND-EINSATZORTE.md)
-- [Euro-Wirtschaft](docs/EURO-WIRTSCHAFT.md) · [Wachbesetzung](docs/GEBAEUDEBESETZUNG-2.21.md) · [Audio](docs/AUDIO.md)
-- [Sicherheit](SECURITY.md) · [Lizenzen](docs/LIZENZEN.md) · [Historische Berichte und Bilder](docs/HISTORIE.md)
-- [Fehler melden](https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose) · [Community](https://github.com/Philipp284868/Leitstellen-Verbund/discussions) · [Releases](https://github.com/Philipp284868/Leitstellen-Verbund/releases)
-
-Die Wiki-Quellen unter `docs/wiki/` werden im Repository gepflegt. Ihre separate Veröffentlichung folgt dem [Wiki-Verfahren](docs/WIKI-VEROEFFENTLICHUNG.md); ein Quellcode-Push behauptet keine bereits erfolgte Aktualisierung der externen Wiki oder eines privaten AMP-Servers.
+Ein Git-Push aktualisiert keinen privaten Server. Der Betreiber löst Updates in AMP selbst aus. Ein Reset ist immer eine separate, instanzbezogen bestätigte Wartungsaktion.

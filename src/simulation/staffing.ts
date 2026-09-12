@@ -1,9 +1,15 @@
-import { BALANCE, bt, vehicleHomeAllowed, vehicles, vt } from "../catalog";
-import { ECONOMY_PRICES } from "../economy/prices";
-import { recall } from "../engine";
-import { querySites } from "../germany/world";
-import type { Building, Save, Vehicle } from "../model";
-import { distance, nearest } from "../world";
+import {
+  BALANCE,
+  bt,
+  vehicleHomeAllowed,
+  vehicles,
+  vt,
+} from "../shared/catalog";
+import { ECONOMY_PRICES } from "../shared/economy/prices";
+import { recall } from "../shared/engine";
+import { querySites } from "../shared/germany/world";
+import type { Building, Save, Vehicle } from "../shared/model";
+import { distance, nearest } from "../shared/world";
 import { record } from "./events";
 import { setFms } from "./fms";
 import { request } from "./incidents";

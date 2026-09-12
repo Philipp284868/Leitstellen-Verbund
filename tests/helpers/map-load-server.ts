@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { startServer, prepareGeography } from "../../server/index";
+import { startServer, prepareGeography } from "../../src/server/index";
 import { createGermanyRuntime } from "../fixtures/germany/runtime";
 import { loadFixture } from "../fixtures/germany/load";
 import { listenServer } from "./listen-server";

@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import type { ServerAction } from "../server/actions";
+import type { ServerAction } from "../src/server/actions";
 import { sites as nodes } from "./fixtures/germany/locations";
 import { startServer } from "./fixtures/germany/server";
 

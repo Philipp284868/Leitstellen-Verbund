@@ -11,7 +11,7 @@ import {
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import type { ServerResponse } from "node:http";
-import { GermanyMaps } from "../server/germany/maps";
+import { GermanyMaps } from "../src/server/germany/maps";
 
 let dir: string;
 const fingerprint = "a".repeat(64),

@@ -3,8 +3,12 @@ import {
   type Facility,
   type FacilityCatalog,
   type FacilityQuery,
-} from "../../../src/facilities/types";
-import { meters, unproject, type Point } from "../../../src/germany/projection";
+} from "../../../src/shared/facilities/types";
+import {
+  meters,
+  unproject,
+  type Point,
+} from "../../../src/shared/germany/projection";
 import { sites } from "./locations";
 
 /** Fixed, explicitly synthetic catalog. Test purchases still use IDs and the production purchase action. */

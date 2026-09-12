@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { missions, mt, vehicles } from "../src/catalog";
-import { tick } from "../src/engine";
-import { validate } from "../src/model";
-import { xpForLevel } from "../src/progression";
+import { missions, mt, vehicles } from "../src/shared/catalog";
+import { tick } from "../src/shared/engine";
+import { validate } from "../src/shared/model";
+import { xpForLevel } from "../src/shared/progression";
 import { callAction } from "../src/simulation/calls";
 import { alarm, propose } from "../src/simulation/dispatch";
 import {

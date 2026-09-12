@@ -28,8 +28,8 @@ it("Dev erstellt eigene Daten, übernimmt Serveränderungen, erhält bei Compile
   await mkdir(root);
   for (const path of [
     "src",
-    "server",
     "scripts",
+    "ops",
     "public",
     "package.json",
     "vite.config.ts",
@@ -94,7 +94,7 @@ it("Dev erstellt eigene Daten, übernimmt Serveränderungen, erhält bei Compile
     });
     expect(response.status).toBe(200);
     const cookie = response.headers.get("set-cookie")!.split(";")[0];
-    const file = resolve(root, "server/index.ts"),
+    const file = resolve(root, "src/server/index.ts"),
       source = await readFile(file, "utf8");
     expect(source).toContain("{ ok: !failed }");
     await writeFile(

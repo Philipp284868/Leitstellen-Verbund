@@ -1,4 +1,4 @@
-import type { Save } from "../model";
+import type { Save } from "../shared/model";
 
 // A synchronous simulation scope; callbacks recheck authorization immediately
 // before creating an offer. No presence flag is persisted in a save.

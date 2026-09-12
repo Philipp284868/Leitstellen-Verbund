@@ -1,12 +1,12 @@
 import { configuredSkills } from "./vehicle-equipment";
-import type { Building, Save } from "../model";
+import type { Building, Save } from "../shared/model";
 import type { CivilProtectionAction } from "./civil-protection-schema";
 import { isVolunteerStation, personDuty } from "./staffing";
 import { volunteerArrival } from "./volunteers";
 import { presentAtStation } from "./staging";
 import { sample } from "./random";
-import { mt } from "../catalog";
-import { fleetReadiness } from "../fleet-view";
+import { mt } from "../shared/catalog";
+import { fleetReadiness } from "../shared/fleet-view";
 import {
   newOperatingBill,
   operatingCostTick,
