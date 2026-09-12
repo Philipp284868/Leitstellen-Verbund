@@ -25,11 +25,12 @@ export class FacilityReader<T> {
     private receive: (data: T, query: string) => void,
     private state: (state: State) => void,
     private headers: HeadersInit = {},
+    private context = "default",
   ) {}
   cooldown(query: string) {
     return Math.max(
-      cooldowns.get("facility-reads") || 0,
-      cooldowns.get(facilityReadScope(query)) || 0,
+      cooldowns.get(`${this.context}:facility-reads`) || 0,
+      cooldowns.get(`${this.context}:${facilityReadScope(query)}`) || 0,
     );
   }
   request(query: string, revision = "") {
@@ -89,7 +90,9 @@ export class FacilityReader<T> {
             ? "facility-reads"
             : facilityReadScope(intent.query);
         const until = Date.now() + wait * 1000 + 100 + Math.random() * 200;
-        cooldowns.set(scope, until);
+        cooldowns.set(`${this.context}:${scope}`, until);
+        if (cooldowns.size > 64)
+          cooldowns.delete(cooldowns.keys().next().value!);
         this.state({
           loading: false,
           error: `Standorte werden zu häufig abgefragt. Erneuter Versuch frühestens in ${Math.ceil(wait)} Sekunden.`,

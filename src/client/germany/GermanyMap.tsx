@@ -88,7 +88,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     onInspect,
     inspectionsHidden = false,
   } = props;
-  const { mode } = useGame(),
+  const { mode, user } = useGame(),
     modeRef = useRef(mode);
   modeRef.current = mode;
   const viewport = useRef<HTMLDivElement>(null),
@@ -160,11 +160,13 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   const facilityCanvas = useRef<HTMLCanvasElement>(null),
     facilityLayer = useRef<ReturnType<typeof attachFacilityLayer> | null>(null);
   const facilityOptions = useRef({
+    actor: user?.id || "anonymous",
     enabled: true,
     kind: "" as const,
     owned: new Set<string>(),
   });
   facilityOptions.current = {
+    actor: user?.id || "anonymous",
     enabled: true,
     kind: "" as const,
     owned: new Set(
@@ -614,7 +616,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       map?.remove();
       mapRef.current = null;
     };
-  }, [attempt, cameraKey, s.world, s.worldSeed]);
+  }, [attempt, cameraKey, s.world, s.worldSeed, user?.id]);
 
   useEffect(() => {
     const focus = (event: Event) => {

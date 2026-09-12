@@ -31,7 +31,9 @@ type ListOffer = Omit<Offer, "facility"> & {
   >;
 };
 export function useFacilities<T>(query: string, revision: string | number = 0) {
-  const { mode } = useGame();
+  const { mode, user, workspace } = useGame();
+  const actor = user?.id || "anonymous",
+    owner = workspace?.owner || actor;
   const [result, setResult] = useState<{
     data?: T;
     error?: string;
@@ -41,6 +43,7 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
   const latest = useRef({ query, revision });
   latest.current = { query, revision };
   useEffect(() => {
+    setResult({ loading: true });
     const activate = () => {
       reader.current?.destroy();
       reader.current = undefined;
@@ -54,6 +57,7 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
             error: state.error,
           })),
         { "x-game-mode": mode },
+        actor,
       );
       reader.current.request(
         latest.current.query,
@@ -66,7 +70,7 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
       reader.current?.destroy();
       document.removeEventListener("visibilitychange", activate);
     };
-  }, [mode]);
+  }, [mode, actor, owner]);
   useEffect(() => {
     reader.current?.request(query, String(revision));
   }, [query, revision]);

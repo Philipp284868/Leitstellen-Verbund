@@ -6,6 +6,7 @@ import type {
   FacilityKind,
 } from "../../shared/facilities/types";
 type Options = {
+  actor: string;
   enabled: boolean;
   kind: FacilityKind | "";
   owned: ReadonlySet<string>;
@@ -122,6 +123,8 @@ export function attachFacilityLayer(
       canvas.dataset.cooldownUntil = String(state.cooldownUntil);
       error(state.error);
     },
+    {},
+    options().actor,
   );
   const refresh = () => {
     if (disposed) return;

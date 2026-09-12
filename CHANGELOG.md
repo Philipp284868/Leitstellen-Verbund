@@ -8,6 +8,8 @@
 - Kartenbewegungen bündeln Standortabfragen nach 250 ms mit begrenzten Zwischenabrufen. Gepufferte Ausschnitte bleiben im Cache, verspätete Antworten überschreiben keine neuere Auswahl. Standort-Sperren wiederholen nur die jüngste Leseabfrage begrenzt und melden den Spieler nicht ab.
 - Bestehende Marker bleiben beim Nachladen sichtbar. Besitzänderungen aktualisieren sich sofort; kleine Geld-/XP-Änderungen lösen keine unnötigen Angebotsabfragen aus. Keine Datenmigration, kein Reset und keine Änderung privater AMP-/Proxykonfiguration.
 
+- Lesewartezeiten sind auch im Browser pro angemeldetem Konto getrennt. Ein Leitstellenwechsel verwirft alte private Angebote.
+
 ## 2.26.0 · Verwaltete AMP-Instanz und gesicherter Neustart · 12.09.2026
 
 - Getrennte Programmversionen, feste private Instanzkonfiguration und geschützte Update-/Resetjournale. Updates installieren geprüfte Pakete ohne lokalen Entwicklungsbuild.

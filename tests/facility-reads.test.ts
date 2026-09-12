@@ -14,6 +14,34 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
+it("a browser cooldown is shared within an account but cannot hold back a different account", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(3000000);
+  const fetcher = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ scope: "facility-search" }), {
+        status: 429,
+        headers: { "Retry-After": "5" },
+      }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  const a = new FacilityReader(vi.fn(), vi.fn(), {}, "a");
+  const a2 = new FacilityReader(vi.fn(), vi.fn(), {}, "a");
+  const b = new FacilityReader(vi.fn(), vi.fn(), {}, "b");
+  try {
+    a.request("q=one");
+    await vi.advanceTimersByTimeAsync(300);
+    a2.request("q=two");
+    b.request("q=three");
+    await vi.advanceTimersByTimeAsync(400);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe("/api/facilities?q=three");
+  } finally {
+    a.destroy();
+    a2.destroy();
+    b.destroy();
+  }
+});
 it("keeps rate scopes/users independent, rejected requests do not extend the deadline", () => {
   vi.useFakeTimers();
   vi.setSystemTime(100000);
