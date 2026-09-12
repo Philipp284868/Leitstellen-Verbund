@@ -33,12 +33,9 @@ test(
       ).toBeVisible();
       const readyMs = Date.now() - started;
       const before = Date.now();
-      if (
-        (await page
-          .getByRole("button", { name: "Karte", exact: true })
-          .getAttribute("aria-expanded")) !== "true"
-      )
-        await toggleMapTools(page);
+      await expect(
+        page.getByRole("complementary", { name: "Kartenwerkzeuge" }),
+      ).toBeVisible();
       await page
         .getByRole("button", { name: "Ganz Deutschland", exact: true })
         .click();

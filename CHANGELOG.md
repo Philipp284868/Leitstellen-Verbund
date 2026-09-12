@@ -11,6 +11,7 @@
 - Kartensuche, Großlagenübersicht und Notrufarbeitsplatz bleiben über die neue Navigation erreichbar. Eingeklappte Listen verdecken keine Kartenwerkzeuge.
 - Ereignisprotokoll respektiert die erste Erkundung auch beim Lesen alter Einträge und führt FMS-Doppelbelege zusammen. Ein begrenztes Fenster verhindert wiederholtes Schreiben unveränderter Historien; ältere Seiten bleiben getrennt lesbar.
 - Bereinigte technische Angaben lassen sich kopieren oder exportieren. Lokale Skript-/Darstellungsfehler werden ohne Rohtexte oder Zugangsdaten gesammelt; fehlender Versionsverlauf erhält eine verständliche Fehlermeldung.
+- Rangliste startet mit kompakten Spielerzeilen; Wertungsregeln und Kennzahlen öffnen sich bei Bedarf. Der Kartenlasttest bedient die neue Sammelnavigation und prüft weiterhin 100 Wachen, 500 Fahrzeuge und 40 Einsätze.
 
 ## Textprotokoll und Leitstellenmenü · 12.09.2026
 

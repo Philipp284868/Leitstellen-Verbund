@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "./store";
 import { credits } from "./ui";
 import type { leaderboard } from "../server/leaderboard";
-import "./Players.css";
 type Board = ReturnType<typeof leaderboard>;
 const number = (v: number | null | undefined) =>
   v == null
@@ -13,6 +12,7 @@ export function Players() {
     [q, setQ] = useState(""),
     [sort, setSort] = useState("xp"),
     [page, setPage] = useState(0),
+    [showMine, setShowMine] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
@@ -38,19 +38,23 @@ export function Players() {
   return (
     <section className="menu-flow leaderboard" aria-label="Leaderboard">
       <h2>Leaderboard</h2>
-      <p>
-        Alle berechtigten Konten dieses Servers, einschließlich
-        Offline-Spielern. Rang nach Gesamt-Wertungs-XP, bei Gleichstand nach
-        Erstellungszeit und stabiler Konto-ID. Technische Konten mit
-        Betreiberkennzeichnung sind ausgeschlossen.
-      </p>
-      <p>
-        Wertung: übernommene historische Konto-XP plus seit Version 2.25
-        erfasste Einsatzanteile. Bestätigte Einsatz-XP werden gleichmäßig auf
-        die tatsächlich beteiligten Disponenten verteilt, Restpunkte nach
-        stabiler ID. Leitstellenbestand zählt nicht mehrfach als persönliche
-        Leistung.
-      </p>
+      <p>Spieler dieser Serverwelt · Rang nach Wertungs-XP · auch offline</p>
+      <details>
+        <summary>Wertung und Datengrundlage</summary>
+        <p>
+          Alle berechtigten Konten dieses Servers, einschließlich
+          Offline-Spielern. Rang nach Gesamt-Wertungs-XP, bei Gleichstand nach
+          Erstellungszeit und stabiler Konto-ID. Technische Konten mit
+          Betreiberkennzeichnung sind ausgeschlossen.
+        </p>
+        <p>
+          Wertung: übernommene historische Konto-XP plus seit Version 2.25
+          erfasste Einsatzanteile. Bestätigte Einsatz-XP werden gleichmäßig auf
+          die tatsächlich beteiligten Disponenten verteilt, Restpunkte nach
+          stabiler ID. Leitstellenbestand zählt nicht mehrfach als persönliche
+          Leistung.
+        </p>
+      </details>
       <div className="inline">
         <label>
           Spieler oder Leitstelle suchen
@@ -89,6 +93,7 @@ export function Players() {
               onClick={() => {
                 setQ("");
                 setSort("xp");
+                setShowMine(true);
                 setPage(Math.floor(((data.myRank ?? 1) - 1) / 20));
               }}
             >
@@ -99,7 +104,7 @@ export function Players() {
             <details
               key={p.id}
               className="leaderboard-row"
-              open={p.own || undefined}
+              open={(p.own && showMine) || undefined}
             >
               <summary>
                 <strong>
