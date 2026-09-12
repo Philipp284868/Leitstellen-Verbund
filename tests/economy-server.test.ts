@@ -90,17 +90,16 @@ describe("Serverautoritatives Euro-Budget", () => {
     try {
       const before = read().money;
       expect(() => run("manual-relief", { type: "relief" })).toThrow(
-        /automatisch/,
+        /abgeschafft/,
       );
       game.step(900);
-      expect(read().money - before).toBe(euro(30000));
-      const next = read().economy!.fundingNextAt;
+      expect(read().money - before).toBe(0);
       const restarted = new Game(db);
       restarted.step(0);
-      expect(read().money - before).toBe(euro(30000));
-      expect(read().economy!.fundingNextAt).toBe(next);
+      expect(read().money - before).toBe(0);
+      expect(read().economy).not.toHaveProperty("fundingNextAt");
       restarted.step(900);
-      expect(read().money - before).toBe(euro(60000));
+      expect(read().money - before).toBe(0);
     } finally {
       db.close();
     }

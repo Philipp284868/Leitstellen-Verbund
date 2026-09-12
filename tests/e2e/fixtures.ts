@@ -14,7 +14,6 @@ export function established(name: string): Save {
   fundTestBudget(s, 4000000);
   s.xp = xpForLevel(4);
   s.completed = 3;
-  s.economy!.fundingNextAt = 1e12;
   s.speed = 1;
   apply(s, fixturePurchase("fire", nodes[0]));
   s.buildings[0].organization = {

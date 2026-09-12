@@ -583,7 +583,7 @@ it("keeps real call, dispatch, FMS, radio, rewards and export exclusively in the
     expect(completed.control!.briefed).toBe(true);
     expect(completed.telemetry!.credits).toBeGreaterThan(0);
     expect(completed.telemetry!.xp).toBeGreaterThan(0);
-    expect(s.economy!.fundingPaidCents).toBe(0);
+    expect(s.economy!.historicalFundingCents).toBe(0);
     expect(ledgerBalance(s)).toBe(s.money);
     const history = await f.value<{ total: number; missions: Save["archive"] }>(
       f.request(client, "history"),

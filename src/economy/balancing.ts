@@ -1,11 +1,6 @@
 import { bt, mt, vt, extensions } from "../catalog";
 import { euro, sumCents } from "../money";
-import {
-  bookMoney,
-  fundingTick,
-  ledgerBalance,
-  type MoneyState,
-} from "./ledger";
+import { bookMoney, ledgerBalance, type MoneyState } from "./ledger";
 import { ECONOMY_PRICES } from "./prices";
 import { newEconomy } from "./schema";
 
@@ -87,7 +82,6 @@ export function economyBalanceAudit() {
     const fixedPayment = mt("bin").reward;
     while (s.money < c.goal && s.time < 86400 * 30) {
       s.time += 900;
-      fundingTick(s);
       const expected = Math.floor((s.time * c.callsPerHour) / 3600);
       while (completed < expected) {
         bookMoney(s, fixedPayment, "Modell: feste Einsatzabrechnung");
@@ -95,15 +89,14 @@ export function economyBalanceAudit() {
         completed++;
       }
     }
-    if (s.money < c.goal || ledgerBalance(s) !== s.money)
+    if (ledgerBalance(s) !== s.money)
       throw Error(`Nicht tragfähiges Wirtschaftsmodell: ${c.id}`);
-    const secondsToGoal = s.time,
-      incomeCents = s.economy!.fundingPaidCents + payments;
-    bookMoney(s, -c.goal, "Modell: nächste Anschaffung");
+    const secondsToGoal = s.money >= c.goal ? s.time : null,
+      incomeCents = payments;
+    if (s.money >= c.goal) bookMoney(s, -c.goal, "Modell: nächste Anschaffung");
     const nextReserve = s.money;
     if (c.id === "absence") {
       s.time = 30 * 86400;
-      fundingTick(s);
     }
     return {
       ...c,

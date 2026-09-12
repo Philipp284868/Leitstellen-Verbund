@@ -74,7 +74,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
         )
         .run(s.player.id, "starter", "unused", "player", 0);
       db.save(s.player.id, s);
-      const game = new Game(db);
+      const game = new Game(db, () => true);
       game.step(1);
       const start = db.all().get(s.player.id)!.time;
       for (
@@ -152,7 +152,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
         database.save(s.player.id, s);
       }
       for (const database of [db, continuous]) {
-        const game = new Game(database);
+        const game = new Game(database, () => true);
         // Five-second server slices retain the same simulated interval without
         // hundreds of redundant durable commits in the disk-backed restart test.
         for (let i = 0; i < 24; i++) game.step(5);
@@ -160,11 +160,11 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
       const deadline = db.all().get(s.player.id)!.callPacing!.notBefore;
       db.close();
       db = new Database(directory);
-      const resumed = new Game(db);
+      const resumed = new Game(db, () => true);
       for (let i = 0; i < 10; i++)
         resumed.view(s.player.id, new Set([s.player.id]));
       expect(db.all().get(s.player.id)!.callPacing!.notBefore).toBe(deadline);
-      for (const game of [resumed, new Game(continuous)])
+      for (const game of [resumed, new Game(continuous, () => true)])
         for (let i = 0; i < 96; i++) game.step(5);
       const after = db.all().get(s.player.id)!;
       expect(after.missions.length).toBeGreaterThanOrEqual(1);

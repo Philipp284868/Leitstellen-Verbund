@@ -275,6 +275,7 @@ export function campaignTick(
   s: Save,
   create: (template: string, pos: { x: number; y: number }) => Mission,
 ) {
+  if (!callGenerationAllowed(s)) return false;
   const c = s.operations.campaign;
   if (!c) return false;
   if (
@@ -331,5 +332,6 @@ export function campaignTick(
   s.missionWait = 120;
   return true;
 }
+import { callGenerationAllowed } from "./call-generation";
 import { generationLocations } from "./incident-location";
 import { verifyIncidentLocation } from "./location-reachability";

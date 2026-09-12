@@ -109,8 +109,6 @@ export const ECONOMY_PRICES = {
   hire: 0,
   training: 0,
   operatingPerHour: 0,
-  fundingPerInterval: euro(30000),
-  fundingCeiling: euro(2500000),
   legacyReliefReward: euro(15000),
 };
 /** Fixed scenario funding, independent of extra vehicles, actual elapsed time or escalation. */

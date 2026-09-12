@@ -1,4 +1,5 @@
 import type { Save } from "../model";
+import { callGenerationAllowed } from "./call-generation";
 import { crewSummaries } from "./staffing";
 import { vehicleAvailability } from "./availability";
 import { sample } from "./random";
@@ -112,6 +113,7 @@ export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
   s.nextMission = s.callPacing.notBefore;
 }
 export function mayCreateIncident(s: Save) {
+  if (!callGenerationAllowed(s)) return false;
   const load = callLoad(s);
   return !!s.callPacing && s.time >= s.callPacing.notBefore && load.fleet > 0;
 }
@@ -134,6 +136,7 @@ export function retryCallLater(s: Save) {
   s.nextMission = s.callPacing.notBefore;
 }
 export function mayReceiveAdditionalCall(s: Save, recovery: boolean) {
+  if (!callGenerationAllowed(s)) return false;
   const ringing = s.missions.some((m) =>
     m.control?.calls.some((c) => c.state === "ringing"),
   );

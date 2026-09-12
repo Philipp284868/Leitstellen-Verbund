@@ -65,6 +65,24 @@ let snapshot: Snapshot = {
 let csrf = "",
   socket: Socket | null = null,
   started = false;
+let playing = false;
+export function setPlaying(active: boolean) {
+  playing = active;
+  if (socket?.connected) socket.emit("play:presence", { active });
+}
+// Timers continue in hidden tabs; a delayed heartbeat is safe (fail closed).
+if (typeof window !== "undefined") {
+  window.setInterval(() => {
+    if (playing && socket?.connected)
+      socket.emit("play:presence", { active: true });
+  }, 10000);
+  window.addEventListener("pagehide", () => {
+    if (socket?.connected) socket.emit("play:presence", { active: false });
+  });
+  window.addEventListener("pageshow", () => {
+    if (socket?.connected) socket.emit("play:presence", { active: playing });
+  });
+}
 const listeners = new Set<() => void>();
 let clientEpoch = 0;
 type RequestContext = {
@@ -91,6 +109,7 @@ export function notice(text: string) {
   emit({ notice: text });
 }
 function clear() {
+  setPlaying(false);
   clientEpoch++;
   const previous = socket;
   socket = null;
@@ -201,6 +220,7 @@ export async function refresh() {
       withCredentials: true,
     });
     socket.on("connect", () => {
+      socket?.emit("play:presence", { active: playing });
       presenceConnection(true);
       emit({
         readonly: false,

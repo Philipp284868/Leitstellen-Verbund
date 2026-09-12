@@ -3,6 +3,11 @@ import {
   type CivilProtectionAction,
 } from "../src/simulation/civil-protection-schema";
 import { civilProtectionCommand } from "../src/simulation/civil-protection";
+import { diagnostics } from "./diagnostics";
+import {
+  callGenerationAllowed,
+  withCallGeneration,
+} from "../src/simulation/call-generation";
 import { mulRatio } from "../src/money";
 import { ensureWorldSituation, stepWorldSituation } from "./world-situation";
 import { advanceSituation } from "../src/simulation/world-situation";
@@ -74,7 +79,10 @@ import { parseMode, type GameMode } from "../src/mode";
 import { vt, mt, type Skills } from "../src/catalog";
 
 export class Game {
-  constructor(public db: Database) {}
+  constructor(
+    public db: Database,
+    private canGenerate: (desk: string) => boolean = () => false,
+  ) {}
   command(user: string, input: unknown, mode: GameMode = "multi") {
     parseMode(mode);
     if (
@@ -372,12 +380,20 @@ export class Game {
   ) {
     withAutomaticRouting(() =>
       this.db.transaction(() => {
-        this.stepMode(
-          seconds,
-          now,
-          "multi",
-          options.generation !== false,
-          options.sharedSituation !== false,
+        withCallGeneration(
+          (s) =>
+            options.generation !== false &&
+            seconds <= 60 &&
+            deskOwner(this.db, s.player.id, "multi") === s.player.id &&
+            this.canGenerate(s.player.id),
+          () =>
+            this.stepMode(
+              seconds,
+              now,
+              "multi",
+              options.generation !== false,
+              options.sharedSituation !== false,
+            ),
         );
       }),
     );
@@ -587,7 +603,9 @@ export class Game {
       s.revision++;
       // A shared dispatch has exactly one generator. Dormant member saves and
       // missed server time cannot create an additional queue or catch-up wave.
-      const activeDesk = deskOwner(this.db, id, mode) === id;
+      const activeDesk = callGenerationAllowed(s);
+      if (!activeDesk && s.vehicles.length)
+        diagnostics.log("generation", "CALLS_SUPPRESSED_ABSENT");
       prepareCallPacing(s, seconds, activeDesk);
       if (
         allowGeneration &&
@@ -599,6 +617,8 @@ export class Game {
         else {
           const count = s.missions.length;
           campaignTick(s, (template, pos) => {
+            if (!callGenerationAllowed(s))
+              throw Error("PLAY_PRESENCE_REQUIRED");
             const m = {
               id: simId(s),
               template,

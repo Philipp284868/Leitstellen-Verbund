@@ -1,7 +1,5 @@
 import { checkedCents, mulRatio, sumCents } from "../money";
 import type { Economy } from "./schema";
-import { FUNDING_INTERVAL } from "./schema";
-import { ECONOMY_PRICES } from "./prices";
 export type MoneyState = {
   money: number;
   time: number;
@@ -46,35 +44,6 @@ export function bookMoney(
   if (receipt) s.receipts.push(receipt);
   s.journal = [{ id, at: s.time, amount, text }, ...s.journal.slice(0, 1999)];
   return true;
-}
-/** No login clock, no debt and no retroactive charge; unused funding above the cap expires. */
-export function fundingTick(
-  s: MoneyState,
-  now = s.time,
-  practice = false,
-): number {
-  if (practice) return 0;
-  const e = s.economy;
-  if (!e) throw Error("Euro-Umstellung des Spielstands fehlt.");
-  if (!Number.isFinite(now) || now < 0 || now > 1e12)
-    throw Error("Ungültiger Abrechnungszeitpunkt.");
-  if (now < e.fundingNextAt) return 0;
-  const intervals = Math.floor((now - e.fundingNextAt) / FUNDING_INTERVAL) + 1,
-    next = e.fundingNextAt + intervals * FUNDING_INTERVAL,
-    room = Math.max(0, ECONOMY_PRICES.fundingCeiling - s.money),
-    amount = Number(
-      BigInt(intervals) * BigInt(ECONOMY_PRICES.fundingPerInterval) >
-        BigInt(room)
-        ? BigInt(room)
-        : BigInt(intervals) * BigInt(ECONOMY_PRICES.fundingPerInterval),
-    ),
-    paid = checkedCents(sumCents([e.fundingPaidCents, amount]));
-  // The persisted next-at cursor is the receipt; no ever-growing recurring receipt list.
-  if (amount)
-    bookMoney(s, amount, "Kommunales Vorhaltebudget · Spielgrundfinanzierung");
-  e.fundingNextAt = next;
-  e.fundingPaidCents = paid;
-  return amount;
 }
 /** Original paid/book value, never a price increase after purchase. */
 export function saleValue(purchasePriceCents: number): number {

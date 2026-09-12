@@ -1,5 +1,13 @@
 # Änderungen
 
+## Spielanwesenheit und Finanzierung · 12.09.2026
+
+- Neue Notrufe erfordern eine tatsächlich aktive, authentifizierte Spielansicht. Hauptmenü, Abmeldung, verlorene/abgelaufene Verbindungen und Serverrestart halten die Erzeugung zurück. Mehrere Tabs und Leitstellendisponenten werden einzeln gezählt; laufende Einsätze bleiben bestehen.
+- Keine wiederkehrende Grundfinanzierung mehr. Migration 21 erhält Guthaben und historische Buchungen und entfernt alte Auszahlungstermine. Einmaliges Startgeld und tatsächliche Einsatzvergütungen bleiben erhalten.
+- Strukturierte und gedrosselte Diagnosegrundlage für Spielanwesenheit, unterdrückte Erzeugung und Speicherfehler.
+
+[Betriebsregeln](docs/HUD-UND-SERVER.md).
+
 ## Routing-Protokoll · 11.09.2026
 
 - Die AMP-Konsole protokolliert normale GraphHopper-Anfragen und erwartete nicht verbundene Straßenpunkte nicht mehr fortlaufend. Gezielte Laufzeit-Logger behalten Warnungen, Fehler und Start-/Stoppmeldungen bei.

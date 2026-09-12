@@ -9,7 +9,13 @@ import {
 } from "../src/presence";
 
 export const PRESENCE_GRACE_MS = 8000;
-type Connection = { user: string; session: string };
+export const PLAY_LEASE_MS = 120000;
+type Connection = {
+  user: string;
+  session: string;
+  desk?: string;
+  playingUntil?: number;
+};
 type Actor = { id: string; status: PublicPlayer["status"] };
 
 /** Presence never consumes or serializes a private Save. SQLite projects only
@@ -93,6 +99,28 @@ export class WorldPresence {
   connect(id: string, user: string, session: string) {
     this.connections.set(id, { user, session });
     this.away.delete(user);
+  }
+  play(id: string, desk: string, active: boolean, now: number) {
+    const c = this.connections.get(id);
+    if (!c) return false;
+    const changed = !!c.playingUntil !== active || (active && c.desk !== desk);
+    c.desk = active ? desk : undefined;
+    c.playingUntil = active ? now + PLAY_LEASE_MS : undefined;
+    return changed;
+  }
+  playing(
+    desk: string,
+    now: number,
+    valid: (session: string, user: string) => boolean,
+    owner: (user: string) => string,
+  ) {
+    return [...this.connections.values()].some(
+      (c) =>
+        c.desk === desk &&
+        (c.playingUntil ?? 0) > now &&
+        valid(c.session, c.user) &&
+        owner(c.user) === desk,
+    );
   }
   disconnect(id: string, now: number, immediate = false) {
     const connection = this.connections.get(id);

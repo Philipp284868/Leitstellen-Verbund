@@ -252,7 +252,7 @@ describe("personal tutorial and authoritative practice", () => {
       expect(s.archive).toHaveLength(1);
       expect(s.archive[0].telemetry!.credits).toBeGreaterThan(0);
       expect(s.archive[0].telemetry!.xp).toBeGreaterThan(0);
-      expect(s.economy!.fundingPaidCents).toBe(0);
+      expect(s.economy!.historicalFundingCents).toBe(0);
       expect(ledgerBalance(s)).toBe(s.money);
       expect(JSON.stringify([...f.db.all()])).toBe(before);
       f.tutorial.stopTraining(f.user);

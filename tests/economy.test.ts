@@ -2,12 +2,7 @@ import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { buildings, extensions, missions, vehicles } from "../src/catalog";
 import { economyBalanceAudit } from "../src/economy/balancing";
-import {
-  bookMoney,
-  fundingTick,
-  ledgerBalance,
-  saleValue,
-} from "../src/economy/ledger";
+import { bookMoney, ledgerBalance, saleValue } from "../src/economy/ledger";
 import {
   convertLegacyCredits,
   migrateEconomy,
@@ -33,13 +28,9 @@ describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {
     expect(economyBalanceAudit()).toEqual(cases);
     expect(cases.find((c) => c.id === "entry")!.reserve).toBe(euro(570000));
     expect(cases.find((c) => c.id === "entry")!.secondsToGoal).toBe(0);
-    expect(cases.find((c) => c.id === "advanced")!.secondsToGoal).toBeLessThan(
-      13 * 3600,
-    );
-    expect(cases.find((c) => c.id === "absence")!.secondsToGoal).toBe(90 * 60);
-    expect(cases.find((c) => c.id === "absence")!.finalCents).toBe(
-      ECONOMY_PRICES.fundingCeiling,
-    );
+    expect(cases.find((c) => c.id === "absence")!.secondsToGoal).toBeNull();
+    expect(cases.find((c) => c.id === "absence")!.finalCents).toBe(0);
+    expect(cases.every((c) => c.fundingCents === 0)).toBe(true);
     expect(cases.every((c) => c.nextReserve >= 0)).toBe(true);
   });
   it("bewahrt auch im großen sicheren Bereich den letzten Cent und rundet nur einmal", () => {
@@ -95,26 +86,23 @@ describe("Euro-Cent-Modell und vollständiger Preiskatalog", () => {
     expect(ledgerBalance(s)).toBe(s.money);
     expect(validate(s)).toBeDefined();
   });
-  it("finanziert geringe Einsatzdichte zeitbasiert ohne Login-/Übungsfarm oder Abwesenheitsschulden", () => {
-    let s = fresh("Vorhaltung", "Mitte", 1000);
-    bookMoney(s, -s.money, "Bestand vollständig investiert");
-    const first = s.economy!.fundingNextAt;
-    expect(fundingTick(s, first - 1)).toBe(0);
-    expect(fundingTick(s, first)).toBe(euro(30000));
-    expect(fundingTick(s, first)).toBe(0);
-    s = validate(structuredClone(s));
-    expect(fundingTick(s, first)).toBe(0);
-    const before = structuredClone(s);
-    expect(fundingTick(s, first + 86400, true)).toBe(0);
-    expect(s).toEqual(before);
-    expect(fundingTick(s, first + 30 * 86400)).toBe(euro(2470000));
-    expect(s.money).toBe(ECONOMY_PRICES.fundingCeiling);
-    const after = s.economy!.fundingNextAt;
-    bookMoney(s, -euro(100000), "Späterer Kauf");
-    expect(fundingTick(s, after - 1)).toBe(0);
-    expect(fundingTick(s, after)).toBe(euro(30000));
-    expect(ledgerBalance(s)).toBe(s.money);
-    expect(s.receipts).toEqual([]);
+  it("entfernt alte Fördercursor ohne nachträgliche Zahlungen oder Journaländerungen", () => {
+    const s = fresh("Bestand", "Mitte", 1000);
+    bookMoney(s, 3000000, "Kommunales Vorhaltebudget · Spielgrundfinanzierung");
+    const old = {
+      ...s,
+      economy: { ...s.economy, fundingNextAt: 1, fundingPaidCents: 3000000 },
+    };
+    const migrated = validate(old);
+    expect(migrated.money).toBe(s.money);
+    expect(migrated.journal).toEqual(s.journal);
+    expect(migrated.economy).not.toHaveProperty("fundingNextAt");
+    expect(migrated.economy!.historicalFundingCents).toBe(3000000);
+    expect(validate(migrated)).toEqual(migrated);
+    tick(migrated, migrated.time + 86400 * 30);
+    expect(migrated.money).toBe(s.money);
+    expect(migrated.journal).toEqual(s.journal);
+    expect(ledgerBalance(migrated)).toBe(migrated.money);
   });
   it("trennt Währungsumrechnung, Kaufkraftausgleich und XP und wiederholt nichts", () => {
     const old = fresh("Altbestand", "Mitte", 1000);

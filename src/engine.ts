@@ -1,3 +1,4 @@
+import { callGenerationAllowed } from "./simulation/call-generation";
 import { beginTrip } from "./simulation/trip-start";
 export { beginTrip } from "./simulation/trip-start";
 import { vehicleHomeAllowed } from "./catalog";
@@ -11,7 +12,7 @@ import {
   equipmentProfile,
   type Equipment,
 } from "./simulation/vehicle-equipment";
-import { bookMoney, fundingTick, saleValue } from "./economy/ledger";
+import { bookMoney, saleValue } from "./economy/ledger";
 import { ECONOMY_PRICES } from "./economy/prices";
 import { mulRatio } from "./money";
 import { reconcileBuildingStaffing } from "./simulation/building-staffing";
@@ -185,7 +186,7 @@ export function apply(s: Save, a: Action) {
     }
     case "relief":
       throw Error(
-        "Grundfinanzierung wird automatisch durch den Server gebucht. Details stehen im Geldjournal.",
+        "Passive Grundfinanzierung wurde abgeschafft. Einnahmen entstehen durch Einsatzabrechnungen.",
       );
     case "unassign": {
       const v = s.vehicles.find((v) => v.id === a.vehicle);
@@ -458,6 +459,7 @@ export function apply(s: Save, a: Action) {
     reconcileBuildingStaffing(s);
 }
 export function generate(s: Save) {
+  if (!callGenerationAllowed(s)) return;
   const available = capacity(s);
   const candidates = missions.filter((m) => canGenerate(s, m, available));
   if (!candidates.length) return;
@@ -544,7 +546,7 @@ function tickState(
   carriers: Record<string, Skills> = {},
   remoteDynamic: Set<string> = new Set(),
   remoteUnits: Record<string, Vehicle[]> = {},
-  practice = false,
+  _practice = false,
 ) {
   for (const m of s.missions) migratePatientTransports(m);
   const delta = Math.max(0, Math.min(BALANCE.offlineMax, wall - s.time));
@@ -564,7 +566,6 @@ function tickState(
     const dt = next - s.time;
     s.time = next;
     reconcileBuildingStaffing(s);
-    fundingTick(s, s.time, practice);
     updateWeather(s);
     beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {

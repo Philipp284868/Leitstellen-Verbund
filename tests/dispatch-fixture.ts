@@ -15,7 +15,6 @@ export function phaseFixture(owner: string, template = "field"): Save {
   s.seed = 124;
   bookMoney(s, euro(100000000) - s.money, "Entwickler-Testbudget");
   // Mission suites isolate payouts; recurring financing has dedicated economy-server tests.
-  s.economy!.fundingNextAt = 1e12;
   s.xp = xpForLevel(30);
   s.tutorial = 6;
   apply(s, fixturePurchase("fire", nodes[0]));

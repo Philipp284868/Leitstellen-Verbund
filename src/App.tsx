@@ -38,7 +38,7 @@ import { SituationDesk } from "./SituationDesk";
 import { AudioSession } from "./Sound";
 import { garageIndex, StationGarage } from "./StationGarage";
 import { download } from "./storage";
-import { emit, retryStorage, useGame } from "./store";
+import { emit, retryStorage, useGame, setPlaying } from "./store";
 import {
   TutorialCoach,
   TutorialEvents,
@@ -142,7 +142,9 @@ function GameApp() {
   }, []);
   useEffect(() => {
     audio.scene(screen === "game");
-  }, [screen]);
+    setPlaying(screen === "game" && !!user);
+    return () => setPlaying(false);
+  }, [screen, user?.id]);
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("all"),
     [sort, setSort] = useState("priority");

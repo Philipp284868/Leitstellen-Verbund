@@ -35,7 +35,6 @@ test.beforeEach(async () => {
   save.missions = [];
   save.missionWait = 100000;
   save.nextMission = save.time + 100000;
-  if (save.economy) save.economy.fundingNextAt = 1e12;
   app.db.save(owner, save);
 });
 test.afterEach(async () => await app.close());

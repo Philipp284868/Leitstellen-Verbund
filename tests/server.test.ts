@@ -301,7 +301,6 @@ describe("Autoritativer Server", () => {
       // Cross a real funding boundary during the transport, independent of
       // random vehicle delays and the wall-clock phase of this fixture.
       fundTestBudget(s, 1000000);
-      s.economy!.fundingNextAt = s.time + 1;
       app.db.save(id, s);
     }
     const s = app.db.all().get(a)!,

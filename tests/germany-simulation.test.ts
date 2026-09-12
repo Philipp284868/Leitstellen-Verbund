@@ -101,7 +101,6 @@ function createGame() {
   save.player.id = owner;
   save.seed = 124;
   fundTestBudget(save, 4000000); // Routing scenarios need both the initial fire fleet and a rescue station.
-  save.economy!.fundingNextAt = 1e12; // Isolate routing/reward assertions from recurring funding.
   save.xp = fixture.xpForLevel(30);
   save.missionWait = 100000;
   db.save(owner, save);

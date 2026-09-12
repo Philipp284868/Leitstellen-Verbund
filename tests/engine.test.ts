@@ -105,7 +105,6 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
   });
   it("bearbeitet einen Solo-Einsatz, bucht genau einmal und kehrt zurück", () => {
     const s = setup();
-    s.economy!.fundingNextAt = 1e12; // Isolate mission rewards from recurring funding.
     generate(s);
     const m = s.missions[0];
     const before = s.money;

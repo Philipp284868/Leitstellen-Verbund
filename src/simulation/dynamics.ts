@@ -527,6 +527,7 @@ export function dynamicsComplete(m: Mission, time: number) {
   );
 }
 export function followupsTick(s: Save) {
+  if (!callGenerationAllowed(s)) return;
   // Time pacing is independent of the count of open incidents; no catch-up burst.
   if (s.missionWait > 0) return;
   const available = fleetCapabilities(s);
@@ -588,4 +589,5 @@ export function followupsTick(s: Save) {
     return;
   }
 }
+import { callGenerationAllowed } from "./call-generation";
 import { verifyIncidentLocation } from "./location-reachability";

@@ -531,34 +531,15 @@ export function BackupPanel({ s }: { s: Save | null }) {
 export function ProgressPanel({ s }: { s: Save }) {
   return (
     <div>
-      <h3>Finanzierung deiner Leitstelle</h3>
+      <h3>Finanzen</h3>
       <p>
-        Grundfinanzierung wird automatisch alle 15 Minuten Serverzeit gebucht:
-        30.000,00 € bis zu einer Liquiditätsgrenze von 2.500.000,00 €.
-        Zusätzlich vergütet der Server abgeschlossene Einsätze. Es gibt keine
-        laufenden Betriebskosten und keine manuell anzufordernden
-        Bereitschaftsprämien.
+        Einmaliges Startgeld ermöglicht den Einstieg. Abgeschlossene Einsätze
+        und geleistete Unterstützung bringen weitere Einnahmen. Anschaffungen,
+        Wartung und Bereitschaftskosten stehen im Geldjournal.
       </p>
-      <div className="resource-summary">
-        <div>
-          <small>Aktuelles Budget</small>
-          <strong>{credits(s.money)}</strong>
-        </div>
-        <div>
-          <small>Grundfinanzierung bisher</small>
-          <strong>{credits(s.economy?.fundingPaidCents ?? 0)}</strong>
-        </div>
-        <div>
-          <small>Nächster Finanzierungszeitpunkt</small>
-          <strong>
-            {s.economy
-              ? new Date(s.economy.fundingNextAt * 1000).toLocaleTimeString(
-                  "de-DE",
-                )
-              : "Nach Migration"}
-          </strong>
-        </div>
-      </div>
+      <p>
+        Aktuelles Budget: <strong>{credits(s.money)}</strong>
+      </p>
       <h3>Ausbauziele</h3>
       {[
         {

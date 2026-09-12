@@ -17,12 +17,21 @@ export const economySchema = z
     migratedAt: time,
     openingBalanceCents: signedCentsSchema,
     compensationCents: centsSchema,
-    fundingNextAt: time,
-    fundingPaidCents: centsSchema,
+    // Read-only migration input, stripped from all validated saves.
+    fundingNextAt: time.optional(),
+    fundingPaidCents: centsSchema.optional(),
+    historicalFundingCents: centsSchema.default(0),
   })
-  .strict();
+  .strict()
+  .transform((e) => {
+    const { fundingNextAt: _cursor, fundingPaidCents: paid, ...current } = e;
+    void _cursor;
+    return {
+      ...current,
+      historicalFundingCents: paid ?? current.historicalFundingCents,
+    };
+  });
 export type Economy = z.infer<typeof economySchema>;
-export const FUNDING_INTERVAL = 900;
 export function newEconomy(now: number, openingBalanceCents: number): Economy {
   return economySchema.parse({
     version: 1,
@@ -32,7 +41,6 @@ export function newEconomy(now: number, openingBalanceCents: number): Economy {
     migratedAt: now,
     openingBalanceCents,
     compensationCents: 0,
-    fundingNextAt: now + FUNDING_INTERVAL,
-    fundingPaidCents: 0,
+    historicalFundingCents: 0,
   });
 }

@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { AccountLifecycle } from "./account-lifecycle";
+import { diagnostics } from "./diagnostics";
 import {
   createServer,
   type IncomingMessage,
@@ -82,8 +83,21 @@ export function startServer(
     throw e;
   }
   const auth = new Auth(db),
-    game = new Game(db),
-    presence = new WorldPresence();
+    presence = new WorldPresence(),
+    game = new Game(db, (desk) =>
+      presence.playing(
+        desk,
+        Date.now(),
+        (session, user) =>
+          !!db.sql
+            .prepare(
+              "SELECT 1 FROM sessions WHERE hash=? AND user_id=? AND expires>?",
+            )
+            .get(session, user, Date.now()),
+        (user) => deskOwner(db, user, "multi"),
+      ),
+    );
+  diagnostics.log("server", "DATABASE_READY");
   const tutorial = new TutorialService(db);
   const viewForActor = (
     user: string,
@@ -711,12 +725,46 @@ export function startServer(
   });
   io.on("connection", (socket) => {
     presence.connect(socket.id, socket.data.user, socket.data.session);
+    socket.on(
+      "play:presence",
+      (input: unknown, ack?: (result: { ok: boolean }) => void) => {
+        try {
+          const session = auth.session(socket.request.headers.cookie);
+          if (!session) {
+            socket.disconnect(true);
+            return;
+          }
+          const { active } = z
+            .object({ active: z.boolean() })
+            .strict()
+            .parse(input);
+          auth.limit(`play-presence:${socket.id}`, 20, 60000);
+          const changed = presence.play(
+            socket.id,
+            deskOwner(db, session.user_id, "multi"),
+            active,
+            Date.now(),
+          );
+          if (changed)
+            diagnostics.log(
+              "presence",
+              active ? "PLAY_ENTER" : "PLAY_LEAVE",
+              "info",
+              { active },
+            );
+          if (typeof ack === "function") ack({ ok: true });
+        } catch {
+          if (typeof ack === "function") ack({ ok: false });
+        }
+      },
+    );
     socket.on("disconnect", (reason) => {
       presence.disconnect(
         socket.id,
         Date.now(),
         reason === "server namespace disconnect",
       );
+      diagnostics.log("presence", "PLAY_DISCONNECTED");
       refreshPresence();
     });
     socket.on("presence:sync", () => {
@@ -812,15 +860,13 @@ export function startServer(
     if (failed || stopping) return;
     const now = Date.now();
     try {
-      game.step(Math.min(60, Math.max(0, (now - last) / 1000)), now);
+      game.step(Math.max(0, (now - last) / 1000), now);
       tutorial.step(now);
       last = now;
       publish();
     } catch {
       failed = true;
-      console.error(
-        "Simulation wegen Speicher-/Validierungsfehler pausiert. Datenbank prüfen.",
-      );
+      diagnostics.log("simulation", "STORAGE_OR_VALIDATION_FAILED", "error");
       io.emit(
         "notice",
         "Server-Simulation pausiert. Serverbetreiber informieren.",
