@@ -7,8 +7,10 @@ import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { randomBytes } from "node:crypto";
-import { initialize, instance } from "../../ops/runtime/instance.mjs";
-import { hash } from "../../ops/runtime/files.mjs";
+import { build } from "esbuild";
+import { initialize, instance, program } from "../../ops/runtime/instance.mjs";
+import { hash, atomic } from "../../ops/runtime/files.mjs";
+import { io } from "socket.io-client";
 import { update } from "../../ops/runtime/update.mjs";
 import { preview, reset } from "../../ops/runtime/reset.mjs";
 const archive = await readFile(process.argv[2]);
@@ -72,6 +74,34 @@ async function start() {
   }
   throw Error("Verwaltetes Paket nicht bereit: " + output);
 }
+async function register(username) {
+  const response = await fetch(origin + "/api/register", {
+    method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      password: randomBytes(24).toString("base64url"),
+      name: "Paketspieler",
+      station: "Paketleitstelle",
+    }),
+  });
+  assert.equal(response.status, 200, await response.clone().text());
+  return {
+    cookie: response.headers.get("set-cookie").split(";")[0],
+    body: await response.json(),
+  };
+}
+function maintenance(action) {
+  return execFileSync(
+    resolve(root, "node/bin/node"),
+    [resolve(root, "launcher/runtime.mjs"), action],
+    {
+      env: { ...process.env, LV_INSTANCE_ROOT: root },
+      encoding: "utf8",
+      timeout: 20000,
+    },
+  );
+}
 try {
   initialize(
     root,
@@ -112,13 +142,91 @@ try {
   await stop();
   const i = instance(root),
     plan = preview(root, "smoke-reset");
-  await reset(root, "smoke-reset", plan.confirmation);
+  atomic(resolve(root, "shared/config/reset-request.json"), {
+    request: plan.request,
+    confirmation: plan.confirmation,
+  });
+  assert.match(maintenance("reset-confirm"), /Reset abgeschlossen/);
   await start();
   assert.equal(
     (await fetch(origin + "/api/me", { headers: { Cookie: cookie } })).status,
     401,
   );
+  const next = await register("afterreset");
+  const get = async (path) => {
+    const r = await fetch(origin + path, { headers: { Cookie: next.cookie } });
+    assert.equal(r.status, 200, await r.clone().text());
+    return r.json();
+  };
+  let me = await get("/api/me");
+  const socket = io(origin, {
+    transports: ["websocket"],
+    extraHeaders: { Origin: origin, Cookie: next.cookie },
+    auth: {
+      csrf: me.csrf,
+      mode: "multi",
+      generation: instance(root).record.generation,
+    },
+    reconnection: false,
+  });
+  await new Promise((done, reject) => {
+    const timer = setTimeout(
+      () => reject(Error("WebSocket nicht bereit")),
+      5000,
+    );
+    socket.once("connect", () => {
+      clearTimeout(timer);
+      done();
+    });
+    socket.once("connect_error", (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+  });
+  socket.disconnect();
+  assert.equal(
+    (
+      await fetch(origin + "/api/operator/status", {
+        headers: { Cookie: next.cookie },
+      })
+    ).status,
+    403,
+  );
+  const offers = await get("/api/facilities?kind=fire&status=available");
+  const action = async (a, id = crypto.randomUUID()) => {
+    const r = await fetch(origin + "/api/action", {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        Cookie: next.cookie,
+        "Content-Type": "application/json",
+        "x-csrf-token": me.csrf,
+      },
+      body: JSON.stringify({ id, action: a }),
+    });
+    assert.equal(r.status, 200, await r.clone().text());
+  };
+  const buyId = crypto.randomUUID(),
+    buy = { type: "purchase-facility", facility: offers.offers[0].facility.id };
+  await action(buy, buyId);
+  await action(buy, buyId);
+  for (let n = 0; n < 35; n++) {
+    me = await get("/api/me");
+    if (me.save.buildings[0].ready <= me.save.time) break;
+    await delay(1000);
+  }
+  await action({ type: "buy", kind: "tsf", home: me.save.buildings[0].id });
+  const newProgress = await get("/api/me");
+  assert.equal(newProgress.save.buildings.length, 1);
+  assert.equal(newProgress.save.vehicles.length, 1);
   await stop();
+  atomic(resolve(root, "shared/config/operator-request.json"), {
+    instance: instance(root).record.id,
+    generation: instance(root).record.generation,
+    username: "afterreset",
+    confirm: true,
+  });
+  assert.match(maintenance("grant-operator"), /Spieladministrator bestätigt/);
   assert.notEqual(i.record.generation, instance(root).record.generation);
   assert.equal(
     (await reset(root, "smoke-reset", plan.confirmation)).repeated,
@@ -128,7 +236,48 @@ try {
   assert.equal((await install()).unchanged, true);
   const repeatMs = performance.now() - at;
   await start();
+  const persisted = await get("/api/me");
+  assert.equal(persisted.save.money, newProgress.save.money);
+  assert.equal(persisted.save.vehicles[0].id, newProgress.save.vehicles[0].id);
+  assert.equal(
+    persisted.save.buildings[0].id,
+    newProgress.save.buildings[0].id,
+  );
+  assert.equal(
+    (
+      await fetch(origin + "/api/operator/status", {
+        headers: { Cookie: next.cookie },
+      })
+    ).status,
+    200,
+  );
   await stop();
+  await build({
+    entryPoints: ["tests/helpers/packaged-transport.ts"],
+    outfile: ".tools/runtime-fixture/packaged-transport.mjs",
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    packages: "external",
+  });
+  const { packagedTransport } = await import(
+    pathToFileURL(resolve(".tools/runtime-fixture/packaged-transport.mjs")).href
+  );
+  const final = instance(root);
+  await packagedTransport(
+    resolve(program(final), "dist/server/index.js"),
+    {
+      host: "127.0.0.1",
+      port,
+      publicUrl: origin,
+      secure: false,
+      trustedProxies: [],
+      dataDir: final.data,
+      geodataDir: runtime.geodataDir,
+      routerUrl: runtime.routerUrl,
+    },
+    final.record.generation,
+  );
   console.log(
     JSON.stringify({
       managedPackage: "passed",
@@ -139,6 +288,11 @@ try {
         "package without source",
         "readiness handshake",
         "registration",
+        "post-reset registration, site and vehicle purchase",
+        "packaged patient transport, reward, XP and archive across restart",
+        "private operator enrollment",
+        "WebSocket",
+        "new progress preserved across restart and repeated update",
         "reset",
         "old session denied",
         "reset idempotence",

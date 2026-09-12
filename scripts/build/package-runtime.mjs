@@ -18,6 +18,7 @@ import {
   cleanRuntimeBookkeeping,
   pruneRuntimeDependencies,
   runtimeDependencies,
+  retainDependencyLicenses,
 } from "./runtime-dependencies.mjs";
 if (process.platform !== "linux")
   throw Error(
@@ -88,7 +89,9 @@ try {
   // Remove machine-specific metadata and generated dependency CLI wrappers;
   // preserve the dependency modules, their bin source files and package links.
   await cleanRuntimeBookkeeping(stage);
+  await retainDependencyLicenses(stage);
   await pruneRuntimeDependencies(stage);
+  await rm(join(stage, "pnpm-lock.yaml"));
   await rm(join(stage, "dist/server/lab-cli.js"), { force: true });
   await writeFile(
     join(stage, "package.json"),
@@ -163,6 +166,7 @@ try {
       "--group=0",
       "--numeric-owner",
       "--format=gnu",
+      "--hard-dereference",
       "-cf",
       tar,
       "-C",

@@ -79,6 +79,9 @@ export async function start(root) {
     if (!ready) rollbackBeforeReady(i);
     if (ready && code === 0) cleanup(i);
     return code;
+  } catch (error) {
+    if (!ready) rollbackBeforeReady(i);
+    throw error;
   } finally {
     clearInterval(timer);
     release();

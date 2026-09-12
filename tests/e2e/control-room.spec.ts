@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -7,6 +7,9 @@ import { phaseFixture } from "../dispatch-fixture";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect } from "./test";
 import { openPanel } from "./ui-navigation";
+const { version } = JSON.parse(await readFile("package.json", "utf8")) as {
+  version: string;
+};
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -180,7 +183,7 @@ test("Leaderboard, sicherer Versionsverlauf, Berichtsvorschau und Offlineexport 
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Changelogs", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Installierte Version 2.25.0" }),
+    page.getByRole("heading", { name: `Installierte Version ${version}` }),
   ).toBeVisible();
   await expect(page.locator(".changelog-panel article").first()).toBeVisible();
   await page

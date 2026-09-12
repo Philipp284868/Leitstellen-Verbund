@@ -6,6 +6,7 @@
 - Einmaliger Reset mit konkreter Vorschau, Instanzbestätigung, geprüfter SQLite-Sicherung und neuer Weltgeneration. Kein Reset beim normalen Start oder Update; alte Sitzungen und Spielcaches werden ungültig.
 - Gemeinsame Wartungssperre, bestätigte Bereitschaft vor Spielerzugriff, begrenzter Rückfall auf kompatible Programmversionen und eigene AMP-Vorlage.
 - Client, Server und gemeinsame Modelle getrennt; Build und Releasewerkzeuge geordnet. Historische Testberichte und alte ungesicherte Resetlogik entfernt; Regressionen bleiben in CI.
+- Das fertige Paket wird zusätzlich mit Neuregistrierung, kontrollierter Administratorfreigabe, Standort-/Fahrzeugkauf, Echtzeitverbindung und Bestandsschutz nach Reset und Update geprüft. Abhängige Lizenztexte bleiben auch nach der Paketbereinigung erhalten.
 
 ## 2.25.0 · Leitstellenarbeitsplatz und Serverbetrieb · 12.09.2026
 

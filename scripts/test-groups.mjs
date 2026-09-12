@@ -52,8 +52,8 @@ export function testGroups(root = resolve(".")) {
     if (seen.has(file)) return false;
     seen.add(file);
     if (
-      file.startsWith(resolve(root, "server") + "/") ||
-      file.startsWith(resolve(root, "server") + "\\")
+      file.startsWith(resolve(root, "src/server") + "/") ||
+      file.startsWith(resolve(root, "src/server") + "\\")
     )
       return true;
     return dependencies(file).some((specifier) => {

@@ -31,7 +31,11 @@ import {
   hash,
   assertSpace,
 } from "../ops/runtime/files.mjs";
-import { update, rollbackBeforeReady } from "../ops/runtime/update.mjs";
+import {
+  update,
+  rollbackBeforeReady,
+  acceptReady,
+} from "../ops/runtime/update.mjs";
 import { unpack } from "../ops/runtime/archive.mjs";
 import { gzipSync } from "node:zlib";
 
@@ -343,4 +347,124 @@ test("Storage exhaustion and forged activated-reset paths are refused before tou
     /Zielpfade/,
   );
   assert.equal(existsSync(i.data), true);
+});
+
+function archive(records) {
+  const parts = [];
+  for (const {
+    path,
+    type = "0",
+    bytes = Buffer.alloc(0),
+    link = "",
+  } of records) {
+    const h = Buffer.alloc(512);
+    h.write(path, 0, 100);
+    h.write("0000700\0", 100);
+    h.write(bytes.length.toString(8).padStart(11, "0") + "\0", 124);
+    h.fill(32, 148, 156);
+    h[156] = type.charCodeAt(0);
+    h.write(link, 157, 100);
+    h.write(
+      h
+        .reduce((sum, b) => sum + b, 0)
+        .toString(8)
+        .padStart(6, "0") + "\0 ",
+      148,
+    );
+    parts.push(h, bytes, Buffer.alloc((512 - (bytes.length % 512)) % 512));
+  }
+  return gzipSync(Buffer.concat([...parts, Buffer.alloc(1024)]));
+}
+test("Archive rejects traversal, duplicate paths, escaping links, hardlinks and file parents before extraction", (t) => {
+  const { root } = fixture(t);
+  for (const records of [
+    [{ path: "../escape" }],
+    [{ path: "/absolute" }],
+    [{ path: "same" }, { path: "same" }],
+    [{ path: "node_modules/link", type: "2", link: "../../../escape" }],
+    [
+      {
+        path: "././@LongLink",
+        type: "K",
+        bytes: Buffer.from("../../../escape\0"),
+      },
+      { path: "node_modules/link", type: "2", link: "safe-but-overridden" },
+    ],
+    [{ path: "hard", type: "1", link: "somewhere" }],
+    [{ path: "parent" }, { path: "parent/child" }],
+  ]) {
+    const target = resolve(root, "staging/invalid");
+    assert.throws(
+      () => unpack(archive(records), target),
+      /Archiv|Sonderdateien|Symlink/,
+    );
+    assert.equal(existsSync(target), false);
+  }
+});
+
+test("Verified complete update keeps new-world accounts and receipts, isolates files and disallows rollback after admission", async (t) => {
+  const { root, i, app } = fixture(t);
+  writeFileSync(resolve(app, "removed-in-next.js"), "old program");
+  const db = new DatabaseSync(resolve(i.data, "game.sqlite"));
+  db.exec(
+    "INSERT INTO users VALUES('new','new','hash','player',1); INSERT INTO actions VALUES('new','receipt','digest');",
+  );
+  db.close();
+  const files = [
+    { path: "config/baseline.sql", bytes: readFileSync("config/baseline.sql") },
+    {
+      path: "dist/server/index.js",
+      bytes: Buffer.from("// complete test candidate"),
+    },
+  ];
+  const manifest = {
+    format: 2,
+    product: "germany-1",
+    node: "24.x",
+    platform: "linux-x64",
+    commit: "c".repeat(40),
+    version: "2.26.1",
+    compatibility: { database: 26, minimumDatabase: 25, geodata: 1 },
+    files: files.map((f) => ({ path: f.path, sha256: hash(f.bytes) })),
+  };
+  const bytes = archive([
+    ...files,
+    { path: "release.json", bytes: Buffer.from(JSON.stringify(manifest)) },
+  ]);
+  const descriptor = {
+    version: manifest.version,
+    commit: manifest.commit,
+    sequence: 11,
+    size: bytes.length,
+    sha256: hash(bytes),
+    url: "fixture",
+  };
+  const oldRouter = process.env.GRAPHHOPPER_URL;
+  process.env.GRAPHHOPPER_URL = "http://127.0.0.1:1";
+  try {
+    const options = {
+      resolveCandidate: async () => descriptor,
+      download: async () => bytes,
+    };
+    await update(root, options);
+    const next = instance(root);
+    assert.equal(next.record.generation, i.record.generation);
+    assert.equal(next.current.commit, manifest.commit);
+    assert.equal(
+      existsSync(
+        resolve(root, "releases", next.current.release, "removed-in-next.js"),
+      ),
+      false,
+    );
+    const check = new DatabaseSync(resolve(next.data, "game.sqlite"));
+    assert.equal(check.prepare("SELECT count(*) n FROM actions").get().n, 1);
+    check.close();
+    acceptReady(next);
+    assert.equal(rollbackBeforeReady(next), false);
+    assert.equal((await update(root, options)).unchanged, true);
+    assert.equal(inspect(resolve(next.data, "game.sqlite")).accounts, 1);
+  } finally {
+    if (oldRouter === undefined) delete process.env.GRAPHHOPPER_URL;
+    else process.env.GRAPHHOPPER_URL = oldRouter;
+  }
 });

@@ -30,7 +30,8 @@ function name(value) {
 export function unpack(bytes, destination) {
   const tar = gunzipSync(bytes, { maxOutputLength: 768 * 1024 * 1024 });
   let cursor = 0,
-    longName;
+    longName,
+    longLink;
   const entries = [],
     seen = new Set();
   const string = (b) => b.toString("utf8").replace(/\0.*$/s, "");
@@ -57,9 +58,14 @@ export function unpack(bytes, destination) {
       longName = string(data);
       continue;
     }
+    if (type === "K") {
+      if (longLink || size > 4096) throw Error("Ungültiges Langlinkziel.");
+      longLink = string(data);
+      continue;
+    }
     if (!["0", "5", "2"].includes(type))
       throw Error(
-        "Verknüpfungen und Sonderdateien sind im Laufzeitpaket verboten.",
+        "Hardlinks und Sonderdateien sind im Laufzeitpaket verboten.",
       );
     const raw = longName || string(h.subarray(0, 100));
     longName = undefined;
@@ -67,13 +73,18 @@ export function unpack(bytes, destination) {
     const path = name(raw);
     if (seen.has(path)) throw Error("Doppelter Archivpfad.");
     seen.add(path);
-    const link = type === "2" ? string(h.subarray(157, 257)) : undefined;
+    if (longLink && type !== "2") throw Error("Langlink ohne Symlink.");
+    const link =
+      type === "2" ? longLink || string(h.subarray(157, 257)) : undefined;
+    longLink = undefined;
+    if (type === "2" && !link) throw Error("Leeres Symlinkziel.");
     if (
       link &&
       (!path.startsWith("node_modules/") ||
         link.startsWith("/") ||
         link.includes("\\") ||
         link.includes(":") ||
+        /[\x00-\x1f]/.test(link) ||
         !within(
           resolve(destination, "node_modules"),
           resolve(destination, path, "..", link),
@@ -88,7 +99,8 @@ export function unpack(bytes, destination) {
       mode: octal(h.subarray(100, 108)) & 0o111 ? 0o700 : 0o600,
     });
   }
-  if (longName || !entries.length) throw Error("Archiv unvollständig.");
+  if (longName || longLink || !entries.length)
+    throw Error("Archiv unvollständig.");
   if (existsSync(destination) && readdirSync(destination).length)
     throw Error("Paket darf nur in einen leeren Ordner entpackt werden.");
   const types = new Map(entries.map((e) => [e.path, e.type]));
@@ -110,7 +122,7 @@ export function unpack(bytes, destination) {
     if (e.type === "5") mkdirSync(file, { recursive: true, mode: 0o700 });
     else if (e.type !== "2") {
       mkdirSync(resolve(file, ".."), { recursive: true, mode: 0o700 });
-      writeFileSync(file, e.data, { flag: "wx", mode: e.mode });
+      writeFileSync(file, e.data, { flag: "wx", mode: e.mode, flush: true });
     }
   }
   for (const e of entries.filter((e) => e.type === "2")) {

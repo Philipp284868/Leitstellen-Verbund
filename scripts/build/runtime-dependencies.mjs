@@ -1,4 +1,12 @@
-import { lstat, readdir, rm, readFile, realpath } from "node:fs/promises";
+import {
+  lstat,
+  readdir,
+  rm,
+  readFile,
+  realpath,
+  mkdir,
+  writeFile,
+} from "node:fs/promises";
 import { basename, join, resolve, sep } from "node:path";
 
 export const runtimeDependencies = [
@@ -7,6 +15,42 @@ export const runtimeDependencies = [
   "socket.io",
   "zod",
 ];
+
+export async function retainDependencyLicenses(stage) {
+  const output = join(stage, "licenses");
+  await mkdir(output, { recursive: true });
+  async function scan(folder) {
+    const entries = await readdir(folder);
+    if (entries.includes("package.json")) {
+      const pkg = JSON.parse(
+        await readFile(join(folder, "package.json"), "utf8"),
+      );
+      if (typeof pkg.name === "string" && typeof pkg.version === "string") {
+        for (const name of entries.filter((n) =>
+          /^(?:licen[cs]e|notice|copying)(?:[._-].*)?$/i.test(n),
+        )) {
+          const file = join(folder, name),
+            stat = await lstat(file);
+          if (stat.isFile())
+            await writeFile(
+              join(
+                output,
+                encodeURIComponent(pkg.name + "@" + pkg.version + "-" + name) +
+                  ".txt",
+              ),
+              await readFile(file),
+            );
+        }
+      }
+    }
+    for (const name of entries) {
+      const file = join(folder, name),
+        stat = await lstat(file);
+      if (stat.isDirectory() && !stat.isSymbolicLink()) await scan(file);
+    }
+  }
+  await scan(join(stage, "node_modules"));
+}
 
 // Retain the installed, lockfile-resolved closure; never resolve a fresh dependency version.
 export async function pruneRuntimeDependencies(stage) {
@@ -89,7 +133,11 @@ export async function cleanRuntimeBookkeeping(stage) {
       throw Error("Runtime-Bereinigung außerhalb des Paketordners verweigert.");
     await rm(target, { recursive, force: true });
   }
-  for (const file of [".modules.yaml", ".pnpm-workspace-state-v1.json"])
+  for (const file of [
+    ".modules.yaml",
+    ".pnpm-workspace-state-v1.json",
+    ".pnpm/lock.yaml",
+  ])
     await removeLocal(join(modules, file));
   async function visit(folder) {
     for (const name of await readdir(folder)) {

@@ -71,6 +71,14 @@ async function register(page: Page, label: string) {
 }
 async function enter(page: Page, username: string) {
   await page.goto(config.publicUrl);
+  // Session lookup and generation-bound cache cleanup finish asynchronously.
+  // Wait for either actual entry state before deciding whether login is required.
+  await expect(
+    page
+      .getByLabel("Benutzername", { exact: true })
+      .or(page.getByRole("button", { name: "Spielen", exact: false }))
+      .first(),
+  ).toBeVisible();
   if (await page.getByLabel("Benutzername", { exact: true }).isVisible()) {
     await page.getByLabel("Benutzername", { exact: true }).fill(username);
     await page.getByLabel("Passwort", { exact: true }).fill(password);

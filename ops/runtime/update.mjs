@@ -91,8 +91,9 @@ export async function update(
       try {
         const details = inspect(resolve(i.data, "game.sqlite"));
         if (
-          details.schema > manifest.compatibility.database ||
-          details.schema < manifest.compatibility.minimumDatabase
+          !i.record.requiresReset &&
+          (details.schema > manifest.compatibility.database ||
+            details.schema < manifest.compatibility.minimumDatabase)
         )
           throw Error(
             "Technische Migration erforderlich; dieses Paket unterstützt keinen ungeprüften Schemawechsel.",
@@ -104,9 +105,11 @@ export async function update(
             "game.sqlite",
           ),
         );
-        const rehearsal = resolve(work, "migration-preview.sqlite");
-        copyFileSync(journal.backup.file, rehearsal);
-        migrate(rehearsal, folder, manifest.compatibility);
+        if (!i.record.requiresReset) {
+          const rehearsal = resolve(work, "migration-preview.sqlite");
+          copyFileSync(journal.backup.file, rehearsal);
+          migrate(rehearsal, folder, manifest.compatibility);
+        }
       } finally {
         dataUnlock();
       }
@@ -135,7 +138,7 @@ export async function update(
       fresh(i, target);
       i.record.initialized = true;
       atomic(resolve(i.state, "instance.json"), i.record);
-    } else {
+    } else if (!i.record.requiresReset) {
       journal.phase = "migrating";
       atomic(journalFile, journal);
       const dataUnlock = lock(
