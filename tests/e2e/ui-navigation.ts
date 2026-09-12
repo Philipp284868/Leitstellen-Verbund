@@ -1,4 +1,20 @@
 import { expect, type Page } from "@playwright/test";
+export async function loginAndEnter(
+  page: Page,
+  username: string,
+  password: string,
+) {
+  const login = page.getByLabel("Benutzername", { exact: true });
+  const play = page.getByRole("button", { name: "Spielen", exact: true });
+  // Session lookup and generation-bound cache cleanup finish asynchronously.
+  await expect(login.or(play).first()).toBeVisible();
+  if (await login.isVisible()) {
+    await login.fill(username);
+    await page.getByLabel("Passwort", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  }
+  await enterGame(page);
+}
 export async function enterGame(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(

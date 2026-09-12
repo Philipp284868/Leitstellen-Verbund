@@ -10,7 +10,12 @@ import { formatMoney } from "../../src/shared/money";
 import { interviewUI, joinDesk } from "./desk-helpers";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Browser, type Page } from "./test";
-import { openPanel, showIncidents, showMapTools } from "./ui-navigation";
+import {
+  openPanel,
+  showIncidents,
+  showMapTools,
+  loginAndEnter,
+} from "./ui-navigation";
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
 )) as { startServer: typeof startServer };
@@ -71,20 +76,7 @@ async function register(page: Page, label: string) {
 }
 async function enter(page: Page, username: string) {
   await page.goto(config.publicUrl);
-  // Session lookup and generation-bound cache cleanup finish asynchronously.
-  // Wait for either actual entry state before deciding whether login is required.
-  await expect(
-    page
-      .getByLabel("Benutzername", { exact: true })
-      .or(page.getByRole("button", { name: "Spielen", exact: false }))
-      .first(),
-  ).toBeVisible();
-  if (await page.getByLabel("Benutzername", { exact: true }).isVisible()) {
-    await page.getByLabel("Benutzername", { exact: true }).fill(username);
-    await page.getByLabel("Passwort", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  }
-  await page.getByRole("button", { name: "Spielen", exact: false }).click();
+  await loginAndEnter(page, username, password);
 }
 function ownerOf(username: string) {
   return String(

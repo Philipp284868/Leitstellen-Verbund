@@ -15,7 +15,7 @@ import { saleValue } from "../../src/shared/economy/ledger";
 import { formatMoney } from "../../src/shared/money";
 import { stationCapacity } from "../../src/simulation/staffing";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
-import { openPanel } from "./ui-navigation";
+import { openPanel, loginAndEnter } from "./ui-navigation";
 import { equipmentPrice } from "../../src/simulation/vehicle-equipment";
 
 const compiled = (await import(
@@ -28,14 +28,7 @@ const password = "Resource-actions-test-password-123!";
 const current = () => app.db.all().get(owner)!;
 async function enter(page: Page) {
   await page.goto(config.publicUrl);
-  if (await page.getByLabel("Benutzername", { exact: true }).isVisible()) {
-    await page
-      .getByLabel("Benutzername", { exact: true })
-      .fill("resources-user");
-    await page.getByLabel("Passwort", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  }
-  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  await loginAndEnter(page, "resources-user", password);
 }
 async function station(page: Page, name: string) {
   await openPanel(page, "Standorte");

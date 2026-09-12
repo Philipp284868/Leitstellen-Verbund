@@ -1,4 +1,4 @@
-import { openPanel } from "./ui-navigation";
+import { openPanel, loginAndEnter } from "./ui-navigation";
 import { pathToFileURL } from "node:url";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -36,14 +36,7 @@ test("zwei Leitstellen erwerben denselben festen Standort unabhängig; Bestätig
     const pages = await Promise.all(contexts.map((c) => c.newPage()));
     const enter = async (page: Page, username: string) => {
       await page.goto(config.publicUrl);
-      if (await page.getByLabel("Benutzername", { exact: true }).isVisible()) {
-        await page.getByLabel("Benutzername", { exact: true }).fill(username);
-        await page.getByLabel("Passwort", { exact: true }).fill(password);
-        await page
-          .getByRole("button", { name: "Anmelden", exact: true })
-          .click();
-      }
-      await page.getByRole("button", { name: "Spielen", exact: true }).click();
+      await loginAndEnter(page, username, password);
     };
     await Promise.all(
       pages.map((p, i) => enter(p, i ? "site-other" : "site-owner")),
