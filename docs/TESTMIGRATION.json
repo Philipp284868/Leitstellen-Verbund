@@ -1745,7 +1745,7 @@
         "keeps real call, dispatch, FMS, radio, rewards and export exclusively in the practice world",
         "persists private progress, session and duplicate receipts through a real server restart"
       ],
-      "replacement": "tests/tutorial-http.test.ts",
+      "replacement": "tests/tutorial-retirement.test.ts",
       "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
     },
     {
@@ -1758,7 +1758,7 @@
         "records personal steps only after actual evidence and rejects stale repeated advancement",
         "uses real calls, dispatch, FMS, radio, completion and private financial receipts"
       ],
-      "replacement": "tests/tutorial.test.ts",
+      "replacement": "tests/tutorial-retirement.test.ts",
       "disposition": "Anforderung erhalten; aktuelle Deutschland-Umgebung und automatische Besatzung übernehmen."
     },
     {

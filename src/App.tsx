@@ -5,7 +5,6 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useRef,
   useState,
   type CSSProperties,
 } from "react";
@@ -20,13 +19,12 @@ import { requestDialogTransition } from "./dialog-state";
 import { DynamicsPanel } from "./Dynamics";
 import { MainMenu } from "./MainMenu";
 import { BuildingIcon } from "./map-icons";
-import { level } from "./model";
 import { navigation } from "./navigation";
 import { usePresence } from "./network";
 import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "./product";
-import { RadioDesk } from "./RadioDesk";
-import { ReconnectSummary } from "./ReconnectSummary";
+import { EventLog } from "./EventLog";
+import "./ControlRoom.css";
 const BuildingPanel = lazy(() =>
   import("./Resources").then((m) => ({ default: m.BuildingPanel })),
 );
@@ -37,15 +35,8 @@ import "./Settings.css";
 import { SituationDesk } from "./SituationDesk";
 import { AudioSession } from "./Sound";
 import { garageIndex, StationGarage } from "./StationGarage";
-import { download } from "./storage";
 import { emit, retryStorage, useGame, setPlaying } from "./store";
-import {
-  TutorialCoach,
-  TutorialEvents,
-  TutorialHome,
-  tutorialInteraction,
-} from "./Tutorial";
-import { ActionButton, Modal } from "./ui";
+import { Modal } from "./ui";
 import { shortcutFor } from "./workspace";
 import "./Workspace.css";
 const Progression = lazy(() =>
@@ -76,7 +67,6 @@ export function App() {
   return (
     <>
       <AudioSession />
-      <TutorialEvents />
       <div className="desktop-required" role="status">
         <h1>Leitstellen-Verbund für PC</h1>
         <p>
@@ -100,20 +90,6 @@ export function App() {
 function GameApp() {
   const { save: s, loading, readonly, error, notice, user } = useGame();
   const presence = usePresence();
-  const priorProgress = useRef<{ generation: string; level: number } | null>(
-    null,
-  );
-  useEffect(() => {
-    if (!s || readonly) return;
-    const current = level(s),
-      previous = priorProgress.current;
-    if (previous?.generation === s.generation && current > previous.level)
-      emit({
-        notice: `Stufe ${previous.level} → ${current} erreicht. Neue Freischaltungen unter Fortschritt.`,
-      });
-    priorProgress.current = { generation: s.generation, level: current };
-  }, [s, readonly]);
-
   const [screen, setScreen] = useState("start"),
     [modal, setModalRaw] = useState(""),
     [selected, setSelected] = useState("");
@@ -123,7 +99,7 @@ function GameApp() {
   );
   const preferences = useDevicePreferences();
   const layout = preferences.workspace;
-  const [listOpen, setListOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
   const [settingsTab, setSettingsTab] = useState<
     "audio" | "display" | "controls" | "help"
   >("audio");
@@ -192,13 +168,6 @@ function GameApp() {
     return () => window.removeEventListener("keydown", handler);
   }, [s, screen, selected, layout.keys, modal]);
   useEffect(() => {
-    if (modal === "archive") tutorialInteraction("budget");
-    if (modal === "building") tutorialInteraction("staff");
-    if (modal === "fleet") tutorialInteraction("withdraw");
-    if (modal === "friends") tutorialInteraction("cooperation");
-    if (modal === "help") tutorialInteraction("finish");
-  }, [modal]);
-  useEffect(() => {
     setSelected("");
     setModalRaw("");
   }, [s?.generation]);
@@ -245,55 +214,12 @@ function GameApp() {
           "--marker-scale": preferences.markerSize / 100,
         } as CSSProperties
       }
-      data-sidebar={layout.side}
+      data-sidebar="left"
       data-compact={layout.compact}
       data-queue-bottom={layout.queueBottom}
       data-stations-top={layout.stationsTop}
       className={`app command-hud ${screen === "game" ? "in-game" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
     >
-      <ReconnectSummary />
-      {error && (
-        <div className="global-error" role="alert">
-          <strong>{error}</strong>
-          <ActionButton action={retryStorage}>
-            Server erneut verbinden
-          </ActionButton>
-          <button onClick={() => setModal("backups")}>Wiederherstellung</button>
-          <button
-            onClick={() =>
-              download(
-                "leitstellen-diagnose.json",
-                JSON.stringify(
-                  {
-                    app: "leitstellen-verbund",
-                    version: 1,
-                    storageError: !!error,
-                    readonly,
-                    buildings: s?.buildings.length,
-                    vehicles: s?.vehicles.length,
-                  },
-                  null,
-                  2,
-                ),
-              )
-            }
-          >
-            Bereinigte Diagnose
-          </button>
-          <button onClick={() => emit({ error: "" })}>Schließen</button>
-        </div>
-      )}
-      {readonly && (
-        <div className="banner">
-          Serververbindung unterbrochen. Aktionen sind gesperrt; deine
-          Leitstelle wird auf dem Server weiter simuliert.
-          {!error && (
-            <ActionButton action={retryStorage}>
-              Server erneut verbinden
-            </ActionButton>
-          )}
-        </div>
-      )}
       {screen === "start" ? (
         <MainMenu
           save={s}
@@ -367,27 +293,8 @@ function GameApp() {
           }
         />
       )}
-      {screen === "game" && (
-        <TutorialCoach
-          onOverview={() => setModal("tutorial")}
-          onOpen={(panel) => {
-            if (!panel) {
-              document
-                .querySelector<HTMLButtonElement>('[aria-label="Kartensuche"]')
-                ?.click();
-              return;
-            }
-            if (panel === "building") {
-              const home = s.buildings.find((b) => b.type === "fire");
-              if (home) open(home.id);
-              else setModal("stations");
-            } else if (panel === "mission") {
-              const mission = s.missions[0];
-              if (mission) open(mission.id);
-              else setModal("archive");
-            } else setModal(panel);
-          }}
-        />
+      {screen === "start" && readonly && (
+        <EventLog open={open} panel={setModal} />
       )}
       {modal && !(screen === "game" && modal === "mission") && (
         <Modal
@@ -396,14 +303,13 @@ function GameApp() {
               {
                 catalog: "Einsatzkatalog",
                 exit: "Spiel verlassen",
-                news: "Neuigkeiten",
+                news: "Changelogs",
                 credits: "Mitwirkende",
                 account: "Konto & Sicherheit",
-                tutorial: "Interaktives Tutorial",
                 privacy: "Datenschutz im Spiel",
                 support: "Support",
                 language: "Sprache",
-                players: "Spieler dieser Serverwelt",
+                players: "Leaderboard",
                 facilities: "Standorte kaufen",
                 stations: "Wachen verwalten",
                 building: "Wachendetails",
@@ -411,7 +317,7 @@ function GameApp() {
                 mission: "Einsatzdisposition",
                 friends: "Leitstellenverbund und Disponenten",
                 aaos: "Alarm- und Ausrückeordnung",
-                radio: "Funkarbeitsplatz",
+                radio: "Funk und Ereignisse",
                 calls: "Notrufarbeitsplatz",
                 situation: "Gemeinsame Einsatzlagen",
                 civil: "Katastrophenbereitschaft und KatS-Wachen",
@@ -462,9 +368,6 @@ function GameApp() {
                   Einsatzkatalog
                 </button>
                 <div className="action-grid">
-                  <button onClick={() => setModal("tutorial")}>
-                    Interaktives Tutorial
-                  </button>
                   <button onClick={() => setModal("aaos")}>
                     AAO verwalten
                   </button>
@@ -483,15 +386,6 @@ function GameApp() {
               <Settings onOpen={setModal} initialTab={settingsTab} />
             )}
             {modal === "account" && <Account />}
-            {modal === "tutorial" && (
-              <TutorialHome
-                onEnter={() => {
-                  setModalRaw("");
-                  setSelected("");
-                  setScreen("game");
-                }}
-              />
-            )}
             {s && (
               <>
                 {modal === "calls" && <CallDesk s={s} />}
@@ -506,11 +400,7 @@ function GameApp() {
                   <SituationDesk s={s} onOpen={open} onPanel={setModal} />
                 )}
                 {modal === "radio" && (
-                  <RadioDesk
-                    s={s}
-                    onOpen={open}
-                    onArchive={() => setModal("archive")}
-                  />
+                  <EventLog open={open} panel={setModal} expanded />
                 )}
                 {modal === "facilities" && (
                   <FacilityBrowser

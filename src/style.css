@@ -462,29 +462,6 @@ progress::-moz-progress-bar {
   color: #e99577;
   background: #4a302c;
 }
-.tutorial {
-  position: fixed;
-  right: 24px;
-  bottom: 230px;
-  width: 285px;
-  padding: 18px;
-  background: #162531f5;
-  border: 1px solid #56716e;
-  border-top: 3px solid #7ec7ae;
-  border-radius: 7px;
-  box-shadow: 0 10px 35px #0006;
-}
-.tutorial p {
-  font-size: 13px;
-  margin: 10px 0;
-}
-.tutorial button {
-  padding: 7px 0;
-  border: 0;
-  background: none;
-  color: #91dbc0;
-  font-size: 12px;
-}
 .scrim {
   position: fixed;
   inset: 0;
@@ -788,16 +765,6 @@ li {
   border-color: #c2cfd9;
   color: #203241;
 }
-.light .shop-card,
-.light .station-card,
-.light .person,
-.light .vehicle-shop article,
-.light .friend,
-.light .tutorial {
-  background: #e2eaf0;
-  border-color: #aebfcb;
-  color: #213442;
-}
 .light button {
   background: #dce6ed;
   color: #213442;
@@ -869,9 +836,6 @@ li {
   .mission-card {
     padding: 26px 20px;
   }
-  .tutorial {
-    bottom: 250px;
-  }
 }
 @media (max-width: 1100px) {
   .topbar {
@@ -892,10 +856,6 @@ li {
   }
   .map-toolbar .muted {
     display: none;
-  }
-  .tutorial {
-    width: 240px;
-    right: 15px;
   }
   .map-legend {
     gap: 8px;
@@ -937,9 +897,6 @@ li {
 .friends-panel li {
   font-size: 16px;
 }
-.tutorial p {
-  font-size: 14px;
-}
 
 .map-wrap {
   flex: 1 1 0;
@@ -954,8 +911,4 @@ li {
 .mission-card p,
 .mission-meta b {
   font-size: 12px;
-}
-.tutorial {
-  max-height: 220px;
-  overflow: auto;
 }

@@ -22,7 +22,6 @@ export interface DevicePreferences {
   follow: boolean;
   zoomSensitivity: number;
   reconnectSummary: boolean;
-  tutorialHints: boolean;
 }
 export const defaultDevice: DevicePreferences = {
   version: 2,
@@ -33,13 +32,12 @@ export const defaultDevice: DevicePreferences = {
   markerSize: 100,
   labels: true,
   routes: true,
-  pois: true,
-  players: true,
+  pois: false,
+  players: false,
   friends: true,
   follow: false,
   zoomSensitivity: 100,
   reconnectSummary: true,
-  tutorialHints: true,
 };
 export function parseDevice(
   raw: string | null,
@@ -61,12 +59,9 @@ export function parseDevice(
     "reduced",
     "labels",
     "routes",
-    "pois",
-    "players",
     "friends",
     "follow",
     "reconnectSummary",
-    "tutorialHints",
   ] as const)
     if (typeof value[key] === "boolean") next[key] = value[key];
   for (const key of ["scale", "markerSize", "zoomSensitivity"] as const) {

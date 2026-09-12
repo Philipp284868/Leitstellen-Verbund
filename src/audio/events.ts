@@ -59,7 +59,6 @@ export class AudioEvents {
                 ? "priority"
                 : "radioOpen",
           radio: entry.channel,
-          text: `${entry.sender}. ${entry.text}`,
           priority: entry.priority,
         });
     }

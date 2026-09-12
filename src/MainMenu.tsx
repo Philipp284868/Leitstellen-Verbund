@@ -1,14 +1,11 @@
 import {
-  BookOpen,
   Building2,
   ChevronRight,
   Clock,
-  Globe,
   LifeBuoy,
   Newspaper,
   Play,
   Power,
-  Radio,
   Settings,
   Shield,
   Siren,
@@ -19,8 +16,6 @@ import {
 import { version } from "../package.json";
 import { BrandMark } from "./BrandMark";
 import "./MainMenu.css";
-import { useProjectNews } from "./ProjectNews";
-import { SoundButton } from "./Sound";
 import { fleetReadiness } from "./fleet-view";
 import { GermanyScene } from "./germany/GermanyScene";
 import { modeName } from "./mode";
@@ -40,10 +35,9 @@ export function MainMenu({
   onPlay: () => void;
   onOpen: (panel: string) => void;
 }) {
-  const { mode, tutorial } = useGame();
+  const { mode } = useGame();
   const available = fleetReadiness(s);
   const xp = progress(s.xp);
-  const news = useProjectNews()[0];
   const actions = [
     {
       name: "Spielen",
@@ -53,20 +47,14 @@ export function MainMenu({
       primary: true,
     },
     {
-      name: "Leitstellen",
-      text: "Disponenten, Einladungen und Nachbarleitstellen",
+      name: "Leaderboard",
+      text: "Rangliste und echte Spielstatistiken",
       icon: Users,
-      action: () => onOpen("friends"),
+      action: () => onOpen("players"),
     },
     {
-      name: "Hilfe / Wiki",
-      text: "Bedienung, Einsatzabläufe und Serverbetrieb",
-      icon: BookOpen,
-      action: () => onOpen("help"),
-    },
-    {
-      name: "Neuigkeiten",
-      text: "Freigegebene Änderungen und Community",
+      name: "Changelogs",
+      text: "Versionen, Verbesserungen und Fehlerkorrekturen",
       icon: Newspaper,
       action: () => onOpen("news"),
     },
@@ -75,6 +63,12 @@ export function MainMenu({
       text: "Audio, Darstellung, Steuerung & Konto",
       icon: Settings,
       action: () => onOpen("settings"),
+    },
+    {
+      name: "Support",
+      text: "Bedienung, Einsatzabläufe und Serverbetrieb",
+      icon: LifeBuoy,
+      action: () => onOpen("support"),
     },
     {
       name: "Abmelden",
@@ -97,17 +91,13 @@ export function MainMenu({
           </p>
         </div>
       </header>
-      <p className="menu-claim">
-        SCHNELLER REAGIEREN.
-        <br />
-        SICHERER LEBEN.
-      </p>
       <nav className="menu-actions" aria-label="Hauptmenü">
         {actions.map(({ name, text, icon: Icon, action, primary }) => (
           <button
             className={primary ? "menu-action primary" : "menu-action"}
             key={name}
             aria-label={name}
+            disabled={primary && readonly}
             onClick={action}
           >
             <Icon />
@@ -120,17 +110,6 @@ export function MainMenu({
         ))}
       </nav>
       <aside className="menu-intel" aria-label="Deine Leitstelle im Überblick">
-        <button
-          className="menu-tutorial-link"
-          onClick={() => onOpen("tutorial")}
-        >
-          <BookOpen size={16} />{" "}
-          {tutorial?.progress.state === "complete"
-            ? "Tutorial wiederholen / üben"
-            : tutorial?.progress.state === "new"
-              ? "Neu hier? Interaktives Tutorial"
-              : "Tutorial fortsetzen"}
-        </button>
         <button
           className="menu-panel menu-profile"
           onClick={() => onOpen("progress")}
@@ -210,72 +189,21 @@ export function MainMenu({
             })}
           </dl>
         </section>
-        <section className="menu-panel menu-news">
-          <h2>
-            Neuigkeiten{" "}
-            <button onClick={() => onOpen("news")}>Alle anzeigen</button>
-          </h2>
-          <div className="news-visual">
-            <Radio />
-            <span>
-              DEINE REGION.
-              <br />
-              DEINE ENTSCHEIDUNGEN.
-            </span>
-          </div>
-          <button className="news-copy" onClick={() => onOpen("news")}>
-            <strong>{news?.title ?? "Projektinformationen"}</strong>
-            <p>
-              {news?.summary ?? "Veröffentlichte Meldungen auf GitHub ansehen."}
-            </p>
-            <span className="news-dots" aria-hidden="true">
-              ●
-            </span>
-          </button>
+        <section className="menu-panel discord-card">
+          <span className="eyebrow">COMMUNITY</span>
+          <h2>Gaminglive – Discord</h2>
+          <p>Gemeinsam disponieren. Fragen stellen. Erfahrungen teilen.</p>
+          <a
+            className="discord-button"
+            href="https://discord.gg/RgtUHaWpcQ"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Discord beitreten ↗
+          </a>
         </section>
       </aside>
-      <div className="menu-lower">
-        <p>
-          MENSCHEN · TECHNOLOGIE · SICHERHEIT
-          <br />
-          FÜR EINE STARKE REGION
-        </p>
-        <div className="menu-worlds" aria-label="Spielmodus">
-          <span>PC · Multiplayer · Maus & Tastatur</span>
-        </div>
-        <span
-          className={`menu-connection ${readonly ? "is-offline" : ""}`}
-          role="status"
-        >
-          <i />
-          {readonly
-            ? "Verbindung unterbrochen · letzter bestätigter Stand"
-            : "Mit Server verbunden"}
-        </span>
-      </div>
-      <footer className="menu-footer">
-        <span>Version {version}</span>
-        <span className="footer-project">
-          Eine Echtzeit-Simulation · Leitstellen-Verbund
-        </span>
-        <nav>
-          <SoundButton />
-          {[
-            ["credits", BookOpen, "Mitwirkende"],
-            ["privacy", Shield, "Datenschutz"],
-            ["support", LifeBuoy, "Support"],
-            ["language", Globe, "Deutsch"],
-          ].map(([id, Icon, text]) => {
-            const Symbol = Icon as typeof Newspaper;
-            return (
-              <button key={String(id)} onClick={() => onOpen(String(id))}>
-                <Symbol />
-                {String(text)}
-              </button>
-            );
-          })}
-        </nav>
-      </footer>
+      <span className="menu-version">Version {version}</span>
     </main>
   );
 }

@@ -10,7 +10,6 @@ import {
 import { AudioOwnership } from "./ownership";
 import { smooth } from "./mixer";
 import { StreamedSignal } from "./stream";
-import { speakLocal } from "./speech";
 import {
   customSounds,
   storeSound,
@@ -38,7 +37,6 @@ type PendingCue = {
   radio: string;
   preview: boolean;
   at: number;
-  text?: string;
   priority: number;
   interrupted: boolean;
   sequence: number;
@@ -51,7 +49,6 @@ type Voice = PendingCue & {
   gain: GainNode;
   stop: () => void;
   timer?: ReturnType<typeof setTimeout>;
-  speech?: ReturnType<typeof speakLocal>;
 };
 const priority = (cue: Cue) =>
   cue === "emergency"
@@ -128,7 +125,6 @@ export class AudioController {
     filesBusy: false,
     error: "",
     interrupted: [] as string[],
-    speechAvailable: false,
   };
   subscribe = (f: () => void) => {
     this.listeners.add(f);
@@ -331,12 +327,6 @@ export class AudioController {
             : p.channels[voice.channel] / 100,
           c?.currentTime ?? 0,
         );
-      voice.speech?.volume(
-        ((((groupLevel(p, voice.group, this.hidden()) * p.masterVolume) / 100) *
-          p.channels[voice.channel]) /
-          100) *
-          0.7,
-      );
     }
     if (!c) {
       if (this.snapshot.status !== "unavailable")
@@ -418,7 +408,6 @@ export class AudioController {
       id?: string;
       radio?: string;
       preview?: boolean;
-      text?: string;
       priority?: number;
     } = {},
   ) {
@@ -454,7 +443,6 @@ export class AudioController {
       radio: options.radio ?? "dispatch",
       preview: options.preview ?? false,
       at: now,
-      text: options.text,
       priority: options.priority ?? priority(cue),
       interrupted: false,
       sequence: ++this.counter,
@@ -476,7 +464,6 @@ export class AudioController {
           radio: active.radio,
           preview: active.preview,
           at: active.at,
-          text: active.text,
           priority: active.priority,
           interrupted: true,
           sequence: active.sequence,
@@ -549,24 +536,6 @@ export class AudioController {
     const end = () => this.finishVoice(voice.id);
     const signalEnded = () => {
       if (this.voices.get(voice.id) !== voice || !this.wanted()) return;
-      if (voice.text && group === "radio") {
-        const current = this.snapshot.preferences;
-        voice.speech = speakLocal(
-          voice.text,
-          ((((groupLevel(current, group, this.hidden()) *
-            current.masterVolume) /
-            100) *
-            current.channels[channel]) /
-            100) *
-            0.7,
-          end,
-        );
-        this.publish({ speechAvailable: !!voice.speech });
-        if (voice.speech) {
-          voice.stop = () => voice.speech?.stop();
-          return;
-        }
-      }
       end();
     };
     const original = () => {
@@ -667,7 +636,7 @@ export class AudioController {
       (next = queue.shift()) &&
       (this.context?.currentTime ?? 0) - next.at > 180
     ) {
-      /* Never replay stale speech backlog. */
+      /* Never replay stale sound backlog. */
     }
     if (!queue.length) this.queue.delete("dispatch");
     if (next) this.start(next);

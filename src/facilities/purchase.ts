@@ -135,7 +135,6 @@ export function purchaseFacility(s: Save, id: string) {
       subtype: facility.subtype,
     },
   });
-  s.tutorial = Math.max(1, s.tutorial);
   const building = s.buildings.at(-1)!;
   if (facility.subtype === "BF" && building.organization)
     building.organization.kind = "bf";

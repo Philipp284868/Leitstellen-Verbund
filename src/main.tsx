@@ -8,6 +8,7 @@ import "./style.css";
 import "./HudTheme.css";
 import "./MapTheme.css";
 import "./Hud.css";
+import "./ControlRoom.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {

@@ -121,54 +121,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("eine wiederholte Spielaktion behält Übungskennung, Spielkontext und Aktions-ID auch nach Stop", async () => {
-  await connect(packet(1, "training-one", "account-a", "world-training", 10));
-  const first = deferred<Response>();
-  fetcher.mockImplementationOnce(() => first.promise);
-  const action = store.command({
-    type: "template",
-    name: "Übungsvorlage",
-    types: ["tsf"],
-  });
-  expect(request(0).headers.get("X-Training-Session")).toBe("training-one");
-  expect(request(0).headers.get("X-Play-Context")).toBe("1");
-  fetcher.mockResolvedValueOnce(
-    response(packet(2, null, "account-a", "world-live", 3)),
-  );
-  await store.trainingControl({ op: "stop" });
-  fetcher.mockResolvedValueOnce(
-    response({ error: "Alter Spielkontext abgelehnt." }, 409),
-  );
-  first.reject(new TypeError("network interrupted"));
-  await expect(action).rejects.toThrow("Alter Spielkontext");
-  expect(request(2).headers.get("X-Training-Session")).toBe("training-one");
-  expect(request(2).headers.get("X-Play-Context")).toBe("1");
-  expect(request(2).body).toEqual(request(0).body);
-  expect(store.useGame()).toMatchObject({
-    playContext: 2,
-    training: null,
-    save: { generation: "world-live" },
-  });
-});
-it("auch Trainings-Reset behält seinen ursprünglichen Kontext beim Retry nach zwischenzeitigem Stop", async () => {
-  await connect(packet(5, "training-five", "account-a", "world-training", 4));
-  const first = deferred<Response>();
-  fetcher.mockImplementationOnce(() => first.promise);
-  const reset = store.trainingControl({ op: "start", reset: true });
-  fetcher.mockResolvedValueOnce(
-    response(packet(6, null, "account-a", "world-live", 7)),
-  );
-  await store.trainingControl({ op: "stop" });
-  fetcher.mockResolvedValueOnce(
-    response({ error: "Übungssitzung veraltet." }, 409),
-  );
-  first.reject(new TypeError("timeout"));
-  await expect(reset).rejects.toThrow("veraltet");
-  expect(request(2).headers.get("X-Training-Session")).toBe("training-five");
-  expect(request(2).headers.get("X-Play-Context")).toBe("5");
-  expect(request(2).body).toEqual(request(0).body);
-  expect(store.useGame().playContext).toBe(6);
-});
 it("monotone Spielkontexte verhindern verspätetes /me und bewahren neuen CSRF-/Übungsstand", async () => {
   await connect(packet(1, "old-training", "account-a", "old-world", 10));
   const old = deferred<Response>();
@@ -185,38 +137,13 @@ it("monotone Spielkontexte verhindern verspätetes /me und bewahren neuen CSRF-/
   expect(store.useGame()).toMatchObject({
     playContext: 3,
     user: { id: "account-a" },
-    training: { session: "new-training" },
     save: { generation: "new-world", revision: 1 },
   });
   fetcher.mockResolvedValueOnce(response({}));
   await store.api("diagnostic", {});
   expect(request(2).headers.get("X-CSRF-Token")).toBe("csrf-account-a-3");
-  expect(request(2).headers.get("X-Training-Session")).toBe("new-training");
+  expect(request(2).headers.get("X-Training-Session")).toBeNull();
   expect(request(2).headers.get("X-Play-Context")).toBe("3");
-});
-it("verspätete /action- und Socket-Antworten dürfen nach einem Reset keine alte Spielgeneration zurückholen", async () => {
-  await connect(packet(2, "old", "account-a", "old-world", 5));
-  const old = deferred<Response>();
-  fetcher.mockImplementationOnce(() => old.promise);
-  const action = store.command({
-    type: "template",
-    name: "Alt",
-    types: ["tsf"],
-  });
-  fetcher.mockResolvedValueOnce(
-    response(packet(4, "new", "account-a", "new-world", 1)),
-  );
-  await store.trainingControl({ op: "start", reset: true });
-  old.resolve(response(packet(2, "old", "account-a", "old-world", 999)));
-  await action;
-  sockets.all[0].handlers.get("snapshot")?.(
-    packet(3, null, "account-a", "live-world", 9999),
-  );
-  expect(store.useGame()).toMatchObject({
-    playContext: 4,
-    training: { session: "new" },
-    save: { generation: "new-world", revision: 1 },
-  });
 });
 it("alte 401- und /me-Antworten nach Logout/Login löschen oder überschreiben keine neue Kontositzung", async () => {
   await connect();
@@ -248,20 +175,17 @@ it("alte 401- und /me-Antworten nach Logout/Login löschen oder überschreiben k
   });
   expect(sockets.all.at(-1)?.connected).toBe(true);
 });
-it.each(["action", "training"] as const)(
+it.each(["action"] as const)(
   "%s wird nach Kontowechsel nicht mit neuem Cookie/CSRF wiederholt",
-  async (kind) => {
+  async () => {
     await connect();
     const old = deferred<Response>();
     fetcher.mockImplementationOnce(() => old.promise);
-    const action =
-      kind === "action"
-        ? store.command({
-            type: "template",
-            name: "Alte private Auswahl",
-            types: ["tsf"],
-          })
-        : store.trainingControl({ op: "start" });
+    const action = store.command({
+      type: "template",
+      name: "Alte private Auswahl",
+      types: ["tsf"],
+    });
     const finished = action.catch(() => {});
     fetcher.mockResolvedValueOnce(response({}));
     await store.logout();

@@ -19,11 +19,7 @@ export function IncidentOperations({ s, m }: { s: Save; m: Mission }) {
   return (
     <section className="incident-operations" aria-label="Laufender Einsatz">
       {c.radio.some((r) => r.state === "open") && (
-        <section
-          className="radio-queue"
-          data-hud-section="radio"
-          data-tutorial="radio"
-        >
+        <section className="radio-queue" data-hud-section="radio">
           <h3>Sprechwünsche und Lagemeldungen</h3>
           {c.radio
             .filter((r) => r.state === "open")

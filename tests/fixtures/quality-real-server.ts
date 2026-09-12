@@ -147,18 +147,6 @@ process.on(
         userIndex >= ids.length
       )
         throw Error("Unknown fixture user");
-      if (message.type === "practice-advance") {
-        const row = app.db.sql
-          .prepare("SELECT updated_at FROM training_worlds WHERE user_id=?")
-          .get(ids[userIndex]);
-        if (!row) throw Error("Start practice through the UI first");
-        app.tutorial.step(
-          Number(row.updated_at) + (message.seconds ?? 1) * 1000,
-        );
-        app.db.sql
-          .prepare("UPDATE training_worlds SET updated_at=? WHERE user_id=?")
-          .run(Date.now(), ids[userIndex]);
-      }
       if (message.type === "restart") {
         await app.close();
         geography = await prepareGeography(config);
@@ -175,9 +163,7 @@ process.on(
         process.send?.({
           type: "reply",
           id: message.id,
-          save: message.type.startsWith("practice-")
-            ? app.tutorial.trainingSave(ids[userIndex])
-            : app.db.all().get(ids[0]),
+          save: app.db.all().get(ids[0]),
         });
     } catch (error) {
       process.send?.({ type: "reply", id: message.id, error: String(error) });

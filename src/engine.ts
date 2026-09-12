@@ -277,7 +277,6 @@ export function apply(s: Save, a: Action) {
         water: equipmentProfile(purchased).water,
         refilledAt: s.time,
       };
-      s.tutorial = Math.max(2, s.tutorial);
       break;
     }
     case "hire": {
@@ -336,7 +335,6 @@ export function apply(s: Save, a: Action) {
       money(s, -BALANCE.upgrade * b.level, "Wachenausbau");
       b.level++;
       b.ready = s.time + BALANCE.upgradeSeconds;
-      if (s.tutorial >= 5) s.tutorial = 6;
       break;
     }
     case "rename": {
@@ -433,7 +431,6 @@ export function apply(s: Save, a: Action) {
         v.assignment = simId(s);
         beginTrip(s, v, m.pos, "travel");
       }
-      s.tutorial = Math.max(4, s.tutorial);
       break;
     }
     case "recall": {
@@ -721,7 +718,6 @@ function tickState(
           measured.xp = Math.floor(missionXp(t) * quality);
           addXp(s, measured.xp);
           s.completed++;
-          s.tutorial = Math.max(5, s.tutorial);
         }
         for (const v of s.vehicles.filter((v) => v.mission === m.id))
           recall(s, v);

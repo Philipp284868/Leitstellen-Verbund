@@ -25,22 +25,6 @@ function storedWorlds(sql: DatabaseSync) {
       raw: JSON.parse(String(r.data)),
       training: undefined as Record<string, unknown> | undefined,
     }));
-  if (
-    sql
-      .prepare("SELECT name FROM sqlite_master WHERE name='training_worlds'")
-      .get()
-  )
-    for (const r of sql
-      .prepare("SELECT user_id,payload FROM training_worlds")
-      .all()) {
-      const training = JSON.parse(String(r.payload));
-      worlds.push({
-        owner: `practice:${r.user_id}`,
-        key: String(r.user_id),
-        raw: training.save,
-        training,
-      });
-    }
   return worlds;
 }
 export function facilityBinding(f: Facility) {

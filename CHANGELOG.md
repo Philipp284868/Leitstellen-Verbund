@@ -1,5 +1,12 @@
 # Änderungen
 
+## Textprotokoll und Leitstellenmenü · 12.09.2026
+
+- Einsatz-/Notrufreiter links, dauerhafter Textverlauf unten links und Sammelmenü unmittelbar am Leitstellennamen ersetzen die untere Navigationsleiste. Hauptmenü mit Spielen, Leaderboard-Zugang, Changelogs, Einstellungen, Support, Abmeldung und Gaminglive-Discord.
+- Persistente, private Ereignishistorie mit stabilen IDs, Nachladen, wichtigen offenen Meldungen und Verbindungsaktionen. Fachliche Funkentscheidungen bleiben am Einsatz. Keine Browser-Sprachausgabe mehr.
+- Tutorial, Übungsendpunkte und Übungswelten entfernt. SQLite 22/23 erhalten reale Spielstände und führen den Ereignisverlauf ein; alte Übungsanfragen werden abgewiesen.
+- Keine allgemeinen POI-, Spieler- oder Personal-Pins und kein schwebender Standortfilter mehr. Reale Einrichtungen und operative Einsatz-/Fahrzeuganzeigen bleiben.
+
 ## Spielanwesenheit und Finanzierung · 12.09.2026
 
 - Neue Notrufe erfordern eine tatsächlich aktive, authentifizierte Spielansicht. Hauptmenü, Abmeldung, verlorene/abgelaufene Verbindungen und Serverrestart halten die Erzeugung zurück. Mehrere Tabs und Leitstellendisponenten werden einzeln gezählt; laufende Einsätze bleiben bestehen.

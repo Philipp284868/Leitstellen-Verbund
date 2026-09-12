@@ -1,5 +1,4 @@
 import { ledgerBalance } from "./economy/ledger";
-import { tutorialInteraction } from "./Tutorial";
 import { useState, useEffect } from "react";
 import { api } from "./store";
 import { QualityReport } from "./QualityReport";
@@ -127,7 +126,6 @@ export function Replay({ m }: { m: Mission }) {
   );
 }
 export function ReportPanel({ m }: { m: Mission }) {
-  useEffect(() => tutorialInteraction("receipt"), [m.id]);
   const r = m.report ?? buildReport(m);
   const issues = (m.control?.events ?? []).filter((e) =>
     /DEFICIT|SHORTAGE|REINFORCEMENT|TURNOUT_FAILED|VEHICLE_BREAKDOWN|MAJOR_RESOURCE/.test(

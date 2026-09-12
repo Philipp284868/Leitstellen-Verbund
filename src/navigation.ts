@@ -52,7 +52,7 @@ export const navigation = [
   },
   {
     id: "players",
-    title: "Spieler dieser Serverwelt",
+    title: "Leaderboard",
     words: "Leitstellen Personen online Nachbarn",
   },
   {
@@ -64,7 +64,7 @@ export const navigation = [
   {
     id: "progress",
     title: "Fortschritt und Erfolge",
-    words: "XP Stufe Freischaltung Finanzierung",
+    words: "XP Stufe Freischaltung",
   },
   {
     id: "settings",
@@ -87,18 +87,13 @@ export const navigation = [
   {
     id: "settings",
     title: "Hinweise und Hilfe",
-    words: "Tutorial Rückmeldung Hinweise",
+    words: "Rückmeldung Hinweise Support",
     tab: "help",
   },
   {
     id: "account",
     title: "Konto und Sicherheit",
     words: "Passwort Benutzer Rolle Anmeldung Abmelden",
-  },
-  {
-    id: "tutorial",
-    title: "Interaktives Tutorial",
-    words: "Übung Lernen Anleitung Einstieg",
   },
   { id: "help", title: "Spielanleitung", words: "Hilfe Wiki Bedienung" },
   {
@@ -111,11 +106,9 @@ export const navigation = [
     title: "Spielstände und Sicherungen",
     words: "Export Import Wiederherstellung",
   },
-  { id: "news", title: "Neuigkeiten", words: "Updates Änderungen" },
-  { id: "credits", title: "Mitwirkende", words: "Lizenzen Urheber Credits" },
+  { id: "news", title: "Changelogs", words: "Updates Änderungen" },
   { id: "privacy", title: "Datenschutz im Spiel", words: "Daten Privatsphäre" },
   { id: "support", title: "Support", words: "Fehler Diagnose Hilfe GitHub" },
-  { id: "language", title: "Sprache", words: "Deutsch" },
   { id: "exit", title: "Spiel verlassen", words: "Abmelden Sitzung beenden" },
 ] as const;
 export function searchNavigation(query: string) {

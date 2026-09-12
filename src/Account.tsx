@@ -62,10 +62,7 @@ export function AuthScreen() {
           </article>
           <article>
             <b>Schritt für Schritt</b>
-            <p>
-              Ein optionales Tutorial führt durch den ersten Einsatz. Übungen
-              verwenden einen getrennten Übungsstand auf dem Server.
-            </p>
+            <p>Hilfe zur Bedienung findest du im Support. </p>
           </article>
         </div>
       </section>
@@ -193,7 +190,7 @@ export function Account() {
     lock = useRef(false);
   useDialogDirty(!!current || !!password || !!repeat, undefined, busy);
   return (
-    <section className="account-view" data-tutorial="account">
+    <section className="account-view">
       <p className="view-intro">
         Dein Zugang zu {location.host}. Sitzungen und Passwort werden auf dem
         Server verwaltet.

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { AccountLifecycle } from "./account-lifecycle";
 import { diagnostics } from "./diagnostics";
+import { eventsPage } from "./game-events";
 import {
   createServer,
   type IncomingMessage,
@@ -9,7 +10,6 @@ import {
 import { extname, resolve } from "node:path";
 import { Server, type Socket } from "socket.io";
 import { z } from "zod";
-import { mt } from "../src/catalog";
 import { inBounds } from "../src/germany/projection";
 import { germanyProvider } from "../src/germany/world";
 import { parseMode } from "../src/mode";
@@ -40,7 +40,6 @@ import { RouteSnapshotEncoder } from "./germany/snapshots";
 import { exportHistory, historyPage } from "./history";
 import { acquireLock } from "./lock";
 import { WorldPresence, readPublicPresence } from "./presence";
-import { TutorialService } from "./tutorial";
 import { deskOwner } from "./workspaces";
 export { prepareGeography } from "./germany/runtime";
 const loginSchema = z
@@ -98,12 +97,15 @@ export function startServer(
       ),
     );
   diagnostics.log("server", "DATABASE_READY");
-  const tutorial = new TutorialService(db);
   const viewForActor = (
     user: string,
     peers: Set<string>,
     mode: ReturnType<typeof parseMode>,
-  ) => tutorial.decorate(user, game.view(user, peers, mode));
+  ) => ({
+    ...game.view(user, peers, mode),
+    playContext: 0,
+    events: eventsPage(db.sql, deskOwner(db, user, mode)).events,
+  });
   const prior = db.sql
     .prepare("SELECT value FROM meta WHERE key=?")
     .get("lastTick");
@@ -339,37 +341,11 @@ export function startServer(
             ...viewForActor(session.user_id, online(), mode),
           });
         }
-        if (path === "/api/tutorial" && req.method === "POST") {
-          auth.limit(`tutorial:${session.user_id}`, 30, 1000);
-          const input = await body(req);
-          tutorial.assertContext(
-            session.user_id,
-            req.headers["x-play-context"],
-            req.headers["x-training-session"],
-          );
-          tutorial.control(
-            session.user_id,
-            input,
-            viewForActor(session.user_id, online(), mode).save,
-          );
-          return reply(res, 200, publish()(session.user_id, mode));
-        }
-        if (path === "/api/training" && req.method === "POST") {
-          auth.limit(`training:${session.user_id}`, 10, 1000);
-          if (failed)
-            throw Error(
-              "Übung ist wegen eines Serverfehlers momentan gesperrt.",
-            );
-          tutorial.trainingControl(
-            session.user_id,
-            await body(req),
-            game.view(session.user_id, online(), mode).save,
-            req.headers["x-play-context"],
-            req.headers["x-training-session"],
-          );
-          presenceDetailsDirty = true;
-          return reply(res, 200, publish()(session.user_id, mode));
-        }
+        if (["/api/tutorial", "/api/training"].includes(path))
+          return reply(res, 410, {
+            error:
+              "Tutorial und Trainingswelt wurden eingestellt. Bitte die Seite neu laden.",
+          });
         if (path === "/api/logout" && req.method === "POST") {
           db.sql.prepare("DELETE FROM sessions WHERE hash=?").run(session.hash);
           disconnectSession(session.hash);
@@ -444,30 +420,36 @@ export function startServer(
                 "Simulation pausiert wegen Speicherfehler. Serverbetreiber informieren.",
             });
           auth.limit(`action:${session.user_id}`, 60, 1000);
-          const input = await body(req),
-            activeTraining = tutorial.active(session.user_id);
-          const practiceSession = req.headers["x-training-session"];
-          tutorial.assertContext(
-            session.user_id,
-            req.headers["x-play-context"],
-            practiceSession,
-          );
-          if (activeTraining)
-            tutorial.command(
-              session.user_id,
-              input,
-              typeof practiceSession === "string" ? practiceSession : "",
-            );
-          else {
-            if (practiceSession)
-              throw Error(
-                "Übung bereits beendet. Diese Aktion wurde nicht auf den echten Spielstand angewendet.",
-              );
-            game.command(session.user_id, input, mode);
-          }
+          if (
+            req.headers["x-training-session"] ||
+            Number(req.headers["x-play-context"] || 0) !== 0
+          )
+            return reply(res, 409, {
+              error:
+                "Veralteter Übungskontext. Bitte neu laden; keine Aktion ausgeführt.",
+            });
+          game.command(session.user_id, await body(req), mode);
           presenceDetailsDirty = true;
           const publishedView = publish();
           return reply(res, 200, publishedView(session.user_id, mode));
+        }
+        if (path === "/api/events" && req.method === "GET") {
+          const before = requestUrl.searchParams.has("at")
+            ? z
+                .object({
+                  at: z.coerce.number().finite().nonnegative(),
+                  id: z.string().max(200),
+                })
+                .parse({
+                  at: requestUrl.searchParams.get("at"),
+                  id: requestUrl.searchParams.get("id"),
+                })
+            : undefined;
+          return reply(
+            res,
+            200,
+            eventsPage(db.sql, deskOwner(db, session.user_id, mode), before),
+          );
         }
         if (path === "/api/history" && req.method === "GET") {
           const params = requestUrl.searchParams;
@@ -484,30 +466,6 @@ export function startServer(
               org: params.get("org") ?? "Alle",
               major: params.get("major") === "true",
             });
-          const practice = tutorial.trainingSave(session.user_id);
-          if (practice) {
-            const needle = options.query.toLocaleLowerCase("de");
-            const missions = publicSave(practice).archive.filter(
-              (m) =>
-                (!needle ||
-                  `${m.id} ${mt(m.template).name}`
-                    .toLocaleLowerCase("de")
-                    .includes(needle)) &&
-                (options.org === "Alle" ||
-                  mt(m.template).org === options.org) &&
-                (!options.major || !!m.major),
-            );
-            const page = Math.min(
-              options.page,
-              Math.max(0, Math.ceil(missions.length / 25) - 1),
-            );
-            return reply(res, 200, {
-              total: missions.length,
-              page,
-              pageSize: 25,
-              missions: missions.slice(page * 25, (page + 1) * 25),
-            });
-          }
           return reply(
             res,
             200,
@@ -545,17 +503,14 @@ export function startServer(
         }
         if (path === "/api/export" && req.method === "GET") {
           const save = viewForActor(session.user_id, online(), mode).save;
-          if (!tutorial.active(session.user_id))
-            save.archive = exportHistory(
-              db.sql,
-              deskOwner(db, session.user_id, mode),
-              mode,
-              save.archive,
-            );
+          save.archive = exportHistory(
+            db.sql,
+            deskOwner(db, session.user_id, mode),
+            mode,
+            save.archive,
+          );
           return reply(res, 200, {
-            format: tutorial.active(session.user_id)
-              ? "leitstellen-verbund-practice"
-              : "leitstellen-verbund",
+            format: "leitstellen-verbund",
             version: 1,
             exportedAt: Date.now(),
             mode,
@@ -861,7 +816,6 @@ export function startServer(
     const now = Date.now();
     try {
       game.step(Math.max(0, (now - last) / 1000), now);
-      tutorial.step(now);
       last = now;
       publish();
     } catch {
@@ -892,7 +846,6 @@ export function startServer(
   }, 3600000);
   let closePromise: Promise<void> | undefined;
   return {
-    tutorial,
     db,
     auth,
     game,

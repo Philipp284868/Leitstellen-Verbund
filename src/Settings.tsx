@@ -1,4 +1,3 @@
-import { tutorialInteraction } from "./Tutorial";
 import { memo, useEffect, useRef, useState } from "react";
 import { AudioSettingsEditor } from "./audio/settings-editor";
 import { audio, useSound } from "./audio/controller";
@@ -108,7 +107,7 @@ export const Settings = memo(function Settings({
     </label>
   );
   return (
-    <div className="settings-view" data-tutorial="settings">
+    <div className="settings-view">
       <p className="view-intro">
         Dein Arbeitsplatz auf diesem Gerät. Änderungen werden als Vorschau
         angezeigt und mit „Übernehmen“ gespeichert. Spielregeln und
@@ -163,8 +162,6 @@ export const Settings = memo(function Settings({
             <h3>Kartenebenen</h3>
             {checkbox("labels", "Ortsbeschriftungen")}
             {checkbox("routes", "Fahrwege anzeigen")}
-            {checkbox("pois", "Geografische Einrichtungen")}
-            {checkbox("players", "Andere Leitstellen anzeigen")}
             {checkbox("friends", "Freigegebene Verbundobjekte")}
           </>
         )}
@@ -194,20 +191,8 @@ export const Settings = memo(function Settings({
         )}
         {tab === "help" && (
           <>
-            {checkbox(
-              "tutorialHints",
-              "Tutorialhinweise einblenden",
-              "Der gespeicherte Lernfortschritt bleibt beim Ausblenden erhalten.",
-            )}
-            {checkbox(
-              "reconnectSummary",
-              "Zusammenfassung nach Wiederverbindung",
-            )}
             <h3>Hilfe und Konto</h3>
             <div className="action-grid">
-              <button onClick={() => onOpen("tutorial")}>
-                Interaktives Tutorial
-              </button>
               <button onClick={() => onOpen("help")}>Spielanleitung</button>
               <button onClick={() => onOpen("account")}>
                 Konto & Sicherheit
@@ -306,7 +291,6 @@ export const Settings = memo(function Settings({
                 sound: JSON.stringify(sound),
               };
               setMessage("Alle Änderungen gespeichert.");
-              tutorialInteraction("settings");
             })()
               .catch((reason) => setError(String(reason)))
               .finally(() => {

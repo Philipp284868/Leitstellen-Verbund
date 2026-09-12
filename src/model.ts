@@ -271,7 +271,7 @@ export const saveSchema = z
     reliefActive: z.boolean().default(false),
     reliefReady: num.default(0),
     beds: z.array(z.object({ id, home: id, until: num }).strict()).max(500),
-    tutorial: integer.max(6),
+    tutorial: integer.max(6).optional(),
     contributions: z
       .array(
         z
@@ -346,13 +346,13 @@ export function fresh(player: string, station: string, now: number): Save {
     receipts: [],
     treated: 0,
     beds: [],
-    tutorial: 0,
     templates: [],
   });
 }
 export function validate(data: unknown): Save {
   assertSaveWorld(data);
   const s: Save = saveSchema.parse(data);
+  delete s.tutorial;
   if (!s.progression) {
     const previousXp = s.xp,
       previousLevel = Math.min(10, 1 + Math.floor(previousXp / 150));

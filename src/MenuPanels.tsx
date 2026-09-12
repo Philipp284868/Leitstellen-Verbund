@@ -193,13 +193,12 @@ function SupportPanel({ onOpen }: { onOpen: (panel: string) => void }) {
     <section className="menu-flow">
       <h3>Hilfe zur Leitstelle</h3>
       <p>
-        Für Bedienfragen stehen Spielanleitung und Tutorial bereit. Bei einem
+        Für Bedienfragen stehen Spielanleitung und Support bereit. Bei einem
         Fehler sind die letzte Aktion, die genaue Fehlermeldung und die
         folgenden technischen Angaben hilfreich.
       </p>
       <div className="inline">
         <button onClick={() => onOpen("help")}>Spielanleitung öffnen</button>
-        <button onClick={() => onOpen("tutorial")}>Tutorial öffnen</button>
       </div>
       <label>
         Technische Angaben

@@ -393,7 +393,7 @@ test("überlappende Gespräche halten Ducking bis zum letzten Ende, Regler und S
   expect((await stats(page)).contexts).toBe(1);
 });
 
-test("hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals eine Netzstimme", async ({
+test("Funk verwendet auch bei vorhandener Browser-Sprachfunktion ausschließlich Signaltöne", async ({
   page,
 }) => {
   await open(page);
@@ -429,12 +429,10 @@ test("hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals ei
     });
     window.AudioLab.audio.cue("radioOpen", {
       id: "stalled-speech",
-      text: "Erste Meldung",
     });
     window.AudioLab.audio.cue("radioOpen", {
       id: "next-speech",
       radio: "support",
-      text: "Zweite Meldung",
     });
   });
   const probe = () =>
@@ -449,20 +447,14 @@ test("hängende lokale Sprachausgabe gibt den Funk frei und verwendet niemals ei
           }
         ).speechProbe,
     );
-  await expect.poll(async () => (await probe()).spoken.length).toBe(1);
   await expect
-    .poll(async () => (await probe()).spoken.length, { timeout: 35000 })
-    .toBe(2);
-  expect((await probe()).spoken.every((u) => u.local)).toBe(true);
-  expect((await probe()).cancelled).toBeGreaterThanOrEqual(1);
-  expect(
-    (await stats(page)).voices.filter((v) => v.group === "radio"),
-  ).toHaveLength(1);
-  expect(
-    await page.evaluate(() => window.AudioLab.audio.state().error),
-  ).toContain("Zeitlimit");
-  await page.evaluate(() => window.AudioLab.audio.session(false));
-  expect((await probe()).cancelled).toBeGreaterThanOrEqual(2);
+    .poll(
+      async () =>
+        (await stats(page)).voices.filter((v) => v.group === "radio").length,
+    )
+    .toBe(0);
+  expect((await probe()).spoken).toEqual([]);
+  expect((await probe()).cancelled).toBe(0);
 });
 test("Hintergrundwahl und Mehrfachtab-Lease verhindern doppelte Ausgabe und geben Quellen beim Logout frei", async ({
   page,

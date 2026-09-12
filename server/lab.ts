@@ -126,7 +126,6 @@ export function createLab(seed: number): Lab {
   s.player.id = "developer";
   s.generation = `lab-${seed}`;
   s.seed = seed;
-  s.tutorial = 6;
   s.xp = xpForLevel(6);
   const facility = germanyProvider().facilities?.query({
     kind: "fire",

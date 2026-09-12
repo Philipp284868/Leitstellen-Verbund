@@ -44,7 +44,7 @@ export function parseWorkspace(raw: string | null): WorkspacePreferences {
       if (keys[key]) used.add(keys[key]);
     }
     return {
-      side: v.side === "right" ? "right" : "left",
+      side: "left",
       width: [280, 320, 380].includes(v.width) ? v.width : 320,
       compact: v.compact === true,
       queueBottom: v.queueBottom === true,

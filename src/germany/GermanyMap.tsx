@@ -30,34 +30,24 @@ import type { Save } from "../model";
 import { openNavigation, searchNavigation } from "../navigation";
 import type { Friend } from "../network";
 import { Operations } from "../Operations";
-import { groupPresence, type PublicPlayer } from "../presence";
-import { volunteerMarkers } from "../simulation/volunteers";
+import type { PublicPlayer } from "../presence";
 import { emit, useGame } from "../store";
 import { tripLabel } from "../travel";
-import { tutorialInteraction } from "../Tutorial";
 import { FacilityDetails } from "../facilities/FacilityBrowser";
 import { attachFacilityLayer } from "../facilities/map-layer";
-import {
-  facilityKinds,
-  facilityLabels,
-  type FacilityKind,
-  type FacilityCluster,
-} from "../facilities/types";
+import { facilityLabels, type FacilityCluster } from "../facilities/types";
 import { vehicleMotion, vehiclePosition } from "../vehicle-position";
 import type { Point } from "../world";
 import { groupGameMarkers, type MarkerData } from "./game-markers";
 import "./GermanyMap.css";
 import { mapInitializationMessage } from "./map-errors";
 import { attachTileLabels } from "./map-labels";
-import { clusterPresence } from "./map-presence";
 import {
   GERMANY_BOUNDS,
   germanyStyle,
   loadGeoManifest,
   readGermanyCamera,
 } from "./map-style";
-import { poiCategories, type MapPoi, type PoiCategory } from "./poi-data";
-import { attachPoiLayer } from "./poi-layer";
 import { WORLD_CENTER, inBounds, project, unproject } from "./projection";
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -86,8 +76,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     selected,
     onSelect,
     friends,
-    presence = [],
-    ownDeskId,
     readonly = false,
     onInspect,
     inspectionsHidden = false,
@@ -97,8 +85,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   modeRef.current = mode;
   const viewport = useRef<HTMLDivElement>(null),
     labelCanvas = useRef<HTMLCanvasElement>(null),
-    poiCanvas = useRef<HTMLCanvasElement>(null),
-    poiLayer = useRef<ReturnType<typeof attachPoiLayer> | null>(null),
     mapRef = useRef<GLMap | null>(null);
   const latest = useRef(props);
   latest.current = props;
@@ -118,14 +104,9 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   const labels = preferences.labels,
     routes = preferences.routes,
     showFriends = preferences.friends,
-    following = preferences.follow,
-    pois = preferences.pois,
-    showPlayers = preferences.players;
+    following = preferences.follow;
   const setPreference = useCallback(
-    (
-      key: "labels" | "routes" | "friends" | "follow" | "pois" | "players",
-      value: boolean,
-    ) => {
+    (key: "labels" | "routes" | "friends" | "follow", value: boolean) => {
       try {
         updateDevicePreference(key, value);
       } catch (error) {
@@ -141,72 +122,25 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     (value: boolean) => setPreference("follow", value),
     [setPreference],
   );
-  const setPois = (value: boolean) => setPreference("pois", value);
-  const setShowPlayers = (value: boolean) => setPreference("players", value);
-  const [poiFilter, setPoiFilter] = useState<ReadonlySet<PoiCategory>>(
-      () => new Set(Object.keys(poiCategories) as PoiCategory[]),
-    ),
-    [poiSelection, setPoiSelection] = useState<MapPoi | null>(null),
-    [poiGroup, setPoiGroup] = useState<MapPoi[]>([]),
-    [poiError, setPoiError] = useState(""),
-    [presenceSelection, setPresenceSelection] = useState<string[]>([]),
-    [objectGroup, setObjectGroup] = useState<MarkerData[]>([]);
-  const poiOptions = useRef({
-    enabled: pois,
-    categories: new Set(
-      [...poiFilter].filter(
-        (k) => !["fire", "ems", "police", "thw", "hospital"].includes(k),
-      ),
-    ),
-    buildings: s.buildings,
-    selected: poiSelection?.id,
-  });
-  poiOptions.current = {
-    enabled: pois,
-    categories: new Set(
-      [...poiFilter].filter(
-        (k) => !["fire", "ems", "police", "thw", "hospital"].includes(k),
-      ),
-    ),
-    buildings: s.buildings,
-    selected: poiSelection?.id,
-  };
-  const presenceDesks = useMemo(() => groupPresence(presence), [presence]);
-  const selectedPresence = presenceDesks.filter((d) =>
-    presenceSelection.includes(d.id),
-  );
+  const [objectGroup, setObjectGroup] = useState<MarkerData[]>([]);
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
       if (
         event.key !== "Escape" ||
-        (!poiSelection &&
-          !poiGroup.length &&
-          !selectedPresence.length &&
-          !objectGroup.length) ||
+        !objectGroup.length ||
         document.querySelector('[aria-modal="true"]')
       )
         return;
       event.preventDefault();
       event.stopPropagation();
-      setPoiSelection(null);
-      setPoiGroup([]);
-      setPresenceSelection([]);
       setObjectGroup([]);
       mapRef.current?.getCanvas().focus({ preventScroll: true });
     };
     window.addEventListener("keydown", close, true);
     return () => window.removeEventListener("keydown", close, true);
-  }, [
-    poiSelection,
-    poiGroup.length,
-    selectedPresence.length,
-    objectGroup.length,
-  ]);
+  }, [objectGroup.length]);
   useEffect(() => {
     if (inspectionsHidden) {
-      setPoiSelection(null);
-      setPoiGroup([]);
-      setPresenceSelection([]);
       setObjectGroup([]);
     }
   }, [inspectionsHidden]);
@@ -214,19 +148,17 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   labelsRef.current = labels;
   const [facilityId, setFacilityId] = useState(""),
     [facilityGroup, setFacilityGroup] = useState<FacilityCluster[]>([]),
-    [facilityKind, setFacilityKind] = useState<FacilityKind | "">(""),
-    [showFacilities, setShowFacilities] = useState(true),
     [facilityError, setFacilityError] = useState("");
   const facilityCanvas = useRef<HTMLCanvasElement>(null),
     facilityLayer = useRef<ReturnType<typeof attachFacilityLayer> | null>(null);
   const facilityOptions = useRef({
-    enabled: showFacilities,
-    kind: facilityKind,
+    enabled: true,
+    kind: "" as const,
     owned: new Set<string>(),
   });
   facilityOptions.current = {
-    enabled: showFacilities,
-    kind: facilityKind,
+    enabled: true,
+    kind: "" as const,
     owned: new Set(
       s.buildings.flatMap((b) => (b.facility ? [b.facility.id] : [])),
     ),
@@ -262,9 +194,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       duration: devicePreferences().reduced ? 0 : 300,
     });
 
-  useEffect(() => {
-    facilityLayer.current?.refresh();
-  }, [showFacilities, facilityKind]);
   useEffect(() => {
     facilityLayer.current?.repaint();
   }, [s.buildings]);
@@ -359,14 +288,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           canvas,
           () => labelsRef.current,
         );
-        if (poiCanvas.current)
-          poiLayer.current = attachPoiLayer(
-            gl,
-            poiCanvas.current,
-            manifest.dataset ?? "",
-            () => poiOptions.current,
-            setPoiError,
-          );
         if (facilityCanvas.current)
           facilityLayer.current = attachFacilityLayer(
             gl,
@@ -523,7 +444,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         const up = (event: PointerEvent) => {
           if (!gesture || gesture.id !== event.pointerId) return;
           const click = !gesture.moved && !gesture.marker;
-          if (gesture.moved) tutorialInteraction("pan");
           cancel();
           if (!click) return;
           {
@@ -535,8 +455,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               ) || [];
             if (facilities.length) {
               latest.current.onInspect?.();
-              setPoiSelection(null);
-              setPoiGroup([]);
               const cluster = facilities.find((f) => f.count > 1);
               if (cluster) {
                 gl.easeTo({
@@ -553,29 +471,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             }
             setFacilityId("");
             setFacilityGroup([]);
-            const bounds = container.getBoundingClientRect();
-            const hit = poiLayer.current?.hitTest(
-              event.clientX - bounds.left,
-              event.clientY - bounds.top,
-            );
-            requestDialogTransition(() => {
-              setPresenceSelection([]);
-              setObjectGroup([]);
-              setPoiGroup([]);
-              if (hit) {
-                latest.current.onInspect?.();
-                if (hit.count > 1)
-                  gl.easeTo({
-                    center: [hit.point.lon, hit.point.lat],
-                    zoom: Math.min(18, gl.getZoom() + 2),
-                    duration: devicePreferences().reduced ? 0 : 250,
-                  });
-                if (hit.members.length > 1) {
-                  setPoiSelection(null);
-                  setPoiGroup(hit.members);
-                } else setPoiSelection(hit.point);
-              } else setPoiSelection(null);
-            });
             return;
           }
         };
@@ -596,7 +491,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               event.clientY - rect.top,
             ]);
           setFollowing(false);
-          tutorialInteraction("zoom");
           gl.easeTo({
             zoom: Math.max(
               4,
@@ -637,11 +531,9 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             event.preventDefault();
             setFollowing(false);
             gl.panBy(directions[event.key], { duration: 0 });
-            tutorialInteraction("pan");
           }
           if (["+", "=", "-"].includes(event.key)) {
             event.preventDefault();
-            tutorialInteraction("zoom");
             gl.zoomTo(gl.getZoom() + (event.key === "-" ? -0.5 : 0.5), {
               duration: devicePreferences().reduced ? 0 : 100,
             });
@@ -688,8 +580,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           removeLabels();
           facilityLayer.current?.destroy();
           facilityLayer.current = null;
-          poiLayer.current?.destroy();
-          poiLayer.current = null;
           observer.disconnect();
           dialogs.disconnect();
           cancelAnimationFrame(pending);
@@ -718,15 +608,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     };
   }, [attempt, cameraKey, s.world, s.worldSeed]);
 
-  const poiBuildingKey = s.buildings
-    .map((b) => `${b.id}:${b.type}:${b.name}:${b.pos.x}:${b.pos.y}`)
-    .join("|");
-  useEffect(() => {
-    poiLayer.current?.refresh();
-  }, [pois, poiBuildingKey]);
-  useEffect(() => {
-    poiLayer.current?.repaint();
-  }, [poiFilter, poiSelection?.id]);
   useEffect(() => {
     const focus = (event: Event) => {
       const detail = (event as CustomEvent<{ point?: Point; zoom?: number }>)
@@ -915,17 +796,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           org: bt(vt(v.type).home).org,
         }),
       );
-    if (status === "Alle" || status === "Unterwegs")
-      volunteerMarkers(s, now).forEach((a) =>
-        add({
-          id: a.id,
-          name: a.name,
-          pos: a.pos,
-          kind: "volunteer",
-          org: "Feuerwehr",
-          target: a.home,
-        }),
-      );
     if (showFriends)
       friends.forEach((f) => {
         f.buildings.forEach((b) =>
@@ -999,20 +869,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     markers.flatMap((m) => m.members).map((m) => [m.id, m]),
   );
   const objectDetails = objectGroup.map((m) => visibleObjects.get(m.id) ?? m);
-  const presenceMarkers = useMemo(() => {
-    const map = mapRef.current;
-    if (!ready || !map || !showPlayers) return [];
-    const box = map.getContainer().getBoundingClientRect();
-    return clusterPresence(
-      presenceDesks,
-      (p) => {
-        const ll = unproject(p);
-        return map.project([ll.lon, ll.lat]);
-      },
-      box.width,
-      box.height,
-    );
-  }, [ready, cameraTick, presenceDesks, showPlayers]);
   return (
     <div
       className="map-wrap germany-map"
@@ -1034,7 +890,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           className="facility-map-canvas"
           aria-hidden="true"
         />
-        <canvas ref={poiCanvas} className="germany-pois" aria-hidden="true" />
         <div className="germany-markers">
           {markers.map((m) => (
             <button
@@ -1060,9 +915,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               onClick={() =>
                 requestDialogTransition(() => {
                   setFollowing(false);
-                  setPoiSelection(null);
-                  setPoiGroup([]);
-                  setPresenceSelection([]);
                   if (m.count) {
                     onInspect?.();
                     setObjectGroup(m.members);
@@ -1122,25 +974,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               {m.id === selected && <small>{m.name}</small>}
             </button>
           ))}
-          {presenceMarkers.map((m) => (
-            <button
-              key={`presence:${m.id}`}
-              className={`germany-marker presence ${m.desks.some((d) => d.id === ownDeskId) ? "own" : ""}`}
-              style={{ left: m.x, top: m.y }}
-              aria-label={`${m.count} Spieler · ${m.desks.map((d) => d.name).join(", ")}`}
-              data-testid="map-presence"
-              onClick={() => {
-                onInspect?.();
-                setObjectGroup([]);
-                setPresenceSelection(m.desks.map((d) => d.id));
-                setPoiSelection(null);
-                setPoiGroup([]);
-              }}
-            >
-              <MapIcon glyph="dispatch" />
-              <b className="presence-count">{m.count}</b>
-            </button>
-          ))}
         </div>
       </div>
       {(!ready || error) && (
@@ -1172,8 +1005,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
-                if (event.target.value.trim().length >= 2)
-                  tutorialInteraction("search");
               }}
             />
           </label>
@@ -1353,44 +1184,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             am Einsatz zeigt NOTFALL; bei kombinierten Lagen bleiben zusätzliche
             Kategorien erkennbar.
           </p>
-          <label>
-            <input
-              type="checkbox"
-              checked={pois}
-              onChange={(e) => {
-                setPois(e.target.checked);
-                setPoiSelection(null);
-                setPoiGroup([]);
-              }}
-            />{" "}
-            Geografische Einrichtungen
-          </label>
-          <div className="poi-category-grid">
-            {(Object.keys(poiCategories) as PoiCategory[])
-              .filter(
-                (key) =>
-                  !["fire", "ems", "police", "thw", "hospital"].includes(key),
-              )
-              .map((key) => (
-                <label key={key}>
-                  <input
-                    type="checkbox"
-                    checked={poiFilter.has(key)}
-                    onChange={(e) => {
-                      const next = new Set(poiFilter);
-                      if (e.target.checked) next.add(key);
-                      else next.delete(key);
-                      setPoiFilter(next);
-                      setPoiSelection(null);
-                      setPoiGroup([]);
-                    }}
-                  />
-                  <MapIcon glyph={poiCategories[key].glyph} size={20} />
-                  {poiCategories[key].label}
-                  <small>ab Zoom {poiCategories[key].minZoom}</small>
-                </label>
-              ))}
-          </div>
           <p>
             Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
             Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
@@ -1402,21 +1195,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             OpenStreetMap-Datenstand. Ihre Verfügbarkeit im Spiel folgt
             ausschließlich den Spielregeln.
           </p>
-          {poiError && <p role="status">{poiError}</p>}
         </details>
-        {!!presence.length && (
-          <label className="map-presence-toggle">
-            <input
-              type="checkbox"
-              checked={showPlayers}
-              onChange={(e) => {
-                setShowPlayers(e.target.checked);
-                setPresenceSelection([]);
-              }}
-            />{" "}
-            Spielerstandorte ({presence.length})
-          </label>
-        )}
         <div className="map-zoom" aria-label="Zoomsteuerung">
           <button
             aria-label="Vergrößern"
@@ -1494,202 +1273,31 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           </div>
         </aside>
       )}
-      {!inspectionsHidden && !!poiGroup.length && pois && (
-        <aside
-          className="map-place-detail map-poi-group"
-          aria-label="Geografische Einrichtungen am Kartenstandort"
-        >
+      {!inspectionsHidden && selectedVehicle && !objectDetails.length && (
+        <div className="map-vehicle-detail" aria-label="Ausgewähltes Fahrzeug">
           <button
             className="map-detail-close"
-            aria-label="Einrichtungsgruppe schließen"
-            onClick={() => setPoiGroup([])}
+            aria-label="Fahrzeugdetails schließen"
+            onClick={() => onInspect?.()}
           >
             <X size={18} />
           </button>
-          <h3>
-            {poiGroup.reduce((sum, point) => sum + point.count, 0)}{" "}
-            Karteneinträge in dieser Gruppe
-          </h3>
-          <p>Einrichtung auswählen, auch bei identischen Koordinaten.</p>
-          <div className="map-object-list">
-            {poiGroup.map((point) => (
-              <button
-                key={point.id}
-                onClick={() => {
-                  setPoiGroup([]);
-                  setPoiSelection(point);
-                  if (point.count > 1)
-                    center(
-                      project(point),
-                      Math.min(18, (mapRef.current?.getZoom() ?? 12) + 2),
-                    );
-                }}
-              >
-                <MapIcon
-                  glyph={poiCategories[point.category].glyph}
-                  size={30}
-                />
-                <span>
-                  <strong>{point.name}</strong>
-                  <small>
-                    {poiCategories[point.category].singular}
-                    {point.count > 1 ? ` · ${point.count} Karteneinträge` : ""}
-                  </small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </aside>
+          <strong>
+            <VehicleIcon type={selectedVehicle.type} />
+            {selectedVehicle.name}
+          </strong>
+          <span>{tripLabel(selectedVehicle, s.time)}</span>
+          <span>
+            {Math.round(vehicleMotion(selectedVehicle, s.time).kmh)} km/h
+            aktuell
+          </span>
+          <span>
+            {selectedVehicle.journey?.reason ||
+              "Fahrweg nach aktuellem Straßenmodell"}
+          </span>
+        </div>
       )}
-      {!inspectionsHidden && poiSelection && pois && (
-        <aside
-          className="map-place-detail"
-          aria-label="Geografische Einrichtung"
-        >
-          <button
-            className="map-detail-close"
-            aria-label="Einrichtungsdetails schließen"
-            onClick={() => setPoiSelection(null)}
-          >
-            <X size={18} />
-          </button>
-          <MapIcon
-            glyph={poiCategories[poiSelection.category].glyph}
-            size={32}
-          />
-          <h3>{poiSelection.name}</h3>
-          <p>
-            {poiCategories[poiSelection.category].singular} · geografischer
-            Karteneintrag
-          </p>
-          {poiSelection.count > 1 ? (
-            <p>
-              {poiSelection.count} Karteneinträge in dieser Gruppe. Vergrößern
-              zeigt die einzelnen Standorte.
-            </p>
-          ) : (
-            <p>
-              {poiSelection.lat.toFixed(5)}° N · {poiSelection.lon.toFixed(5)}°
-              E
-            </p>
-          )}
-          <p>
-            OpenStreetMap · lokaler{" "}
-            {poiSelection.source === "index" ? "Ortsindex" : "Vektorkartensatz"}
-            . Keine Aussage über reale Besetzung, Betten oder
-            Einsatzbereitschaft.
-          </p>
-          <button
-            onClick={() =>
-              center(
-                project(poiSelection),
-                Math.min(18, (mapRef.current?.getZoom() ?? 12) + 2),
-              )
-            }
-          >
-            Standort vergrößern
-          </button>
-        </aside>
-      )}
-      {!inspectionsHidden && !!selectedPresence.length && showPlayers && (
-        <aside
-          className="map-place-detail presence-detail"
-          aria-label="Spieler am Kartenstandort"
-        >
-          <button
-            className="map-detail-close"
-            aria-label="Spielerdetails schließen"
-            onClick={() => setPresenceSelection([])}
-          >
-            <X size={18} />
-          </button>
-          <MapIcon glyph="dispatch" size={32} />
-          <h3>Leitstellen an diesem Standort</h3>
-          {selectedPresence.map((d) => (
-            <section key={d.id}>
-              <strong>
-                {d.name}
-                {d.id === ownDeskId ? " · Meine Leitstelle" : ""}
-              </strong>
-              <p>{d.location?.label}</p>
-              <ul>
-                {d.players.map((p) => (
-                  <li key={p.id}>
-                    {p.name}
-                    <span>
-                      {p.status === "online" ? "Online" : "Verbindet erneut"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <button onClick={() => d.location && center(d.location, 16)}>
-                Auf Standort zentrieren
-              </button>
-            </section>
-          ))}
-          <p>
-            Gemeinsamer Spielstandort der Leitstelle · keine Standortfreigabe
-            deines Geräts.
-          </p>
-        </aside>
-      )}
-      {!inspectionsHidden &&
-        selectedVehicle &&
-        !objectDetails.length &&
-        !poiSelection &&
-        !poiGroup.length &&
-        !selectedPresence.length && (
-          <div
-            className="map-vehicle-detail"
-            aria-label="Ausgewähltes Fahrzeug"
-          >
-            <button
-              className="map-detail-close"
-              aria-label="Fahrzeugdetails schließen"
-              onClick={() => onInspect?.()}
-            >
-              <X size={18} />
-            </button>
-            <strong>
-              <VehicleIcon type={selectedVehicle.type} />
-              {selectedVehicle.name}
-            </strong>
-            <span>{tripLabel(selectedVehicle, s.time)}</span>
-            <span>
-              {Math.round(vehicleMotion(selectedVehicle, s.time).kmh)} km/h
-              aktuell
-            </span>
-            <span>
-              {selectedVehicle.journey?.reason ||
-                "Fahrweg nach aktuellem Straßenmodell"}
-            </span>
-          </div>
-        )}
-      <details className="facility-map-controls">
-        <summary>Standortfilter</summary>
-        <label>
-          <input
-            type="checkbox"
-            checked={showFacilities}
-            onChange={(e) => setShowFacilities(e.target.checked)}
-          />{" "}
-          Standorte
-        </label>
-        <select
-          aria-label="Standorte nach Organisation filtern"
-          value={facilityKind}
-          onChange={(e) => setFacilityKind(e.target.value as FacilityKind | "")}
-        >
-          <option value="">Alle Organisationen</option>
-          {facilityKinds.map((k) => (
-            <option key={k} value={k}>
-              {facilityLabels[k]}
-            </option>
-          ))}
-        </select>
-        <small>+ erwerbbar · × Datenprüfung</small>
-      </details>
-      {!inspectionsHidden && showFacilities && facilityId && (
+      {!inspectionsHidden && facilityId && (
         <div className="facility-map-panel">
           <FacilityDetails
             key={facilityId}
@@ -1704,7 +1312,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           />
         </div>
       )}
-      {!inspectionsHidden && showFacilities && !!facilityGroup.length && (
+      {!inspectionsHidden && !!facilityGroup.length && (
         <div className="facility-map-panel facility-details">
           <button className="close" onClick={() => setFacilityGroup([])}>
             ×
@@ -1724,7 +1332,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           ))}
         </div>
       )}
-      {facilityError && showFacilities && (
+      {facilityError && (
         <p className="facility-map-panel facility-details" role="status">
           {facilityError}
         </p>

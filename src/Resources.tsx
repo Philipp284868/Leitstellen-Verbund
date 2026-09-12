@@ -99,7 +99,7 @@ export function BuildingPanel({
   const location = unproject(b.pos);
   const selectedPurchase = vehicles.find((v) => v.id === purchase);
   return (
-    <section className="resource-panel" data-tutorial="building-details">
+    <section className="resource-panel">
       {form.error && (
         <p className="error" role="alert">
           {form.error}
@@ -154,7 +154,7 @@ export function BuildingPanel({
       </div>
       {tab === "overview" && (
         <>
-          <article className="purchase-review" data-tutorial="automatic-staff">
+          <article className="purchase-review">
             <h3>Automatische Wachbesetzung</h3>
             <p>{automatic.reason}</p>
             <p>
@@ -412,7 +412,6 @@ export function BuildingPanel({
                     Vergleichen
                   </button>
                   <button
-                    data-tutorial={`buy-${v.id}`}
                     disabled={
                       readonly ||
                       form.busy ||

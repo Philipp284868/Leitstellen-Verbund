@@ -255,5 +255,4 @@ export function alarm(
     m.control.stage = vehicles.some((v) => v.status === "travel")
       ? "enroute"
       : "alarming";
-  s.tutorial = Math.max(4, s.tutorial);
 }

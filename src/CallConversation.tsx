@@ -32,11 +32,7 @@ export function CallConversation({
   const own = call.actor === user?.id;
   const waiting = Math.max(0, call.nextAnswer - s.time);
   return (
-    <section
-      className="call-conversation"
-      aria-label="Notrufgespräch"
-      data-tutorial="call"
-    >
+    <section className="call-conversation" aria-label="Notrufgespräch">
       {form.error && (
         <p className="error" role="alert">
           {form.error}

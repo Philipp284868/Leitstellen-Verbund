@@ -20,9 +20,10 @@ import { HISTORY_SCHEMA, persistHistory } from "./history";
 import { applyLocationMigration } from "./location-migration";
 import { applyReadinessMigration } from "./readiness-migration";
 import { ensureWorldSituation } from "./world-situation";
+import { EVENTS_SCHEMA, persistGameEvents } from "./game-events";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 21;
+export const DATABASE_VERSION = 23;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -53,6 +54,7 @@ export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   }
 }
 export class Database {
+  private eventKnown = new Map<string, Map<string, string>>();
   sql: DatabaseSync;
   path: string;
   constructor(
@@ -437,6 +439,27 @@ export class Database {
             "play-presence-no-passive-funding-v21; balances and journals preserved",
           );
         });
+      if (version < 22)
+        this.transaction(() => {
+          this.sql.exec(
+            "DELETE FROM tutorial_progress; DELETE FROM training_worlds;",
+          );
+          for (const table of ["saves", "solo_saves"])
+            this.sql.exec(
+              `UPDATE ${table} SET data=json_remove(data,'$.tutorial')`,
+            );
+          this.sql.exec("PRAGMA user_version=22");
+          this.audit(
+            "server-migration",
+            "tutorial-retired-v22; isolated practice data removed, real property and rewards preserved",
+          );
+        });
+      if (version < 23)
+        this.transaction(() => {
+          this.sql.exec(EVENTS_SCHEMA);
+          this.sql.exec("PRAGMA user_version=23");
+          this.audit("server-migration", "persistent-operational-events-v23");
+        });
       this.sql
         .prepare(
           "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
@@ -455,6 +478,7 @@ export class Database {
       return result;
     } catch (e) {
       this.sql.exec("ROLLBACK");
+      this.eventKnown.clear();
       throw e;
     }
   }
@@ -487,6 +511,19 @@ export class Database {
         .get()
     )
       persistHistory(this.sql, checked, mode);
+    if (
+      mode === "multi" &&
+      this.sql
+        .prepare("SELECT name FROM sqlite_master WHERE name='game_events'")
+        .get()
+    ) {
+      let known = this.eventKnown.get(id);
+      if (!known) {
+        known = new Map();
+        this.eventKnown.set(id, known);
+      }
+      persistGameEvents(this.sql, checked, known);
+    }
     for (const v of checked.vehicles) delete v.availability;
     this.sql
       .prepare(

@@ -75,7 +75,7 @@ export function DispatchPanel({ s, m }: { s: Save; m: Mission }) {
           c.reportedTemplate &&
           (!m.location || m.location.state === "verified") &&
           m.phase !== "done" && (
-            <section data-hud-section="vehicles" data-tutorial="dispatch">
+            <section data-hud-section="vehicles">
               <h3>Kräfte alarmieren / nachfordern</h3>
               <p>
                 {c.briefed

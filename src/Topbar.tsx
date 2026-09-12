@@ -1,381 +1,239 @@
-import {
-  Building2,
-  ChevronDown,
-  Clock,
-  Layers,
-  Phone,
-  Radio,
-  Search,
-  Settings,
-  Shield,
-  Siren,
-  TriangleAlert,
-  Truck,
-  Users,
-  Wallet,
-  X,
-} from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { requestDialogTransition } from "./dialog-state";
+import { Menu, Radio, Clock, Wallet, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { Save } from "./model";
-import { useNetwork } from "./network";
-import { WORLD_NAME } from "./product";
 import { progress } from "./progression";
-import { weatherNames } from "./simulation/weather";
-import { situationNames, situationLevel } from "./simulation/world-situation";
 import { credits } from "./ui";
-import "./WorldSituation.css";
-import { PublicAlarmList, WorldSituationView } from "./WorldSituationView";
-
+import { useNetwork } from "./network";
+import { situationNames, situationLevel } from "./simulation/world-situation";
+import { WorldSituationView, PublicAlarmList } from "./WorldSituationView";
+import { requestDialogTransition } from "./dialog-state";
+const groups = [
+  [
+    "Disposition",
+    [
+      ["fleet", "Fuhrpark"],
+      ["facilities", "Standorte kaufen"],
+      ["stations", "Standorte verwalten"],
+      ["aaos", "AAO"],
+      ["fms", "FMS & Alarmierung"],
+    ],
+  ],
+  [
+    "Zusammenarbeit",
+    [
+      ["friends", "Kooperation & Disponenten"],
+      ["situation", "Gemeinsame Einsatzlagen"],
+      ["civil", "Katastrophenbereitschaft"],
+    ],
+  ],
+  [
+    "Auswertung",
+    [
+      ["archive", "Archiv & Statistik"],
+      ["progress", "Fortschritt"],
+      ["players", "Leaderboard"],
+      ["news", "Changelogs"],
+    ],
+  ],
+  [
+    "Arbeitsplatz",
+    [
+      ["search", "Suche"],
+      ["settings", "Einstellungen"],
+      ["account", "Konto & Sicherheit"],
+      ["backups", "Sicherungen"],
+      ["support", "Support"],
+    ],
+  ],
+] as const;
 export function Topbar({
   s,
-  listOpen,
-  layers,
-  callCount,
-  radioCount,
-  aidCount,
-  playerCount,
-  readonly,
   onMenu,
-  onMissions,
-  onCall,
-  onRadio,
-  onLayers,
-  onSearch,
   panel,
+  onSearch,
 }: {
   s: Save;
-  listOpen: boolean;
-  layers: boolean;
-  callCount: number;
-  radioCount: number;
-  aidCount: number;
-  playerCount: number;
-  readonly: boolean;
   onMenu: () => void;
-  onMissions: () => void;
-  onCall: () => void;
-  onRadio: () => void;
-  onLayers: () => void;
-  onSearch: () => void;
   panel: (id: string) => void;
+  onSearch: () => void;
 }) {
-  const [menu, setMenu] = useState("");
-  const { alarms } = useNetwork();
+  const [popup, setPopup] = useState("");
   const root = useRef<HTMLElement>(null);
-  const faults = s.vehicles.filter(
-    (v) => v.fault && v.fault.state !== "repaired",
-  ).length;
+  const { alarms } = useNetwork();
   const xp = progress(s.xp);
-  const date = new Date(s.time * 1000);
-  const action = (fn: () => void) =>
+  const act = (fn: () => void) =>
     requestDialogTransition(() => {
-      setMenu("");
+      setPopup("");
       fn();
     });
   useEffect(() => {
-    if (!menu) return;
-    const owner = root.current;
-    const popup = owner?.querySelector<HTMLElement>(".topbar-popup");
-    popup?.querySelector<HTMLElement>("button")?.focus();
-    const outside = (e: PointerEvent) => {
-      if (!owner?.contains(e.target as Node)) setMenu("");
+    if (!popup) return;
+    const anchor = document.activeElement as HTMLElement;
+    const el = root.current?.querySelector<HTMLElement>(".topbar-popup");
+    el?.querySelector<HTMLElement>("button")?.focus();
+    const close = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setPopup("");
     };
-    const keyboard = (e: KeyboardEvent) => {
+    const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopImmediatePropagation();
-        setMenu("");
-        owner?.querySelector<HTMLElement>(`[data-popup="${menu}"]`)?.focus();
+        setPopup("");
+        anchor?.focus();
       } else if (
         ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) &&
-        popup?.contains(e.target as Node)
+        el?.contains(e.target as Node)
       ) {
         e.preventDefault();
-        const buttons = [
-          ...popup.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
-        ];
-        const index = buttons.indexOf(
-          document.activeElement as HTMLButtonElement,
-        );
+        const buttons = [...el.querySelectorAll<HTMLButtonElement>("button")];
+        const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
         buttons[
           e.key === "Home"
             ? 0
             : e.key === "End"
               ? buttons.length - 1
-              : (index + (e.key === "ArrowDown" ? 1 : -1) + buttons.length) %
+              : (i + (e.key === "ArrowDown" ? 1 : -1) + buttons.length) %
                 buttons.length
         ]?.focus();
       }
     };
-    document.addEventListener("pointerdown", outside);
-    window.addEventListener("keydown", keyboard, true);
+    document.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", key, true);
     return () => {
-      document.removeEventListener("pointerdown", outside);
-      window.removeEventListener("keydown", keyboard, true);
+      document.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", key, true);
     };
-  }, [menu]);
-  const count = (n: number) =>
-    n > 0 ? (
-      <b className="topbar-count" title={String(n)}>
-        {n > 99 ? "99+" : n}
-      </b>
-    ) : null;
-  const popup = (
-    id: string,
-    label: string,
-    icon: ReactNode,
-    content: ReactNode,
-    badge = 0,
-  ) => (
-    <div className="topbar-group">
-      <button
-        data-popup={id}
-        aria-label={label}
-        title={label}
-        aria-expanded={menu === id}
-        aria-controls={`topbar-${id}`}
-        onClick={() => setMenu(menu === id ? "" : id)}
-      >
-        {icon}
-        <span>{label}</span>
-        {count(badge)}
-        <ChevronDown className="topbar-chevron" />
-      </button>
-      {menu === id && (
-        <section
-          id={`topbar-${id}`}
-          className="topbar-popup"
-          aria-label={label}
-          onBlur={(e) => {
-            if (
-              e.relatedTarget &&
-              !e.currentTarget.parentElement?.contains(e.relatedTarget)
-            )
-              setMenu("");
-          }}
-        >
-          {content}
-        </section>
-      )}
-    </div>
-  );
+  }, [popup]);
+  const toggle = (id: string) => setPopup(popup === id ? "" : id);
   return (
-    <header className="topbar" ref={root}>
-      <button
-        className="hud-identity"
-        aria-label="Hauptmenü"
-        title={`${s.player.station} · ${window.location.host}`}
-        onClick={() => action(onMenu)}
-      >
+    <header className="topbar control-topbar" ref={root}>
+      <div className="hud-identity">
         <Radio />
-        <span>
-          <strong>{s.player.station}</strong>
-          <small>
-            {WORLD_NAME} · {readonly ? "Verbindung fehlt" : "Verbunden"}
-          </small>
-        </span>
-      </button>
-      <nav className="topbar-navigation" aria-label="Spielbereiche">
+        <strong title={s.player.station}>{s.player.station}</strong>
+      </div>
+      <div className="control-menu-anchor">
         <button
-          aria-label={
-            listOpen ? "Einsatzliste einklappen" : "Einsatzliste ausklappen"
-          }
-          aria-expanded={listOpen}
-          onClick={() => action(onMissions)}
+          className="control-menu-button"
+          aria-label="Leitstellenmenü"
+          aria-expanded={popup === "navigation"}
+          aria-controls="control-menu"
+          onClick={() => toggle("navigation")}
         >
-          <Siren />
-          <span>Einsätze</span>
-          {count(s.missions.length)}
+          <Menu />
+          <span>Menü</span>
+          <ChevronDown size={14} />
         </button>
-        <button
-          className={callCount ? "needs-attention topbar-icon" : "topbar-icon"}
-          aria-label={`Notrufe (${callCount})`}
-          title="Notrufarbeitsplatz öffnen"
-          onClick={() => action(onCall)}
-        >
-          <Phone />
-          {count(callCount)}
-        </button>
-        <button
-          data-tutorial="fleet"
-          aria-label="Fuhrpark"
-          title="Fahrzeuge und Einsatzbereitschaft"
-          onClick={() => action(() => panel("fleet"))}
-        >
-          <Truck />
-          <span>Fahrzeuge</span>
-        </button>
-        <button
-          data-tutorial="stations"
-          aria-label="Standorte"
-          title="Reale Standorte kaufen und verwalten"
-          onClick={() => action(() => panel("stations"))}
-        >
-          <Building2 />
-          <span>Standorte</span>
-        </button>
-        {popup(
-          "radio",
-          "Funk",
-          <Radio />,
-          <>
-            <button onClick={() => action(onRadio)}>
-              Sprechwünsche {count(radioCount)}
+        {popup === "navigation" && (
+          <nav
+            id="control-menu"
+            className="topbar-popup control-menu"
+            aria-label="Leitstellenmenü"
+          >
+            <button className="return-menu" onClick={() => act(onMenu)}>
+              Zurück zum Hauptmenü
             </button>
-            <button onClick={() => action(() => panel("friends"))}>
-              Verbund & Leitstellenfunk {count(aidCount)}
-            </button>
-            <button onClick={() => action(() => panel("aaos"))}>
-              AAO verwalten
-            </button>
-            <button onClick={() => action(() => panel("fms"))}>
-              FMS & Alarmierungsprofile
-            </button>
-            <button onClick={() => action(() => panel("situation"))}>
-              Gemeinsame Einsatzlagen
-            </button>
-            <button onClick={() => action(() => panel("civil"))}>
-              Katastrophenbereitschaft & KatS-Wachen
-            </button>
-          </>,
-          radioCount + aidCount,
+            {groups.map(([title, items]) => (
+              <section key={title}>
+                <h3>{title}</h3>
+                {items.map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() =>
+                      act(() => (id === "search" ? onSearch() : panel(id)))
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </section>
+            ))}
+          </nav>
         )}
-        <button
-          aria-label="Karte"
-          title="Kartenwerkzeuge, Ebenen und Legende"
-          aria-expanded={layers}
-          onClick={() => action(onLayers)}
-        >
-          <Layers />
-          <span>Karte</span>
-        </button>
-        <button
-          aria-label="Spieler"
-          title="Spieler dieser Serverwelt"
-          onClick={() => action(() => panel("players"))}
-        >
-          <Users />
-          <span>Spieler</span>
-          {count(playerCount)}
-        </button>
-        <button
-          className="topbar-icon"
-          data-tutorial="search"
-          aria-label="Kartensuche"
-          title="Ort, Adresse, Objekt, Menü oder Einstellung suchen"
-          onClick={() => action(onSearch)}
-        >
-          <Search />
-        </button>
-      </nav>
-      <div className="topbar-status">
-        <div className="topbar-world-status">
-          {popup(
-            "world-situation",
-            `Lage: ${s.worldSituation ? `${situationNames[s.worldSituation.profile]} · ${situationLevel(s.worldSituation)}` : "wird geladen"}`,
-            null,
-            <>
-              <WorldSituationView s={s} />
-              <button onClick={() => setMenu("")}>Anzeige schließen</button>
-            </>,
-          )}
-          {popup(
-            "public-alarms",
-            `Katastrophenalarm: ${alarms.length === 0 ? "keiner" : alarms.length === 1 ? alarms[0].name : `${alarms.length} Leitstellen`}`,
-            null,
-            <>
-              <PublicAlarmList alarms={alarms} />
-              <button onClick={() => action(() => panel("civil"))}>
-                Eigene Bereitschaft verwalten
-              </button>
-            </>,
-          )}
-        </div>
-        {(faults > 0 || readonly) &&
-          popup(
-            "warnings",
-            "Warnungen",
-            <TriangleAlert />,
-            <>
-              {readonly && (
-                <p role="alert">
-                  Verbindung unterbrochen. Aktionen sind gesperrt.
-                </p>
-              )}
-              {faults > 0 && (
-                <button onClick={() => action(() => panel("fleet"))}>
-                  {faults} Fahrzeugstörungen · Fuhrpark öffnen
-                </button>
-              )}
-              <button onClick={() => action(onLayers)}>
-                Wetter & Betrieb ansehen
-              </button>
-            </>,
-            faults + Number(readonly),
-          )}
-        <span
-          className="hud-clock"
-          title={`${date.toLocaleString("de-DE")} · Echtzeit · Simuliertes Wetter: ${s.environment ? `${weatherNames[s.environment.kind]}, ${s.environment.temperature} °C` : "wird ermittelt"}`}
-        >
-          <Clock />
+      </div>
+      <div className="status-tile time-tile">
+        <Clock />
+        <span>
+          <small>Ortszeit</small>
           <time>
-            {date.toLocaleTimeString("de-DE", {
+            {new Date(s.time * 1000).toLocaleTimeString("de-DE", {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </time>
         </span>
-        <button
-          data-tutorial="budget"
-          className="hud-budget"
-          title="Verfügbares Budget · Geldjournal öffnen"
-          aria-label="Budget und Geldjournal"
-          onClick={() => action(() => panel("archive"))}
-        >
-          <Wallet />
+      </div>
+      <button
+        className="status-tile money-tile"
+        aria-label="Budget und Geldjournal"
+        onClick={() => act(() => panel("archive"))}
+      >
+        <Wallet />
+        <span>
+          <small>Budget</small>
           <strong>{credits(s.money)}</strong>
-        </button>
-        <button
-          className="hud-profile"
-          data-tutorial="progress"
-          aria-label="Fortschritt"
-          title={`Stufe ${xp.level} · ${xp.current}/${xp.required} XP`}
-          onClick={() => action(() => panel("progress"))}
-        >
-          <Shield />
-          <span>{xp.level}</span>
+        </span>
+      </button>
+      <button
+        className="status-tile level-tile"
+        aria-label="Fortschritt"
+        onClick={() => act(() => panel("progress"))}
+      >
+        <b>{xp.level}</b>
+        <span>
+          <small>
+            Level · {xp.current.toLocaleString("de-DE")} /{" "}
+            {xp.required.toLocaleString("de-DE")} XP
+          </small>
           <progress value={xp.current} max={xp.required} />
-        </button>
+        </span>
+      </button>
+      <div className="status-tile situation-tile">
         <button
-          className="topbar-icon"
-          data-tutorial="settings-open"
-          aria-label="Einstellungen"
-          title="Einstellungen und Hilfe"
-          onClick={() => action(() => panel("settings"))}
+          aria-expanded={popup === "situation"}
+          onClick={() => toggle("situation")}
         >
-          <Settings />
+          <small>Welt- & Wetterlage</small>
+          <strong>
+            {s.worldSituation
+              ? situationNames[s.worldSituation.profile]
+              : "Wird geladen"}
+          </strong>
+          <span>
+            {s.worldSituation ? situationLevel(s.worldSituation) : ""}
+          </span>
         </button>
+        {popup === "situation" && (
+          <section className="topbar-popup status-popup">
+            <WorldSituationView s={s} />
+            <button onClick={() => act(() => panel("situation"))}>
+              Lagedetails öffnen
+            </button>
+          </section>
+        )}
+      </div>
+      <div className="status-tile alarm-tile" data-alarm={alarms.length > 0}>
+        <button
+          aria-expanded={popup === "alarm"}
+          onClick={() => toggle("alarm")}
+        >
+          <small>Katastrophenalarm</small>
+          <strong>
+            {alarms.length
+              ? alarms.length === 1
+                ? alarms[0].name
+                : `${alarms.length} Leitstellen`
+              : "Kein Katastrophenalarm"}
+          </strong>
+        </button>
+        {popup === "alarm" && (
+          <section className="topbar-popup status-popup">
+            <PublicAlarmList alarms={alarms} />
+            <button onClick={() => act(() => panel("civil"))}>
+              Eigene Bereitschaft verwalten
+            </button>
+          </section>
+        )}
       </div>
     </header>
   );
-}
-
-export function HudNotice({ message }: { message: string }) {
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    setHidden(false);
-    if (!message) return;
-    const timer = setTimeout(() => setHidden(true), 9000);
-    return () => clearTimeout(timer);
-  }, [message]);
-  return message && !hidden ? (
-    <div className="hud-notice" role="status">
-      <Radio size={16} />
-      <span>{message}</span>
-      <button aria-label="Meldung schließen" onClick={() => setHidden(true)}>
-        <X size={16} />
-      </button>
-    </div>
-  ) : null;
 }

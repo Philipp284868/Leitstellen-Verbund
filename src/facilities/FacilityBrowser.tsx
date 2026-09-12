@@ -70,11 +70,7 @@ export function FacilityDetails({
   const offer = response.data,
     f = offer?.facility;
   return (
-    <section
-      className="facility-details"
-      aria-label="Standortdetails"
-      data-tutorial="facility-details"
-    >
+    <section className="facility-details" aria-label="Standortdetails">
       {onClose && (
         <button
           className="close"
@@ -243,7 +239,7 @@ export function FacilityBrowser({
     `${s.money}:${s.xp}:${s.buildings.map((b) => b.facility?.id).join(",")}`,
   );
   return (
-    <div className="facility-browser" data-tutorial="facility-browser">
+    <div className="facility-browser">
       <p className="view-intro">
         Wähle einen echten Standort aus dem Deutschlandkatalog. Standort und
         Zufahrt stehen fest. Einsteiger können mit einer nutzbaren Feuerwache

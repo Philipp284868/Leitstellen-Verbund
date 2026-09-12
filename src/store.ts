@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { ServerAction } from "../server/actions";
-import type { TrainingView, TutorialView } from "../server/tutorial";
 import type { Action } from "./engine";
 import { subscription } from "./external-store";
 import {
@@ -20,10 +19,17 @@ import {
   setNetwork,
 } from "./network";
 import { ensureSocketConnection } from "./socket-connection";
+import {
+  clearEvents,
+  localEvent,
+  observeEvents,
+  resolveConnectionEvents,
+  eventSnapshot,
+  mergeEvents,
+} from "./event-store";
+import type { GameEvent } from "./game-events";
 export interface Snapshot {
   playContext: number;
-  tutorial?: TutorialView;
-  training?: TrainingView;
   mode: GameMode;
   workspace?: {
     outgoing: {
@@ -93,11 +99,38 @@ type RequestContext = {
 };
 const requestContext = (): RequestContext => ({
   mode: snapshot.mode,
-  session: snapshot.training?.session ?? null,
+  session: null,
   revision: snapshot.playContext,
   epoch: clientEpoch,
 });
 export function emit(p: Partial<Snapshot>) {
+  if (p.readonly === true && !snapshot.readonly && snapshot.user)
+    localEvent(
+      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+      "Verbindung",
+      true,
+      true,
+    );
+  if (
+    p.readonly === false &&
+    snapshot.readonly &&
+    eventSnapshot().some((e) => e.connection && e.unresolved)
+  ) {
+    resolveConnectionEvents();
+    localEvent(
+      "Serververbindung wiederhergestellt. Aktionen sind wieder möglich.",
+      "Verbindung",
+    );
+  }
+  if (p.error && p.error !== snapshot.error) localEvent(p.error, "Fehler");
+  if (
+    p.notice &&
+    p.notice !== snapshot.notice &&
+    !/Verbindung|verbunden|Server nicht erreichbar|Offline\.|Kartendaten werden/.test(
+      p.notice,
+    )
+  )
+    localEvent(p.notice);
   snapshot = { ...snapshot, ...p };
   listeners.forEach((f) => f());
 }
@@ -118,11 +151,10 @@ function clear() {
   csrf = "";
   resetNetwork();
   resetPresence();
+  clearEvents();
   emit({
     playContext: 0,
     save: null,
-    tutorial: undefined,
-    training: null,
     workspace: undefined,
     user: null,
     readonly: true,
@@ -158,9 +190,8 @@ export async function api(
   return result;
 }
 function accept(data: {
+  events?: GameEvent[];
   playContext?: number;
-  tutorial?: TutorialView;
-  training?: TrainingView;
   workspace?: Snapshot["workspace"];
   mode: GameMode;
   save: Save;
@@ -179,12 +210,12 @@ function accept(data: {
     data.save.revision >= snapshot.save.revision
   ) {
     if (snapshot.workspace?.owner !== data.workspace?.owner) resetNetwork();
+    observeEvents(data.save);
+    if (data.events) mergeEvents(data.events);
     emit({
       playContext: data.playContext ?? 0,
       save: data.save,
       workspace: data.workspace,
-      tutorial: data.tutorial,
-      training: data.training,
     });
     setNetwork(data.network);
   }
@@ -358,30 +389,4 @@ if (typeof window !== "undefined") {
     socket?.disconnect();
   });
   window.addEventListener("online", () => ensureSocketConnection(socket));
-}
-export async function tutorialControl(data: unknown) {
-  const context = requestContext();
-  const result = await api("tutorial", data, context.mode, context);
-  if (context.epoch === clientEpoch) accept(result);
-}
-export async function trainingControl(data: {
-  op: "start" | "stop" | "scenario";
-  reset?: boolean;
-  kind?: "technical" | "fire";
-  session?: string;
-}) {
-  const context = requestContext(),
-    input = { ...data, id: createId() };
-  let result;
-  try {
-    result = await api("training", input, context.mode, context);
-  } catch (error) {
-    if (!(error instanceof TypeError)) throw error;
-    if (context.epoch !== clientEpoch)
-      throw Error(
-        "Konto wurde gewechselt. Die Übungsanfrage wird nicht wiederholt.",
-      );
-    result = await api("training", input, context.mode, context);
-  }
-  if (context.epoch === clientEpoch) accept(result);
 }
