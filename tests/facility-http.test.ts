@@ -37,9 +37,10 @@ it("HTTP facilities bypass Game.view, isolate NAT users and return typed non-cac
     vi.spyOn(app.game, "view").mockImplementation(() => {
       throw Error("world view forbidden");
     });
-    const query = "clusters=1&bbox=5,47,16,56&zoom=6";
+    const query = "clusters=1&bbox=5,47,16,56&zoom=16";
     const response = await request(query);
     expect(response.status).toBe(200);
+    expect(response.headers.get("content-encoding")).toBe("gzip");
     expect(response.headers.get("etag")).toMatch(/^W\//);
     expect(
       (

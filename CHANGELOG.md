@@ -5,6 +5,9 @@
 - Getrennte Lesebudgets für Karte, Suche und Standortdetails; eindeutige Sperrantworten mit Wartezeit. Anmeldungen, Kontofunktionen und Spielaktionen behalten ihre Schutzregeln. Proxyadressen werden genau geprüft und normalisiert.
 - Standortcluster benötigen keine Gesamtansicht der Spielwelt. Angebote lesen nur den berechtigten Kaufkontext; räumliche Indizes, begrenzte Cluster-Caches, private HTTP-Caches und komprimierte Antworten entlasten den Server. Dichte Ausschnitte werden vollständig zusammengefasst; Suchergebnisse sind seitenweise erreichbar.
 
+- Kartenbewegungen bündeln Standortabfragen nach 250 ms mit begrenzten Zwischenabrufen. Gepufferte Ausschnitte bleiben im Cache, verspätete Antworten überschreiben keine neuere Auswahl. Standort-Sperren wiederholen nur die jüngste Leseabfrage begrenzt und melden den Spieler nicht ab.
+- Bestehende Marker bleiben beim Nachladen sichtbar. Besitzänderungen aktualisieren sich sofort; kleine Geld-/XP-Änderungen lösen keine unnötigen Angebotsabfragen aus. Keine Datenmigration, kein Reset und keine Änderung privater AMP-/Proxykonfiguration.
+
 ## 2.26.0 · Verwaltete AMP-Instanz und gesicherter Neustart · 12.09.2026
 
 - Getrennte Programmversionen, feste private Instanzkonfiguration und geschützte Update-/Resetjournale. Updates installieren geprüfte Pakete ohne lokalen Entwicklungsbuild.

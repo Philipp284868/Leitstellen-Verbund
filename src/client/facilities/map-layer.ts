@@ -1,3 +1,4 @@
+import { FacilityReader } from "./reader";
 import type { Map as GLMap } from "maplibre-gl";
 import { buildingIconDefinition, iconPaths } from "../../shared/map-icons";
 import type {
@@ -18,7 +19,6 @@ export function attachFacilityLayer(
 ) {
   let points: FacilityCluster[] = [],
     hits: (FacilityCluster & { x: number; y: number })[] = [],
-    request: AbortController | undefined,
     frame = 0,
     disposed = false;
   const cache = new Map<string, FacilityCluster[]>();
@@ -95,59 +95,102 @@ export function attachFacilityLayer(
   const repaint = () => {
     if (!frame) frame = requestAnimationFrame(paint);
   };
+  type Bounds = [number, number, number, number];
+  let covered:
+    | { bbox: Bounds; zoom: number; kind: string; query: string }
+    | undefined;
+  let snapshot = "";
+  const reader = new FacilityReader<{
+    snapshot: string;
+    clusters: FacilityCluster[];
+  }>(
+    (data, query) => {
+      if (!Array.isArray(data.clusters) || data.clusters.length > 2000)
+        throw Error("Ungültiger Standortkatalog-Ausschnitt.");
+      if (snapshot !== data.snapshot) {
+        cache.clear();
+        snapshot = data.snapshot;
+      }
+      cache.set(query, data.clusters);
+      if (cache.size > 24) cache.delete(cache.keys().next().value!);
+      canvas.dataset.loadedBounds = new URLSearchParams(query).get("bbox")!;
+      points = data.clusters;
+      repaint();
+    },
+    (state) => {
+      canvas.dataset.loading = String(state.loading);
+      canvas.dataset.cooldownUntil = String(state.cooldownUntil);
+      error(state.error);
+    },
+  );
   const refresh = () => {
-    request?.abort();
-    if (!options().enabled) {
-      points = [];
+    if (disposed) return;
+    if (!options().enabled || document.hidden) {
+      reader.cancel();
+      covered = undefined;
+      canvas.dataset.loading = "false";
       repaint();
       return;
     }
     const b = map.getBounds(),
-      bbox = [
-        Math.max(-180, b.getWest()),
-        Math.max(-85, b.getSouth()),
-        Math.min(180, b.getEast()),
-        Math.min(85, b.getNorth()),
-      ]
-        .map((v) => v.toFixed(5))
-        .join(",");
-    const query = new URLSearchParams({
-      clusters: "1",
-      bbox,
-      zoom: String(map.getZoom()),
-      kind: options().kind,
-    }).toString();
-    const prior = cache.get(query);
-    if (prior) {
-      points = prior;
-      repaint();
+      zoom = Math.max(4, Math.min(20, Math.floor(map.getZoom()))),
+      kind = options().kind;
+    const visible: Bounds = [
+      Math.max(-180, b.getWest()),
+      Math.max(-85, b.getSouth()),
+      Math.min(180, b.getEast()),
+      Math.min(85, b.getNorth()),
+    ];
+    if (
+      covered &&
+      covered.zoom === zoom &&
+      covered.kind === kind &&
+      visible[0] >= covered.bbox[0] &&
+      visible[1] >= covered.bbox[1] &&
+      visible[2] <= covered.bbox[2] &&
+      visible[3] <= covered.bbox[3]
+    ) {
+      if (
+        cache.has(covered.query) &&
+        reader.cooldown(covered.query) <= Date.now()
+      )
+        error("");
       return;
     }
-    const controller = new AbortController();
-    request = controller;
-    void fetch(`/api/facilities?${query}`, {
-      signal: controller.signal,
-      credentials: "same-origin",
-    })
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw Error(data.error || "Standortkarte nicht verfügbar.");
-        if (!Array.isArray(data.clusters) || data.clusters.length > 2000)
-          throw Error("Ungültiger Standortkatalog-Ausschnitt.");
-        if (!controller.signal.aborted) {
-          points = data.clusters;
-          cache.set(query, points);
-          if (cache.size > 24) cache.delete(cache.keys().next().value!);
-          error("");
-          repaint();
-        }
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) error(String(e.message));
-      });
+    const cell = 360 / 2 ** zoom / 2;
+    const bbox: Bounds = [
+      Math.max(-180, (Math.floor(visible[0] / cell) - 1) * cell),
+      Math.max(-85, (Math.floor(visible[1] / cell) - 1) * cell),
+      Math.min(180, (Math.ceil(visible[2] / cell) + 1) * cell),
+      Math.min(85, (Math.ceil(visible[3] / cell) + 1) * cell),
+    ];
+    const query = new URLSearchParams({
+      clusters: "1",
+      bbox: bbox.join(","),
+      zoom: String(zoom),
+      kind,
+    }).toString();
+    covered = { bbox, zoom, kind, query };
+    const prior = cache.get(query);
+    if (prior) {
+      reader.supersede();
+      canvas.dataset.loadedBounds = bbox.join(",");
+      points = prior;
+      canvas.dataset.loading = "false";
+      if (reader.cooldown(query) <= Date.now()) {
+        error("");
+        canvas.dataset.cooldownUntil = "0";
+      }
+      repaint();
+    } else reader.request(query);
   };
+  const resize = () => {
+    repaint();
+    refresh();
+  };
+  document.addEventListener("visibilitychange", refresh);
   map.on("move", repaint);
-  map.on("resize", repaint);
+  map.on("resize", resize);
   map.on("moveend", refresh);
   refresh();
   return {
@@ -157,10 +200,11 @@ export function attachFacilityLayer(
       hits.filter((h) => Math.abs(h.x - x) <= 18 && Math.abs(h.y - y) <= 18),
     destroy: () => {
       disposed = true;
-      request?.abort();
+      reader.destroy();
+      document.removeEventListener("visibilitychange", refresh);
       cancelAnimationFrame(frame);
       map.off("move", repaint);
-      map.off("resize", repaint);
+      map.off("resize", resize);
       map.off("moveend", refresh);
     },
   };

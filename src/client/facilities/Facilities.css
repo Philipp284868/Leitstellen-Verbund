@@ -142,3 +142,21 @@
     max-height: 32vh;
   }
 }
+
+.facility-map-loading {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 4px 10px;
+  color: #c6d9e2;
+  background: #102630d9;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+}
+.facility-map-canvas[data-loading="true"] + .facility-map-loading {
+  display: block;
+}

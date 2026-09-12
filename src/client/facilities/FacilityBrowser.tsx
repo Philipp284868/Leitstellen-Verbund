@@ -1,3 +1,7 @@
+import { bt } from "../../shared/catalog";
+import { progress } from "../../shared/progression";
+import { FacilityReader } from "./reader";
+import { useRef } from "react";
 import { useEffect, useState } from "react";
 import { BuildingIcon } from "../../shared/map-icons";
 import type { Save } from "../../shared/model";
@@ -10,7 +14,22 @@ import {
   type FacilityKind,
 } from "../../shared/facilities/types";
 import "./Facilities.css";
+// Offer validity changes at affordability/unlock boundaries, not at every cent or XP tick.
+function purchaseRevision(s: Save) {
+  return `${progress(s.xp).level}:${facilityKinds
+    .filter((k) => k !== "other")
+    .map((k) => (s.money >= bt(k).price ? "1" : "0"))
+    .join(
+      "",
+    )}:${s.buildings.length}:${s.buildings.map((b) => b.facility?.id).join(",")}`;
+}
 type Offer = ReturnType<typeof facilityOffer>;
+type ListOffer = Omit<Offer, "facility"> & {
+  facility: Pick<
+    Offer["facility"],
+    "id" | "kind" | "name" | "address" | "state" | "pos"
+  >;
+};
 export function useFacilities<T>(query: string, revision: string | number = 0) {
   const { mode } = useGame();
   const [result, setResult] = useState<{
@@ -18,33 +37,39 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
     error?: string;
     loading: boolean;
   }>({ loading: true });
+  const reader = useRef<FacilityReader<T> | undefined>(undefined);
+  const latest = useRef({ query, revision });
+  latest.current = { query, revision };
   useEffect(() => {
-    const controller = new AbortController();
-    setResult({ loading: true });
-    const timer = setTimeout(() => {
-      void fetch(`/api/facilities?${query}`, {
-        signal: controller.signal,
-        credentials: "same-origin",
-        headers: { "x-game-mode": mode },
-      })
-        .then(async (r) => {
-          const data = await r.json();
-          if (!r.ok)
-            throw Error(
-              data.error || "Standorte konnten nicht geladen werden.",
-            );
-          if (!controller.signal.aborted) setResult({ data, loading: false });
-        })
-        .catch((e) => {
-          if (!controller.signal.aborted)
-            setResult({ error: String(e.message), loading: false });
-        });
-    }, 180);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
+    const activate = () => {
+      reader.current?.destroy();
+      reader.current = undefined;
+      if (document.hidden) return;
+      reader.current = new FacilityReader<T>(
+        (data) => setResult({ data, loading: false }),
+        (state) =>
+          setResult((prior) => ({
+            ...prior,
+            loading: state.loading,
+            error: state.error,
+          })),
+        { "x-game-mode": mode },
+      );
+      reader.current.request(
+        latest.current.query,
+        String(latest.current.revision),
+      );
     };
-  }, [query, revision, mode]);
+    activate();
+    document.addEventListener("visibilitychange", activate);
+    return () => {
+      reader.current?.destroy();
+      document.removeEventListener("visibilitychange", activate);
+    };
+  }, [mode]);
+  useEffect(() => {
+    reader.current?.request(query, String(revision));
+  }, [query, revision]);
   return result;
 }
 export function FacilityDetails({
@@ -62,7 +87,7 @@ export function FacilityDetails({
 }) {
   const response = useFacilities<Offer>(
     new URLSearchParams({ id }).toString(),
-    `${s.money}:${s.xp}:${s.buildings.map((b) => b.facility?.id).join(",")}`,
+    purchaseRevision(s),
   );
   const [confirm, setConfirm] = useState(false),
     [busy, setBusy] = useState(false),
@@ -234,13 +259,21 @@ export function FacilityBrowser({
   const [query, setQuery] = useState(""),
     [kind, setKind] = useState<FacilityKind | "">("fire"),
     [status, setStatus] = useState("all"),
-    [selected, setSelected] = useState("");
+    [selected, setSelected] = useState(""),
+    [offset, setOffset] = useState(0);
+  useEffect(() => setOffset(0), [query, kind, status]);
   const { data, error, loading } = useFacilities<{
-    offers: Offer[];
+    offers: ListOffer[];
     snapshot: string;
+    nextOffset: number | null;
   }>(
-    new URLSearchParams({ q: query, kind, status }).toString(),
-    `${s.money}:${s.xp}:${s.buildings.map((b) => b.facility?.id).join(",")}`,
+    new URLSearchParams({
+      q: query,
+      kind,
+      status,
+      offset: String(offset),
+    }).toString(),
+    purchaseRevision(s),
   );
   return (
     <div className="facility-browser">
@@ -320,9 +353,21 @@ export function FacilityBrowser({
               Organisation und Kaufstatus ändern.
             </p>
           )}
-          <p className="hint">
-            Bis zu 80 Treffer. Suche eingrenzen, um weitere Orte zu finden.
-          </p>
+          <div aria-label="Standortseiten">
+            <button
+              disabled={loading || offset === 0}
+              onClick={() => setOffset(Math.max(0, offset - 80))}
+            >
+              Zurück
+            </button>
+            <span>Seite {Math.floor(offset / 80) + 1}</span>
+            <button
+              disabled={loading || data?.nextOffset == null}
+              onClick={() => setOffset(data!.nextOffset!)}
+            >
+              Weitere Standorte
+            </button>
+          </div>
         </div>
         {selected && (
           <FacilityDetails

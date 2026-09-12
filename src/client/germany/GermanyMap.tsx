@@ -898,6 +898,9 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           className="facility-map-canvas"
           aria-hidden="true"
         />
+        <span className="facility-map-loading" role="status">
+          Standorte werden aktualisiert …
+        </span>
         <div className="germany-markers">
           {markers.map((m) => (
             <button
