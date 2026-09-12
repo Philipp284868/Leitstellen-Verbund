@@ -10,6 +10,8 @@
 
 - Lesewartezeiten sind auch im Browser pro angemeldetem Konto getrennt. Ein Leitstellenwechsel verwirft alte private Angebote.
 
+- Abnahme prüft tatsächliche Fahrzeugankunft einschließlich möglicher Pannen und den aktiven Pointer beim Aufheben der Mausbindung.
+
 ## 2.26.0 · Verwaltete AMP-Instanz und gesicherter Neustart · 12.09.2026
 
 - Getrennte Programmversionen, feste private Instanzkonfiguration und geschützte Update-/Resetjournale. Updates installieren geprüfte Pakete ohne lokalen Entwicklungsbuild.

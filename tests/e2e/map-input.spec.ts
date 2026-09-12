@@ -180,11 +180,23 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Standortauswahl behalte
         ),
       );
     if (reason === "capture")
-      await map(page).evaluate((e) =>
-        e.releasePointerCapture(
-          Number((e as HTMLElement).dataset.testPointerId),
-        ),
-      );
+      await map(page).evaluate((e) => {
+        // Release the live pointer during its native event. Firefox can retire a
+        // previous pointer identifier after the preceding synthetic cancellation.
+        e.addEventListener(
+          "pointermove",
+          (event) => {
+            const id = (event as PointerEvent).pointerId;
+            if (!e.hasPointerCapture(id))
+              throw Error("Active drag has no pointer capture");
+            e.releasePointerCapture(id);
+            (e as HTMLElement).dataset.testCaptureReleased = String(
+              !e.hasPointerCapture(id),
+            );
+          },
+          { once: true },
+        );
+      });
     if (reason === "hidden")
       await page.evaluate(() => {
         Object.defineProperty(document, "hidden", {
@@ -195,6 +207,11 @@ test("Drag-Abbrüche, getrennte Tabs, Menürückkehr und Standortauswahl behalte
         Reflect.deleteProperty(document, "hidden");
       });
     await page.mouse.move(985, 555);
+    if (reason === "capture")
+      await expect(map(page)).toHaveAttribute(
+        "data-test-capture-released",
+        "true",
+      );
     await expect(map(page)).not.toHaveClass(/dragging/);
     await page.mouse.up();
     await expect(map(page)).toHaveAttribute("data-camera-moving", "false");

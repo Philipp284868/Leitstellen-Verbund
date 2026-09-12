@@ -206,6 +206,24 @@ test("Patientenversorgung mit wirksamem Schwerpunkt, Wiederverbindung und Kranke
   let saved = app.db.all().get(owner)!,
     rtw = saved.vehicles.find((v) => v.type === "rtw")!;
   app.game.step(rtw.arrive - saved.time + 1);
+  // Automatic breakdown/repair can move the ETA. Exercise the real arrival,
+  // rather than assuming the original alarm ETA is still authoritative.
+  for (
+    let i = 0;
+    i < 60 &&
+    app.db
+      .all()
+      .get(owner)!
+      .vehicles.find((v) => v.id === rtw.id)!.status !== "scene";
+    i++
+  )
+    app.game.step(10);
+  expect(
+    app.db
+      .all()
+      .get(owner)!
+      .vehicles.find((v) => v.id === rtw.id)!.status,
+  ).toBe("scene");
   await page
     .getByRole("button", { name: "Lagemeldung aufnehmen", exact: true })
     .click();
