@@ -18,6 +18,7 @@ import { request as httpsRequest } from "node:https";
 import { createServer } from "node:net";
 import { pathToFileURL } from "node:url";
 import { gzipSync, gunzipSync } from "node:zlib";
+import { DatabaseSync } from "node:sqlite";
 import { parseEnv } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { io } from "socket.io-client";
@@ -141,8 +142,54 @@ try {
     chunkBytes: 268435456,
     files: [],
   };
+  // The published water supplement belongs to the application package, not
+  // the allowlisted Germany download catalog. Exercise its real first-start
+  // indexing using the same small synthetic source data as the routing fixture.
+  const water = new DatabaseSync(join(runtime.geodataDir, "water.sqlite"), {
+    readOnly: true,
+  });
+  let sources;
+  try {
+    sources = water
+      .prepare("SELECT id,lon,lat,data FROM sources ORDER BY id")
+      .all()
+      .map((row) => ({
+        id: row.id,
+        lon: row.lon,
+        lat: row.lat,
+        properties: JSON.parse(row.data),
+      }));
+  } finally {
+    water.close();
+  }
+  const waterHeader = {
+    schema: 1,
+    snapshot: "2026-09-10",
+    sourceSha256: catalog.dataset,
+  };
+  const waterRaw = Buffer.from(
+    [waterHeader, ...sources].map((row) => JSON.stringify(row)).join("\n") +
+      "\n",
+  );
+  const waterArchive = gzipSync(waterRaw);
+  await writeFile(
+    join(app, "data/water/germany-260907.ndjson.gz"),
+    waterArchive,
+  );
+  await writeFile(
+    join(app, "data/water/manifest.json"),
+    JSON.stringify({
+      ...waterHeader,
+      sha256: hash(waterArchive),
+      bytes: waterArchive.length,
+      rawBytes: waterRaw.length,
+      total: sources.length,
+      attribution: "Explicit synthetic AMP acceptance fixture",
+    }),
+  );
   const transfers = {};
   for (const name of await readdir(runtime.geodataDir)) {
+    if (name === "water.sqlite") continue;
     const bytes = await readFile(join(runtime.geodataDir, name)),
       compressed = gzipSync(bytes),
       asset = name + ".gz",

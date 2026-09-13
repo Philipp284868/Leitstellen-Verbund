@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import type { Config } from "../../src/server/config";
 import { prepared } from "./patient-transport";
+import { saveIndependentFixture } from "./independent-sites";
 import { installLogicGeography } from "../fixtures/germany/logic-provider";
 
 /** Setup-only fixture outside the archive. All transport decisions, rewards and
@@ -33,7 +34,7 @@ export async function packagedTransport(
     installLogicGeography();
     const { s, m } = prepared(1, 1, owner);
     s.generation = generation;
-    app.db.save(owner, s);
+    saveIndependentFixture(app.db, owner, s);
     const startingMoney = s.money,
       startingXp = s.xp;
     step(1, Date.now(), { generation: false });

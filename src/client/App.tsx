@@ -349,6 +349,7 @@ function GameApp() {
               } as Record<string, string>
             )[modal]
           }
+          kind={modal}
           onClose={() =>
             requestDialogTransition(() => {
               setModalRaw("");

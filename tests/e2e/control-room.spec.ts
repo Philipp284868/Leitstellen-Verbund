@@ -6,7 +6,7 @@ import type { startServer } from "../../src/server/index";
 import { phaseFixture } from "../dispatch-fixture";
 import { listenBrowserServer } from "./server-helper";
 import { test, expect } from "./test";
-import { openPanel } from "./ui-navigation";
+import { openPanel, loginAndEnter } from "./ui-navigation";
 const { version } = JSON.parse(await readFile("package.json", "utf8")) as {
   version: string;
 };
@@ -39,6 +39,48 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => {
   await app.close();
+});
+
+test("Notrufdialog behält seinen Schließen-Knopf beim verzögerten Laden an derselben Stelle", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/assets/MenuPanels-*.js", async (route) => {
+    await held;
+    await route.continue();
+  });
+  try {
+    await page.goto(origin);
+    await loginAndEnter(page, "control", "Control-room-password!");
+    await page.getByRole("button", { name: "Notrufe", exact: true }).click();
+    const dialog = page.getByRole("dialog"),
+      close = dialog.getByRole("button", { name: "Schließen", exact: true });
+    await expect(
+      dialog.getByText("Ansicht wird geladen …", { exact: true }),
+    ).toBeVisible();
+    const before = await close.boundingBox();
+    release();
+    await expect(
+      page.getByRole("region", { name: "Notrufarbeitsplatz", exact: true }),
+    ).toBeVisible();
+    const after = await close.boundingBox();
+    expect(after).toEqual(before);
+    await close.click();
+    await expect(dialog).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Leitstellenmenü", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Zurück zum Hauptmenü", exact: true }),
+    ).toBeVisible();
+  } finally {
+    release();
+    await page.unrouteAll({ behavior: "wait" });
+  }
 });
 
 test("Hauptmenü und Rückkehr unterdrücken Anrufe, Spielansicht und zweiter Tab zählen unabhängig", async ({

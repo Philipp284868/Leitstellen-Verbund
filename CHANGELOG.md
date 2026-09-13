@@ -2,6 +2,7 @@
 
 ## 2.29.0 · Kompaktes HUD und gemeinsame Infrastruktur · 13.09.2026
 
+- Deckende Dialogflächen verhindern durchscheinende Karten- und Einsatztexte. Der Notrufdialog hat schon beim Öffnen einen stabilen Rahmen; nachgeladene Inhalte verschieben seinen Schließen-Knopf nicht.
 - Drei zusammenhängende Statuskarten für Serverzeit/Wetter, Budget und Rang/XP. Die kompakte aktive Einsatzliste folgt mit echtem Abstand und passt sich Schriftvergrößerung an. Der eigenständige Funk-/Ereignisbereich entfällt; offene Aufgaben bleiben im jeweiligen Einsatz bedienbar. Ein einzelner begrenzter Hinweis erscheint für drei Sekunden ab tatsächlicher Anzeige, ohne Quittierung oder Wiederholung nach Wiederverbindung.
 - Die sichtbare Kartenwerkzeugleiste entfällt. Maus, Tastatur, Suche und Quellenangaben bleiben erhalten. Maßstab und sämtliche Spielmarker verwenden dieselbe metrische Projektionsberechnung: sichtbar bei 200 Metern und näher, ohne unsichtbare Trefferflächen oder zusätzliche Übersichtsabfragen.
 - Ein realer Wachstandort besitzt genau einen Eigentümer je Serverwelt. Kauf, Abbuchung und Standortidentität einschließlich Quellaliasen werden zusammen geprüft. Andere Spieler sehen ausschließlich öffentliche Besitzdaten, auch bei ausgeloggtem Eigentümer.

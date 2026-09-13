@@ -31,10 +31,12 @@ export const playerColor = (id: string) =>
   `hsl(${150 + ([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 160)} 55% 68%)`;
 export function Modal({
   title,
+  kind,
   children,
   onClose,
 }: {
   title: string;
+  kind?: string;
   children: ReactNode;
   onClose: () => void;
 }) {
@@ -116,6 +118,7 @@ export function Modal({
         ref={ref}
         tabIndex={-1}
         className="modal"
+        data-modal={kind}
         role="dialog"
         aria-modal="true"
         aria-label={title}

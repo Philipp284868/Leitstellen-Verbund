@@ -459,6 +459,11 @@
 .app.command-hud.desktop-hud .modal > header {
   background: var(--hud-panel);
 }
+/* Keep the call workspace and its close button in place while its content loads. */
+.app.command-hud.desktop-hud .modal[data-modal="calls"] {
+  width: min(1520px, calc(100vw - 48px));
+  height: 90dvh;
+}
 .app.command-hud.desktop-hud
   :is(
     .modal,

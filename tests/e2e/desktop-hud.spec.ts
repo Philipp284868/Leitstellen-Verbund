@@ -209,9 +209,7 @@ for (const [width, height, scale] of [
             background: getComputedStyle(e).backgroundColor,
           }));
           expect(dialogColors.text).toBe("rgb(237, 242, 245)");
-          expect(dialogColors.background).toMatch(
-            /^rgba?\(8, 23, 34(?:, [^)]+)?\)$/,
-          );
+          expect(dialogColors.background).toBe("rgb(9, 24, 33)");
         }
         await openPanel(page, "Suche");
         await expect(page.getByLabel("Karte durchsuchen")).toBeFocused();
