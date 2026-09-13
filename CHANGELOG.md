@@ -1,5 +1,11 @@
 # Änderungen
 
+## 2.29.1 · Serverabsturz bei langen Funkzusammenfassungen · 13.09.2026
+
+- Die Kürzung berücksichtigt jetzt die tatsächliche Länge des angehängten Hinweises. Zuvor ergaben 560 Zeichen plus 42 Zeichen Hinweis eine ungültige 602-Zeichen-Zusammenfassung. Das konnte beim Simulationsnachlauf nach dem Start und beim Speichern laufender Einsätze einen Zod-Fehler und die AMP-Rückschaltung auslösen; auch 2.28.0 enthielt den Fehler.
+- Zusammenfassung, Funkhistorie und Weitergabe an Helfer bleiben innerhalb der bestehenden 600-Zeichen-Grenze. Vollständige fachliche Anliegen bleiben unverändert in den Einsatzdetails. Keine Datenbankmigration, kein Reset und keine Lockerung der Speicherprüfung erforderlich.
+- Regressionstests prüfen lange Anliegen vor und nach der Erkundung, wiederholte Aktualisierung, Helferfunk sowie SQLite-Speicherung und erneutes Öffnen der Datenbank.
+
 ## 2.29.0 · Kompaktes HUD und gemeinsame Infrastruktur · 13.09.2026
 
 - Deckende Dialogflächen verhindern durchscheinende Karten- und Einsatztexte. Der Notrufdialog hat schon beim Öffnen einen stabilen Rahmen; nachgeladene Inhalte verschieben seinen Schließen-Knopf nicht.

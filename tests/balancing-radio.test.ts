@@ -18,6 +18,77 @@ import {
 } from "../src/simulation/incident-radio";
 import { advanceRadio, transmit } from "../src/simulation/transmissions";
 import { validate } from "../src/shared/model";
+import { radioNetworkSchema } from "../src/simulation/transmission-schema";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Database } from "../src/server/database";
+
+it.each([false, true])(
+  "lange Funkanliegen bleiben vor/nach Erkundung speicherbar (briefed=%s)",
+  (briefed) => {
+    const dir = mkdtempSync(join(tmpdir(), "lv-radio-limit-"));
+    let db = new Database(dir);
+    try {
+      const owner = "long-radio-owner";
+      db.sql
+        .prepare("INSERT INTO users VALUES(?,?,?,'player',0)")
+        .run(owner, owner, "unused");
+      const initial = radioFixture(owner);
+      initial.missions[0].control!.briefed = briefed;
+      db.save(owner, initial);
+      db.close();
+      db = new Database(dir);
+      const s = db.all().get(owner)!,
+        m = s.missions[0];
+      const helper = phaseFixture("long-radio-helper");
+      helper.vehicles[0].mission = `remote:${owner}:${m.id}`;
+      helper.vehicles[0].status = "scene";
+      const details = Array.from(
+        { length: 4 },
+        (_, i) =>
+          `Nachforderung ${i}: ${"Weitere Kräfte und Wasserversorgung erforderlich. ".repeat(9)}`,
+      );
+      for (const [i, detail] of details.entries()) {
+        request(
+          s,
+          m,
+          s.vehicles[0].id,
+          "request",
+          detail,
+          "DRINGEND",
+          `fault:long-${i}`,
+        );
+        syncAssistanceRadio(s, m, helper);
+        expect(() =>
+          radioNetworkSchema.parse(helper.radioNetwork),
+        ).not.toThrow();
+        expect(() => db.save(owner, s)).not.toThrow();
+      }
+      const summary = m.control!.radioSummary!;
+      expect(summary.text).toHaveLength(600);
+      expect(summary.text).toMatch(/Weitere Anliegen in den Einsatzdetails\.$/);
+      expect(summary.history.every((h) => h.text.length <= 600)).toBe(true);
+      expect(
+        m
+          .control!.radio.filter((r) => r.topic?.startsWith("fault:long-"))
+          .map((r) => r.details),
+      ).toEqual(details);
+      const before = structuredClone(s);
+      updateIncidentRadio(s, m);
+      expect(s).toEqual(before);
+      db.close();
+      db = new Database(dir);
+      const resumed = db.all().get(owner)!;
+      expect(resumed.missions[0].control!.radioSummary).toEqual(summary);
+      updateIncidentRadio(resumed, resumed.missions[0]);
+      expect(() => db.save(owner, resumed)).not.toThrow();
+    } finally {
+      db.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+);
 
 it("zeigt eigene Ausfälle bereits vor Erkundung, ohne verborgene Lagen oder einen zweiten Erstfunk preiszugeben", () => {
   const s = phaseFixture("fault-owner"),

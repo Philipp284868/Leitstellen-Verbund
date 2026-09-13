@@ -5,9 +5,10 @@ import { visibleRadioConcern } from "./incident-visibility";
 
 export const incidentRadioId = (s: Save, m: Mission) =>
   `incident:${m.id}:${s.player.id}`;
+const overflowNotice = " … Weitere Anliegen in den Einsatzdetails.";
 const trim = (text: string) =>
   text.length > 600
-    ? text.slice(0, 560) + " … Weitere Anliegen in den Einsatzdetails."
+    ? text.slice(0, 600 - overflowNotice.length) + overflowNotice
     : text;
 export function updateIncidentRadio(s: Save, m: Mission, silent = false) {
   const c = m.control;
