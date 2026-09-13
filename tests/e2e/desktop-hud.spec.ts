@@ -141,6 +141,16 @@ for (const [width, height, scale] of [
       await menu.click();
       await shot("open-missions");
       await page.keyboard.press("Escape");
+      await page.locator(".mission-card").first().click();
+      const dockBox = await page.locator(".incident-dock").boundingBox();
+      const scaleBox = await page
+        .locator(".maplibregl-ctrl-scale")
+        .boundingBox();
+      expect(dockBox!.y + dockBox!.height).toBeLessThan(scaleBox!.y);
+      await page
+        .locator(".incident-dock")
+        .getByRole("button", { name: "Schließen", exact: true })
+        .click();
       await page
         .getByRole("button", { name: "Ereignispanel einklappen" })
         .click();

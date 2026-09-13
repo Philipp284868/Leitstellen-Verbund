@@ -514,7 +514,7 @@
   left: 20px;
   right: auto;
   top: var(--hud-top);
-  bottom: 20px;
+  bottom: 92px;
   width: min(620px, calc(100vw - var(--preview-width) - 60px));
   z-index: 24;
   backdrop-filter: none;
@@ -526,7 +526,7 @@
   top: var(--hud-top);
   bottom: auto;
   width: min(500px, calc(100vw - var(--preview-width) - 60px));
-  max-height: calc(100dvh - var(--hud-top) - 20px);
+  max-height: calc(100dvh - var(--hud-top) - 92px);
   overflow: auto;
   border-radius: 12px;
   background: var(--hud-panel);
