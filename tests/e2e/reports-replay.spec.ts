@@ -126,7 +126,7 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await app.listen();
   await page.goto(config.publicUrl);
   await enterGame(page);
-  await expect(page.locator(".event-log")).toContainText(
+  await expect(page.locator(".compact-desk")).toContainText(
     "Neuer Notruf eingegangen.",
   );
   await expect(page.locator(".reconnect-summary")).toHaveCount(0);
@@ -161,10 +161,10 @@ test("Arbeitsplatzlayout, Filter und sichere Tastenkürzel funktionieren auf Des
   ).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await showIncidents(page);
-  const side = await page.locator(".mission-sidebar").boundingBox(),
+  const side = await page.locator(".compact-desk").boundingBox(),
     map = await page.locator(".map-column").boundingBox();
   expect(side!.x).toBeGreaterThan(map!.x);
-  expect(side!.width).toBeCloseTo(310, 0);
+  expect(side!.width).toBeCloseTo(410, 0);
   expect(
     (await page.locator("[data-testid=germany-map-viewport]").boundingBox())!
       .height,

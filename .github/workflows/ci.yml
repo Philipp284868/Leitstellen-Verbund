@@ -173,6 +173,7 @@ jobs:
           path: |
             .tools/test-runs/
             .tools/ci/browser-output/
+            .tools/hud-acceptance/
           include-hidden-files: true
           retention-days: 7
   geodata:

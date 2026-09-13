@@ -286,11 +286,13 @@ export function ReportPanel({ m }: { m: Mission }) {
 export function ArchivePanel({
   s,
   open,
+  initialTab = "archive",
 }: {
+  initialTab?: "archive" | "statistics" | "journal";
   s: Save;
   open: (id: string) => void;
 }) {
-  const [tab, setTab] = useState("archive"),
+  const [tab, setTab] = useState<string>(initialTab),
     [query, setQuery] = useState(""),
     [org, setOrg] = useState("Alle"),
     [major, setMajor] = useState(false);

@@ -434,7 +434,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await second.close();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.locator(".critical-events")).toContainText(
+  await expect(page.locator(".connection-inline")).toContainText(
     "Serververbindung verloren.",
   );
   await openPanel(page, "Fuhrpark");
@@ -465,7 +465,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   handshake.resume!();
   await expect(
     page
-      .locator(".critical-events article")
+      .locator(".connection-inline")
       .filter({ hasText: "Serververbindung verloren." }),
   ).toHaveCount(0);
   await page

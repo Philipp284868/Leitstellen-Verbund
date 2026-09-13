@@ -106,9 +106,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     "km/h aktuell",
   );
   await showMapTools(page);
-  await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toContainText(
-    vehicleName,
-  );
+  await expect(page.getByLabel("Ausgewähltes Fahrzeug")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Fahrzeug folgen", exact: true })
     .click();
@@ -158,7 +156,7 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
   await context.setOffline(false);
   await expect(
     page
-      .locator(".critical-events article")
+      .locator(".connection-inline")
       .filter({ hasText: "Serververbindung verloren." }),
   ).toHaveCount(0);
   await expect(

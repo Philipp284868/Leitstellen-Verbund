@@ -106,7 +106,7 @@ test("Ausfall der Projektmeldungen blockiert weder Menü noch Spielbeitritt", as
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),
   ).toBeVisible();
-  await expect(page.locator(".mission-sidebar")).toBeVisible();
+  await expect(page.locator(".compact-desk")).toBeVisible();
   await showIncidents(page);
   await expect(page.locator(".mission-card").first()).toBeVisible();
 });
@@ -186,7 +186,7 @@ for (const size of [
       .boundingBox();
     expect(box!.width).toBe(size.width);
     expect(box!.height).toBeGreaterThan(size.height * 0.7);
-    expect(box!.y).toBeCloseTo(76, 0);
+    expect(box!.y).toBeCloseTo(0, 0);
     expect(box!.y + box!.height).toBeCloseTo(size.height, 0);
     await expect(page.locator(".bottom-toolbar, .radio-bar")).toHaveCount(0);
     const sidebar = await dock.boundingBox();

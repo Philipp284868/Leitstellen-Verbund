@@ -207,16 +207,17 @@ test("Kritischer Textfunk bleibt sichtbar; Lesen quittiert nicht; Übernahme und
   app.db.save(owner, s);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await login(page);
-  const log = page.getByRole("region", { name: "Funk und Ereignisse" });
-  await expect(log.locator(".critical-events")).toContainText(
-    "Erste Erkundung abgeschlossen.",
-  );
-  await expect(log.locator("input,textarea")).toHaveCount(0);
+  const log = page.getByRole("region", {
+    name: "Einsatzübersicht und Textfunk",
+  });
+  await expect(
+    log.locator('.event-preview[data-priority="critical"]'),
+  ).toContainText("Erste Erkundung abgeschlossen.");
+  await expect(log.locator("input:visible,textarea:visible")).toHaveCount(0);
   await log
-    .locator(".critical-events")
-    .getByRole("button", {
-      name: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
-      exact: true,
+    .locator('.event-preview[data-priority="critical"]')
+    .filter({
+      hasText: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
     })
     .click();
   const requestRow = page
@@ -237,10 +238,110 @@ test("Kritischer Textfunk bleibt sichtbar; Lesen quittiert nicht; Übernahme und
     .getByRole("button", { name: "Bearbeitung freigeben", exact: true })
     .click();
   await expect(requestRow).toContainText("Offen · zur Übernahme verfügbar");
-  await expect(log.locator(".critical-events")).toContainText(
-    "Erste Erkundung abgeschlossen.",
-  );
+  await expect(
+    log.locator('.event-preview[data-priority="critical"]'),
+  ).toContainText("Erste Erkundung abgeschlossen.");
   await page.screenshot({
     path: info.outputPath("textfunk-und-einsatz-1920.png"),
   });
+});
+
+test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungshinweise", async ({
+  page,
+  context,
+}) => {
+  await login(page);
+  const s = app.db.all().get(owner)!,
+    m = s.missions[0];
+  const arrival = m.control!.radio.find((r) => r.reason === "arrival")!;
+  const visible = page.locator(
+    `#radio-preview [data-event-id="${arrival.id}"]`,
+  );
+  await expect(visible).toBeVisible();
+  const before = structuredClone(arrival);
+  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+  arrival.priority = "NOTFALL";
+  s.revision++;
+  app.db.save(owner, s);
+  await expect(page.locator(".critical-count")).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: /Aktive Einsätze/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
+  await page.getByRole("button", { name: "Ereignispanel einklappen" }).click();
+  await page.getByRole("button", { name: "Ereignispanel ausklappen" }).click();
+  expect(
+    app.db
+      .all()
+      .get(owner)!
+      .missions[0].control!.radio.find((r) => r.id === arrival.id),
+  ).toMatchObject({ ...before, priority: "NOTFALL", state: "open" });
+  const scroll = page.locator("#radio-preview .preview-scroll");
+  await scroll.evaluate((e) => {
+    e.scrollTop = 90;
+    e.dispatchEvent(new Event("scroll"));
+  });
+  const position = await scroll.evaluate((e) => e.scrollTop);
+  expect(position).toBeGreaterThan(0);
+  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+  await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
+  expect(await scroll.evaluate((e) => e.scrollTop)).toBeCloseTo(position, 0);
+  const anchor = await scroll.evaluate((el) => {
+    const top = el.getBoundingClientRect().top;
+    const row = [...el.querySelectorAll<HTMLElement>("[data-event-id]")].find(
+      (r) => r.getBoundingClientRect().bottom > top,
+    )!;
+    return {
+      id: row.dataset.eventId!,
+      offset: row.getBoundingClientRect().top - top,
+    };
+  });
+  const latest = app.db.all().get(owner)!;
+  latest.time++;
+  request(
+    latest,
+    latest.missions[0],
+    latest.vehicles[1].id,
+    "arrival",
+    "Neue dringende Rückfrage während des Lesens.",
+    "NOTFALL",
+  );
+  latest.revision++;
+  app.db.save(owner, latest);
+  const addedRequest = latest.missions[0].control!.radio.at(-1)!;
+  await expect(
+    scroll.locator(`[data-event-id="${addedRequest.id}"]`),
+  ).toHaveCount(1);
+  await expect
+    .poll(() =>
+      scroll.evaluate((el, id) => {
+        const row = [
+          ...el.querySelectorAll<HTMLElement>("[data-event-id]"),
+        ].find((r) => r.dataset.eventId === id)!;
+        return row.getBoundingClientRect().top - el.getBoundingClientRect().top;
+      }, anchor.id),
+    )
+    .toBeCloseTo(anchor.offset, 0);
+  await context.setOffline(true);
+  await expect(page.locator(".connection-inline")).toContainText(
+    "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+  );
+  await context.setOffline(false);
+  await expect(page.locator(".connection-inline")).toHaveCount(0);
+  await expect(
+    page.locator(`#radio-preview [data-event-id="${arrival.id}"]`),
+  ).toHaveCount(1);
+  await page.reload();
+  await enterGame(page);
+  await expect(
+    page.locator(`#radio-preview [data-event-id="${arrival.id}"]`),
+  ).toHaveCount(1);
+  await page.locator(`#radio-preview [data-event-id="${arrival.id}"]`).click();
+  await expect(page.locator(".radio-queue")).toBeVisible();
+  expect(
+    app.db
+      .all()
+      .get(owner)!
+      .missions[0].control!.radio.find((r) => r.id === arrival.id)!.state,
+  ).toBe("open");
 });

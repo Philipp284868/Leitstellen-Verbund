@@ -109,7 +109,9 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
   await second.goto(origin);
   await play(second);
   for (const p of [page, second]) {
-    await expect(p.locator(".hud-identity")).toContainText("Leitstelle Berlin");
+    await expect(
+      p.getByRole("button", { name: "Leitstellenmenü", exact: true }),
+    ).toBeVisible();
     await expect(
       p.getByRole("button", { name: "Einzelspieler", exact: true }),
     ).toHaveCount(0);
@@ -244,7 +246,7 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
     ),
   ).toBe(true);
   await showIncidents(page);
-  await expect(page.locator(".mission-sidebar")).toBeVisible();
+  await expect(page.locator(".compact-desk")).toBeVisible();
   await toggleMapTools(page);
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),

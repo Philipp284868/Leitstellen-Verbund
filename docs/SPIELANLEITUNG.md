@@ -6,7 +6,7 @@ Leitstellen-Verbund ist ein PC-Multiplayer-Spiel mit Maus und Tastatur. Zuerst a
 
 **Spielen** öffnet die berechtigte Leitstelle. Tutorial und separate Übungswelt entfallen. Mit dem einmaligen Startgeld kaufst du einen freigeschalteten realen Standort und ein passendes Fahrzeug. Hilfe bleibt unter Support erreichbar. Neue Notrufe entstehen nur, solange mindestens ein berechtigter Disponent in der Spielansicht ist; Anmeldung und Hauptmenü genügen nicht. Bestehende Einsätze und Transporte laufen weiter.
 
-**Menü** rechts neben dem Leitstellennamen bündelt Verwaltung, Notrufarbeitsplatz, Kooperation, Auswertung und Support. Links stehen Einsätze/Notrufe, darunter das reine Textprotokoll. Fachliche Sprechwünsche bearbeitest du im Einsatz. [Bedienung und Betriebsgrenzen ab 2.25](https://github.com/Philipp284868/Leitstellen-Verbund/blob/8940407e97361c978cd95125922849c97dda9b19/docs/HUD-UND-SERVER.md).
+**Menü** oben links öffnet Verwaltung, Suche, Kooperation, Auswertung und Support. Rechts oben stehen Zeit, Wetter, Budget und Fortschritt. Darunter wechselst du im kompakten Panel zwischen **Funk & Ereignisse** und **Aktive Einsätze** einschließlich offener Notrufe. Eine Zeile öffnet den bestehenden Einsatzdialog; fachliche Sprechwünsche bearbeitest du dort. **Verlauf öffnen** zeigt das vollständige Textprotokoll. [Aktuelle Bedienung](wiki/Bedienung.md).
 
 ## Budget und Wachen
 

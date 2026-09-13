@@ -101,7 +101,7 @@ async function login(page: Page, ready = false) {
 async function play(page: Page) {
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Funk und Ereignisse" }),
+    page.getByRole("region", { name: "Einsatzübersicht und Textfunk" }),
   ).toBeVisible();
 }
 async function logoutFromSettings(page: Page) {

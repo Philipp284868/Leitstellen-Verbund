@@ -22,24 +22,51 @@ export async function enterGame(page: Page) {
   ).toBeVisible();
 }
 export async function openPanel(page: Page, name: string) {
+  if (
+    name === "Fortschritt" &&
+    (await page.locator(".level-tile").isVisible())
+  ) {
+    await page.locator(".level-tile").click();
+    return;
+  }
   const modal = page.getByRole("dialog");
   if (await modal.isVisible()) {
     await modal.getByRole("button", { name: "Schließen", exact: true }).click();
     await expect(modal).toHaveCount(0);
   }
-  const names: Record<string, string> = {
-    AAO: "AAO",
-    "AAO verwalten": "AAO",
-    FMS: "FMS & Alarmierung",
-    "FMS & Alarmierungsprofile": "FMS & Alarmierung",
-    Freunde: "Kooperation & Disponenten",
-    "Verbund & Leitstellenfunk": "Kooperation & Disponenten",
-    Archiv: "Archiv & Statistik",
-    Fahrzeuge: "Fuhrpark",
-    Wachen: "Standorte verwalten",
-    Standorte: "Standorte verwalten",
-    "Katastrophenbereitschaft & KatS-Wachen": "Katastrophenbereitschaft",
-    Gebäude: "Standorte verwalten",
+  const routes: Record<string, string[]> = {
+    AAO: ["AAO & Disposition"],
+    "AAO verwalten": ["AAO & Disposition"],
+    FMS: ["AAO & Disposition", "FMS & Alarmierung"],
+    "FMS & Alarmierung": ["AAO & Disposition", "FMS & Alarmierung"],
+    "FMS & Alarmierungsprofile": ["AAO & Disposition", "FMS & Alarmierung"],
+    Notrufarbeitsplatz: ["AAO & Disposition", "Notrufarbeitsplatz"],
+    Einsatzkatalog: ["AAO & Disposition", "Einsatzkatalog"],
+    Freunde: ["Verbund"],
+    "Verbund & Leitstellenfunk": ["Verbund"],
+    "Kooperation & Disponenten": ["Verbund"],
+    "Gemeinsame Einsatzlagen": ["Verbund", "Gemeinsame Einsatzlagen"],
+    Katastrophenbereitschaft: ["Verbund", "Katastrophenbereitschaft"],
+    "Katastrophenbereitschaft & KatS-Wachen": [
+      "Verbund",
+      "Katastrophenbereitschaft",
+    ],
+    Archiv: ["Einsatzarchiv"],
+    "Archiv & Statistik": ["Einsatzarchiv"],
+    Fahrzeuge: ["Fahrzeuge"],
+    Fuhrpark: ["Fahrzeuge"],
+    Wachen: ["Standorte"],
+    "Standorte verwalten": ["Standorte"],
+    Gebäude: ["Standorte"],
+    "Standorte kaufen": ["Standorte", "Standort kaufen"],
+    Fortschritt: ["Fortschritt"],
+    Suche: ["Suchen …"],
+    "Konto & Sicherheit": [
+      "Einstellungen",
+      "Hinweise & Hilfe",
+      "Konto & Sicherheit",
+    ],
+    Sicherungen: ["Einstellungen", "Hinweise & Hilfe", "Sicherungen"],
   };
   const menu = page.getByRole("button", {
     name: "Leitstellenmenü",
@@ -54,10 +81,19 @@ export async function openPanel(page: Page, name: string) {
   }
   await expect(menu).toBeVisible();
   if ((await menu.getAttribute("aria-expanded")) !== "true") await menu.click();
+  const route = routes[name] ?? [name];
   await page
     .getByRole("navigation", { name: "Leitstellenmenü", exact: true })
-    .getByRole("button", { name: names[name] ?? name, exact: true })
+    .getByRole("button", { name: route[0], exact: true })
     .click();
+  for (const child of route.slice(1))
+    await page
+      .getByRole("dialog")
+      .getByRole(child === "Hinweise & Hilfe" ? "tab" : "button", {
+        name: child,
+        exact: true,
+      })
+      .click();
 }
 export async function showIncidents(page: Page) {
   if (
@@ -66,10 +102,12 @@ export async function showIncidents(page: Page) {
       .isVisible()
   )
     await page.keyboard.press("Escape");
-  const collapsed = page.getByRole("button", { name: /Einsätze.*Notrufe/ });
-  if (await collapsed.isVisible()) await collapsed.click();
-  await expect(page.getByRole("tab", { name: /Einsätze/ })).toBeVisible();
-  await page.getByRole("tab", { name: /Einsätze/ }).click();
+  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+  const expand = page.getByRole("button", {
+    name: "Ereignispanel ausklappen",
+    exact: true,
+  });
+  if (await expand.isVisible()) await expand.click();
 }
 export async function showMapTools(page: Page) {
   await openPanel(page, "Suche");

@@ -151,9 +151,13 @@ export const Settings = memo(function Settings({
         {tab === "display" && (
           <>
             <h3>Lesbarkeit</h3>
-            {select("scale", "Oberflächentext", [90, 100, 110, 120])}
+            {select("scale", "Oberflächentext", [90, 100, 110, 120, 125, 150])}
             {select("markerSize", "Kartensymbole", [80, 100, 120, 140])}
-            {checkbox("light", "Helle Oberfläche")}
+            {checkbox(
+              "light",
+              "Helle Oberfläche",
+              "Gilt für das Hauptmenü. Der Einsatzarbeitsplatz verwendet immer das helle Desktop-HUD.",
+            )}
             {checkbox(
               "reduced",
               "Bewegung reduzieren",

@@ -96,7 +96,7 @@ function GameApp() {
   );
   const preferences = useDevicePreferences();
   const layout = preferences.workspace;
-  const [listOpen, setListOpen] = useState(true);
+  const [listOpen, setListOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<
     "audio" | "display" | "controls" | "help"
   >("audio");
@@ -168,6 +168,30 @@ function GameApp() {
     setSelected("");
     setModalRaw("");
   }, [s?.generation]);
+  const open = useCallback(
+    (id: string) =>
+      requestDialogTransition(() => {
+        if (id === "friends") {
+          setModalRaw("friends");
+          return;
+        }
+        setSelected(id);
+        if (s?.buildings.some((b) => b.id === id)) setModalRaw("building");
+        else if (s?.vehicles.some((v) => v.id === id)) setModalRaw("");
+        else setModalRaw("mission");
+      }),
+    [s],
+  );
+  const closeDetail = useCallback(
+    () =>
+      requestDialogTransition(() => {
+        setModalRaw("");
+        setSelected("");
+      }),
+    [],
+  );
+  const closeKeepSelection = useCallback(() => setModal(""), [setModal]);
+  const returnToMenu = useCallback(() => setScreen("start"), []);
   if (loading)
     return (
       <div className="loading">
@@ -191,17 +215,6 @@ function GameApp() {
     );
   if (!s) return <AuthScreen />;
   const garages = modal === "stations" ? garageIndex(s) : null;
-  const open = (id: string) =>
-    requestDialogTransition(() => {
-      if (id === "friends") {
-        setModalRaw("friends");
-        return;
-      }
-      setSelected(id);
-      if (s?.buildings.some((b) => b.id === id)) setModalRaw("building");
-      else if (s?.vehicles.some((v) => v.id === id)) setModalRaw("");
-      else setModalRaw("mission");
-    });
   return (
     <div
       style={
@@ -215,7 +228,7 @@ function GameApp() {
       data-compact={layout.compact}
       data-queue-bottom={layout.queueBottom}
       data-stations-top={layout.stationsTop}
-      className={`app command-hud ${screen === "game" ? "in-game" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
+      className={`app command-hud ${screen === "game" ? "in-game light-hud light" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
     >
       {screen === "start" ? (
         <MainMenu
@@ -226,21 +239,17 @@ function GameApp() {
         />
       ) : (
         <GameHud
+          key={s.player.id + s.generation}
           s={s}
           selected={selected}
           open={open}
           setModal={setModal}
           readonly={readonly}
           notice={notice}
-          onMenu={() => setScreen("start")}
+          onMenu={returnToMenu}
           showDetail={modal === "mission"}
-          onCloseDetailKeepSelection={() => setModal("")}
-          onCloseDetail={() =>
-            requestDialogTransition(() => {
-              setModalRaw("");
-              setSelected("");
-            })
-          }
+          onCloseDetailKeepSelection={closeKeepSelection}
+          onCloseDetail={closeDetail}
           search={search}
           setSearch={setSearch}
           filter={filter}
@@ -322,6 +331,7 @@ function GameApp() {
                 backups: "Spielstände und Sicherungen",
                 progress: "Fortschritt und Erfolge",
                 archive: "Einsatzarchiv und Geldjournal",
+                statistics: "Statistiken",
                 help: "Spielanleitung",
                 settings: "Einstellungen",
               } as Record<string, string>
@@ -518,19 +528,56 @@ function GameApp() {
                         ))}
                     </>
                   )}
-                {modal === "friends" && <TeamPanel />}
+                {modal === "friends" && (
+                  <>
+                    <div className="action-grid">
+                      <button onClick={() => setModal("situation")}>
+                        Gemeinsame Einsatzlagen
+                      </button>
+                      <button onClick={() => setModal("civil")}>
+                        Katastrophenbereitschaft
+                      </button>
+                    </div>
+                    <TeamPanel />
+                  </>
+                )}
                 {modal === "players" && <Players />}
-                {modal === "aaos" && <AAOPanel s={s} />}
+                {modal === "aaos" && (
+                  <>
+                    <div className="action-grid">
+                      <button onClick={() => setModal("fms")}>
+                        FMS & Alarmierung
+                      </button>
+                      <button onClick={() => setModal("calls")}>
+                        Notrufarbeitsplatz
+                      </button>
+                      <button onClick={() => setModal("catalog")}>
+                        Einsatzkatalog
+                      </button>
+                    </div>
+                    <AAOPanel s={s} />
+                  </>
+                )}
                 {modal === "fms" && <FMSPanel s={s} />}
                 {modal === "progress" && (
                   <>
+                    <button onClick={() => setModal("archive")}>
+                      Einsatzstatistiken und Geldjournal
+                    </button>
                     <Progression s={s} />
                     <ProgressPanel s={s} />
                   </>
                 )}
-                {modal === "archive" && (
+                {(modal === "archive" || modal === "statistics") && (
                   <Suspense fallback={<p>Auswertung wird geladen …</p>}>
-                    <ArchivePanel s={s} open={open} />
+                    <ArchivePanel
+                      key={modal}
+                      s={s}
+                      open={open}
+                      initialTab={
+                        modal === "statistics" ? "statistics" : "archive"
+                      }
+                    />
                   </Suspense>
                 )}
               </>

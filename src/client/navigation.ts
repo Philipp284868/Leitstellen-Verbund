@@ -1,6 +1,11 @@
 /** The same catalog drives quick navigation and the documented reachable-view audit. */
 export const navigation = [
   {
+    id: "statistics",
+    title: "Statistiken",
+    words: "Einsätze Fahrleistung Patienten Auswertung",
+  },
+  {
     id: "calls",
     title: "Notrufarbeitsplatz",
     words: "Gespräch Rückruf Annahme Übergabe Warteschlange",

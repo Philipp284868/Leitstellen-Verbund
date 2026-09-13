@@ -9,8 +9,6 @@ import { writeWorldSituation } from "../../src/server/world-situation";
 import {
   advanceSituation,
   createSituation,
-  situationLevel,
-  situationNames,
 } from "../../src/simulation/world-situation";
 import { phaseFixture } from "../dispatch-fixture";
 import { organizationFixture } from "../mutual-aid-fixture";
@@ -103,7 +101,7 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     );
     writeWorldSituation(app.db.sql, state);
     app.game.step(0, Date.now(), { generation: false });
-    const situationLabel = `Welt- & Wetterlage ${situationNames[state.profile]} ${situationLevel(state)}`;
+    const situationLabel = "Welt- & Wetterlage";
     for (const p of [page, other])
       await expect(
         p.getByRole("button", {
@@ -135,13 +133,10 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     });
     const name = save.player.station;
     await expect(
-      other.getByRole("button", {
-        name: `Katastrophenalarm ${name}`,
-        exact: true,
-      }),
+      other.locator(".compact-desk").getByText(name, { exact: true }).first(),
     ).toBeVisible();
     await other
-      .getByRole("button", { name: `Katastrophenalarm ${name}`, exact: true })
+      .getByRole("button", { name: "Welt- & Wetterlage", exact: true })
       .click();
     await expect(other.locator(".public-alarm-list")).toContainText(name);
     expect(
@@ -158,10 +153,7 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     await other.reload();
     await enterGame(other);
     await expect(
-      other.getByRole("button", {
-        name: `Katastrophenalarm ${name}`,
-        exact: true,
-      }),
+      other.locator(".compact-desk").getByText(name, { exact: true }).first(),
     ).toBeVisible();
     await other.setViewportSize({ width: 1100, height: 700 });
     const fits = await other

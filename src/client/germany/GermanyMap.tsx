@@ -1,4 +1,13 @@
-import { Crosshair, LocateFixed, Navigation, Search, X } from "lucide-react";
+import {
+  Crosshair,
+  LocateFixed,
+  Navigation,
+  Search,
+  X,
+  Layers,
+  Plus,
+  Minus,
+} from "lucide-react";
 import type { Map as GLMap, GeoJSONSource } from "maplibre-gl";
 import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
@@ -76,6 +85,8 @@ export type GermanyMapProps = {
   readonly?: boolean;
   onInspect?: () => void;
   inspectionsHidden?: boolean;
+  toolsOpen?: boolean;
+  onToggleTools?: () => void;
 };
 
 export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
@@ -1004,7 +1015,48 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           Verbindung fehlt · letzter bestätigter Spielstand
         </div>
       )}
+      <div className="map-quick-tools" aria-label="Kartensteuerung">
+        <button
+          aria-label="Karte zentrieren"
+          title="Eigene Wachen zentrieren"
+          onClick={() => {
+            setFollowing(false);
+            center(s.buildings[0]?.pos ?? WORLD_CENTER);
+          }}
+        >
+          <LocateFixed size={20} />
+        </button>
+        <button
+          aria-label="Vergrößern"
+          title="Vergrößern"
+          onClick={() => mapRef.current?.zoomIn()}
+        >
+          <Plus size={20} />
+        </button>
+        <button
+          aria-label="Verkleinern"
+          title="Verkleinern"
+          onClick={() => mapRef.current?.zoomOut()}
+        >
+          <Minus size={20} />
+        </button>
+        <button
+          aria-label="Ebenen"
+          title="Ebenen und Kartensuche"
+          aria-expanded={props.toolsOpen}
+          onClick={props.onToggleTools}
+        >
+          <Layers size={20} />
+        </button>
+      </div>
       <aside className="map-tool-panel" aria-label="Kartenwerkzeuge">
+        <button
+          className="map-tools-close"
+          aria-label="Kartenwerkzeuge schließen"
+          onClick={props.onToggleTools}
+        >
+          <X size={18} />
+        </button>
         <div className="map-toolbar">
           <strong>Deutschland · reale Geografie</strong>
           <span>Regionen, Orte und Straßen aus dem lokalen Kartensatz</span>
@@ -1209,26 +1261,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             ausschließlich den Spielregeln.
           </p>
         </details>
-        <div className="map-zoom" aria-label="Zoomsteuerung">
-          <button
-            aria-label="Vergrößern"
-            onClick={() => mapRef.current?.zoomIn()}
-          >
-            +
-          </button>
-          <button
-            aria-label="Verkleinern"
-            onClick={() => mapRef.current?.zoomOut()}
-          >
-            −
-          </button>
-          <button
-            aria-label="Karte zentrieren"
-            onClick={() => center(s.buildings[0]?.pos ?? WORLD_CENTER)}
-          >
-            <LocateFixed size={18} />
-          </button>
-        </div>
         <details className="map-control-help">
           <summary>Kartensteuerung</summary>
           <p>

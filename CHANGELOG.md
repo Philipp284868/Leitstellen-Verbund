@@ -1,5 +1,13 @@
 # Änderungen
 
+## 2.27.0 · Heller, kompakter Leitstellenarbeitsplatz · 13.09.2026
+
+- Aufklappbares weißes Menü links, vier kompakte Statusanzeigen rechts und ein gemeinsames Panel für Textfunk und aktive Einsätze. Die Deutschlandkarte bleibt vollflächig bedienbar; Zentrieren, Zoom und Ebenen liegen unten rechts.
+- Serverzeit, Wetter, Budget und zusammengefasster Level-/XP-Fortschritt nutzen die vorhandenen Spieldaten. Weltlagen und Katastrophenbereitschaft bleiben erreichbar. Es gibt keine Zeitbeschleunigung und keine neue Ranglogik.
+- Sprechwünsche, Notrufe, Dringlichkeit und Großlagen bleiben in der kompakten Vorschau erkennbar. Suche, Filter, Verlauf und bestehende Einsatzbearbeitung erhalten alle Aktionen. Lesen oder Reiterwechsel quittiert keinen Sprechwunsch.
+- Menübedienung mit Tastatur, Escape und Fokus-Rückgabe; schließende Außenklicks gelangen nicht zur Karte. Menü- und Reiterwechsel behalten Kartenposition und Karteninstanz, ohne neue Standortabfragen auszulösen.
+- Helle Unterdialoge und zusätzliche Schriftgrößen 125/150 Prozent. Keine neue Abhängigkeit, Datenmigration, Neuinstallation oder Änderung an Routing, Ratenbegrenzung und privater AMP-Konfiguration.
+
 ## 2.26.2 · Routing und Standortzufahrten · 13.09.2026
 
 - Automatische Einsatzortprüfungen unterscheiden eine unerreichbare Straße von einem Routingausfall und prüfen weitere Kandidaten im selben Durchlauf. Bereits eingesetzte Fahrzeuge behalten ihre sichere Wartebehandlung.

@@ -1,4 +1,6 @@
-# Aktuelle Oberflächen des Deutschland-Produkts
+# Oberflächen des Deutschland-Produkts
+
+Seit 2.27 gelten die Zugänge in [Bedienung](wiki/Bedienung.md) und die Komponentenzuordnung in [Desktop-HUD-Abnahme](DESKTOP-HUD-ABNAHME.md): Menü links, vier Statusanzeigen rechts, ein gemeinsames Funk-/Einsatzpanel und Kartenwerkzeuge unten rechts. Die folgende ältere Funktionsmatrix dokumentiert den damaligen Prüfstand; frühere Hauptleisten-/Funkmenüpfade und das stillgelegte Tutorial sind keine aktuellen Navigationseinträge.
 
 Die zentrale Registrierung in `src/client/navigation.ts` und die Aufrufe in `src/client/App.tsx`, `src/client/GameHud.tsx` und `src/client/Topbar.tsx` bestimmen die vorhandenen Zugänge. Alle folgenden Ansichten verwenden die bestehende serverseitige Fachlogik. Die frühere unaufgerufene Friends-Ansicht ist durch TeamPanel/NeighborDesk ersetzt; der alte SoundSettings-Einstieg durch die gemeinsamen Einstellungen.
 

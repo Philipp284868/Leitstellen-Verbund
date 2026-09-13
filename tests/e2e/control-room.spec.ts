@@ -109,9 +109,7 @@ for (const [width, height] of [
   [1920, 1080],
   [2560, 1440],
 ])
-  test(`linker Arbeitsplatz, Textfunk und Menü ${width}x${height}`, async ({
-    page,
-  }) => {
+  test(`kompakter Textfunk und Menü ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto(origin);
     await page.getByLabel("Benutzername", { exact: true }).fill("control");
@@ -130,23 +128,23 @@ for (const [width, height] of [
       path: `.tools/screenshots/control-room/menu-${width}.png`,
     });
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
-    const log = page.getByRole("region", { name: "Funk und Ereignisse" });
+    const log = page.getByRole("region", {
+      name: "Einsatzübersicht und Textfunk",
+    });
     await expect(log).toBeVisible();
-    await expect(log.locator("input,textarea")).toHaveCount(0);
+    await expect(log.locator("input:visible,textarea:visible")).toHaveCount(0);
     await expect(page.getByRole("tab", { name: /Einsätze/ })).toBeVisible();
-    await page.getByRole("tab", { name: /Notrufe/ }).click();
-    await expect(page.locator(".left-call-list")).toBeVisible();
-    await page.getByRole("tab", { name: /Einsätze/ }).click();
-    const list = await page.locator(".mission-sidebar").boundingBox(),
-      bounds = await log.boundingBox();
-    expect(list!.y + list!.height).toBeLessThanOrEqual(bounds!.y);
-    const identity = await page
-        .locator(".control-topbar .hud-identity")
-        .boundingBox(),
-      menu = await page
-        .getByRole("button", { name: "Leitstellenmenü", exact: true })
-        .boundingBox();
-    expect(menu!.x).toBeGreaterThanOrEqual(identity!.x + identity!.width);
+    await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+    await page.getByRole("button", { name: /^Notrufe / }).click();
+    await expect(page.locator("#missions-preview")).toBeVisible();
+    await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
+    const bounds = await log.boundingBox(),
+      status = await page.locator(".hud-status").boundingBox();
+    expect(bounds!.y).toBeGreaterThan(status!.y + status!.height);
+    const menu = await page
+      .getByRole("button", { name: "Leitstellenmenü", exact: true })
+      .boundingBox();
+    expect(menu!.x).toBe(20);
     await page.screenshot({
       path: `.tools/screenshots/control-room/hud-${width}.png`,
     });
@@ -259,15 +257,15 @@ test("vergrößerte Bedienoberfläche behält Kartenfokus und Textprotokoll", as
     .fill("Control-room-password!");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
-  await expect(page.locator(".event-log")).toBeVisible();
+  await expect(page.locator(".compact-desk")).toBeVisible();
   await expect(
     page.locator(
       ".facility-map-controls,[data-testid=map-presence],.germany-pois",
     ),
   ).toHaveCount(0);
-  const side = await page.locator(".mission-sidebar").boundingBox(),
-    log = await page.locator(".event-log").boundingBox();
-  expect(side!.y + side!.height).toBeLessThanOrEqual(log!.y);
+  const desk = await page.locator(".compact-desk").boundingBox();
+  expect(desk!.x + desk!.width).toBeCloseTo(1346, 0);
+  expect(desk!.y + desk!.height).toBeLessThan(680);
   await page.screenshot({
     path: ".tools/screenshots/control-room/hud-scaled.png",
   });

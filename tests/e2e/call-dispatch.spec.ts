@@ -170,7 +170,7 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
   await expect(
     page.getByRole("heading", { name: "Warten auf Notruf" }),
   ).toBeVisible();
-  await expect(page.locator(".mission-sidebar")).toContainText(
+  await expect(page.locator(".compact-desk")).toContainText(
     "mehrere Einsätze können gleichzeitig laufen",
   );
   await page.screenshot({

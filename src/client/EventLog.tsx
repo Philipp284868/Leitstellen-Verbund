@@ -43,7 +43,7 @@ export function EventLog({
     setHistory(null);
     setLoaded(false);
     setCursor(null);
-  }, [save?.generation]);
+  }, [save?.player.id, save?.generation]);
   useEffect(() => {
     if (bottom.current && !history)
       scroll.current?.scrollTo({ top: scroll.current.scrollHeight });

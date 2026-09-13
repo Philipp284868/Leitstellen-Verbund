@@ -68,13 +68,13 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
     box = await map.boundingBox();
   expect(top).not.toBeNull();
   expect(box).not.toBeNull();
-  expect(top!.height).toBe(76);
-  expect(top!.y).toBe(0);
+  expect(top!.height).toBe(64);
+  expect(top!.y).toBe(20);
   expect(box!.x).toBe(0);
-  expect(box!.y).toBe(76);
+  expect(box!.y).toBe(0);
   expect(box!.width).toBe(1600);
-  expect(box!.height).toBe(924);
-  await expect(page.locator(".mission-sidebar")).toBeVisible();
+  expect(box!.height).toBe(1000);
+  await expect(page.locator(".compact-desk")).toBeVisible();
   await expect(tools).toBeHidden();
   await expect(
     page.getByRole("button", { name: "Personal", exact: true }),
@@ -128,9 +128,8 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await expect(page.locator(".command-menu")).toBeVisible();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(map).toHaveAttribute("data-camera", camera!);
-  await expect(page.locator(".mission-sidebar")).toBeHidden();
-  await page.getByRole("button", { name: /Einsätze.*Notrufe/ }).click();
-  await expect(page.locator(".mission-sidebar")).toBeVisible();
+  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+  await expect(page.locator(".compact-desk")).toBeVisible();
   expect(errors).toEqual([]);
 });
 

@@ -67,7 +67,7 @@ export function parseDevice(
   for (const key of ["scale", "markerSize", "zoomSensitivity"] as const) {
     const allowed =
       key === "scale"
-        ? [90, 100, 110, 120]
+        ? [90, 100, 110, 120, 125, 150]
         : key === "markerSize"
           ? [80, 100, 120, 140]
           : [50, 75, 100, 125, 150];

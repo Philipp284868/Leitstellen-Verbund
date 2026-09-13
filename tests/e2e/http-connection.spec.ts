@@ -74,7 +74,7 @@ async function register(page: Page, label: string) {
   ).toHaveCount(0);
   await expect(
     page
-      .locator(".critical-events article")
+      .locator(".connection-inline")
       .filter({ hasText: "Serververbindung verloren." }),
   ).toHaveCount(0);
 }
@@ -173,7 +173,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
 
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
-    await expect(a.locator(".critical-events")).toContainText(
+    await expect(a.locator(".connection-inline")).toContainText(
       "Serververbindung verloren.",
     );
     await openPanel(a, "Standorte");
@@ -201,7 +201,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     await a.getByRole("button", { name: "Spielen", exact: true }).click();
     await expect(
       a
-        .locator(".critical-events article")
+        .locator(".connection-inline")
         .filter({ hasText: "Serververbindung verloren." }),
     ).toHaveCount(0);
     await expect(
