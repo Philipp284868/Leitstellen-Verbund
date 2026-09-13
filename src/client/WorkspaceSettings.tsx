@@ -20,8 +20,8 @@ export function WorkspaceSettings({
         Texteingaben.
       </p>
       <p>
-        Einsätze und Notrufe liegen links, das Textprotokoll bleibt unten links.
-        Die Größe folgt der Oberflächenskalierung.
+        Funk, Ereignisse und aktive Einsätze teilen sich das Panel rechts oben.
+        Das Menü öffnet sich links. Die Größe folgt der Oberflächenskalierung.
       </p>
       <label>
         <input

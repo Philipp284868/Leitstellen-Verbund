@@ -416,6 +416,11 @@
 .light-hud .compact-desk .mission-preview.selected {
   background: #edf4ff;
 }
+.app.command-hud.light-hud[data-compact="true"] .compact-desk .mission-preview {
+  padding: 4px 8px;
+  min-height: 48px;
+  gap: 6px;
+}
 .preview-empty {
   padding: 14px 8px;
   font-size: calc(13px * var(--ui-scale));
