@@ -1,6 +1,12 @@
 # AMP-Betrieb ab 2.26
 
-## Normales Balancing-Update 2.28
+## Infrastruktur-Update 2.29
+
+Die bestehende Instanz über **Update** aktualisieren und anschließend starten. Das freigegebene Paket enthält den Wasserquellenzusatz; der vorhandene lokale Geodatenordner und alle Konfigurationswerte bleiben bestehen. Beim ersten Start wird dieser kleine Zusatz einmal indexiert, spätere Starts verwenden den geprüften Cache. Kein neuer Deutschlandvollimport.
+
+Schema 28 wird vor Spielerfreigabe mit konsistenter Sicherung und einer privaten Migrationsvorschau aktiviert. Eindeutige Altbesitz-/Klinikfälle werden automatisch übernommen. Bei `INFRASTRUCTURE_MIGRATION_REQUIRED` bleibt der Bestand geschützt; die konkrete Vorschau benennt fehlende Kaufbelege, widersprüchliche Zuordnungen oder Transportkonflikte. Nicht zurücksetzen oder Dateien von Hand korrigieren. Der kontrollierte Prüf-/Klärungsweg steht in [Gemeinsame Infrastruktur](GEMEINSAME-INFRASTRUKTUR.md).
+
+## Vorheriges Balancing-Update 2.28
 
 Die bestehende Instanz regulär **aktualisieren** und anschließend falls nötig **starten**. Template, Startskript, Geodaten und private Konfiguration weiterverwenden. Kein Reset. Der vorhandene Paketweg sichert den Bestand und übernimmt Schema 27; beim Start werden Level und anteiliger Fortschritt, Kaufrechte und laufende Einsätze einmalig erhalten und Funkanliegen still zusammengeführt. Alte überzählige Einsätze zuerst abarbeiten. Die neue Version allein verändert keine private Installation. [Genaue Regeln und Messungen](PROGRESSION-KARTE.md).
 

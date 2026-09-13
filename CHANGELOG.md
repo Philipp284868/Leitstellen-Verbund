@@ -1,5 +1,15 @@
 # Änderungen
 
+## 2.29.0 · Kompaktes HUD und gemeinsame Infrastruktur · 13.09.2026
+
+- Drei zusammenhängende Statuskarten für Serverzeit/Wetter, Budget und Rang/XP. Die kompakte aktive Einsatzliste folgt mit echtem Abstand und passt sich Schriftvergrößerung an. Der eigenständige Funk-/Ereignisbereich entfällt; offene Aufgaben bleiben im jeweiligen Einsatz bedienbar. Ein einzelner begrenzter Hinweis erscheint für drei Sekunden ab tatsächlicher Anzeige, ohne Quittierung oder Wiederholung nach Wiederverbindung.
+- Die sichtbare Kartenwerkzeugleiste entfällt. Maus, Tastatur, Suche und Quellenangaben bleiben erhalten. Maßstab und sämtliche Spielmarker verwenden dieselbe metrische Projektionsberechnung: sichtbar bei 200 Metern und näher, ohne unsichtbare Trefferflächen oder zusätzliche Übersichtsabfragen.
+- Ein realer Wachstandort besitzt genau einen Eigentümer je Serverwelt. Kauf, Abbuchung und Standortidentität einschließlich Quellaliasen werden zusammen geprüft. Andere Spieler sehen ausschließlich öffentliche Besitzdaten, auch bei ausgeloggtem Eigentümer.
+- Reale Kliniken sind feste Servereinrichtungen ohne Kauf, Ausbau oder Fahrzeugdepot. Gemeinsame persistente Betten/Fachbereiche, transaktionale Reservierung, reale Anfahrt, Übergabe und spätere Entlassung ersetzen getrennte Spielerpools. Volle Ziele führen zu begrenzter Alternativprüfung oder einem sichtbaren Wartezustand; laufende Reservierungen haben keine blinde Ablaufzeit.
+- Mitgeliefertes OSM-Wasserquellenpaket mit Datenstand und Quell-IDs; zusätzlich eindeutig gekennzeichnete deterministische Ergänzungen anhand lokaler Siedlungs-, Straßen- und Flächengeometrie. Endliche gemeinsame Förderleistung, Schlauch-/Pumpenprüfung, Aufbauzeit, Tankverbrauch und tatsächliche Tanker-Nachfüllfahrt sind Teil der Simulation. Kartenabfragen sind gebündelt, gecacht und abbrechbar; genaue Zugangsprüfung erfolgt bei Auswahl oder Verwendung.
+- Schema 28 sichert den Bestand vor der Migration, erstellt eine Vorschau und führt nur eindeutig belegte Eigentums-/Erstattungskorrekturen aus. Unklare Altbelege stoppen die Aktivierung mit Diagnose. Fahrzeuge, Patienten, Transporte und übernommene Klinikbelegung bleiben erhalten; doppelte Wachen und bisherige Privatkliniken werden bei Bedarf zu einer nicht operativen Migrationsreserve. Kein Reset und keine Änderung des regulären XP-/Euro-Balancings.
+- Bestehender AMP-Paketweg einschließlich Wasserzusatzpaket; keine neue Instanz oder normale manuelle Dateireparatur. [Betreiberhinweise und Prüfgrenzen](docs/GEMEINSAME-INFRASTRUKTUR.md).
+
 ## 2.28.0 · Fortschritt, Einsatzplätze und ruhiger Einsatzfunk · 13.09.2026
 
 - Gemeinsame Progressionsversion 2 mit fachlich festen XP-Beträgen und neuer Levelkurve: Einstiegsprüfung 11–12 erfolgreiche Aufträge bis Stufe 2. Abschluss-XP sind ganzzahlig, transaktional und dauerhaft gegen Wiederholung geschützt; Helfer teilen einen begrenzten XP-Pool. Preise, Startgeld und Geldvergütungen bleiben unverändert.

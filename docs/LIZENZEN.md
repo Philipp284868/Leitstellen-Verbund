@@ -6,6 +6,8 @@ UI-Symbole stammen aus **Lucide**, ISC-Lizenz. Abhängigkeiten werden über die 
 
 MapLibre GL JS: BSD-3-Clause. Die separaten Aufbereitungs-/Routingwerkzeuge GraphHopper und Planetiler: Apache-2.0. Deren ausführbare Artefakte werden anhand fester Prüfsummen außerhalb des Quellcodepakets bereitgestellt. Lizenztexte und Hinweise der jeweiligen Werkzeuge/Daten bleiben bei Weitergabe maßgeblich.
 
+Das ab 2.29 mitgelieferte Löschwasser-Zusatzpaket enthält OpenStreetMap-Daten unter ODbL aus demselben Geofabrik-Datenstand wie die Deutschlandkarte. [Quellkennungen, Aufbereitung und Prüfsummen](../data/water/README.md) liegen mit dem unveränderten Zusatzpaket bei. Ergänzte Standorte und unbekannte Förderwerte sind ausdrücklich Simulation beziehungsweise Spielprofile, keine zusätzlich behaupteten OSM-Erfassungen oder Messungen. Die sichtbare Kartenattribution bleibt erhalten.
+
 Primärquellen für die technische Auswahl:
 
 - [React-Versionen](https://react.dev/versions)
