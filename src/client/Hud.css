@@ -304,13 +304,19 @@
 }
 @media print {
   .app.command-hud.in-game,
-  .app.command-hud > .hud-shell {
+  .app.command-hud > .hud-shell,
+  .app.command-hud .hud-overlays,
+  .app.command-hud .hud-workspace {
     display: block !important;
+    position: static !important;
+    max-height: none !important;
     height: auto !important;
     overflow: visible !important;
     background: white !important;
   }
-  .app.command-hud .hud-shell > :not(.incident-dock) {
+  .app.command-hud .hud-shell > :not(.hud-overlays),
+  .app.command-hud .hud-overlays > :not(.hud-workspace),
+  .app.command-hud .hud-workspace > :not(.incident-dock) {
     display: none !important;
   }
   .app.command-hud .incident-dock,

@@ -22,7 +22,6 @@ import { BuildingIcon } from "../shared/map-icons";
 import { navigation } from "./navigation";
 import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "../shared/product";
-import { EventLog } from "./EventLog";
 const BuildingPanel = lazy(() =>
   import("./Resources").then((m) => ({ default: m.BuildingPanel })),
 );
@@ -96,7 +95,7 @@ function GameApp() {
   );
   const preferences = useDevicePreferences();
   const layout = preferences.workspace;
-  const [listOpen, setListOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
   const [settingsTab, setSettingsTab] = useState<
     "audio" | "display" | "controls" | "help"
   >("audio");
@@ -191,7 +190,15 @@ function GameApp() {
     [],
   );
   const closeKeepSelection = useCallback(() => setModal(""), [setModal]);
-  const returnToMenu = useCallback(() => setScreen("start"), []);
+  const returnToMenu = useCallback(
+    () =>
+      requestDialogTransition(() => {
+        setModalRaw("");
+        setSelected("");
+        setScreen("start");
+      }),
+    [],
+  );
   if (loading)
     return (
       <div className="loading">
@@ -300,7 +307,13 @@ function GameApp() {
         />
       )}
       {screen === "start" && readonly && (
-        <EventLog open={open} panel={setModal} />
+        <p className="menu-offline" role="status">
+          Offline · Aktionen sind gesperrt.{" "}
+          <button onClick={() => window.location.reload()}>
+            Neu verbinden
+          </button>
+          <button onClick={() => setModal("support")}>Verbindungshilfe</button>
+        </p>
       )}
       {modal && !(screen === "game" && modal === "mission") && (
         <Modal
@@ -323,7 +336,6 @@ function GameApp() {
                 mission: "Einsatzdisposition",
                 friends: "Leitstellenverbund und Disponenten",
                 aaos: "Alarm- und Ausrückeordnung",
-                radio: "Funk und Ereignisse",
                 calls: "Notrufarbeitsplatz",
                 situation: "Gemeinsame Einsatzlagen",
                 civil: "Katastrophenbereitschaft und KatS-Wachen",
@@ -405,9 +417,6 @@ function GameApp() {
                 )}
                 {modal === "situation" && (
                   <SituationDesk s={s} onOpen={open} onPanel={setModal} />
-                )}
-                {modal === "radio" && (
-                  <EventLog open={open} panel={setModal} expanded />
                 )}
                 {modal === "facilities" && (
                   <FacilityBrowser

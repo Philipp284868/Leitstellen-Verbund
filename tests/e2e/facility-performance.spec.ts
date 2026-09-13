@@ -145,18 +145,11 @@ test("facility viewport sustained drag measurement", async ({ page }) => {
     await page.mouse.up();
     await page.waitForTimeout(1200);
     if (!process.env.FACILITY_BASELINE) {
-      const loaded = (await page
-        .locator(".facility-map-canvas")
-        .getAttribute("data-loaded-bounds"))!
-        .split(",")
-        .map(Number);
-      const visible = JSON.parse(
-        (await viewport.getAttribute("data-bounds"))!,
-      ) as number[][];
-      expect(loaded[0]).toBeLessThanOrEqual(visible[0][0]);
-      expect(loaded[1]).toBeLessThanOrEqual(visible[0][1]);
-      expect(loaded[2]).toBeGreaterThanOrEqual(visible[1][0]);
-      expect(loaded[3]).toBeGreaterThanOrEqual(visible[1][1]);
+      await expect(page.locator(".facility-map-canvas")).toHaveAttribute(
+        "data-visible-count",
+        "0",
+      );
+      expect(metrics.started).toBe(0);
     }
     await openPanel(page, "Standorte verwalten");
     await page

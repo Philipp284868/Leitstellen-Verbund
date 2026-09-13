@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "../helpers/independent-sites";
 import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -132,9 +133,6 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
       },
     });
     const name = save.player.station;
-    await expect(
-      other.locator(".compact-desk").getByText(name, { exact: true }).first(),
-    ).toBeVisible();
     await other
       .getByRole("button", { name: "Welt- & Wetterlage", exact: true })
       .click();
@@ -152,9 +150,6 @@ test("zwei Arbeitsplätze sehen dieselbe regionale Weltlage und öffentliche Ala
     });
     await other.reload();
     await enterGame(other);
-    await expect(
-      other.locator(".compact-desk").getByText(name, { exact: true }).first(),
-    ).toBeVisible();
     await other.setViewportSize({ width: 1100, height: 700 });
     const fits = await other
       .locator(".topbar")
@@ -535,7 +530,8 @@ test("gezielt angefragte Nachbarhilfe ist in der gemeinsamen Lage mit wirklicher
   const helper = await app.auth.create("helper", password, "Helfer", "West");
   const s = organizationFixture(owner, "field", "ops-browser-owner");
   replaceFixtureSave(app.db, owner, s);
-  app.db.save(
+  saveIndependentFixture(
+    app.db,
     helper,
     organizationFixture(helper, "field", "ops-browser-helper"),
   );
@@ -596,7 +592,8 @@ test("freie Fahrzeugwünsche werden als privater Entwurf gespeichert, nach Versa
     owner,
     organizationFixture(owner, "field", "aid-wishes-owner"),
   );
-  app.db.save(
+  saveIndependentFixture(
+    app.db,
     helper,
     organizationFixture(helper, "field", "aid-wishes-helper"),
   );

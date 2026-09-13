@@ -477,7 +477,7 @@ export class AudioController {
       if (queue.length >= 160) {
         this.publish({
           error:
-            "Funkwarteschlange ausgelastet. Weitere Meldungen bleiben im Funkverlauf abrufbar.",
+            "Funkwarteschlange ausgelastet. Weitere Informationen bleiben in den Einsatzdetails abrufbar.",
         });
         return;
       }
@@ -585,7 +585,7 @@ export class AudioController {
         if (!voice.preview)
           this.publish({
             error:
-              "Funk-/Audiosignal nach Zeitlimit beendet; Meldung bleibt im Verlauf abrufbar.",
+              "Funk-/Audiosignal nach Zeitlimit beendet; Information bleibt in den Einsatzdetails abrufbar.",
           });
         this.stopVoice(voice.id);
         this.drain("dispatch");

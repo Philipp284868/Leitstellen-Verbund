@@ -72,11 +72,7 @@ async function register(page: Page, label: string) {
       { exact: true },
     ),
   ).toHaveCount(0);
-  await expect(
-    page
-      .locator(".connection-inline")
-      .filter({ hasText: "Serververbindung verloren." }),
-  ).toHaveCount(0);
+  await expect(page.locator(".offline-badge")).toHaveCount(0);
 }
 
 test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller Reconnect ohne Lockerung des Servers", async ({
@@ -108,6 +104,10 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
     const legacy = await fetch(origin + "/socket.io/?EIO=4&transport=polling");
     expect(legacy.status).toBe(403);
     await expect(a.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
+    await expect(a.getByTestId("germany-map-viewport")).toHaveAttribute(
+      "data-camera",
+      /zoom/,
+    );
     await showMapTools(a);
     await a.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
     await a
@@ -173,9 +173,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
 
     // Simulate a stopped client connection without an automatic online event.
     await a.evaluate(() => window.dispatchEvent(new Event("offline")));
-    await expect(a.locator(".connection-inline")).toContainText(
-      "Serververbindung verloren.",
-    );
+    await expect(a.locator(".offline-badge")).toHaveText("Offline");
     await openPanel(a, "Standorte");
     await a.locator(".station-card").click();
     const ownerState = () =>
@@ -196,14 +194,11 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       .last()
       .click();
     await a
-      .getByRole("button", { name: "Seite neu laden", exact: true })
+      .getByRole("button", { name: "Leitstellenmenü", exact: true })
       .click();
+    await a.getByRole("button", { name: "Neu verbinden", exact: true }).click();
     await a.getByRole("button", { name: "Spielen", exact: true }).click();
-    await expect(
-      a
-        .locator(".connection-inline")
-        .filter({ hasText: "Serververbindung verloren." }),
-    ).toHaveCount(0);
+    await expect(a.locator(".offline-badge")).toHaveCount(0);
     await expect(
       a.getByRole("button", { name: "Leitstellenmenü", exact: true }),
     ).toBeVisible();

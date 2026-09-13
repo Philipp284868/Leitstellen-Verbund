@@ -26,6 +26,7 @@ export class FacilityReader<T> {
     private state: (state: State) => void,
     private headers: HeadersInit = {},
     private context = "default",
+    private endpoint = "/api/facilities",
   ) {}
   cooldown(query: string) {
     return Math.max(
@@ -70,7 +71,7 @@ export class FacilityReader<T> {
     this.lastStart = Date.now();
     this.state({ loading: true, error: "", cooldownUntil: 0 });
     try {
-      const response = await fetch(`/api/facilities?${intent.query}`, {
+      const response = await fetch(`${this.endpoint}?${intent.query}`, {
         credentials: "same-origin",
         headers: this.headers,
         signal: controller.signal,
@@ -124,7 +125,8 @@ export class FacilityReader<T> {
         !this.stopped &&
         !controller.signal.aborted &&
         intent.generation === this.generation
-      )
+      ) {
+        this.lastIdentity = "";
         this.state({
           loading: false,
           error:
@@ -133,6 +135,7 @@ export class FacilityReader<T> {
               : "Standortverbindung unterbrochen.",
           cooldownUntil: 0,
         });
+      }
     } finally {
       if (this.active === controller) this.active = undefined;
       if (this.pending && !this.stopped) this.schedule(Date.now() + 250);

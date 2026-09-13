@@ -7,7 +7,9 @@ import { BuildingIcon } from "../../shared/map-icons";
 import type { Save } from "../../shared/model";
 import { command, useGame } from "../store";
 import { credits } from "../ui";
-import type { facilityOffer } from "../../shared/facilities/purchase";
+import { facilityOffer } from "../../shared/facilities/purchase";
+import { useInfrastructure } from "../infrastructure";
+import { specialties } from "../../simulation/organizations-schema";
 import {
   facilityKinds,
   facilityLabels,
@@ -30,7 +32,11 @@ type ListOffer = Omit<Offer, "facility"> & {
     "id" | "kind" | "name" | "address" | "state" | "pos"
   >;
 };
-export function useFacilities<T>(query: string, revision: string | number = 0) {
+export function useFacilities<T>(
+  query: string,
+  revision: string | number = 0,
+  endpoint = "/api/facilities",
+) {
   const { mode, user, workspace } = useGame();
   const actor = user?.id || "anonymous",
     owner = workspace?.owner || actor;
@@ -58,6 +64,7 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
           })),
         { "x-game-mode": mode },
         actor,
+        endpoint,
       );
       reader.current.request(
         latest.current.query,
@@ -70,7 +77,7 @@ export function useFacilities<T>(query: string, revision: string | number = 0) {
       reader.current?.destroy();
       document.removeEventListener("visibilitychange", activate);
     };
-  }, [mode, actor, owner]);
+  }, [mode, actor, owner, endpoint]);
   useEffect(() => {
     reader.current?.request(query, String(revision));
   }, [query, revision]);
@@ -89,6 +96,7 @@ export function FacilityDetails({
   onClose?: () => void;
   readonly?: boolean;
 }) {
+  const infra = useInfrastructure([id]);
   const response = useFacilities<Offer>(
     new URLSearchParams({ id }).toString(),
     purchaseRevision(s),
@@ -100,8 +108,18 @@ export function FacilityDetails({
     setConfirm(false);
     setError("");
   }, [id]);
-  const offer = response.data,
-    f = offer?.facility;
+  const f = response.data?.facility;
+  const ownership = infra.facilities.includes(id)
+    ? infra.ownership.find((o) => o.facility === id)
+    : response.data?.ownership;
+  const clinic = response.data?.clinic
+    ? {
+        ...response.data.clinic,
+        ...infra.clinics[`public:${id}`],
+        revision: infra.revision,
+      }
+    : undefined;
+  const offer = f ? facilityOffer(s, f, ownership, clinic) : undefined;
   return (
     <section className="facility-details" aria-label="Standortdetails">
       {onClose && (
@@ -125,24 +143,36 @@ export function FacilityDetails({
             {f.address || "Postadresse in der Quelle nicht erfasst"} · {f.state}
           </p>
           <p className="facility-status">
-            {offer.owned
-              ? "✓ Eigener Standort"
-              : offer.reason
-                ? `⊘ ${offer.reason}`
-                : "+ Kauf möglich · Fahrweg wird bei Bestätigung geprüft"}
+            {f.kind === "hospital"
+              ? "Servereinrichtung · gemeinsame Klinikaufnahme"
+              : offer.owned
+                ? "✓ Eigener Standort"
+                : offer.reason
+                  ? `⊘ ${offer.reason}`
+                  : "+ Kauf möglich · Fahrweg wird bei Bestätigung geprüft"}
           </p>
           <dl>
-            <dt>Kaufpreis im Spiel</dt>
-            <dd>{credits(offer.price)}</dd>
-            <dt>Freischaltung</dt>
-            <dd>Stufe {offer.level}</dd>
-            <dt>Spielkapazität</dt>
+            {f.kind !== "hospital" && (
+              <>
+                <dt>Kaufpreis im Spiel</dt>
+                <dd>{credits(offer.price)}</dd>
+                <dt>Freischaltung</dt>
+                <dd>Stufe {offer.level}</dd>
+                <dt>Spielkapazität</dt>
+                <dd>
+                  {offer.slots
+                    ? `${offer.slots} Stellplätze · automatische Grundbesetzung`
+                    : "Ausbildungsbetrieb"}
+                </dd>
+              </>
+            )}
+            <dt>Eigentümer</dt>
             <dd>
-              {offer.slots
-                ? `${offer.slots} Stellplätze · automatische Grundbesetzung`
-                : f.kind === "hospital"
-                  ? "20 Behandlungsplätze · simulierte Fachbereiche"
-                  : "Ausbildungsbetrieb"}
+              {f.kind === "hospital"
+                ? "Server"
+                : offer.owned
+                  ? "Deine Leitstelle"
+                  : (ownership?.name ?? "Noch nicht erworben")}
             </dd>
             <dt>Untertyp laut Quelle</dt>
             <dd>{f.subtype === "unknown" ? "Nicht belegt" : f.subtype}</dd>
@@ -169,12 +199,52 @@ export function FacilityDetails({
               </>
             )}
           </dl>
+          {clinic && (
+            <section
+              className="clinic-capacity"
+              aria-label="Gemeinsame Klinikbetten"
+            >
+              <h3>
+                {clinic.open ? "Aufnahme geöffnet" : "Keine Notfallaufnahme"}
+              </h3>
+              <p>
+                {readonly
+                  ? "Offline · letzte bestätigte Kapazität"
+                  : "Gemeinsame Spielkapazität"}
+                :{" "}
+                <strong>
+                  {clinic.free} / {clinic.total} Betten frei
+                </strong>
+              </p>
+              <p>
+                {clinic.occupied} belegt · {clinic.reserved} für Anfahrten
+                reserviert
+              </p>
+              {clinic.occupied + clinic.reserved > clinic.total && (
+                <p role="status">
+                  Übernommener Übergangsbestand: Alle bisherigen Patienten und
+                  Anfahrten bleiben erhalten. Neue Aufnahmen warten auf freie
+                  Kapazität.
+                </p>
+              )}
+              <p>
+                {clinic.specialties
+                  .map((d) => specialties[d as keyof typeof specialties] ?? d)
+                  .join(" · ")}
+              </p>
+              <small>
+                Simulierte Behandlungsplätze, keine echten aktuellen
+                Krankenhausbelegungen. Reservierungen bleiben während der
+                Anfahrt erhalten.
+              </small>
+            </section>
+          )}
           <p className="hint">
             {f.kind !== "hospital" &&
               "Nach dem Kauf wird der Spielbetrieb innerhalb von 25 Sekunden vorbereitet. "}
-            Personal, Fahrzeuge, Betten und Preise sind Spielwerte. Du erwirbst
-            das Verwaltungsrecht für deine Leitstelle; andere Leitstellen
-            bleiben unabhängig.
+            {f.kind === "hospital"
+              ? "Diese reale Klinik wird vom Server betrieben. Alle Leitstellen nutzen dieselben Spielkapazitäten."
+              : "Personal, Fahrzeuge und Preise sind Spielwerte. Der reale Wachstandort besitzt genau einen Eigentümer in dieser Serverwelt."}
           </p>
           {f.quality.length > 0 && (
             <details>
@@ -204,7 +274,8 @@ export function FacilityDetails({
             </details>
           )}
           {error && <p role="alert">{error}</p>}
-          {offer.owned ? (
+          {f.kind === "hospital" ||
+          (ownership && !offer.owned) ? null : offer.owned ? (
             <button className="primary" onClick={() => onManage(offer.owned!)}>
               Verwalten
             </button>
@@ -273,10 +344,13 @@ export function FacilityBrowser({
     new URLSearchParams({
       q: query,
       kind,
-      status,
+      status: kind === "hospital" ? "all" : status,
       offset: String(offset),
     }).toString(),
     purchaseRevision(s),
+  );
+  const infra = useInfrastructure(
+    (data?.offers ?? []).map((o) => o.facility.id),
   );
   return (
     <div className="facility-browser">
@@ -310,7 +384,11 @@ export function FacilityBrowser({
         </label>
         <label>
           Kaufstatus
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select
+            value={kind === "hospital" ? "all" : status}
+            disabled={kind === "hospital"}
+            onChange={(e) => setStatus(e.target.value)}
+          >
             <option value="all">Alle Standorte</option>
             <option value="available">Jetzt erwerbbar</option>
             <option value="owned">Eigene Standorte</option>
@@ -341,11 +419,17 @@ export function FacilityBrowser({
                 <b>{o.facility.name || facilityLabels[o.facility.kind]}</b>
                 <small>{o.facility.address || o.facility.state}</small>
                 <small>
-                  {o.owned
-                    ? "✓ Eigener Standort"
-                    : o.reason
-                      ? `⊘ ${o.reason}`
-                      : `+ ${credits(o.price)} · Stufe ${o.level}`}
+                  {o.facility.kind === "hospital"
+                    ? `Serverklinik · ${readonly ? "Offline · " : ""}${infra.clinics[`public:${o.facility.id}`] ? `${infra.clinics[`public:${o.facility.id}`].free} / ${infra.clinics[`public:${o.facility.id}`].total} Betten frei` : "gemeinsame Aufnahme"}`
+                    : o.owned
+                      ? "✓ Eigener Standort"
+                      : infra.ownership.find(
+                            (p) => p.facility === o.facility.id,
+                          )
+                        ? `Besitz von ${infra.ownership.find((p) => p.facility === o.facility.id)!.name}`
+                        : o.reason
+                          ? `⊘ ${o.reason}`
+                          : `+ ${credits(o.price)} · Stufe ${o.level}`}
                 </small>
               </span>
             </button>

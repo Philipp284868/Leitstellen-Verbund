@@ -54,19 +54,37 @@ emit({ mode: "multi", readonly: false });
 function App() {
   const [selected, setSelected] = useState(""),
     [inspected, setInspected] = useState(0),
-    [hidden, setHidden] = useState(false);
+    [hidden, setHidden] = useState(false),
+    [tools, setTools] = useState(false),
+    [details, setDetails] = useState<HTMLDivElement | null>(null);
   return (
     <>
+      <style>{`.hud-inspection-slot > :is(.map-vehicle-detail,.map-place-detail,.facility-map-panel,.map-tool-panel) { position:relative; inset:auto; width:100%; max-height:700px; margin:0; box-sizing:border-box; overflow:auto; }`}</style>
       <header>
         <b>Isolierte Kartensteuerungsprüfung · keine Geografieabnahme</b>
         <button onClick={() => setHidden(!hidden)}>
           Testarbeitsansicht umschalten
         </button>
+        <button onClick={() => setTools(!tools)}>Kartensuche öffnen</button>
         <output data-testid="selection">{selected}</output>
         <output data-testid="inspection-count">{inspected}</output>
       </header>
+      <div
+        ref={setDetails}
+        className="hud-inspection-slot"
+        style={{
+          position: "absolute",
+          top: 70,
+          left: 12,
+          zIndex: 20,
+          width: 400,
+        }}
+      />
       <GermanyMap
         s={save}
+        detailContainer={details}
+        toolsOpen={tools}
+        onToggleTools={() => setTools(!tools)}
         selected={selected}
         onSelect={setSelected}
         inspectionsHidden={hidden}

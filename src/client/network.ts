@@ -1,4 +1,5 @@
 import type { AidRequest } from "../simulation/organizations-schema";
+import { resetInfrastructure } from "./infrastructure";
 import { audio } from "./audio/controller";
 import { useSyncExternalStore } from "react";
 import { subscription } from "./external-store";
@@ -59,6 +60,7 @@ export function setNetwork(data: {
   update();
 }
 export function resetNetwork() {
+  resetInfrastructure();
   net = {
     friends: [],
     support: [],

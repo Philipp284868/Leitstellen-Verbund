@@ -65,14 +65,17 @@ test("Menü- und Reiterwechsel erzeugen keine Kartenabfragen oder Kameraänderun
         .getByRole("button", { name: "Leitstellenmenü", exact: true })
         .click();
       await page.keyboard.press("Escape");
-      await page
-        .getByRole("tab", { name: baseline ? /Notrufe/ : /Aktive Einsätze/ })
-        .click();
-      await page
-        .getByRole("tab", {
-          name: baseline ? /^Einsätze/ : /Funk & Ereignisse/,
-        })
-        .click();
+      if (baseline) {
+        await page.getByRole("tab", { name: /Notrufe/ }).click();
+        await page.getByRole("tab", { name: /^Einsätze/ }).click();
+      } else {
+        await page
+          .getByRole("button", { name: "Einsatzliste einklappen" })
+          .click();
+        await page
+          .getByRole("button", { name: "Einsatzliste ausklappen" })
+          .click();
+      }
     }
     const after = await metrics();
     expect(await map.getAttribute("data-camera")).toBe(camera);

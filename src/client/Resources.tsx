@@ -28,11 +28,7 @@ import { fleetReadiness } from "../shared/fleet-view";
 import { unproject } from "../shared/germany/projection";
 import { BuildingIcon, VehicleIcon } from "../shared/map-icons";
 import { type Building, type Save } from "../shared/model";
-import {
-  HospitalSettings,
-  StationSettings,
-  VehicleStaffing,
-} from "./Organizations";
+import { StationSettings, VehicleStaffing } from "./Organizations";
 import { purchaseReason } from "../shared/purchase";
 import { buildingStaffingStatus } from "../simulation/building-staffing";
 import { operativeCode } from "../simulation/fms";
@@ -103,6 +99,39 @@ export function BuildingPanel({
             : "";
   const location = unproject(b.pos);
   const selectedPurchase = vehicles.find((v) => v.id === purchase);
+  if (b.migrationReserve)
+    return (
+      <section className="resource-panel">
+        <h2>Migrationsreserve · {b.name}</h2>
+        <p>
+          {b.migrationReserve.reason}. Dieser Bestand ist keine betriebsfähige
+          Wache und erzeugt keine Einsätze.
+        </p>
+        <p>
+          Einmalige belegte Erstattung:{" "}
+          {credits(b.migrationReserve.refundedCents)}. Fahrzeuge, Ausrüstung und{" "}
+          {s.people.filter((p) => p.home === b.id).length} Personen sind
+          erhalten.
+        </p>
+        <p>
+          Fahrzeuge im Fuhrpark an eine eigene passende Wache mit freier
+          Kapazität versetzen. Bereits laufende Fahrten werden zunächst
+          abgeschlossen.
+        </p>
+        {fleet.map((v) => (
+          <button key={v.id} onClick={() => onOpenVehicle(v.id)}>
+            {v.name} · {tripLabel(v, s.time)}
+          </button>
+        ))}
+      </section>
+    );
+  if (b.type === "hospital")
+    return (
+      <p>
+        Serverkrankenhäuser werden in der Standortsuche unter „Krankenhaus“
+        angezeigt. Eine private Verwaltung ist nicht vorgesehen.
+      </p>
+    );
   return (
     <section className="resource-panel">
       {form.error && (
@@ -176,16 +205,6 @@ export function BuildingPanel({
           )}
           <StationSettings key={`${b.id}-station`} s={s} b={b} />
           <CivilStationSettings key={`${b.id}-civil`} s={s} b={b} />
-          <HospitalSettings key={`${b.id}-hospital`} s={s} b={b} />
-          {b.type === "hospital" && (
-            <p className="banner">
-              {b.hospital?.open === false
-                ? "Patientenaufnahme abgemeldet"
-                : "Patientenaufnahme geöffnet"}{" "}
-              · {s.beds.filter((x) => x.home === b.id).length} /{" "}
-              {b.hospital?.capacity ?? 20 * b.level} Betten belegt
-            </p>
-          )}
           <StationGarage s={s} b={b} onOpen={onOpenVehicle} />
           {!fleet.length && (
             <button
@@ -681,7 +700,10 @@ export function Fleet({
                       }
                     >
                       {s.buildings
-                        .filter((b) => b.type === vt(v.type).home)
+                        .filter(
+                          (b) =>
+                            !b.migrationReserve && b.type === vt(v.type).home,
+                        )
                         .map((b) => (
                           <option key={b.id} value={b.id}>
                             {b.name}

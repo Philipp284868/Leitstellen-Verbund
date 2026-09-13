@@ -1,3 +1,4 @@
+import { mapKey } from "./ui-navigation";
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -214,7 +215,7 @@ for (const size of [
     const before = await page
       .locator("[data-testid=germany-map-viewport]")
       .getAttribute("data-bounds");
-    await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
+    await mapKey(page, "+");
     await expect(
       page.locator("[data-testid=germany-map-viewport]"),
     ).not.toHaveAttribute("data-bounds", before!);

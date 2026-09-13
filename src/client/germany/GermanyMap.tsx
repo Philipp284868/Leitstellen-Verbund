@@ -1,18 +1,11 @@
-import {
-  Crosshair,
-  LocateFixed,
-  Navigation,
-  Search,
-  X,
-  Layers,
-  Plus,
-  Minus,
-} from "lucide-react";
+import { WaterSourceDetails } from "./WaterSourceDetails";
+import { Crosshair, Navigation, Search, X } from "lucide-react";
 import type { Map as GLMap, GeoJSONSource } from "maplibre-gl";
 import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { bt, vt } from "../../shared/catalog";
 import {
   devicePreferences,
@@ -51,6 +44,9 @@ import {
 import { vehicleMotion, vehiclePosition } from "../../shared/vehicle-position";
 import type { Point } from "../../shared/world";
 import { groupGameMarkers, type MarkerData } from "./game-markers";
+import { mapMetricScale, markerFocusZoom } from "./metric-scale";
+import { attachWaterLayer } from "./water-layer";
+import type { WaterSource } from "../../shared/germany/water";
 import "./GermanyMap.css";
 import { mapInitializationMessage } from "./map-errors";
 import { attachTileLabels } from "./map-labels";
@@ -76,6 +72,7 @@ type SearchResult = {
   lat: number;
 };
 export type GermanyMapProps = {
+  detailContainer?: HTMLElement | null;
   s: Save;
   selected: string;
   onSelect: (id: string) => void;
@@ -170,6 +167,10 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     [facilityError, setFacilityError] = useState("");
   const facilityCanvas = useRef<HTMLCanvasElement>(null),
     facilityLayer = useRef<ReturnType<typeof attachFacilityLayer> | null>(null);
+  const waterCanvas = useRef<HTMLCanvasElement>(null),
+    waterLayer = useRef<ReturnType<typeof attachWaterLayer> | null>(null);
+  const [waterSource, setWaterSource] = useState<WaterSource | null>(null),
+    [waterError, setWaterError] = useState("");
   const facilityOptions = useRef({
     actor: user?.id || "anonymous",
     enabled: true,
@@ -201,11 +202,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       s.missions.find(
         (m) => m.id === selected && (!m.control || m.control.locationKnown),
       )?.pos);
-  const center = useCallback((point: Point, zoom = 13) => {
+  const center = useCallback((point: Point, zoom?: number) => {
     const p = unproject(point);
     mapRef.current?.easeTo({
       center: [p.lon, p.lat],
-      zoom,
+      zoom: zoom ?? markerFocusZoom(p.lat),
       duration: devicePreferences().reduced ? 0 : 250,
     });
   }, []);
@@ -222,6 +223,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     if (inspectionsHidden) {
       setFacilityId("");
       setFacilityGroup([]);
+      setWaterSource(null);
     }
   }, [inspectionsHidden]);
   useEffect(() => {
@@ -295,10 +297,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         mapRef.current = gl;
         gl.addControl(
           new maplibregl.AttributionControl({ compact: false }),
-          "bottom-right",
-        );
-        gl.addControl(
-          new maplibregl.ScaleControl({ unit: "metric", maxWidth: 120 }),
           "bottom-left",
         );
         const target = gl.getCanvas();
@@ -315,6 +313,13 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             facilityCanvas.current,
             () => facilityOptions.current,
             setFacilityError,
+          );
+        if (waterCanvas.current)
+          waterLayer.current = attachWaterLayer(
+            gl,
+            waterCanvas.current,
+            user?.id ?? "anonymous",
+            setWaterError,
           );
         gl.on("load", () => {
           if (!disposed) {
@@ -475,6 +480,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                 event.clientY - box.top,
               ) || [];
             if (facilities.length) {
+              setWaterSource(null);
               latest.current.onInspect?.();
               const cluster = facilities.find((f) => f.count > 1);
               if (cluster) {
@@ -492,6 +498,12 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
             }
             setFacilityId("");
             setFacilityGroup([]);
+            const water = waterLayer.current?.hitTest(
+              event.clientX - box.left,
+              event.clientY - box.top,
+            );
+            if (water) latest.current.onInspect?.();
+            setWaterSource(water ?? null);
             return;
           }
         };
@@ -601,6 +613,8 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           removeLabels();
           facilityLayer.current?.destroy();
           facilityLayer.current = null;
+          waterLayer.current?.destroy();
+          waterLayer.current = null;
           observer.disconnect();
           dialogs.disconnect();
           cancelAnimationFrame(pending);
@@ -639,7 +653,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         detail.point,
         Number.isFinite(detail.zoom)
           ? Math.max(4, Math.min(18, detail.zoom!))
-          : 14,
+          : markerFocusZoom(unproject(detail.point).lat),
       );
     };
     window.addEventListener("lv:map-focus", focus);
@@ -751,7 +765,7 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
   // never become DOM nodes. At overview scale overlapping markers form groups.
   const markers = useMemo(() => {
     const map = mapRef.current;
-    if (!ready || !map) return [];
+    if (!ready || !map || !mapMetricScale(map).markers) return [];
     const data: MarkerData[] = [];
     const add = (item: MarkerData) => {
       if (
@@ -767,16 +781,18 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       )
         data.push(item);
     };
-    s.buildings.forEach((b) =>
-      add({
-        id: b.id,
-        name: b.name,
-        pos: b.facility?.position ?? b.pos,
-        kind: "station",
-        type: b.type,
-        org: bt(b.type).org,
-      }),
-    );
+    s.buildings
+      .filter((b) => !b.migrationReserve && b.type !== "hospital")
+      .forEach((b) =>
+        add({
+          id: b.id,
+          name: b.name,
+          pos: b.facility?.position ?? b.pos,
+          kind: "station",
+          type: b.type,
+          org: bt(b.type).org,
+        }),
+      );
     s.missions
       .filter((m) => !m.control || m.control.locationKnown)
       .forEach((m) =>
@@ -819,17 +835,6 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
       );
     if (showFriends)
       friends.forEach((f) => {
-        f.buildings.forEach((b) =>
-          add({
-            id: `${f.id}:${b.id}`,
-            name: `${b.name} · ${f.name}`,
-            pos: b.facility?.position ?? b.pos,
-            kind: "station",
-            type: b.type,
-            org: bt(b.type).org,
-            friend: true,
-          }),
-        );
         f.missions
           .filter((m) => !m.control || m.control.locationKnown)
           .forEach((m) =>
@@ -890,11 +895,18 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
     markers.flatMap((m) => m.members).map((m) => [m.id, m]),
   );
   const objectDetails = objectGroup.map((m) => visibleObjects.get(m.id) ?? m);
+  const scale =
+    ready && mapRef.current ? mapMetricScale(mapRef.current) : undefined;
+  useEffect(() => {
+    if (ready && selectionPosition && !scale?.markers)
+      center(selectionPosition);
+  }, [selected, ready]);
   return (
     <div
       className="map-wrap germany-map"
       data-world={s.world}
       data-testid="germany-map"
+      data-scale-meters={scale?.meters}
     >
       <div
         ref={viewport}
@@ -909,6 +921,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
         <canvas
           ref={facilityCanvas}
           className="facility-map-canvas"
+          aria-hidden="true"
+        />
+        <canvas
+          ref={waterCanvas}
+          className="water-map-canvas"
           aria-hidden="true"
         />
         <span className="facility-map-loading" role="status">
@@ -1015,373 +1032,392 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
           Verbindung fehlt · letzter bestätigter Spielstand
         </div>
       )}
-      <div className="map-quick-tools" aria-label="Kartensteuerung">
-        <button
-          aria-label="Karte zentrieren"
-          title="Eigene Wachen zentrieren"
-          onClick={() => {
-            setFollowing(false);
-            center(s.buildings[0]?.pos ?? WORLD_CENTER);
-          }}
+      {scale && (
+        <div
+          className="metric-map-scale"
+          aria-label="Metrischer Kartenmaßstab"
+          style={{ width: scale.pixels }}
         >
-          <LocateFixed size={20} />
-        </button>
-        <button
-          aria-label="Vergrößern"
-          title="Vergrößern"
-          onClick={() => mapRef.current?.zoomIn()}
-        >
-          <Plus size={20} />
-        </button>
-        <button
-          aria-label="Verkleinern"
-          title="Verkleinern"
-          onClick={() => mapRef.current?.zoomOut()}
-        >
-          <Minus size={20} />
-        </button>
-        <button
-          aria-label="Ebenen"
-          title="Ebenen und Kartensuche"
-          aria-expanded={props.toolsOpen}
-          onClick={props.onToggleTools}
-        >
-          <Layers size={20} />
-        </button>
-      </div>
-      <aside className="map-tool-panel" aria-label="Kartenwerkzeuge">
-        <button
-          className="map-tools-close"
-          aria-label="Kartenwerkzeuge schließen"
-          onClick={props.onToggleTools}
-        >
-          <X size={18} />
-        </button>
-        <div className="map-toolbar">
-          <strong>Deutschland · reale Geografie</strong>
-          <span>Regionen, Orte und Straßen aus dem lokalen Kartensatz</span>
+          {scale.label}
         </div>
-        <div className="map-search">
-          <label>
-            <Search size={16} />
-            <input
-              aria-label="Karte durchsuchen"
-              placeholder="Ort, Fahrzeug, Menü oder Einstellung …"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-              }}
-            />
-          </label>
-          {search && (
-            <button aria-label="Suche löschen" onClick={() => setSearch("")}>
-              <X size={15} />
-            </button>
-          )}
-          <select
-            aria-label="Kartenfilter"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          >
-            {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((v) => (
-              <option key={v}>{v}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Organisation auf Karte"
-            value={org}
-            onChange={(event) => setOrg(event.target.value)}
-          >
-            {[
-              "Alle",
-              "Feuerwehr",
-              "Rettungsdienst",
-              "Polizei",
-              "THW",
-              "Wasserrettung",
-              "Infrastruktur",
-            ].map((v) => (
-              <option key={v}>{v}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Fahrzeugstatus auf Karte"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map((v) => (
-              <option key={v}>{v}</option>
-            ))}
-          </select>
-          {search && (
-            <div className="map-search-results" aria-label="Suchergebnisse">
-              {searchNavigation(search).map((item) => (
+      )}
+      {props.detailContainer &&
+        createPortal(
+          <>
+            {props.toolsOpen && (
+              <aside className="map-tool-panel" aria-label="Kartenwerkzeuge">
                 <button
-                  key={item.title}
-                  onClick={() => {
-                    openNavigation(item);
-                    setSearch("");
-                  }}
+                  className="map-tools-close"
+                  aria-label="Kartenwerkzeuge schließen"
+                  onClick={props.onToggleTools}
                 >
-                  <b>{item.title}</b>
-                  <small>Menü / Einstellungen</small>
+                  <X size={18} />
                 </button>
-              ))}
-              {localResults.map((result) => (
-                <button
-                  key={result.id}
-                  onClick={() => {
-                    center(result.pos);
-                    onSelect(result.id);
-                    setSearch("");
-                    setFollowing(false);
-                  }}
-                >
-                  {result.name}
-                  <small>Meine Leitstelle</small>
-                </button>
-              ))}
-              {found.map((result) => (
-                <button
-                  key={result.id}
-                  onClick={() => {
-                    center(project(result), result.kind === "city" ? 11 : 14);
-                    setSearch("");
-                    setFollowing(false);
-                  }}
-                >
-                  {result.name}
-                  <small>{result.kind}</small>
-                </button>
-              ))}
-              {searching && <span role="status">Orte werden gesucht …</span>}
-              {searchError && <span role="alert">{searchError}</span>}
-              {!searching &&
-                !searchError &&
-                !found.length &&
-                !localResults.length &&
-                !searchNavigation(search).length && (
+                <div className="map-toolbar">
+                  <strong>Deutschland · reale Geografie</strong>
                   <span>
-                    Keine passenden Orte oder sichtbaren Objekte gefunden.
+                    Regionen, Orte und Straßen aus dem lokalen Kartensatz
                   </span>
-                )}
-            </div>
-          )}
-        </div>
-        <div className="map-layers" aria-label="Kartenebenen">
-          <button
-            onClick={() => {
-              setFollowing(false);
-              overview();
-            }}
-          >
-            Ganz Deutschland
-          </button>
-          <button
-            onClick={() => {
-              setFollowing(false);
-              center(s.buildings[0]?.pos ?? WORLD_CENTER);
-            }}
-          >
-            Meine Wachen
-          </button>
-          <button
-            data-center-selection
-            disabled={!selectionPosition}
-            onClick={() => selectionPosition && center(selectionPosition)}
-          >
-            <Crosshair size={15} /> Auswahl zentrieren
-          </button>
-          {selectedVehicle && (
-            <button
-              aria-pressed={following}
-              onClick={() => setFollowing(!following)}
-            >
-              <Navigation size={15} />
-              Fahrzeug folgen
-            </button>
-          )}
-          <button
-            aria-pressed={labels}
-            onClick={() => {
-              setLabels(!labels);
-              mapRef.current?.triggerRepaint();
-            }}
-          >
-            Beschriftung
-          </button>
-          <button aria-pressed={routes} onClick={() => setRoutes(!routes)}>
-            Fahrwege
-          </button>
-          {!!friends.length && (
-            <button
-              aria-pressed={showFriends}
-              onClick={() => setShowFriends(!showFriends)}
-            >
-              Verbund
-            </button>
-          )}
-        </div>
-        <details className="map-poi-filters">
-          <summary>Einrichtungen & Kartenlegende</summary>
-          <div className="incident-legend" aria-label="Einsatzkategorien">
-            {(
-              [
-                "unknown",
-                "fire",
-                "medical",
-                "technical",
-                "police",
-                "water",
-                "mixed",
-              ] as const
-            ).map((category) => (
-              <span key={category}>
-                <i style={{ background: incidentColors[category] }}>
-                  <IncidentIcon category={category} />
-                </i>
-                {incidentKindNames[category]}
-              </span>
-            ))}
-          </div>
-          <p>
-            Grün kennzeichnet Medizin, nicht geringe Dringlichkeit. Ein gelbes !
-            am Einsatz zeigt NOTFALL; bei kombinierten Lagen bleiben zusätzliche
-            Kategorien erkennbar.
-          </p>
-          <p>
-            Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
-            Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
-            freigegebener Verbund · ! am Fahrzeug: Störung. Gruppen öffnen eine
-            Auswahl; Vergrößern zeigt räumlich getrennte Standorte.
-          </p>
-          <p>
-            Einrichtungen stammen aus dem installierten
-            OpenStreetMap-Datenstand. Ihre Verfügbarkeit im Spiel folgt
-            ausschließlich den Spielregeln.
-          </p>
-        </details>
-        <details className="map-control-help">
-          <summary>Kartensteuerung</summary>
-          <p>
-            Ziehen: Karte verschieben · Mausrad: Zoom zum Zeiger · Klick:
-            auswählen. Pfeiltasten und +/− bei fokussierter Karte, Pos1: ganz
-            Deutschland. Strg+Mausrad vergrößert den Browser. Escape bricht die
-            Standortsuche ab.
-          </p>
-        </details>
-        <Operations s={s} />
-      </aside>
-      {!inspectionsHidden && !!objectDetails.length && (
-        <aside
-          className="map-place-detail map-object-group"
-          aria-label="Objekte am Kartenstandort"
-        >
-          <button
-            className="map-detail-close"
-            aria-label="Objektgruppe schließen"
-            onClick={() => setObjectGroup([])}
-          >
-            <X size={18} />
-          </button>
-          <h3>{objectDetails.length} Objekte an diesem Standort</h3>
-          <p>
-            Alle Einträge bleiben einzeln auswählbar, auch an derselben Wache.
-          </p>
-          <div className="map-object-list">
-            {objectDetails.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => {
-                  setObjectGroup([]);
-                  onSelect(m.friend ? "friends" : (m.target ?? m.id));
-                }}
+                </div>
+                <div className="map-search">
+                  <label>
+                    <Search size={16} />
+                    <input
+                      aria-label="Karte durchsuchen"
+                      placeholder="Ort, Fahrzeug, Menü oder Einstellung …"
+                      value={search}
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                      }}
+                    />
+                  </label>
+                  {search && (
+                    <button
+                      aria-label="Suche löschen"
+                      onClick={() => setSearch("")}
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                  <select
+                    aria-label="Kartenfilter"
+                    value={filter}
+                    onChange={(event) => setFilter(event.target.value)}
+                  >
+                    {["Alle", "Einsätze", "Wachen", "Fahrzeuge"].map((v) => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Organisation auf Karte"
+                    value={org}
+                    onChange={(event) => setOrg(event.target.value)}
+                  >
+                    {[
+                      "Alle",
+                      "Feuerwehr",
+                      "Rettungsdienst",
+                      "Polizei",
+                      "THW",
+                      "Wasserrettung",
+                      "Infrastruktur",
+                    ].map((v) => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Fahrzeugstatus auf Karte"
+                    value={status}
+                    onChange={(event) => setStatus(event.target.value)}
+                  >
+                    {["Alle", "Bereit", "Unterwegs", "Am Einsatzort"].map(
+                      (v) => (
+                        <option key={v}>{v}</option>
+                      ),
+                    )}
+                  </select>
+                  {search && (
+                    <div
+                      className="map-search-results"
+                      aria-label="Suchergebnisse"
+                    >
+                      {searchNavigation(search).map((item) => (
+                        <button
+                          key={item.title}
+                          onClick={() => {
+                            openNavigation(item);
+                            setSearch("");
+                          }}
+                        >
+                          <b>{item.title}</b>
+                          <small>Menü / Einstellungen</small>
+                        </button>
+                      ))}
+                      {localResults.map((result) => (
+                        <button
+                          key={result.id}
+                          onClick={() => {
+                            center(result.pos);
+                            onSelect(result.id);
+                            setSearch("");
+                            setFollowing(false);
+                          }}
+                        >
+                          {result.name}
+                          <small>Meine Leitstelle</small>
+                        </button>
+                      ))}
+                      {found.map((result) => (
+                        <button
+                          key={result.id}
+                          onClick={() => {
+                            center(
+                              project(result),
+                              result.kind === "city" ? 11 : 14,
+                            );
+                            setSearch("");
+                            setFollowing(false);
+                          }}
+                        >
+                          {result.name}
+                          <small>{result.kind}</small>
+                        </button>
+                      ))}
+                      {searching && (
+                        <span role="status">Orte werden gesucht …</span>
+                      )}
+                      {searchError && <span role="alert">{searchError}</span>}
+                      {!searching &&
+                        !searchError &&
+                        !found.length &&
+                        !localResults.length &&
+                        !searchNavigation(search).length && (
+                          <span>
+                            Keine passenden Orte oder sichtbaren Objekte
+                            gefunden.
+                          </span>
+                        )}
+                    </div>
+                  )}
+                </div>
+                <div className="map-layers" aria-label="Kartenebenen">
+                  <button
+                    onClick={() => {
+                      setFollowing(false);
+                      overview();
+                    }}
+                  >
+                    Ganz Deutschland
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFollowing(false);
+                      center(s.buildings[0]?.pos ?? WORLD_CENTER);
+                    }}
+                  >
+                    Meine Wachen
+                  </button>
+                  <button
+                    data-center-selection
+                    disabled={!selectionPosition}
+                    onClick={() =>
+                      selectionPosition && center(selectionPosition)
+                    }
+                  >
+                    <Crosshair size={15} /> Auswahl zentrieren
+                  </button>
+                  {selectedVehicle && (
+                    <button
+                      aria-pressed={following}
+                      onClick={() => setFollowing(!following)}
+                    >
+                      <Navigation size={15} />
+                      Fahrzeug folgen
+                    </button>
+                  )}
+                  <button
+                    aria-pressed={labels}
+                    onClick={() => {
+                      setLabels(!labels);
+                      mapRef.current?.triggerRepaint();
+                    }}
+                  >
+                    Beschriftung
+                  </button>
+                  <button
+                    aria-pressed={routes}
+                    onClick={() => setRoutes(!routes)}
+                  >
+                    Fahrwege
+                  </button>
+                  {!!friends.length && (
+                    <button
+                      aria-pressed={showFriends}
+                      onClick={() => setShowFriends(!showFriends)}
+                    >
+                      Verbund
+                    </button>
+                  )}
+                </div>
+                <details className="map-poi-filters">
+                  <summary>Einrichtungen & Kartenlegende</summary>
+                  <div
+                    className="incident-legend"
+                    aria-label="Einsatzkategorien"
+                  >
+                    {(
+                      [
+                        "unknown",
+                        "fire",
+                        "medical",
+                        "technical",
+                        "police",
+                        "water",
+                        "mixed",
+                      ] as const
+                    ).map((category) => (
+                      <span key={category}>
+                        <i style={{ background: incidentColors[category] }}>
+                          <IncidentIcon category={category} />
+                        </i>
+                        {incidentKindNames[category]}
+                      </span>
+                    ))}
+                  </div>
+                  <p>
+                    Grün kennzeichnet Medizin, nicht geringe Dringlichkeit. Ein
+                    gelbes ! am Einsatz zeigt NOTFALL; bei kombinierten Lagen
+                    bleiben zusätzliche Kategorien erkennbar.
+                  </p>
+                  <p>
+                    Kontur: geografischer Ort · gefüllt: Spielgebäude. Farbe:
+                    Organisation · Zahl am Fahrzeug: FMS · gestrichelter Rand:
+                    freigegebener Verbund · ! am Fahrzeug: Störung. Gruppen
+                    öffnen eine Auswahl; Vergrößern zeigt räumlich getrennte
+                    Standorte.
+                  </p>
+                  <p>
+                    Einrichtungen stammen aus dem installierten
+                    OpenStreetMap-Datenstand. Ihre Verfügbarkeit im Spiel folgt
+                    ausschließlich den Spielregeln.
+                  </p>
+                </details>
+                <details className="map-control-help">
+                  <summary>Kartensteuerung</summary>
+                  <p>
+                    Ziehen: Karte verschieben · Mausrad: Zoom zum Zeiger ·
+                    Klick: auswählen. Pfeiltasten und +/− bei fokussierter
+                    Karte, Pos1: ganz Deutschland. Strg+Mausrad vergrößert den
+                    Browser. Escape bricht die Standortsuche ab.
+                  </p>
+                </details>
+                <Operations s={s} />
+              </aside>
+            )}
+            {!inspectionsHidden && !!objectDetails.length && (
+              <aside
+                className="map-place-detail map-object-group"
+                aria-label="Objekte am Kartenstandort"
               >
-                {m.kind === "vehicle" ? (
-                  <VehicleIcon type={m.type ?? ""} size={30} />
-                ) : m.kind === "station" ? (
-                  <BuildingIcon type={m.type ?? ""} size={30} />
-                ) : (
-                  <IncidentIcon org={m.org} category={m.category} />
-                )}
+                <button
+                  className="map-detail-close"
+                  aria-label="Objektgruppe schließen"
+                  onClick={() => setObjectGroup([])}
+                >
+                  <X size={18} />
+                </button>
+                <h3>{objectDetails.length} Objekte an diesem Standort</h3>
+                <p>
+                  Alle Einträge bleiben einzeln auswählbar, auch an derselben
+                  Wache.
+                </p>
+                <div className="map-object-list">
+                  {objectDetails.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setObjectGroup([]);
+                        onSelect(m.friend ? "friends" : (m.target ?? m.id));
+                      }}
+                    >
+                      {m.kind === "vehicle" ? (
+                        <VehicleIcon type={m.type ?? ""} size={30} />
+                      ) : m.kind === "station" ? (
+                        <BuildingIcon type={m.type ?? ""} size={30} />
+                      ) : (
+                        <IncidentIcon org={m.org} category={m.category} />
+                      )}
+                      <span>
+                        <strong>{m.name}</strong>
+                        <small>
+                          {m.org}
+                          {m.fms !== undefined ? ` · FMS ${m.fms}` : ""}
+                          {m.fault ? " · Störung" : ""}
+                          {m.friend ? " · Verbund" : ""}
+                        </small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+            )}
+            {!inspectionsHidden && selectedVehicle && !objectDetails.length && (
+              <div
+                className="map-vehicle-detail"
+                aria-label="Ausgewähltes Fahrzeug"
+              >
+                <button
+                  className="map-detail-close"
+                  aria-label="Fahrzeugdetails schließen"
+                  onClick={() => onInspect?.()}
+                >
+                  <X size={18} />
+                </button>
+                <strong>
+                  <VehicleIcon type={selectedVehicle.type} />
+                  {selectedVehicle.name}
+                </strong>
+                <span>{tripLabel(selectedVehicle, s.time)}</span>
                 <span>
-                  <strong>{m.name}</strong>
-                  <small>
-                    {m.org}
-                    {m.fms !== undefined ? ` · FMS ${m.fms}` : ""}
-                    {m.fault ? " · Störung" : ""}
-                    {m.friend ? " · Verbund" : ""}
-                  </small>
+                  {Math.round(vehicleMotion(selectedVehicle, s.time).kmh)} km/h
+                  aktuell
                 </span>
-              </button>
-            ))}
-          </div>
-        </aside>
-      )}
-      {!inspectionsHidden && selectedVehicle && !objectDetails.length && (
-        <div className="map-vehicle-detail" aria-label="Ausgewähltes Fahrzeug">
-          <button
-            className="map-detail-close"
-            aria-label="Fahrzeugdetails schließen"
-            onClick={() => onInspect?.()}
-          >
-            <X size={18} />
-          </button>
-          <strong>
-            <VehicleIcon type={selectedVehicle.type} />
-            {selectedVehicle.name}
-          </strong>
-          <span>{tripLabel(selectedVehicle, s.time)}</span>
-          <span>
-            {Math.round(vehicleMotion(selectedVehicle, s.time).kmh)} km/h
-            aktuell
-          </span>
-          <span>
-            {selectedVehicle.journey?.reason ||
-              "Fahrweg nach aktuellem Straßenmodell"}
-          </span>
-        </div>
-      )}
-      {!inspectionsHidden && facilityId && (
-        <div className="facility-map-panel">
-          <FacilityDetails
-            key={facilityId}
-            s={s}
-            id={facilityId}
-            readonly={readonly}
-            onClose={() => setFacilityId("")}
-            onManage={(id) => {
-              setFacilityId("");
-              onSelect(id);
-            }}
-          />
-        </div>
-      )}
-      {!inspectionsHidden && !!facilityGroup.length && (
-        <div className="facility-map-panel facility-details">
-          <button className="close" onClick={() => setFacilityGroup([])}>
-            ×
-          </button>
-          <h3>Einrichtungen an dieser Stelle</h3>
-          {facilityGroup.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => {
-                setFacilityId(f.id!);
-                setFacilityGroup([]);
-              }}
-            >
-              {f.name || "Name nicht erfasst"} ·{" "}
-              {f.kind ? facilityLabels[f.kind] : "Einrichtung"}
-            </button>
-          ))}
-        </div>
-      )}
-      {facilityError && (
-        <p className="facility-map-panel facility-details" role="status">
-          {facilityError}
-        </p>
-      )}
+                <span>
+                  {selectedVehicle.journey?.reason ||
+                    "Fahrweg nach aktuellem Straßenmodell"}
+                </span>
+              </div>
+            )}
+            {!inspectionsHidden && facilityId && (
+              <div className="facility-map-panel">
+                <FacilityDetails
+                  key={facilityId}
+                  s={s}
+                  id={facilityId}
+                  readonly={readonly}
+                  onClose={() => setFacilityId("")}
+                  onManage={(id) => {
+                    setFacilityId("");
+                    onSelect(id);
+                  }}
+                />
+              </div>
+            )}
+            {!inspectionsHidden && !!facilityGroup.length && (
+              <div className="facility-map-panel facility-details">
+                <button className="close" onClick={() => setFacilityGroup([])}>
+                  ×
+                </button>
+                <h3>Einrichtungen an dieser Stelle</h3>
+                {facilityGroup.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      setFacilityId(f.id!);
+                      setFacilityGroup([]);
+                    }}
+                  >
+                    {f.name || "Name nicht erfasst"} ·{" "}
+                    {f.kind ? facilityLabels[f.kind] : "Einrichtung"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {facilityError && (
+              <p className="facility-map-panel facility-details" role="status">
+                {facilityError}
+              </p>
+            )}
+            {!inspectionsHidden && waterSource && (
+              <WaterSourceDetails
+                source={waterSource}
+                onClose={() => setWaterSource(null)}
+              />
+            )}
+            {waterError && props.toolsOpen && <p role="status">{waterError}</p>}
+          </>,
+          props.detailContainer,
+        )}
     </div>
   );
 });

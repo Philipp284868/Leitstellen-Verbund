@@ -5,7 +5,6 @@ import { pathToFileURL } from "node:url";
 import type { Config } from "../../src/server/config";
 import type { startServer } from "../../src/server/index";
 import { request } from "../../src/simulation/incidents";
-import { updateIncidentRadio } from "../../src/simulation/incident-radio";
 import { transmit } from "../../src/simulation/transmissions";
 import { radioFixture } from "../radio-fixture";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
@@ -192,7 +191,7 @@ test("zwei Disponenten bearbeiten Lage und Nachforderung bis zur Alarmierung und
     await second.close();
   }
 });
-test("Kritischer Textfunk bleibt sichtbar; Lesen quittiert nicht; Übernahme und Freigabe erfolgen im Einsatz", async ({
+test("Offene Lagemeldungen bleiben ausschließlich im Einsatz bearbeitbar; Lesen und Hinweisablauf quittieren nichts", async ({
   page,
 }, info) => {
   const s = app.db.all().get(owner)!,
@@ -205,161 +204,124 @@ test("Kritischer Textfunk bleibt sichtbar; Lesen quittiert nicht; Übernahme und
     "Dringende Erkundung abgeschlossen.",
     "NOTFALL",
   );
-  s.desk.fleet[s.vehicles[1].id].channel = "Feuerwehr Süd";
   app.db.save(owner, s);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await login(page);
-  const log = page.getByRole("region", {
-    name: "Einsatzübersicht und Textfunk",
-  });
   await expect(
-    log.locator('.event-preview[data-priority="critical"]'),
-  ).toContainText("Erste Erkundung abgeschlossen.");
-  await expect(log.locator("input:visible,textarea:visible")).toHaveCount(0);
-  await log
-    .locator('.event-preview[data-priority="critical"]')
-    .filter({
-      hasText: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
-    })
-    .click();
-  const requestRow = page
+    page.locator(".game-toast,.event-log,.event-preview"),
+  ).toHaveCount(0);
+  await radio(page);
+  const row = page
     .locator(".radio-queue article")
     .filter({ hasText: "NOTFALL" });
-  await expect(requestRow).toBeVisible();
+  await expect(row).toBeVisible();
   expect(
     app.db
       .all()
       .get(owner)!
       .missions[0].control!.radio.filter((r) => r.state === "open"),
   ).toHaveLength(2);
-  await requestRow
+  await row
     .getByRole("button", { name: "Sprechwunsch übernehmen", exact: true })
     .click();
-  await expect(requestRow).toContainText("In Bearbeitung bei dir");
-  await requestRow
+  await expect(row).toContainText("In Bearbeitung bei dir");
+  await row
     .getByRole("button", { name: "Bearbeitung freigeben", exact: true })
     .click();
-  await expect(requestRow).toContainText("Offen · zur Übernahme verfügbar");
-  await expect(
-    log.locator('.event-preview[data-priority="critical"]'),
-  ).toContainText("Erste Erkundung abgeschlossen.");
-  await page.screenshot({
-    path: info.outputPath("textfunk-und-einsatz-1920.png"),
-  });
+  await expect(row).toContainText("Offen · zur Übernahme verfügbar");
+  await page.screenshot({ path: info.outputPath("lage-im-einsatz-1920.png") });
 });
 
-test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungshinweise", async ({
+test("ein Dreisekundenhinweis ab DOM-Einblendung; Offlinezustand bleibt, Remount und Reconnect spielen nichts nach", async ({
   page,
   context,
 }) => {
   const initial = app.db.all().get(owner)!;
   for (let i = 0; i < 12; i++)
     transmit(initial, {
-      id: `separate-system-${i}`,
+      id: "old-system-" + i,
       channel: "System",
       sender: "Leitstelle",
       vehicle: "",
       mission: "",
-      text: `Unabhängiger Betriebshinweis ${i}.`,
+      text: "Älterer Betriebshinweis " + i,
       priority: 10,
       silent: true,
     });
   app.db.save(owner, initial);
   await login(page);
-  const s = app.db.all().get(owner)!,
-    m = s.missions[0];
-  const arrival = m.control!.radio.find((r) => r.reason === "arrival")!;
-  const summaryId = m.control!.radioSummary!.id;
-  const visible = page.locator(`#radio-preview [data-event-id="${summaryId}"]`);
-  await expect(visible).toBeVisible();
-  await expect(page.locator(".compact-desk footer")).toContainText(
-    "1 offene Sprechwünsche",
-  );
-  const before = structuredClone(arrival);
-  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
-  arrival.priority = "NOTFALL";
-  updateIncidentRadio(s, m);
-  s.revision++;
-  app.db.save(owner, s);
-  await expect(page.locator(".critical-count")).toBeVisible();
-  await expect(
-    page.getByRole("tab", { name: /Aktive Einsätze/ }),
-  ).toHaveAttribute("aria-selected", "true");
-  await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
-  await page.getByRole("button", { name: "Ereignispanel einklappen" }).click();
-  await page.getByRole("button", { name: "Ereignispanel ausklappen" }).click();
-  expect(
-    app.db
-      .all()
-      .get(owner)!
-      .missions[0].control!.radio.find((r) => r.id === arrival.id),
-  ).toMatchObject({ ...before, priority: "NOTFALL", state: "open" });
-  const scroll = page.locator("#radio-preview .preview-scroll");
-  await scroll.evaluate((e) => {
-    e.scrollTop = 90;
-    e.dispatchEvent(new Event("scroll"));
+  await radio(page);
+  const before = app.db.all().get(owner)!.missions[0].control!.radio;
+  await expect(page.locator(".game-toast")).toHaveCount(0);
+  const button = page
+    .locator(".radio-queue")
+    .getByRole("button", { name: "Sprechwunsch übernehmen", exact: true });
+  await button.focus();
+  await page.evaluate(() => {
+    const measurements: {
+      shown: number;
+      removed: number;
+      count: number;
+      max: number;
+    } = { shown: 0, removed: 0, count: 0, max: 0 };
+    Object.assign(window, { toastMeasurements: measurements });
+    const observer = new MutationObserver(() => {
+      const visible = document.querySelectorAll(".game-toast").length;
+      measurements.max = Math.max(measurements.max, visible);
+      if (visible && !measurements.shown) {
+        measurements.shown = performance.now();
+        measurements.count++;
+      }
+      if (!visible && measurements.shown && !measurements.removed)
+        measurements.removed = performance.now();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   });
-  const position = await scroll.evaluate((e) => e.scrollTop);
-  expect(position).toBeGreaterThan(0);
-  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
-  await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
-  expect(await scroll.evaluate((e) => e.scrollTop)).toBeCloseTo(position, 0);
-  const anchor = await scroll.evaluate((el) => {
-    const top = el.getBoundingClientRect().top;
-    const row = [...el.querySelectorAll<HTMLElement>("[data-event-id]")].find(
-      (r) => r.getBoundingClientRect().bottom > top,
-    )!;
-    return {
-      id: row.dataset.eventId!,
-      offset: row.getBoundingClientRect().top - top,
-    };
-  });
-  const latest = app.db.all().get(owner)!;
-  latest.time++;
-  request(
-    latest,
-    latest.missions[0],
-    latest.vehicles[1].id,
-    "arrival",
-    "Neue dringende Rückfrage während des Lesens.",
-    "NOTFALL",
-  );
-  latest.revision++;
-  app.db.save(owner, latest);
-  await expect(scroll.locator(`[data-event-id="${summaryId}"]`)).toHaveCount(1);
-  await expect(scroll.locator('[data-event-id^="incident:"]')).toHaveCount(1);
-  await expect
-    .poll(() =>
-      scroll.evaluate((el, id) => {
-        const row = [
-          ...el.querySelectorAll<HTMLElement>("[data-event-id]"),
-        ].find((r) => r.dataset.eventId === id)!;
-        return row.getBoundingClientRect().top - el.getBoundingClientRect().top;
-      }, anchor.id),
-    )
-    .toBeCloseTo(anchor.offset, 0);
   await context.setOffline(true);
-  await expect(page.locator(".connection-inline")).toContainText(
-    "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
+  const toast = page.locator(".game-toast");
+  await expect(toast).toHaveCount(1);
+  await expect(toast).toContainText("Serververbindung verloren");
+  await expect(button).toBeDisabled();
+  const box = await toast.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(300);
+  expect(box!.width).toBeLessThanOrEqual(420);
+  expect(
+    Math.abs(box!.x + box!.width / 2 - page.viewportSize()!.width / 2),
+  ).toBeLessThan(2);
+  await page.mouse.move(box!.x + 20, box!.y + 10);
+  await expect(toast).toHaveCount(0, { timeout: 5000 });
+  const timing = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          toastMeasurements: {
+            shown: number;
+            removed: number;
+            count: number;
+            max: number;
+          };
+        }
+      ).toastMeasurements,
   );
+  expect(timing.max).toBe(1);
+  expect(timing.count).toBe(1);
+  expect(timing.removed - timing.shown).toBeGreaterThanOrEqual(2950);
+  expect(timing.removed - timing.shown).toBeLessThan(3300);
+  await expect(page.locator(".offline-badge")).toBeVisible();
+  expect(app.db.all().get(owner)!.missions[0].control!.radio).toEqual(before);
   await context.setOffline(false);
-  await expect(page.locator(".connection-inline")).toHaveCount(0);
-  await expect(
-    page.locator(`#radio-preview [data-event-id="${summaryId}"]`),
-  ).toHaveCount(1);
-  await page.reload();
+  await expect(button).toBeEnabled();
+  await expect(page.locator(".offline-badge")).toHaveCount(0);
+  await openPanel(page, "Zurück zum Hauptmenü");
   await enterGame(page);
   await expect(
-    page.locator(`#radio-preview [data-event-id="${summaryId}"]`),
-  ).toHaveCount(1);
-  await page.locator(`#radio-preview [data-event-id="${summaryId}"]`).click();
-  await expect(page.locator(".radio-queue")).toBeVisible();
-  expect(
-    app.db
-      .all()
-      .get(owner)!
-      .missions[0].control!.radio.find((r) => r.id === arrival.id)!.state,
-  ).toBe("open");
+    page.locator(".game-toast,.event-log,.event-preview"),
+  ).toHaveCount(0);
+  await page.reload();
+  await enterGame(page);
+  await radio(page);
+  await expect(page.locator(".game-toast")).toHaveCount(0);
+  expect(app.db.all().get(owner)!.missions[0].control!.radio).toEqual(before);
 });
 
 test("Fortschrittsdetail zeigt nächste Kaufziele und Voraussetzungen; das kompakte Panel zählt tatsächliche Einsatzplätze", async ({
@@ -370,7 +332,7 @@ test("Fortschrittsdetail zeigt nächste Kaufziele und Voraussetzungen; das kompa
   app.db.save(owner, s);
   await login(page);
   await expect(
-    page.getByRole("tab", { name: /Aktive Einsätze/ }),
+    page.getByRole("heading", { name: /Aktive Einsätze/ }),
   ).toContainText("1 / 3");
   await openPanel(page, "Fortschritt");
   await page

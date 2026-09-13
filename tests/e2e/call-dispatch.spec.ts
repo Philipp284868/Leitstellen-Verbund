@@ -171,7 +171,7 @@ test("Neustart mit einem TSF-W: Bereitschaft, automatisch erzeugter Notruf und A
     page.getByRole("heading", { name: "Warten auf Notruf" }),
   ).toBeVisible();
   await expect(page.locator(".compact-desk")).toContainText(
-    "mehrere Einsätze können gleichzeitig laufen",
+    "Passende Notrufe treffen nach und nach ein",
   );
   await page.screenshot({
     path: info.outputPath("starter-waiting-for-call.png"),

@@ -264,37 +264,6 @@
   flex-direction: column;
   overflow: hidden;
 }
-.compact-tabs {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--hud-border);
-}
-.desktop-hud .compact-tabs button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  flex: 1;
-  padding: 12px 5px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  font-size: calc(13px * var(--ui-scale));
-  border-bottom: 2px solid transparent;
-}
-.app.command-hud.desktop-hud .compact-tabs button[aria-selected="true"] {
-  background: linear-gradient(180deg, #542b27, #302122);
-  border-bottom-color: var(--hud-accent);
-}
-.critical-count {
-  background: var(--hud-critical-bg);
-  color: var(--hud-critical);
-  border-radius: 5px;
-  padding: 2px 4px;
-  font-size: 12px;
-  white-space: nowrap;
-}
 .compact-toolbar {
   display: flex;
   align-items: center;
@@ -315,11 +284,6 @@
   padding: 4px;
   font-size: 12px;
 }
-.compact-desk [role="tabpanel"] {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 .compact-desk [hidden] {
   display: none !important;
 }
@@ -336,7 +300,7 @@
   margin: 0;
   padding: 0 8px;
 }
-.desktop-hud .compact-desk :is(.event-preview, .mission-preview) {
+.desktop-hud .compact-desk .mission-preview {
   display: flex;
   flex-shrink: 0;
   gap: 8px;
@@ -347,17 +311,6 @@
   min-height: 54px;
   border-radius: 5px;
   border-left: 3px solid var(--hud-link);
-}
-.event-preview > svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--hud-link);
-}
-.desktop-hud .event-preview[data-priority="critical"] {
-  border-left-color: #ee785c;
-}
-.desktop-hud .event-preview[data-priority="important"] {
-  border-left-color: #d8a354;
 }
 .preview-copy {
   display: block;
@@ -437,23 +390,6 @@
   color: var(--hud-muted);
   line-height: 1.5;
 }
-.compact-desk footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-top: 1px solid var(--hud-border);
-  gap: 8px;
-  flex-shrink: 0;
-  font-size: 12px;
-}
-.desktop-hud .compact-desk footer button {
-  color: var(--hud-link);
-  background: none;
-  border: 0;
-  padding: 4px 0;
-  font-size: 12px;
-}
 .compact-search {
   display: flex;
   gap: 5px;
@@ -475,44 +411,6 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-}
-.connection-inline {
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  border-bottom: 1px solid #a75e49;
-  background: var(--hud-critical-bg);
-  font-size: 13px;
-}
-.connection-inline > span {
-  flex: 1 1 85%;
-}
-.connection-inline button {
-  padding: 4px 8px;
-}
-.app.command-hud.desktop-hud .map-quick-tools {
-  position: absolute;
-  z-index: 12;
-  right: 20px;
-  bottom: 34px;
-  width: 200px;
-  height: 54px;
-  display: flex;
-  gap: 3px;
-  padding: 6px;
-  background: var(--hud-panel);
-  border: 1px solid var(--hud-border);
-  border-radius: 6px;
-  box-shadow: var(--hud-shadow);
-}
-.desktop-hud .map-quick-tools button {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: 5px;
-  border: 0;
-  color: var(--hud-link);
 }
 .app.command-hud.desktop-hud [data-map-tools="true"] .map-tool-panel {
   top: 84px;
@@ -552,7 +450,7 @@
   backdrop-filter: none;
 }
 .app.command-hud.desktop-hud .modal {
-  background: var(--hud-panel);
+  background: #091821;
   border: 1px solid var(--hud-border);
   box-shadow: 0 12px 45px #0008;
   color: var(--hud-text);
@@ -580,8 +478,6 @@
     .draft-confirm,
     .leaderboard-row,
     .settings-actions,
-    .event-heading,
-    .critical-events,
     .dynamics-panel,
     .major-panel,
     .org-panel
@@ -609,27 +505,8 @@
     .map-vehicle-detail,
     .facility-map-panel
   )
-  :is(p, small, time, .event-message) {
+  :is(p, small, time) {
   color: var(--hud-muted);
-}
-.app.command-hud.desktop-hud .event-log.expanded {
-  background: var(--hud-control);
-  color: var(--hud-text);
-  border-color: var(--hud-border);
-}
-.app.command-hud.desktop-hud .event-log article {
-  font-size: 14px;
-}
-.app.command-hud.desktop-hud
-  .event-log
-  article
-  :is(header, header span, small) {
-  color: var(--hud-muted);
-  font-size: 12px;
-}
-.app.command-hud.desktop-hud .event-log article[data-priority="critical"] {
-  background: var(--hud-critical-bg);
-  border-left-color: #ee785c;
 }
 .desktop-hud .germany-map :is(.maplibregl-ctrl-attrib, .maplibregl-ctrl-scale) {
   color: var(--hud-muted);
@@ -663,20 +540,6 @@
   }
 }
 
-.desktop-hud .compact-tabs button {
-  min-height: 0;
-  height: 42px;
-  line-height: 18px;
-  padding: 10px 5px;
-}
-.compact-desk footer {
-  padding: 4px 10px;
-}
-.desktop-hud .compact-desk footer button {
-  min-height: 0;
-  line-height: 18px;
-}
-
 .desktop-hud .control-menu button {
   justify-content: flex-start;
 }
@@ -684,15 +547,7 @@
   margin: 0;
   font-size: inherit;
 }
-/* Larger text gets actual layout room, without transforming the HUD. */
-.desktop-hud .hud-status {
-  grid-template-columns:
-    minmax(110px, calc(122px * var(--ui-scale))) minmax(
-      146px,
-      calc(162px * var(--ui-scale))
-    )
-    minmax(170px, auto) minmax(285px, calc(300px * var(--ui-scale)));
-}
+
 .desktop-hud .germany-marker .marker-label {
   color: #edf2f5;
 }
@@ -716,7 +571,235 @@
   color: var(--hud-text);
   border-color: var(--hud-border);
 }
-/* Long mandatory attributions must not sit underneath the map buttons. */
+
+/* Status, short hint and operational lists share one intrinsic grid. */
+.desktop-hud .hud-overlays {
+  position: absolute;
+  inset: 20px 20px 80px;
+  z-index: 20;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px;
+  pointer-events: none;
+  min-height: 0;
+}
+.app.command-hud.desktop-hud .control-topbar {
+  position: relative;
+  inset: auto;
+  grid-row: 1;
+  height: auto;
+  min-height: 52px;
+  display: flex;
+  align-items: start;
+  gap: 20px;
+  z-index: 35;
+}
+.desktop-hud .hud-status {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, calc(230px * var(--ui-scale))), 1fr)
+  );
+  width: min(calc(850px * var(--ui-scale)), calc(100% - 155px));
+  max-width: none;
+  height: auto;
+  gap: 10px;
+}
+.desktop-hud .status-tile {
+  min-height: calc(70px * var(--ui-scale));
+  height: auto;
+}
+.desktop-hud .status-tile.money-tile strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: calc(18px * var(--ui-scale));
+}
+.time-weather-content {
+  width: 100%;
+}
+.time-weather-values {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.time-weather-values time {
+  margin-right: auto;
+}
+.time-weather-values svg {
+  color: var(--hud-link);
+  flex: none;
+}
+.desktop-hud .time-weather-tile small {
+  overflow-wrap: anywhere;
+}
+.desktop-hud .hud-workspace {
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--preview-width);
+  gap: 20px;
+  min-height: 0;
+  align-items: start;
+}
+.desktop-hud .compact-desk {
+  position: relative;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  pointer-events: auto;
+}
+.compact-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--hud-border);
+}
+.compact-heading h2 {
+  font-size: calc(14px * var(--ui-scale));
+  margin: 0;
+}
+.compact-heading h2 span {
+  color: var(--hud-muted);
+  margin-left: 6px;
+  font-weight: 500;
+}
+.compact-heading button {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  min-height: 24px;
+}
+.desktop-hud .preview-scroll {
+  flex: 1 1 auto;
+}
+.app.command-hud.desktop-hud .incident-dock {
+  position: relative;
+  inset: auto;
+  grid-column: 1;
+  grid-row: 1;
+  width: min(620px, 100%);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  pointer-events: auto;
+}
+.desktop-hud .game-toast {
+  grid-row: 2;
+  justify-self: center;
+  width: min(420px, 100%);
+  box-sizing: border-box;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--hud-text);
+  background: var(--hud-panel);
+  border: 1px solid var(--hud-border);
+  border-radius: 6px;
+  box-shadow: var(--hud-shadow);
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1.35;
+  pointer-events: none;
+}
+.game-toast svg {
+  flex: none;
+  color: #9dcae5;
+}
+.game-toast[data-priority="critical"] svg {
+  color: #ffaf96;
+}
+.game-toast span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.desktop-hud .offline-badge {
+  color: #ffaf96;
+  font-size: 11px;
+}
+.desktop-hud .control-menu-button {
+  flex-wrap: wrap;
+}
+.menu-connection-state {
+  padding: 8px;
+  color: #ffaf96;
+}
+.menu-offline {
+  position: fixed;
+  bottom: 40px;
+  left: 30px;
+  z-index: 40;
+  padding: 12px;
+  background: #142431;
+  color: #ffaf96;
+}
 .desktop-hud .germany-map .maplibregl-ctrl-bottom-right {
-  right: 240px;
+  right: 0;
+}
+.desktop-hud .germany-map .maplibregl-ctrl-bottom-left {
+  max-width: calc(100% - 20px);
+}
+.desktop-hud .germany-map .maplibregl-ctrl-attrib {
+  max-width: min(850px, 100%);
+}
+.desktop-hud .hud-inspection-slot {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  max-height: 100%;
+  width: min(620px, 100%);
+  overflow: auto;
+  pointer-events: none;
+}
+.app.command-hud.desktop-hud
+  .hud-inspection-slot
+  :is(
+    .map-vehicle-detail,
+    .map-place-detail,
+    .facility-map-panel,
+    .map-tool-panel
+  ) {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-height: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+.app.command-hud.desktop-hud .hud-inspection-slot .map-tool-panel {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+}
+.hud-inspection-slot .map-vehicle-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--hud-border);
+}
+.hud-inspection-slot .map-detail-close {
+  align-self: end;
+  float: right;
+}
+.metric-map-scale {
+  position: absolute;
+  bottom: 42px;
+  left: 12px;
+  padding: 2px 0;
+  border: 2px solid #cad7dc;
+  border-top: 0;
+  text-align: center;
+  color: #edf2f5;
+  background: #0a1a25dd;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 8;
 }

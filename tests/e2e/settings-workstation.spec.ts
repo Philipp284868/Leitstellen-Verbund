@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "../helpers/independent-sites";
 import { openPanel } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -40,7 +41,7 @@ async function login(page: Page, play = false) {
   save.missions = [];
   save.missionWait = 100000;
   save.nextMission = save.time + 100000;
-  app.db.save(owner, save);
+  saveIndependentFixture(app.db, owner, save);
   await page.goto(origin);
   await page.getByLabel("Benutzername", { exact: true }).fill(username);
   await page.getByLabel("Passwort", { exact: true }).fill(password);

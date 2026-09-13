@@ -1,3 +1,4 @@
+import { focusMapPoint } from "./ui-navigation";
 import { spawnSync } from "node:child_process";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -107,7 +108,7 @@ async function expectAlarmableFF(page: Page, owner: string) {
       "Alarmierbar: Freiwillige Kräfte müssen zuerst zur Wache kommen.",
     );
 }
-async function resources(page: Page, username: string) {
+async function resources(page: Page, username: string, site = 0) {
   await showMapTools(page);
   await page.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
   await page
@@ -124,7 +125,7 @@ async function resources(page: Page, username: string) {
     .click();
   await page
     .getByLabel("Ort, Adresse oder Standortname")
-    .fill("Teststandort fire 0");
+    .fill(`Teststandort fire ${site}`);
   await page.locator(".facility-result").first().click();
   await page.getByRole("button", { name: /^Kaufen ·/ }).click();
   await page
@@ -299,7 +300,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
 }) => {
   const { ca, cb, a, b, ua, ub } = await pair(browser);
   await resources(a, ua);
-  await resources(b, ub);
+  await resources(b, ub, 8);
   await joinDesk(a, b, ub);
   advanceToFirstCall(ua);
   await showIncidents(a);
@@ -402,6 +403,10 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
     page = await restored.newPage();
   await enter(page, ub);
   await expect(page.locator(".money-tile strong")).toHaveText(bMoney);
+  await focusMapPoint(
+    page,
+    app.db.all().get(ownerOf(ua))!.buildings[0].facility!.position,
+  );
   await expect(
     page.locator(
       "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
@@ -424,6 +429,10 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await expect(second.locator(".money-tile strong")).toHaveText(
     formatMoney(before),
   );
+  await focusMapPoint(
+    second,
+    app.db.all().get(owner)!.buildings[0].facility!.position,
+  );
   await expect(
     second.locator(
       "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",
@@ -434,9 +443,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
   await second.close();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.locator(".connection-inline")).toContainText(
-    "Serververbindung verloren.",
-  );
+  await expect(page.locator(".offline-badge")).toHaveText("Offline");
   await openPanel(page, "Fuhrpark");
   await page
     .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
@@ -463,11 +470,7 @@ test("Mehrere Tabs verwenden einen Serverstand; Offline-Aktionen werden nicht be
     window.dispatchEvent(new Event("online"));
   });
   handshake.resume!();
-  await expect(
-    page
-      .locator(".connection-inline")
-      .filter({ hasText: "Serververbindung verloren." }),
-  ).toHaveCount(0);
+  await expect(page.locator(".offline-badge")).toHaveCount(0);
   await page
     .getByRole("button", { name: `Favorit ${vehicle.name}`, exact: true })
     .click();

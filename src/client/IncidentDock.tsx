@@ -102,7 +102,7 @@ export function IncidentDock({
         {[
           ["details", "Details"],
           ["vehicles", "Fahrzeuge"],
-          ["radio", "Funk"],
+          ["radio", "Lage & Aufgaben"],
           ["arrival", "Anfahrt"],
           ["history", "Protokoll"],
         ].map(([id, label]) => (

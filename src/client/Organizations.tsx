@@ -16,7 +16,6 @@ import { vehicleAvailability } from "../simulation/availability";
 import { injuryReason } from "../simulation/responder-recovery";
 import {
   stationKinds,
-  specialties,
   taskNames,
   type Station,
 } from "../simulation/organizations-schema";
@@ -252,107 +251,6 @@ export function VehicleStaffing({ s, v }: { s: Save; v: Vehicle }) {
     </div>
   );
 }
-export function HospitalSettings({ s, b }: { s: Save; b: Building }) {
-  const hospitals = useHospitalOptions(
-    s,
-    b.pos,
-    0,
-    undefined,
-    undefined,
-    b.type === "hospital",
-  );
-  const [draft, setProfile] = useState<NonNullable<
-    Building["hospital"]
-  > | null>(null);
-  const profile = draft ??
-    b.hospital ?? {
-      open: true,
-      capacity: 20 * b.level,
-      specialties: Object.keys(specialties) as (keyof typeof specialties)[],
-    };
-  const form = useCommandForm(draft !== null, () => setProfile(null));
-  if (b.type !== "hospital") return null;
-  const h = hospitals.options.find((h) => h.id === b.id) ?? {
-    occupied: 0,
-    reserved: 0,
-  };
-  return (
-    <details className="org-settings">
-      <summary>
-        Krankenhausaufnahme · {h.occupied} belegt · {h.reserved} zugesagt
-      </summary>
-      {form.error && (
-        <p className="error" role="alert">
-          {form.error}
-        </p>
-      )}
-      <fieldset className="command-fields" disabled={form.busy}>
-        {hospitals.loading && (
-          <p role="status">Aufnahmekapazitäten werden geladen …</p>
-        )}
-        {hospitals.error && <p role="alert">{hospitals.error}</p>}
-        <label>
-          <input
-            type="checkbox"
-            checked={profile.open}
-            onChange={(e) => setProfile({ ...profile, open: e.target.checked })}
-          />
-          Aufnahme geöffnet
-        </label>
-        <label>
-          Verfügbare Betten
-          <input
-            type="number"
-            min={1}
-            max={20 * b.level}
-            value={profile.capacity}
-            onChange={(e) =>
-              setProfile({ ...profile, capacity: Number(e.target.value) })
-            }
-          />
-        </label>
-        {Object.entries(specialties).map(([key, label]) => (
-          <label key={key}>
-            <input
-              type="checkbox"
-              checked={profile.specialties.includes(
-                key as keyof typeof specialties,
-              )}
-              onChange={(e) =>
-                setProfile({
-                  ...profile,
-                  specialties: e.target.checked
-                    ? [...profile.specialties, key as keyof typeof specialties]
-                    : profile.specialties.filter((x) => x !== key),
-                })
-              }
-            />
-            {label}
-          </label>
-        ))}
-        <p>
-          Bereits fahrende Transporte behalten ihre Aufnahmezusage. Neue
-          Patienten werden nach Fachbereich und freien Betten zugeteilt; bei
-          Ablehnung wird eine geeignete Alternative angefahren.
-        </p>
-        <button
-          disabled={!profile.specialties.length}
-          onClick={() =>
-            void form.run(async () => {
-              await command({ type: "hospital-profile", home: b.id, profile });
-              setProfile(null);
-            })
-          }
-        >
-          Aufnahmeprofil speichern
-        </button>
-        <button disabled={draft === null} onClick={() => setProfile(null)}>
-          Änderungen verwerfen
-        </button>
-      </fieldset>
-    </details>
-  );
-}
 export function OrganizationTasks({ s, m }: { s: Save; m: Mission }) {
   const form = useCommandForm();
   const v = s.vehicles.find((v) => v.mission === m.id && vt(v.type).capacity);
@@ -444,9 +342,47 @@ export function OrganizationTasks({ s, m }: { s: Save; m: Mission }) {
             </label>
             <small>
               Keine geeignete Aufnahme am Wunschziel: automatische Umleitung.
-              Fremde Rettungsmittel nutzen die Krankenhäuser ihrer
-              Heimatleitstelle.
+              Alle Leitstellen nutzen dieselben Serverkliniken und freien
+              Betten.
             </small>
+            {m.clinicWait && (
+              <p className="warning" role="status">
+                {m.clinicWait.reason}
+              </p>
+            )}
+            {m.transports
+              .filter((t) => t.status === "ordered" && t.owner === s.player.id)
+              .map((t) => (
+                <label key={t.id ?? t.assignment}>
+                  Laufenden Transport umleiten ·{" "}
+                  {s.vehicles.find((v) => v.id === t.vehicle)?.name ??
+                    t.vehicle}
+                  <select
+                    value={t.hospital ?? ""}
+                    onChange={(e) =>
+                      void form.run(() =>
+                        command({
+                          type: "hospital-select",
+                          mission: m.id,
+                          vehicle: t.vehicle,
+                          home: e.target.value,
+                        }),
+                      )
+                    }
+                  >
+                    <option value={t.hospital ?? ""}>
+                      Aktuelles Ziel · Bett reserviert
+                    </option>
+                    {options
+                      .filter((h) => h.id !== t.hospital && !h.reason)
+                      .map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name} · {h.free} frei
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              ))}
           </>
         ) : null}
       </fieldset>

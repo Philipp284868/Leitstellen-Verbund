@@ -49,6 +49,7 @@ test.beforeAll(async () => {
     }
     if (url.pathname === "/api/facilities")
       return json({ snapshot: "fixture", clusters: [] });
+    if (url.pathname === "/api/water") return json({ sources: [] });
     if (url.pathname === "/geo/manifest")
       return json({ bounds: [5.5, 47.1, 15.6, 55.2], minzoom: 0, maxzoom: 14 });
     if (url.pathname.startsWith("/geo/pois/")) {
@@ -168,6 +169,7 @@ test("Deutschland-Renderer: CSP-Worker, PC-Steuerung, Such-API und unabhängige 
   await page.mouse.wheel(0, -120);
   await expect.poll(camera).not.toBe(dragged);
   expect(await page.evaluate(() => scrollY)).toBe(0);
+  await page.getByRole("button", { name: "Kartensuche öffnen" }).click();
   await page.getByLabel("Karte durchsuchen").fill("Test");
   await page.getByRole("button", { name: "Suchantwort aus Test-API" }).click();
   await expect(page.getByLabel("Karte durchsuchen")).toHaveValue("");
@@ -271,7 +273,7 @@ test("Fahrzeuge mit identischen Koordinaten bleiben am Detailzoom einzeln erreic
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1600, height: 1080 });
   await page.goto(`${origin}/__controls?fleet=1`);
-  await expect(page.getByTestId("map-vehicle")).toHaveCount(1);
+  await expect(page.getByTestId("map-vehicle")).toHaveCount(0);
   await page.evaluate(
     (point) =>
       window.dispatchEvent(

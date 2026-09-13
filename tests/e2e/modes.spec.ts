@@ -1,3 +1,5 @@
+import { mapKey, focusMapPoint } from "./ui-navigation";
+import { saveIndependentFixture } from "../helpers/independent-sites";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -57,7 +59,7 @@ async function account(page: Page, distantIncident = false) {
   for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
   generate(s);
   for (const m of s.missions) attachIncident(s, m);
-  app.db.save(id, s);
+  saveIndependentFixture(app.db, id, s);
   app.game.step(1);
   if (distantIncident) {
     // Keep the real routed journey visible throughout desktop window checks.
@@ -109,6 +111,10 @@ test("Mehrere Tabs und alte Browserpräferenzen öffnen ausschließlich dieselbe
   await second.goto(origin);
   await play(second);
   for (const p of [page, second]) {
+    await focusMapPoint(
+      p,
+      before.buildings[0].facility?.position ?? before.buildings[0].pos,
+    );
     await expect(
       p.getByRole("button", { name: "Leitstellenmenü", exact: true }),
     ).toBeVisible();
@@ -163,7 +169,7 @@ test("HUD und Karte bleiben mit heller Hauptmenüpräferenz und per Tastatur bed
     .boundingBox();
   await toggleMapTools(page);
   const toolsArea = await page.locator(".map-layers").boundingBox();
-  const scale = page.locator(".maplibregl-ctrl-scale");
+  const scale = page.locator(".metric-map-scale");
   const legendArea = await scale.boundingBox();
   expect(toolsArea!.y).toBeGreaterThanOrEqual(mapArea!.y);
   expect(legendArea!.y + legendArea!.height).toBeLessThanOrEqual(
@@ -174,11 +180,9 @@ test("HUD und Karte bleiben mit heller Hauptmenüpräferenz und per Tastatur bed
   const zoom = async () =>
     JSON.parse((await viewport.getAttribute("data-camera"))!).zoom;
   const initialZoom = await zoom();
-  await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
+  await mapKey(page, "+");
   await expect.poll(zoom).toBeGreaterThan(initialZoom);
-  await page
-    .getByRole("button", { name: "Karte zentrieren", exact: true })
-    .click();
+  await mapKey(page, "Home");
   await page.getByLabel("Karte durchsuchen").fill("Straße des 17. Juni");
   await page
     .locator(".map-search-results")
@@ -266,7 +270,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
   const { id } = await account(page, true);
   await play(page);
   await expect(page.getByLabel("Spielgeschwindigkeit")).toHaveCount(0);
-  await expect(page.locator(".time-tile time")).toBeVisible();
+  await expect(page.locator(".time-weather-tile time")).toBeVisible();
   await toggleMapTools(page);
   await page
     .getByRole("button", { name: "Ganz Deutschland", exact: true })
@@ -298,9 +302,7 @@ test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in gro
         JSON.parse((await viewport.getAttribute("data-camera"))!).zoom,
     )
     .toBe(14);
-  await page
-    .getByRole("button", { name: "Karte zentrieren", exact: true })
-    .click();
+  await mapKey(page, "Home");
   await showIncidents(page);
   await page.locator(".mission-card").first().click();
   await interviewUI(page, app);

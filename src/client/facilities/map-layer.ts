@@ -1,4 +1,11 @@
+import { createId } from "../ids";
 import { FacilityReader } from "./reader";
+import { mapMetricScale } from "../germany/metric-scale";
+import {
+  infrastructureState,
+  subscribeInfrastructure,
+  watchInfrastructure,
+} from "../infrastructure";
 import type { Map as GLMap } from "maplibre-gl";
 import { buildingIconDefinition, iconPaths } from "../../shared/map-icons";
 import type {
@@ -24,6 +31,15 @@ export function attachFacilityLayer(
     disposed = false;
   const cache = new Map<string, FacilityCluster[]>();
   const paths = new Map<string, Path2D[]>();
+  let unwatch = () => {};
+  const watchKey = createId();
+  const watch = () => {
+    unwatch();
+    unwatch = watchInfrastructure(
+      watchKey,
+      points.flatMap((p) => (p.id ? [p.id] : [])),
+    );
+  };
   const paint = () => {
     frame = 0;
     if (disposed) return;
@@ -42,7 +58,10 @@ export function attachFacilityLayer(
     ctx.clearRect(0, 0, box.width, box.height);
     hits = [];
     canvas.dataset.visibleCount = "0";
-    if (!options().enabled) return;
+    if (!options().enabled || !mapMetricScale(map).markers) return;
+    const ownership = new Map(
+      infrastructureState().ownership.map((o) => [o.facility, o]),
+    );
     for (const point of points) {
       if (point.id && options().owned.has(point.id)) continue;
       const { x, y } = map.project([point.lon, point.lat]);
@@ -52,7 +71,15 @@ export function attachFacilityLayer(
       ctx.translate(x, y);
       ctx.fillStyle = "#122c3af0";
       ctx.strokeStyle =
-        point.count > 1 ? "#80bacb" : point.usable ? "#82d3aa" : "#a4a7ac";
+        point.count > 1
+          ? "#80bacb"
+          : point.kind === "hospital"
+            ? "#9dbcf0"
+            : ownership.has(point.id ?? "")
+              ? "#d3ac77"
+              : point.usable
+                ? "#82d3aa"
+                : "#a4a7ac";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(-15, -15, 30, 30, 6);
@@ -87,7 +114,17 @@ export function attachFacilityLayer(
         ctx.fillRect(6, 5, 14, 14);
         ctx.fillStyle = point.usable ? "#96e5b6" : "#e5be8c";
         ctx.font = "bold 13px system-ui";
-        ctx.fillText(point.usable ? "+" : "×", 8, 17);
+        ctx.fillText(
+          point.kind === "hospital"
+            ? "H"
+            : ownership.has(point.id ?? "")
+              ? "●"
+              : point.usable
+                ? "+"
+                : "×",
+          8,
+          17,
+        );
       }
       ctx.restore();
     }
@@ -116,6 +153,7 @@ export function attachFacilityLayer(
       if (cache.size > 24) cache.delete(cache.keys().next().value!);
       canvas.dataset.loadedBounds = new URLSearchParams(query).get("bbox")!;
       points = data.clusters;
+      watch();
       repaint();
     },
     (state) => {
@@ -128,8 +166,9 @@ export function attachFacilityLayer(
   );
   const refresh = () => {
     if (disposed) return;
-    if (!options().enabled || document.hidden) {
+    if (!options().enabled || document.hidden || !mapMetricScale(map).markers) {
       reader.cancel();
+      unwatch();
       covered = undefined;
       canvas.dataset.loading = "false";
       repaint();
@@ -179,6 +218,7 @@ export function attachFacilityLayer(
       reader.supersede();
       canvas.dataset.loadedBounds = bbox.join(",");
       points = prior;
+      watch();
       canvas.dataset.loading = "false";
       if (reader.cooldown(query) <= Date.now()) {
         error("");
@@ -195,15 +235,20 @@ export function attachFacilityLayer(
   map.on("move", repaint);
   map.on("resize", resize);
   map.on("moveend", refresh);
+  const unsubscribe = subscribeInfrastructure(repaint);
   refresh();
   return {
     refresh,
     repaint,
     hitTest: (x: number, y: number) =>
-      hits.filter((h) => Math.abs(h.x - x) <= 18 && Math.abs(h.y - y) <= 18),
+      mapMetricScale(map).markers
+        ? hits.filter((h) => Math.abs(h.x - x) <= 18 && Math.abs(h.y - y) <= 18)
+        : [],
     destroy: () => {
       disposed = true;
       reader.destroy();
+      unsubscribe();
+      unwatch();
       document.removeEventListener("visibilitychange", refresh);
       cancelAnimationFrame(frame);
       map.off("move", repaint);

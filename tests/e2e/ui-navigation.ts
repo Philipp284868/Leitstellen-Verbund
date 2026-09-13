@@ -102,9 +102,8 @@ export async function showIncidents(page: Page) {
       .isVisible()
   )
     await page.keyboard.press("Escape");
-  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
   const expand = page.getByRole("button", {
-    name: "Ereignispanel ausklappen",
+    name: "Einsatzliste ausklappen",
     exact: true,
   });
   if (await expand.isVisible()) await expand.click();
@@ -120,4 +119,38 @@ export async function toggleMapTools(page: Page) {
   });
   if (await tools.isVisible()) await page.keyboard.press("Escape");
   else await showMapTools(page);
+}
+
+export async function focusMapPoint(
+  page: Page,
+  point: { x: number; y: number },
+  zoom = 17,
+) {
+  await expect(page.getByTestId("germany-map-viewport")).toHaveAttribute(
+    "data-camera",
+    /zoom/,
+  );
+  await page.evaluate(
+    ({ point, zoom }) =>
+      window.dispatchEvent(
+        new CustomEvent("lv:map-focus", { detail: { point, zoom } }),
+      ),
+    { point, zoom },
+  );
+  await expect
+    .poll(
+      async () =>
+        JSON.parse(
+          (await page
+            .getByTestId("germany-map-viewport")
+            .getAttribute("data-camera"))!,
+        ).zoom,
+    )
+    .toBeCloseTo(zoom, 1);
+}
+export async function mapKey(page: Page, key: string) {
+  await page
+    .getByLabel("Interaktive Karte von Deutschland", { exact: true })
+    .focus();
+  await page.keyboard.press(key);
 }

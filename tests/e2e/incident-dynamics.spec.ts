@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "../helpers/independent-sites";
 import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -34,7 +35,7 @@ test.beforeEach(async () => {
   owner = await app.auth.create("north", password, "Nord", "Nord");
   peer = await app.auth.create("south", password, "Süd", "Süd");
   app.db.save(owner, majorFixture(owner));
-  app.db.save(peer, majorFixture(peer, "field", "south"));
+  saveIndependentFixture(app.db, peer, majorFixture(peer, "field", "south"));
 });
 test.afterEach(async () => {
   await app.close();

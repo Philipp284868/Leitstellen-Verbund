@@ -16,11 +16,7 @@ import {
   operativeCode,
 } from "../simulation/fms";
 import type { AAO, Alarm, Priority } from "../simulation/schema";
-import {
-  priorities,
-  priorityRank,
-  visiblePriority,
-} from "../simulation/priority";
+import { priorities, visiblePriority } from "../simulation/priority";
 import { statuses, ConfirmAction } from "./ui";
 import "./Desk.css";
 const orgs = [
@@ -32,117 +28,6 @@ const orgs = [
   "Wasserrettung",
   "Infrastruktur",
 ] as const;
-export function DeskQueue({
-  s,
-  open,
-  panel,
-}: {
-  s: Save;
-  open: (id: string) => void;
-  panel: (id: string) => void;
-}) {
-  const [callPage, setCallPage] = useState(0),
-    [radioPage, setRadioPage] = useState(0);
-  const calls = s.missions
-    .flatMap((m) =>
-      (m.control?.calls ?? [])
-        .filter(
-          (c) =>
-            c.state === "ringing" ||
-            c.state === "dropped" ||
-            c.state === "active",
-        )
-        .map((c) => ({ m, c })),
-    )
-    .sort(
-      (a, b) =>
-        priorityRank(b.m.control?.priority) -
-          priorityRank(a.m.control?.priority) || a.c.created - b.c.created,
-    );
-  const radio = s.missions
-    .flatMap((m) =>
-      (m.control?.radio ?? [])
-        .filter((r) => r.state === "open")
-        .map((r) => ({ m, r })),
-    )
-    .sort(
-      (a, b) =>
-        priorityRank(b.r.priority) - priorityRank(a.r.priority) ||
-        a.r.created - b.r.created,
-    );
-  const callsAt = Math.min(
-    callPage,
-    Math.max(0, Math.ceil(calls.length / 10) - 1),
-  );
-  const radioAt = Math.min(
-    radioPage,
-    Math.max(0, Math.ceil(radio.length / 10) - 1),
-  );
-  return (
-    <section className="desk-queue" aria-label="Notruf und Funk">
-      <div className="desk-tools">
-        <button onClick={() => panel("aaos")}>AAO</button>
-        <button onClick={() => panel("fms")}>FMS / Funkstatus</button>
-      </div>
-      <strong>Notrufe · {calls.length}</strong>
-      {!calls.length && <small>Keine offenen Gespräche.</small>}
-      {calls.slice(callsAt * 10, (callsAt + 1) * 10).map(({ m, c }) => (
-        <button className="call-card" key={c.id} onClick={() => open(m.id)}>
-          <b>
-            {c.state === "ringing"
-              ? "☎ Notruf annehmen"
-              : c.state === "active"
-                ? "☎ Gespräch fortsetzen"
-                : "☎ Gespräch abgebrochen"}
-          </b>
-          <small>
-            {c.caller} ·{" "}
-            {m.control?.locationKnown ? "Ort erfasst" : "Ort noch unbekannt"}
-          </small>
-        </button>
-      ))}
-      {calls.length > 10 && (
-        <nav className="mission-pagination" aria-label="Notrufseiten">
-          <button disabled={!callsAt} onClick={() => setCallPage(callsAt - 1)}>
-            Vorherige Notrufe
-          </button>
-          <span>
-            {callsAt + 1}/{Math.ceil(calls.length / 10)}
-          </span>
-          <button
-            disabled={(callsAt + 1) * 10 >= calls.length}
-            onClick={() => setCallPage(callsAt + 1)}
-          >
-            Weitere Notrufe
-          </button>
-        </nav>
-      )}
-      <strong>Funk · {radio.length} offen</strong>
-      {radio.slice(radioAt * 10, (radioAt + 1) * 10).map(({ m, r }) => (
-        <button className="radio-request" key={r.id} onClick={() => open(m.id)}>
-          <b>{visiblePriority(r.priority)} · Sprechwunsch</b>
-          <small>{r.details}</small>
-        </button>
-      ))}
-      {radio.length > 10 && (
-        <nav className="mission-pagination" aria-label="Funkseiten">
-          <button disabled={!radioAt} onClick={() => setRadioPage(radioAt - 1)}>
-            Vorherige Sprechwünsche
-          </button>
-          <span>
-            {radioAt + 1}/{Math.ceil(radio.length / 10)}
-          </span>
-          <button
-            disabled={(radioAt + 1) * 10 >= radio.length}
-            onClick={() => setRadioPage(radioAt + 1)}
-          >
-            Weitere Sprechwünsche
-          </button>
-        </nav>
-      )}
-    </section>
-  );
-}
 export { History } from "./IncidentHistory";
 export function IncidentPanel({ s, m }: { s: Save; m: Mission }) {
   return <CallDesk s={s} focusMission={m.id} />;

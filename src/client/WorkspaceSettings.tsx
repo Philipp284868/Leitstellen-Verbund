@@ -20,7 +20,8 @@ export function WorkspaceSettings({
         Texteingaben.
       </p>
       <p>
-        Funk, Ereignisse und aktive Einsätze teilen sich das Panel rechts oben.
+        Aktive Einsätze stehen unter den Statuskarten rechts oben. Neue Hinweise
+        erscheinen kurz oben mittig; offene Entscheidungen bleiben im Einsatz.
         Das Menü öffnet sich links. Die Größe folgt der Oberflächenskalierung.
       </p>
       <label>

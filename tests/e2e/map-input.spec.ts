@@ -1,3 +1,4 @@
+import { focusMapPoint } from "./ui-navigation";
 import { openPanel } from "./ui-navigation";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -88,6 +89,7 @@ test("Kartenbeschriftung bleibt beim Ziehen unmarkiert; Markerdrag löst keinen 
   page,
 }) => {
   await enter(page);
+  await focusMapPoint(page, sites[3]);
   const marker = page.getByRole("button", {
     name: "Testwache ohne Fahrzeuge",
     exact: true,

@@ -52,7 +52,7 @@ test("Hauptmenü und Rückkehr unterdrücken Anrufe, Spielansicht und zweiter Ta
       "Anwesenheit",
       "Prüfleitstelle",
     );
-  const save = phaseFixture(owner);
+  const save = phaseFixture(owner, undefined, 8);
   save.missions = [];
   save.archive = [];
   save.missionWait = 0;
@@ -109,7 +109,9 @@ for (const [width, height] of [
   [1920, 1080],
   [2560, 1440],
 ])
-  test(`kompakter Textfunk und Menü ${width}x${height}`, async ({ page }) => {
+  test(`kompakte Einsatzliste und Menü ${width}x${height}`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height });
     await page.goto(origin);
     await page.getByLabel("Benutzername", { exact: true }).fill("control");
@@ -129,15 +131,18 @@ for (const [width, height] of [
     });
     await page.getByRole("button", { name: "Spielen", exact: true }).click();
     const log = page.getByRole("region", {
-      name: "Einsatzübersicht und Textfunk",
+      name: "Aktive Einsätze",
     });
     await expect(log).toBeVisible();
     await expect(log.locator("input:visible,textarea:visible")).toHaveCount(0);
-    await expect(page.getByRole("tab", { name: /Einsätze/ })).toBeVisible();
-    await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
-    await page.getByRole("button", { name: /^Notrufe / }).click();
-    await expect(page.locator("#missions-preview")).toBeVisible();
-    await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
+    await expect(
+      page.getByRole("tab", { name: /Funk|Ereignisse/ }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Notrufe", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Schließen", exact: true })
+      .click();
     const bounds = await log.boundingBox(),
       status = await page.locator(".hud-status").boundingBox();
     expect(bounds!.y).toBeGreaterThan(status!.y + status!.height);

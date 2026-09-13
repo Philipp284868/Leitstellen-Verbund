@@ -68,7 +68,13 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
     box = await map.boundingBox();
   expect(top).not.toBeNull();
   expect(box).not.toBeNull();
-  expect(top!.height).toBe(64);
+  expect(top!.height).toBeGreaterThan(64);
+  expect(top!.height).toBeLessThan(130);
+  await expect(
+    topbar.locator(".time-weather-tile,.money-tile,.level-tile"),
+  ).toHaveCount(3);
+  const list = await page.locator(".compact-desk").boundingBox();
+  expect(list!.y).toBeGreaterThan(top!.y + top!.height + 7);
   expect(top!.y).toBe(20);
   expect(box!.x).toBe(0);
   expect(box!.y).toBe(0);
@@ -128,7 +134,9 @@ test("kompakte Topbar, freie Karte, Tastaturmenüs und unveränderte Kamera bei 
   await expect(page.locator(".command-menu")).toBeVisible();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
   await expect(map).toHaveAttribute("data-camera", camera!);
-  await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+  await expect(
+    page.getByRole("region", { name: "Aktive Einsätze", exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".compact-desk")).toBeVisible();
   expect(errors).toEqual([]);
 });

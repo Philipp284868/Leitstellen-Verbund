@@ -1,3 +1,4 @@
+import { focusMapPoint } from "./ui-navigation";
 import { fixturePurchase } from "../fixtures/germany/facilities";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -239,6 +240,7 @@ test("Versetzen, Fahrzeugverkauf und leerer Standortverkauf sind echte einmalige
   await expect(page.locator(".money-tile strong")).toHaveText(
     formatMoney(finalMoney),
   );
+  await focusMapPoint(page, current().buildings[0].facility!.position);
   await expect(
     page.locator(
       "[data-testid=germany-map-viewport] [data-testid=map-station]:not(.friend)",

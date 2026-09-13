@@ -74,19 +74,24 @@ for (const [width, height, scale] of [
       await expect(map).toHaveAttribute("data-camera", /.+/);
       await expect(page.locator(".connection-inline")).toHaveCount(0);
       await expect(page.locator(".control-menu")).toHaveCount(0);
-      await expect(page.locator(".status-tile")).toHaveCount(4);
+      await expect(page.locator(".status-tile")).toHaveCount(3);
       await expect(
         page.locator(".hud-identity,.mission-sidebar,.hud-shell > .event-log"),
       ).toHaveCount(0);
       await expect(
-        page.getByRole("tab", { name: /Funk & Ereignisse/ }),
-      ).toHaveAttribute("aria-selected", "true");
-      await expect(page.locator(".event-preview").nth(3)).toBeVisible();
+        page.getByRole("tab", { name: /Funk|Ereignisse/ }),
+      ).toHaveCount(0);
+      await expect(
+        page.locator(
+          ".event-preview,.event-log,.map-quick-tools,.maplibregl-ctrl-zoom-in",
+        ),
+      ).toHaveCount(0);
+      await expect(page.locator(".mission-card").nth(3)).toBeVisible();
       const desk = await page.locator(".compact-desk").boundingBox(),
         status = await page.locator(".hud-status").boundingBox();
       expect(desk!.y).toBeGreaterThanOrEqual(status!.y + status!.height + 10);
       expect(desk!.x + desk!.width).toBeCloseTo(width - 20, 0);
-      expect(desk!.height).toBeLessThanOrEqual(scale === 100 ? 365 : 510);
+      expect(desk!.y + desk!.height).toBeLessThanOrEqual(height - 34);
       await expect(page.locator(".app")).toHaveClass(/desktop-hud/);
       await expect(page.locator(".app")).not.toHaveClass(/\blight\b/);
       const palette = await page.locator(".compact-desk").evaluate((e) => {
@@ -104,14 +109,14 @@ for (const [width, height, scale] of [
       expect(palette.background).toMatch(/^rgba?\(8, 23, 34(?:, [^)]+)?\)$/);
       expect(palette.text).toBe("rgb(237, 242, 245)");
       const camera = await map.getAttribute("data-camera");
-      await mkdir(".tools/hud-acceptance", { recursive: true });
+      await mkdir(".tools/infrastructure-acceptance", { recursive: true });
       const shot = async (state: string) => {
         if (info.project.name === "chromium")
           await page.screenshot({
-            path: `.tools/hud-acceptance/${width}-${scale}-${state}.png`,
+            path: `.tools/infrastructure-acceptance/${width}-${scale}-${state}.png`,
           });
       };
-      await shot("closed-radio");
+      await shot("missions");
       await menu.click();
       const nav = page.getByRole("navigation", {
         name: "Leitstellenmenü",
@@ -137,7 +142,7 @@ for (const [width, height, scale] of [
         navBox!.x + navBox!.width <= status!.x ||
           navBox!.y >= status!.y + status!.height,
       ).toBe(true);
-      await shot("open-radio");
+      await shot("menu");
       await page.keyboard.press("Escape");
       await expect(menu).toBeFocused();
       await menu.click();
@@ -145,44 +150,42 @@ for (const [width, height, scale] of [
       await expect(nav).toHaveCount(0);
       await expect(menu).toBeFocused();
       expect(await map.getAttribute("data-camera")).toBe(camera);
-      await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+
       await expect(page.locator(".mission-card")).toHaveCount(6);
-      await expect(page.locator("#radio-preview")).toBeHidden();
+
       await shot("closed-missions");
       await menu.click();
       await shot("open-missions");
       await page.keyboard.press("Escape");
       await page.locator(".mission-card").first().click();
       const dockBox = await page.locator(".incident-dock").boundingBox();
-      const scaleBox = await page
-        .locator(".maplibregl-ctrl-scale")
-        .boundingBox();
+      const scaleBox = await page.locator(".metric-map-scale").boundingBox();
       expect(dockBox!.y + dockBox!.height).toBeLessThan(scaleBox!.y);
       await page
         .locator(".incident-dock")
         .getByRole("button", { name: "Schließen", exact: true })
         .click();
       await page
-        .getByRole("button", { name: "Ereignispanel einklappen" })
+        .getByRole("button", { name: "Einsatzliste einklappen" })
         .click();
-      await expect(page.locator("#missions-preview")).toBeHidden();
+      await expect(page.locator(".preview-scroll")).toBeHidden();
       await page
-        .getByRole("button", { name: "Ereignispanel ausklappen" })
+        .getByRole("button", { name: "Einsatzliste ausklappen" })
         .click();
-      await page.getByRole("button", { name: "Vorschau durchsuchen" }).click();
+      await page
+        .getByText("Suchen, filtern und sortieren", { exact: true })
+        .click();
       await page
         .getByRole("textbox", { name: "Einsätze durchsuchen", exact: true })
         .fill("kein passender Name");
       await expect(page.locator(".mission-card")).toHaveCount(0);
-      await page.getByRole("tab", { name: /Funk & Ereignisse/ }).click();
-      await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
+
       await expect(
         page.getByRole("textbox", {
           name: "Einsätze durchsuchen",
           exact: true,
         }),
       ).toHaveValue("kein passender Name");
-      expect(await map.getAttribute("data-camera")).toBe(camera);
       if (width === 1920 && scale === 100) {
         for (const name of [
           "Fahrzeuge",

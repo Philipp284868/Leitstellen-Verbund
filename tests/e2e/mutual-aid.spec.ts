@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "../helpers/independent-sites";
 import { replaceFixtureSave } from "../fixtures/germany/replace-save";
 import { advanceUntil } from "../helpers/simulation-time";
 import { mkdtemp } from "node:fs/promises";
@@ -41,7 +42,7 @@ test.beforeEach(async () => {
   a.player.station = "Nord";
   b.player.station = "Süd";
   app.db.save(owner, a);
-  app.db.save(helper, b);
+  saveIndependentFixture(app.db, helper, b);
 });
 test.afterEach(async () => {
   await app.close();

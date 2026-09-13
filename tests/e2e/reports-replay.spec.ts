@@ -126,9 +126,8 @@ test("Bericht, CSV/JSON, Replay, Statistik und Wiederverbindungsübersicht über
   await app.listen();
   await page.goto(config.publicUrl);
   await enterGame(page);
-  await expect(page.locator(".compact-desk")).toContainText(
-    "Neuer Notruf eingegangen.",
-  );
+  await expect(page.locator(".mission-card")).toHaveCount(1);
+  await expect(page.locator(".game-toast")).toHaveCount(0);
   await expect(page.locator(".reconnect-summary")).toHaveCount(0);
   expect(app.db.all().get(owner)!.archive[0].report).toEqual(savedReport);
   expect(errors).toEqual([]);

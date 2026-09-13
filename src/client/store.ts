@@ -26,9 +26,10 @@ import {
   observeEvents,
   resolveConnectionEvents,
   eventSnapshot,
-  mergeEvents,
 } from "./event-store";
 import type { GameEvent } from "../shared/game-events";
+import { connectInfrastructure, receiveInfrastructure } from "./infrastructure";
+import { suppressEventReplay } from "./event-store";
 export interface Snapshot {
   playContext: number;
   mode: GameMode;
@@ -213,8 +214,7 @@ function accept(data: {
     data.save.revision >= snapshot.save.revision
   ) {
     if (snapshot.workspace?.owner !== data.workspace?.owner) resetNetwork();
-    observeEvents(data.save);
-    if (data.events) mergeEvents(data.events);
+    observeEvents(data.save, data.events);
     emit({
       playContext: data.playContext ?? 0,
       save: data.save,
@@ -254,6 +254,8 @@ export async function refresh() {
       withCredentials: true,
     });
     socket.on("connect", () => {
+      suppressEventReplay();
+      connectInfrastructure((ids) => socket?.emit("infrastructure:watch", ids));
       socket?.emit("play:presence", { active: playing });
       presenceConnection(true);
       emit({
@@ -263,6 +265,7 @@ export async function refresh() {
       });
     });
     socket.on("disconnect", (reason) => {
+      connectInfrastructure(undefined);
       presenceConnection(false);
       routeDecoder.reset();
       emit({
@@ -309,6 +312,7 @@ export async function refresh() {
       if (!receivePresence(frame)) socket?.emit("presence:sync");
     });
     socket.on("notice", notice);
+    socket.on("infrastructure", receiveInfrastructure);
   }
   // Retry may overlap a browser online event or an automatic reconnection.
   ensureSocketConnection(socket);

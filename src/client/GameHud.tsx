@@ -11,6 +11,7 @@ import { IncidentDock } from "./IncidentDock";
 import { useNetwork, usePresence } from "./network";
 import { Topbar } from "./Topbar";
 import { CompactDesk, type CompactDeskProps } from "./CompactDesk";
+import { GameToast } from "./GameToast";
 type Props = Omit<CompactDeskProps, "panel"> & {
   setModal: (id: string) => void;
   notice: string;
@@ -37,6 +38,8 @@ export function GameHud({
   const [layers, setLayers] = useState(false),
     [tab, setTab] = useState("details");
   const dock = useRef<HTMLElement>(null);
+  const [inspectionContainer, setInspectionContainer] =
+    useState<HTMLDivElement | null>(null);
   const working = !!activePanel && activePanel !== "mission";
   useEffect(() => {
     if (working || showDetail) setLayers(false);
@@ -89,26 +92,49 @@ export function GameHud({
       data-detail-open={showDetail}
       data-map-tools={layers && !working}
     >
-      <Topbar
-        s={s}
-        onNavigationOpen={() => setLayers(false)}
-        panel={setModal}
-        onMenu={onMenu}
-        onSearch={() => {
-          setLayers(true);
-          onCloseDetailKeepSelection();
-          requestAnimationFrame(() =>
-            document
-              .querySelector<HTMLInputElement>(
-                '[aria-label="Karte durchsuchen"]',
-              )
-              ?.focus(),
-          );
-        }}
-      />
+      <div className="hud-overlays">
+        <Topbar
+          s={s}
+          onNavigationOpen={() => setLayers(false)}
+          panel={setModal}
+          onMenu={onMenu}
+          onSearch={() => {
+            setLayers(true);
+            onCloseDetailKeepSelection();
+            requestAnimationFrame(() =>
+              document
+                .querySelector<HTMLInputElement>(
+                  '[aria-label="Karte durchsuchen"]',
+                )
+                ?.focus(),
+            );
+          }}
+        />
+        <GameToast />
+        <div className="hud-workspace">
+          <div className="hud-inspection-slot" ref={setInspectionContainer} />
+          <CompactDesk {...props} panel={setModal} />
+          {showDetail && (
+            <IncidentDock
+              mission={
+                s.missions.find((m) => m.id === selected) ??
+                s.archive.find((m) => m.id === selected)
+              }
+              dockRef={dock}
+              tab={tab}
+              onSection={focusSection}
+              onClose={onCloseDetail}
+              readonly={readonly}
+            >
+              {detail}
+            </IncidentDock>
+          )}
+        </div>
+      </div>
       <main className="map-column">
         <MapView
           s={s}
+          detailContainer={inspectionContainer}
           selected={selected}
           onSelect={choose}
           inspectionsHidden={working || showDetail || layers}
@@ -121,22 +147,6 @@ export function GameHud({
           onToggleTools={toggleTools}
         />
       </main>
-      <CompactDesk {...props} panel={setModal} />
-      {showDetail && (
-        <IncidentDock
-          mission={
-            s.missions.find((m) => m.id === selected) ??
-            s.archive.find((m) => m.id === selected)
-          }
-          dockRef={dock}
-          tab={tab}
-          onSection={focusSection}
-          onClose={onCloseDetail}
-          readonly={readonly}
-        >
-          {detail}
-        </IncidentDock>
-      )}
     </div>
   );
 }

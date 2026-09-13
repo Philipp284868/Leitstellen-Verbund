@@ -1,3 +1,4 @@
+import { createId } from "../ids";
 import { useEffect, useRef, useState } from "react";
 import type { Mission, Save, Vehicle } from "../../shared/model";
 import type { TravelMode } from "../../simulation/dynamics-schema";
@@ -8,8 +9,14 @@ import { approachContext } from "./approach-key";
 import type { Point } from "../../shared/germany/projection";
 import { project, unproject } from "../../shared/germany/projection";
 import { GeoRequestCache, type QueryResult } from "./request-cache";
+import { useInfrastructure, watchInfrastructure } from "../infrastructure";
 const cache = new GeoRequestCache();
-function useGeoQuery<T>(key: string, path: string, enabled: boolean) {
+function useGeoQuery<T>(
+  key: string,
+  path: string,
+  enabled: boolean,
+  periodic = true,
+) {
   const { mode } = useGame();
   const [state, setState] = useState<
     QueryResult<T> & {
@@ -28,12 +35,14 @@ function useGeoQuery<T>(key: string, path: string, enabled: boolean) {
       (result) => setState({ ...result, key }),
       mode,
     );
-    const timer = setTimeout(() => setRefresh((value) => value + 1), 15010);
+    const timer = periodic
+      ? setTimeout(() => setRefresh((value) => value + 1), 15010)
+      : undefined;
     return () => {
       release();
       clearTimeout(timer);
     };
-  }, [key, path, enabled, refresh, mode]);
+  }, [key, path, enabled, refresh, mode, periodic]);
   return state.key === key ? state : ({ loading: true } as QueryResult<T>);
 }
 function useScope(s: Save) {
@@ -90,6 +99,25 @@ export function useHospitalOptions(
   vehicle?: Vehicle,
   enabled = true,
 ) {
+  const infra = useInfrastructure([], false),
+    { readonly } = useGame();
+  const remembered = useRef<{
+    scope: string;
+    options: ReturnType<typeof hospitalOptions>;
+  }>({ scope: "", options: [] });
+  const capacities = JSON.stringify(
+    remembered.current.options.map((h) => [h.id, infra.clinics[h.id]]),
+  );
+  const care = JSON.stringify([
+    mission?.organization?.hospital,
+    mission?.dynamics?.patients.map((p) => [
+      p.id,
+      p.condition,
+      p.transport,
+      p.triage,
+      p.priority,
+    ]),
+  ]);
   const scope = useScope(s),
     params = new URLSearchParams({
       x: String(origin.x),
@@ -101,11 +129,30 @@ export function useHospitalOptions(
   const path = `/api/geo/hospitals?${params}`;
   const result = useGeoQuery<{
     options: ReturnType<typeof hospitalOptions>;
-  }>(`${scope}:${path}`, path, enabled);
+  }>(
+    `${scope}:${path}:${care}:${capacities}`,
+    path,
+    enabled && !readonly,
+    false,
+  );
+  if (result.data) remembered.current = { scope, options: result.data.options };
+  const options =
+    result.data?.options ??
+    (remembered.current.scope === scope ? remembered.current.options : []);
+  const clinicIds = options
+    .map((h) => h.facilityId ?? h.id.replace(/^public:/, ""))
+    .sort()
+    .join("|");
+  useEffect(() => {
+    if (enabled && clinicIds)
+      return watchInfrastructure(createId(), clinicIds.split("|"));
+  }, [enabled, clinicIds]);
   return {
-    options: result.data?.options ?? [],
+    options,
     loading: enabled && result.loading,
-    error: result.error,
+    error: readonly
+      ? "Offline · Klinikzahlen sind nicht aktuell. Die Aufnahme bestätigt der Server nach Wiederverbindung."
+      : result.error,
   };
 }
 /** Stable OSM node IDs are resolved by the server, never indexed into a client graph. */

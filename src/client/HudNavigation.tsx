@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { requestDialogTransition } from "./dialog-state";
+import { useGame } from "./store";
 const items = [
   ["search", "Suchen …", Search],
   ["fleet", "Fahrzeuge", Truck],
@@ -39,6 +40,7 @@ export function HudNavigation({
   onMenu: () => void;
   onOpen: () => void;
 }) {
+  const { readonly } = useGame();
   const [opened, setOpened] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null),
     nav = useRef<HTMLElement>(null);
@@ -117,6 +119,7 @@ export function HudNavigation({
       >
         <Menu size={21} />
         <span>Menü</span>
+        {readonly && <small className="offline-badge">Offline</small>}
       </button>
       {opened && (
         <nav
@@ -126,6 +129,17 @@ export function HudNavigation({
           aria-label="Leitstellenmenü"
         >
           <div className="control-menu-scroll">
+            {readonly && (
+              <p className="menu-connection-state">
+                Serververbindung verloren. Aktionen sind gesperrt.{" "}
+                <button onClick={() => window.location.reload()}>
+                  Neu verbinden
+                </button>
+                <button onClick={() => act(() => panel("support"))}>
+                  Support öffnen
+                </button>
+              </p>
+            )}
             {items.map(([id, label, Icon]) => (
               <button
                 key={id}

@@ -21,11 +21,6 @@ export const navigation = [
     words: "Mobilisierung Bereitschaft Katastrophenschutz Standort",
   },
   {
-    id: "radio",
-    title: "Funkarbeitsplatz",
-    words: "Sprechwünsche Lagemeldung Rückfrage Nachforderung Kanal Übernahme",
-  },
-  {
     id: "stations",
     title: "Wachen verwalten",
     words: "Gebäude Standorte Organisation Krankenhaus",

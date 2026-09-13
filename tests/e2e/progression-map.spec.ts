@@ -1,3 +1,4 @@
+import { mapKey } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -145,20 +146,9 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
     fullPage: true,
   });
   await context.setOffline(true);
-  await expect(
-    page.getByText(
-      "Serververbindung verloren. Bitte die Seite neu laden oder den Support kontaktieren.",
-      {
-        exact: true,
-      },
-    ),
-  ).toBeVisible();
+  await expect(page.locator(".offline-badge")).toHaveText("Offline");
   await context.setOffline(false);
-  await expect(
-    page
-      .locator(".connection-inline")
-      .filter({ hasText: "Serververbindung verloren." }),
-  ).toHaveCount(0);
+  await expect(page.locator(".offline-badge")).toHaveCount(0);
   await expect(
     page
       .locator("[data-testid=germany-map-viewport]")
@@ -174,11 +164,11 @@ test("reale Karte: Übersicht, Suche, Filter, ausgewählte Fahrtdaten, Folgen, k
   const beforeZoom = await page
     .locator("[data-testid=germany-map-viewport]")
     .getAttribute("data-bounds");
-  await page.getByRole("button", { name: "Vergrößern", exact: true }).click();
+  await mapKey(page, "+");
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),
   ).not.toHaveAttribute("data-bounds", beforeZoom!);
-  await page.getByRole("button", { name: "Verkleinern", exact: true }).click();
+  await mapKey(page, "-");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

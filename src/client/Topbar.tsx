@@ -87,21 +87,9 @@ export function Topbar({
         onMenu={onMenu}
       />
       <div className="hud-status" aria-label="Leitstellenstatus">
-        <div className="status-tile time-tile">
-          <Clock />
-          <span>
-            <small>Serverzeit</small>
-            <time>
-              {new Date(s.time * 1000).toLocaleTimeString("de-DE", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </time>
-          </span>
-        </div>
         <button
           ref={weatherTrigger}
-          className="status-tile weather-tile"
+          className="status-tile time-weather-tile"
           aria-label="Welt- & Wetterlage"
           title={
             elevatedSituation
@@ -111,18 +99,25 @@ export function Topbar({
           aria-expanded={situation}
           onClick={() => setSituation(!situation)}
         >
-          <WeatherIcon />
-          <span>
-            <strong>
-              {weather
-                ? `${weather.temperature.toLocaleString("de-DE")} °C`
-                : "—"}
-            </strong>
+          <span className="time-weather-content">
+            <small>Serverzeit & Wetter</small>
+            <span className="time-weather-values">
+              <Clock size={16} />
+              <time>
+                {new Date(s.time * 1000).toLocaleTimeString("de-DE", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </time>
+              <WeatherIcon size={20} />
+              <strong>
+                {weather
+                  ? `${weather.temperature.toLocaleString("de-DE")} °C`
+                  : "—"}
+              </strong>
+            </span>
             <small>
               {weather ? weatherNames[weather.kind] : "Wetter nicht verfügbar"}
-              {elevatedSituation && ` · ${elevatedSituation}`}
-              {!!alarms.length &&
-                ` · ${alarms.length} Warnung${alarms.length === 1 ? "" : "en"}`}
             </small>
           </span>
           {(!!alarms.length || elevatedSituation) && (
@@ -148,7 +143,7 @@ export function Topbar({
           <Award />
           <span>
             <span className="xp-heading">
-              <b>Fortschritt</b>
+              <b>Leitstellenleiter</b>
               <small>
                 {xp.current.toLocaleString("de-DE")} /{" "}
                 {xp.required.toLocaleString("de-DE")} XP

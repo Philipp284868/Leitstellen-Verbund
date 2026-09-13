@@ -1,14 +1,40 @@
 import { useSyncExternalStore } from "react";
 import { projectEvents, type GameEvent } from "../shared/game-events";
 import type { Save } from "../shared/model";
+import { gameToasts } from "./toast-queue";
 const listeners = new Set<() => void>();
 let entries: GameEvent[] = [],
   owner = "",
   serial = 0;
+let baseline = true;
+export function suppressEventReplay() {
+  baseline = true;
+}
 export function eventSnapshot() {
   return entries;
 }
 export function mergeEvents(incoming: GameEvent[], complete = false) {
+  const known = new Set(entries.map((e) => e.id));
+  if (!baseline)
+    for (const e of incoming) {
+      if (
+        known.has(e.id) ||
+        (!e.local &&
+          !e.incidentRadio &&
+          !["Notruf", "Abschluss"].includes(e.type))
+      )
+        continue;
+      gameToasts.add({
+        id: e.id,
+        text: e.connection ? "Serververbindung verloren" : e.text,
+        priority: e.priority,
+        group: e.incidentRadio
+          ? `incident:${e.mission}`
+          : e.type === "Notruf"
+            ? `call:${e.mission}`
+            : undefined,
+      });
+    }
   const consolidated = new Set(
     [...incoming, ...entries]
       .filter((e) => e.incidentRadio)
@@ -59,7 +85,7 @@ export function mergeEvents(incoming: GameEvent[], complete = false) {
       type: "Offene Meldungen",
       priority: "critical",
       unresolved: true,
-      text: "Weitere offene Meldungen. Im Einsatz bearbeiten oder im älteren Verlauf nachladen.",
+      text: "Weitere offene Meldungen. Im Einsatz bearbeiten oder in den Einsatzdetails prüfen.",
     });
   const recent = all.filter((e) => !e.unresolved).slice(-600);
   entries = [...pinned, ...recent].sort(
@@ -67,12 +93,14 @@ export function mergeEvents(incoming: GameEvent[], complete = false) {
   );
   listeners.forEach((f) => f());
 }
-export function observeEvents(save: Save) {
+export function observeEvents(save: Save, external: GameEvent[] = []) {
   if (owner !== save.player.id + save.generation) {
     owner = save.player.id + save.generation;
     entries = [];
+    baseline = true;
   }
-  mergeEvents(projectEvents(save), true);
+  mergeEvents([...projectEvents(save), ...external], true);
+  baseline = false;
 }
 export function localEvent(
   text: string,
@@ -108,6 +136,7 @@ export function resolveConnectionEvents() {
   );
 }
 export function clearEvents() {
+  baseline = true;
   owner = "";
   entries = [];
   listeners.forEach((f) => f());

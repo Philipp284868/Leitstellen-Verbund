@@ -14,10 +14,29 @@ export function WaterSupplyControls({ m }: { m: Mission }) {
         {Math.round(w.flow * 60)} l/min · Verbrauch {Math.round(w.consumed)} l.
       </p>
       <p>
-        Hydrantenleistung ist ein Simulationswert des Einsatzszenarios.
-        Gewässerentnahme benötigt ein kartiertes Gewässer und Pumpen.
-        Tankpendelverkehr bindet Tanker an den Wassernachschub.
+        Quellen stammen aus kartierter Infrastruktur oder gekennzeichneten,
+        ortsabhängigen Ergänzungen. Ihre endliche Förderleistung ist ein
+        gemeinsam genutzter Spielwert. Gewässerentnahme benötigt einen
+        bestätigten Zugang, Pumpen und Schlauchmaterial.
       </p>
+      {(w.connection?.source ?? w.refillSource) && (
+        <p>
+          {(w.connection?.source ?? w.refillSource)!.origin === "openstreetmap"
+            ? "Kartierte Entnahmestelle"
+            : "Simulierte Ergänzung"}{" "}
+          · {(w.connection?.source ?? w.refillSource)!.id} ·{" "}
+          {(w.connection?.source ?? w.refillSource)!.flowLpm} l/min insgesamt
+          {w.connection &&
+            ` · ${Math.ceil(w.connection.meters)} m geprüfter Schlauchweg`}
+        </p>
+      )}
+      {w.setupUntil && (
+        <small>
+          Leitungsaufbau bis{" "}
+          {new Date(w.setupUntil * 1000).toLocaleTimeString("de-DE")}.
+          Tankversorgung bleibt währenddessen verfügbar.
+        </small>
+      )}
       {w.shortage && (
         <p className="warning" role="status">
           {w.shortage}
