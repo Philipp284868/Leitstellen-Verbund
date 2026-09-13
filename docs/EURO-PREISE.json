@@ -127,7 +127,7 @@
       "legacyCredits": 28000,
       "cents": 16000000,
       "name": "NEF",
-      "prerequisite": "Stufe 11; Rettungswache; freier Stellplatz; Notarztstandort",
+      "prerequisite": "Stufe 9; Rettungswache; freier Stellplatz; Notarztstandort",
       "included": "Komplettes Fahrzeug; Notarzt, Patientenversorgung; passende Gebäudebesatzung",
       "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
     },
@@ -197,7 +197,7 @@
       "legacyCredits": 28000,
       "cents": 27000000,
       "name": "GW-Wasserrettung",
-      "prerequisite": "Stufe 20; Wasserrettungsstation; freier Stellplatz",
+      "prerequisite": "Stufe 19; Wasserrettungsstation; freier Stellplatz",
       "included": "Komplettes Fahrzeug; Wasserrettung, Technische Rettung; passende Gebäudebesatzung",
       "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
     },
@@ -207,7 +207,7 @@
       "legacyCredits": 36000,
       "cents": 32000000,
       "name": "Zugfahrzeug mit Rettungsboot (MZB)",
-      "prerequisite": "Stufe 20; Wasserrettungsstation; freier Stellplatz",
+      "prerequisite": "Stufe 19; Wasserrettungsstation; freier Stellplatz",
       "included": "Komplettes Fahrzeug; Rettungsboot, Wasserrettung; passende Gebäudebesatzung",
       "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
     },
@@ -287,7 +287,7 @@
       "legacyCredits": 37000,
       "cents": 31000000,
       "name": "GW-L",
-      "prerequisite": "Stufe 16; Feuerwache; freier Stellplatz",
+      "prerequisite": "Stufe 13; Feuerwache; freier Stellplatz",
       "included": "Komplettes Fahrzeug; Logistik, Beleuchtung; passende Gebäudebesatzung",
       "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
     },
@@ -307,7 +307,7 @@
       "legacyCredits": 38000,
       "cents": 34000000,
       "name": "GW-T",
-      "prerequisite": "Stufe 16; Feuerwache; freier Stellplatz",
+      "prerequisite": "Stufe 15; Feuerwache; freier Stellplatz",
       "included": "Komplettes Fahrzeug; Bergung, Technische Rettung, Notstromversorgung; passende Gebäudebesatzung",
       "reasoning": "Spezialfahrzeug einschließlich Ausrüstung; Funktions-/Kapazitätsabstufung"
     },
@@ -436,7 +436,7 @@
       "id": "ktwb",
       "legacyCredits": 23000,
       "cents": 18000000,
-      "name": "KTW-B – zwei Transportplätze",
+      "name": "NKTW / KTW Typ B – zwei Transportplätze",
       "prerequisite": "Stufe 8; Rettungswache; freier Stellplatz",
       "included": "Komplettes Fahrzeug; Patientenversorgung, Patiententransport; passende Gebäudebesatzung",
       "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
@@ -512,12 +512,92 @@
       "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
     },
     {
+      "kind": "vehicle",
+      "id": "flf",
+      "legacyCredits": 900000,
+      "cents": 125000000,
+      "name": "Flugfeldlöschfahrzeug",
+      "prerequisite": "Stufe 24; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser, Schaummittelversorgung, Technische Rettung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "ulf",
+      "legacyCredits": 750000,
+      "cents": 98000000,
+      "name": "Universallöschfahrzeug",
+      "prerequisite": "Stufe 24; Feuerwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Brandbekämpfung, Löschwasser, Schaummittelversorgung, Gefahrgut, Atemschutz; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "thw-power",
+      "legacyCredits": 260000,
+      "cents": 34000000,
+      "name": "Fachgruppe Elektroversorgung",
+      "prerequisite": "Stufe 18; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Notstromversorgung, Beleuchtung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "thw-pump",
+      "legacyCredits": 350000,
+      "cents": 46000000,
+      "name": "Hochleistungspumpen-Modul",
+      "prerequisite": "Stufe 18; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Pumpen, Bergung, Logistik; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "thw-light",
+      "legacyCredits": 220000,
+      "cents": 29000000,
+      "name": "Beleuchtungsfahrzeug",
+      "prerequisite": "Stufe 15; THW-Unterkunft; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Beleuchtung, Notstromversorgung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "kats-log",
+      "legacyCredits": 280000,
+      "cents": 38000000,
+      "name": "GW Logistik Katastrophenschutz",
+      "prerequisite": "Stufe 16; Katastrophenschutzwache; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Logistik, Betreuung, Notstromversorgung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "vehicle",
+      "id": "dive-unit",
+      "legacyCredits": 310000,
+      "cents": 41000000,
+      "name": "Gerätewagen Taucher",
+      "prerequisite": "Stufe 22; Wasserrettungsstation; freier Stellplatz",
+      "included": "Komplettes Fahrzeug; Wasserrettung, Technische Rettung, Patientenversorgung; passende Gebäudebesatzung",
+      "reasoning": "Funktions-/Kapazitätsabstufung; erreichbare Grundausstattung"
+    },
+    {
+      "kind": "building",
+      "id": "kats",
+      "legacyCredits": 52000,
+      "cents": 52000000,
+      "name": "Katastrophenschutzwache",
+      "prerequisite": "Stufe 16; reale Einrichtung mit geprüfter Zufahrt",
+      "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
+      "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
+    },
+    {
       "kind": "building",
       "id": "fire",
       "legacyCredits": 55000,
       "cents": 65000000,
       "name": "Feuerwache",
-      "prerequisite": "Stufe 1; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 1; reale Einrichtung mit geprüfter Zufahrt",
       "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -527,7 +607,7 @@
       "legacyCredits": 42000,
       "cents": 45000000,
       "name": "Rettungswache",
-      "prerequisite": "Stufe 4; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 4; reale Einrichtung mit geprüfter Zufahrt",
       "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -537,7 +617,7 @@
       "legacyCredits": 40000,
       "cents": 42000000,
       "name": "Polizeiwache",
-      "prerequisite": "Stufe 7; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 7; reale Einrichtung mit geprüfter Zufahrt",
       "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -547,7 +627,7 @@
       "legacyCredits": 62000,
       "cents": 68000000,
       "name": "THW-Unterkunft",
-      "prerequisite": "Stufe 15; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 15; reale Einrichtung mit geprüfter Zufahrt",
       "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -557,7 +637,7 @@
       "legacyCredits": 48000,
       "cents": 42000000,
       "name": "Wasserrettungsstation",
-      "prerequisite": "Stufe 20; gültiger eigener Bauplatz; geprüfter Uferzugang",
+      "prerequisite": "Stufe 19; reale Einrichtung mit geprüfter Zufahrt; geprüfter Uferzugang",
       "included": "4 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -567,7 +647,7 @@
       "legacyCredits": 100000,
       "cents": 160000000,
       "name": "Krankenhaus",
-      "prerequisite": "Stufe 12; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 12; reale Einrichtung mit geprüfter Zufahrt",
       "included": "0 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -577,7 +657,7 @@
       "legacyCredits": 35000,
       "cents": 40000000,
       "name": "Ausbildungszentrum",
-      "prerequisite": "Stufe 5; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 4; reale Einrichtung mit geprüfter Zufahrt",
       "included": "0 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -587,7 +667,7 @@
       "legacyCredits": 95000,
       "cents": 98000000,
       "name": "Rettungshubschrauberstation",
-      "prerequisite": "Stufe 30; gültiger eigener Bauplatz",
+      "prerequisite": "Stufe 30; reale Einrichtung mit geprüfter Zufahrt",
       "included": "2 Grundstellplätze; automatische Betriebsbesetzung; Fahrzeuge separat",
       "reasoning": "Betriebsfähige Spielanlage; reale Baukosten bewusst komprimiert"
     },
@@ -627,7 +707,7 @@
       "legacyCredits": 12000,
       "cents": 9000000,
       "name": "Notarztstandort",
-      "prerequisite": "Passende Wache; Stufe 11",
+      "prerequisite": "Passende Wache; Stufe 9",
       "included": "Gebäudefunktion Notarztstandort; passende Qualifikation ohne Einzelgebühr",
       "reasoning": "Einmalige Funktionsfreigabe; keine nachträgliche Personalrechnung"
     }
@@ -639,8 +719,6 @@
     "hire": 0,
     "training": 0,
     "operatingPerHour": 0,
-    "fundingPerInterval": 3000000,
-    "fundingCeiling": 250000000,
     "legacyReliefReward": 1500000
   },
   "missions": [
@@ -930,6 +1008,237 @@
       "level": 1,
       "legacyCredits": 5000,
       "cents": 675000
+    },
+    {
+      "id": "case-wohnung-personen-eingeschlossen-reported",
+      "name": "Wohnungsbrand mit eingeschlossener Person – erste Meldung",
+      "level": 4,
+      "legacyCredits": 22500,
+      "cents": 1330000
+    },
+    {
+      "id": "case-wohnung-personen-eingeschlossen-access",
+      "name": "Wohnungsbrand mit eingeschlossener Person – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 23700,
+      "cents": 1330000
+    },
+    {
+      "id": "case-wohnung-personen-eingeschlossen-extended",
+      "name": "Wohnungsbrand mit eingeschlossener Person – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 34400,
+      "cents": 1630000
+    },
+    {
+      "id": "case-wohnung-gas-ausbreitung-reported",
+      "name": "Wohnungsbrand mit Gasgefahr – erste Meldung",
+      "level": 1,
+      "legacyCredits": 16900,
+      "cents": 975000
+    },
+    {
+      "id": "case-wohnung-gas-ausbreitung-access",
+      "name": "Wohnungsbrand mit Gasgefahr – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 1100000
+    },
+    {
+      "id": "case-wohnung-gas-ausbreitung-extended",
+      "name": "Wohnungsbrand mit Gasgefahr – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 33000,
+      "cents": 1630000
+    },
+    {
+      "id": "case-wohnung-dach-ausbreitung-reported",
+      "name": "Brandausbreitung zum Dachstuhl – erste Meldung",
+      "level": 1,
+      "legacyCredits": 20900,
+      "cents": 975000
+    },
+    {
+      "id": "case-wohnung-dach-ausbreitung-access",
+      "name": "Brandausbreitung zum Dachstuhl – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 26300,
+      "cents": 1150000
+    },
+    {
+      "id": "case-wohnung-dach-ausbreitung-extended",
+      "name": "Brandausbreitung zum Dachstuhl – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 34200,
+      "cents": 1680000
+    },
+    {
+      "id": "case-schulgebaeude-rauch-reported",
+      "name": "Rauchentwicklung in einer Schule – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-schulgebaeude-rauch-access",
+      "name": "Rauchentwicklung in einer Schule – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-schulgebaeude-rauch-extended",
+      "name": "Rauchentwicklung in einer Schule – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 31600,
+      "cents": 1505000
+    },
+    {
+      "id": "case-klinik-stromausfall-reported",
+      "name": "Stromausfall im Krankenhaus – erste Meldung",
+      "level": 15,
+      "legacyCredits": 15500,
+      "cents": 1465000
+    },
+    {
+      "id": "case-klinik-stromausfall-access",
+      "name": "Stromausfall im Krankenhaus – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 19500,
+      "cents": 1590000
+    },
+    {
+      "id": "case-klinik-stromausfall-extended",
+      "name": "Stromausfall im Krankenhaus – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 20400,
+      "cents": 1640000
+    },
+    {
+      "id": "case-einkaufszentrum-raeumung-reported",
+      "name": "Räumung eines Einkaufszentrums – erste Meldung",
+      "level": 7,
+      "legacyCredits": 21100,
+      "cents": 1310000
+    },
+    {
+      "id": "case-einkaufszentrum-raeumung-access",
+      "name": "Räumung eines Einkaufszentrums – Zugang erschwert",
+      "level": 7,
+      "legacyCredits": 25100,
+      "cents": 1435000
+    },
+    {
+      "id": "case-einkaufszentrum-raeumung-extended",
+      "name": "Räumung eines Einkaufszentrums – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 34400,
+      "cents": 1755000
+    },
+    {
+      "id": "case-parkhaus-fahrzeugbrand-reported",
+      "name": "Fahrzeugbrand im Parkhaus – erste Meldung",
+      "level": 1,
+      "legacyCredits": 15500,
+      "cents": 850000
+    },
+    {
+      "id": "case-parkhaus-fahrzeugbrand-access",
+      "name": "Fahrzeugbrand im Parkhaus – Zugang erschwert",
+      "level": 1,
+      "legacyCredits": 19500,
+      "cents": 975000
+    },
+    {
+      "id": "case-parkhaus-fahrzeugbrand-extended",
+      "name": "Fahrzeugbrand im Parkhaus – Lage ausgeweitet",
+      "level": 1,
+      "legacyCredits": 23200,
+      "cents": 1150000
+    },
+    {
+      "id": "case-autobahn-lkw-bergung-reported",
+      "name": "Lkw-Unfall auf der Autobahn – erste Meldung",
+      "level": 4,
+      "legacyCredits": 21100,
+      "cents": 1330000
+    },
+    {
+      "id": "case-autobahn-lkw-bergung-access",
+      "name": "Lkw-Unfall auf der Autobahn – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 22300,
+      "cents": 1330000
+    },
+    {
+      "id": "case-autobahn-lkw-bergung-extended",
+      "name": "Lkw-Unfall auf der Autobahn – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 30200,
+      "cents": 1630000
+    },
+    {
+      "id": "case-flugzeugbrand-vorfeld-reported",
+      "name": "Flugzeugbrand auf dem Vorfeld – erste Meldung",
+      "level": 4,
+      "legacyCredits": 27900,
+      "cents": 1580000
+    },
+    {
+      "id": "case-flugzeugbrand-vorfeld-access",
+      "name": "Flugzeugbrand auf dem Vorfeld – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 33300,
+      "cents": 1755000
+    },
+    {
+      "id": "case-flugzeugbrand-vorfeld-extended",
+      "name": "Flugzeugbrand auf dem Vorfeld – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 35600,
+      "cents": 1805000
+    },
+    {
+      "id": "case-fruehling-allergie-reported",
+      "name": "Allergischer Notfall im Freien – erste Meldung",
+      "level": 4,
+      "legacyCredits": 12900,
+      "cents": 905000
+    },
+    {
+      "id": "case-fruehling-allergie-access",
+      "name": "Allergischer Notfall im Freien – Zugang erschwert",
+      "level": 4,
+      "legacyCredits": 15500,
+      "cents": 1080000
+    },
+    {
+      "id": "case-fruehling-allergie-extended",
+      "name": "Allergischer Notfall im Freien – Lage ausgeweitet",
+      "level": 4,
+      "legacyCredits": 22000,
+      "cents": 1205000
+    },
+    {
+      "id": "case-winter-heizungsstoerung-reported",
+      "name": "Heizungsausfall bei Frost – erste Meldung",
+      "level": 15,
+      "legacyCredits": 14300,
+      "cents": 1415000
+    },
+    {
+      "id": "case-winter-heizungsstoerung-access",
+      "name": "Heizungsausfall bei Frost – Zugang erschwert",
+      "level": 15,
+      "legacyCredits": 16900,
+      "cents": 1590000
+    },
+    {
+      "id": "case-winter-heizungsstoerung-extended",
+      "name": "Heizungsausfall bei Frost – Lage ausgeweitet",
+      "level": 15,
+      "legacyCredits": 19200,
+      "cents": 1590000
     },
     {
       "id": "case-muelleimerbrand-reported",
@@ -5248,14 +5557,14 @@
       "currency": "EUR",
       "unit": "cent",
       "reserve": 25000000,
-      "nextReserve": 2875000,
-      "secondsToGoal": 13500,
-      "incomeCents": 46875000,
-      "fundingCents": 45000000,
-      "missionPaymentsCents": 1875000,
-      "completed": 3,
+      "nextReserve": 375000,
+      "secondsToGoal": 255600,
+      "incomeCents": 44375000,
+      "fundingCents": 0,
+      "missionPaymentsCents": 44375000,
+      "completed": 71,
       "fixedPaymentCents": 625000,
-      "finalCents": 2875000
+      "finalCents": 375000
     },
     {
       "id": "medical",
@@ -5263,19 +5572,19 @@
       "initial": 69000000,
       "spending": 69000000,
       "goal": 25000000,
-      "requiredLevel": 11,
+      "requiredLevel": 9,
       "callsPerHour": 1,
       "currency": "EUR",
       "unit": "cent",
       "reserve": 0,
-      "nextReserve": 250000,
-      "secondsToGoal": 7200,
-      "incomeCents": 25250000,
-      "fundingCents": 24000000,
-      "missionPaymentsCents": 1250000,
-      "completed": 2,
+      "nextReserve": 0,
+      "secondsToGoal": 144000,
+      "incomeCents": 25000000,
+      "fundingCents": 0,
+      "missionPaymentsCents": 25000000,
+      "completed": 40,
       "fixedPaymentCents": 625000,
-      "finalCents": 250000
+      "finalCents": 0
     },
     {
       "id": "specialist",
@@ -5288,14 +5597,14 @@
       "currency": "EUR",
       "unit": "cent",
       "reserve": 25000000,
-      "nextReserve": 2375000,
-      "secondsToGoal": 13500,
-      "incomeCents": 49375000,
-      "fundingCents": 45000000,
-      "missionPaymentsCents": 4375000,
-      "completed": 7,
+      "nextReserve": 500000,
+      "secondsToGoal": 136800,
+      "incomeCents": 47500000,
+      "fundingCents": 0,
+      "missionPaymentsCents": 47500000,
+      "completed": 76,
       "fixedPaymentCents": 625000,
-      "finalCents": 2375000
+      "finalCents": 500000
     },
     {
       "id": "advanced",
@@ -5308,14 +5617,14 @@
       "currency": "EUR",
       "unit": "cent",
       "reserve": 100000000,
-      "nextReserve": 2750000,
-      "secondsToGoal": 39600,
-      "incomeCents": 145750000,
-      "fundingCents": 132000000,
-      "missionPaymentsCents": 13750000,
-      "completed": 22,
+      "nextReserve": 125000,
+      "secondsToGoal": 412200,
+      "incomeCents": 143125000,
+      "fundingCents": 0,
+      "missionPaymentsCents": 143125000,
+      "completed": 229,
       "fixedPaymentCents": 625000,
-      "finalCents": 2750000
+      "finalCents": 125000
     },
     {
       "id": "absence",
@@ -5329,13 +5638,13 @@
       "unit": "cent",
       "reserve": 0,
       "nextReserve": 0,
-      "secondsToGoal": 5400,
-      "incomeCents": 18000000,
-      "fundingCents": 18000000,
+      "secondsToGoal": null,
+      "incomeCents": 0,
+      "fundingCents": 0,
       "missionPaymentsCents": 0,
       "completed": 0,
       "fixedPaymentCents": 625000,
-      "finalCents": 250000000
+      "finalCents": 0
     }
   ]
 }
