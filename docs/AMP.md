@@ -1,5 +1,9 @@
 # AMP-Betrieb ab 2.26
 
+## Normales Balancing-Update 2.28
+
+Die bestehende Instanz regulär **aktualisieren** und anschließend falls nötig **starten**. Template, Startskript, Geodaten und private Konfiguration weiterverwenden. Kein Reset. Der vorhandene Paketweg sichert den Bestand und übernimmt Schema 27; beim Start werden Level und anteiliger Fortschritt, Kaufrechte und laufende Einsätze einmalig erhalten und Funkanliegen still zusammengeführt. Alte überzählige Einsätze zuerst abarbeiten. Die neue Version allein verändert keine private Installation. [Genaue Regeln und Messungen](PROGRESSION-KARTE.md).
+
 Programmupdate, einmaliger Reset und AMP-Verwaltung sind getrennte Vorgänge. Das private Spiel wurde durch Veröffentlichung dieser Dateien nicht umgestellt. Die Vorlage ist für Linux x64 mit Node 24 bestimmt. Caddy, Zertifikate, Routerregeln und andere AMP-Instanzen bleiben eigenständig.
 
 ## Einmalige Übernahme
