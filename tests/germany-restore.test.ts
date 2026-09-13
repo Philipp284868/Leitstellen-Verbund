@@ -1,3 +1,4 @@
+import { createWaterFixture } from "./fixtures/germany/water-package";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "esbuild";
@@ -88,6 +89,7 @@ beforeEach(async () => {
     positions: [f.project({ lon: 13.4, lat: 52.52 })],
   });
   index.close();
+  createWaterFixture(geodataDir, dataset, [{ lon: 13.4, lat: 52.52 }]);
   createMap(
     resolve(geodataDir, "maps.mbtiles"),
     [

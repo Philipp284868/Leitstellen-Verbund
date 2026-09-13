@@ -10,8 +10,9 @@ export function prepared(
   count: number,
   ambulances: number,
   owner = "transport-owner",
+  generation?: string,
 ) {
-  const s = phaseFixture(owner, "sick");
+  const s = phaseFixture(owner, "sick", 0, generation);
   apply(s, fixturePurchase("ems", sites[1]));
   const home = s.buildings.at(-1)!;
   home.ready = s.time;

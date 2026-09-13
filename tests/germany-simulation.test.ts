@@ -435,8 +435,25 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     v.mission = mission;
     v.assignment = crypto.randomUUID();
     v.patients = 1;
-    v.destination = "public:node:10";
+    v.destination = "public:fixture:hospital:0";
     fixture.beginTrip(save, v, save.buildings[0].pos, "transport");
+    db!.transaction(() =>
+      new fixture.SharedClinics(db!.sql).reserve(
+        {
+          id: v.destination!,
+          name: "Fixture-Klinik",
+          pos: save.buildings[0].pos,
+          capacity: 30,
+          open: true,
+          specialties: ["general"],
+        },
+        [{ patient: mission + ":routing-fixture", departments: ["general"] }],
+        owner,
+        mission,
+        v.assignment!,
+        save.time,
+      ),
+    );
     const arrival = v.arrive;
     db!.save(owner, save);
     await reopenProvider();

@@ -14,13 +14,15 @@ import { progress } from "./progression";
 /** The display is derived from the actual catalogue and the purchase gates. */
 export function unlockMatrix(s: Save) {
   const items = [
-    ...buildings.map((b) => ({
-      id: `building:${b.id}`,
-      name: b.name,
-      level: b.level,
-      available: unlocked(s, "building", b.id),
-      detail: `${formatMoney(b.price)} · passenden realen Standort kaufen${b.water ? " · Zugang zum Wasser" : ""}`,
-    })),
+    ...buildings
+      .filter((b) => b.id !== "hospital")
+      .map((b) => ({
+        id: `building:${b.id}`,
+        name: b.name,
+        level: b.level,
+        available: unlocked(s, "building", b.id),
+        detail: `${formatMoney(b.price)} · passenden realen Standort kaufen${b.water ? " · Zugang zum Wasser" : ""}`,
+      })),
     ...vehicles.map((v) => {
       const extension = extensions.find((e) => e.types.includes(v.id));
       return {
@@ -52,18 +54,20 @@ export function unlockMatrix(s: Save) {
       available: unlocked(s, "extension", e.id),
       detail: `${formatMoney(e.price)} · ${bt(e.home).name} in Betrieb`,
     })),
-    ...buildings.flatMap((b) =>
-      Array.from({ length: 9 }, (_, i) => {
-        const current = i + 1;
-        return {
-          id: `upgrade:${b.id}:${current + 1}`,
-          name: `${b.name} · Ausbau ${current + 1}`,
-          level: upgradeLevel(b.id, current),
-          available: upgradeUnlocked(s, b.id, current),
-          detail: `${b.name} auf Ausbaustufe ${current} · Betrieb bereit · Ausbaukosten gemäß Gebäudeansicht`,
-        };
-      }),
-    ),
+    ...buildings
+      .filter((b) => b.id !== "hospital")
+      .flatMap((b) =>
+        Array.from({ length: 9 }, (_, i) => {
+          const current = i + 1;
+          return {
+            id: `upgrade:${b.id}:${current + 1}`,
+            name: `${b.name} · Ausbau ${current + 1}`,
+            level: upgradeLevel(b.id, current),
+            available: upgradeUnlocked(s, b.id, current),
+            detail: `${b.name} auf Ausbaustufe ${current} · Betrieb bereit · Ausbaukosten gemäß Gebäudeansicht`,
+          };
+        }),
+      ),
     {
       id: "professional-fire",
       name: "Berufsfeuerwehr-Umstellung",

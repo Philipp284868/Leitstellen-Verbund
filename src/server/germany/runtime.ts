@@ -4,13 +4,29 @@ import { existsSync } from "node:fs";
 import { assertGraphRuntimeIdentity } from "./identity";
 import { GermanyMaps } from "./maps";
 import { initializeGermany } from "./provider";
+import { prepareWaterIndex } from "./water-index";
+import { readFile } from "node:fs/promises";
 export async function prepareGeography(
   c: Pick<Config, "geodataDir" | "routerUrl">,
 ) {
   if (!c.geodataDir) throw Error("GEODATA_DIR fehlt für Deutschland.");
   const maps = new GermanyMaps(c.geodataDir);
   try {
+    const localWater = resolve(c.geodataDir, "water.sqlite");
+    let waterPath = localWater;
+    if (!existsSync(localWater)) {
+      const waterManifest = JSON.parse(
+        await readFile(resolve(root, "data/water/manifest.json"), "utf8"),
+      );
+      waterPath = await prepareWaterIndex(
+        resolve(root, "data/water/germany-260907.ndjson.gz"),
+        c.geodataDir,
+        maps.manifest.dataset,
+        waterManifest.sha256,
+      );
+    }
     const provider = await initializeGermany({
+      waterPath,
       indexPath: resolve(c.geodataDir, "index.sqlite"),
       facilitiesPath: existsSync(resolve(c.geodataDir, "facilities.sqlite"))
         ? resolve(c.geodataDir, "facilities.sqlite")

@@ -8,16 +8,21 @@ import { sites as nodes } from "./fixtures/germany/locations";
 import { fixtureMission } from "./fixtures/germany/mission";
 
 import { attachIncident } from "../src/simulation/calls";
-export function phaseFixture(owner: string, template = "field"): Save {
+export function phaseFixture(
+  owner: string,
+  template = "field",
+  stationIndex = 0,
+  generation = "11111111-2222-4333-8444-555555555555",
+): Save {
   const s = fresh("Disponent", "Testleitstelle", 1000);
   s.player.id = owner;
-  s.generation = "11111111-2222-4333-8444-555555555555";
+  s.generation = generation;
   s.seed = 124;
   bookMoney(s, euro(100000000) - s.money, "Entwickler-Testbudget");
   // Mission suites isolate payouts; recurring financing has dedicated economy-server tests.
   s.xp = xpForLevel(30);
 
-  apply(s, fixturePurchase("fire", nodes[0]));
+  apply(s, fixturePurchase("fire", nodes[stationIndex]));
   // Existing phase suites model an established professional station. Volunteer starts have their own suite.
   s.buildings[0].organization = {
     kind: "bf",

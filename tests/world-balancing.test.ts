@@ -1,4 +1,3 @@
-import { fixturePurchase } from "./fixtures/germany/facilities";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -6,7 +5,6 @@ import { Database } from "../src/server/database";
 import { Game } from "../src/server/game";
 import { writeWorldSituation } from "../src/server/world-situation";
 import { mt } from "../src/shared/catalog";
-import { apply } from "../src/shared/engine";
 import { incidentCategory } from "../src/simulation/incident-selection";
 import { callLoad } from "../src/simulation/pacing";
 import {
@@ -15,7 +13,6 @@ import {
   type SituationProfile,
 } from "../src/simulation/world-situation";
 import { phaseFixture } from "./dispatch-fixture";
-import { sites as nodes } from "./fixtures/germany/locations";
 import { operate } from "./helpers/ideal-dispatcher";
 import { addUnit } from "./incident-dynamics-fixture";
 
@@ -35,8 +32,6 @@ function measure(seed: number, expanded: boolean) {
     if (expanded) {
       for (const kind of ["hlf", "lf", "rtw", "rtw", "nef", "gkw"])
         addUnit(s, kind);
-      apply(s, fixturePurchase("hospital", nodes[6]));
-      s.buildings.find((b) => b.type === "hospital")!.ready = s.time;
     } else {
       s.vehicles = s.vehicles.slice(0, 1);
       s.vehicles[0].type = "tsf";

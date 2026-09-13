@@ -7,7 +7,12 @@ export function purchaseReason(s: Save, kind: string, home: string) {
     b = s.buildings.find((b) => b.id === home);
   if (!unlocked(s, "vehicle", t.id))
     return `Freischaltung ab Stufe ${t.level}.`;
-  if (!b || !vehicleHomeAllowed(t, b.type))
+  if (
+    !b ||
+    b.migrationReserve ||
+    b.type === "hospital" ||
+    !vehicleHomeAllowed(t, b.type)
+  )
     return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;
   if (t.stationKinds && !t.stationKinds.includes(b.organization?.kind ?? ""))
     return "Benötigt eine passende Werk-, Betriebs- oder Flughafenfeuerwehr.";

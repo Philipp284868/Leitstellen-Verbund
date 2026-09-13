@@ -23,7 +23,11 @@ export function generationLocations(
         situationAffects(s.worldSituation, p),
     );
     const bases = s.buildings.filter(
-      (b) => b.owner === s.player.id && b.ready <= s.time,
+      (b) =>
+        b.owner === s.player.id &&
+        !b.migrationReserve &&
+        b.type !== "hospital" &&
+        b.ready <= s.time,
     );
     const ranked = candidates.sort(
       (a, b) =>

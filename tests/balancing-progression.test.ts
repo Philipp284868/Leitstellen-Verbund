@@ -62,7 +62,7 @@ it("überträgt jede Schwelle, Restfortschritt und große XP-Stände einmalig, o
     });
     for (const [kind, items] of Object.entries(oldUnlocks))
       for (const [id, l] of Object.entries(items))
-        if (l <= old.level)
+        if (l <= old.level && !(kind === "building" && id === "hospital"))
           expect(unlocked(next, kind, id), `${kind}/${id}`).toBe(true);
     expect(validate(next)).toEqual(next);
   }
@@ -80,6 +80,10 @@ it("prüft den gesamten realen Katalog samt Organisationseinstiegen, Erweiterung
       items.map((i) => i.id).sort(),
     );
     for (const item of items) {
+      if (kind === "building" && item.id === "hospital") {
+        expect(matrix.some((r) => r.id === "building:hospital")).toBe(false);
+        continue;
+      }
       const row = matrix.find((r) => r.id === `${kind}:${item.id}`)!;
       expect(row.level).toBe(item.level);
       if (item.level > 1) {
@@ -109,7 +113,7 @@ it("prüft den gesamten realen Katalog samt Organisationseinstiegen, Erweiterung
       );
   }
   expect(matrix.filter((r) => r.id.startsWith("upgrade:"))).toHaveLength(
-    buildings.length * 9,
+    buildings.filter((b) => b.id !== "hospital").length * 9,
   );
   for (const m of missions) {
     expect(Number.isSafeInteger(missionXp(m)), m.id).toBe(true);

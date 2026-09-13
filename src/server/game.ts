@@ -1,4 +1,9 @@
 import { syncAssistanceRadio } from "../simulation/incident-radio";
+import { withClinicAuthority } from "../simulation/clinic-capacity";
+import { SharedClinics } from "./infrastructure/clinics";
+import { SharedWater } from "./infrastructure/water";
+import { withWaterAuthority } from "../simulation/water-authority";
+import { attemptClinicTransport } from "../simulation/clinic-transport";
 import { recordActivity } from "./leaderboard";
 import {
   civilProtectionActions,
@@ -72,8 +77,6 @@ import {
   tick,
   money,
   recall,
-  transport,
-  hospital,
   endCooperation,
   type Action,
 } from "../shared/engine";
@@ -104,319 +107,326 @@ export class Game {
       );
     const { id, action } = commandSchema.parse(input),
       fingerprint = hash(JSON.stringify(action));
-    return this.db.transaction(() => {
-      const prior = this.db.sql
-        .prepare("SELECT fingerprint FROM actions WHERE user_id=? AND id=?")
-        .get(user, id);
-      if (prior) {
-        if (prior.fingerprint !== fingerprint)
-          throw Error("Aktions-ID bereits für eine andere Aktion benutzt.");
-        return;
-      }
-      if (membership(this.db, user, action, mode)) {
-        this.db.sql
-          .prepare("INSERT INTO actions VALUES (?,?,?)")
-          .run(user, id, fingerprint);
-        return;
-      }
-      const owner = deskOwner(this.db, user, mode);
-      const saves = this.db.all(mode),
-        s = saves.get(owner);
-      if (!s) throw Error("Konto fehlt.");
-      const external: Skills = {},
-        externalUnits: Vehicle[] = [];
-      const actionMission =
-        "mission" in action
-          ? action.mission
-          : action.type === "recall"
-            ? s.vehicles.find((v) => v.id === action.id)?.mission
-            : undefined;
-      if (actionMission) {
-        const m = s.missions.find((m) => m.id === actionMission);
-        if (m)
-          for (const helper of saves.values())
-            for (const v of helper.vehicles.filter(
-              (v) =>
-                v.mission === `remote:${owner}:${m.id}` &&
-                v.status === "scene" &&
-                (!v.fault || v.fault.state === "repaired") &&
-                authorizedHelper(s, m, helper, v),
-            )) {
-              externalUnits.push(v);
-              for (const [k, n] of Object.entries(effectiveSkills(m, v)))
-                external[k] = (external[k] || 0) + n;
-            }
-      }
-      if (
-        majorActions.some((schema) => schema.shape.type.value === action.type)
-      ) {
-        const a = action as MajorAction;
-        const m = s.missions.find((m) => m.id === a.mission);
-        const foreign = m
-          ? [...saves.values()]
-              .filter((helper) => helper.player.id !== owner)
-              .flatMap((helper) =>
-                helper.vehicles.filter(
-                  (v) =>
-                    v.mission === `remote:${owner}:${m.id}` &&
-                    authorizedHelper(s, m, helper, v),
-                ),
-              )
-          : [];
-        majorCommand(s, a, user, foreign);
-      } else if (
-        aidActions.some((schema) => schema.shape.type.value === action.type)
-      ) {
-        if (mode !== "multi")
-          throw Error("Unterstützungsanfragen nur im Multiplayer.");
-        const eligible = new Set(
-          [...saves.keys()].filter((id) => deskOwner(this.db, id, mode) === id),
-        );
-        aidCommand(saves, s, action as AidAction, user, eligible);
-      } else if (
-        civilProtectionActions.some(
-          (schema) => schema.shape.type.value === action.type,
-        )
-      )
-        civilProtectionCommand(s, action as CivilProtectionAction, user);
-      else if (
-        organizationActions.some(
-          (schema) => schema.shape.type.value === action.type,
-        )
-      )
-        organizationCommand(s, action as OrganizationAction, user);
-      else if (action.type === "dispatch") {
-        const m = s.missions.find((m) => m.id === action.mission);
-        if (!m) throw Error("Eigener Einsatz fehlt.");
-        legacyIncident(s, m);
-        writable(m);
-        alarm(
-          s,
-          m,
-          action.vehicles,
-          user,
-          action.priority,
-          action.alarm,
-          action.travel,
-        );
-      } else if (
-        deskActions.some((schema) => schema.shape.type.value === action.type)
-      )
-        deskCommand(s, action as DeskAction, user, external, externalUnits);
-      else if (
-        action.type === "recall" &&
-        s.vehicles.some(
-          (v) =>
-            v.id === action.id &&
-            v.status === "scene" &&
-            s.missions.some((m) => m.id === v.mission),
-        )
-      ) {
-        const v = s.vehicles.find((v) => v.id === action.id)!;
-        const m = s.missions.find((m) => m.id === v.mission)!;
-        writable(m);
-        withdraw(s, m, [v.id], user, external, externalUnits);
-      } else if (
-        action.type === "recall" &&
-        s.vehicles.some(
-          (v) =>
-            v.id === action.id &&
-            v.status === "scene" &&
-            v.mission?.startsWith("remote:"),
-        )
-      ) {
-        const v = s.vehicles.find((v) => v.id === action.id)!;
-        const targetOwner = [...saves.values()].find((other) =>
-          other.missions.some(
-            (m) => v.mission === `remote:${other.player.id}:${m.id}`,
-          ),
-        );
-        const m = targetOwner?.missions.find(
-          (m) => v.mission === `remote:${targetOwner.player.id}:${m.id}`,
-        );
-        if (targetOwner && m && m.phase !== "done") {
-          writable(m);
-          if (!authorizedHelper(targetOwner, m, s, v))
-            throw Error("Keine gültige Unterstützungszuordnung.");
-          const units: Vehicle[] = [],
-            skills: Skills = {};
-          for (const helper of saves.values())
-            for (const unit of helper.vehicles) {
-              if (
-                unit.mission !== v.mission ||
-                unit.status !== "scene" ||
-                !authorizedHelper(targetOwner, m, helper, unit)
-              )
-                continue;
-              units.push(unit);
-              for (const [key, n] of Object.entries(effectiveSkills(m, unit)))
-                skills[key] = (skills[key] || 0) + n;
-            }
-          const assessment = assessRemoteWithdrawal(
-            targetOwner,
-            m,
-            [v.id],
-            skills,
-            units,
-          );
-          if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
+    return withClinicAuthority(new SharedClinics(this.db.sql), () =>
+      this.db.transaction(() => {
+        const prior = this.db.sql
+          .prepare("SELECT fingerprint FROM actions WHERE user_id=? AND id=?")
+          .get(user, id);
+        if (prior) {
+          if (prior.fingerprint !== fingerprint)
+            throw Error("Aktions-ID bereits für eine andere Aktion benutzt.");
+          return;
         }
-        recall(s, v);
-      } else if (action.type === "share" || action.type === "unshare") {
-        const m = s.missions.find((m) => m.id === action.id);
-        if (!m) throw Error("Eigener Einsatz fehlt.");
-        if (action.type === "share" && m.control && !m.control.legacy)
-          throw Error(
-            "Neue Einsätze bleiben in der eigenen Leitstelle. Bitte eine Unterstützungsanfrage im Leitstellenverbund erstellen.",
+        if (membership(this.db, user, action, mode)) {
+          this.db.sql
+            .prepare("INSERT INTO actions VALUES (?,?,?)")
+            .run(user, id, fingerprint);
+          return;
+        }
+        const owner = deskOwner(this.db, user, mode);
+        const saves = this.db.all(mode),
+          s = saves.get(owner);
+        if (!s) throw Error("Konto fehlt.");
+        const external: Skills = {},
+          externalUnits: Vehicle[] = [];
+        const actionMission =
+          "mission" in action
+            ? action.mission
+            : action.type === "recall"
+              ? s.vehicles.find((v) => v.id === action.id)?.mission
+              : undefined;
+        if (actionMission) {
+          const m = s.missions.find((m) => m.id === actionMission);
+          if (m)
+            for (const helper of saves.values())
+              for (const v of helper.vehicles.filter(
+                (v) =>
+                  v.mission === `remote:${owner}:${m.id}` &&
+                  v.status === "scene" &&
+                  (!v.fault || v.fault.state === "repaired") &&
+                  authorizedHelper(s, m, helper, v),
+              )) {
+                externalUnits.push(v);
+                for (const [k, n] of Object.entries(effectiveSkills(m, v)))
+                  external[k] = (external[k] || 0) + n;
+              }
+        }
+        if (
+          majorActions.some((schema) => schema.shape.type.value === action.type)
+        ) {
+          const a = action as MajorAction;
+          const m = s.missions.find((m) => m.id === a.mission);
+          const foreign = m
+            ? [...saves.values()]
+                .filter((helper) => helper.player.id !== owner)
+                .flatMap((helper) =>
+                  helper.vehicles.filter(
+                    (v) =>
+                      v.mission === `remote:${owner}:${m.id}` &&
+                      authorizedHelper(s, m, helper, v),
+                  ),
+                )
+            : [];
+          majorCommand(s, a, user, foreign);
+        } else if (
+          aidActions.some((schema) => schema.shape.type.value === action.type)
+        ) {
+          if (mode !== "multi")
+            throw Error("Unterstützungsanfragen nur im Multiplayer.");
+          const eligible = new Set(
+            [...saves.keys()].filter(
+              (id) => deskOwner(this.db, id, mode) === id,
+            ),
           );
-        if (action.type === "share") m.shared = true;
-        else {
-          if (
-            m.transports.some(
-              (t) => t.owner !== owner && t.status === "ordered",
-            )
+          aidCommand(saves, s, action as AidAction, user, eligible);
+        } else if (
+          civilProtectionActions.some(
+            (schema) => schema.shape.type.value === action.type,
           )
-            throw Error(
-              "Laufender fremder Patiententransport muss zuerst ankommen.",
-            );
-          const units: Vehicle[] = [],
-            skills: Skills = {};
-          for (const helper of saves.values())
-            for (const v of helper.vehicles) {
-              if (
-                v.mission !== `remote:${owner}:${m.id}` ||
-                !authorizedHelper(s, m, helper, v)
-              )
-                continue;
-              units.push(v);
-              if (v.status === "scene")
-                for (const [key, n] of Object.entries(effectiveSkills(m, v)))
+        )
+          civilProtectionCommand(s, action as CivilProtectionAction, user);
+        else if (
+          organizationActions.some(
+            (schema) => schema.shape.type.value === action.type,
+          )
+        )
+          organizationCommand(s, action as OrganizationAction, user);
+        else if (action.type === "dispatch") {
+          const m = s.missions.find((m) => m.id === action.mission);
+          if (!m) throw Error("Eigener Einsatz fehlt.");
+          legacyIncident(s, m);
+          writable(m);
+          alarm(
+            s,
+            m,
+            action.vehicles,
+            user,
+            action.priority,
+            action.alarm,
+            action.travel,
+          );
+        } else if (
+          deskActions.some((schema) => schema.shape.type.value === action.type)
+        )
+          deskCommand(s, action as DeskAction, user, external, externalUnits);
+        else if (
+          action.type === "recall" &&
+          s.vehicles.some(
+            (v) =>
+              v.id === action.id &&
+              v.status === "scene" &&
+              s.missions.some((m) => m.id === v.mission),
+          )
+        ) {
+          const v = s.vehicles.find((v) => v.id === action.id)!;
+          const m = s.missions.find((m) => m.id === v.mission)!;
+          writable(m);
+          withdraw(s, m, [v.id], user, external, externalUnits);
+        } else if (
+          action.type === "recall" &&
+          s.vehicles.some(
+            (v) =>
+              v.id === action.id &&
+              v.status === "scene" &&
+              v.mission?.startsWith("remote:"),
+          )
+        ) {
+          const v = s.vehicles.find((v) => v.id === action.id)!;
+          const targetOwner = [...saves.values()].find((other) =>
+            other.missions.some(
+              (m) => v.mission === `remote:${other.player.id}:${m.id}`,
+            ),
+          );
+          const m = targetOwner?.missions.find(
+            (m) => v.mission === `remote:${targetOwner.player.id}:${m.id}`,
+          );
+          if (targetOwner && m && m.phase !== "done") {
+            writable(m);
+            if (!authorizedHelper(targetOwner, m, s, v))
+              throw Error("Keine gültige Unterstützungszuordnung.");
+            const units: Vehicle[] = [],
+              skills: Skills = {};
+            for (const helper of saves.values())
+              for (const unit of helper.vehicles) {
+                if (
+                  unit.mission !== v.mission ||
+                  unit.status !== "scene" ||
+                  !authorizedHelper(targetOwner, m, helper, unit)
+                )
+                  continue;
+                units.push(unit);
+                for (const [key, n] of Object.entries(effectiveSkills(m, unit)))
                   skills[key] = (skills[key] || 0) + n;
-            }
-          if (units.length) {
+              }
             const assessment = assessRemoteWithdrawal(
-              s,
+              targetOwner,
               m,
-              units.map((v) => v.id),
+              [v.id],
               skills,
               units,
             );
             if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
           }
-          for (const helper of saves.values())
-            for (const v of helper.vehicles.filter(
-              (v) => v.mission === `remote:${owner}:${m.id}` && !v.patients,
-            ))
-              recall(helper, v);
-          endCooperation(s, m.id);
-        }
-      } else if (action.type === "support") {
-        const remoteOwner = saves.get(action.peer),
-          m = remoteOwner?.missions.find((m) => m.id === action.mission);
-        const v = s.vehicles.find((v) => v.id === action.vehicle);
-        if (
-          action.peer === owner ||
-          !m?.shared ||
-          m.round !== action.round ||
-          m.phase === "done" ||
-          !v
-        )
-          throw Error("Freigegebener Einsatz oder eigenes Fahrzeug fehlt.");
-        assertAssistanceCapacity(s, action.peer, m.id);
-        const reason = readiness(s, v);
-        if (reason) throw Error(reason);
-        if (vt(v.type).mode === "water" && !mt(m.template).water)
-          throw Error("Boot benötigt Gewässereinsatz.");
-        const participants = new Set([
-          ...m.contributors,
-          ...Array.from(saves.values())
-            .filter((p) =>
-              p.vehicles.some(
-                (v) => v.mission === `remote:${action.peer}:${m.id}`,
-              ),
+          recall(s, v);
+        } else if (action.type === "share" || action.type === "unshare") {
+          const m = s.missions.find((m) => m.id === action.id);
+          if (!m) throw Error("Eigener Einsatz fehlt.");
+          if (action.type === "share" && m.control && !m.control.legacy)
+            throw Error(
+              "Neue Einsätze bleiben in der eigenen Leitstelle. Bitte eine Unterstützungsanfrage im Leitstellenverbund erstellen.",
+            );
+          if (action.type === "share") m.shared = true;
+          else {
+            if (
+              m.transports.some(
+                (t) => t.owner !== owner && t.status === "ordered",
+              )
             )
-            .map((p) => p.player.id),
-        ]);
-        if (participants.size >= 4 && !participants.has(owner))
-          throw Error("Maximal vier unterstützende Konten je Einsatz.");
-        v.assignment = simId(s);
-        v.mission = `remote:${action.peer}:${m.id}`;
-        s.contributions = s.contributions
-          .filter((c) => c.status === "active")
-          .slice(-499);
-        s.contributions.push({
-          assignment: v.assignment,
-          peer: action.peer,
-          mission: m.id,
-          round: m.round,
-          vehicle: v.id,
-          maxReward: m.paymentCents ?? mt(m.template).reward,
-          status: "active",
-        });
-        beginTrip(s, v, m.pos, "travel");
-      } else if (action.type === "settings")
-        s.settings = { light: action.light, reduced: action.reduced };
-      else if (action.type === "template") {
-        action.types.forEach(vt);
-        if (s.templates.length >= 12) throw Error("Maximal zwölf Vorlagen.");
-        s.templates.push({ name: action.name, types: action.types });
-      } else {
-        apply(s, action as Action);
-        if (action.type === "hire")
-          for (const p of s.people.filter(
-            (p) => p.home === action.home && !p.duty,
-          ))
-            p.duty = personDuty(s, p);
-      }
-      recordActivity(this.db.sql, s, user, action, id);
-      for (const [id, value] of saves) {
-        value.revision++;
-        this.db.save(id, value, mode);
-      }
-      this.db.sql
-        .prepare("INSERT INTO actions VALUES (?,?,?)")
-        .run(user, id, fingerprint);
-    });
+              throw Error(
+                "Laufender fremder Patiententransport muss zuerst ankommen.",
+              );
+            const units: Vehicle[] = [],
+              skills: Skills = {};
+            for (const helper of saves.values())
+              for (const v of helper.vehicles) {
+                if (
+                  v.mission !== `remote:${owner}:${m.id}` ||
+                  !authorizedHelper(s, m, helper, v)
+                )
+                  continue;
+                units.push(v);
+                if (v.status === "scene")
+                  for (const [key, n] of Object.entries(effectiveSkills(m, v)))
+                    skills[key] = (skills[key] || 0) + n;
+              }
+            if (units.length) {
+              const assessment = assessRemoteWithdrawal(
+                s,
+                m,
+                units.map((v) => v.id),
+                skills,
+                units,
+              );
+              if (!assessment.allowed)
+                throw Error(assessment.reasons.join(" "));
+            }
+            for (const helper of saves.values())
+              for (const v of helper.vehicles.filter(
+                (v) => v.mission === `remote:${owner}:${m.id}` && !v.patients,
+              ))
+                recall(helper, v);
+            endCooperation(s, m.id);
+          }
+        } else if (action.type === "support") {
+          const remoteOwner = saves.get(action.peer),
+            m = remoteOwner?.missions.find((m) => m.id === action.mission);
+          const v = s.vehicles.find((v) => v.id === action.vehicle);
+          if (
+            action.peer === owner ||
+            !m?.shared ||
+            m.round !== action.round ||
+            m.phase === "done" ||
+            !v
+          )
+            throw Error("Freigegebener Einsatz oder eigenes Fahrzeug fehlt.");
+          assertAssistanceCapacity(s, action.peer, m.id);
+          const reason = readiness(s, v);
+          if (reason) throw Error(reason);
+          if (vt(v.type).mode === "water" && !mt(m.template).water)
+            throw Error("Boot benötigt Gewässereinsatz.");
+          const participants = new Set([
+            ...m.contributors,
+            ...Array.from(saves.values())
+              .filter((p) =>
+                p.vehicles.some(
+                  (v) => v.mission === `remote:${action.peer}:${m.id}`,
+                ),
+              )
+              .map((p) => p.player.id),
+          ]);
+          if (participants.size >= 4 && !participants.has(owner))
+            throw Error("Maximal vier unterstützende Konten je Einsatz.");
+          v.assignment = simId(s);
+          v.mission = `remote:${action.peer}:${m.id}`;
+          s.contributions = s.contributions
+            .filter((c) => c.status === "active")
+            .slice(-499);
+          s.contributions.push({
+            assignment: v.assignment,
+            peer: action.peer,
+            mission: m.id,
+            round: m.round,
+            vehicle: v.id,
+            maxReward: m.paymentCents ?? mt(m.template).reward,
+            status: "active",
+          });
+          beginTrip(s, v, m.pos, "travel");
+        } else if (action.type === "settings")
+          s.settings = { light: action.light, reduced: action.reduced };
+        else if (action.type === "template") {
+          action.types.forEach(vt);
+          if (s.templates.length >= 12) throw Error("Maximal zwölf Vorlagen.");
+          s.templates.push({ name: action.name, types: action.types });
+        } else {
+          apply(s, action as Action);
+          if (action.type === "hire")
+            for (const p of s.people.filter(
+              (p) => p.home === action.home && !p.duty,
+            ))
+              p.duty = personDuty(s, p);
+        }
+        recordActivity(this.db.sql, s, user, action, id);
+        for (const [id, value] of saves) {
+          value.revision++;
+          this.db.save(id, value, mode);
+        }
+        this.db.sql
+          .prepare("INSERT INTO actions VALUES (?,?,?)")
+          .run(user, id, fingerprint);
+      }),
+    );
   }
   step(
     seconds: number,
     now = Date.now(),
     options: { generation?: boolean; sharedSituation?: boolean } = {},
   ) {
-    withAutomaticRouting(() =>
-      this.db.transaction(() => {
-        withCallGeneration(
-          (s) =>
-            options.generation !== false &&
-            seconds <= 60 &&
-            deskOwner(this.db, s.player.id, "multi") === s.player.id &&
-            this.canGenerate(s.player.id),
-          () =>
-            withXpJournal(
-              (award) =>
-                !!this.db.sql
-                  .prepare(
-                    "INSERT OR IGNORE INTO xp_rewards(id,user_id,generation,mission,kind,amount,version) VALUES(?,?,?,?,?,?,2)",
-                  )
-                  .run(
-                    award.id,
-                    award.recipient,
-                    award.generation,
-                    award.mission,
-                    award.kind,
-                    award.amount,
-                  ).changes,
-              () =>
-                this.stepMode(
-                  seconds,
-                  now,
-                  "multi",
-                  options.generation !== false,
-                  options.sharedSituation !== false,
-                ),
-            ),
-        );
-      }),
+    withClinicAuthority(new SharedClinics(this.db.sql), () =>
+      withAutomaticRouting(() =>
+        this.db.transaction(() => {
+          withCallGeneration(
+            (s) =>
+              options.generation !== false &&
+              seconds <= 60 &&
+              deskOwner(this.db, s.player.id, "multi") === s.player.id &&
+              this.canGenerate(s.player.id),
+            () =>
+              withXpJournal(
+                (award) =>
+                  !!this.db.sql
+                    .prepare(
+                      "INSERT OR IGNORE INTO xp_rewards(id,user_id,generation,mission,kind,amount,version) VALUES(?,?,?,?,?,?,2)",
+                    )
+                    .run(
+                      award.id,
+                      award.recipient,
+                      award.generation,
+                      award.mission,
+                      award.kind,
+                      award.amount,
+                    ).changes,
+                () =>
+                  this.stepMode(
+                    seconds,
+                    now,
+                    "multi",
+                    options.generation !== false,
+                    options.sharedSituation !== false,
+                  ),
+              ),
+          );
+        }),
+      ),
     );
   }
   private stepMode(
@@ -427,6 +437,42 @@ export class Game {
     sharedSituation = true,
   ) {
     const saves = this.db.all(mode);
+    const consumers = (source: string) =>
+      [...saves.values()].reduce(
+        (sum, s) =>
+          sum +
+          s.missions.filter(
+            (m) =>
+              m.phase !== "done" &&
+              m.waterSupply?.connection?.source.id === source &&
+              m.dynamics?.hazards.some((h) => h.kind === "fire" && !h.resolved),
+          ).length +
+          s.vehicles.filter(
+            (v) =>
+              v.waterTrip?.source?.id === source &&
+              v.waterTrip.stage === "refilling",
+          ).length,
+        0,
+      );
+    return withWaterAuthority(new SharedWater(this.db.sql, consumers), () =>
+      this.advanceMode(
+        saves,
+        seconds,
+        now,
+        mode,
+        allowGeneration,
+        sharedSituation,
+      ),
+    );
+  }
+  private advanceMode(
+    saves: Map<string, Save>,
+    seconds: number,
+    now: number,
+    mode: GameMode,
+    allowGeneration: boolean,
+    sharedSituation: boolean,
+  ) {
     const world = ensureWorldSituation(this.db.sql);
     for (const s of saves.values())
       repairIncidentLocations(s, (m) => {
@@ -504,11 +550,7 @@ export class Game {
                 )
               ) {
                 const seats = transportSeatsAvailable(m, v);
-                if (
-                  seats > 0 &&
-                  hospital(helper, v.path.at(-1)!, seats, m, v)
-                ) {
-                  transport(helper, v, seats, m);
+                if (attemptClinicTransport(helper, m, v, seats)) {
                   const assignment = v.assignment!;
                   const order = registerPatientTransport(
                     owner,

@@ -6,6 +6,7 @@ import { level } from "../shared/model";
 import { nodes } from "../shared/world";
 import { record, writable } from "./events";
 import { hospitalOptions } from "./hospitals";
+import { retargetClinicTransport } from "./clinic-transport";
 import { taskNames, type OrganizationAction } from "./organizations-schema";
 import {
   crewRequired,
@@ -80,6 +81,11 @@ export function organizationCommand(
   a: OrganizationAction,
   actor: string,
 ) {
+  if (
+    "home" in a &&
+    s.buildings.some((b) => b.id === a.home && b.migrationReserve)
+  )
+    throw Error("Migrationsreserve besitzt keine betriebsfähige Wache.");
   if (a.type === "station-upgrade-bf") {
     const b = s.buildings.find((b) => b.id === a.home);
     if (!b || b.type !== "fire" || stationProfile(b).kind !== "ff")
@@ -96,6 +102,11 @@ export function organizationCommand(
         "BF-Ausbau erst nach Rückkehr aller Fahrzeuge und Abschluss bestehender Bauarbeiten.",
       );
     money(s, -PROFESSIONAL_FIRE.price, `Ausbau zur Berufsfeuerwehr: ${b.name}`);
+    (b.investmentReceipts ??= []).push({
+      id: s.journal[0].id,
+      at: s.time,
+      amount: PROFESSIONAL_FIRE.price,
+    });
     b.organization = {
       ...stationProfile(b),
       kind: "bf",
@@ -107,10 +118,12 @@ export function organizationCommand(
     const b = s.buildings.find((b) => b.id === a.home);
     if (!b) throw Error("Eigene Wache fehlt.");
     if (a.type === "hospital-profile") {
-      if (b.type !== "hospital" || a.profile.capacity > b.level * 20)
-        throw Error("Krankenhauskapazität überschritten.");
-      b.hospital = a.profile;
+      throw Error(
+        "Krankenhäuser und ihre gemeinsamen Kapazitäten werden vom Server verwaltet.",
+      );
     } else {
+      if (b.migrationReserve || b.type === "hospital")
+        throw Error("Diese Einrichtung besitzt keine Wachenverwaltung.");
       const allowed =
         b.type === "fire"
           ? ["bf", "ff", "works", "company", "airport"]
@@ -206,19 +219,34 @@ export function organizationCommand(
     const m = s.missions.find((m) => m.id === a.mission);
     if (!m) throw Error("Eigener Einsatz fehlt.");
     writable(m);
-    if (!m.control?.briefed) throw Error("Zuerst die Lagemeldung bearbeiten.");
+    if (a.type !== "hospital-select" && !m.control?.briefed)
+      throw Error("Zuerst die Lagemeldung bearbeiten.");
     if (a.type === "hospital-select") {
+      if (a.vehicle) {
+        const v = s.vehicles.find(
+          (v) => v.id === a.vehicle && v.owner === s.player.id,
+        );
+        if (!v) throw Error("Eigenes Rettungsmittel fehlt.");
+        retargetClinicTransport(s, m, v, a.home);
+        record(
+          s,
+          m,
+          "HOSPITAL_SELECTED",
+          "Laufender Transport umgeleitet; neue Aufnahme bestätigt und bisherige Reservierung freigegeben.",
+          actor,
+        );
+        return;
+      }
       const hospital =
         a.home === "auto" || a.home === "public"
           ? undefined
           : hospitalOptions(s, m.pos, 1, m).find((h) => h.id === a.home);
       if (a.home !== "auto" && a.home !== "public" && !hospital)
-        throw Error(
-          "Eigenes Krankenhaus oder bestätigte öffentliche Klinik fehlt.",
-        );
+        throw Error("Bestätigte Serverklinik fehlt.");
       m.organization ??= { tasks: [] };
       if (a.home === "auto") delete m.organization.hospital;
       else m.organization.hospital = a.home;
+      delete m.clinicWait;
       record(
         s,
         m,

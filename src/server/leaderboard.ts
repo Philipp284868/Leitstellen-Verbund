@@ -130,7 +130,9 @@ export function persistMetrics(
     patients: t.since ? { delivered: t.delivered, dead: t.dead } : null,
     meters: t.since ? t.meters : null,
     credits: t.since ? t.credits : null,
-    sites: s.buildings.length,
+    sites: s.buildings.filter(
+      (b) => !b.migrationReserve && b.type !== "hospital",
+    ).length,
     vehicles: s.vehicles.length,
     people: s.people.length,
     timings: Object.fromEntries(

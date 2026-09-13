@@ -12,8 +12,9 @@ export function organizationFixture(
   owner: string,
   template = "field",
   identity = "north",
+  stationIndex = 0,
 ) {
-  const raw = phaseFixture(owner, template);
+  const raw = phaseFixture(owner, template, stationIndex);
   const s = validate(
     JSON.parse(
       JSON.stringify(raw).replaceAll(raw.generation, `mutual-aid-${identity}`),

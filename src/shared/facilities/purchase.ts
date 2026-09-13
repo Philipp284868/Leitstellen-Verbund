@@ -8,28 +8,55 @@ import { newStationProfile } from "../../simulation/staffing";
 import { reconcileBuildingStaffing } from "../../simulation/building-staffing";
 import type { Facility } from "./types";
 import { GermanyRoutingError } from "../germany/errors";
+import type { ClinicSnapshot } from "../../simulation/clinic-capacity";
+import type { HospitalOption } from "../../simulation/hospital-profiles";
+export type FacilityOwner = { facility: string; owner: string; name: string };
 
 export type PurchaseContext = Pick<Save, "money" | "xp" | "progression"> & {
-  buildings: { id: string; facility?: { id: string } }[];
+  buildings: {
+    id: string;
+    type?: string;
+    migrationReserve?: unknown;
+    facility?: { id: string; sources?: string[] };
+  }[];
 };
-export function facilityOffer(s: PurchaseContext, facility: Facility) {
-  const owned = s.buildings.find((b) => b.facility?.id === facility.id);
+export function facilityOffer(
+  s: PurchaseContext,
+  facility: Facility,
+  ownership?: FacilityOwner,
+  clinic?: HospitalOption & ClinicSnapshot,
+) {
+  const owned = s.buildings.find(
+    (b) =>
+      !b.migrationReserve &&
+      b.facility &&
+      (b.facility.id === facility.id ||
+        (b.type === facility.kind &&
+          b.facility.sources?.some((source) =>
+            facility.sources.includes(source),
+          ))),
+  );
   const type = facility.kind === "other" ? undefined : bt(facility.kind);
-  const reason = owned
-    ? "Bereits von deiner Leitstelle erworben."
-    : facility.status !== "active"
-      ? "Standort benötigt eine Datenprüfung oder ist nicht aktiv."
-      : !type
-        ? "Einrichtungstyp ist nicht als operative Wache belegt."
-        : !facility.access
-          ? "Zufahrt nicht hinreichend belegt. Dieser Standort kann noch nicht erworben werden."
-          : s.buildings.length >= 150
-            ? "Höchstens 150 verwaltete Einrichtungen pro Leitstelle."
-            : !unlocked(s, "building", type.id)
-              ? `Freischaltung ab Stufe ${type.level}.`
-              : s.money < type.price
-                ? "Budget reicht für diesen Kauf nicht aus."
-                : "";
+  const reason =
+    facility.kind === "hospital"
+      ? "Serverkrankenhaus · gemeinsame Aufnahme, nicht käuflich."
+      : owned
+        ? "Bereits von deiner Leitstelle erworben."
+        : ownership
+          ? `Standort bereits von ${ownership.name} erworben.`
+          : facility.status !== "active"
+            ? "Standort benötigt eine Datenprüfung oder ist nicht aktiv."
+            : !type
+              ? "Einrichtungstyp ist nicht als operative Wache belegt."
+              : !facility.access
+                ? "Zufahrt nicht hinreichend belegt. Dieser Standort kann noch nicht erworben werden."
+                : s.buildings.length >= 150
+                  ? "Höchstens 150 verwaltete Einrichtungen pro Leitstelle."
+                  : !unlocked(s, "building", type.id)
+                    ? `Freischaltung ab Stufe ${type.level}.`
+                    : s.money < type.price
+                      ? "Budget reicht für diesen Kauf nicht aus."
+                      : "";
   return {
     facility,
     price: type?.price ?? 0,
@@ -37,6 +64,8 @@ export function facilityOffer(s: PurchaseContext, facility: Facility) {
     slots: type?.slots ?? 0,
     people: type?.people ?? 0,
     owned: owned?.id,
+    ownership,
+    clinic,
     reason,
   };
 }
@@ -116,8 +145,8 @@ export function purchaseFacility(s: Save, id: string) {
   if (!facility)
     throw Error("Standort ist im geprüften Katalog nicht vorhanden.");
   // Repeated purchase requests, even with a new command UUID, never charge twice.
-  if (s.buildings.some((b) => b.facility?.id === facility.id)) return;
   const offer = facilityOffer(s, facility);
+  if (offer.owned) return;
   if (offer.reason) throw Error(offer.reason);
   const access = assertFacilityAccess(facility);
   const buildingId = simId(s);
@@ -132,6 +161,11 @@ export function purchaseFacility(s: Save, id: string) {
     type: facility.kind,
     name: (facility.name || bt(facility.kind).name).slice(0, 48),
     purchasePriceCents: offer.price,
+    purchaseReceipt: {
+      id: s.journal[0].id,
+      at: s.journal[0].at,
+      amount: offer.price,
+    },
     pos: { ...access.pos },
     level: 1,
     ready:
@@ -158,15 +192,5 @@ export function purchaseFacility(s: Save, id: string) {
       | "works"
       | "company"
       | "airport";
-  if (facility.kind === "hospital") {
-    const previous = new Set([
-      `public:${facility.id}`,
-      ...facility.sources.map((ref) => `public:${ref}`),
-    ]);
-    for (const bed of s.beds) if (previous.has(bed.home)) bed.home = buildingId;
-    for (const vehicle of s.vehicles)
-      if (vehicle.destination && previous.has(vehicle.destination))
-        vehicle.destination = buildingId;
-  }
   reconcileBuildingStaffing(s);
 }

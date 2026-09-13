@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -31,7 +32,8 @@ it("HTTP/Socket: Notrufübergabe, Lagebuch und KatS bleiben bei Wiederverbindung
       );
     const [owner, member, helper] = ids;
     app.db.save(owner, organizationFixture(owner, "field", "operations-owner"));
-    app.db.save(
+    saveIndependentFixture(
+      app.db,
       helper,
       organizationFixture(helper, "field", "operations-helper"),
     );

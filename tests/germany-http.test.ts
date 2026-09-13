@@ -1,3 +1,4 @@
+import { createWaterFixture } from "./fixtures/germany/water-package";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import {
@@ -204,6 +205,7 @@ beforeEach(async () => {
     "INSERT INTO places VALUES(1,'node','10','city','Berlin','Berlin',13.4,52.52,'Berlin'); INSERT INTO places_rtree VALUES(1,13.4,13.4,52.52,52.52); INSERT INTO places VALUES(2,'way','11','hospital','Testklinik','Testklinik',13.4009,52.5209,'Berlin'); INSERT INTO places_rtree VALUES(2,13.4009,13.4009,52.5209,52.5209); INSERT INTO places_fts(places_fts) VALUES('rebuild')",
   );
   createFacilityFixture(geodataDir, { dataset, positions: facilityPositions });
+  createWaterFixture(geodataDir, dataset, facilityPositions.map(unproject));
   db.close();
   const tiles = new DatabaseSync(resolve(geodataDir, "maps.mbtiles"));
   tiles.exec(

@@ -145,7 +145,7 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
       "Routingserver nicht erreichbar",
     );
   });
-  it("übernimmt Klinikpatienten und Transportreservierungen ohne Doppelzählung; öffentliche Behandlung bleibt ohne Kauf möglich", () => {
+  it("erhält laufende öffentliche Transporte und Betten bei abgewiesenem Krankenhauskauf", () => {
     const s = fresh("A", "B", 1000);
     s.xp = xpForLevel(30);
     bookMoney(s, 200000000, "Isoliertes Testbudget");
@@ -188,24 +188,24 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
     });
     const path = structuredClone(v.path),
       arrival = v.arrive;
-    apply(s, fixturePurchase("hospital", sites[1]));
-    const home = s.buildings.at(-1)!;
+    const money = s.money;
+    expect(() => apply(s, fixturePurchase("hospital", sites[1]))).toThrow(
+      /Serverkrankenhaus/,
+    );
+    expect(s.money).toBe(money);
     expect(v.path).toEqual(path);
     expect(v.arrive).toBe(arrival);
-    expect(s.beds[0].home).toBe(home.id);
-    expect(v.destination).toBe(home.id);
+    expect(s.beds[0].home).toBe(publicId);
+    expect(v.destination).toBe(publicId);
     expect(hospitalOptions(s, sites[0], 1)).toMatchObject([
-      { id: home.id, occupied: 1, reserved: 1 },
+      { id: publicId, occupied: 1, reserved: 1 },
     ]);
     s.beds = [];
-    expect(() => apply(s, { type: "sell", id: home.id })).toThrow(/Transporte/);
     tick(s, arrival + 1, {}, false, false);
-    expect(s.beds.filter((b) => b.home === home.id)).toHaveLength(1);
+    expect(s.beds.filter((b) => b.home === publicId)).toHaveLength(1);
     expect(v.patients).toBe(0);
     expect(v.status).toBe("return");
     expect(() => validate(s)).not.toThrow();
-    home.facility!.emergency = "no";
-    expect(hospitalOptions(s, sites[0], 1)[0].reason).toBe("Abgemeldet");
   });
   it("listet vor dem Kauf reale Referenzen ohne sie zu verschenken und bucht pro Leitstelle atomar nur einmal", () => {
     const { db, run } = setup(),
@@ -232,13 +232,13 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
     expect(s.buildings[0].facility!.id).toBe(action.facility);
     expect(s.buildings[0].pos).toEqual(sites[0]);
     expect(db.all().get("member")!.buildings).toHaveLength(0);
-    run("other", action);
-    expect(db.all().get("other")!.buildings[0].facility!.id).toBe(
-      action.facility,
-    );
+    const otherMoney = db.all().get("other")!.money;
+    expect(() => run("other", action)).toThrow(/bereits von owner erworben/);
+    expect(db.all().get("other")!.buildings).toHaveLength(0);
+    expect(db.all().get("other")!.money).toBe(otherMoney);
     expect(
       db.sql.prepare("SELECT COUNT(*) n FROM facility_rights").get()!.n,
-    ).toBe(2);
+    ).toBe(1);
   });
   it("verwirft Preise, Eigentümer und Koordinaten vom Client; prüft Geld, Stufe, Zugang und freie Bauaktionen", () => {
     const { db, run } = setup(),

@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { describe, it, expect } from "vitest";
 import { phaseFixture } from "./dispatch-fixture";
 import { nextCallDelay } from "../src/simulation/balance";
@@ -165,7 +166,7 @@ describe("Notruflast und Reproduzierbarkeit", () => {
             "INSERT INTO users(id,username,password,role,created) VALUES (?,?,?,?,?)",
           )
           .run(id, id, "unused", "player", 0);
-        db.save(id, s);
+        saveIndependentFixture(db, id, s);
       }
       db.sql
         .prepare("INSERT INTO desk_members VALUES (?,?)")

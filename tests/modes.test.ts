@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -128,7 +129,7 @@ it("beginnt ruhig mit versetzten Mindestabständen und erzeugt weitere Einsätze
     first.seed = 123;
     second.seed = 987;
     db.save(a, first);
-    db.save(b, second);
+    saveIndependentFixture(db, b, second);
     game.step(1);
     const s = db.all().get(a)!,
       t = db.all().get(b)!;

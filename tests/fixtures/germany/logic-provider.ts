@@ -9,6 +9,7 @@ import {
   type Anchor,
 } from "../../../src/shared/germany/world";
 import { GermanyRoutingError } from "../../../src/shared/germany/errors";
+import type { WaterSource } from "../../../src/shared/germany/water";
 
 /** Consumer-contract fixture for simulation tests. Production simulation, auth,
  * SQLite and routing-plan logic run unchanged. This is explicitly not evidence
@@ -51,6 +52,38 @@ export function installLogicGeography() {
       .slice(0, limit);
   const provider: GermanyProvider = {
     facilities: logicFacilityCatalog,
+    waterSources: (point, radius, limit) =>
+      query(point, radius / 12, limit).map(
+        (p): WaterSource => ({
+          id: `fixture:hydrant:${p.id}`,
+          pos: { x: p.x, y: p.y },
+          access: { x: p.x, y: p.y },
+          kind: "hydrant",
+          origin: "simulation-v1",
+          snapshot: "fixture-v1",
+          dataset: fixtureDataset,
+          area: "residential",
+          flowLpm: 1200,
+          flowSource: "simulation-v1",
+          properties: {},
+          quality: [
+            "Explizite synthetische Leitungsnetz-Fixture; keine OSM-Daten.",
+          ],
+        }),
+      ),
+    waterConnection: (source, target) => ({
+      source,
+      path: provider.route(
+        source.access,
+        target,
+        "road",
+        new Set(),
+        40,
+        new Map(),
+        1,
+      ),
+      meters: meters(source.pos, target),
+    }),
     dataset: fixtureDataset,
     node: (id) => anchors[id],
     nearest,

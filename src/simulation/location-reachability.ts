@@ -136,7 +136,11 @@ function verifyAccess(
     coreKeys[0];
   if (requireRange && !coreKey) return;
   const homes = s.buildings.filter(
-    (b) => b.owner === s.player.id && b.ready <= s.time,
+    (b) =>
+      b.owner === s.player.id &&
+      !b.migrationReserve &&
+      b.type !== "hospital" &&
+      b.ready <= s.time,
   );
   const units = s.vehicles.filter(
     (v) =>

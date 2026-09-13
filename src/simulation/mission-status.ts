@@ -71,7 +71,7 @@ export function missionStatus(
   if (c?.radio.some((r) => r.state === "open" && r.reason === "request"))
     return status(
       "reinforcement",
-      `Offene Nachforderung im Funk bearbeiten. ${deployment}`.trim(),
+      `Offene Nachforderung in den Einsatzdetails bearbeiten. ${deployment}`.trim(),
       true,
     );
   if (

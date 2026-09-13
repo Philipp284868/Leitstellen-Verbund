@@ -1,3 +1,4 @@
+import { createWaterFixture } from "./water-package";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -14,6 +15,7 @@ import {
 export function createGermanyPackage(dir: string) {
   mkdirSync(dir, { recursive: true });
   createFacilityFixture(dir);
+  createWaterFixture(dir, fixtureDataset, coordinates);
   writeFileSync(
     resolve(dir, "manifest.json"),
     JSON.stringify({

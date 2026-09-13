@@ -12,6 +12,7 @@ export function unlocked(
   kind: string,
   id: string,
 ) {
+  if (kind === "building" && id === "hospital") return false;
   return (
     progress(s.xp).level >= unlockLevel(kind, id) ||
     !!s.progression?.rights?.includes(`${kind}:${id}`)
@@ -25,6 +26,7 @@ export function upgradeUnlocked(
   kind: string,
   current: number,
 ) {
+  if (kind === "hospital") return false;
   return (
     progress(s.xp).level >= upgradeLevel(kind, current) ||
     !!s.progression?.rights?.includes(`upgrade:${kind}:${current + 1}`)

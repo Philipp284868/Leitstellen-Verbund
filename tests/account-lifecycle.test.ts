@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { afterEach, expect, it } from "vitest";
 import { Database } from "../src/server/database";
 import { Auth } from "../src/server/auth";
@@ -5,7 +6,51 @@ import { AccountLifecycle } from "../src/server/account-lifecycle";
 import { fresh } from "../src/shared/model";
 import { phaseFixture } from "./dispatch-fixture";
 import { Game } from "../src/server/game";
+import { SharedClinics } from "../src/server/infrastructure/clinics";
+import { publicHospitalProfile } from "../src/simulation/hospital-profiles";
+import { germanyProvider } from "../src/shared/germany/world";
 const resources: Database[] = [];
+it("hält Reservierungen bei Kontowartung fest und erhält nach bestätigter Löschung bereits belegte Betten anonym", async () => {
+  const { db, owner, lifecycle } = await setup(),
+    source = germanyProvider().hospitals(
+      db.all().get(owner)!.buildings[0].pos,
+      1,
+    )[0],
+    clinic = publicHospitalProfile(source),
+    shared = new SharedClinics(db.sql);
+  db.transaction(() =>
+    shared.reserve(
+      clinic,
+      [{ patient: "test-admission", departments: ["general"] }],
+      owner,
+      "mission",
+      "trip",
+      1000,
+    ),
+  );
+  await expect(
+    lifecycle.prepare(owner, {
+      operation: "delete",
+      password: "account-password-123",
+    }),
+  ).rejects.toThrow(/Patiententransporte/);
+  db.transaction(() => shared.admit(owner, "trip", clinic.id, 1100));
+  const p = await lifecycle.prepare(owner, {
+    operation: "delete",
+    password: "account-password-123",
+  });
+  lifecycle.confirm(owner, {
+    challenge: p.challenge,
+    phrase: p.phrase,
+    acknowledged: true,
+  });
+  expect(shared.snapshot(clinic).occupied).toBe(1);
+  expect(
+    db.sql
+      .prepare("SELECT owner FROM clinic_places WHERE patient='test-admission'")
+      .get()!.owner,
+  ).toBeNull();
+});
 afterEach(() => {
   for (const db of resources.splice(0)) db.close();
 });
@@ -131,7 +176,7 @@ it("beendet unbestätigte fremde Anfragen atomar und erhält deren Leitstelle", 
     assignments: [],
     messages: [],
   });
-  db.save(other, neighbor);
+  saveIndependentFixture(db, other, neighbor);
   const before = db.all().get(other)!;
   const confirmation = await lifecycle.prepare(owner, {
     operation: "delete",

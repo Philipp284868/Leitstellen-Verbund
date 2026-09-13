@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { replaceFixtureSave } from "./fixtures/germany/replace-save";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
@@ -336,7 +337,7 @@ async function databaseWorld() {
     ),
     peer = await auth.create("peer", "Phase-four-password-123!", "Süd", "Süd");
   db.save(owner, majorFixture(owner));
-  db.save(peer, majorFixture(peer, "field", "south"));
+  saveIndependentFixture(db, peer, majorFixture(peer, "field", "south"));
   return { dir, db, owner, peer, game: new Game(db) };
 }
 it("Server schützt fremde und doppelte Großlagenaktionen und erhält sie über Neustart", async () => {

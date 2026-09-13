@@ -23,6 +23,16 @@ export class AccountLifecycle {
   private pending = new Map<string, Pending>();
   constructor(private db: Database) {}
   private idle(user: string) {
+    if (
+      this.db.sql
+        .prepare(
+          "SELECT 1 FROM clinic_places WHERE owner=? AND state='reserved' LIMIT 1",
+        )
+        .get(user)
+    )
+      throw Error(
+        "Zuerst laufende Patiententransporte abschließen. Ihre reservierten Klinikplätze bleiben erhalten.",
+      );
     const saves = this.db.all();
     for (const s of saves.values()) {
       if (
@@ -120,6 +130,19 @@ export class AccountLifecycle {
       this.db.sql
         .prepare("DELETE FROM facility_rights WHERE owner=?")
         .run(user);
+      this.db.sql
+        .prepare("DELETE FROM station_ownership WHERE owner=?")
+        .run(user);
+      this.db.sql
+        .prepare("DELETE FROM infrastructure_refunds WHERE owner=?")
+        .run(user);
+      // A confirmed account deletion removes identity, not another patient's bed.
+      this.db.sql
+        .prepare("UPDATE clinic_places SET owner=NULL WHERE owner=?")
+        .run(user);
+      this.db.sql.exec(
+        "UPDATE infrastructure_state SET revision=revision+1 WHERE id=1",
+      );
       this.db.sql
         .prepare("DELETE FROM desk_invites WHERE user_id=? OR owner_id=?")
         .run(user, user);

@@ -6,6 +6,8 @@ import { existsSync } from "node:fs";
 import { RoutingBridge } from "./bridge";
 import { RouteFailures } from "./route-failures";
 import { GermanyIncidentGeography } from "./geography-sites";
+import { WaterGeography } from "./water-geography";
+import type { WaterSource, WaterEnvironment } from "../../shared/germany/water";
 import { GermanyRoutingError } from "../../shared/germany/errors";
 import {
   adaptGraphHopperRoute,
@@ -59,6 +61,7 @@ function remaining(deadline: number) {
   return budget;
 }
 export interface GermanyOptions {
+  waterPath?: string;
   facilitiesPath?: string;
   indexPath: string;
   mapsPath?: string;
@@ -70,8 +73,14 @@ export class LocalGermanyProvider implements GermanyProvider {
   readonly facilities?: SqliteFacilityCatalog;
   readonly dataset: string;
   private db: DatabaseSync;
-  private bridge: RoutingBridge;
+  private bridge!: RoutingBridge;
   private geography?: GermanyIncidentGeography;
+  private water!: WaterGeography;
+  private waterEnvironments = new Map<string, WaterEnvironment>();
+  private waterSettlements = new Map<
+    string,
+    { id: number; kind: string; lon: number; lat: number; point: Point }[]
+  >();
   private incidentSitesCache = new Map<string, Anchor[]>();
   private shoreSitesCache = new Map<number, boolean>();
   private anchorCache = new Map<number, Anchor>();
@@ -112,6 +121,30 @@ export class LocalGermanyProvider implements GermanyProvider {
         throw Error(
           "Geodatenkonflikt: Ortsindex und Routingmanifest gehören nicht zum selben OSM-Datenstand.",
         );
+      // Build a bounded settlement-only lookup once before serving requests.
+      // The general places RTree also contains millions of address/building rows;
+      // filtering those separately for each hydrant would block the simulation.
+      const settlements = this.db
+        .prepare(
+          "SELECT id,kind,lon,lat FROM places WHERE kind IN ('city','town','village','hamlet','suburb','neighbourhood','quarter','municipality') LIMIT 200001",
+        )
+        .all();
+      if (settlements.length > 200000)
+        throw Error("Siedlungsindex überschreitet das geprüfte Größenbudget.");
+      for (const row of settlements) {
+        const lon = Number(row.lon),
+          lat = Number(row.lat),
+          key = `${Math.floor(lon / 0.05)}:${Math.floor(lat / 0.05)}`,
+          group = this.waterSettlements.get(key) ?? [];
+        group.push({
+          id: Number(row.id),
+          kind: String(row.kind),
+          lon,
+          lat,
+          point: project({ lon, lat }),
+        });
+        this.waterSettlements.set(key, group);
+      }
       if (options.mapsPath)
         this.geography = new GermanyIncidentGeography(
           resolve(options.mapsPath),
@@ -123,7 +156,15 @@ export class LocalGermanyProvider implements GermanyProvider {
         resolve(dirname(options.indexPath), "facilities.sqlite");
       if (existsSync(catalogPath))
         this.facilities = new SqliteFacilityCatalog(catalogPath, this.dataset);
+      this.water = new WaterGeography(
+        this,
+        (a, b) => this.geography?.clearWaterAccess(a, b) ?? false,
+        options.waterPath,
+      );
     } catch (e) {
+      this.water?.close();
+      this.facilities?.close();
+      void this.bridge?.close();
       this.geography?.close();
       this.db.close();
       throw e;
@@ -201,6 +242,100 @@ export class LocalGermanyProvider implements GermanyProvider {
       reference: `osm-anchor:${anchor.id}`,
       distanceMeters: meters(point, anchor),
     };
+  }
+  waterEnvironment(point: Point): WaterEnvironment {
+    const key = `${point.x}:${point.y}`,
+      cached = this.waterEnvironments.get(key);
+    if (cached) return cached;
+    const ground = this.geography?.waterEnvironment(point);
+    if (!ground)
+      return {
+        area: "unknown",
+        blocked: true,
+        buildings: 0,
+        roadClass: "unknown",
+        reference: "Keine lokale Flächengeometrie",
+      };
+    const settlement = this.waterSettlement(point);
+    const area: WaterEnvironment["area"] =
+      ground.landuse === "industrial" || ground.landuse === "commercial"
+        ? "industrial"
+        : ground.buildings >= 45 &&
+            ["city", "suburb", "quarter", "neighbourhood"].includes(settlement)
+          ? "center"
+          : ground.landuse === "residential"
+            ? ["village", "hamlet"].includes(settlement)
+              ? "village"
+              : "residential"
+            : ground.buildings >= 12
+              ? ["village", "hamlet"].includes(settlement)
+                ? "village"
+                : "residential"
+              : ground.buildings > 0
+                ? "farm"
+                : "unbuilt";
+    const value = {
+      area,
+      blocked: ground.blocked,
+      buildings: ground.buildings,
+      roadClass: "local",
+      reference: ground.reference,
+    };
+    boundedCache(this.waterEnvironments, key, value, 8192);
+    return value;
+  }
+  waterSources(point: Point, radiusMeters: number, limit: number) {
+    return this.water.query(point, radiusMeters, limit);
+  }
+  waterMapSources(
+    point: Point,
+    radiusMeters: number,
+    limit: number,
+    signal?: AbortSignal,
+  ) {
+    return this.water.mapQuery(point, radiusMeters, limit, signal);
+  }
+  waterSource(point: Point, id: string) {
+    return this.water.detail(point, id);
+  }
+  private waterSettlement(point: Point) {
+    const { lon, lat } = unproject(point);
+    for (const radius of [1500, 5000, 20000, 75000]) {
+      const dy = radius / 110000,
+        dx = dy / Math.cos((lat * Math.PI) / 180);
+      let best: { kind: string; id: number; distance: number } | undefined;
+      for (
+        let x = Math.floor((lon - dx) / 0.05);
+        x <= Math.floor((lon + dx) / 0.05);
+        x++
+      )
+        for (
+          let y = Math.floor((lat - dy) / 0.05);
+          y <= Math.floor((lat + dy) / 0.05);
+          y++
+        )
+          for (const p of this.waterSettlements.get(`${x}:${y}`) ?? []) {
+            if (
+              p.lon < lon - dx ||
+              p.lon > lon + dx ||
+              p.lat < lat - dy ||
+              p.lat > lat + dy
+            )
+              continue;
+            const distance = meters(point, p.point);
+            if (
+              !best ||
+              distance < best.distance ||
+              (distance === best.distance && p.id < best.id)
+            )
+              best = { kind: p.kind, id: p.id, distance };
+          }
+      if (best) return best.kind;
+    }
+    return "";
+  }
+  waterConnection(source: WaterSource, target: Point) {
+    return this.water.connection(source, target);
   }
   queryIncidentSites(
     center: Point,
@@ -616,8 +751,12 @@ export class LocalGermanyProvider implements GermanyProvider {
   hospitals(point: Point, limit: number): Hospital[] {
     if (this.facilities) {
       const p = unproject(point);
+      const candidates = new Map<
+        string,
+        ReturnType<NonNullable<GermanyProvider["facilities"]>["query"]>[number]
+      >();
       for (const radius of [0.1, 0.5, 2, 10]) {
-        const found = this.facilities
+        const nearby = this.facilities
           .query({
             kind: "hospital",
             usable: true,
@@ -629,13 +768,15 @@ export class LocalGermanyProvider implements GermanyProvider {
             ],
             limit: 200,
           })
-          .filter((f) => f.access && f.emergency !== "no")
+          .filter((f) => f.access && f.emergency !== "no");
+        for (const f of nearby) candidates.set(f.id, f);
+        const found = [...candidates.values()]
           .sort(
             (a, b) =>
               meters(point, a.access!.pos) - meters(point, b.access!.pos),
           )
           .slice(0, limit);
-        if (found.length)
+        if (found.length >= limit || radius === 10)
           return found.map((f) => ({
             ...f.access!.pos,
             id: f.id,
@@ -707,6 +848,7 @@ export class LocalGermanyProvider implements GermanyProvider {
     if (this.closed) return;
     this.closed = true;
     clearGermanyProvider(this);
+    this.water.close();
     this.geography?.close();
     this.facilities?.close();
     this.incidentSitesCache.clear();

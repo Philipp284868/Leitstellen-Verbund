@@ -8,6 +8,10 @@ import {
 } from "node:fs/promises";
 import { resolve } from "node:path";
 import { DatabaseSync, backup as sqliteBackup } from "node:sqlite";
+import {
+  planInfrastructureMigration,
+  applyInfrastructureMigration,
+} from "./infrastructure/migration";
 import { z } from "zod";
 import { germanyProvider } from "../shared/germany/world";
 import {
@@ -57,10 +61,12 @@ if (
     "retired-export",
     "facilities-preview",
     "facilities-migrate",
+    "infrastructure-preview",
+    "infrastructure-migrate",
   ].includes(command)
 ) {
   throw Error(
-    "Befehle: player-create, leaderboard-exclude, world-situation, backup, restore, migration-preview, facilities-preview, facilities-migrate, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
+    "Befehle: player-create, leaderboard-exclude, world-situation, backup, restore, migration-preview, facilities-preview, facilities-migrate, infrastructure-preview, infrastructure-migrate, archive-export, retired-export, legacy-import, unlock. Keine Admin-Konten oder Einladungen mehr. Konten können direkt im Spiel erstellt werden.",
   );
 }
 const arg = (key: string) => {
@@ -106,7 +112,84 @@ const geography = await prepareGeography(c);
 let release = () => {};
 try {
   release = acquireLock(c.dataDir);
-  if (command === "facilities-preview" || command === "facilities-migrate") {
+  if (
+    command === "infrastructure-preview" ||
+    command === "infrastructure-migrate"
+  ) {
+    const resolutions = process.argv.includes("--resolutions")
+      ? z
+          .array(
+            z
+              .object({
+                owner: z.string().min(1).max(100),
+                building: z.string().min(1).max(100),
+                purchasedAt: z.number().finite().nonnegative(),
+                paidCents: z.number().int().nonnegative().max(1e12),
+                evidence: z.string().trim().min(20).max(2000),
+              })
+              .strict(),
+          )
+          .max(25000)
+          .parse(JSON.parse(await readFile(arg("resolutions"), "utf8")))
+      : [];
+    const source = new DatabaseSync(resolve(c.dataDir, "game.sqlite"), {
+      readOnly: true,
+    });
+    let backupPath = "";
+    try {
+      assertWorldMetadata(source, true);
+      const plan = planInfrastructureMigration(source, resolutions);
+      console.log(JSON.stringify({ readOnly: true, ...plan }, null, 2));
+      if (command === "infrastructure-migrate" && !plan.applied) {
+        if (!process.argv.includes("--confirm"))
+          throw Error(
+            "Zuerst Trockenlauf prüfen; Migration benötigt --confirm.",
+          );
+        if (!plan.ready)
+          throw Error(
+            "Infrastrukturkonflikte zuerst anhand der Belege klären. Bestand unverändert.",
+          );
+        backupPath = resolve(
+          c.dataDir,
+          `pre-infrastructure-${Date.now()}-${crypto.randomUUID()}.sqlite`,
+        );
+        await sqliteBackup(source, backupPath);
+        const check = new DatabaseSync(backupPath, { readOnly: true });
+        try {
+          if (
+            check.prepare("PRAGMA integrity_check").get()!.integrity_check !==
+            "ok"
+          )
+            throw Error("Sicherung ungültig; keine Migration.");
+        } finally {
+          check.close();
+        }
+      }
+    } finally {
+      source.close();
+    }
+    if (backupPath) {
+      const target = new DatabaseSync(resolve(c.dataDir, "game.sqlite"));
+      try {
+        target.exec(
+          "PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; BEGIN IMMEDIATE",
+        );
+        try {
+          const plan = applyInfrastructureMigration(target, resolutions);
+          target.exec("COMMIT");
+          console.log(JSON.stringify({ backup: backupPath, ...plan }, null, 2));
+        } catch (error) {
+          target.exec("ROLLBACK");
+          throw error;
+        }
+      } finally {
+        target.close();
+      }
+    }
+  } else if (
+    command === "facilities-preview" ||
+    command === "facilities-migrate"
+  ) {
     const catalog = germanyProvider().facilities;
     if (!catalog) throw Error("Standortkatalog fehlt.");
     const resolutions = process.argv.includes("--resolutions")
@@ -161,18 +244,20 @@ try {
       source.close();
     }
     if (backupPath) {
-      const db = new Database(c.dataDir);
+      const db = new DatabaseSync(resolve(c.dataDir, "game.sqlite"));
       try {
-        const result = db.transaction(() => {
-          const plan = applyFacilityMigration(db.sql, catalog, resolutions);
-          for (const [id, s] of db.all()) db.save(id, s);
-          db.audit(
-            "maintenance",
-            `facilities-migration:${JSON.stringify(plan.changes)}`,
-          );
-          return plan;
-        });
+        db.exec("PRAGMA foreign_keys=ON; BEGIN IMMEDIATE");
+        const result = applyFacilityMigration(db, catalog, resolutions);
+        db.prepare("INSERT INTO audit(at,actor,event) VALUES(?,?,?)").run(
+          Date.now(),
+          "maintenance",
+          `facilities-migration:${JSON.stringify(result.changes)}`,
+        );
+        db.exec("COMMIT");
         console.log(JSON.stringify({ backup: backupPath, ...result }, null, 2));
+      } catch (error) {
+        if (db.isTransaction) db.exec("ROLLBACK");
+        throw error;
       } finally {
         db.close();
       }
@@ -497,6 +582,9 @@ try {
           // Explicit offline replacement already has a verified backup; normal game writes cannot rebind rights.
           db.sql
             .prepare("DELETE FROM facility_rights WHERE owner=?")
+            .run(user.id);
+          db.sql
+            .prepare("DELETE FROM station_ownership WHERE owner=?")
             .run(user.id);
           db.save(String(user.id), s, mode);
           db.sql.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);

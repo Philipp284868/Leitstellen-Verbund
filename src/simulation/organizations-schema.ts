@@ -239,7 +239,12 @@ export const organizationActions = [
     })
     .strict(),
   z
-    .object({ type: z.literal("hospital-select"), mission: id, home: id })
+    .object({
+      type: z.literal("hospital-select"),
+      mission: id,
+      home: id,
+      vehicle: id.optional(),
+    })
     .strict(),
   z
     .object({

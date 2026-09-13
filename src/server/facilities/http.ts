@@ -5,6 +5,10 @@ import { facilityKinds } from "../../shared/facilities/types";
 import { germanyProvider } from "../../shared/germany/world";
 import { facilityOffer } from "../../shared/facilities/purchase";
 import type { PurchaseContext } from "../../shared/facilities/purchase";
+import type { FacilityOwner } from "../../shared/facilities/purchase";
+import type { Facility } from "../../shared/facilities/types";
+import type { HospitalOption } from "../../simulation/hospital-profiles";
+import type { ClinicSnapshot } from "../../simulation/clinic-capacity";
 
 const bboxSchema = z
   .tuple([
@@ -17,6 +21,10 @@ const bboxSchema = z
 export function facilityResponse(
   url: URL,
   context: PurchaseContext | (() => PurchaseContext),
+  services?: {
+    ownership: (ids: string[]) => FacilityOwner[];
+    clinic: (f: Facility) => HospitalOption & ClinicSnapshot;
+  },
 ) {
   const catalog = germanyProvider().facilities;
   if (!catalog)
@@ -30,24 +38,30 @@ export function facilityResponse(
   if (p.has("id")) {
     const facility = catalog.get(z.string().min(1).max(100).parse(p.get("id")));
     if (!facility) throw Error("Standort nicht gefunden.");
-    return facilityOffer(purchaseContext(), facility);
+    return facilityOffer(
+      purchaseContext(),
+      facility,
+      services?.ownership([facility.id])[0],
+      facility.kind === "hospital" ? services?.clinic(facility) : undefined,
+    );
   }
   const bbox = p.has("bbox")
     ? bboxSchema.parse(p.get("bbox")!.split(",").map(Number))
     : undefined;
   if (p.get("clusters") === "1") {
     if (!bbox) throw Error("Kartenausschnitt fehlt.");
+    const clusters = catalog.clusters(
+      bbox,
+      z.coerce
+        .number()
+        .min(4)
+        .max(20)
+        .parse(p.get("zoom") || 10),
+      kind,
+    );
     return {
       snapshot: catalog.snapshot,
-      clusters: catalog.clusters(
-        bbox,
-        z.coerce
-          .number()
-          .min(4)
-          .max(20)
-          .parse(p.get("zoom") || 10),
-        kind,
-      ),
+      clusters,
     };
   }
   const s = purchaseContext();
@@ -83,6 +97,7 @@ export function facilityResponse(
             kinds: facilityKinds.filter(
               (kind) =>
                 kind !== "other" &&
+                kind !== "hospital" &&
                 s.buildings.length < 150 &&
                 unlocked(s, "building", kind) &&
                 s.money >= bt(kind).price,
@@ -91,8 +106,21 @@ export function facilityResponse(
         }
       : {}),
   });
+  const ownership = new Map(
+    (services?.ownership(facilities.map((f) => f.id)) ?? []).map((o) => [
+      o.facility,
+      o,
+    ]),
+  );
   const offers = facilities
-    .map((f) => facilityOffer(s, f))
+    .map((f) =>
+      facilityOffer(
+        s,
+        f,
+        ownership.get(f.id),
+        f.kind === "hospital" ? services?.clinic(f) : undefined,
+      ),
+    )
     .filter((o) =>
       status === "all" || status === "owned" || status === "available"
         ? status !== "available" || !o.reason

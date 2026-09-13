@@ -77,7 +77,7 @@ export function planFacilityMigration(
       if (b.facility) matched.set(`${owner}:${b.facility.id}`, b.id);
   for (const { owner, raw } of saves)
     for (const b of raw.buildings as Building[]) {
-      if (b.facility) continue;
+      if (b.facility || b.migrationReserve) continue;
       const p = unproject(b.pos),
         candidates = catalog
           .query({
@@ -235,7 +235,9 @@ export function applyFacilityMigration(
 export function assertFacilityMigration(sql: DatabaseSync) {
   for (const row of storedWorlds(sql)) {
     const save = row.raw;
-    const conflicts = save.buildings.filter((b: Building) => !b.facility);
+    const conflicts = save.buildings.filter(
+      (b: Building) => !b.facility && !b.migrationReserve,
+    );
     if (conflicts.length)
       throw Error(
         `FACILITY_MIGRATION_REQUIRED: Leitstelle ${row.owner} hat ${conflicts.length} noch nicht zugeordnete Einrichtungen (${conflicts.map((b: Building) => b.name).join(", ")}). Server gestoppt; Bestand erhalten. AMP: App Name vorübergehend „scripts/facilities-maintenance.mjs“ für die schreibfreie Prüfung verwenden. Terminal: „node scripts/facilities-maintenance.mjs“. Danach Zuordnung prüfen und gesicherte Standortmigration ausführen. Anleitung: docs/STANDORTE.md.`,

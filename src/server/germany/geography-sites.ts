@@ -7,6 +7,7 @@ import {
   unproject,
   meters,
   inBounds,
+  METERS_PER_UNIT,
   type Point,
 } from "../../shared/germany/projection";
 import type { IncidentSiteKind } from "../../shared/germany/world";
@@ -214,6 +215,13 @@ function insideRing(p: Point, ring: Point[]) {
   return result;
 }
 function inside(p: Point, shape: Shape) {
+  if (
+    p.x < shape.bounds[0] ||
+    p.y < shape.bounds[1] ||
+    p.x > shape.bounds[2] ||
+    p.y > shape.bounds[3]
+  )
+    return false;
   return shape.polygons.some(
     ([outer, ...holes]) =>
       insideRing(p, outer) && !holes.some((ring) => insideRing(p, ring)),
@@ -327,7 +335,8 @@ export class GermanyIncidentGeography {
         for (let i = 0; i < layer.length; i++) {
           const feature = layer.feature(i),
             kinds = kindsFor(name, feature.properties);
-          if (!kinds.length || feature.type === 0) continue;
+          if ((!kinds.length && name !== "building") || feature.type === 0)
+            continue;
           const geometry = feature.loadGeometry();
           const convert = (p: Point): Point =>
             project({
@@ -454,6 +463,57 @@ export class GermanyIncidentGeography {
       estimatedBytes: this.bytes,
       reads: this.reads,
     };
+  }
+  /** Actual local polygons, independent of incident labels. No routing request. */
+  waterEnvironment(point: Point) {
+    const p = unproject(point),
+      position = tilePosition(p.lon, p.lat);
+    const shapes = this.tile(Math.floor(position.x), Math.floor(position.y));
+    const nearby = (s: Shape, r: number) =>
+      point.x >= s.bounds[0] - r &&
+      point.x <= s.bounds[2] + r &&
+      point.y >= s.bounds[1] - r &&
+      point.y <= s.bounds[3] + r;
+    const blocked = shapes.some(
+      (s) =>
+        (s.layer === "water" ||
+          s.layer === "building" ||
+          s.kinds.includes("rail") ||
+          s.kinds.includes("motorway")) &&
+        nearby(s, 3 / (METERS_PER_UNIT * 0.8)) &&
+        (s.type === 3 ? inside(point, s) : distance(point, s) < 3),
+    );
+    const buildings = shapes.filter(
+      (s) =>
+        s.layer === "building" &&
+        nearby(s, 150 / (METERS_PER_UNIT * 0.8)) &&
+        distance(point, s) <= 150,
+    ).length;
+    const area = shapes.find(
+      (s) => s.layer === "landuse" && s.type === 3 && inside(point, s),
+    );
+    return {
+      blocked,
+      buildings,
+      landuse: area?.featureClass,
+      reference:
+        area?.reference ??
+        `tile:${ZOOM}/${Math.floor(position.x)}/${Math.floor(position.y)}`,
+    };
+  }
+  clearWaterAccess(a: Point, b: Point) {
+    const length = meters(a, b);
+    if (length > 80) return false;
+    const steps = Math.max(1, Math.ceil(length / 2));
+    for (let i = 0; i <= steps; i++)
+      if (
+        this.waterEnvironment({
+          x: a.x + ((b.x - a.x) * i) / steps,
+          y: a.y + ((b.y - a.y) * i) / steps,
+        }).blocked
+      )
+        return false;
+    return true;
   }
   close() {
     this.cache.clear();

@@ -1,5 +1,6 @@
 import { pointAlong, polylineLength } from "../geometry";
 import type { FacilityCatalog } from "../facilities/types";
+import type { WaterSource, WaterEnvironment, WaterConnection } from "./water";
 import { meters, METERS_PER_UNIT, type Point } from "./projection";
 export { METERS_PER_UNIT, WORLD_HEIGHT, WORLD_WIDTH } from "./projection";
 export type { Point } from "./projection";
@@ -54,6 +55,23 @@ export type RoadProjection = {
   distance: number;
 };
 export interface GermanyProvider {
+  waterSources?(
+    point: Point,
+    radiusMeters: number,
+    limit: number,
+  ): WaterSource[];
+  waterMapSources?(
+    point: Point,
+    radiusMeters: number,
+    limit: number,
+    signal?: AbortSignal,
+  ): Promise<WaterSource[]>;
+  waterSource?(point: Point, id: string): WaterSource | undefined;
+  waterEnvironment?(point: Point): WaterEnvironment;
+  waterConnection?(
+    source: WaterSource,
+    target: Point,
+  ): WaterConnection | undefined;
   readonly facilities?: FacilityCatalog;
   readonly dataset: string;
   node(id: number): Anchor | undefined;

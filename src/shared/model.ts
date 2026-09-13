@@ -85,6 +85,24 @@ export const buildingSchema = z
   .object({
     facility: facilityBindingSchema.optional(),
     purchasePriceCents: centsSchema.optional(),
+    purchaseReceipt: z
+      .object({ id, at: num, amount: centsSchema })
+      .strict()
+      .optional(),
+    investmentReceipts: z
+      .array(z.object({ id, at: num, amount: centsSchema }).strict())
+      .max(100)
+      .optional(),
+    // Retained assets awaiting an explicit move to a purchased, compatible station.
+    // This record is not a station: no claims, markers, staffing or new dispatches.
+    migrationReserve: z
+      .object({
+        facility: id,
+        reason: z.string().max(300),
+        refundedCents: centsSchema,
+      })
+      .strict()
+      .optional(),
     id,
     owner: id,
     type: id,
@@ -203,6 +221,10 @@ export const missionSchema = z
       )
       .max(100)
       .default([]),
+    clinicWait: z
+      .object({ until: num, reason: z.string().max(300) })
+      .strict()
+      .optional(),
   })
   .strict();
 export const journalSchema = z
@@ -467,8 +489,10 @@ export function validateReferences(s: Save) {
   for (const b of s.buildings) {
     const t = bt(b.type);
     if (
-      (!b.facility && distance(b.pos, nodes[nearest(b.pos)]) > 1) ||
-      (t.water && !isWaterSite(b.pos))
+      (!b.migrationReserve &&
+        !b.facility &&
+        distance(b.pos, nodes[nearest(b.pos)]) > 1) ||
+      (!b.migrationReserve && t.water && !isWaterSite(b.pos))
     )
       throw Error("Ungültiger Einrichtungsstandort.");
     if (
@@ -549,8 +573,15 @@ export function achievementProgress(s: Save, i: number) {
       : i === 8
         ? s.vehicles.length
         : i === 9
-          ? new Set(s.buildings.map((b) => b.type)).size
+          ? new Set(
+              s.buildings
+                .filter((b) => !b.migrationReserve && b.type !== "hospital")
+                .map((b) => b.type),
+            ).size
           : i === 10
             ? s.people.filter((p) => p.skills.length).length
-            : s.buildings.filter((b) => b.level >= 2).length;
+            : s.buildings.filter(
+                (b) =>
+                  !b.migrationReserve && b.type !== "hospital" && b.level >= 2,
+              ).length;
 }

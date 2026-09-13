@@ -8,6 +8,7 @@ export type HospitalOption = {
   pos: Point;
   osmLocation?: Point;
   capacity: number;
+  departmentCapacity?: Record<string, number>;
   open: boolean;
   specialties: string[];
   profileSource?: "simulation-v1";
@@ -45,6 +46,14 @@ export function publicHospitalProfile(h: Hospital): HospitalOption {
     pos: { x: h.x, y: h.y },
     osmLocation: h.osmLocation,
     capacity: profile.capacity,
+    departmentCapacity: Object.fromEntries(
+      profile.specialties.map((d) => [
+        d,
+        d === "general"
+          ? profile.capacity
+          : Math.max(5, Math.floor(profile.capacity / 3)),
+      ]),
+    ),
     open: h.emergency !== "no",
     aliases: h.aliases?.map((ref) => `public:${ref}`),
     facilityId: h.facilityId,

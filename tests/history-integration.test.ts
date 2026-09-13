@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { execFile } from "node:child_process";
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -196,7 +197,7 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
     const current = historyFixture(f.owner, 537),
       foreign = historyFixture(f.other, 131);
     f.app.db.save(f.owner, current);
-    f.app.db.save(f.other, foreign);
+    saveIndependentFixture(f.app.db, f.other, foreign);
     const retired = historyFixture(f.owner, 137),
       retiredForeign = historyFixture(f.other, 129);
     for (const s of [retired, retiredForeign]) {
@@ -361,7 +362,7 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
   it("isoliert fremde Leitstellen und widerruft Archivzugriff nach Ende der Mitgliedschaft", async () => {
     const f = await setup();
     f.app.db.save(f.owner, historyFixture(f.owner, 3));
-    f.app.db.save(f.other, historyFixture(f.other, 2));
+    saveIndependentFixture(f.app.db, f.other, historyFixture(f.other, 2));
     expect((await f.request("history")).status).toBe(401);
     expect(
       (

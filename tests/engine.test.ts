@@ -151,12 +151,14 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
       missing(s.missions[0], capacity(s, s.missions[0].id)).length,
     ).toBeGreaterThan(0);
   });
-  it("behandelt Patienten, fährt zum eigenen Krankenhaus und gibt Betten frei", () => {
+  it("behandelt Patienten, fährt zur Serverklinik und gibt Betten frei", () => {
     const s = setup();
     s.xp = xpForLevel(12);
     money(s, euro(2500000), "Testkapital für Klinik und Rettungsdienst");
     apply(s, fixturePurchase("ems", nodes[3]));
-    apply(s, fixturePurchase("hospital", nodes[6]));
+    expect(() => apply(s, fixturePurchase("hospital", nodes[6]))).toThrow(
+      /Serverkrankenhaus/,
+    );
     tick(s, s.time + 30);
     const home = s.buildings.find((b) => b.type === "ems")!;
     apply(s, { type: "buy", kind: "rtw", home: home.id });
@@ -174,9 +176,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     for (let i = 0; i < 400 && !s.beds.length; i++)
       tick(s, s.time + 5, {}, false, false);
     expect(s.archive.some((x) => x.id === m.id)).toBe(true);
-    expect(s.beds[0]?.home).toBe(
-      s.buildings.find((b) => b.type === "hospital")!.id,
-    );
+    expect(s.beds[0]?.home).toMatch(/^public:/);
     expect(s.money).toBe(before + mt("sick").reward);
     tick(s, s.time + 300);
     expect(s.beds).toHaveLength(0);

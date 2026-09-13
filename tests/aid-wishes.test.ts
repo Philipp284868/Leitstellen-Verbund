@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { expect, it } from "vitest";
 import { commandSchema, type ServerAction } from "../src/server/actions";
 import { Auth } from "../src/server/auth";
@@ -23,7 +24,11 @@ it("freie Wünsche bleiben privat, werden übertragen und historisiert; geeignet
       );
     const [owner, helper, other] = ids;
     db.save(owner, organizationFixture(owner, "field", "wishes-owner"));
-    db.save(helper, organizationFixture(helper, "field", "wishes-helper"));
+    saveIndependentFixture(
+      db,
+      helper,
+      organizationFixture(helper, "field", "wishes-helper"),
+    );
     const game = new Game(db);
     const command = (
       user: string,

@@ -39,3 +39,5 @@ export {
   forceVolunteerAvailability,
   volunteerMarkers,
 } from "../src/simulation/volunteers";
+
+export { SharedClinics } from "../src/server/infrastructure/clinics";

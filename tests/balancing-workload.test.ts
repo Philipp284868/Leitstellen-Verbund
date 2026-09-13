@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { expect, it } from "vitest";
 import { phaseFixture } from "./dispatch-fixture";
 import { organizationFixture } from "./mutual-aid-fixture";
@@ -143,7 +144,7 @@ it("prüft Unterstützungsannahmen atomar am gemeinsamen Leitstellenlimit, nicht
       db.sql
         .prepare("INSERT INTO users VALUES(?,?,?,?,?)")
         .run(id, id, "unused", "player", 0);
-      db.save(id, organizationFixture(id, "field", id));
+      saveIndependentFixture(db, id, organizationFixture(id, "field", id));
     }
     const helper = db.all().get("helper")!;
     helper.xp = 0;

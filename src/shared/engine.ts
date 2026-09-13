@@ -1,3 +1,4 @@
+import { GermanyRoutingError } from "./germany/errors";
 import { beginTrip } from "../simulation/trip-start";
 export { beginTrip } from "../simulation/trip-start";
 import { vehicleHomeAllowed } from "./catalog";
@@ -18,6 +19,7 @@ import { reconcileBuildingStaffing } from "../simulation/building-staffing";
 import { purchaseReason } from "./purchase";
 import { purchaseFacility } from "./facilities/purchase";
 import { canGenerate } from "../simulation/feasibility";
+import { generationWaterFeasible } from "../simulation/water-feasibility";
 import { dispatchReason } from "../simulation/availability";
 import {
   queuePostIncident,
@@ -28,6 +30,11 @@ import { awardMissionXp } from "../simulation/xp-rewards";
 import { createIncident, mayStartIncident } from "../simulation/workload";
 import { unlocked, upgradeLevel, upgradeUnlocked } from "./progression-state";
 import { selectHospital } from "../simulation/hospitals";
+import { clinicAuthority } from "../simulation/clinic-capacity";
+import {
+  startClinicTransport,
+  attemptClinicTransport,
+} from "../simulation/clinic-transport";
 import { measureTravel, telemetry, qualityFactor } from "../simulation/reports";
 import { effectiveSkills, canTransport } from "../simulation/major-resources";
 import { stationCapacity, releaseVolunteerCrew } from "../simulation/staffing";
@@ -167,6 +174,18 @@ export function recall(s: Save, v: Vehicle) {
   v.mission = null;
 }
 export function apply(s: Save, a: Action) {
+  const buildingId = "home" in a ? a.home : "id" in a ? a.id : undefined;
+  const managed = s.buildings.find((b) => b.id === buildingId);
+  if (
+    managed &&
+    (managed.type === "hospital" || managed.migrationReserve) &&
+    a.type !== "favorite"
+  )
+    throw Error(
+      managed.type === "hospital"
+        ? "Krankenhäuser werden ausschließlich vom Server verwaltet."
+        : "Migrationsreserve besitzt keinen kaufbaren oder ausbaubaren Standort. Fahrzeuge an eine eigene passende Wache versetzen.",
+    );
   switch (a.type) {
     case "extension": {
       const b = s.buildings.find((b) => b.id === a.id),
@@ -181,6 +200,11 @@ export function apply(s: Save, a: Action) {
       )
         throw Error("Erweiterung derzeit nicht möglich.");
       money(s, -e.price, e.name);
+      (b.investmentReceipts ??= []).push({
+        id: s.journal[0].id,
+        at: s.time,
+        amount: e.price,
+      });
       b.extensions.push(e.id as (typeof b.extensions)[number]);
       b.ready = s.time + BALANCE.upgradeSeconds;
       break;
@@ -303,7 +327,10 @@ export function apply(s: Save, a: Action) {
       if (
         !p ||
         p.ready > s.time ||
-        !s.buildings.some((b) => b.type === "school" && b.ready <= s.time) ||
+        !s.buildings.some(
+          (b) =>
+            b.type === "school" && !b.migrationReserve && b.ready <= s.time,
+        ) ||
         ![
           "Drehleiter",
           "Führung",
@@ -336,6 +363,11 @@ export function apply(s: Save, a: Action) {
       if (!upgradeUnlocked(s, b.type, b.level))
         throw Error(`Ausbau ab Stufe ${required}.`);
       money(s, -BALANCE.upgrade * b.level, "Wachenausbau");
+      (b.investmentReceipts ??= []).push({
+        id: s.journal[0].id,
+        at: s.time,
+        amount: BALANCE.upgrade * b.level,
+      });
       b.level++;
       b.ready = s.time + BALANCE.upgradeSeconds;
       break;
@@ -400,6 +432,7 @@ export function apply(s: Save, a: Action) {
         v.status !== "ready" ||
         (v.maintenance?.until ?? 0) > s.time ||
         !b ||
+        b.migrationReserve ||
         b.ready > s.time ||
         !vehicleHomeAllowed(vt(v.type), b.type) ||
         (vt(v.type).stationKinds &&
@@ -490,6 +523,20 @@ export function generate(s: Save) {
         t,
         sites[(s.seed + i) % sites.length],
       );
+      try {
+        if (location && !generationWaterFeasible(s, t, location.access))
+          location = undefined;
+      } catch (error) {
+        if (!(error instanceof GermanyRoutingError)) throw error;
+        if (error.code !== "unavailable") {
+          location = undefined;
+          continue;
+        }
+        s.seed = previousSeed;
+        s.missionWait = Math.max(s.missionWait, 60);
+        s.nextMission = s.time + 60;
+        return;
+      }
       if (location) break;
     }
     if (location) break;
@@ -524,14 +571,7 @@ export function hospital(
   return selectHospital(s, origin, seats, m, v);
 }
 export function transport(s: Save, v: Vehicle, patients: number, m?: Mission) {
-  const target = hospital(s, v.path.at(-1)!, patients, m, v);
-  if (!target)
-    throw Error(
-      "Keine geeignete Krankenhausaufnahme. Patienten warten versorgt am Einsatzort.",
-    );
-  v.patients = patients;
-  v.destination = target.id;
-  beginTrip(s, v, target.pos, "transport");
+  startClinicTransport(s, v, patients, m);
 }
 export function tick(...args: Parameters<typeof tickState>) {
   return withAutomaticRouting(() => tickState(...args));
@@ -564,6 +604,7 @@ function tickState(
     }
     const dt = next - s.time;
     s.time = next;
+    clinicAuthority()?.advance(s.time);
     reconcileBuildingStaffing(s);
     updateWeather(s);
     beforeStep(s);
@@ -599,7 +640,8 @@ function tickState(
       if (v.status === "travel") v.status = "scene";
       else if (v.status === "return") {
         v.status = "ready";
-        v.supplies = { water: equipmentProfile(v).water, refilledAt: s.time };
+        if (!s.buildings.find((b) => b.id === v.home)?.migrationReserve)
+          v.supplies = { water: equipmentProfile(v).water, refilledAt: s.time };
         v.path = [s.buildings.find((b) => b.id === v.home)!.pos];
         releaseVolunteerCrew(s, v);
         startPostIncident(s, v);
@@ -610,8 +652,14 @@ function tickState(
             (b) => b.type === "hospital" && distance(b.pos, v.path.at(-1)!) < 1,
           )?.id ??
           "public";
+        const admitted = clinicAuthority()?.admit(
+          s.player.id,
+          v.assignment!,
+          home,
+          s.time,
+        );
         s.beds.push(
-          ...Array.from({ length: v.patients }, () => ({
+          ...Array.from({ length: admitted ?? v.patients }, () => ({
             id: simId(s),
             home,
             until: s.time + BALANCE.hospitalSeconds,
@@ -689,8 +737,7 @@ function tickState(
             ),
         )) {
           const seats = transportSeatsAvailable(m, v);
-          if (!seats || !hospital(s, v.path.at(-1)!, seats, m, v)) continue;
-          transport(s, v, seats, m);
+          if (!attemptClinicTransport(s, m, v, seats)) continue;
           registerPatientTransport(s, m, v, seats);
         }
         if (m.phase !== "transport") continue;

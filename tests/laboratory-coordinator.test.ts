@@ -27,7 +27,7 @@ it("does not allow one seed to create colliding identities across independent la
 it("laboratory coordinator preserves complete archives and does not mutate input worlds", () => {
   const sources = [
     historyFixture("lab-archive-own", 137),
-    historyFixture("lab-archive-neighbor", 115),
+    historyFixture("lab-archive-neighbor", 115, 8),
   ];
   const before = JSON.stringify(sources);
   const advanced = stepLaboratoryWorlds(sources, 5);

@@ -3,8 +3,12 @@ import { priorities } from "../src/simulation/priority";
 import { organizationFixture } from "./mutual-aid-fixture";
 
 /** Complete archived records, with private simulation state intentionally retained on disk. */
-export function historyFixture(owner: string, count = 537): Save {
-  const s = organizationFixture(owner);
+export function historyFixture(
+  owner: string,
+  count = 537,
+  stationIndex = 0,
+): Save {
+  const s = organizationFixture(owner, "field", "north", stationIndex);
   const original = s.missions[0];
   s.missions = [];
   s.archive = Array.from({ length: count }, (_, index): Mission => {

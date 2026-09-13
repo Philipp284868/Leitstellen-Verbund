@@ -23,6 +23,8 @@ import {
 } from "../src/simulation/operating-costs";
 import { phaseFixture } from "./dispatch-fixture";
 import { addUnit, atScene } from "./incident-dynamics-fixture";
+import { waterFixture } from "./helpers/water";
+import { sites } from "./fixtures/germany/locations";
 
 it("prüft einen gemischten Warenkorb atomar inklusive Ausrüstung und wiederhergestellter Fähigkeiten", () => {
   const s = phaseFixture("buyer");
@@ -64,7 +66,7 @@ it("prüft einen gemischten Warenkorb atomar inklusive Ausrüstung und wiederher
   expect(s).toEqual(unchanged);
 });
 
-it("verbraucht echte Tankmengen und verlangt 500 m B statt 300 m für die Leitung", () => {
+it("verbraucht endliche Tanks unabhängig von fehlendem B-Material und meldet den Leitungsbedarf", () => {
   const s = phaseFixture("water", "field"),
     m = s.missions[0];
   attachDynamics(s, m);
@@ -77,17 +79,28 @@ it("verbraucht echte Tankmengen und verlangt 500 m B statt 300 m für die Leitun
   w.hoseB = 500;
   w.hoseC = 240;
   w.source = "tank";
+  w.manual = true;
   const first = { fire: 2, water: 2 };
   waterSupplyTick(s, m, first, 5);
-  expect(first.fire).toBe(0);
+  expect(first.fire).toBe(2);
+  expect(v.supplies!.water).toBe(1940);
+  const fixture = waterFixture(m.pos);
+  w.connection = {
+    source: fixture.source,
+    path: [fixture.source.pos, m.pos],
+    meters: 500,
+  };
+  w.source = "hydrant";
+  w.setupUntil = s.time + 500;
+  waterSupplyTick(s, m, { fire: 2, water: 2 }, 5);
   expect(w.shortage).toContain("200 m");
-  expect(v.supplies!.water).toBe(2000);
+  fixture.restore();
   v.equipment = ["hose"];
   const next = { fire: 2, water: 2 };
   waterSupplyTick(s, m, next, 5);
   expect(next.fire).toBe(2);
-  expect(v.supplies!.water).toBe(1940);
-  expect(w.consumed).toBe(60);
+  expect(v.supplies!.water).toBe(1820);
+  expect(w.consumed).toBe(180);
   v.supplies!.water = 10;
   const dry = { fire: 2, water: 2 };
   waterSupplyTick(s, m, dry, 5);
@@ -106,6 +119,9 @@ it("führt Tanker auf wirklichen Routen zur Nachfüllstelle und zurück, auch na
   v.supplies = { water: 0, refilledAt: s.time };
   const w = ensureWaterSupply(s, m)!;
   w.source = "shuttle";
+  const fixture = waterFixture(sites[4]);
+  w.manual = true;
+  w.refillSource = fixture.source;
   waterSupplyTick(s, m, { fire: 1, water: 4 }, 5);
   expect(v.waterTrip?.stage).toBe("queued");
   waterTripTick(s, v);
@@ -121,6 +137,16 @@ it("führt Tanker auf wirklichen Routen zur Nachfüllstelle und zurück, auch na
     expect(unit.supplies!.water).toBe(0);
     state.time = unit.waterTrip!.readyAt;
     waterTripTick(state, unit);
+    expect(unit.waterTrip?.stage).toBe("refilling");
+    expect(unit.supplies!.water).toBeLessThan(4000);
+    for (
+      let seconds = 0;
+      seconds < 500 && unit.waterTrip?.stage === "refilling";
+      seconds += 5
+    ) {
+      state.time += 5;
+      waterTripTick(state, unit);
+    }
     expect(unit.waterTrip?.stage).toBe("inbound");
     expect(unit.supplies!.water).toBe(4000);
     state.time = unit.arrive;
@@ -129,6 +155,7 @@ it("führt Tanker auf wirklichen Routen zur Nachfüllstelle und zurück, auch na
     expect(unit.status).toBe("scene");
   }
   expect(clone).toEqual(s);
+  fixture.restore();
 });
 
 it("sperrt gewartete Fahrzeuge, bucht einmal und setzt Verschleiß erst beim Abschluss zurück", () => {

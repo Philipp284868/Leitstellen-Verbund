@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -302,7 +303,7 @@ describe("Autoritativer Server", () => {
       // Cross a real funding boundary during the transport, independent of
       // random vehicle delays and the wall-clock phase of this fixture.
       fundTestBudget(s, 1000000);
-      app.db.save(id, s);
+      saveIndependentFixture(app.db, id, s);
     }
     const s = app.db.all().get(a)!,
       helper = app.db.all().get(b)!,
@@ -370,7 +371,7 @@ describe("Autoritativer Server", () => {
       s.player.id = id;
       for (const o of [...s.buildings, ...s.vehicles]) o.owner = id;
       generate(s); // Existing legacy cooperation remains cancellable after the update.
-      app.db.save(id, s);
+      saveIndependentFixture(app.db, id, s);
     }
     app.game.step(5);
     const owner = app.db.all().get(a)!,

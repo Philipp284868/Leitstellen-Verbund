@@ -22,6 +22,7 @@ import { parseMode } from "../shared/mode";
 import type { Save } from "../shared/model";
 import type { PublicPlayer } from "../shared/presence";
 import { facilityResponse } from "./facilities/http";
+import { infrastructureSnapshot } from "./infrastructure/public";
 import { assertFacilityMigration } from "./facilities/migration";
 import { hospitalOptions } from "../simulation/hospitals";
 import { publicSave } from "../simulation/incidents";
@@ -40,6 +41,10 @@ import {
   assertInstalledData,
 } from "../../scripts/installation.mjs";
 import { Database } from "./database";
+import { SharedClinics } from "./infrastructure/clinics";
+import { publicOwnership } from "./infrastructure/ownership";
+import { publicHospitalProfile } from "../simulation/hospital-profiles";
+import { withClinicAuthority } from "../simulation/clinic-capacity";
 import { Game } from "./game";
 import { prepareGeography, type Geography } from "./germany/runtime";
 import { RouteSnapshotEncoder } from "./germany/snapshots";
@@ -295,8 +300,28 @@ export function startServer(
             60000,
           );
           auth.limit(`facility-reads:${session.user_id}`, 480, 60000);
-          const data = facilityResponse(requestUrl, () =>
-            facilityContext(db, deskOwner(db, session.user_id, mode)),
+          const data = facilityResponse(
+            requestUrl,
+            () => facilityContext(db, deskOwner(db, session.user_id, mode)),
+            {
+              ownership: (ids) => publicOwnership(db.sql, ids),
+              clinic: (f) => {
+                const profile = publicHospitalProfile({
+                  id: f.id,
+                  name: f.name,
+                  ...(f.access?.pos ?? f.pos),
+                  osmLocation: f.pos,
+                  facilityId: f.id,
+                  emergency: f.emergency,
+                  aliases: f.sources,
+                });
+                return {
+                  ...profile,
+                  open: profile.open && f.status === "active" && !!f.access,
+                  ...new SharedClinics(db.sql).snapshot(profile),
+                };
+              },
+            },
           );
           return await respondFacilities(
             req,
@@ -306,6 +331,49 @@ export function startServer(
           );
         }
 
+        if (path === "/api/water") {
+          if (req.method !== "GET")
+            return reply(res, 405, { error: "GET erforderlich." });
+          auth.limit(`water-map:${session.user_id}`, 120, 60000);
+          auth.limit(`facility-reads:${session.user_id}`, 480, 60000);
+          const params = requestUrl.searchParams,
+            p = { x: Number(params.get("x")), y: Number(params.get("y")) };
+          if (!params.has("x") || !params.has("y") || !inBounds(p))
+            return reply(res, 400, { error: "Ungültiger Kartenausschnitt." });
+          const provider = germanyProvider();
+          if (params.has("source")) {
+            const id = z.string().min(1).max(200).parse(params.get("source")),
+              source = provider.waterSource?.(p, id);
+            return source
+              ? reply(res, 200, { source })
+              : reply(res, 404, {
+                  error: "Wasserquelle in diesem Ausschnitt nicht gefunden.",
+                });
+          }
+          const radius = z.coerce
+            .number()
+            .min(1)
+            .max(10000)
+            .parse(params.get("radius"));
+          const cancelled = new AbortController(),
+            cancel = () => cancelled.abort();
+          res.once("close", cancel);
+          try {
+            const sources = provider.waterMapSources
+              ? await provider.waterMapSources(
+                  p,
+                  radius,
+                  50000,
+                  cancelled.signal,
+                )
+              : (provider.waterSources?.(p, radius, 50000) ?? []);
+            return await respondFacilities(req, res, { sources }, true);
+          } catch (error) {
+            if (!cancelled.signal.aborted) throw error;
+          } finally {
+            res.off("close", cancel);
+          }
+        }
         if (path.startsWith("/api/geo/")) {
           if (req.method !== "GET")
             return reply(res, 405, { error: "GET erforderlich." });
@@ -364,7 +432,9 @@ export function startServer(
               .max(100)
               .parse(params.get("seats") || "0");
             return reply(res, 200, {
-              options: hospitalOptions(s, p, seats, m, v),
+              options: withClinicAuthority(new SharedClinics(db.sql), () =>
+                hospitalOptions(s, p, seats, m, v),
+              ),
             });
           }
           return reply(res, 404, {
@@ -781,6 +851,29 @@ export function startServer(
     next();
   });
   io.on("connection", (socket) => {
+    socket.on("infrastructure:watch", (input: unknown) => {
+      try {
+        if (!auth.session(socket.request.headers.cookie))
+          return socket.disconnect(true);
+        auth.limit(`infrastructure:${socket.data.user}`, 120, 60000);
+        const ids = z.array(z.string().min(1).max(100)).max(2000).parse(input);
+        const value = infrastructureSnapshot(db.sql, [...new Set(ids)]);
+        infrastructureWatches.set(socket, {
+          ids,
+          revision: value.revision,
+          fingerprint: JSON.stringify({
+            ownership: value.ownership,
+            clinics: value.clinics,
+          }),
+        });
+        socket.emit("infrastructure", value);
+      } catch {
+        socket.emit(
+          "notice",
+          "Standortstatus konnte nicht aktualisiert werden.",
+        );
+      }
+    });
     presence.connect(socket.id, socket.data.user, socket.data.session);
     socket.on(
       "play:presence",
@@ -872,11 +965,35 @@ export function startServer(
     });
   });
   const encoders = new WeakMap<Socket, RouteSnapshotEncoder>();
+  const infrastructureWatches = new WeakMap<
+    Socket,
+    { ids: string[]; revision: number; fingerprint: string }
+  >();
   function deliverSnapshot(
     socket: Socket,
     peers: Set<string>,
     view = viewForActor(socket.data.user, peers, socket.data.mode),
   ) {
+    const watched = infrastructureWatches.get(socket);
+    if (watched) {
+      const revision = Number(
+        db.sql
+          .prepare("SELECT revision FROM infrastructure_state WHERE id=1")
+          .get()!.revision,
+      );
+      if (watched.revision !== revision) {
+        const value = infrastructureSnapshot(db.sql, watched.ids),
+          fingerprint = JSON.stringify({
+            ownership: value.ownership,
+            clinics: value.clinics,
+          });
+        watched.revision = revision;
+        if (fingerprint !== watched.fingerprint) {
+          watched.fingerprint = fingerprint;
+          socket.emit("infrastructure", value);
+        }
+      }
+    }
     if (socket.handshake.auth.routeSnapshots === 1) {
       let encoder = encoders.get(socket);
       if (!encoder) {

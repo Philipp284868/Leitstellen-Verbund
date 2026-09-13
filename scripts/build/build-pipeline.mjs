@@ -94,6 +94,7 @@ export async function buildApplication({ incremental = false } = {}) {
               "scripts/build/build-server.mjs",
               "scripts/geodata/install-facilities.mjs",
               "data/facilities",
+              "data/water",
             ]),
       ]),
     ]);

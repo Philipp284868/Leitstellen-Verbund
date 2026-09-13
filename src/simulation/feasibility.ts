@@ -10,7 +10,12 @@ export function fleetCapabilities(s: Save): Skills {
     (v) =>
       v.owner === s.player.id &&
       s.buildings.some(
-        (b) => b.id === v.home && b.owner === s.player.id && b.ready <= s.time,
+        (b) =>
+          b.id === v.home &&
+          !b.migrationReserve &&
+          b.type !== "hospital" &&
+          b.owner === s.player.id &&
+          b.ready <= s.time,
       ),
   ))
     for (const [skill, amount] of Object.entries(configuredSkills(v)))

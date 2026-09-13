@@ -5,6 +5,7 @@ import { Database } from "./database";
 import { Game } from "./game";
 import { writeWorldSituation } from "./world-situation";
 import { createSituation } from "../simulation/world-situation";
+import { prepareLegacyClinics } from "./infrastructure/legacy-clinics";
 export function stepLaboratoryWorlds(saves: Save[], seconds: number) {
   const db = new Database("", { memory: true });
   try {
@@ -19,6 +20,25 @@ export function stepLaboratoryWorlds(saves: Save[], seconds: number) {
         .run(s.player.id, s.player.id, "offline-lab-no-login", "player", 0);
       db.save(s.player.id, s);
     }
+    const clinics = prepareLegacyClinics(structuredClone(saves));
+    if (clinics.conflicts.length)
+      throw Error(JSON.stringify(clinics.conflicts));
+    const insert = db.sql.prepare(
+      "INSERT INTO clinic_places VALUES(?,?,?,?,?,?,?,?,?,?,0)",
+    );
+    for (const p of clinics.places)
+      insert.run(
+        p.patient,
+        p.clinic,
+        p.owner,
+        p.mission,
+        p.transport,
+        JSON.stringify(p.departments),
+        p.state,
+        p.created,
+        p.admitted,
+        p.discharge,
+      );
     new Game(db).step(seconds, (saves[0].time + seconds) * 1000, {
       generation: false,
       // Historical laboratory presets intentionally control exact weather kinds

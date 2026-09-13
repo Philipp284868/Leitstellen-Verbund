@@ -122,7 +122,8 @@ export function reconcileBuildingStaffing(s: Save): StaffingChange {
     ].map((o) => o.id),
   );
   for (const b of s.buildings) {
-    if (b.owner !== s.player.id || b.ready > s.time) continue;
+    if (b.migrationReserve || b.owner !== s.player.id || b.ready > s.time)
+      continue;
     const plan = buildingStaffingPlan(s, b),
       fleet = fleets.get(b.id) ?? [],
       pool = homes.get(b.id) ?? [];

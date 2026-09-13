@@ -19,7 +19,10 @@ export function vehicleAvailability(
     crewRequired: crew.required,
     crewCapacity: vt(v.type).crew,
   };
-  if ((v.maintenance?.until ?? 0) > s.time) {
+  if (s.buildings.some((b) => b.id === v.home && b.migrationReserve)) {
+    result.reason =
+      "Migrationsreserve: zuerst an eine eigene passende Wache versetzen.";
+  } else if ((v.maintenance?.until ?? 0) > s.time) {
     result.state = "MAINTENANCE";
     result.reason = "Werkstatt: Wartung läuft.";
     result.until = v.maintenance!.until;

@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir } from "node:fs/promises";
@@ -5,11 +6,10 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { apply, hospital, readiness, tick } from "../src/shared/engine";
+import { apply, readiness, tick } from "../src/shared/engine";
 import { validate } from "../src/shared/model";
-import { xpForLevel } from "../src/shared/progression";
 import { alarm } from "../src/simulation/dispatch";
-import { hospitalOptions } from "../src/simulation/hospitals";
+import { assessHospitals } from "../src/simulation/hospitals";
 import { publicSave } from "../src/simulation/incidents";
 import {
   attachOrganizations,
@@ -44,7 +44,11 @@ async function world() {
     helper = await auth.create("helper", password, "Süd", "Süd"),
     other = await auth.create("other", password, "West", "West");
   db.save(owner, organizationFixture(owner));
-  db.save(helper, organizationFixture(helper, "field", "south"));
+  saveIndependentFixture(
+    db,
+    helper,
+    organizationFixture(helper, "field", "south"),
+  );
   const game = new Game(db);
   const command = (user: string, action: ServerAction) =>
     game.command(user, { id: crypto.randomUUID(), action });
@@ -257,40 +261,41 @@ it("Polizeisicherung schützt Rettungskräfte; THW-Aufträge brauchen echte Fäh
     m.control!.events.filter((e) => e.type === "ORGANIZATION_TASK_DONE"),
   ).toHaveLength(4);
 });
-it("Krankenhäuser lehnen ungeeignete Patienten ab, reservieren Betten und lenken zum geeigneten Ziel um", () => {
+it("Serverkliniken lehnen ungeeignete Patienten ab und berücksichtigen aktive Reservierungen", () => {
   const s = organizationFixture("hospital", "sick"),
     v = addAmbulance(s),
     m = s.missions[0];
-  s.money += 100000;
-  s.xp = xpForLevel(30);
-  apply(s, fixturePurchase("hospital", nodes[30]));
-  tick(s, s.time + 30, {}, false, false);
-  const b = s.buildings.at(-1)!;
-  organizationCommand(
-    s,
-    {
-      type: "hospital-profile",
-      home: b.id,
-      profile: { open: true, capacity: 1, specialties: ["general"] },
-    },
-    "hospital",
-  );
   m.dynamics!.patients[0].age = 10;
-  m.organization!.hospital = b.id;
-  expect(
-    hospitalOptions(s, m.pos, 1, m, v).find((h) => h.id === b.id)!.reason,
-  ).toContain("Kinderheilkunde");
-  expect(hospital(s, m.pos, 1, m, v)!.id).toBe("public:way:100000");
-  b.hospital!.specialties.push("pediatric");
-  expect(hospital(s, m.pos, 1, m, v)!.id).toBe(b.id);
+  expect(() => apply(s, fixturePurchase("hospital", nodes[30]))).toThrow(
+    /Serverkrankenhaus/,
+  );
+  const basics = {
+    id: "public:fixture:hospital:0",
+    name: "Basisklinik",
+    pos: nodes[30],
+    capacity: 1,
+    open: true,
+    specialties: ["general"],
+  };
+  const child = {
+    ...basics,
+    id: "public:fixture:hospital:1",
+    name: "Kinderklinik",
+    pos: nodes[31],
+    specialties: ["general", "pediatric"],
+  };
+  let options = assessHospitals(s, [basics, child], m.pos, 1, m, v);
+  expect(options.find((h) => h.id === basics.id)!.reason).toContain(
+    "Kinderheilkunde",
+  );
+  expect(options.filter((h) => !h.reason).map((h) => h.id)).toEqual([child.id]);
   v.status = "transport";
-  v.path = [m.pos, b.pos];
-  v.destination = b.id;
+  v.path = [m.pos, child.pos];
+  v.destination = child.id;
   v.patients = 1;
-  expect(
-    hospitalOptions(s, m.pos, 1, m, v).find((h) => h.id === b.id)!.reserved,
-  ).toBe(1);
-  expect(hospital(s, m.pos, 1, m, v)!.id).toBe("public:way:100000");
+  options = assessHospitals(s, [child], m.pos, 1, m, v);
+  expect(options[0].reserved).toBe(1);
+  expect(options[0].reason).toBe("Keine freie Aufnahme");
 });
 it("Entwürfe sind privat; Versand gewährt nur der Ziel-Leitstelle die Anfrage; Fremdzugriff und Solo sind gesperrt", async () => {
   const w = await world();
@@ -497,7 +502,7 @@ it.each([false, true])(
       owner.missions[0].dynamics!.patients[0].age = 30;
       owner.missions[0].dynamics!.patients[0].health = 95;
       w.db.save(w.owner, owner);
-      w.db.save(w.helper, helper);
+      saveIndependentFixture(w.db, w.helper, helper);
       w.command(w.owner, {
         type: "organization-task",
         mission: owner.missions[0].id,

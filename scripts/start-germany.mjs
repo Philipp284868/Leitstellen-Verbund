@@ -14,9 +14,16 @@ function maintenanceCommand(args) {
   if (!Array.isArray(args) || args.some((arg) => typeof arg !== "string"))
     throw Error("Ungültige Wartungsargumente.");
   const [command = "facilities-preview", ...flags] = args;
-  if (!["facilities-preview", "facilities-migrate"].includes(command))
+  if (
+    ![
+      "facilities-preview",
+      "facilities-migrate",
+      "infrastructure-preview",
+      "infrastructure-migrate",
+    ].includes(command)
+  )
     throw Error(
-      "Wartung erlaubt nur facilities-preview oder facilities-migrate.",
+      "Wartung erlaubt die Standort- oder Infrastrukturprüfung und die zugehörige gesicherte Migration.",
     );
   const seen = new Set();
   for (let i = 0; i < flags.length; i++) {
@@ -28,10 +35,10 @@ function maintenanceCommand(args) {
         throw Error(
           "--resolutions benötigt den Pfad der geprüften Zuordnungsdatei.",
         );
-    } else if (flag !== "--confirm" || command !== "facilities-migrate")
+    } else if (flag !== "--confirm" || !command.endsWith("-migrate"))
       throw Error(`Unzulässiges Wartungsargument: ${flag}`);
   }
-  if (command === "facilities-migrate" && !seen.has("--confirm"))
+  if (command.endsWith("-migrate") && !seen.has("--confirm"))
     throw Error(
       "Standortmigration erst nach geprüftem Trockenlauf mit --confirm ausführen.",
     );

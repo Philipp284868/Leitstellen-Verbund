@@ -21,7 +21,13 @@ export const CALL_PACING = {
 export function callLoad(s: Save) {
   const homes = new Set(
     s.buildings
-      .filter((b) => b.owner === s.player.id && b.ready <= s.time)
+      .filter(
+        (b) =>
+          !b.migrationReserve &&
+          b.type !== "hospital" &&
+          b.owner === s.player.id &&
+          b.ready <= s.time,
+      )
       .map((b) => b.id),
   );
   const fleet = s.vehicles.filter(
@@ -102,7 +108,13 @@ export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
     elapsed > 60 ||
     !activeDesk ||
     !s.vehicles.some((v) =>
-      s.buildings.some((b) => b.id === v.home && b.ready <= s.time),
+      s.buildings.some(
+        (b) =>
+          b.id === v.home &&
+          !b.migrationReserve &&
+          b.type !== "hospital" &&
+          b.ready <= s.time,
+      ),
     )
   ) {
     s.callPacing.notBefore = Math.max(

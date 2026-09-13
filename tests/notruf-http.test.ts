@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -40,7 +41,7 @@ it("Tabs, zugeordnete Disponenten und Reconnect verändern die gespeicherte Notr
           "INSERT INTO users(id,username,password,role,created) VALUES (?,?,?,?,?)",
         )
         .run(id, id, "unused-test-account", "player", now);
-      app.db.save(id, s);
+      saveIndependentFixture(app.db, id, s);
       const session = app.auth.issue(id);
       return { id, cookie: `lv_session=${session.value}`, csrf: session.csrf };
     });

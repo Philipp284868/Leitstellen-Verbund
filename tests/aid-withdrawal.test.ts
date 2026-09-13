@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -30,7 +31,7 @@ it("verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatz
       assisting = organizationFixture(helper, "bin", "helper");
     owned.missions[0].control!.briefed = true;
     db.save(owner, owned);
-    db.save(helper, assisting);
+    saveIndependentFixture(db, helper, assisting);
     const game = new Game(db);
     const command = (who: string, action: ServerAction) =>
       game.command(who, { id: crypto.randomUUID(), action });

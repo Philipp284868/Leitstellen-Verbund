@@ -29,7 +29,7 @@ it("speichert eine bestätigte Deutschland-Klinik, weist erfundene und fremde Zi
         { type: "hospital-select", mission: m.id, home },
         "owner",
       ),
-    ).toThrow("Klinik fehlt");
+    ).toThrow("Bestätigte Serverklinik fehlt");
     expect(m.organization).toEqual(previous);
   }
   organizationCommand(

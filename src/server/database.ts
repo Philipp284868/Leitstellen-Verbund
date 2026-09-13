@@ -3,6 +3,12 @@ import {
   XP_REWARDS_SCHEMA,
 } from "./balancing-migration";
 import { REPORTS_SCHEMA } from "./bug-reports";
+import {
+  applyInfrastructureMigration,
+  planInfrastructureMigration,
+} from "./infrastructure/migration";
+import { atomicPrivate } from "../../scripts/installation-storage.mjs";
+import { persistExclusiveOwnership } from "./infrastructure/ownership";
 import { closeSync, existsSync, mkdirSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import { DatabaseSync, backup } from "node:sqlite";
@@ -29,7 +35,7 @@ import { EVENTS_SCHEMA, persistGameEvents } from "./game-events";
 import { LEADERBOARD_SCHEMA, persistMetrics } from "./leaderboard";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 27;
+export const DATABASE_VERSION = 28;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -151,7 +157,13 @@ export class Database {
       if (this.sql.prepare("PRAGMA quick_check").get()!.quick_check !== "ok")
         throw Error("SQLite-Integritätsprüfung fehlgeschlagen.");
       // Preserve a full pre-migration copy, including the original map coordinates.
-      if (existed && version < DATABASE_VERSION) {
+      if (
+        existed &&
+        (version < DATABASE_VERSION ||
+          !this.sql
+            .prepare("SELECT 1 FROM meta WHERE key='shared-infrastructure-v1'")
+            .get())
+      ) {
         this.sql
           .prepare("VACUUM INTO ?")
           .run(
@@ -514,6 +526,21 @@ export class Database {
           "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",
         )
         .run(germanyProvider().dataset);
+      this.transaction(() => {
+        const preview = planInfrastructureMigration(this.sql);
+        if (!preview.applied && !options.memory)
+          atomicPrivate(
+            resolve(dir, "infrastructure-migration-preview.json"),
+            JSON.stringify(preview, null, 2) + "\n",
+          );
+        const result = applyInfrastructureMigration(this.sql);
+        if (!result.applied)
+          this.audit(
+            "server-migration",
+            "shared-infrastructure-v1: " + JSON.stringify(result),
+          );
+        this.sql.exec("PRAGMA user_version=28");
+      });
     } catch (e) {
       this.sql.close();
       throw e;
@@ -547,6 +574,13 @@ export class Database {
     if (!this.sql.isTransaction)
       return this.transaction(() => this.save(id, s, mode));
     const checked = validate(s);
+    if (
+      mode === "multi" &&
+      this.sql
+        .prepare("SELECT 1 FROM meta WHERE key='shared-infrastructure-v1'")
+        .get()
+    )
+      persistExclusiveOwnership(this.sql, checked);
     if (
       mode === "multi" &&
       this.sql

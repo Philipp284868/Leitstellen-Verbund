@@ -84,6 +84,31 @@ const area = (
 });
 
 describe("incident locations from local OSM MVT evidence", () => {
+  it.each([
+    ["water", "lake"],
+    ["building", "house"],
+    ["transportation", "rail"],
+    ["transportation", "motorway"],
+  ])(
+    "rejects water access across actual %s/%s geometry and accepts the adjacent clear road",
+    (layer, kind) => {
+      const geo = open([
+        area("landuse", "residential"),
+        area(layer, kind, [rectangle(990, 990, 1010, 1010)]),
+      ]);
+      expect(geo.waterEnvironment(tilePoint(1000, 1000)).blocked).toBe(true);
+      expect(geo.waterEnvironment(tilePoint(980, 1000)).blocked).toBe(false);
+      expect(
+        geo.clearWaterAccess(tilePoint(980, 1000), tilePoint(1020, 1000)),
+      ).toBe(false);
+      expect(
+        geo.clearWaterAccess(tilePoint(980, 1050), tilePoint(1020, 1050)),
+      ).toBe(true);
+      expect(geo.waterEnvironment(tilePoint(980, 1050)).landuse).toBe(
+        "residential",
+      );
+    },
+  );
   it("rejects excessive geometry commands before allocating decoded coordinate arrays", () => {
     const geo = open([
       {
@@ -314,7 +339,7 @@ async function startProvider() {
   ]);
   const db = new DatabaseSync(resolve(dir, "index.sqlite"));
   db.exec(
-    "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,name TEXT,road_class TEXT,bridge INTEGER,tunnel INTEGER,access TEXT); CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat); CREATE TABLE places(id INTEGER PRIMARY KEY,lon REAL,lat REAL); CREATE VIRTUAL TABLE places_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);",
+    "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,name TEXT,road_class TEXT,bridge INTEGER,tunnel INTEGER,access TEXT); CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat); CREATE TABLE places(id INTEGER PRIMARY KEY,lon REAL,lat REAL,kind TEXT); CREATE VIRTUAL TABLE places_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);",
   );
   db.prepare("INSERT INTO metadata VALUES('source_sha256',?)").run(
     fixtureDataset,

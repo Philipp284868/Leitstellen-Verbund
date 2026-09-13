@@ -1,3 +1,4 @@
+import { saveIndependentFixture } from "./helpers/independent-sites";
 import { it, expect } from "vitest";
 import { Database } from "../src/server/database";
 import { phaseFixture } from "./dispatch-fixture";
@@ -20,7 +21,7 @@ it("wertet Offline-Spieler, echte persönliche Beteiligung und gemeinsamen Besit
       db.sql
         .prepare("INSERT INTO users VALUES(?,?,?,?,?)")
         .run(s.player.id, s.player.id, "private-password", "player", 1);
-      db.save(s.player.id, s);
+      saveIndependentFixture(db, s.player.id, s);
     }
     db.sql.prepare("INSERT INTO desk_members VALUES('member','owner')").run();
     db.sql

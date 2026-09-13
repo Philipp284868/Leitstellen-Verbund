@@ -130,6 +130,10 @@ export function equipmentProfile(v: Pick<Vehicle, "type" | "equipment">) {
     )[v.type] ?? (t.skills.water ?? 0) * 500;
   return {
     water: baseWater + (v.equipment?.includes("water") ? 500 : 0),
+    pumpLpm: fire
+      ? Math.max(600, (t.skills.fire ?? 1) * 600)
+      : (t.skills.pump ?? 0) * 800,
+    suctionHose: fire || t.skills.pump ? 8 : 0,
     hoseB:
       (v.type === "sw" ? 2000 : fire ? (v.type === "tsf" ? 180 : 300) : 0) +
       (v.equipment?.includes("hose") ? 200 : 0),

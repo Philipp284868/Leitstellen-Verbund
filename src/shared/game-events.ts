@@ -26,6 +26,19 @@ export function projectEvents(s: Save): GameEvent[] {
     hidden = new Set<string>(),
     fmsIds = new Map<string, string>();
   for (const m of [...s.missions, ...s.archive]) {
+    const earned =
+      m.xpPolicy?.awarded[`owner:${s.player.id}`] ??
+      m.xpPolicy?.awarded[`helper:${s.player.id}`];
+    if (m.phase === "done" && earned !== undefined)
+      out.push({
+        id: `completed:${m.id}:${s.player.id}`,
+        at: m.completed,
+        sender: "Leitstelle",
+        type: "Abschluss",
+        priority: "normal",
+        mission: m.id,
+        text: `Einsatz beendet · +${earned.toLocaleString("de-DE")} XP`,
+      });
     const summary = m.control?.radioSummary;
     if (summary)
       out.push({

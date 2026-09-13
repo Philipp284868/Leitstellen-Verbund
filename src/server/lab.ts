@@ -120,7 +120,7 @@ const laboratoryHash = (lab: Lab) =>
         )
         .digest("hex")
     : stateHash(lab.save);
-export function createLab(seed: number): Lab {
+export function createLab(seed: number, occupied: string[] = []): Lab {
   if (!Number.isInteger(seed) || seed < 0 || seed > 4294967295)
     throw Error("Seed muss eine 32-Bit-Ganzzahl sein.");
   let s = fresh("Entwicklung", "Lokale Simulation", 1000);
@@ -128,11 +128,13 @@ export function createLab(seed: number): Lab {
   s.generation = `lab-${seed}`;
   s.seed = seed;
   s.xp = xpForLevel(6);
-  const facility = germanyProvider().facilities?.query({
-    kind: "fire",
-    usable: true,
-    limit: 1,
-  })[0];
+  const facility = germanyProvider()
+    .facilities?.query({
+      kind: "fire",
+      usable: true,
+      limit: 80,
+    })
+    .find((f) => !occupied.includes(f.id));
   if (!facility)
     throw Error(
       "Keine nutzbare reale Feuerwache für die Laborübung vorhanden.",
@@ -332,7 +334,12 @@ export function runLab(source: Lab, input: unknown): Lab {
       throw Error(
         "Seed einer vorhandenen Nachbarleitstelle ist bereits in Verwendung.",
       );
-    const neighbor = createLab(action.seed).save;
+    const neighbor = createLab(
+      action.seed,
+      [s, ...lab.neighbors].flatMap((world) =>
+        world.buildings.flatMap((b) => (b.facility ? [b.facility.id] : [])),
+      ),
+    ).save;
     neighbor.player.id = `neighbor-${action.seed}`;
     neighbor.player.station = `Labor-Nachbar ${action.seed}`;
     for (const b of neighbor.buildings) b.owner = neighbor.player.id;
