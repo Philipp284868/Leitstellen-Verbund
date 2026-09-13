@@ -7,6 +7,8 @@ type Fields = {
   status?: number;
   port?: number;
   errorType?: string;
+  routingOperation?: "trip" | "access" | "projection" | "shore";
+  routingCode?: "no-route" | "unavailable" | "blocked";
 };
 /** Only allowlisted scalar metadata crosses this boundary. Never serialize requests/errors/saves. */
 export class Diagnostics {
@@ -36,6 +38,18 @@ export class Diagnostics {
     if (this.recent.size >= 256)
       this.recent.delete(this.recent.keys().next().value!);
     const clean: Fields = {};
+    if (
+      fields.routingOperation &&
+      ["trip", "access", "projection", "shore"].includes(
+        fields.routingOperation,
+      )
+    )
+      clean.routingOperation = fields.routingOperation;
+    if (
+      fields.routingCode &&
+      ["no-route", "unavailable", "blocked"].includes(fields.routingCode)
+    )
+      clean.routingCode = fields.routingCode;
     for (const name of ["count", "status", "port"] as const)
       if (Number.isFinite(fields[name])) clean[name] = fields[name];
     if (typeof fields.active === "boolean") clean.active = fields.active;

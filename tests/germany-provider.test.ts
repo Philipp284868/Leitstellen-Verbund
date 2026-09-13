@@ -77,6 +77,61 @@ const setMode = (mode: string) =>
   });
 
 describe("Germany provider contract (synthetic API fixtures, not nationwide geographic acceptance)", () => {
+  it("does not mistake an exhausted route search for proof of disconnected geography", async () => {
+    await setMode("search-limit");
+    const bridge = new RoutingBridge(origin);
+    try {
+      expect(() => bridge.request("/route", {})).toThrow(
+        expect.objectContaining({ code: "unavailable" }),
+      );
+      const before = (await (await fetch(origin + "/stats")).json()).requests;
+      expect(() => bridge.request("/route", {})).toThrow(
+        expect.objectContaining({ code: "unavailable" }),
+      );
+      expect((await (await fetch(origin + "/stats")).json()).requests).toBe(
+        before,
+      );
+    } finally {
+      await bridge.close();
+    }
+  });
+  it("does not hide malformed projection responses as disconnected candidates", async () => {
+    provider = await initializeGermany(options());
+    await setMode("invalid");
+    expect(() => provider!.projectRoad(a)).toThrow("Ungültige Antwort");
+    expect((await (await fetch(origin + "/stats")).json()).requests).toBe(1);
+  });
+  it("avoids repeated HTTP work for the same disconnected route without blocking other routes", async () => {
+    provider = await initializeGermany(options());
+    await setMode("unreachable");
+    const start = performance.now();
+    for (let i = 0; i < 25; i++)
+      expect(() =>
+        provider!.route(
+          a,
+          b,
+          "road",
+          new Set(),
+          50 + (i % 3) * 20,
+          new Map(),
+          1,
+        ),
+      ).toThrow("Connection not found");
+    const elapsedMs = performance.now() - start;
+    const stats = await (await fetch(origin + "/stats")).json();
+    console.log(
+      JSON.stringify({
+        reproduction: "repeated-disconnected-route",
+        requests: stats.requests,
+        elapsedMs,
+      }),
+    );
+    expect(stats.requests).toBe(1);
+    await setMode("normal");
+    expect(
+      provider.route(b, a, "road", new Set(), 50, new Map(), 1),
+    ).toHaveLength(3);
+  });
   it("accepts the captured GH11 zero-route response without inventing an edge", () => {
     const raw = JSON.parse(
       readFileSync(

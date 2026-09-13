@@ -82,15 +82,25 @@ function accessFor(site, index) {
           (entry ? 0 : onsite || exactPoint ? 1000 : 2000) + distance(site, a),
       });
   }
-  return ranked
-    .sort((a, b) => a.rank - b.rank || a.source.localeCompare(b.source))
-    .slice(0, 3)
-    .map((best) => ({
-      lon: best.lon,
-      lat: best.lat,
-      source: best.source,
-      method: best.method,
-    }));
+  ranked.sort((a, b) => a.rank - b.rank || a.source.localeCompare(b.source));
+  // Three adjacent vertices of the same entrance are not three alternatives.
+  // Keep the preferred access and prioritize other mapped entrances/road positions.
+  const selected = [];
+  for (const candidate of ranked) {
+    if (selected.every((chosen) => distance(chosen, candidate) >= 20))
+      selected.push(candidate);
+    if (selected.length === 3) break;
+  }
+  for (const candidate of ranked) {
+    if (selected.length === 3) break;
+    if (!selected.includes(candidate)) selected.push(candidate);
+  }
+  return selected.map((best) => ({
+    lon: best.lon,
+    lat: best.lat,
+    source: best.source,
+    method: best.method,
+  }));
 }
 export function normalizeFacilities(
   records,
@@ -294,6 +304,7 @@ export function writeFacilityCatalog(
         "";
       const entry = {
         ...row,
+        snapshot,
         name: row.tags?.["name:de"] || row.tags?.name || row.name || "",
         address,
         access: access || row.access,

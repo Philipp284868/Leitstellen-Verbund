@@ -33,9 +33,28 @@ const server = createServer(async (req, res) => {
   }
   if (mode === "invalid") return res.end(JSON.stringify({ paths: [] }));
   if (mode === "timeout") return setTimeout(() => res.end("{}"), 1500);
-  if (mode === "unreachable") {
+  if (mode === "unreachable" || mode === "slow-unreachable") {
     res.statusCode = 400;
+    if (mode === "slow-unreachable")
+      return setTimeout(
+        () => res.end(JSON.stringify({ message: "Connection not found" })),
+        40,
+      );
     return res.end(JSON.stringify({ message: "Connection not found" }));
+  }
+  if (mode === "search-limit") {
+    res.statusCode = 400;
+    return res.end(
+      JSON.stringify({
+        message: "Maximum nodes exceeded",
+        hints: [
+          {
+            details:
+              "com.graphhopper.util.exceptions.MaximumNodesExceededException",
+          },
+        ],
+      }),
+    );
   }
   const parts = [];
   for await (const c of req) parts.push(c);

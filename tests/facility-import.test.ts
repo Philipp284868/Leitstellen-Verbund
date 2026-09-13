@@ -44,63 +44,75 @@ const point = {
   members: [],
 };
 describe("nachvollziehbarer Einrichtungskatalog", () => {
-  it("liefert bis zu drei kartierte Zufahrtskandidaten und verwendet keine gesperrte Privatstraße als Näherung", () => {
-    const dir = mkdtempSync(resolve(tmpdir(), "lv-access-candidates-"));
-    const index = new DatabaseSync(":memory:");
-    try {
-      index.exec(`CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,bridge INTEGER,tunnel INTEGER,road_class TEXT,access TEXT);
-        CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);`);
-      for (const [id, lon, access] of [
-        [1, 13.00501, "private"],
-        [2, 13.0051, ""],
-        [3, 13.0052, ""],
-        [4, 13.0053, ""],
-      ] as const) {
-        index
-          .prepare("INSERT INTO anchors VALUES(?,?,52.005,0,0,'service',?)")
-          .run(id, lon, access);
-        index
-          .prepare("INSERT INTO anchors_rtree VALUES(?,?,?,52.005,52.005)")
-          .run(id, lon, lon);
-      }
-      // Point lies next to (not on) the service road. Explicit source coordinates
-      // remain separate from candidates that still need a runtime route check.
-      const record = {
-        ...point,
-        lon: 13.005,
-        lat: 52.0052,
-        geometry: { type: "Point", coordinates: [13.005, 52.0052] },
-        tags: {
-          amenity: "fire_station",
-          "fire_station:type": "airport",
-          name: "Test",
-        },
-      };
-      const path = resolve(dir, "catalog.sqlite");
-      writeFacilityCatalog(
-        path,
-        normalizeFacilities([record], { snapshot: "fixture" }),
-        { index, dataset: "a".repeat(64), snapshot: "fixture" },
-      );
-      const db = new DatabaseSync(path, { readOnly: true });
+  it.each([false, true])(
+    "liefert räumlich verschiedene kartierte Zufahrtskandidaten ohne private Näherung (weitere Zufahrt: %s)",
+    (separate) => {
+      const dir = mkdtempSync(resolve(tmpdir(), "lv-access-candidates-"));
+      const index = new DatabaseSync(":memory:");
       try {
-        const data = JSON.parse(
-          String(db.prepare("SELECT data FROM facilities").get()!.data),
+        index.exec(`CREATE TABLE anchors(id INTEGER PRIMARY KEY,lon REAL,lat REAL,bridge INTEGER,tunnel INTEGER,road_class TEXT,access TEXT);
+        CREATE VIRTUAL TABLE anchors_rtree USING rtree(id,min_lon,max_lon,min_lat,max_lat);`);
+        for (const [id, lon, access] of [
+          [1, 13.00501, "private"],
+          [2, 13.0051, ""],
+          [3, 13.0052, ""],
+          [4, 13.0053, ""],
+        ] as const) {
+          index
+            .prepare("INSERT INTO anchors VALUES(?,?,52.005,0,0,'service',?)")
+            .run(id, lon, access);
+          index
+            .prepare("INSERT INTO anchors_rtree VALUES(?,?,?,52.005,52.005)")
+            .run(id, lon, lon);
+        }
+        if (separate) {
+          index.exec(
+            "INSERT INTO anchors VALUES(5,13.00545,52.005,0,0,'service',''); INSERT INTO anchors_rtree VALUES(5,13.00545,13.00545,52.005,52.005)",
+          );
+        }
+        // Point lies next to (not on) the service road. Explicit source coordinates
+        // remain separate from candidates that still need a runtime route check.
+        const record = {
+          ...point,
+          lon: 13.005,
+          lat: 52.0052,
+          geometry: { type: "Point", coordinates: [13.005, 52.0052] },
+          tags: {
+            amenity: "fire_station",
+            "fire_station:type": "airport",
+            name: "Test",
+          },
+        };
+        const path = resolve(dir, "catalog.sqlite");
+        writeFacilityCatalog(
+          path,
+          normalizeFacilities([record], { snapshot: "fixture" }),
+          { index, dataset: "a".repeat(64), snapshot: "fixture" },
         );
-        expect(data.access.method).toBe("nearby-service-road");
-        expect(
-          [data.access, ...data.accessAlternatives].map((a) => a.source),
-        ).toEqual(["road-node:2", "road-node:3", "road-node:4"]);
-        expect(data.lon).toBe(record.lon);
-        expect(data.lat).toBe(record.lat);
+        const db = new DatabaseSync(path, { readOnly: true });
+        try {
+          const data = JSON.parse(
+            String(db.prepare("SELECT data FROM facilities").get()!.data),
+          );
+          expect(data.access.method).toBe("nearby-service-road");
+          expect(
+            [data.access, ...data.accessAlternatives].map((a) => a.source),
+          ).toEqual(
+            separate
+              ? ["road-node:2", "road-node:5", "road-node:3"]
+              : ["road-node:2", "road-node:3", "road-node:4"],
+          );
+          expect(data.lon).toBe(record.lon);
+          expect(data.lat).toBe(record.lat);
+        } finally {
+          db.close();
+        }
       } finally {
-        db.close();
+        index.close();
+        rmSync(dir, { recursive: true, force: true });
       }
-    } finally {
-      index.close();
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
+    },
+  );
   it("erkennt ausdrücklich gekennzeichnete Flughafen- und Betriebsfeuerwehren ohne Namensraten", () => {
     for (const [tag, subtype] of [
       ["airport", "airport"],

@@ -1,5 +1,13 @@
 # Änderungen
 
+## 2.26.2 · Routing und Standortzufahrten · 13.09.2026
+
+- Automatische Einsatzortprüfungen unterscheiden eine unerreichbare Straße von einem Routingausfall und prüfen weitere Kandidaten im selben Durchlauf. Bereits eingesetzte Fahrzeuge behalten ihre sichere Wartebehandlung.
+- Standortkäufe prüfen Alternativen auch nach einer fehlgeschlagenen Land-/Uferzugangsprüfung. Ausfälle und beschädigte Antworten werden nicht als fehlender Fahrweg verschluckt; Geld und Besitz bleiben bei abgelehnten Käufen unverändert.
+- Bestätigte Fehlwege werden höchstens 30 Sekunden in einem auf 512 Einträge begrenzten Speicher wiederverwendet. Suchzeit-/Knotenlimits sind keine dauerhafte Unerreichbarkeitsdiagnose. Routinglogs nennen den Prüfbereich ohne Koordinaten oder Spielerdaten.
+- Das mitgelieferte Standortpaket bevorzugt räumlich verschiedene belegte Zufahrten. Alle 40.034 Identitäten, Positionen und Hauptzufahrten bleiben erhalten; 6.158 Alternativensätze wurden verbessert. Es wird keine neue Deutschlandkarte heruntergeladen.
+- Standortdetails zeigen den konkreten Kaufhinderungsgrund. Fehlende Postadressen sind Datenhinweise und keine Kaufsperre. Keine Datenmigration, kein Reset, keine Lockerung der Ratenbegrenzung.
+
 ## 2.26.1 · Standortkarte und Anfragebegrenzung · 13.09.2026
 
 - Getrennte Lesebudgets für Karte, Suche und Standortdetails; eindeutige Sperrantworten mit Wartezeit. Anmeldungen, Kontofunktionen und Spielaktionen behalten ihre Schutzregeln. Proxyadressen werden genau geprüft und normalisiert.

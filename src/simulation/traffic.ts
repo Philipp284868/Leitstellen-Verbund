@@ -62,11 +62,13 @@ export function routePlan(
   origin: Point,
   target: Point,
   mode: TravelMode = "priority",
+  failurePolicy: "wait" | "throw" = "wait",
 ) {
   try {
     return calculateRoutePlan(s, v, origin, target, mode);
   } catch (error) {
     if (
+      failurePolicy === "throw" ||
       !automaticRouting() ||
       !(error instanceof GermanyRoutingError) ||
       error.code === "blocked"

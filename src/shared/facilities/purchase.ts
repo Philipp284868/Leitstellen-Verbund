@@ -49,55 +49,64 @@ export function assertFacilityAccess(facility: Facility) {
     facility.access,
     ...(facility.accessAlternatives ?? []),
   ].slice(0, 3)) {
-    if (!provider.isLandSite(access.pos)) continue;
-    if (
-      access.method === "nearby-service-road" &&
-      [0.25, 0.5, 0.75].some(
-        (t) =>
-          !provider.isLandSite({
-            x: facility.pos.x + (access.pos.x - facility.pos.x) * t,
-            y: facility.pos.y + (access.pos.y - facility.pos.y) * t,
-          }),
-      )
-    )
-      continue;
-    if (facility.kind === "water" && !provider.isWaterSite?.(access.pos)) {
-      failure = "Wasserrettungszugang ist noch nicht bestätigt.";
-      continue;
-    }
-    const neighbors = provider
-      .querySites(access.pos, 100, 16)
-      .filter((p) => Math.hypot(p.x - access.pos.x, p.y - access.pos.y) > 3)
-      .slice(0, 3);
-    for (const neighbor of neighbors)
-      try {
-        provider.route(
-          access.pos,
-          neighbor,
-          "road",
-          new Set(),
-          50,
-          new Map(),
-          1,
-        );
-        provider.route(
-          neighbor,
-          access.pos,
-          "road",
-          new Set(),
-          50,
-          new Map(),
-          1,
-        );
-        return access;
-      } catch (error) {
-        if (
-          !(error instanceof GermanyRoutingError) ||
-          error.code === "unavailable"
+    try {
+      if (!provider.isLandSite(access.pos)) continue;
+      if (
+        access.method === "nearby-service-road" &&
+        [0.25, 0.5, 0.75].some(
+          (t) =>
+            !provider.isLandSite({
+              x: facility.pos.x + (access.pos.x - facility.pos.x) * t,
+              y: facility.pos.y + (access.pos.y - facility.pos.y) * t,
+            }),
         )
-          throw error;
-        failure = error.message;
+      )
+        continue;
+      if (facility.kind === "water" && !provider.isWaterSite?.(access.pos)) {
+        failure = "Wasserrettungszugang ist noch nicht bestätigt.";
+        continue;
       }
+      const neighbors = provider
+        .querySites(access.pos, 100, 16)
+        .filter((p) => Math.hypot(p.x - access.pos.x, p.y - access.pos.y) > 3)
+        .slice(0, 3);
+      for (const neighbor of neighbors)
+        try {
+          provider.route(
+            access.pos,
+            neighbor,
+            "road",
+            new Set(),
+            50,
+            new Map(),
+            1,
+          );
+          provider.route(
+            neighbor,
+            access.pos,
+            "road",
+            new Set(),
+            50,
+            new Map(),
+            1,
+          );
+          return access;
+        } catch (error) {
+          if (
+            !(error instanceof GermanyRoutingError) ||
+            error.code === "unavailable"
+          )
+            throw error;
+          failure = error.message;
+        }
+    } catch (error) {
+      if (
+        !(error instanceof GermanyRoutingError) ||
+        error.code === "unavailable"
+      )
+        throw error;
+      failure = error.message;
+    }
   }
   throw Error(`Keine erreichbare Zufahrt: ${failure}`);
 }

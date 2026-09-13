@@ -122,14 +122,14 @@ export function FacilityDetails({
           </span>
           <h2>{f.name || `${facilityLabels[f.kind]} · Name nicht erfasst`}</h2>
           <p>
-            {f.address || "Adresse nicht vollständig erfasst"} · {f.state}
+            {f.address || "Postadresse in der Quelle nicht erfasst"} · {f.state}
           </p>
           <p className="facility-status">
             {offer.owned
               ? "✓ Eigener Standort"
               : offer.reason
-                ? "⊘ Derzeit gesperrt"
-                : "+ Erwerbbar"}
+                ? `⊘ ${offer.reason}`
+                : "+ Kauf möglich · Fahrweg wird bei Bestätigung geprüft"}
           </p>
           <dl>
             <dt>Kaufpreis im Spiel</dt>
@@ -203,7 +203,6 @@ export function FacilityDetails({
                 ))}
             </details>
           )}
-          {offer.reason && !offer.owned && <p role="status">{offer.reason}</p>}
           {error && <p role="alert">{error}</p>}
           {offer.owned ? (
             <button className="primary" onClick={() => onManage(offer.owned!)}>

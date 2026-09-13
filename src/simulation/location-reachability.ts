@@ -66,12 +66,9 @@ function planned(
   ]);
   const old = cache.get(key);
   if (old) return old;
-  const plan = routePlan(s, { type }, origin, target);
-  if (plan.blockedUntil && plan.reason?.toLowerCase().includes("routing"))
-    throw new GermanyRoutingError(
-      "Straßenrouting derzeit nicht verfügbar.",
-      "unavailable",
-    );
+  // Candidate checks must preserve the router's typed failure even inside an
+  // automatic tick. Only assigned trips may turn failures into a waiting vehicle.
+  const plan = routePlan(s, { type }, origin, target, "priority", "throw");
   const result = {
     seconds: plan.seconds,
     blocked: !!plan.blockedUntil,

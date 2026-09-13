@@ -24,9 +24,30 @@ import {
   repairIncidentLocations,
 } from "../src/simulation/location-repair";
 import * as traffic from "../src/simulation/traffic";
+import { withAutomaticRouting } from "../src/simulation/routing-context";
 afterEach(() => {
   vi.restoreAllMocks();
   clearReachabilityCache();
+});
+it("prüft auch im automatischen Server-Tick weitere Zufahrten statt einen einzelnen Fehlweg als Dienstausfall zu behandeln", () => {
+  const s = phaseFixture("automatic-alternative", "bin"),
+    t = mt("bin"),
+    pos = s.missions[0].pos,
+    accesses = incidentSiteReferences(t, pos),
+    provider = germanyProvider(),
+    original = provider.route.bind(provider);
+  clearReachabilityCache();
+  expect(accesses.length).toBeGreaterThan(1);
+  vi.spyOn(provider, "route").mockImplementation((...args) => {
+    if (
+      args[1].x === accesses[0].access.x &&
+      args[1].y === accesses[0].access.y
+    )
+      throw new GermanyRoutingError("Connection not found", "no-route");
+    return original(...args);
+  });
+  const result = withAutomaticRouting(() => verifyIncidentLocation(s, t, pos));
+  expect(result?.access).toEqual(accesses[1].access);
 });
 it("prüft die nächste belegte Zufahrt im selben Versuch, wenn die erste Straße nicht erreichbar ist", () => {
   const s = phaseFixture("alternate", "bin"),

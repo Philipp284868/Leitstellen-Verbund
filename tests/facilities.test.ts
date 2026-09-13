@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Database } from "../src/server/database";
 import { Game } from "../src/server/game";
 import { apply, tick } from "../src/shared/engine";
@@ -30,6 +30,7 @@ import { resolve } from "node:path";
 
 const resources: (() => void)[] = [];
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const close of resources.reverse()) close();
   resources.length = 0;
 });
@@ -56,6 +57,43 @@ function setup() {
   };
 }
 describe("reale Standortkäufe und unveränderliche Identität", () => {
+  it("erhält bei Ausfall der Zugangsprüfung Geld und Besitz und erlaubt danach einen einmaligen Kauf", () => {
+    const { db, run } = setup(),
+      action = fixturePurchase("fire", sites[0]);
+    const before = JSON.stringify(db.all().get("owner"));
+    const land = vi
+      .spyOn(germanyProvider(), "isLandSite")
+      .mockImplementation(() => {
+        throw new GermanyRoutingError("Routing unavailable", "unavailable");
+      });
+    expect(() => run("owner", action)).toThrow("Routing unavailable");
+    expect(land).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(db.all().get("owner"))).toBe(before);
+    land.mockRestore();
+    run("owner", action);
+    const bought = db.all().get("owner")!;
+    run("owner", action);
+    expect(db.all().get("owner")).toEqual({
+      ...bought,
+      revision: bought.revision + 1,
+    });
+  });
+  it("prüft eine alternative Zufahrt auch nach einer fehlgeschlagenen Landzugangsprüfung", () => {
+    const provider = germanyProvider();
+    const facility = structuredClone(
+      logicFacilityCatalog.get(fixturePurchase("fire", sites[0]).facility)!,
+    );
+    facility.accessAlternatives = [{ ...facility.access!, pos: sites[1] }];
+    const first = facility.access!.pos;
+    vi.spyOn(provider, "isLandSite").mockImplementation((point) => {
+      if (point.x === first.x && point.y === first.y)
+        throw new GermanyRoutingError("Cannot find point 0", "no-route");
+      return true;
+    });
+    expect(assertFacilityAccess(facility)).toEqual(
+      facility.accessAlternatives[0],
+    );
+  });
   it("nutzt die nächste Standortzufahrt und erhält bei einem Routingausfall den unveränderten Besitz", () => {
     const provider = germanyProvider();
     const facility = structuredClone(

@@ -30,7 +30,8 @@ parentPort.on('message', async ({ url, method, body, shared, timeout }) => {
       const error = Error('Routingdienst: ' + String(parsed.message || response.status));
       const details = String(parsed.message || '') + ' ' + JSON.stringify(parsed.hints || []);
       if (response.status >= 500 || response.status === 429) error.routingCode = 'unavailable';
-      else if (/Connection(?: between locations)? not found|ConnectionNotFoundException|PointNotFoundException|PointOutOfBoundsException|Cannot find point|maximum.*visited|timed? ?out|timeout/i.test(details)) error.routingCode = 'no-route';
+      else if (/maximum.*visited|MaximumNodesExceededException|timed? ?out|timeout/i.test(details)) error.routingCode = 'unavailable';
+      else if (/Connection(?: between locations)? not found|ConnectionNotFoundException|PointNotFoundException|PointOutOfBoundsException|Cannot find point/i.test(details)) error.routingCode = 'no-route';
       throw error;
     }
     result = buffer;

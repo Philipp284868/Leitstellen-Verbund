@@ -4,6 +4,7 @@ import { SqliteFacilityCatalog } from "../facilities/catalog";
 import { resolve, dirname } from "node:path";
 import { existsSync } from "node:fs";
 import { RoutingBridge } from "./bridge";
+import { RouteFailures } from "./route-failures";
 import { GermanyIncidentGeography } from "./geography-sites";
 import { GermanyRoutingError } from "../../shared/germany/errors";
 import {
@@ -75,6 +76,7 @@ export class LocalGermanyProvider implements GermanyProvider {
   private shoreSitesCache = new Map<number, boolean>();
   private anchorCache = new Map<number, Anchor>();
   private routeCache = new Map<string, GermanyRoute>();
+  private routeFailures = new RouteFailures();
   private sections = new Map<string, RoadSection>();
   private legCache = new Map<string, GermanyLeg>();
   private siteCache = new Map<number, boolean>();
@@ -241,6 +243,7 @@ export class LocalGermanyProvider implements GermanyProvider {
             anchor,
             50,
             remaining(deadline),
+            "shore",
           );
           const endpoint = route.path.at(-1);
           if (
@@ -320,39 +323,49 @@ export class LocalGermanyProvider implements GermanyProvider {
     b: Point,
     maxSpeed: number,
     budget?: number,
+    operation: "trip" | "access" | "projection" | "shore" = "trip",
   ): GermanyRoute {
     if (!inBounds(a) || !inBounds(b))
       throw Error("Straßenroute außerhalb des Kartengebiets.");
+    const request = graphHopperRequest(unproject(a), unproject(b), maxSpeed);
     const key = JSON.stringify([this.dataset, a.x, a.y, b.x, b.y, maxSpeed]),
       cached = this.routeCache.get(key);
     if (cached) {
       this.remember(cached);
       return cached;
     }
+    // All road vehicles use the same fixed car graph. Speed only changes the
+    // successful motion profile, not whether these directed endpoints connect.
+    const failureKey = JSON.stringify([this.dataset, a.x, a.y, b.x, b.y]);
+    const previousFailure = this.routeFailures.get(failureKey);
+    if (previousFailure) throw previousFailure;
     let result: GermanyRoute;
     try {
-      const raw = this.bridge.request(
-        "/route",
-        graphHopperRequest(unproject(a), unproject(b), maxSpeed),
-        budget,
-      );
+      const raw = this.bridge.request("/route", request, budget);
       result = adaptGraphHopperRoute(raw, this.dataset, maxSpeed);
+      if (meters(a, result.path[0]) > 20 || meters(b, result.path.at(-1)!) > 20)
+        throw new GermanyRoutingError(
+          "Standort hat keine passende Straßenanbindung; Routing darf ihn nicht versetzen.",
+          "no-route",
+        );
     } catch (error) {
+      this.routeFailures.remember(failureKey, error);
       diagnostics.log(
         "routing",
         error instanceof GermanyRoutingError && error.code === "no-route"
           ? "ROUTE_UNAVAILABLE"
           : "ROUTING_REQUEST_FAILED",
         "warn",
-        { errorType: error instanceof Error ? error.name : "UnknownError" },
+        {
+          errorType: error instanceof Error ? error.name : "UnknownError",
+          routingOperation: operation,
+          ...(error instanceof GermanyRoutingError
+            ? { routingCode: error.code }
+            : {}),
+        },
       );
       throw error;
     }
-    if (meters(a, result.path[0]) > 20 || meters(b, result.path.at(-1)!) > 20)
-      throw new GermanyRoutingError(
-        "Standort hat keine passende Straßenanbindung; Routing darf ihn nicht versetzen.",
-        "no-route",
-      );
     boundedCache(this.routeCache, key, result, 512);
     // Cap geometry as well as entry count: 512 trans-German routes must not exhaust AMP memory.
     let vertices = [...this.routeCache.values()].reduce(
@@ -472,7 +485,13 @@ export class LocalGermanyProvider implements GermanyProvider {
       if (remaining < 50)
         throw Error("Zeitlimit der Straßenabfrage überschritten.");
       try {
-        const result = this.fetchRoute(anchor, candidate, 120, remaining),
+        const result = this.fetchRoute(
+            anchor,
+            candidate,
+            120,
+            remaining,
+            "projection",
+          ),
           leg = result.legs[0];
         if (!leg) continue;
         const projection = {
@@ -485,10 +504,8 @@ export class LocalGermanyProvider implements GermanyProvider {
         return projection;
       } catch (error) {
         if (
-          !(error instanceof Error) ||
-          /timeout|Zeitlimit|aborted|fetch failed|nicht verfügbar/i.test(
-            error.message,
-          )
+          !(error instanceof GermanyRoutingError) ||
+          error.code !== "no-route"
         )
           throw error;
         /* Try another real nearby road endpoint, never invent a connection. */
@@ -562,7 +579,7 @@ export class LocalGermanyProvider implements GermanyProvider {
       return false;
     }
     // A car-profile routing query validates the actual imported graph, unlike /nearest (ALL_EDGES).
-    const result = this.fetchRoute(anchor, anchor, 50, budget);
+    const result = this.fetchRoute(anchor, anchor, 50, budget, "access");
     const valid = meters(anchor, result.path[0]) <= 2;
     boundedCache(this.siteCache, anchor.id, valid, 4096);
     return valid;
