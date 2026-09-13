@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "snapshot": "2026-09-07",
+  "license": "ODbL-1.0",
+  "sourceSha256": "155596c0041a76f05d3b5fb03a36f2b9e26540b517fde8b4b9884c62c4fc1a90",
+  "attribution": "OpenStreetMap contributors",
+  "sha256": "12dc5aa6ff69aba4f7569599d1851c91ae62bfb00598c2d429def52a623ec547",
+  "bytes": 17437255,
+  "rawBytes": 179889149,
+  "total": 919518,
+  "kinds": {
+    "fire_hydrant": 907396,
+    "suction_point": 12122
+  }
+}
