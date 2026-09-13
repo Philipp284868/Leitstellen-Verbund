@@ -1,3 +1,8 @@
+import {
+  unlocked,
+  upgradeLevel,
+  upgradeUnlocked,
+} from "../shared/progression-state";
 import { useState } from "react";
 import { VehicleConfiguration } from "./VehicleConfiguration";
 import { fleetSorts, sortFleet, type FleetSort } from "./fleet-sort";
@@ -22,7 +27,7 @@ import { saleValue } from "../shared/economy/ledger";
 import { fleetReadiness } from "../shared/fleet-view";
 import { unproject } from "../shared/germany/projection";
 import { BuildingIcon, VehicleIcon } from "../shared/map-icons";
-import { level, type Building, type Save } from "../shared/model";
+import { type Building, type Save } from "../shared/model";
 import {
   HospitalSettings,
   StationSettings,
@@ -84,14 +89,14 @@ export function BuildingPanel({
         .toLocaleLowerCase("de")
         .includes(query.toLocaleLowerCase("de")),
   );
-  const requiredLevel = Math.max(bt(b.type).level, b.level * 2),
+  const requiredLevel = upgradeLevel(b.type, b.level),
     upgradeCost = BALANCE.upgrade * b.level;
   const upgradeReason =
     b.ready > s.time
       ? "Bauarbeiten abwarten"
       : b.level >= 10
         ? "Maximale Ausbaustufe erreicht"
-        : level(s) < requiredLevel
+        : !upgradeUnlocked(s, b.type, b.level)
           ? `Ausbau ab Stufe ${requiredLevel}`
           : s.money < upgradeCost
             ? "Budget reicht für diesen Ausbau nicht aus"
@@ -477,7 +482,7 @@ export function BuildingPanel({
                     disabled={
                       readonly ||
                       s.money < e.price ||
-                      level(s) < e.level ||
+                      !unlocked(s, "extension", e.id) ||
                       b.ready > s.time
                     }
                     message={`${e.name} für ${credits(e.price)} bauen?`}

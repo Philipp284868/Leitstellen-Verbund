@@ -1,7 +1,7 @@
 import { mt } from "../shared/catalog";
 import type { DatabaseSync } from "node:sqlite";
 import type { Save } from "../shared/model";
-import { progress } from "../shared/progression";
+import { PROGRESSION_VERSION, progress } from "../shared/progression";
 export const LEADERBOARD_SCHEMA = `
 CREATE TABLE IF NOT EXISTS player_metrics(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, xp INTEGER NOT NULL, legacy_xp INTEGER NOT NULL, calls INTEGER NOT NULL DEFAULT 0, participations INTEGER NOT NULL DEFAULT 0, active_seconds REAL NOT NULL DEFAULT 0, excluded INTEGER NOT NULL DEFAULT 0 CHECK(excluded IN(0,1)));
 CREATE INDEX IF NOT EXISTS player_rank ON player_metrics(excluded,xp DESC,user_id);
@@ -192,6 +192,7 @@ export function leaderboard(
     xp: Number(r.xp),
     level: progress(Number(r.xp)).level,
     legacyXp: Number(r.legacy_xp),
+    progressionVersion: PROGRESSION_VERSION,
     calls: Number(r.calls),
     participations: Number(r.participations),
     activeSeconds: Number(r.active_seconds),

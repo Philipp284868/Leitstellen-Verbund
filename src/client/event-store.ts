@@ -9,10 +9,33 @@ export function eventSnapshot() {
   return entries;
 }
 export function mergeEvents(incoming: GameEvent[], complete = false) {
-  const merged = new Map(
-    entries.filter((e) => e.id !== "local:overflow").map((e) => [e.id, e]),
+  const consolidated = new Set(
+    [...incoming, ...entries]
+      .filter((e) => e.incidentRadio)
+      .map((e) => e.mission),
   );
-  for (const e of incoming) merged.set(e.id, e);
+  const merged = new Map(
+    entries
+      .filter(
+        (e) =>
+          e.id !== "local:overflow" &&
+          !(
+            consolidated.has(e.mission) &&
+            !e.incidentRadio &&
+            ["Funk", "Sprechwunsch", "Einsatz"].includes(e.type)
+          ),
+      )
+      .map((e) => [e.id, e]),
+  );
+  for (const e of incoming)
+    if (
+      !(
+        consolidated.has(e.mission) &&
+        !e.incidentRadio &&
+        ["Funk", "Sprechwunsch", "Einsatz"].includes(e.type)
+      )
+    )
+      merged.set(e.id, e);
   const all = [...merged.values()].sort(
     (a, b) => a.at - b.at || a.id.localeCompare(b.id),
   );

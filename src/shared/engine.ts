@@ -1,4 +1,3 @@
-import { callGenerationAllowed } from "../simulation/call-generation";
 import { beginTrip } from "../simulation/trip-start";
 export { beginTrip } from "../simulation/trip-start";
 import { vehicleHomeAllowed } from "./catalog";
@@ -25,7 +24,9 @@ import {
   startPostIncident,
   postIncidentTick,
 } from "../simulation/post-incident";
-import { addXp, missionXp } from "./progression";
+import { awardMissionXp } from "../simulation/xp-rewards";
+import { createIncident, mayStartIncident } from "../simulation/workload";
+import { unlocked, upgradeLevel, upgradeUnlocked } from "./progression-state";
 import { selectHospital } from "../simulation/hospitals";
 import { measureTravel, telemetry, qualityFactor } from "../simulation/reports";
 import { effectiveSkills, canTransport } from "../simulation/major-resources";
@@ -62,7 +63,7 @@ import {
   extensions,
   type Skills,
 } from "./catalog";
-import { level, type Save, type Mission, type Vehicle } from "./model";
+import { type Save, type Mission, type Vehicle } from "./model";
 import { distance, type Point } from "./world";
 export type Action =
   | { type: "vehicle-service"; vehicle: string }
@@ -176,7 +177,7 @@ export function apply(s: Save, a: Action) {
         e.home !== b.type ||
         b.ready > s.time ||
         b.extensions.includes(e.id as (typeof b.extensions)[number]) ||
-        level(s) < e.level
+        !unlocked(s, "extension", e.id)
       )
         throw Error("Erweiterung derzeit nicht möglich.");
       money(s, -e.price, e.name);
@@ -237,7 +238,8 @@ export function apply(s: Save, a: Action) {
         b = s.buildings.find((b) => b.id === a.home);
       if (!b || !vehicleHomeAllowed(t, b.type) || b.ready > s.time)
         throw Error("Keine passende fertige Wache.");
-      if (level(s) < t.level) throw Error(`Freischaltung ab Stufe ${t.level}.`);
+      if (!unlocked(s, "vehicle", t.id))
+        throw Error(`Freischaltung ab Stufe ${t.level}.`);
       const extension = extensions.find((e) => e.types.includes(t.id));
       if (
         extension &&
@@ -330,8 +332,9 @@ export function apply(s: Save, a: Action) {
       const b = s.buildings.find((b) => b.id === a.id);
       if (!b || b.ready > s.time || b.level >= 10)
         throw Error("Ausbau derzeit nicht möglich.");
-      const required = Math.max(bt(b.type).level, b.level * 2);
-      if (level(s) < required) throw Error(`Ausbau ab Stufe ${required}.`);
+      const required = upgradeLevel(b.type, b.level);
+      if (!upgradeUnlocked(s, b.type, b.level))
+        throw Error(`Ausbau ab Stufe ${required}.`);
       money(s, -BALANCE.upgrade * b.level, "Wachenausbau");
       b.level++;
       b.ready = s.time + BALANCE.upgradeSeconds;
@@ -456,9 +459,8 @@ export function apply(s: Save, a: Action) {
     reconcileBuildingStaffing(s);
 }
 export function generate(s: Save) {
-  if (!callGenerationAllowed(s)) return;
-  const available = capacity(s);
-  const candidates = missions.filter((m) => canGenerate(s, m, available));
+  if (!mayStartIncident(s)) return;
+  const candidates = missions.filter((m) => canGenerate(s, m));
   if (!candidates.length) return;
   const previousSeed = s.seed;
   const previousWait = s.missionWait;
@@ -495,7 +497,7 @@ export function generate(s: Save) {
   if (!location) return;
   s.missionWait = previousWait;
   const pos = location.access;
-  s.missions.push({
+  createIncident(s, {
     location,
     id: simId(s),
     template: t.id,
@@ -699,6 +701,11 @@ function tickState(
         if (m.dynamics) m.dynamics.state = "resolved";
         m.phase = "done";
         m.completed = s.time;
+        if (s.callPacing)
+          s.callPacing.notBefore = Math.max(
+            s.callPacing.notBefore,
+            s.time + 45,
+          );
         const quality = qualityFactor(m);
         const reward = mulRatio(
           m.paymentCents ?? t.reward,
@@ -715,8 +722,7 @@ function tickState(
         ) {
           const measured = telemetry(s, m);
           measured.credits = reward;
-          measured.xp = Math.floor(missionXp(t) * quality);
-          addXp(s, measured.xp);
+          measured.xp = awardMissionXp(s, m, "owner", quality);
           s.completed++;
         }
         for (const v of s.vehicles.filter((v) => v.mission === m.id))

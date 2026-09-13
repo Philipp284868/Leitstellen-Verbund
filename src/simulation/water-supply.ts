@@ -1,3 +1,4 @@
+import { resolveRadioTopic } from "./radio-requests";
 import type { Mission, Save, Vehicle } from "../shared/model";
 import type { Skills } from "../shared/catalog";
 import { mt } from "../shared/catalog";
@@ -140,7 +141,14 @@ export function waterSupplyTick(
         .join(" · ")
     : "";
   if (shortage && shortage !== w.shortage && m.control?.briefed)
-    request(s, m, units[0].id, "request", shortage, "DRINGEND");
+    request(s, m, units[0].id, "request", shortage, "DRINGEND", "water-supply");
+  if (!shortage)
+    resolveRadioTopic(
+      s,
+      m,
+      "water-supply",
+      "Löschwasserversorgung und Schlauchmaterial ausreichend.",
+    );
   w.shortage = shortage;
   if (w.source === "shuttle")
     for (const { v, p } of profiles)

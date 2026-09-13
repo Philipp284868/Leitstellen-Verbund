@@ -1,3 +1,4 @@
+import { createIncident, mayStartIncident } from "./workload";
 import {
   organizationsTick,
   organizationsComplete,
@@ -19,6 +20,7 @@ import { ensureMissionTasks, taskTick, tasksComplete } from "./mission-tasks";
 import { newPatient, patientTick, patientsReady } from "./patients";
 import { record, simId } from "./events";
 import { request } from "./incidents";
+import { resolveRadioTopic } from "./radio-requests";
 import { attachIncident } from "./calls";
 import { DYNAMICS, sample } from "./random";
 import { updateWeather, weatherNames, weatherAtPoint } from "./weather";
@@ -189,6 +191,16 @@ function announce(
   text: string,
   urgent = false,
 ) {
+  if (["MISSION_DOWNGRADED", "MISSION_STABILIZED"].includes(type)) {
+    resolveRadioTopic(
+      s,
+      m,
+      "development:MISSION_ESCALATED",
+      "Gefahrenentwicklung zurückgenommen: " + text,
+    );
+    record(s, m, type, text);
+    return;
+  }
   record(s, m, type, text);
   if (!m.control?.briefed) return;
   const v = s.vehicles.find(
@@ -197,7 +209,16 @@ function announce(
       v.status === "scene" &&
       (!v.fault || v.fault.state === "repaired"),
   );
-  if (v) request(s, m, v.id, "request", text, urgent ? "NOTFALL" : "DRINGEND");
+  if (v)
+    request(
+      s,
+      m,
+      v.id,
+      "request",
+      text,
+      urgent ? "NOTFALL" : "DRINGEND",
+      `development:${type}`,
+    );
 }
 function escalate(s: Save, m: Mission, skills: Skills) {
   const d = m.dynamics!;
@@ -527,7 +548,7 @@ export function dynamicsComplete(m: Mission, time: number) {
   );
 }
 export function followupsTick(s: Save) {
-  if (!callGenerationAllowed(s)) return;
+  if (!mayStartIncident(s)) return;
   // Time pacing is independent of the count of open incidents; no catch-up burst.
   if (s.missionWait > 0) return;
   const available = fleetCapabilities(s);
@@ -566,7 +587,7 @@ export function followupsTick(s: Save) {
       contributors: [],
       transports: [],
     };
-    s.missions.push(child);
+    if (!createIncident(s, child)) return;
     attachIncident(s, child);
     attachDynamics(s, child);
     attachOrganizations(child);
@@ -589,5 +610,5 @@ export function followupsTick(s: Save) {
     return;
   }
 }
-import { callGenerationAllowed } from "./call-generation";
+
 import { verifyIncidentLocation } from "./location-reachability";

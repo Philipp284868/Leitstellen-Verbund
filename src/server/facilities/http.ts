@@ -1,5 +1,5 @@
 import { bt } from "../../shared/catalog";
-import { progress } from "../../shared/progression";
+import { unlocked } from "../../shared/progression-state";
 import { z } from "zod";
 import { facilityKinds } from "../../shared/facilities/types";
 import { germanyProvider } from "../../shared/germany/world";
@@ -84,7 +84,7 @@ export function facilityResponse(
               (kind) =>
                 kind !== "other" &&
                 s.buildings.length < 150 &&
-                progress(s.xp).level >= bt(kind).level &&
+                unlocked(s, "building", kind) &&
                 s.money >= bt(kind).price,
             ),
           },

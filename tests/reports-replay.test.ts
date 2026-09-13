@@ -346,7 +346,7 @@ it("Kanalregler migrieren alte Audiowerte und dringender Funk gewinnt genau einm
     details: "Dringend",
   });
   record(next, next.missions[0], "CALL_RECEIVED", "Neuer Anruf");
-  expect(events.observe(next, "multi", true)).toBe("emergency");
+  expect(events.observe(next, "multi", true)).toBe("phone"); // A status-only update cannot start an extra radio alarm.
   expect(events.observe(next, "multi", true)).toBeNull();
 });
 

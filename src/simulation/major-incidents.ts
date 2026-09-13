@@ -1,3 +1,4 @@
+import { mayStartIncident } from "./workload";
 import type { Save, Mission, Vehicle } from "../shared/model";
 import { mt, vt, type Skills } from "../shared/catalog";
 import { distance } from "../shared/world";
@@ -266,7 +267,8 @@ export function majorTick(
     const text = `Weitere Betroffene gefunden: ${m.dynamics.patients.length} Patienten, MANV-Stufe ${g.level}. Sichtung und Transportmittel nachfordern.`;
     record(s, m, "MAJOR_PATIENTS_FOUND", text);
     const first = units[0];
-    if (first) request(s, m, first.id, "request", text, "NOTFALL");
+    if (first)
+      request(s, m, first.id, "request", text, "NOTFALL", "major-needs");
   }
   g.shortage = [...new Set(missing)].join(" · ").slice(0, 300);
 }
@@ -275,7 +277,6 @@ export function campaignTick(
   s: Save,
   create: (template: string, pos: { x: number; y: number }) => Mission,
 ) {
-  if (!callGenerationAllowed(s)) return false;
   const c = s.operations.campaign;
   if (!c) return false;
   if (
@@ -288,7 +289,13 @@ export function campaignTick(
     delete s.operations.campaign;
     return false;
   }
-  if (!c.remaining || s.time < c.next || s.missionWait > 0) return false;
+  if (
+    !c.remaining ||
+    s.time < c.next ||
+    s.missionWait > 0 ||
+    !mayStartIncident(s)
+  )
+    return false;
   const first = [...s.missions, ...s.archive].find(
     (m) => m.id === c.missions[0],
   );
@@ -332,6 +339,6 @@ export function campaignTick(
   s.missionWait = 120;
   return true;
 }
-import { callGenerationAllowed } from "./call-generation";
+
 import { generationLocations } from "./incident-location";
 import { verifyIncidentLocation } from "./location-reachability";

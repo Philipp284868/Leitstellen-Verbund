@@ -3,6 +3,7 @@ import type { Save, Vehicle } from "../shared/model";
 import { beginTrip, recall } from "../shared/engine";
 import { setFms, operativeCode } from "./fms";
 import { request } from "./incidents";
+import { resolveRadioTopic } from "./radio-requests";
 import { record } from "./events";
 import { sample, DYNAMICS } from "./random";
 import { newPatient } from "./patients";
@@ -117,6 +118,7 @@ export function breakVehicle(
       "request",
       `${v.name} ausgefallen (${faultNames[kind]}). Automatische Behebung läuft; bei Bedarf Ersatzfahrzeug disponieren.`,
       v.patients ? "NOTFALL" : "DRINGEND",
+      `fault:${v.id}`,
     );
   }
   setFms(s, v, 6, "server", faultNames[kind]);
@@ -160,6 +162,8 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
       beginTrip(s, v, target, v.status, v.journey?.mode);
     }
     v.fault.state = "repaired";
+    if (m)
+      resolveRadioTopic(s, m, `fault:${v.id}`, `${v.name}: Störung behoben.`);
     if (m)
       record(
         s,

@@ -31,7 +31,13 @@ export function RadioRequestActions({
   ) => {
     onInteract?.();
     void form.run(() =>
-      command({ type: "radio", mission: m.id, id: r.id, op }),
+      command({
+        type: "radio",
+        mission: m.id,
+        id: r.id,
+        op,
+        version: r.version ?? 1,
+      }),
     );
   };
   return (

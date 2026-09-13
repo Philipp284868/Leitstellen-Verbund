@@ -1,20 +1,23 @@
+import { request, resolveRadioTopic } from "./radio-requests";
+export { request } from "./radio-requests";
+import { updateIncidentRadio } from "./incident-radio";
 import { PRE_RECON_EVENTS } from "./incident-visibility";
 import { civilProtectionTick } from "./civil-protection";
 import { advanceRadio } from "./transmissions";
 import { turnoutReady } from "./staffing";
 import { isVolunteerStation, crewSummaries, personDuty } from "./staffing";
 import { vehicleAvailability } from "./availability";
-import { urgentPriority } from "./priority";
+
 import { openForceLabels } from "./force-plan";
 import { finalizeReport } from "./reports";
 import type { Skills } from "../shared/catalog";
 import type { Save, Mission } from "../shared/model";
 import { missing, capacity } from "../shared/engine";
 import { mt, vt } from "../shared/catalog";
-import { record, simId } from "./events";
+import { record } from "./events";
 import { syncFms, setFms, operativeCode } from "./fms";
 import { callsTick } from "./calls";
-import type { Incident } from "./schema";
+
 import { assertRadioHandler, reserveRadio } from "./radio";
 export function legacyIncident(s: Save, m: Mission) {
   if (m.control) return;
@@ -72,41 +75,6 @@ export function beforeStep(s: Save) {
       }
       setFms(s, v, 3);
     }
-}
-export function request(
-  s: Save,
-  m: Mission,
-  vehicle: string,
-  reason: "arrival" | "request" | "question",
-  details: string,
-  priority: Incident["radio"][number]["priority"] = "NORMAL",
-) {
-  const c = m.control!;
-  if (
-    c.radio.length >= 50 ||
-    c.radio.some(
-      (r) =>
-        r.state === "open" &&
-        r.reason === reason &&
-        r.vehicle === vehicle &&
-        r.details === details,
-    )
-  )
-    return;
-  c.radio.push({
-    id: simId(s),
-    vehicle,
-    reason,
-    priority,
-    state: "open",
-    created: s.time,
-    answered: 0,
-    details,
-  });
-  record(s, m, "SPEAK_REQUESTED", details, "server", vehicle);
-  const v = s.vehicles.find((v) => v.id === vehicle);
-  if (v && (!v.fault || v.fault.state === "repaired"))
-    setFms(s, v, urgentPriority(priority) ? 0 : 5);
 }
 export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
   syncFms(s);
@@ -184,9 +152,18 @@ export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
           "request",
           `Nachforderung: ${openForceLabels(Object.fromEntries(deficit)).join(", ")}`,
           "DRINGEND",
+          "force-deficit",
+        );
+      if (!deficit.length)
+        resolveRadioTopic(
+          s,
+          m,
+          "force-deficit",
+          "Angeforderte Fähigkeiten vor Ort vollständig vorhanden.",
         );
       c.deficit = signature;
     }
+    if (c.radioSummary) updateIncidentRadio(s, m);
   }
 }
 export function radioAction(
@@ -196,11 +173,16 @@ export function radioAction(
   op: "report" | "request" | "question" | "close" | "claim" | "release",
   actor: string,
   remote: Skills = {},
+  expectedVersion?: number,
 ) {
   const c = m.control,
     r = c?.radio.find((r) => r.id === id);
   if (!c || !r) throw Error("Sprechwunsch fehlt.");
   if (r.state === "handled") return;
+  if ((expectedVersion ?? 1) !== (r.version ?? 1))
+    throw Error(
+      "Funkanliegen wurde aktualisiert. Aktuellen Stand prüfen und erneut bearbeiten.",
+    );
   if (op === "claim" || op === "release")
     return reserveRadio(s, m, r, actor, op === "release");
   assertRadioHandler(s, r, actor);
@@ -239,6 +221,7 @@ export function radioAction(
   if (op === "question") {
     if (r.questioned) return;
     r.questioned = true;
+    r.version = (r.version ?? 1) + 1;
     const skills = capacity(s, m.id);
     for (const [k, n] of Object.entries(remote))
       skills[k] = (skills[k] || 0) + n;
@@ -259,6 +242,7 @@ export function radioAction(
       r.vehicle,
     );
   r.state = "handled";
+  r.version = (r.version ?? 1) + 1;
   r.answered = s.time;
   r.handledBy = actor;
   delete r.handling;
@@ -353,6 +337,7 @@ export function publicSave(source: Save): Save {
       delete m.waterSupply;
       delete m.major;
       delete m.paymentCents;
+      delete m.xpPolicy;
     } else if (m.major) delete m.major.pending;
     if (!m.control?.briefed) delete m.organization;
     if (m.dynamics) {

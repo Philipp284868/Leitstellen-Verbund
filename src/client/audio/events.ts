@@ -47,6 +47,7 @@ export class AudioEvents {
       for (const entry of save.radioNetwork.entries.filter(
         (e) =>
           e.state === "transmitting" &&
+          !e.silent &&
           !known.has(e.id) &&
           e.started! >= before.time,
       ))
@@ -99,6 +100,7 @@ export class AudioEvents {
           result.push({ id: `radio:${r.id}`, cue });
       }
       if (
+        !save.radioNetwork &&
         m.control &&
         (!previous?.control ||
           priorityRank(m.control.priority) >
@@ -170,8 +172,10 @@ export class AudioEvents {
         cues.push(priorityTone(m.control.priority));
       return cues;
     });
-    if (priorityCues.includes("emergency")) return "emergency";
-    if (priorityCues.includes("priority")) return "priority";
+    if (!save.radioNetwork && priorityCues.includes("emergency"))
+      return "emergency";
+    if (!save.radioNetwork && priorityCues.includes("priority"))
+      return "priority";
     if (level(save) > level(before)) return "level";
     const receipts = new Set(before.receipts),
       archive = new Set(before.archive.map((m) => m.id));

@@ -1,6 +1,6 @@
 import { BALANCE, bt } from "../catalog";
 import type { Save } from "../model";
-import { progress } from "../progression";
+import { unlocked } from "../progression-state";
 import { bookMoney } from "../economy/ledger";
 import { germanyProvider } from "../germany/world";
 import { simId } from "../../simulation/events";
@@ -9,7 +9,7 @@ import { reconcileBuildingStaffing } from "../../simulation/building-staffing";
 import type { Facility } from "./types";
 import { GermanyRoutingError } from "../germany/errors";
 
-export type PurchaseContext = Pick<Save, "money" | "xp"> & {
+export type PurchaseContext = Pick<Save, "money" | "xp" | "progression"> & {
   buildings: { id: string; facility?: { id: string } }[];
 };
 export function facilityOffer(s: PurchaseContext, facility: Facility) {
@@ -25,7 +25,7 @@ export function facilityOffer(s: PurchaseContext, facility: Facility) {
           ? "Zufahrt nicht hinreichend belegt. Dieser Standort kann noch nicht erworben werden."
           : s.buildings.length >= 150
             ? "Höchstens 150 verwaltete Einrichtungen pro Leitstelle."
-            : progress(s.xp).level < type.level
+            : !unlocked(s, "building", type.id)
               ? `Freischaltung ab Stufe ${type.level}.`
               : s.money < type.price
                 ? "Budget reicht für diesen Kauf nicht aus."

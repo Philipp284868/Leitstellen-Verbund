@@ -66,11 +66,13 @@ it("migriert gespeicherte XP ohne Verlust, Herabstufung oder doppelte Kompensati
     delete old.progression;
     old.xp = xp;
     const next = validate(old);
-    expect(next.xp).toBeGreaterThanOrEqual(xp);
+    expect(next.progression!.rawEarned).toBe(xp);
     expect(level(next)).toBeGreaterThanOrEqual(
       Math.min(10, 1 + Math.floor(xp / 150)),
     );
-    expect(next.progression!.compensation).toBe(next.xp - xp);
+    expect(next.progression!.conversion!.fromXp).toBe(
+      xp + next.progression!.compensation,
+    );
     expect(validate(next)).toEqual(next);
   }
 });
@@ -108,7 +110,7 @@ it("definiert den vollständigen Katalog, nutzbare Organisationseinstiege und se
       pos: { x: WORLD_WIDTH + 1, y: 2 },
     }),
   ).toThrow(/BUILDING_PURCHASE_ONLY/);
-  expect(missionXp(mt("bin"))).toBeGreaterThan(60);
+  expect(missionXp(mt("bin"))).toBe(20);
   expect(missionXp(mt("bin"))).toBeLessThan(missionXp(mt("crash")));
 });
 const leg = (meters: number, limit: number, x = 0): MotionLeg => ({
@@ -413,7 +415,8 @@ it("Verkehrswarten findet am betroffenen Abschnitt statt und verbraucht keine St
 });
 it("Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigeschalteter Kauf überstehen Neustart", async () => {
   let lab = createLab(124);
-  lab.save.xp = 145;
+  const startXp = xpForLevel(2) - 5;
+  lab.save.xp = startXp;
   const step = (a: LabAction) => {
     lab = runLab(lab, a);
   };
@@ -437,7 +440,7 @@ it("Notruf, Alarmierung, Lagemeldung, Abschluss, Stufe 2 und einmaliger freigesc
   }
   expect(lab.save.archive).toHaveLength(1);
   expect(level(lab.save)).toBe(2);
-  expect(lab.save.xp).toBe(145 + missionXp(mt("bin")));
+  expect(lab.save.xp).toBe(startXp + missionXp(mt("bin")));
   const dir = await mkdtemp(resolve(tmpdir(), "lv-earned-unlock-"));
   let db = new Database(dir);
   try {

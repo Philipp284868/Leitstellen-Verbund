@@ -40,6 +40,12 @@ export function persistGameEvents(
   for (const e of events) {
     const payload = JSON.stringify(e);
     if (known.get(e.id) === payload) continue;
+    if (e.incidentRadio && e.mission && !known.has(e.id))
+      sql
+        .prepare(
+          "UPDATE game_events SET payload=json_set(payload,'$.supersededBy',?) WHERE owner=? AND json_extract(payload,'$.mission')=? AND json_extract(payload,'$.type') IN('Funk','Sprechwunsch','Einsatz') AND id<>?",
+        )
+        .run(e.id, s.player.id, e.mission, e.id);
     put.run(s.player.id, e.id, e.at, payload);
     known.set(e.id, payload);
     changed++;
@@ -67,12 +73,12 @@ export function eventsPage(
   const rows = before
     ? sql
         .prepare(
-          "SELECT payload FROM game_events WHERE (owner=? OR (owner=? AND id LIKE 'report:%')) AND (at<? OR (at=? AND id<?)) ORDER BY at DESC,id DESC LIMIT 101",
+          "SELECT payload FROM game_events WHERE (owner=? OR (owner=? AND id LIKE 'report:%')) AND json_extract(payload,'$.supersededBy') IS NULL AND (at<? OR (at=? AND id<?)) ORDER BY at DESC,id DESC LIMIT 101",
         )
         .all(owner, actor, before.at, before.at, before.id)
     : sql
         .prepare(
-          "SELECT payload FROM game_events WHERE owner=? OR (owner=? AND id LIKE 'report:%') ORDER BY at DESC,id DESC LIMIT 101",
+          "SELECT payload FROM game_events WHERE (owner=? OR (owner=? AND id LIKE 'report:%')) AND json_extract(payload,'$.supersededBy') IS NULL ORDER BY at DESC,id DESC LIMIT 101",
         )
         .all(owner, actor);
   let events = rows.slice(0, 100).map((r) => JSON.parse(String(r.payload)));

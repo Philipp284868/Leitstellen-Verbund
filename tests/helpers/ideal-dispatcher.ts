@@ -38,6 +38,8 @@ export function operate(s: Save) {
         r.id,
         r.reason === "arrival" ? "report" : "request",
         s.player.id,
+        {},
+        r.version,
       );
     if (c.briefed)
       for (const task of m.organization?.tasks ?? [])

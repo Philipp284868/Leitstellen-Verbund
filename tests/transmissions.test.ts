@@ -80,7 +80,7 @@ it("ordnet FIFO je Kanal, lässt andere Leitstellen und FMS unabhängig und übe
   unit.assignment = "radio-assignment";
   setFms(s, unit, 3);
   expect(s.desk.fleet[unit.id].code).toBe(3);
-  expect(s.radioNetwork.entries.at(-1)!.state).toBe("queued");
+  expect(s.radioNetwork.entries).toHaveLength(3); // FMS updates status/history without a radio call.
   const loaded = validate(JSON.parse(JSON.stringify(s)));
   expect(loaded.radioNetwork).toEqual(s.radioNetwork);
   loaded.time = loaded.radioNetwork!.entries[0].ends!;

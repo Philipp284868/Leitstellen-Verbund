@@ -404,7 +404,7 @@ function waterGeneration() {
     save.seed = seed;
     save.missionWait = 0;
     save.callPacing = {
-      version: 1,
+      version: 4,
       notBefore: save.time,
       lastCreated: 0,
       sequence: 1,

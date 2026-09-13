@@ -1,3 +1,4 @@
+import { syncAssistanceRadio } from "../simulation/incident-radio";
 import { recordActivity } from "./leaderboard";
 import {
   civilProtectionActions,
@@ -16,7 +17,11 @@ import { repairIncidentLocations } from "../simulation/location-repair";
 import { vehiclePosition } from "../shared/vehicle-position";
 import { qualityFactor } from "../simulation/reports";
 import { withAutomaticRouting } from "../simulation/routing-context";
-import { addXp } from "../shared/progression";
+import { awardMissionXp, withXpJournal } from "../simulation/xp-rewards";
+import {
+  assertAssistanceCapacity,
+  createIncident,
+} from "../simulation/workload";
 import { personDuty } from "../simulation/staffing";
 import {
   prepareCallPacing,
@@ -317,6 +322,7 @@ export class Game {
           !v
         )
           throw Error("Freigegebener Einsatz oder eigenes Fahrzeug fehlt.");
+        assertAssistanceCapacity(s, action.peer, m.id);
         const reason = readiness(s, v);
         if (reason) throw Error(reason);
         if (vt(v.type).mode === "water" && !mt(m.template).water)
@@ -386,12 +392,28 @@ export class Game {
             deskOwner(this.db, s.player.id, "multi") === s.player.id &&
             this.canGenerate(s.player.id),
           () =>
-            this.stepMode(
-              seconds,
-              now,
-              "multi",
-              options.generation !== false,
-              options.sharedSituation !== false,
+            withXpJournal(
+              (award) =>
+                !!this.db.sql
+                  .prepare(
+                    "INSERT OR IGNORE INTO xp_rewards(id,user_id,generation,mission,kind,amount,version) VALUES(?,?,?,?,?,?,2)",
+                  )
+                  .run(
+                    award.id,
+                    award.recipient,
+                    award.generation,
+                    award.mission,
+                    award.kind,
+                    award.amount,
+                  ).changes,
+              () =>
+                this.stepMode(
+                  seconds,
+                  now,
+                  "multi",
+                  options.generation !== false,
+                  options.sharedSituation !== false,
+                ),
             ),
         );
       }),
@@ -546,6 +568,23 @@ export class Game {
           remoteVehicles.get(id),
         );
         for (const m of s.archive.filter((m) => !before.has(m.round))) {
+          for (const helper of saves.values())
+            if (
+              helper !== s &&
+              m.control?.radioSummary?.receivers?.[helper.player.id] !==
+                undefined
+            )
+              syncAssistanceRadio(
+                s,
+                m,
+                helper,
+                false,
+                helper.vehicles.some(
+                  (v) =>
+                    v.mission === `remote:${s.player.id}:${m.id}` &&
+                    authorizedHelper(s, m, helper, v),
+                ),
+              );
           if (m.location?.state === "technical-closure") continue;
           this.db.sql
             .prepare("INSERT OR IGNORE INTO rewards VALUES (?,?,?)")
@@ -564,7 +603,15 @@ export class Game {
               .run(receipt, helperId, amount);
             if (inserted.changes) {
               money(helper, amount, `Verbund: ${mt(m.template).name}`, receipt);
-              addXp(helper, Math.floor(60 * qualityFactor(m)));
+              const earned = awardMissionXp(
+                helper,
+                m,
+                "helper",
+                qualityFactor(m),
+              );
+              this.db.sql
+                .prepare("UPDATE player_metrics SET xp=xp+? WHERE user_id=?")
+                .run(earned, helperId);
             }
           }
         }
@@ -598,6 +645,25 @@ export class Game {
     }
     stepWorldSituation(this.db.sql, seconds);
     aidTick(saves);
+    for (const owner of saves.values())
+      for (const m of owner.missions)
+        for (const helperId of new Set([
+          ...m.contributors,
+          ...Object.keys(m.control?.radioSummary?.receivers ?? {}),
+        ])) {
+          const helper = saves.get(helperId);
+          if (!helper || helper === owner) continue;
+          const authorized = helper.vehicles.some(
+            (v) =>
+              v.mission === `remote:${owner.player.id}:${m.id}` &&
+              authorizedHelper(owner, m, helper, v),
+          );
+          if (
+            authorized ||
+            m.control?.radioSummary?.receivers?.[helper.player.id] !== undefined
+          )
+            syncAssistanceRadio(owner, m, helper, false, authorized);
+        }
     for (const [id, s] of saves) {
       s.revision++;
       // A shared dispatch has exactly one generator. Dormant member saves and
@@ -632,7 +698,7 @@ export class Game {
               contributors: [],
               transports: [],
             };
-            s.missions.push(m);
+            if (!createIncident(s, m)) throw Error("INCIDENT_CAPACITY_REACHED");
             attachIncident(s, m);
             attachDynamics(s, m);
             attachOrganizations(m);

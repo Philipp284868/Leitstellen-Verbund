@@ -128,6 +128,7 @@ it("schreibt bei mehr als 4000 unveränderten Ereignissen nicht die ganze Histor
       v.id = `window-${m}`;
       v.control!.briefed = true;
       v.control!.radio = [];
+      delete v.control!.radioSummary; // Pre-consolidation history still supports large retained logs.
       v.control!.events = Array.from({ length: 150 }, (_, i) => ({
         id: `event-${m}-${i}`,
         at: s.time + i,

@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS xp_rewards(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),generation TEXT NOT NULL,mission TEXT NOT NULL,kind TEXT NOT NULL CHECK(kind IN('owner','helper')),amount INTEGER NOT NULL CHECK(amount>=0),version INTEGER NOT NULL CHECK(version=2));
+INSERT INTO meta(key,value) SELECT 'balance-source-schema',CAST(user_version AS TEXT) FROM pragma_user_version WHERE true ON CONFLICT(key) DO NOTHING;

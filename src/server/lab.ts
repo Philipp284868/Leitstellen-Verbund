@@ -1,3 +1,4 @@
+import { createIncident } from "../simulation/workload";
 import { germanyProvider } from "../shared/germany/world";
 import { xpForLevel } from "../shared/progression";
 // Offline developer sandbox. Never imported by the HTTP server or client.
@@ -208,7 +209,7 @@ export function runLab(source: Lab, input: unknown): Lab {
       contributors: [],
       transports: [],
     };
-    s.missions.push(m);
+    if (!createIncident(s, m)) throw Error("Einsatzobergrenze erreicht.");
     attachIncident(s, m);
     attachDynamics(s, m);
     attachOrganizations(m);

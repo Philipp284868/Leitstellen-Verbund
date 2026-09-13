@@ -58,7 +58,8 @@ export function deskCommand(
       record(s, m, "SITUATION_NOTE", a.text, actor);
     }
     if (a.type === "call") callAction(s, m, a.call, a.op, actor, a.question);
-    if (a.type === "radio") radioAction(s, m, a.id, a.op, actor, remote);
+    if (a.type === "radio")
+      radioAction(s, m, a.id, a.op, actor, remote, a.version);
     if (a.type === "aao-propose") {
       const aa = s.desk.aaos.find((x) => x.id === a.aao);
       if (!aa) throw Error("AAO fehlt.");

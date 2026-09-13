@@ -1,28 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { buildings, vehicles, extensions, bt } from "../shared/catalog";
+import { unlockMatrix } from "../shared/unlocks";
 import { progress } from "../shared/progression";
 import type { Save } from "../shared/model";
-import { formatMoney } from "../shared/money";
-const upcoming = [
-  ...buildings.map((b) => ({
-    id: "b-" + b.id,
-    name: b.name,
-    level: b.level,
-    detail: formatMoney(b.price),
-  })),
-  ...vehicles.map((v) => ({
-    id: "v-" + v.id,
-    name: v.name,
-    level: v.level,
-    detail: `${formatMoney(v.price)} · ${bt(v.home).name} · automatische Besatzung${v.training ? ", " + v.training : ""}`,
-  })),
-  ...extensions.map((e) => ({
-    id: "e-" + e.id,
-    name: e.name,
-    level: e.level,
-    detail: `${formatMoney(e.price)} · ${bt(e.home).name}`,
-  })),
-].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name, "de"));
 
 export function Progression({ s }: { s: Save }) {
   const [query, setQuery] = useState(""),
@@ -39,13 +18,15 @@ export function Progression({ s }: { s: Save }) {
       );
     previous.current = { generation: s.generation, level: p.level };
   }, [p.level, s.generation]);
+  const upcoming = unlockMatrix(s);
+  const next = upcoming.find((u) => !u.available);
   const matches = upcoming.filter(
     (u) =>
       `${u.name} ${u.detail}`
         .toLocaleLowerCase("de")
         .includes(query.toLocaleLowerCase("de")) &&
       (filter === "all" ||
-        (filter === "available" ? u.level <= p.level : u.level > p.level)),
+        (filter === "available" ? u.available : !u.available)),
   );
   const pages = Math.max(1, Math.ceil(matches.length / 15)),
     at = Math.min(page, pages - 1);
@@ -61,11 +42,28 @@ export function Progression({ s }: { s: Save }) {
         {s.xp.toLocaleString("de-DE")} Gesamt-XP · noch {p.required - p.current}{" "}
         bis Stufe {p.level + 1}
       </p>
-      {!!s.progression?.compensation && (
+      {next && (
         <p>
-          Einmaliger Bestandsschutz: {s.progression.compensation} XP
-          Migrationsausgleich. Erspielte XP bleiben erhalten.
+          <strong>Nächstes Ziel: Stufe {next.level}</strong> ·{" "}
+          {upcoming
+            .filter((u) => !u.available && u.level === next.level)
+            .map((u) => u.name)
+            .join(", ")}
         </p>
+      )}
+      {s.progression?.conversion && (
+        <details>
+          <summary>Übertragener Fortschritt</summary>
+          <p>
+            Vorher {s.progression.conversion.fromXp.toLocaleString("de-DE")} XP
+            · übertragen auf{" "}
+            {s.progression.conversion.toXp.toLocaleString("de-DE")} XP.
+            Erreichte Stufe {s.progression.conversion.level} und Fortschritt im
+            Levelbalken wurden erhalten. Bereits erworbene Kaufrechte bleiben
+            verfügbar. Historisch erspielte XP einschließlich neuer Abschlüsse:{" "}
+            {(s.progression.rawEarned ?? 0).toLocaleString("de-DE")}.
+          </p>
+        </details>
       )}
       <div className="report-filters">
         <label>
@@ -99,7 +97,12 @@ export function Progression({ s }: { s: Save }) {
         {matches.slice(at * 15, (at + 1) * 15).map((u) => (
           <li key={u.id}>
             <strong>
-              {u.level <= p.level ? "✓" : "Stufe " + u.level} · {u.name}
+              {u.available
+                ? u.level > p.level
+                  ? "✓ Bestandsschutz"
+                  : "✓"
+                : "Stufe " + u.level}{" "}
+              · {u.name}
             </strong>
             <br />
             {u.detail}

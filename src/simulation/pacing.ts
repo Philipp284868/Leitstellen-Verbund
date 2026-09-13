@@ -1,3 +1,4 @@
+import { incidentLoad, mayStartIncident } from "./workload";
 import type { Save } from "../shared/model";
 import { callGenerationAllowed } from "./call-generation";
 import { crewSummaries } from "./staffing";
@@ -6,10 +7,10 @@ import { sample } from "./random";
 import { situationDemand } from "./world-situation";
 
 export const CALL_PACING = {
-  version: 3,
+  version: 4,
   initialMin: 90,
   initialMax: 180,
-  minimum: 20,
+  minimum: 60,
   maximum: 360,
   retry: 20,
   additionalSpacing: 120,
@@ -35,7 +36,7 @@ export function callLoad(s: Save) {
     1 +
     Math.log2(Math.max(1, fleet.length)) * 0.25 +
     Math.log2(Math.max(1, readyHomes)) * 0.1;
-  const open = s.missions.filter((m) => m.phase !== "done").length;
+  const open = incidentLoad(s).used;
   const waiting = s.missions.filter((m) =>
     m.control?.calls.some((c) => c.state === "ringing" || c.state === "active"),
   ).length;
@@ -90,10 +91,10 @@ export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
     };
   }
   if (s.callPacing.version < CALL_PACING.version) {
-    // Preserve seed and elapsed wait while replacing the old low-frequency policy.
+    // Preserve all incidents and avoid a catch-up wave when the capacity policy changes.
     s.callPacing.notBefore = Math.min(
-      s.callPacing.notBefore,
-      s.time + pacedDelay(s.seed, s),
+      s.time + CALL_PACING.maximum,
+      Math.max(s.callPacing.notBefore, s.time + pacedDelay(s.seed, s)),
     );
     s.callPacing.version = CALL_PACING.version;
   }
@@ -113,9 +114,14 @@ export function prepareCallPacing(s: Save, elapsed: number, activeDesk = true) {
   s.nextMission = s.callPacing.notBefore;
 }
 export function mayCreateIncident(s: Save) {
-  if (!callGenerationAllowed(s)) return false;
+  if (!mayStartIncident(s)) return false;
   const load = callLoad(s);
-  return !!s.callPacing && s.time >= s.callPacing.notBefore && load.fleet > 0;
+  return (
+    !!s.callPacing &&
+    s.time >= s.callPacing.notBefore &&
+    load.fleet > 0 &&
+    (load.available > 0 || load.open === 0)
+  );
 }
 export function recordIncidentCreated(s: Save) {
   if (!s.callPacing) prepareCallPacing(s, 0);

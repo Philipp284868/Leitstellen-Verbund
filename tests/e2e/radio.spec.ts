@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 import type { Config } from "../../src/server/config";
 import type { startServer } from "../../src/server/index";
 import { request } from "../../src/simulation/incidents";
+import { updateIncidentRadio } from "../../src/simulation/incident-radio";
+import { transmit } from "../../src/simulation/transmissions";
 import { radioFixture } from "../radio-fixture";
 import { createBrowserServer, listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
@@ -250,17 +252,33 @@ test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungs
   page,
   context,
 }) => {
+  const initial = app.db.all().get(owner)!;
+  for (let i = 0; i < 12; i++)
+    transmit(initial, {
+      id: `separate-system-${i}`,
+      channel: "System",
+      sender: "Leitstelle",
+      vehicle: "",
+      mission: "",
+      text: `Unabhängiger Betriebshinweis ${i}.`,
+      priority: 10,
+      silent: true,
+    });
+  app.db.save(owner, initial);
   await login(page);
   const s = app.db.all().get(owner)!,
     m = s.missions[0];
   const arrival = m.control!.radio.find((r) => r.reason === "arrival")!;
-  const visible = page.locator(
-    `#radio-preview [data-event-id="${arrival.id}"]`,
-  );
+  const summaryId = m.control!.radioSummary!.id;
+  const visible = page.locator(`#radio-preview [data-event-id="${summaryId}"]`);
   await expect(visible).toBeVisible();
+  await expect(page.locator(".compact-desk footer")).toContainText(
+    "1 offene Sprechwünsche",
+  );
   const before = structuredClone(arrival);
   await page.getByRole("tab", { name: /Aktive Einsätze/ }).click();
   arrival.priority = "NOTFALL";
+  updateIncidentRadio(s, m);
   s.revision++;
   app.db.save(owner, s);
   await expect(page.locator(".critical-count")).toBeVisible();
@@ -308,10 +326,8 @@ test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungs
   );
   latest.revision++;
   app.db.save(owner, latest);
-  const addedRequest = latest.missions[0].control!.radio.at(-1)!;
-  await expect(
-    scroll.locator(`[data-event-id="${addedRequest.id}"]`),
-  ).toHaveCount(1);
+  await expect(scroll.locator(`[data-event-id="${summaryId}"]`)).toHaveCount(1);
+  await expect(scroll.locator('[data-event-id^="incident:"]')).toHaveCount(1);
   await expect
     .poll(() =>
       scroll.evaluate((el, id) => {
@@ -329,14 +345,14 @@ test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungs
   await context.setOffline(false);
   await expect(page.locator(".connection-inline")).toHaveCount(0);
   await expect(
-    page.locator(`#radio-preview [data-event-id="${arrival.id}"]`),
+    page.locator(`#radio-preview [data-event-id="${summaryId}"]`),
   ).toHaveCount(1);
   await page.reload();
   await enterGame(page);
   await expect(
-    page.locator(`#radio-preview [data-event-id="${arrival.id}"]`),
+    page.locator(`#radio-preview [data-event-id="${summaryId}"]`),
   ).toHaveCount(1);
-  await page.locator(`#radio-preview [data-event-id="${arrival.id}"]`).click();
+  await page.locator(`#radio-preview [data-event-id="${summaryId}"]`).click();
   await expect(page.locator(".radio-queue")).toBeVisible();
   expect(
     app.db
@@ -344,4 +360,38 @@ test("kompaktes Ereignispanel erhält Sprechwunsch, Leseposition und Verbindungs
       .get(owner)!
       .missions[0].control!.radio.find((r) => r.id === arrival.id)!.state,
   ).toBe("open");
+});
+
+test("Fortschrittsdetail zeigt nächste Kaufziele und Voraussetzungen; das kompakte Panel zählt tatsächliche Einsatzplätze", async ({
+  page,
+}, info) => {
+  const s = app.db.all().get(owner)!;
+  s.xp = 0;
+  app.db.save(owner, s);
+  await login(page);
+  await expect(
+    page.getByRole("tab", { name: /Aktive Einsätze/ }),
+  ).toContainText("1 / 3");
+  await openPanel(page, "Fortschritt");
+  await page
+    .getByText("Fortschritt & Freischaltungen · Stufe 1", { exact: true })
+    .click();
+  const detail = page.locator(".progression-details");
+  await expect(detail).toContainText("Nächstes Ziel: Stufe 2");
+  await expect(detail).toContainText("noch 240 bis Stufe 2");
+  await detail
+    .getByLabel("Freischaltungen suchen", { exact: true })
+    .fill("NEF");
+  await expect(detail.locator("ol")).toContainText("Stufe 9");
+  await expect(detail.locator("ol")).toContainText("freier Stellplatz");
+  await detail
+    .getByLabel("Freigabestatus", { exact: true })
+    .selectOption("available");
+  await expect(detail).toContainText("Keine passende Freischaltung");
+  await detail
+    .getByLabel("Freigabestatus", { exact: true })
+    .selectOption("all");
+  await page.screenshot({
+    path: info.outputPath("fortschritt-nef-voraussetzungen.png"),
+  });
 });

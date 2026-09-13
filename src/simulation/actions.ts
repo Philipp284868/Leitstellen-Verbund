@@ -69,6 +69,7 @@ export const deskActions = [
   z
     .object({
       type: z.literal("radio"),
+      version: z.number().int().min(1).optional(),
       mission: id,
       id,
       op: z.enum([

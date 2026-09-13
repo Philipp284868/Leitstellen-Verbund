@@ -1,3 +1,4 @@
+import { assertAssistanceCapacity } from "../simulation/workload";
 import type { Save, Mission, Vehicle } from "../shared/model";
 import { matchingAidType } from "../simulation/aid-matching";
 import { urgentPriority } from "../simulation/priority";
@@ -126,6 +127,7 @@ export function aidCommand(
   } else if (a.type === "aid-accept") {
     if (isOwner || !["SENT", "ACCEPTED", "IN_PROGRESS"].includes(r.state))
       throw Error("Nur die angefragte Leitstelle kann Kräfte zusagen.");
+    assertAssistanceCapacity(s, owner.player.id, m.id);
     if (new Set(a.vehicles).size !== a.vehicles.length)
       throw Error("Fahrzeug doppelt ausgewählt.");
     const participants = new Set([

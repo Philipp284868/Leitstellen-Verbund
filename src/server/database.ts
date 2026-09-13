@@ -1,3 +1,7 @@
+import {
+  applyBalancingMigration,
+  XP_REWARDS_SCHEMA,
+} from "./balancing-migration";
 import { REPORTS_SCHEMA } from "./bug-reports";
 import { closeSync, existsSync, mkdirSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
@@ -25,7 +29,7 @@ import { EVENTS_SCHEMA, persistGameEvents } from "./game-events";
 import { LEADERBOARD_SCHEMA, persistMetrics } from "./leaderboard";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 26;
+export const DATABASE_VERSION = 27;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -496,6 +500,15 @@ export class Database {
             "CREATE TABLE IF NOT EXISTS game_operators(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, granted_at INTEGER NOT NULL); PRAGMA user_version=26;",
           );
         });
+      this.transaction(() => {
+        this.sql.exec(XP_REWARDS_SCHEMA);
+        if (applyBalancingMigration(this.sql, version))
+          this.audit(
+            "server-migration",
+            "game-rules-v2: progression, capacity and consolidated incident radio; money unchanged",
+          );
+        if (version < 27) this.sql.exec("PRAGMA user_version=27");
+      });
       this.sql
         .prepare(
           "INSERT INTO meta(key,value) VALUES('geodata-dataset-v1',?) ON CONFLICT(key) DO NOTHING",

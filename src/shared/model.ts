@@ -20,7 +20,8 @@ import {
   signedCentsSchema,
 } from "./economy/schema";
 import { WORLD_SEED } from "./product";
-import { progress, xpForLevel } from "./progression";
+import { progress } from "./progression";
+import { migrateProgression } from "./progression-state";
 import {
   availabilitySchema,
   postIncidentSchema,
@@ -156,6 +157,17 @@ export const missionSchema = z
     waterSupply: waterSupplySchema.optional(),
     location: incidentLocationSchema.optional(),
     paymentCents: centsSchema.optional(),
+    xpPolicy: z
+      .object({
+        version: z.literal(2),
+        event: id,
+        base: integer.max(150),
+        transition: z.boolean(),
+        partial: integer,
+        awarded: z.record(z.string().max(150), integer),
+      })
+      .strict()
+      .optional(),
     tasks: missionTaskStateSchema.optional(),
     telemetry: telemetrySchema.optional(),
     report: reportSchema.optional(),
@@ -231,12 +243,25 @@ export const saveSchema = z
     player: z.object({ id, name, station: name }).strict(),
     money: centsSchema,
     xp: integer,
+    workloadLegacy: z.array(z.string().max(250)).optional(),
     progression: z
       .object({
-        version: z.literal(1),
+        version: z.union([z.literal(1), z.literal(2)]),
         compensation: integer,
         previousXp: integer,
         previousLevel: integer,
+        rights: z.array(z.string().max(100)).max(250).optional(),
+        rawEarned: integer.optional(),
+        conversion: z
+          .object({
+            fromXp: integer,
+            toXp: integer,
+            level: integer,
+            current: integer,
+            required: integer,
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),
@@ -247,7 +272,12 @@ export const saveSchema = z
     missionWait: num.default(0),
     callPacing: z
       .object({
-        version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+        version: z.union([
+          z.literal(1),
+          z.literal(2),
+          z.literal(3),
+          z.literal(4),
+        ]),
         notBefore: num,
         lastCreated: num,
         sequence: integer,
@@ -328,10 +358,12 @@ export function fresh(player: string, station: string, now: number): Save {
     economy: newEconomy(now, BALANCE.start),
     xp: 0,
     progression: {
-      version: 1,
+      version: 2,
       compensation: 0,
       previousXp: 0,
       previousLevel: 1,
+      rights: [],
+      rawEarned: 0,
     },
     time: now,
     seed: Number.parseInt(uid().slice(0, 8), 16),
@@ -353,13 +385,7 @@ export function validate(data: unknown): Save {
   assertSaveWorld(data);
   const s: Save = saveSchema.parse(data);
   delete s.tutorial;
-  if (!s.progression) {
-    const previousXp = s.xp,
-      previousLevel = Math.min(10, 1 + Math.floor(previousXp / 150));
-    const compensation = Math.max(0, xpForLevel(previousLevel) - previousXp);
-    s.xp += compensation;
-    s.progression = { version: 1, compensation, previousXp, previousLevel };
-  }
+  migrateProgression(s);
   const ids = [
     ...s.buildings,
     ...s.vehicles,

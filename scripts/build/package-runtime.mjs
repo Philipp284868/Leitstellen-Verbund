@@ -142,7 +142,7 @@ try {
     JSON.stringify(
       {
         format: 2,
-        compatibility: { database: 26, minimumDatabase: 25, geodata: 1 },
+        compatibility: { database: 27, minimumDatabase: 25, geodata: 1 },
         version: pkg.version,
         commit,
         product: "germany-1",

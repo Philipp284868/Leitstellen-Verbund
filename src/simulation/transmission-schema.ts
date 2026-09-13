@@ -18,6 +18,11 @@ export const transmissionSchema = z
     started: time.optional(),
     ends: time.optional(),
     interrupted: z.boolean(),
+    consolidated: z.boolean().optional(),
+    silent: z.boolean().optional(),
+    contentVersion: time.int().optional(),
+    unresolved: z.boolean().optional(),
+    supersededBy: z.string().max(150).optional(),
     history: z
       .array(
         z.object({ at: time, state, reason: z.string().max(120) }).strict(),

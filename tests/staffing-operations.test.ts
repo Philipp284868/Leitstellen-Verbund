@@ -283,7 +283,7 @@ it("Defekt bindet Fahrzeug, verhindert Fähigkeiten und Ankunft, Reparatur ist w
   breakVehicle(s, v, "engine");
   expect(
     m.control!.radio.filter((r) => r.details.includes("ausgefallen")),
-  ).toHaveLength(2);
+  ).toHaveLength(1); // The same concern reopens with a newer version.
   expect(
     m.control!.radio.filter(
       (r) => r.details.includes("ausgefallen") && r.state === "open",

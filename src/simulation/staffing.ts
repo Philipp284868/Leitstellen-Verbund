@@ -13,6 +13,7 @@ import { distance, nearest } from "../shared/world";
 import { record } from "./events";
 import { setFms } from "./fms";
 import { request } from "./incidents";
+import { resolveRadioTopic } from "./radio-requests";
 import type { Duty, Station } from "./organizations-schema";
 import { injuryReason } from "./responder-recovery";
 import type { Alarm } from "./schema";
@@ -288,6 +289,14 @@ export function checkReserveSelection(s: Save, vehicles: Vehicle[]) {
   return vehicles.map((v) => reserveWarning(s, v)).filter(Boolean);
 }
 export function planTurnout(s: Save, v: Vehicle, fallback: number) {
+  const mission = s.missions.find((m) => m.id === v.mission);
+  if (mission)
+    resolveRadioTopic(
+      s,
+      mission,
+      `turnout:${v.id}`,
+      `${v.name}: Erneute Alarmierung; Besatzung wird neu geprüft.`,
+    );
   const b = s.buildings.find((b) => b.id === v.home)!,
     profile = stationProfile(b),
     minimum = crewRequired(s, v);
@@ -380,6 +389,7 @@ export function turnoutReady(s: Save, v: Vehicle) {
       "request",
       `${v.name} nicht ausgerückt: Besatzung fehlt. Weiteres Personal oder kleineres Fahrzeug erforderlich.`,
       "DRINGEND",
+      `turnout:${v.id}`,
     );
   }
   recall(s, v);

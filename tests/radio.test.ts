@@ -22,7 +22,7 @@ function setup() {
     m,
     r,
     act: (op: Parameters<typeof radioAction>[3], actor = "alpha") =>
-      radioAction(s, m, r.id, op, actor),
+      radioAction(s, m, r.id, op, actor, {}, r.version),
   };
 }
 it("reserviert atomar, lehnt fremde Bearbeitung unverändert ab und verlängert durch Wiederholung nicht", () => {
@@ -94,14 +94,14 @@ it("Rückfrage und Nachforderung nutzen den echten Kräftebedarf, bleiben nachvo
   )!;
   expect(r).toBeDefined();
   radioAction(s, m, r.id, "claim", "bravo");
-  radioAction(s, m, r.id, "question", "bravo");
+  radioAction(s, m, r.id, "question", "bravo", {}, r.version);
   expect(r.answer).toContain("Löschwasser");
   expect(r.state).toBe("open");
   expect(r.handling?.actor).toBe("bravo");
   const before = structuredClone(s);
-  radioAction(s, m, r.id, "question", "bravo");
+  radioAction(s, m, r.id, "question", "bravo", {}, r.version);
   expect(s).toEqual(before);
-  radioAction(s, m, r.id, "request", "bravo");
+  radioAction(s, m, r.id, "request", "bravo", {}, r.version);
   expect(r.handledBy).toBe("bravo");
   expect(r.handling).toBeUndefined();
   expect(

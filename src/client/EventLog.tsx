@@ -62,6 +62,7 @@ export function EventLog({
   const entry = (e: (typeof events)[number]) => (
     <article
       key={e.id}
+      aria-live={e.incidentRadio ? "off" : "polite"}
       data-event-id={e.id}
       data-priority={e.priority}
       className={e.unresolved ? "unresolved" : ""}
@@ -108,7 +109,7 @@ export function EventLog({
         <span>TEXT</span>
       </header>
       {!!critical.length && (
-        <div className="critical-events" aria-live="polite">
+        <div className="critical-events" aria-live="off">
           {critical.map(entry)}
         </div>
       )}
@@ -116,7 +117,7 @@ export function EventLog({
         className="event-scroll"
         ref={scroll}
         role="log"
-        aria-live="polite"
+        aria-live="off"
         onScroll={() => {
           const e = scroll.current!;
           bottom.current = e.scrollHeight - e.scrollTop - e.clientHeight < 40;

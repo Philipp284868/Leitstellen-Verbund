@@ -66,6 +66,27 @@ export const incidentSchema = z
     briefed: z.boolean(),
     firstArrival: z.string().max(100),
     deficit: z.string().max(600).optional(),
+    radioSummary: z
+      .object({
+        id: z.string().max(150),
+        version: time.int().min(1),
+        at: time,
+        updated: time,
+        speaker: z.string().max(100),
+        sender: z.string().max(100),
+        text,
+        priority: z.number().int().min(0).max(100),
+        unresolved: z.boolean(),
+        notified: z.boolean(),
+        receivers: z.record(z.string().max(100), time.int()).optional(),
+        history: z
+          .array(
+            z.object({ version: time.int().min(1), at: time, text }).strict(),
+          )
+          .max(20000),
+      })
+      .strict()
+      .optional(),
     facts: z
       .array(
         z
@@ -95,10 +116,13 @@ export const incidentSchema = z
             handling: z.object({ actor: id, until: time }).strict().optional(),
             handledBy: id.optional(),
             details: text,
+            topic: z.string().max(160).optional(),
+            version: time.int().min(1).optional(),
+            active: z.boolean().optional(),
           })
           .strict(),
       )
-      .max(60),
+      .max(2000),
     events: z.array(eventSchema).max(20000),
     proposal: z
       .object({

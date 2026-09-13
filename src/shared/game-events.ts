@@ -13,6 +13,8 @@ export type GameEvent = {
   count?: number;
   local?: boolean;
   connection?: boolean;
+  incidentRadio?: boolean;
+  version?: number;
 };
 /** One projection for live UI and durable server history; never exposes an entire save. */
 export function projectEvents(s: Save): GameEvent[] {
@@ -21,6 +23,25 @@ export function projectEvents(s: Save): GameEvent[] {
     hidden = new Set<string>(),
     fmsIds = new Map<string, string>();
   for (const m of [...s.missions, ...s.archive]) {
+    const summary = m.control?.radioSummary;
+    if (summary)
+      out.push({
+        id: summary.id,
+        at: summary.at,
+        sender: summary.sender,
+        type: "Funk",
+        text: summary.text,
+        priority:
+          summary.priority >= 100
+            ? "critical"
+            : summary.priority >= 80
+              ? "important"
+              : "normal",
+        mission: m.id,
+        unresolved: summary.unresolved,
+        incidentRadio: true,
+        version: summary.version,
+      });
     const beforeReport = !!m.control && !m.control.briefed && !m.control.legacy;
     if (beforeReport) hidden.add(m.id);
     for (const e of m.control?.events ?? []) {
@@ -29,7 +50,7 @@ export function projectEvents(s: Save): GameEvent[] {
         fmsIds.set(`${m.id}:${e.at}:${e.vehicle}:${e.text}`, e.id);
     }
     for (const r of m.control?.radio ?? [])
-      if (!beforeReport || r.reason === "arrival")
+      if (!summary && (!beforeReport || r.reason === "arrival"))
         out.push({
           id: r.id,
           at: r.created,
@@ -44,6 +65,13 @@ export function projectEvents(s: Save): GameEvent[] {
           unresolved: r.state === "open",
         });
     for (const e of (m.control?.events ?? []).slice(-150)) {
+      if (
+        summary &&
+        /^(FMS_|VEHICLE_|FAULT_|MISSION_|PATIENT_|TRANSPORT_|REPORT_|AID_FMS|TURNOUT_|WATER_)/.test(
+          e.type,
+        )
+      )
+        continue;
       if (beforeReport && !PRE_RECON_EVENTS.has(e.type)) continue;
       if (
         [
@@ -75,6 +103,28 @@ export function projectEvents(s: Save): GameEvent[] {
     }
   }
   for (const e of s.radioNetwork?.entries ?? []) {
+    if (e.supersededBy) continue;
+    if (e.consolidated) {
+      if (!out.some((x) => x.id === e.id))
+        out.push({
+          id: e.id,
+          at: e.created,
+          sender: e.sender,
+          type: "Funk",
+          text: e.text,
+          priority:
+            e.priority >= 100
+              ? "critical"
+              : e.priority >= 80
+                ? "important"
+                : "normal",
+          mission: e.mission,
+          unresolved: e.unresolved,
+          incidentRadio: true,
+          version: e.contentVersion,
+        });
+      continue;
+    }
     const source = e.id.replace(/^tx:/, ""),
       type = eventTypes.get(source),
       fms = fmsIds.get(`${e.mission}:${e.created}:${e.vehicle}:${e.text}`);

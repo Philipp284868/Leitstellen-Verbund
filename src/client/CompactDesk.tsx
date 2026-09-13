@@ -1,3 +1,4 @@
+import { incidentLoad } from "../simulation/workload";
 import {
   Radio,
   Search,
@@ -58,6 +59,7 @@ export function CompactDesk({
   listOpen,
   setListOpen,
 }: CompactDeskProps) {
+  const load = incidentLoad(s);
   const events = useEvents(),
     net = useNetwork();
   const [collapsed, setCollapsed] = useState(false),
@@ -156,9 +158,20 @@ export function CompactDesk({
       ["ringing", "active", "dropped"].includes(c.state),
     ),
   );
-  const requests = events.filter(
-    (e) => e.type === "Sprechwunsch" && e.unresolved,
-  ).length;
+  const requests = s.missions.reduce(
+    (total, m) =>
+      total +
+      (m.phase === "done"
+        ? 0
+        : (m.control?.radio.filter(
+            (r) =>
+              r.state === "open" &&
+              (m.control?.briefed ||
+                m.control?.legacy ||
+                r.reason === "arrival"),
+          ).length ?? 0)),
+    0,
+  );
   const critical = events.filter(
     (e) => e.unresolved && e.priority === "critical",
   ).length;
@@ -226,7 +239,10 @@ export function CompactDesk({
           aria-controls="missions-preview"
           onClick={() => selectTab(true)}
         >
-          Aktive Einsätze <b>{s.missions.length}</b>
+          Aktive Einsätze{" "}
+          <b>
+            {load.used} / {load.limit}
+          </b>
           {calls.length > 0 && (
             <Phone size={13} aria-label={`${calls.length} Notrufe`} />
           )}
@@ -248,7 +264,9 @@ export function CompactDesk({
       <div className="compact-toolbar">
         <span>
           {listOpen
-            ? `${calls.length} offene Notrufvorgänge`
+            ? load.overloaded
+              ? `Altbestand: ${load.used} / ${load.limit} · zuerst abarbeiten`
+              : `${calls.length} offene Notrufvorgänge`
             : "Neueste Meldungen"}
         </span>
         {!listOpen ? (

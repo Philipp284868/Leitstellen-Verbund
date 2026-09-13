@@ -112,7 +112,12 @@ it("cluster response never asks for a private save; offers read just the authori
       throw Error("all saves forbidden");
     });
     const context = facilityContext(db, "owner");
-    expect(context).toEqual({ money: save.money, xp: save.xp, buildings: [] });
+    expect(context).toEqual({
+      money: save.money,
+      xp: save.xp,
+      progression: save.progression,
+      buildings: [],
+    });
     expect(() => facilityContext(db, "stranger")).toThrow("Leitstelle");
     expect(context).not.toHaveProperty("missions");
   } finally {

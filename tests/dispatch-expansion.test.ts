@@ -64,17 +64,19 @@ function handedOverAmbulance() {
   state.v.patients = 0; // The hospital handover has actually completed.
   return state;
 }
-it("generates and reloads more than 60 simultaneous incidents without a hidden count limit", () => {
+it("begrenzt neue Einsätze auf zehn und erhält diese Grenze nach Neustart", () => {
   const s = phaseFixture("many-calls");
   for (let i = 0; i < 74; i++) generate(s);
-  expect(s.missions).toHaveLength(75);
+  expect(s.missions).toHaveLength(10);
   const db = database(s),
     dir = db.dir;
   db.save(s.player.id, s);
   db.close();
   const restarted = new Database(dir);
   try {
-    expect(restarted.all().get(s.player.id)!.missions).toHaveLength(75);
+    const restored = restarted.all().get(s.player.id)!;
+    generate(restored);
+    expect(restored.missions).toHaveLength(10);
   } finally {
     restarted.close();
   }

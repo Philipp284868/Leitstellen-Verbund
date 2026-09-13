@@ -303,7 +303,7 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
     expect(m.dynamics!.patients.length).toBeGreaterThanOrEqual(5);
     expect(requirements(m).medicalCommand).toBeGreaterThan(0);
   });
-  it("erzeugt kausale Folgeeinsätze auch bei bereits über 60 offenen Einsätzen", () => {
+  it("wartet mit kausalen Folgeeinsätzen auf freie Kapazität, ohne den Altüberhang zu löschen", () => {
     const { s, m } = incident(find("Baum auf Straße"));
     // This case tests pacing with a developed fleet; missing equipment is covered separately.
     const fleet = phaseFixture("catalog-followup");
@@ -321,6 +321,10 @@ describe("Vollständiger fachlicher Einsatzkatalog", () => {
         id: `open-${n}`,
         dynamics: undefined,
       });
+    followupsTick(s);
+    expect(s.missions).toHaveLength(71);
+    expect(m.dynamics!.pending?.template).toBe("crash");
+    for (const job of s.missions.slice(1)) job.phase = "done"; // The retained jobs have now actually completed.
     followupsTick(s);
     expect(s.missions).toHaveLength(72);
     const child = s.missions.at(-1)!;

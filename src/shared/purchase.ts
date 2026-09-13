@@ -1,11 +1,11 @@
 import { bt, extensions, vehicleHomeAllowed, vt } from "./catalog";
 import type { Save } from "./model";
-import { progress } from "./progression";
+import { unlocked } from "./progression-state";
 import { stationCapacity } from "../simulation/staffing";
 export function purchaseReason(s: Save, kind: string, home: string) {
   const t = vt(kind),
     b = s.buildings.find((b) => b.id === home);
-  if (progress(s.xp).level < t.level)
+  if (!unlocked(s, "vehicle", t.id))
     return `Freischaltung ab Stufe ${t.level}.`;
   if (!b || !vehicleHomeAllowed(t, b.type))
     return `Passendes Gebäude fehlt: ${bt(t.home).name}.`;

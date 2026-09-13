@@ -100,7 +100,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
     }
   });
 
-  it("verkürzt alte überlange Fristen einmalig und erhält Zufall, Fortschritt und kurze Fristen", () => {
+  it("migriert Fristen einmalig ohne Nachholwelle oder überlange Startpause", () => {
     const s = starter();
     s.callPacing = {
       version: 1,
@@ -112,7 +112,7 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
     s.worldSituation = createSituation(s.time, 123, "quiet");
     const original = structuredClone(s);
     prepareCallPacing(s, 1);
-    expect(s.callPacing.version).toBe(3);
+    expect(s.callPacing.version).toBe(4);
     expect(s.missionWait).toBeGreaterThanOrEqual(20);
     expect(s.missionWait).toBeLessThanOrEqual(360);
     const resumed = validate(JSON.parse(JSON.stringify(s)));
@@ -134,7 +134,12 @@ describe("Notrufstart mit einer neuen Feuerwache und einem TSF-W", () => {
       notBefore: resumed.time + 20,
     };
     prepareCallPacing(resumed, 1);
-    expect(resumed.callPacing.notBefore).toBe(resumed.time + 20);
+    expect(resumed.callPacing.notBefore).toBeGreaterThanOrEqual(
+      resumed.time + 60,
+    );
+    expect(resumed.callPacing.notBefore).toBeLessThanOrEqual(
+      resumed.time + 360,
+    );
   });
 
   it("liefert nach SQLite-Neustart und wiederholten Ansichten denselben ersten Einsatz wie ohne Unterbrechung", () => {

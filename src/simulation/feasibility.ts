@@ -1,11 +1,18 @@
-import { bt, vehicles, type Skills, type Template } from "../shared/catalog";
+import { unlocked } from "../shared/progression-state";
+import { vehicles, type Skills, type Template } from "../shared/catalog";
 import { configuredSkills } from "./vehicle-equipment";
 import { level, type Save } from "../shared/model";
 
 /** Strategic fleet capacity, including units temporarily busy with another call. */
 export function fleetCapabilities(s: Save): Skills {
   const result: Skills = {};
-  for (const v of s.vehicles)
+  for (const v of s.vehicles.filter(
+    (v) =>
+      v.owner === s.player.id &&
+      s.buildings.some(
+        (b) => b.id === v.home && b.owner === s.player.id && b.ready <= s.time,
+      ),
+  ))
     for (const [skill, amount] of Object.entries(configuredSkills(v)))
       result[skill] = (result[skill] || 0) + amount;
   return result;
@@ -32,12 +39,11 @@ export function generationRequirements(t: Template): Skills {
 
 /** New consequences cannot demand a service that cannot yet be acquired. */
 export function capabilitiesUnlocked(s: Save, required: Skills) {
-  const current = level(s);
   return Object.keys(required).every((skill) =>
     vehicles.some(
       (v) =>
-        v.level <= current &&
-        bt(v.home).level <= current &&
+        unlocked(s, "vehicle", v.id) &&
+        unlocked(s, "building", v.home) &&
         (v.skills[skill] || 0) > 0,
     ),
   );

@@ -67,6 +67,7 @@ export function advanceRadio(s: Save) {
         next.priority < 100 ||
         active.priority >= 100 ||
         active.interrupted ||
+        active.consolidated ||
         s.time - active.created >= RADIO_POLICY.aging
       )
         continue;
@@ -93,7 +94,17 @@ export function transmit(
   s: Save,
   input: Pick<
     Transmission,
-    "id" | "channel" | "sender" | "vehicle" | "mission" | "text" | "priority"
+    | "id"
+    | "channel"
+    | "sender"
+    | "vehicle"
+    | "mission"
+    | "text"
+    | "priority"
+    | "consolidated"
+    | "silent"
+    | "contentVersion"
+    | "unresolved"
   >,
 ) {
   const network = radioNetwork(s);
@@ -108,7 +119,7 @@ export function transmit(
     sequence: ++network.sequence,
     created: s.time,
     seconds: Math.max(2, Math.min(30, 1.5 + input.text.length / 14)),
-    state: overloaded ? "missed" : "queued",
+    state: input.silent ? "delivered" : overloaded ? "missed" : "queued",
     interrupted: false,
     history: [],
   };
