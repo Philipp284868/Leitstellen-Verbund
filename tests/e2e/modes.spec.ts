@@ -152,7 +152,7 @@ test("Multiplayer hält unabhängige Leitstellen und ihre neuen Einsätze privat
   await ca.close();
   await cb.close();
 });
-test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per Tastatur bedienbar", async ({
+test("HUD und Karte bleiben mit heller Hauptmenüpräferenz und per Tastatur bedienbar", async ({
   page,
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -214,7 +214,8 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await expect(
     page.getByLabel("Helle Oberfläche", { exact: true }),
   ).toBeChecked();
-  await expect(page.locator(".app")).toHaveClass(/light/);
+  await expect(page.locator(".app")).toHaveClass(/desktop-hud/);
+  await expect(page.locator(".app")).not.toHaveClass(/\blight\b/);
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toBeVisible();
   await page
@@ -230,9 +231,9 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
       .filter({ hasText: "Alle Änderungen gespeichert." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await expect(page.locator(".app")).toHaveClass(/light/);
+  await expect(page.locator(".app")).not.toHaveClass(/\blight\b/);
   await page.screenshot({
-    path: info.outputPath("hud-hell.png"),
+    path: info.outputPath("hud-hauptmenuestil.png"),
     fullPage: true,
   });
   await page.setViewportSize({ width: 1366, height: 768 });
@@ -251,6 +252,11 @@ test("HUD und Karte bleiben in kleinen Desktopfenstern, im hellen Modus und per 
   await expect(
     page.locator("[data-testid=germany-map-viewport]"),
   ).toBeVisible();
+  await openPanel(page, "Zurück zum Hauptmenü");
+  await expect(page.locator(".app")).toHaveClass(/\blight\b/);
+  await play(page);
+  await expect(page.locator(".app")).toHaveClass(/desktop-hud/);
+  await expect(page.locator(".app")).not.toHaveClass(/\blight\b/);
 });
 
 test("große Region, echte Fahrzeiten und Fahrtenübersicht funktionieren in großen und kleinen Desktopfenstern", async ({
