@@ -57,6 +57,22 @@ function setup() {
   };
 }
 describe("reale Standortkäufe und unveränderliche Identität", () => {
+  it("behält einen früheren funktionierenden Zugang hinter den bevorzugten Alternativen", () => {
+    const provider = germanyProvider();
+    const facility = structuredClone(
+      logicFacilityCatalog.get(fixturePurchase("fire", sites[0]).facility)!,
+    );
+    facility.accessAlternatives = [sites[1], sites[2], sites[3]].map((pos) => ({
+      ...facility.access!,
+      pos,
+    }));
+    vi.spyOn(provider, "isLandSite").mockImplementation((point) => {
+      if (point.x !== sites[3].x || point.y !== sites[3].y)
+        throw new GermanyRoutingError("Missing access", "no-route");
+      return true;
+    });
+    expect(assertFacilityAccess(facility).pos).toEqual(sites[3]);
+  });
   it("erhält bei Ausfall der Zugangsprüfung Geld und Besitz und erlaubt danach einen einmaligen Kauf", () => {
     const { db, run } = setup(),
       action = fixturePurchase("fire", sites[0]);

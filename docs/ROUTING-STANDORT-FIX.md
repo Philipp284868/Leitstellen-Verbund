@@ -119,6 +119,9 @@ Der mitgelieferte kleine Standortkatalog wird über den bestehenden Paketprozess
 aktualisiert. Alle 40.034 IDs, Quellreferenzen, Namen, Positionen, Typen,
 Aktivitätszustände und Hauptzufahrten wurden gegen den alten Katalog geprüft.
 6.158 Alternativensätze ändern sich; kein vorhandener Standort wird versetzt.
+Alle 28.186 bisherigen Alternativzugänge bleiben zusätzlich erhalten. Pro Kauf
+werden höchstens fünf Zugänge versucht: die Hauptzufahrt und bis zu vier
+Alternativen. Neue Kandidaten verdrängen keinen bisher hinterlegten Rückfallweg.
 Katalogrevision: `2026-09-07-access-2026-09-13`. Der ursprüngliche OSM-Datenstand
 bleibt derselbe. Der neue Katalog hat eine geprüfte Integrität und neue Prüfsummen.
 

@@ -48,7 +48,7 @@ export function assertFacilityAccess(facility: Facility) {
   for (const access of [
     facility.access,
     ...(facility.accessAlternatives ?? []),
-  ].slice(0, 3)) {
+  ].slice(0, 5)) {
     try {
       if (!provider.isLandSite(access.pos)) continue;
       if (

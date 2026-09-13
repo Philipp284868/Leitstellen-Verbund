@@ -7,6 +7,7 @@
 - Bestätigte Fehlwege werden höchstens 30 Sekunden in einem auf 512 Einträge begrenzten Speicher wiederverwendet. Suchzeit-/Knotenlimits sind keine dauerhafte Unerreichbarkeitsdiagnose. Routinglogs nennen den Prüfbereich ohne Koordinaten oder Spielerdaten.
 - Das mitgelieferte Standortpaket bevorzugt räumlich verschiedene belegte Zufahrten. Alle 40.034 Identitäten, Positionen und Hauptzufahrten bleiben erhalten; 6.158 Alternativensätze wurden verbessert. Es wird keine neue Deutschlandkarte heruntergeladen.
 - Standortdetails zeigen den konkreten Kaufhinderungsgrund. Fehlende Postadressen sind Datenhinweise und keine Kaufsperre. Keine Datenmigration, kein Reset, keine Lockerung der Ratenbegrenzung.
+- Alle 28.186 zuvor hinterlegten Alternativzufahrten bleiben als Rückfallwege erhalten; die Prüfung bleibt auf höchstens fünf Zugänge pro Kauf begrenzt.
 
 ## 2.26.1 · Standortkarte und Anfragebegrenzung · 13.09.2026
 

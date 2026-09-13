@@ -82,6 +82,16 @@ describe("nachvollziehbarer Einrichtungskatalog", () => {
             "fire_station:type": "airport",
             name: "Test",
           },
+          accessAlternatives: separate
+            ? [
+                {
+                  lon: 13.0053,
+                  lat: 52.005,
+                  source: "road-node:4",
+                  method: "nearby-service-road",
+                },
+              ]
+            : [],
         };
         const path = resolve(dir, "catalog.sqlite");
         writeFacilityCatalog(
@@ -99,7 +109,7 @@ describe("nachvollziehbarer Einrichtungskatalog", () => {
             [data.access, ...data.accessAlternatives].map((a) => a.source),
           ).toEqual(
             separate
-              ? ["road-node:2", "road-node:5", "road-node:3"]
+              ? ["road-node:2", "road-node:5", "road-node:3", "road-node:4"]
               : ["road-node:2", "road-node:3", "road-node:4"],
           );
           expect(data.lon).toBe(record.lon);

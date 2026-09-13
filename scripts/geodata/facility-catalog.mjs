@@ -291,6 +291,28 @@ export function writeFacilityCatalog(
     for (const row of rows) {
       const accesses = accessFor(row, index);
       const access = accesses[0];
+      const alternatives = [];
+      const seenAccess = new Set([JSON.stringify([access?.lon, access?.lat])]);
+      for (const candidate of [
+        ...(row.accessAlternatives || []),
+        ...accesses.slice(1),
+      ]) {
+        const key = JSON.stringify([candidate.lon, candidate.lat]);
+        if (!seenAccess.has(key)) {
+          seenAccess.add(key);
+          alternatives.push(candidate);
+        }
+      }
+      const preferred = new Map(
+        accesses.slice(1).map((p, i) => [JSON.stringify([p.lon, p.lat]), i]),
+      );
+      const retainedAlternatives = alternatives
+        .slice(0, 4)
+        .sort(
+          (a, b) =>
+            (preferred.get(JSON.stringify([a.lon, a.lat])) ?? 100) -
+            (preferred.get(JSON.stringify([b.lon, b.lat])) ?? 100),
+        );
       const address =
         [
           row.tags?.["addr:street"],
@@ -308,7 +330,8 @@ export function writeFacilityCatalog(
         name: row.tags?.["name:de"] || row.tags?.name || row.name || "",
         address,
         access: access || row.access,
-        accessAlternatives: accesses.slice(1),
+        // Preserve previously mapped alternatives after the preferred new ones.
+        accessAlternatives: retainedAlternatives,
         quality: [...row.quality],
       };
       if (!entry.access) entry.quality.push("Zufahrt nicht hinreichend belegt");

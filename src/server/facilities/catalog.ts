@@ -63,7 +63,7 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       lat: data.lat,
       pos: project(data),
       accessAlternatives: (data.accessAlternatives ?? [])
-        .slice(0, 2)
+        .slice(0, 4)
         .map(
           (access: {
             lon: number;
