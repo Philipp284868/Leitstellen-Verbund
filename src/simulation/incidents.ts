@@ -1,7 +1,7 @@
 import { request, resolveRadioTopic } from "./radio-requests";
 export { request } from "./radio-requests";
 import { updateIncidentRadio } from "./incident-radio";
-import { PRE_RECON_EVENTS } from "./incident-visibility";
+import { PRE_RECON_EVENTS, visibleRadioConcern } from "./incident-visibility";
 import { civilProtectionTick } from "./civil-protection";
 import { advanceRadio } from "./transmissions";
 import { turnoutReady } from "./staffing";
@@ -178,6 +178,10 @@ export function radioAction(
   const c = m.control,
     r = c?.radio.find((r) => r.id === id);
   if (!c || !r) throw Error("Sprechwunsch fehlt.");
+  if (!visibleRadioConcern(c.briefed || !!c.legacy, r))
+    throw Error(
+      "Dieses Funkanliegen ist vor der Erkundung noch nicht bekannt.",
+    );
   if (r.state === "handled") return;
   if ((expectedVersion ?? 1) !== (r.version ?? 1))
     throw Error(
@@ -226,8 +230,10 @@ export function radioAction(
     for (const [k, n] of Object.entries(remote))
       skills[k] = (skills[k] || 0) + n;
     r.answer = `Rückfrage beantwortet: ${
-      openForceLabels(Object.fromEntries(missing(m, skills))).join(", ") ||
-      "Kräfte vor Ort ausreichend"
+      !c.briefed && !c.legacy
+        ? r.details
+        : openForceLabels(Object.fromEntries(missing(m, skills))).join(", ") ||
+          "Kräfte vor Ort ausreichend"
     }.`;
     record(s, m, "RADIO_ANSWER", r.answer, actor, r.vehicle);
     return;
@@ -359,10 +365,13 @@ export function publicSave(source: Save): Save {
         delete m.control.deficit;
         m.progress = 0;
         m.control.radio = m.control.radio
-          .filter((r) => r.reason === "arrival")
+          .filter((r) => visibleRadioConcern(false, r))
           .map((r) => ({
             ...r,
-            details: "Erste Erkundung abgeschlossen. Lagemeldung liegt vor.",
+            details:
+              r.reason === "arrival"
+                ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
+                : r.details,
           }));
         if (
           m.control.reportedTemplate &&

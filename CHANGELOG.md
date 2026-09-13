@@ -6,6 +6,7 @@
 - Vollständige Freischaltungen einschließlich Ausbau und Voraussetzungen. Notarzt ab 9, Logistik ab 13/15, KatS ab 16, Wasserrettung ab 19; erworbene Rechte bleiben erhalten. Das bestehende Fortschrittsdetail bietet nächste Ziele, Suche und Filter.
 - Harte Arbeitslastgrenze je Leitstelle: 3 Plätze auf Stufe 1, ein weiterer je Stufe, höchstens 10 ab Stufe 8. Notrufangebote, laufende Transporte und angenommene Unterstützung zählen korrekt; auch Folgeeinsätze und Kampagnen beachten das Limit. Ruhiger Beginn ohne Nachholschwall.
 - Ein dauerhafter Fahrzeugfunkeintrag je Einsatz und empfangender Leitstelle. Erste Lagemeldung einmal aktiv, spätere Bedarfe und Gefahrentwicklungen still im selben Vorgang. Getrennte versionierte Anliegen, vollständiger Verlauf und Erhalt bei Sprecherwechsel, Reconnect und Neustart.
+- Eigene Fahrzeugausfälle und fehlgeschlagenes Ausrücken bleiben bereits vor der Erkundung sichtbar und bearbeitbar. Rückfragen dazu verraten keine verborgenen Einsatzanforderungen und verbrauchen nicht die einmalige erste Lagemeldung.
 - Schema 27 überträgt bestehenden Level, anteiligen Fortschritt, Roh-XP und Kaufrechte gesichert genau einmal. Aktive Altüberhänge bleiben erhalten und werden zuerst abgearbeitet. Kein Reset, keine private AMP-/Netzwerkänderung. [Regeln und Messwerte](docs/PROGRESSION-KARTE.md).
 
 ## 2.27.1 · HUD im Stil des Hauptmenüs · 13.09.2026

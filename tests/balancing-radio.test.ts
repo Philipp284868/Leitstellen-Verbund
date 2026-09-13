@@ -4,7 +4,12 @@ import { radioFixture } from "./radio-fixture";
 import { AudioEvents } from "../src/client/audio/events";
 import { projectEvents } from "../src/shared/game-events";
 import { setFms } from "../src/simulation/fms";
-import { afterVehicles, radioAction } from "../src/simulation/incidents";
+import {
+  afterVehicles,
+  radioAction,
+  publicSave,
+} from "../src/simulation/incidents";
+import { breakVehicle } from "../src/simulation/faults";
 import { request, resolveRadioTopic } from "../src/simulation/radio-requests";
 import {
   updateIncidentRadio,
@@ -13,6 +18,35 @@ import {
 } from "../src/simulation/incident-radio";
 import { advanceRadio, transmit } from "../src/simulation/transmissions";
 import { validate } from "../src/shared/model";
+
+it("zeigt eigene Ausfälle bereits vor Erkundung, ohne verborgene Lagen oder einen zweiten Erstfunk preiszugeben", () => {
+  const s = phaseFixture("fault-owner"),
+    m = s.missions[0],
+    v = s.vehicles[0];
+  s.radioNetwork = { version: 1, sequence: 0, entries: [] };
+  v.mission = m.id;
+  v.status = "travel";
+  breakVehicle(s, v, "engine");
+  const visible = publicSave(s).missions[0];
+  expect(visible.control!.radio).toHaveLength(1);
+  expect(visible.control!.radio[0].details).toContain("Motorschaden");
+  expect(visible.control!.radioSummary).toMatchObject({
+    unresolved: true,
+    notified: false,
+  });
+  expect(visible.control!.radioSummary!.text).toContain("Motorschaden");
+  expect(visible.control!.secret).toBeUndefined();
+  const fault = m.control!.radio[0];
+  radioAction(s, m, fault.id, "question", s.player.id, {}, fault.version);
+  expect(fault.answer).toContain("Motorschaden");
+  expect(m.control!.briefed).toBe(false);
+  const id = m.control!.radioSummary!.id;
+  v.fault!.state = "repaired";
+  v.status = "scene";
+  afterVehicles(s);
+  expect(m.control!.radioSummary).toMatchObject({ id, notified: true });
+  expect(s.radioNetwork.entries.filter((e) => e.consolidated)).toHaveLength(1);
+});
 
 it("zwanzig Fahrzeuge erzeugen einen Erstfunk; Anliegen, FMS und Sprecherwechsel aktualisieren danach still", () => {
   const s = phaseFixture("radio-owner"),

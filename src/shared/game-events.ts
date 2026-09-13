@@ -1,5 +1,8 @@
 import type { Save } from "./model";
-import { PRE_RECON_EVENTS } from "../simulation/incident-visibility";
+import {
+  PRE_RECON_EVENTS,
+  visibleRadioConcern,
+} from "../simulation/incident-visibility";
 
 export type GameEvent = {
   id: string;
@@ -50,7 +53,7 @@ export function projectEvents(s: Save): GameEvent[] {
         fmsIds.set(`${m.id}:${e.at}:${e.vehicle}:${e.text}`, e.id);
     }
     for (const r of m.control?.radio ?? [])
-      if (!summary && (!beforeReport || r.reason === "arrival"))
+      if (!summary && visibleRadioConcern(!beforeReport, r))
         out.push({
           id: r.id,
           at: r.created,
@@ -58,9 +61,10 @@ export function projectEvents(s: Save): GameEvent[] {
             s.vehicles.find((v) => v.id === r.vehicle)?.name ?? "Einsatzmittel",
           type: "Sprechwunsch",
           priority: r.priority === "NOTFALL" ? "critical" : "important",
-          text: beforeReport
-            ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
-            : r.details,
+          text:
+            beforeReport && r.reason === "arrival"
+              ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
+              : r.details,
           mission: m.id,
           unresolved: r.state === "open",
         });

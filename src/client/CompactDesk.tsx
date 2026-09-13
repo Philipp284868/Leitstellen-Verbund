@@ -1,4 +1,5 @@
 import { incidentLoad } from "../simulation/workload";
+import { visibleRadioConcern } from "../simulation/incident-visibility";
 import {
   Radio,
   Search,
@@ -166,9 +167,10 @@ export function CompactDesk({
         : (m.control?.radio.filter(
             (r) =>
               r.state === "open" &&
-              (m.control?.briefed ||
-                m.control?.legacy ||
-                r.reason === "arrival"),
+              visibleRadioConcern(
+                !!(m.control?.briefed || m.control?.legacy),
+                r,
+              ),
           ).length ?? 0)),
     0,
   );

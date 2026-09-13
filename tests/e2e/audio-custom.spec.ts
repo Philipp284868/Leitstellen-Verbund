@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fresh, type Mission } from "../../src/shared/model";
 import { legacyIncident } from "../../src/simulation/incidents";
+import { transmit } from "../../src/simulation/transmissions";
 import { sites as nodes } from "../fixtures/germany/locations";
 import { listenBrowserServer } from "./server-helper";
 import { expect, test, type Page } from "./test";
@@ -374,7 +375,7 @@ for (const format of ["mp3", "ogg"])
       .toMatchObject({ playing: 0, urls: 0, pcm: 0, reads: 0 });
   });
 
-test("Quota- und Codecfehler erhalten den alten Sound und Prioritäts-/Notfallton verdrängen eigene Aufnahmen", async ({
+test("Quota- und Codecfehler erhalten den alten Sound und ein eigenständiger Notfallton verdrängt eigene Aufnahmen", async ({
   page,
 }) => {
   const account = await login(page);
@@ -421,9 +422,18 @@ test("Quota- und Codecfehler erhalten den alten Sound und Prioritäts-/Notfallto
     .getByRole("button", { name: "Funk anhören", exact: true })
     .click();
   await expect.poll(async () => (await meter(page)).playing).toBe(1);
-  const save = app.db.all().get(account.id)!,
-    mission = save.missions.find((m) => m.id === account.mission)!;
-  mission.control!.priority = "NOTFALL";
+  const save = app.db.all().get(account.id)!;
+  // Incident priority changes are silent in version 2. A separate first system
+  // transmission exercises the protected emergency mixer without replaying a job.
+  transmit(save, {
+    id: crypto.randomUUID(),
+    channel: "System",
+    sender: "Betriebstest",
+    vehicle: "",
+    mission: "",
+    text: "Eigenständiger Testnotfall.",
+    priority: 100,
+  });
   save.revision++;
   app.db.save(account.id, save);
   await expect

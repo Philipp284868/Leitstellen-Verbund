@@ -28,4 +28,19 @@ export const PRE_RECON_EVENTS = new Set([
   "VEHICLE_RECALLED",
   "TURNOUT_UPDATED",
   "TURNOUT_DELAYED",
+  "TURNOUT_FAILED",
+  "VEHICLE_BREAKDOWN",
+  "VEHICLE_REPAIRED",
 ]);
+
+/** Own operational failures are known before reconnaissance; hidden scene needs are not. */
+export function visibleRadioConcern(
+  briefed: boolean,
+  request: { reason: string; topic?: string },
+) {
+  return (
+    briefed ||
+    request.reason === "arrival" ||
+    /^(fault|turnout):/.test(request.topic ?? "")
+  );
+}

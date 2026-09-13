@@ -1,6 +1,7 @@
 import type { Mission, Save } from "../shared/model";
 import { radioNetwork, transmit } from "./transmissions";
 import { priorityRank } from "./priority";
+import { visibleRadioConcern } from "./incident-visibility";
 
 export const incidentRadioId = (s: Save, m: Mission) =>
   `incident:${m.id}:${s.player.id}`;
@@ -16,7 +17,7 @@ export function updateIncidentRadio(s: Save, m: Mission, silent = false) {
       (r) =>
         m.phase !== "done" &&
         r.state === "open" &&
-        (c.briefed || c.legacy || r.reason === "arrival"),
+        visibleRadioConcern(c.briefed || !!c.legacy, r),
     )
     .sort(
       (a, b) =>
@@ -54,9 +55,14 @@ export function updateIncidentRadio(s: Save, m: Mission, silent = false) {
     .at(-1);
   const text =
     !c.briefed && !c.legacy
-      ? eligible
-        ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
-        : "Fahrzeughinweis liegt vor. Erkundung steht noch aus."
+      ? trim(
+          [
+            eligible
+              ? "Erste Erkundung abgeschlossen. Lagemeldung liegt vor."
+              : "Erkundung steht noch aus.",
+            ...open.filter((r) => r.reason !== "arrival").map((r) => r.details),
+          ].join(" · "),
+        )
       : trim(
           [
             open.length
