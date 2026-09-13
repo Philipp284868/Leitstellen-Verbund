@@ -156,7 +156,7 @@ export const Settings = memo(function Settings({
             {checkbox(
               "light",
               "Helle Oberfläche",
-              "Gilt für das Hauptmenü. Der Einsatzarbeitsplatz verwendet immer das helle Desktop-HUD.",
+              "Gilt für das Hauptmenü. Der Einsatzarbeitsplatz verwendet den dunklen Stil des Hauptmenüs.",
             )}
             {checkbox(
               "reduced",

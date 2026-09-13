@@ -2,7 +2,7 @@
 
 Das Hauptmenü zeigt links Spielen, Leitstellen, Hilfe/Wiki, Neuigkeiten, Einstellungen und Abmelden. Rechts stehen Profil/XP, verbundener Server und Leitstellenwerte. Ein serverseitiger Bestand ist kein lokaler Lade-Slot. Spielen öffnet die berechtigte Leitstelle im [[Deutschland]]-Multiplayer. [[Einsatzablauf]] beschreibt die regulären Einsatzschritte.
 
-Im Spiel steht die Deutschlandkarte im Mittelpunkt. Links oben öffnet **Menü** das helle Navigationspanel; beim Einstieg ist es geschlossen. Rechts oben stehen vier kompakte Anzeigen für Serverzeit, Wetter, Budget und den gemeinsamen Level-/XP-Fortschritt. Es gibt keine Zeitbeschleunigung.
+Im Spiel steht die Deutschlandkarte im Mittelpunkt. Links oben öffnet **Menü** das kompakte Navigationspanel im dunklen Stil des Hauptmenüs; beim Einstieg ist es geschlossen. Rechts oben stehen vier kompakte Anzeigen für Serverzeit, Wetter, Budget und den gemeinsamen Level-/XP-Fortschritt. Es gibt keine Zeitbeschleunigung.
 
 | Einstieg                                    | Funktion                                                                       |
 | ------------------------------------------- | ------------------------------------------------------------------------------ |

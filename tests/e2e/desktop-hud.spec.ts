@@ -20,7 +20,7 @@ for (const [width, height, scale] of [
   [1366, 768, 150],
   [1920, 1080, 150],
 ]) {
-  test(`Helles HUD ${width}x${height} bei ${scale} Prozent`, async ({
+  test(`HUD im Hauptmenüstil ${width}x${height} bei ${scale} Prozent`, async ({
     page,
   }, info) => {
     const config = {
@@ -53,7 +53,7 @@ for (const [width, height, scale] of [
         (value) =>
           localStorage.setItem(
             "lv-device-v2",
-            JSON.stringify({ version: 2, scale: value }),
+            JSON.stringify({ version: 2, scale: value, light: value === 125 }),
           ),
         scale,
       );
@@ -87,11 +87,22 @@ for (const [width, height, scale] of [
       expect(desk!.y).toBeGreaterThanOrEqual(status!.y + status!.height + 10);
       expect(desk!.x + desk!.width).toBeCloseTo(width - 20, 0);
       expect(desk!.height).toBeLessThanOrEqual(scale === 100 ? 365 : 510);
-      expect(
-        await page
-          .locator(".compact-desk")
-          .evaluate((e) => getComputedStyle(e).backgroundColor),
-      ).toBe("rgb(248, 250, 255)");
+      await expect(page.locator(".app")).toHaveClass(/desktop-hud/);
+      await expect(page.locator(".app")).not.toHaveClass(/\blight\b/);
+      const palette = await page.locator(".compact-desk").evaluate((e) => {
+        const style = getComputedStyle(e);
+        return {
+          background: style.backgroundColor,
+          text: style.color,
+          panel: style.getPropertyValue("--hud-panel").trim(),
+          menuPanel: getComputedStyle(document.documentElement)
+            .getPropertyValue("--hud-panel")
+            .trim(),
+        };
+      });
+      expect(palette.panel).toBe(palette.menuPanel);
+      expect(palette.background).toMatch(/^rgba?\(8, 23, 34(?:, [^)]+)?\)$/);
+      expect(palette.text).toBe("rgb(237, 242, 245)");
       const camera = await map.getAttribute("data-camera");
       await mkdir(".tools/hud-acceptance", { recursive: true });
       const shot = async (state: string) => {
@@ -190,6 +201,14 @@ for (const [width, height, scale] of [
           await expect(
             page.getByText("Ansicht wird geladen …", { exact: true }),
           ).toBeHidden();
+          const dialogColors = await page.getByRole("dialog").evaluate((e) => ({
+            text: getComputedStyle(e).color,
+            background: getComputedStyle(e).backgroundColor,
+          }));
+          expect(dialogColors.text).toBe("rgb(237, 242, 245)");
+          expect(dialogColors.background).toMatch(
+            /^rgba?\(8, 23, 34(?:, [^)]+)?\)$/,
+          );
         }
         await openPanel(page, "Suche");
         await expect(page.getByLabel("Karte durchsuchen")).toBeFocused();

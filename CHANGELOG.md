@@ -1,5 +1,10 @@
 # Änderungen
 
+## 2.27.1 · HUD im Stil des Hauptmenüs · 13.09.2026
+
+- Das kompakte Ingame-HUD verwendet die dunkle blaugrüne Farbwelt des Hauptmenüs: helle Schrift, dezente Konturen, kleine Rundungen und warme rote Akzente für Menü und aktive Reiter. Statuskarten, Funk-/Einsatzvorschau, Kartenwerkzeuge und Unterdialoge passen zusammen.
+- Die kompakte Anordnung und sämtliche Bedienabläufe bleiben erhalten. Die Helligkeitsoption betrifft weiterhin nur das Hauptmenü; ein gespeicherter heller Modus überlagert das Ingame-HUD nicht. Keine Änderung an Spielregeln, Daten, Routing oder Serverkonfiguration.
+
 ## 2.27.0 · Heller, kompakter Leitstellenarbeitsplatz · 13.09.2026
 
 - Aufklappbares weißes Menü links, vier kompakte Statusanzeigen rechts und ein gemeinsames Panel für Textfunk und aktive Einsätze. Die Deutschlandkarte bleibt vollflächig bedienbar; Zentrieren, Zoom und Ebenen liegen unten rechts.

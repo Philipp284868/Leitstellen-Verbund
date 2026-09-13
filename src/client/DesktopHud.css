@@ -1,57 +1,55 @@
-/* Single desktop HUD. Main-menu styling intentionally remains independent. */
-.app.command-hud.light-hud {
-  --hud-bg: #f8faff;
-  --hud-panel: #f8faff;
-  --hud-raised: #edf4ff;
-  --hud-border: #dce6f3;
-  --hud-text: #14294f;
-  --hud-muted: #647a99;
-  --hud-accent: #2384fa;
-  --hud-blue: #2384fa;
-  --hud-radius: 12px;
-  --hud-shadow: 0 4px 20px #18345a18;
+/* Compact desktop layout, sharing the established main-menu visual language. */
+.app.command-hud.desktop-hud {
+  /* Reuse the main menu palette from HudTheme.css. */
+  --hud-control: #10222e;
+  --hud-border-strong: #526e81;
+  --hud-link: #9dcae5;
+  --hud-critical-bg: #38231f;
+  --hud-critical: #ffaf96;
+  --hud-focus: #b5def7;
   --preview-width: clamp(410px, calc(410px * var(--ui-scale)), 520px);
   --status-height: calc(64px * var(--ui-scale));
   --hud-top: calc(20px + var(--status-height) + 12px);
-  color-scheme: light;
+  color-scheme: dark;
   height: 100dvh;
   overflow: hidden;
   font-size: calc(14px * var(--ui-scale));
 }
-.light-hud .hud-shell {
+.desktop-hud .hud-shell {
   height: 100dvh;
   position: relative;
 }
-.app.light-hud button:where(:not(.germany-marker)),
-.app.command-hud.light-hud :is(input, select, textarea) {
+.app.desktop-hud button:where(:not(.germany-marker)),
+.app.command-hud.desktop-hud :is(input, select, textarea) {
   color: var(--hud-text);
-  background: white;
+  background: var(--hud-control);
   border: 1px solid var(--hud-border);
-  border-radius: 9px;
+  border-radius: 5px;
   font-size: inherit;
   box-shadow: none;
 }
-.app.command-hud.light-hud button:hover:not(:disabled, .germany-marker) {
-  background: #edf4ff;
-  border-color: #adc8eb;
+.app.command-hud.desktop-hud button:hover:not(:disabled, .germany-marker) {
+  background: var(--hud-raised);
+  border-color: var(--hud-border-strong);
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(button, input, select, textarea, summary, a):focus-visible {
-  outline: 2px solid #2384fa;
+  outline: 2px solid var(--hud-focus);
   outline-offset: 2px;
 }
-.app.command-hud.light-hud button.primary {
-  background: #176bcb;
-  border-color: #176bcb;
+.app.command-hud.desktop-hud button.primary,
+.app.command-hud.desktop-hud button.primary:hover:not(:disabled) {
+  background: linear-gradient(#823229, #5a2220);
+  border-color: #d55743;
   color: white;
 }
-.app.command-hud.light-hud a {
-  color: #1764b8;
+.app.command-hud.desktop-hud a {
+  color: var(--hud-link);
 }
-.app.command-hud.light-hud :is(.eyebrow, small) {
+.app.command-hud.desktop-hud :is(.eyebrow, small) {
   color: var(--hud-muted);
 }
-.app.command-hud.light-hud .control-topbar {
+.app.command-hud.desktop-hud .control-topbar {
   position: absolute;
   inset: 20px 20px auto;
   z-index: 35;
@@ -69,7 +67,7 @@
   position: relative;
   pointer-events: auto;
 }
-.light-hud .control-menu-button {
+.desktop-hud .control-menu-button {
   width: 132px;
   height: 52px;
   display: flex;
@@ -80,10 +78,17 @@
   z-index: 2;
   box-shadow: var(--hud-shadow) !important;
 }
-.light-hud .control-menu-button svg,
-.light-hud .control-menu svg {
-  color: #2384fa;
+.desktop-hud .control-menu-button svg,
+.desktop-hud .control-menu svg {
+  color: var(--hud-link);
   flex-shrink: 0;
+}
+.app.command-hud.desktop-hud button.control-menu-button[aria-expanded="true"] {
+  background: linear-gradient(100deg, #822e26, #421c1c);
+  border-color: #d45140;
+}
+.desktop-hud .control-menu-button[aria-expanded="true"] svg {
+  color: #fff0e9;
 }
 .hud-dismiss {
   position: fixed;
@@ -92,7 +97,7 @@
   pointer-events: auto;
   z-index: 1;
 }
-.light-hud .control-menu {
+.desktop-hud .control-menu {
   position: absolute;
   z-index: 2;
   top: 62px;
@@ -102,9 +107,9 @@
   display: flex;
   flex-direction: column;
   padding: 8px;
-  background: #f8faff;
+  background: var(--hud-panel);
   border: 1px solid var(--hud-border);
-  border-radius: 14px;
+  border-radius: 8px;
   box-shadow: var(--hud-shadow);
 }
 .control-menu-scroll {
@@ -112,7 +117,7 @@
   min-height: 0;
   overscroll-behavior: contain;
 }
-.light-hud .control-menu button {
+.desktop-hud .control-menu button {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -123,11 +128,12 @@
   border: 0 !important;
   background: transparent !important;
 }
-.light-hud .control-menu button:hover,
-.light-hud .control-menu button:focus-visible {
-  background: #eaf2ff !important;
+.desktop-hud .control-menu button:hover,
+.desktop-hud .control-menu button:focus-visible {
+  background: var(--hud-raised) !important;
+  box-shadow: inset 2px 0 var(--hud-accent);
 }
-.light-hud .control-menu .return-menu {
+.desktop-hud .control-menu .return-menu {
   border-top: 1px solid var(--hud-border) !important;
   margin-top: 6px;
   padding-top: 12px;
@@ -142,9 +148,9 @@
   max-width: calc(100% - 165px);
   pointer-events: auto;
 }
-.light-hud .status-tile {
+.desktop-hud .status-tile {
   border: 1px solid var(--hud-border);
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--hud-panel);
   box-shadow: var(--hud-shadow);
   min-width: 0;
@@ -159,7 +165,7 @@
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-  color: #2384fa;
+  color: var(--hud-link);
 }
 .status-tile > span {
   min-width: 0;
@@ -177,7 +183,7 @@
   white-space: nowrap;
 }
 .status-tile.money-tile > svg {
-  color: #168854;
+  color: #7dc9a4;
 }
 .status-tile.money-tile strong {
   font-size: clamp(16px, 1.2vw, 20px);
@@ -208,15 +214,15 @@
   display: block;
   margin-top: 5px;
   border: 0;
-  accent-color: #2384fa;
+  accent-color: #f18b67;
   border-radius: 5px;
   overflow: hidden;
 }
 .level-tile progress::-webkit-progress-bar {
-  background: #dce6f3;
+  background: #263a49;
 }
 .level-tile progress::-webkit-progress-value {
-  background: #2384fa;
+  background: #f18b67;
 }
 .status-popup {
   pointer-events: auto;
@@ -229,13 +235,13 @@
   padding: 20px;
   background: var(--hud-panel);
   border: 1px solid var(--hud-border);
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: var(--hud-shadow);
 }
 .status-popup .close {
   float: right;
 }
-.app.command-hud.light-hud .map-column {
+.app.command-hud.desktop-hud .map-column {
   position: absolute;
   inset: 0;
   padding: 0;
@@ -252,7 +258,7 @@
   max-height: calc(100dvh - var(--hud-top) - 110px);
   background: var(--hud-panel);
   border: 1px solid var(--hud-border);
-  border-radius: 13px;
+  border-radius: 8px;
   box-shadow: var(--hud-shadow);
   display: flex;
   flex-direction: column;
@@ -264,7 +270,7 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--hud-border);
 }
-.light-hud .compact-tabs button {
+.desktop-hud .compact-tabs button {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -277,13 +283,13 @@
   font-size: calc(13px * var(--ui-scale));
   border-bottom: 2px solid transparent;
 }
-.light-hud .compact-tabs button[aria-selected="true"] {
-  background: #edf4ff;
-  border-bottom-color: #2384fa;
+.app.command-hud.desktop-hud .compact-tabs button[aria-selected="true"] {
+  background: linear-gradient(180deg, #542b27, #302122);
+  border-bottom-color: var(--hud-accent);
 }
 .critical-count {
-  background: #fff0e9;
-  color: #a83922;
+  background: var(--hud-critical-bg);
+  color: var(--hud-critical);
   border-radius: 5px;
   padding: 2px 4px;
   font-size: 12px;
@@ -301,7 +307,7 @@
   font-size: calc(12px * var(--ui-scale));
   color: var(--hud-muted);
 }
-.light-hud .compact-toolbar :is(button, select) {
+.desktop-hud .compact-toolbar :is(button, select) {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -323,14 +329,14 @@
   max-height: calc(232px * var(--ui-scale));
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: #b8c9df transparent;
+  scrollbar-color: var(--hud-border-strong) transparent;
   overflow-anchor: none;
 }
-.light-hud .compact-desk .preview-scroll {
+.desktop-hud .compact-desk .preview-scroll {
   margin: 0;
   padding: 0 8px;
 }
-.light-hud .compact-desk :is(.event-preview, .mission-preview) {
+.desktop-hud .compact-desk :is(.event-preview, .mission-preview) {
   display: flex;
   flex-shrink: 0;
   gap: 8px;
@@ -339,19 +345,19 @@
   padding: 7px 8px;
   margin: 0 0 4px;
   min-height: 54px;
-  border-radius: 7px;
-  border-left: 3px solid #2384fa;
+  border-radius: 5px;
+  border-left: 3px solid var(--hud-link);
 }
 .event-preview > svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #2384fa;
+  color: var(--hud-link);
 }
-.light-hud .event-preview[data-priority="critical"] {
-  border-left-color: #d75337;
+.desktop-hud .event-preview[data-priority="critical"] {
+  border-left-color: #ee785c;
 }
-.light-hud .event-preview[data-priority="important"] {
-  border-left-color: #ca8a12;
+.desktop-hud .event-preview[data-priority="important"] {
+  border-left-color: #d8a354;
 }
 .preview-copy {
   display: block;
@@ -379,7 +385,7 @@
 .preview-meta em {
   font-size: 12px;
   font-style: normal;
-  color: #9a5011;
+  color: #e5bc82;
 }
 .preview-text {
   display: -webkit-box;
@@ -394,10 +400,10 @@
 .preview-status {
   display: block;
   margin-top: 2px;
-  color: #496c91;
+  color: var(--hud-muted);
   font-size: 12px;
 }
-.light-hud .compact-desk .mission-preview {
+.desktop-hud .compact-desk .mission-preview {
   border-left-color: var(--incident-color);
 }
 .mission-number {
@@ -413,10 +419,14 @@
   width: 18px;
   height: 18px;
 }
-.light-hud .compact-desk .mission-preview.selected {
-  background: #edf4ff;
+.desktop-hud .compact-desk .mission-preview.selected {
+  background: #193143;
+  border-color: #7398aa;
+  border-left-color: var(--incident-color);
 }
-.app.command-hud.light-hud[data-compact="true"] .compact-desk .mission-preview {
+.app.command-hud.desktop-hud[data-compact="true"]
+  .compact-desk
+  .mission-preview {
   padding: 4px 8px;
   min-height: 48px;
   gap: 6px;
@@ -437,8 +447,8 @@
   flex-shrink: 0;
   font-size: 12px;
 }
-.light-hud .compact-desk footer button {
-  color: #1764b8;
+.desktop-hud .compact-desk footer button {
+  color: var(--hud-link);
   background: none;
   border: 0;
   padding: 4px 0;
@@ -454,10 +464,10 @@
   min-width: 0;
   padding: 7px;
 }
-.light-hud .compact-desk .mission-filters {
+.desktop-hud .compact-desk .mission-filters {
   margin: 0 0 5px;
   padding: 6px;
-  background: white;
+  background: var(--hud-control);
   font-size: 12px;
 }
 .mission-pagination {
@@ -471,8 +481,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  border-bottom: 1px solid #edbcac;
-  background: #fff3ed;
+  border-bottom: 1px solid #a75e49;
+  background: var(--hud-critical-bg);
   font-size: 13px;
 }
 .connection-inline > span {
@@ -481,7 +491,7 @@
 .connection-inline button {
   padding: 4px 8px;
 }
-.app.command-hud.light-hud .map-quick-tools {
+.app.command-hud.desktop-hud .map-quick-tools {
   position: absolute;
   z-index: 12;
   right: 20px;
@@ -493,18 +503,18 @@
   padding: 6px;
   background: var(--hud-panel);
   border: 1px solid var(--hud-border);
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: var(--hud-shadow);
 }
-.light-hud .map-quick-tools button {
+.desktop-hud .map-quick-tools button {
   flex: 1;
   display: grid;
   place-items: center;
   padding: 5px;
   border: 0;
-  color: #2384fa;
+  color: var(--hud-link);
 }
-.app.command-hud.light-hud [data-map-tools="true"] .map-tool-panel {
+.app.command-hud.desktop-hud [data-map-tools="true"] .map-tool-panel {
   top: 84px;
   left: 20px;
   width: 360px;
@@ -515,7 +525,7 @@
   align-self: flex-end;
   padding: 4px;
 }
-.app.command-hud.light-hud .incident-dock {
+.app.command-hud.desktop-hud .incident-dock {
   left: 20px;
   right: auto;
   top: var(--hud-top);
@@ -524,7 +534,7 @@
   z-index: 24;
   backdrop-filter: none;
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(.map-vehicle-detail, .map-place-detail, .facility-map-panel) {
   left: 20px;
   right: auto;
@@ -533,25 +543,25 @@
   width: min(500px, calc(100vw - var(--preview-width) - 60px));
   max-height: calc(100dvh - var(--hud-top) - 92px);
   overflow: auto;
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--hud-panel);
   color: var(--hud-text);
 }
-.app.command-hud.light-hud .scrim {
-  background: #14294f18;
+.app.command-hud.desktop-hud .scrim {
+  background: #020b1266;
   backdrop-filter: none;
 }
-.app.command-hud.light-hud .modal {
+.app.command-hud.desktop-hud .modal {
   background: var(--hud-panel);
   border: 1px solid var(--hud-border);
-  box-shadow: 0 12px 45px #14294f26;
+  box-shadow: 0 12px 45px #0008;
   color: var(--hud-text);
-  border-radius: 14px;
+  border-radius: 8px;
 }
-.app.command-hud.light-hud .modal > header {
+.app.command-hud.desktop-hud .modal > header {
   background: var(--hud-panel);
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(
     .modal,
     .incident-dock,
@@ -576,11 +586,11 @@
     .major-panel,
     .org-panel
   ) {
-  background: white;
+  background: var(--hud-control);
   border-color: var(--hud-border);
   color: var(--hud-text);
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(
     .modal,
     .incident-dock,
@@ -591,7 +601,7 @@
   :is(h2, h3, h4, b, strong, label, legend, summary) {
   color: var(--hud-text);
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(
     .modal,
     .incident-dock,
@@ -600,35 +610,38 @@
     .facility-map-panel
   )
   :is(p, small, time, .event-message) {
-  color: #536b8c;
+  color: var(--hud-muted);
 }
-.app.command-hud.light-hud .event-log.expanded {
-  background: white;
+.app.command-hud.desktop-hud .event-log.expanded {
+  background: var(--hud-control);
   color: var(--hud-text);
   border-color: var(--hud-border);
 }
-.app.command-hud.light-hud .event-log article {
+.app.command-hud.desktop-hud .event-log article {
   font-size: 14px;
 }
-.app.command-hud.light-hud .event-log article :is(header, header span, small) {
+.app.command-hud.desktop-hud
+  .event-log
+  article
+  :is(header, header span, small) {
   color: var(--hud-muted);
   font-size: 12px;
 }
-.app.command-hud.light-hud .event-log article[data-priority="critical"] {
-  background: #fff1eb;
-  border-left-color: #d75337;
+.app.command-hud.desktop-hud .event-log article[data-priority="critical"] {
+  background: var(--hud-critical-bg);
+  border-left-color: #ee785c;
 }
-.light-hud .germany-map :is(.maplibregl-ctrl-attrib, .maplibregl-ctrl-scale) {
-  color: #294467;
-  background: #f8faffed;
+.desktop-hud .germany-map :is(.maplibregl-ctrl-attrib, .maplibregl-ctrl-scale) {
+  color: var(--hud-muted);
+  background: var(--hud-panel);
   font-size: 12px;
-  border-color: #294467;
+  border-color: var(--hud-muted);
 }
-.light-hud .germany-map .maplibregl-ctrl-attrib a {
-  color: #294467;
+.desktop-hud .germany-map .maplibregl-ctrl-attrib a {
+  color: var(--hud-muted);
 }
 @media (max-width: 1450px) {
-  .light-hud .control-menu {
+  .desktop-hud .control-menu {
     top: calc(var(--status-height) + 12px);
     max-height: calc(100dvh - var(--hud-top) - 20px);
   }
@@ -636,13 +649,13 @@
     grid-template-columns: 110px 146px minmax(154px, 190px) minmax(255px, 310px);
     gap: 8px;
   }
-  .light-hud .status-tile {
+  .desktop-hud .status-tile {
     padding: 8px;
     gap: 7px;
   }
 }
 @media (max-height: 760px) {
-  .light-hud .control-menu {
+  .desktop-hud .control-menu {
     max-height: calc(100dvh - 98px);
   }
   .preview-scroll {
@@ -650,7 +663,7 @@
   }
 }
 
-.light-hud .compact-tabs button {
+.desktop-hud .compact-tabs button {
   min-height: 0;
   height: 42px;
   line-height: 18px;
@@ -659,12 +672,12 @@
 .compact-desk footer {
   padding: 4px 10px;
 }
-.light-hud .compact-desk footer button {
+.desktop-hud .compact-desk footer button {
   min-height: 0;
   line-height: 18px;
 }
 
-.light-hud .control-menu button {
+.desktop-hud .control-menu button {
   justify-content: flex-start;
 }
 .preview-empty h3 {
@@ -672,7 +685,7 @@
   font-size: inherit;
 }
 /* Larger text gets actual layout room, without transforming the HUD. */
-.light-hud .hud-status {
+.desktop-hud .hud-status {
   grid-template-columns:
     minmax(110px, calc(122px * var(--ui-scale))) minmax(
       146px,
@@ -680,10 +693,10 @@
     )
     minmax(170px, auto) minmax(285px, calc(300px * var(--ui-scale)));
 }
-.light-hud .germany-marker .marker-label {
+.desktop-hud .germany-marker .marker-label {
   color: #edf2f5;
 }
-.app.command-hud.light-hud
+.app.command-hud.desktop-hud
   :is(
     .call-list,
     .call-active,
@@ -699,11 +712,11 @@
     .section-tabs,
     .report-grid > div
   ) {
-  background: white;
+  background: var(--hud-control);
   color: var(--hud-text);
   border-color: var(--hud-border);
 }
 /* Long mandatory attributions must not sit underneath the map buttons. */
-.light-hud .germany-map .maplibregl-ctrl-bottom-right {
+.desktop-hud .germany-map .maplibregl-ctrl-bottom-right {
   right: 240px;
 }

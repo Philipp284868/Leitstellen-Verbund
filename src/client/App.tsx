@@ -228,7 +228,7 @@ function GameApp() {
       data-compact={layout.compact}
       data-queue-bottom={layout.queueBottom}
       data-stations-top={layout.stationsTop}
-      className={`app command-hud ${screen === "game" ? "in-game light-hud light" : ""} ${preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
+      className={`app command-hud ${screen === "game" ? "in-game desktop-hud" : preferences.light ? "light" : ""} ${preferences.reduced ? "reduced" : ""}`}
     >
       {screen === "start" ? (
         <MainMenu
