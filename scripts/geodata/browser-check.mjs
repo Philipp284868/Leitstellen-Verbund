@@ -105,20 +105,20 @@ try {
   s.missionWait = 100000;
   const facility = geo.provider.facilities.query({
     kind: "fire",
+    fireKinds: ["bf"],
     usable: true,
     search: "Berlin",
     limit: 100,
   })[0];
-  if (!facility) throw Error("Kein realer Berliner Teststandort im Katalog.");
-  f.apply(s, { type: "purchase-facility", facility: facility.id });
+  if (!facility || facility.fireProfile?.kind !== "bf")
+    throw Error("Keine belegte Berliner Berufsfeuerwache im Testkatalog.");
+  f.apply(s, {
+    type: "purchase-facility",
+    facility: facility.id,
+    quote: f.fireQuote(facility.fireProfile),
+  });
   f.tick(s, s.buildings[0].ready + 1, {}, false, false);
   const home = s.buildings[0].id;
-  s.buildings[0].organization = {
-    kind: "bf",
-    turnout: 30,
-    crew: "normal",
-    reserve: 0,
-  };
   for (const kind of ["hlf", "tlf"]) {
     f.apply(s, { type: "buy", kind, home });
   }

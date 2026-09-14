@@ -193,6 +193,10 @@ try {
     403,
   );
   const offers = await get("/api/facilities?kind=fire&status=available");
+  assert.ok(
+    offers.offers[0]?.quote,
+    "Wachkauf benötigt den angebotenen Preisbeleg",
+  );
   const action = async (a, id = crypto.randomUUID()) => {
     const r = await fetch(origin + "/api/action", {
       method: "POST",
@@ -207,7 +211,11 @@ try {
     assert.equal(r.status, 200, await r.clone().text());
   };
   const buyId = crypto.randomUUID(),
-    buy = { type: "purchase-facility", facility: offers.offers[0].facility.id };
+    buy = {
+      type: "purchase-facility",
+      facility: offers.offers[0].facility.id,
+      quote: offers.offers[0].quote,
+    };
   await action(buy, buyId);
   await action(buy, buyId);
   for (let n = 0; n < 35; n++) {
