@@ -238,7 +238,7 @@ test("Leaderboard, sicherer Versionsverlauf, Berichtsvorschau und Offlineexport 
     "Grundfinanzierung",
   );
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Support", exact: true }).click();
+  await openPanel(page, "Support");
   await expect(
     page.getByText("Direktversand nicht eingerichtet", { exact: true }),
   ).toBeVisible();
@@ -259,7 +259,7 @@ test("Leaderboard, sicherer Versionsverlauf, Berichtsvorschau und Offlineexport 
   await expect(preview).not.toContainText("192.168.1.1");
   await expect(
     preview.getByRole("button", {
-      name: "Öffentlich veröffentlichen",
+      name: "Geprüften Bericht senden",
       exact: true,
     }),
   ).toBeDisabled();

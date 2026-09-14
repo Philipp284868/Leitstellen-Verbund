@@ -1,23 +1,38 @@
-# Automatische Wachbesetzung
+# Reale Wachtypen und automatische Spielbesetzung
 
-Ab Version 2.21 stellt eine **fertige eigene Wache** ihre freigeschalteten Fahrzeugfunktionen einschließlich Besetzung und Qualifikation automatisch bereit. Bau- und Erweiterungspreise enthalten diesen Betrieb. Es gibt keinen zusätzlichen Kauf von Personen, keine kostenpflichtige Einzelqualifikation und keinen manuellen Grundschritt „Besetzen“.
+Der Standortkatalog beschreibt physische Einrichtungen mit Quellen, Datenstand und Zufahrt. Das Wachprofil trennt belegte Organisationsform und Besetzungsform von abstrahierten Spielwerten. Eine FF mit hauptamtlichen Kräften ist keine BF. Ein gemeinsames BF-/FF-Wachobjekt wird einmal exklusiv verkauft; eigenständige benachbarte Wachen bleiben getrennt.
 
-Unter **Gebäude** beziehungsweise in den Fahrzeugdetails stehen Betriebsprofil und konkrete Ausnahmegründe. Neue Funktionen benötigen weiterhin den passenden fertiggestellten Ausbau, Spielerlevel und tatsächlichen Stellplatz. Ein noch laufender Bau oder eine gesperrte Erweiterung wird nicht durch Personalautomatik übersprungen.
+Ungeklärte Angaben erscheinen als **Feuerwehr – Wachtyp ungeklärt**. Ein generischer Name oder das alleinige Wort professional beweist keine Berufsfeuerwehr. Neue typspezifische Angebote benötigen eine belegte Zuordnung. Die Datenlücke ändert nicht rückwirkend den bezahlten Besitz. Quellen und Prüfstand stehen im Standortdialog.
 
-Neue Feuerwachen sind FF. Ab Version 2.22 besitzen sie einen gespeicherten Kern aus vier bis sechs hauptamtlichen Personen. Ergänzende ehrenamtliche Kräfte kommen nach Alarmierung auf tatsächlichen Straßen versetzt zur Wache; erst die geeignete Mindestbesatzung ermöglicht das Ausrücken. Der Kern zählt Personen, nicht Fahrzeuge, und kann nicht mehrfach gleichzeitig gebunden werden. Privatleben und Dienstplan sind keine Pflichtverwaltung. Ab Stufe 6 ist die Umstellung auf BF für 1.350.000,00 € möglich. Vorhandene historische BF bleiben bestehen.
+## Spielprofile und Kaufpreise
 
-Die KatS-Wache stellt GW-SAN für Material und Behandlung sowie NKTW für Patiententransporte bereit. Qualifikation, tatsächliche Mobilisierung und Klinikübergabe bleiben nötig. [[Weltlagen-und-Katastrophenschutz]] erläutert die getrennte Katastrophenbereitschaft und ihre Wirkung auf Sammelzeiten.
+Diese Werte beschreiben die erste Ausbaustufe im Spiel, keine realen Immobilienpreise, Garagenzahlen, Personalstärken oder Ausrückgarantien. Fahrzeuge sind separat zu erwerben. Der Kaufdialog zeigt den verbindlichen aktuellen Preis und mögliche Freischaltungssperren.
 
-**Fahrzeuge in der Garage** zeigt physisch anwesende Fahrzeuge einschließlich dort abgestellter Status-6-Fahrzeuge. Fahrzeuge unterwegs stehen getrennt; eine Heimatzuordnung reicht nicht als Garagenplatz. Der Klappzustand bleibt pro Benutzer nach Echtzeitupdates und Wiederverbindung erhalten.
+| Profil | Neue Wache | Stellplätze | Spielpersonal | Diensthabender Anteil | Freischaltung |
+| --- | --- | --- | --- | --- | --- |
+| FF | 450.000 € | 4 | 36 | 0 | Stufe 1 |
+| FF mit hauptamtlichem Anteil | 850.000 € | 4 | 36 | 6 | Stufe 4 |
+| BF | 1.350.000 € | 4 | 18 | 18 | Stufe 6 |
+| Gemeinschaft BF / FF | 1.550.000 € | 6 | 48 | 12 | Stufe 6 |
+| Werkfeuerwehr | 1.150.000 € | 4 | 18 | 18 | Stufe 6 |
+| Betriebsfeuerwehr | 900.000 € | 3 | 12 | 12 | Stufe 5 |
+| Flughafenfeuerwehr | 1.750.000 € | 5 | 24 | 24 | Stufe 8 |
 
-## Was weiter eine echte Sperre ist
+Der normale Ausbau erhöht Spielkapazität innerhalb desselben Profils. Er macht eine FF niemals zur BF. Alte Kaufbelege werden nicht neu bepreist; es gibt keine nachträgliche Forderung oder Erstattung allein wegen der neuen Preistabelle. Startgeld, Fahrzeugpreise, Einsatzvergütungen und XP sind dadurch unverändert.
 
-Verletzte Kräfte arbeiten nicht still weiter. Bereits alarmierte, fahrende, eingesetzte, transportierende oder nachbereitende Besatzungen bleiben gebunden. Dieselbe Person kann nicht gleichzeitig zwei Fahrzeuge besetzen. Automatische Vertretung erfolgt nur am eigenen Standort in einem dort verfügbaren Fahrzeug; sie heilt niemanden und tauscht keine fahrende Crew aus.
+## Wie die Besatzung ausrückt
 
-Defekte, Patienten an Bord, Übergaben, notwendige Nachbereitung und ungeeignete Gebäudefunktionen bleiben wirksam. Die Anzeige nennt den konkreten Grund. Ein tatsächlich einsatzbereiter Rückkehrer darf mit vorhandener Besatzung direkt erneut alarmiert werden. [[Einsatzablauf]] erklärt FMS und operative Verfügbarkeit.
+Eine fertige eigene Wache stellt Spielpersonal und passende Grundqualifikation automatisch bereit. Es gibt keinen verpflichtenden Einzelkauf von Personen. Nachbereitungsbedarf, Verletzungen, Training und bereits gebundene Besatzungen bleiben wirksam.
 
-## Alte bezahlte Ausbildung
+- **FF:** Ehrenamtliche werden alarmiert und kommen nach dem vorhandenen Verfügbarkeitsmodell über Straßen zur Wache. Tageszeit und Bereitschaft beeinflussen die Sammlung. Bereits anwesende Kräfte fahren nicht erneut von zu Hause los. Erst die geeignete Mindestbesatzung ermöglicht die Ausfahrt.
+- **BF:** Die begrenzte diensthabende Schicht steht vor Ort bereit. Die vorbereitende Ausrückzeit beträgt im Grundprofil 25 Spielsekunden; es folgt die tatsächliche Anfahrt. Bei 18 gebundenen Personen können zwei LF mit je neun Kräften die Schicht vollständig belegen. Ein drittes LF erhält kein zusätzlich erfundenes Personal.
+- **Hauptamtliche FF und Gemeinschaft:** Die diensthabende Komponente ist endlich; weitere Fahrzeuge benötigen freiwillige Verstärkung. Eine Person kann nicht zwei Fahrzeuge gleichzeitig besetzen.
+- **Spezialwachen:** Organisation, Fähigkeiten, passende Stationierung und vorhandene Ausbauten bleiben maßgeblich. Der Preis enthält kein kostenloses Fahrzeug und keinen pauschalen Löschleistungsbonus.
 
-Die gesicherte Migration auf Schema 14 übernimmt bestehende Personen mit ihren Identitäten, Qualifikationen, Verletzungen und aktiven Fahrzeugbindungen. Bereits bezahlte laufende Ausbildungen werden einmalig ohne neue Gebühren abgeschlossen. Es gab zuvor keine gespeicherte Rekrutierungswarteschlange; sie wird daher auch nicht erfunden. Wiederholter Serverstart erzeugt keine zweite Personalrechnung oder wiederholte Übernahme.
+Gleich ausgestattete und qualifiziert besetzte Fahrzeuge behalten dieselben fachlichen Fähigkeiten. Disposition und AAO berücksichtigen tatsächliche Bereitschaft plus Anfahrt. Die FF ist kein schlechter ausgebildeter Fahrzeugtyp.
 
-[Technischer Plan, Kapazitäten und tatsächliche Tests](https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/GEBAEUDEBESETZUNG-2.21.md) · [[Wirtschaft]] · [[Serverbetrieb]].
+## Bestehende Wachen und offene Vorgänge
+
+Die einmalige gesicherte Profilmigration erhält Geld, Fahrzeuge, Personenkennungen, Qualifikationen und Kaufbelege. Ein alter pauschaler hauptamtlicher FF-Kern wird an das belegte Profil angepasst. Aktive Besatzungen bleiben bis zur Rückkehr und notwendigen Nachbereitung erhalten; der Dialog zeigt eine ausstehende Umstellung. Ungeklärte Bestandswachen behalten vorerst ihren operativen Altbetrieb.
+
+**Fahrzeuge in der Garage** bedeutet physisch anwesend, einschließlich dort abgestellter Status-6-Fahrzeuge. Fahrzeuge unterwegs stehen getrennt. Defekt, Patient an Bord, laufende Übergabe und Nachbereitung bleiben konkrete Verfügbarkeitsgründe. [[Einsatzablauf]] erklärt den sicheren Rückruf.

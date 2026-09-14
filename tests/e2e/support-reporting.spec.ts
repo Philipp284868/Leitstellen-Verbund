@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -50,7 +51,7 @@ test("Support veröffentlicht nur die bestätigte Vorschau, zeigt einen dauerhaf
       .getByLabel("Passwort", { exact: true })
       .fill("Reporting-browser-password!");
     await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-    await page.getByRole("button", { name: "Support", exact: true }).click();
+    await openPanel(page, "Support");
     await page
       .getByLabel("Titel", { exact: true })
       .fill("Darstellung eines Fahrzeugs fehlerhaft");
@@ -64,7 +65,7 @@ test("Support veröffentlicht nur die bestätigte Vorschau, zeigt einen dauerhaf
       .click();
     const preview = page.getByRole("article", { name: "Berichtsvorschau" }),
       publish = preview.getByRole("button", {
-        name: "Öffentlich veröffentlichen",
+        name: "Geprüften Bericht senden",
         exact: true,
       });
     await expect(preview).not.toContainText("private-secret");
@@ -73,18 +74,14 @@ test("Support veröffentlicht nur die bestätigte Vorschau, zeigt einen dauerhaf
     expect(posts).toHaveLength(0);
     await preview.getByRole("checkbox").check();
     await publish.click();
-    await expect(
-      preview.getByRole("link", { name: "GitHub-Issue #9876", exact: true }),
-    ).toHaveAttribute(
-      "href",
-      "https://github.com/Philipp284868/Leitstellen-Verbund/issues/9876",
-    );
+    await expect(preview).toContainText("Empfangsbestätigung: LV-9876");
+    await expect(preview.locator('a[href*="github.com"]')).toHaveCount(0);
     expect(posts).toHaveLength(1);
     expect(posts[0]).not.toMatch(
       /private-secret|person@example|@everyone|github_pat/,
     );
     await page.reload();
-    await page.getByRole("button", { name: "Support", exact: true }).click();
+    await openPanel(page, "Support");
     await page
       .getByText("Meine gespeicherten Berichte", { exact: true })
       .click();
@@ -92,8 +89,8 @@ test("Support veröffentlicht nur die bestätigte Vorschau, zeigt einen dauerhaf
       .getByRole("button", { name: /Darstellung eines Fahrzeugs fehlerhaft/ })
       .click();
     await expect(
-      page.getByRole("link", { name: "GitHub-Issue #9876", exact: true }),
-    ).toBeVisible();
+      page.getByRole("article", { name: "Berichtsvorschau" }),
+    ).toContainText("Empfangsbestätigung: LV-9876");
     expect(posts).toHaveLength(1);
     expect(
       app.db.sql

@@ -686,3 +686,21 @@
     -webkit-line-clamp: 1;
   }
 }
+
+.command-menu .menu-action {
+  text-decoration: none;
+}
+.command-menu .menu-action:disabled {
+  cursor: default;
+  transform: none;
+  opacity: 0.65;
+}
+.menu-privacy {
+  grid-column: 3;
+  grid-row: 4;
+  justify-self: end;
+  align-self: center;
+  font-size: 13px;
+  padding: 10px;
+  color: var(--hud-muted);
+}

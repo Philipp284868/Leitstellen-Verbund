@@ -93,7 +93,8 @@ it("schützt Berichtsvorschau und Veröffentlichung durch Sitzung, Origin, CSRF 
       await post("reports/submit", { id: p.id, publish: true }, cookie, me.csrf)
     ).json();
     expect(noToken.status).toBe("prepared");
-    expect(noToken.url).toBeNull();
+    expect(noToken.confirmation).toBeNull();
+    expect(noToken).not.toHaveProperty("url");
     expect(
       (
         await post(

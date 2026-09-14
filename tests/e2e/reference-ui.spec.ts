@@ -61,12 +61,7 @@ test("PC-Multiplayer-Menü verbindet Leitstellen, Hilfe, Nachrichten und Abmelde
     await expect(
       page.getByRole("button", { name: old, exact: true }),
     ).toHaveCount(0);
-  for (const entry of [
-    "Leaderboard",
-    "Support",
-    "Changelogs",
-    "Einstellungen",
-  ]) {
+  for (const entry of ["Leaderboard", "Wiki", "Changelogs", "Einstellungen"]) {
     await page.getByRole("button", { name: entry, exact: true }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     // Lazy content changes the centered dialog's height and close-button position.
@@ -135,7 +130,7 @@ for (const size of [
     await expect(page.locator(".menu-intel")).toContainText("Max Berger");
     for (const name of [
       "Leaderboard",
-      "Support",
+      "Wiki",
       "Changelogs",
       "Einstellungen",
       "Abmelden",

@@ -1,3 +1,4 @@
+import { openPanel } from "./ui-navigation";
 // CDP deny/grant is Chromium-specific. Common clipboard fallback remains in account-support for both engines.
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -50,7 +51,7 @@ test("Support behandelt tatsächlich verweigerte Clipboard-Berechtigung mit manu
   context,
 }, info) => {
   await login(page);
-  await page.getByRole("button", { name: "Support", exact: true }).click();
+  await openPanel(page, "Support");
   const dialog = page.getByRole("dialog", { name: "Support", exact: true });
   const technical = dialog.getByRole("textbox", {
     name: "Technische Angaben",

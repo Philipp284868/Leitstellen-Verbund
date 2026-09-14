@@ -21,9 +21,9 @@ const empty: ReportInput = {
   technical: true,
 };
 const states: Record<string, string> = {
-  prepared: "Vorschau intern gespeichert – noch nicht veröffentlicht",
+  prepared: "Vorschau intern gespeichert – noch nicht gesendet",
   sending: "Versand läuft",
-  sent: "Auf GitHub veröffentlicht",
+  sent: "Bericht an den Betreiber übermittelt",
   uncertain:
     "Versandstatus unklar. Vor jedem weiteren Versuch wird nach der Berichts-ID gesucht; kein blindes Neuerstellen.",
   retry:
@@ -117,26 +117,11 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
         >
           Gaminglive – Discord
         </a>
-        <a
-          href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Wiki
-        </a>
       </div>
       <LegalInfo />
       <p>
-        Sicherheitslücken bitte vertraulich über{" "}
-        <a
-          href="https://github.com/Philipp284868/Leitstellen-Verbund/security/advisories/new"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHubs private Sicherheitsmeldung
-        </a>{" "}
-        melden. Falls dort nicht verfügbar, den Serverbetreiber privat
-        kontaktieren.
+        Sicherheitslücken bitte vertraulich an den Serverbetreiber melden. Keine
+        Zugangsdaten oder vollständigen Datenbanken in Fehlerberichte aufnehmen.
       </p>
       <label>
         Technische Angaben
@@ -179,7 +164,7 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
           : configured === false
             ? "Direktversand nicht eingerichtet"
             : configured
-              ? "Öffentliche GitHub-Berichte nach Vorschau und ausdrücklicher Bestätigung möglich."
+              ? "Berichte an das berechtigte Repository-Team nach Vorschau und ausdrücklicher Bestätigung möglich."
               : "Versandkonfiguration wird geprüft …"}
       </p>
       {(
@@ -285,10 +270,11 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
           </pre>
           <p>Berichts-ID: {preview.id}</p>
           <p role="status">{states[preview.status]}</p>
-          {preview.url ? (
-            <a href={preview.url} target="_blank" rel="noopener noreferrer">
-              GitHub-Issue #{preview.issue}
-            </a>
+          {preview.confirmation ? (
+            <p>
+              Empfangsbestätigung: {preview.confirmation}. Der Betreiber kann
+              den Bericht zuordnen; ein Repositoryzugang ist nicht erforderlich.
+            </p>
           ) : (
             <>
               <label className="inline">
@@ -298,7 +284,9 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
                   onChange={(e) => setConsent(e.target.checked)}
                 />
                 Ich habe die bereinigten Angaben geprüft und möchte genau diesen
-                Bericht öffentlich auf GitHub veröffentlichen.
+                Bericht an den Betreiber über GitHub übermitteln. Die
+                angezeigten Daten verlassen dabei den Spielserver; Zugriff
+                erhält das berechtigte Repository-Team.
               </label>
               <button
                 disabled={
@@ -327,7 +315,7 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
                   ? "Versandstatus abgleichen"
                   : preview.status === "retry"
                     ? "Erneut ausdrücklich senden"
-                    : "Öffentlich veröffentlichen"}
+                    : "Geprüften Bericht senden"}
               </button>
             </>
           )}
@@ -350,14 +338,8 @@ Lokale Fehlercodes: ${JSON.stringify(clientDiagnostics())}`;
         </details>
       )}
       <p>
-        <a
-          href="https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Normaler GitHub-Meldeweg
-        </a>{" "}
-        – Export vorher prüfen und bewusst selbst übernehmen.
+        Ohne eingerichteten Direktversand: bereinigten Export prüfen und bewusst
+        selbst an den Betreiber übergeben.
       </p>
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}

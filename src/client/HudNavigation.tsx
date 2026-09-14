@@ -1,5 +1,6 @@
 import {
   Menu,
+  BookOpen,
   Search,
   Truck,
   Building2,
@@ -27,7 +28,8 @@ const items = [
   ["players", "Leaderboard", Trophy],
   ["news", "Changelogs", Newspaper],
   ["settings", "Einstellungen", Settings],
-  ["support", "Support", LifeBuoy],
+  ["help", "Wiki", BookOpen],
+  ["support", "Fehler melden", LifeBuoy],
 ] as const;
 export function HudNavigation({
   panel,

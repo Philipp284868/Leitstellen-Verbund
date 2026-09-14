@@ -1,3 +1,5 @@
+import licenseNotice from "../../docs/LIZENZEN.md?raw";
+import { privacySections } from "../shared/player-privacy";
 import { SupportPanel } from "./Support";
 import { useMemo, useState } from "react";
 import { capabilities, missions } from "../shared/catalog";
@@ -234,59 +236,29 @@ export function MenuPanels({
           OpenStreetMap-Daten; Herkunft und Kartenlizenzen sind an der Karte und
           im Projekt dokumentiert.
         </p>
-        <ul>
-          <li>
-            <a
-              href="https://github.com/Philipp284868/Leitstellen-Verbund/graphs/contributors"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Mitwirkende am Quellcode
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/LIZENZEN.md"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Komponenten, Datenquellen und Lizenzen
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/Philipp284868/Leitstellen-Verbund/blob/main/docs/AUDIO.md"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Musik und Klangerzeuger
-            </a>
-          </li>
-        </ul>
-        <a
-          href="https://github.com/Philipp284868/Leitstellen-Verbund"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Projekt und Quellcode
-        </a>
+        <details>
+          <summary>Komponenten, Datenquellen und Lizenzen</summary>
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+              overflowWrap: "anywhere",
+            }}
+          >
+            {licenseNotice}
+          </pre>
+        </details>
       </section>
     );
   if (panel === "privacy")
     return (
       <section className="menu-flow">
-        <h3>Deine Daten im Spiel</h3>
-        <p>
-          Konten, Sitzungen, Leitstellenstände und Spielaktionen werden auf dem
-          verbundenen Spielserver verarbeitet. Dieser Browser verwendet lokale
-          Einstellungen für Audio und Bedienung; freiwillige lokale Sicherungen
-          und eigene Audiodateien bleiben auf diesem Gerät.
-        </p>
-        <p>
-          Die Spielkarte benötigt keine externen Kartenkonten oder
-          Kartendienste. Für Betrieb, Aufbewahrung und Löschung der Serverdaten
-          ist der jeweilige Serverbetreiber zuständig.
-        </p>
+        {privacySections.map(([title, text]) => (
+          <section key={title}>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </section>
+        ))}
         <button onClick={() => onOpen("backups")}>
           Eigene Daten exportieren
         </button>

@@ -1,5 +1,7 @@
 import {
   Building2,
+  BookOpen,
+  ShoppingBag,
   ChevronRight,
   Clock,
   LifeBuoy,
@@ -66,9 +68,21 @@ export function MainMenu({
     },
     {
       name: "Support",
-      text: "Bedienung, Einsatzabläufe und Serverbetrieb",
+      text: "Gaminglive – Discord",
       icon: LifeBuoy,
-      action: () => onOpen("support"),
+      href: "https://discord.gg/RgtUHaWpcQ",
+    },
+    {
+      name: "Wiki",
+      text: "Spielerhilfe direkt im Spiel lesen",
+      icon: BookOpen,
+      action: () => onOpen("help"),
+    },
+    {
+      name: "Shop",
+      text: "Demnächst",
+      icon: ShoppingBag,
+      disabled: true,
     },
     {
       name: "Abmelden",
@@ -92,22 +106,42 @@ export function MainMenu({
         </div>
       </header>
       <nav className="menu-actions" aria-label="Hauptmenü">
-        {actions.map(({ name, text, icon: Icon, action, primary }) => (
-          <button
-            className={primary ? "menu-action primary" : "menu-action"}
-            key={name}
-            aria-label={name}
-            disabled={primary && readonly}
-            onClick={action}
-          >
-            <Icon />
-            <span>
-              <strong>{name}</strong>
-              <small>{text}</small>
-            </span>
-            <ChevronRight className="action-chevron" />
-          </button>
-        ))}
+        {actions.map(
+          ({ name, text, icon: Icon, action, primary, href, disabled }) => {
+            const content = (
+              <>
+                <Icon />
+                <span>
+                  <strong>{name}</strong>
+                  <small>{text}</small>
+                </span>
+                {!disabled && <ChevronRight className="action-chevron" />}
+              </>
+            );
+            return href ? (
+              <a
+                key={name}
+                className="menu-action"
+                aria-label={name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {content}
+              </a>
+            ) : (
+              <button
+                key={name}
+                className={primary ? "menu-action primary" : "menu-action"}
+                aria-label={name}
+                disabled={disabled || (primary && readonly)}
+                onClick={action}
+              >
+                {content}
+              </button>
+            );
+          },
+        )}
       </nav>
       <aside className="menu-intel" aria-label="Deine Leitstelle im Überblick">
         <button
@@ -203,6 +237,14 @@ export function MainMenu({
         </section>
       </aside>
       <span className="menu-version">Version {version}</span>
+      <a
+        className="menu-privacy"
+        href="/datenschutz"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Datenschutz
+      </a>
     </main>
   );
 }

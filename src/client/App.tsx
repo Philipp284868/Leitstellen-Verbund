@@ -20,7 +20,7 @@ import { DynamicsPanel } from "./Dynamics";
 import { MainMenu } from "./MainMenu";
 import { BuildingIcon } from "../shared/map-icons";
 import { navigation } from "./navigation";
-import { BackupPanel, Help, MissionPanel, ProgressPanel } from "./Panels";
+import { BackupPanel, MissionPanel, ProgressPanel } from "./Panels";
 import { WORLD_NAME } from "../shared/product";
 const BuildingPanel = lazy(() =>
   import("./Resources").then((m) => ({ default: m.BuildingPanel })),
@@ -41,6 +41,9 @@ const Progression = lazy(() =>
 );
 const GameHud = lazy(() =>
   import("./GameHud").then((m) => ({ default: m.GameHud })),
+);
+const PlayerWiki = lazy(() =>
+  import("./PlayerWiki").then((m) => ({ default: m.PlayerWiki })),
 );
 const MenuPanels = lazy(() =>
   import("./MenuPanels").then((m) => ({ default: m.MenuPanels })),
@@ -373,34 +376,7 @@ function GameApp() {
                 setModal("");
               }}
             />
-            {modal === "help" && (
-              <>
-                <p>
-                  <a
-                    href="https://github.com/Philipp284868/Leitstellen-Verbund/wiki"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Wiki öffnen
-                  </a>
-                </p>
-                <button onClick={() => setModal("catalog")}>
-                  Einsatzkatalog
-                </button>
-                <div className="action-grid">
-                  <button onClick={() => setModal("aaos")}>
-                    AAO verwalten
-                  </button>
-                  <button onClick={() => setModal("fms")}>
-                    FMS & Alarmierung
-                  </button>
-                  <button onClick={() => setModal("account")}>
-                    Konto & Sicherheit
-                  </button>
-                </div>
-                <Help />
-              </>
-            )}
+            {modal === "help" && <PlayerWiki />}
             {modal === "backups" && <BackupPanel s={s} />}
             {modal === "settings" && (
               <Settings onOpen={setModal} initialTab={settingsTab} />

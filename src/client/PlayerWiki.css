@@ -1,0 +1,49 @@
+.wiki-layout {
+  display: grid;
+  grid-template-columns: minmax(170px, 230px) minmax(0, 1fr);
+  gap: 24px;
+}
+.wiki-layout nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: start;
+}
+.wiki-layout article {
+  overflow-wrap: anywhere;
+}
+.wiki-layout article p {
+  white-space: pre-line;
+  line-height: 1.65;
+}
+.wiki-layout [aria-current="page"] {
+  border-color: var(--hud-accent);
+}
+.wiki-link {
+  display: inline;
+  padding: 0 3px;
+  text-decoration: underline;
+}
+.wiki-table {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.wiki-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.wiki-table td,
+.wiki-table th {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--hud-border, #496170);
+}
+.player-wiki li {
+  line-height: 1.6;
+  margin-block: 8px;
+}
+@media (max-width: 850px) {
+  .wiki-layout {
+    grid-template-columns: 1fr;
+  }
+}

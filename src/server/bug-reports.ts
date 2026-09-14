@@ -50,9 +50,8 @@ export class BugReports {
       status: String(r.status),
       preview: JSON.parse(String(r.payload)) as { title: string; text: string },
       issue: r.issue ? Number(r.issue) : null,
-      url: r.issue
-        ? `https://github.com/${REPORT_REPOSITORY}/issues/${Number(r.issue)}`
-        : null,
+      // The confirmation belongs to its submitter; private issue URLs are not player navigation.
+      confirmation: r.issue ? `LV-${Number(r.issue)}` : null,
       retryAt: Number(r.retry_at),
       configured: this.configured(),
     };

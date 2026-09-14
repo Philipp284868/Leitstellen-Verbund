@@ -133,7 +133,8 @@ for (const [width, height, scale] of [
         "Leaderboard",
         "Changelogs",
         "Einstellungen",
-        "Support",
+        "Wiki",
+        "Fehler melden",
         "Zurück zum Hauptmenü",
       ]);
       const navBox = await nav.boundingBox();

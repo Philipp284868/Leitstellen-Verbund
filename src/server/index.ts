@@ -1,4 +1,5 @@
 import { respondFacilities } from "./facilities/respond";
+import { privacySections } from "../shared/player-privacy";
 import { RateLimitError } from "./rate-limit";
 import { clientAddress } from "./client-address";
 import { facilityContext } from "./facilities/context";
@@ -685,6 +686,21 @@ export function startServer(
       }
       if (!["GET", "HEAD"].includes(req.method || ""))
         return reply(res, 405, { error: "Methode nicht erlaubt." });
+      if (path === "/datenschutz") {
+        const escape = (text: string) =>
+          text
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;");
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.writeHead(200);
+        return void res.end(
+          req.method === "HEAD"
+            ? undefined
+            : `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Datenschutz · Leitstellen-Verbund</title><main><h1>Datenschutz</h1>${privacySections.map(([title, text]) => `<section><h2>${escape(title)}</h2><p>${escape(text)}</p></section>`).join("")}<a href="/">Zurück zum Spiel</a></main></html>`,
+        );
+      }
       let relative =
         path === "/" ? "index.html" : decodeURIComponent(path).slice(1);
       if (

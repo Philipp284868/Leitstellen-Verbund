@@ -77,6 +77,96 @@ const countSessions = () =>
       .get(owner)!.n,
   );
 
+test("Hauptmenü verbindet Discord direkt, hält Shop inaktiv und liefert Wiki und Datenschutz lokal", async ({
+  page,
+}) => {
+  const response = await page.request.get(origin + "/datenschutz");
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain("Verantwortlicher Betreiber");
+  let githubRequests = 0;
+  await page.route(/https:\/\/(?:api\.)?github\.com\//, (route) => {
+    githubRequests++;
+    return route.abort();
+  });
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "lv-device-v2",
+      JSON.stringify({ version: 2, scale: 150 }),
+    ),
+  );
+  await login(page);
+  const nav = page.getByRole("navigation", { name: "Hauptmenü", exact: true });
+  expect(
+    await nav
+      .locator(":scope > *")
+      .evaluateAll((items) => items.map((e) => e.getAttribute("aria-label"))),
+  ).toEqual([
+    "Spielen",
+    "Leaderboard",
+    "Changelogs",
+    "Einstellungen",
+    "Support",
+    "Wiki",
+    "Shop",
+    "Abmelden",
+  ]);
+  const support = nav.getByRole("link", { name: "Support", exact: true });
+  await expect(support).toHaveAttribute(
+    "href",
+    "https://discord.gg/RgtUHaWpcQ",
+  );
+  await expect(support).toHaveAttribute("target", "_blank");
+  await expect(support).toHaveAttribute("rel", "noopener noreferrer");
+  const shop = nav.getByRole("button", { name: "Shop", exact: true });
+  await expect(shop).toBeDisabled();
+  await expect(shop).toContainText("Demnächst");
+  const privacy = page.getByRole("link", { name: "Datenschutz", exact: true });
+  await expect(privacy).toHaveCount(1);
+  for (const size of [
+    { width: 1366, height: 768 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(size);
+    const box = (await privacy.boundingBox())!;
+    expect(box.x).toBeGreaterThan(size.width * 0.75);
+    expect(box.y).toBeGreaterThan(size.height * 0.8);
+    expect(box.x + box.width).toBeLessThanOrEqual(size.width);
+    expect(box.y + box.height).toBeLessThanOrEqual(size.height);
+  }
+  await nav.getByRole("button", { name: "Wiki", exact: true }).click();
+  const wiki = page.getByRole("region", { name: "Spieler-Wiki" });
+  await expect(wiki).toBeVisible();
+  await wiki.getByLabel("Wiki durchsuchen").fill("Hydranten");
+  await wiki.getByRole("navigation").getByRole("button").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(wiki.getByRole("article")).toContainText(/Hydranten/i);
+  await wiki.getByRole("button", { name: "Zur vorherigen Hilfeseite" }).click();
+  await expect(wiki.getByRole("article")).toHaveAttribute(
+    "aria-label",
+    "Einstieg",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "Spielen", exact: true }).click();
+  const map = page.getByTestId("germany-map-viewport");
+  await expect(map).toBeVisible();
+  await expect(map).toHaveAttribute("data-camera", /zoom/);
+  const camera = await map.getAttribute("data-camera");
+  const requests: string[] = [];
+  page.on("request", (r) => {
+    if (r.method() === "POST") requests.push(r.url());
+  });
+  await openPanel(page, "Wiki");
+  await expect(wiki).toBeVisible();
+  await page.keyboard.press("Escape");
+  expect(await map.getAttribute("data-camera")).toBe(camera);
+  expect(requests).toEqual([]);
+  expect(githubRequests).toBe(0);
+  await expect(
+    page.getByRole("link", { name: "Datenschutz", exact: true }),
+  ).toHaveCount(0);
+});
+
 for (const operation of ["reset", "delete"] as const)
   test(`Kontoverwaltung: ${operation} mit Passwort, Vorschau, Text und widerrufener Sitzung`, async ({
     page,
@@ -285,11 +375,11 @@ test("Support ohne Clipboard-API bietet weiterhin auswählbaren manuellen Text u
     }),
   );
   await login(page);
+  await openPanel(page, "Support");
   const actions: string[] = [];
   page.on("request", (request) => {
     if (request.method() === "POST") actions.push(request.url());
   });
-  await page.getByRole("button", { name: "Support", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Support", exact: true });
   await dialog
     .getByRole("button", { name: "Angaben kopieren", exact: true })
@@ -298,12 +388,7 @@ test("Support ohne Clipboard-API bietet weiterhin auswählbaren manuellen Text u
   await expect(
     dialog.getByRole("textbox", { name: "Technische Angaben", exact: true }),
   ).toHaveValue(/Leitstellen-Verbund/);
-  await expect(
-    dialog.getByRole("link", { name: "Normaler GitHub-Meldeweg", exact: true }),
-  ).toHaveAttribute(
-    "href",
-    "https://github.com/Philipp284868/Leitstellen-Verbund/issues/new/choose",
-  );
+  await expect(dialog.locator('a[href*="github.com"]')).toHaveCount(0);
   expect(actions).toEqual([]);
 });
 

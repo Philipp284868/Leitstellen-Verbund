@@ -4,7 +4,7 @@ Alle Spielkonten besitzen die Rolle player; es gibt keinen privilegierten Browse
 
 Der Leitstelleninhaber kann bestehende Konten einladen. Erst deren Annahme erlaubt gemeinsame Disposition. Bis zu acht Disponenten können einer Leitstelle angehören. Mitglieder können die Spielaktionen des gemeinsamen Bestands ausführen; Einladungen und Entfernung anderer Mitglieder bleiben beim Inhaber. Es gibt kein feineres frei konfigurierbares Rollen-/Dienstrechte-System.
 
-Unabhängige Leitstellen sehen neue Einsätze und Besitz nicht automatisch. Unterstützung wird ausdrücklich angefragt und zugesagt; nur die dazu freigegebenen Kräfte und Einsätze werden sichtbar. Eigener vorheriger Besitz eines beitretenden Disponenten wird nicht gelöscht. Im Spiel führt **Funk → Verbund & Leitstellenfunk** zu gemeinsamer Disposition und Nachbarhilfe.
+Unabhängige Leitstellen sehen neue Einsätze und Besitz nicht automatisch. Unterstützung wird ausdrücklich angefragt und zugesagt; nur die dazu freigegebenen Kräfte und Einsätze werden sichtbar. Eigener vorheriger Besitz eines beitretenden Disponenten wird nicht gelöscht. Im Spiel führt **Menü → Verbund** zu gemeinsamer Disposition und Nachbarhilfe.
 
 ## Öffentliche Anwesenheit
 
@@ -19,3 +19,6 @@ Die öffentliche Spielerliste wird auf einem getrennten Datenkanal übertragen. 
 ## Verbindlicher Spielzustand
 
 Käufe, Alarmierungen, Besitz, XP und Abschlussbelohnungen werden serverseitig geprüft. Wiederholte Aktionskennungen dürfen keine doppelte Wirkung erzeugen. Eine manuelle FMS-Korrektur umgeht keine tatsächliche Fahrzeug-, Besatzungs- oder Nachbereitungssperre. Normale Spieler können Weltzeit weder pausieren noch beschleunigen; das Produkt läuft fest mit 1×.
+
+
+Ein Helfer darf seine eigenen Kräfte zurückrufen, aber nicht den ganzen fremden Einsatz aufgeben. Die Aufgabe ist nur innerhalb der verantwortlichen Leitstelle möglich. Patienten an Bord und laufende Klinikübergaben behalten auch bei angeordneter Rückkehr ihre Zuordnung.

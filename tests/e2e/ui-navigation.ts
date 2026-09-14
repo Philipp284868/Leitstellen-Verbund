@@ -22,6 +22,19 @@ export async function enterGame(page: Page) {
   ).toBeVisible();
 }
 export async function openPanel(page: Page, name: string) {
+  if (name === "Support")
+    await expect(
+      page
+        .getByRole("button", { name: "Spielen", exact: true })
+        .or(page.getByRole("button", { name: "Leitstellenmenü", exact: true })),
+    ).toBeVisible();
+  if (
+    name === "Support" &&
+    (await page
+      .getByRole("button", { name: "Spielen", exact: true })
+      .isVisible())
+  )
+    await enterGame(page);
   if (
     name === "Fortschritt" &&
     (await page.locator(".level-tile").isVisible())
@@ -35,6 +48,7 @@ export async function openPanel(page: Page, name: string) {
     await expect(modal).toHaveCount(0);
   }
   const routes: Record<string, string[]> = {
+    Support: ["Fehler melden"],
     AAO: ["AAO & Disposition"],
     "AAO verwalten": ["AAO & Disposition"],
     FMS: ["AAO & Disposition", "FMS & Alarmierung"],

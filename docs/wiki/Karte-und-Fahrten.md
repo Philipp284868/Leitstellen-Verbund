@@ -1,8 +1,8 @@
 # Deutschlandkarte, Symbole und Fahrten
 
-Die [[Deutschland]]-Welt verwendet reale OSM-Vektorkacheln, Straßenrouting und eine Orts-/Adressdatenbank für das gesamte Land. Menü und Spiel zeigen denselben Datenstand. Die Version 2.19 ergänzt Kartensymbole, geografische Einrichtungen und öffentliche Spielerstandorte, ohne Spielkoordinaten, Besitz oder Fahrstrecken umzuschreiben.
+Die Deutschlandwelt verwendet reale OSM-Vektorkacheln, Straßenrouting und eine Orts-/Adressdatenbank für das gesamte Land. Menü und Spiel zeigen denselben Datenstand. Die Version 2.19 ergänzt Kartensymbole, geografische Einrichtungen und öffentliche Spielerstandorte, ohne Spielkoordinaten, Besitz oder Fahrstrecken umzuschreiben.
 
-**Karte** in der oberen Hauptleiste öffnet sämtliche Kartenwerkzeuge: Suche, Filter, Ebenen, Zoom, Legende und Steuerung. Die Lupe öffnet die Suche mit direktem Eingabefokus. Ein erneuter Klick auf Karte oder Escape schließt die Werkzeuge. Maßstab und Quellenangaben bleiben an der Karte. Eine untere dauerhafte Werkzeugleiste gibt es nicht. Manuelles Verschieben und Zoomen bleiben bei Liveupdates und bei der Rückkehr aus dem Hauptmenü erhalten; andere Spieler übernehmen deine Kamera nicht.
+Die Kartenwerkzeuge unten rechts öffnen Suche, Filter, Ebenen, Zoom und Legende. Die Lupe fokussiert die Suche. Escape schließt die Werkzeuge. Maßstab und Quellenangaben bleiben sichtbar. Manuelles Verschieben und Zoomen bleiben bei Liveupdates und bei der Rückkehr aus dem Hauptmenü erhalten; andere Spieler übernehmen deine Kamera nicht.
 
 ## Fahrzeuge, Wachen und Spieler unterscheiden
 
@@ -32,14 +32,19 @@ Routen, Kilometer, verbleibende Fahrzeit, ETA und FMS beziehen sich auf die tats
 
 Medizinische Einsätze besitzen grüne Grundmarker mit Kreuz, Brände rote Flammen und ungeklärte Anrufe neutrale Telefonsymbole. Medizin bleibt auch bei Auswahl und NOTFALL grün; ein zusätzliches Ausrufezeichen kennzeichnet höchste Dringlichkeit. Gleichartige Cluster behalten ihre Kategorie. Gemischte Cluster zeigen ein Gruppensymbol und lassen sich vollständig auflösen. Ein Brand mit Verletzten behält seine Brandkategorie und bekommt eine zusätzliche medizinische Kennzeichnung. Die Einordnung verwendet nur den bekannten Informationsstand.
 
-Wasserrettung in Deutschland verwendet eine vollständige Kombination aus Zugfahrzeug und Bootsanhänger auf Straßen zu einem verifizierten Uferzugang. Ein befahrbares offenes Wasser-/Bootsnetz ist weiterhin nicht freigegeben. Eine fehlende Straßenroute wird nicht durch eine erfundene Direktfahrt oder Bootsstrecke ersetzt. Die bekannten Grenzen dynamischer Sperrumfahrungen stehen unter [[Deutschland]].
+Wasserrettung in Deutschland verwendet eine vollständige Kombination aus Zugfahrzeug und Bootsanhänger auf Straßen zu einem verifizierten Uferzugang. Ein befahrbares offenes Wasser-/Bootsnetz ist weiterhin nicht freigegeben. Eine fehlende Straßenroute wird nicht durch eine erfundene Direktfahrt oder Bootsstrecke ersetzt. Dynamische Sperrumfahrungen benötigen weiterhin passende Routingdaten.
 
 ## Historischer Bestand
 
-Die historische fiktive Region ist aus dem aktiven Produkt entfernt. [[Deutschland]] beschreibt ausschließlich den Bestandsschutz und verweist auf den schreibgeschützten Export.
+Die historische fiktive Region ist aus dem aktiven Produkt entfernt. Alte Spielstände bleiben geschützt; technische Fragen zur Übernahme klärt der Betreiber.
 
 ## Einsatzorte ab 2.22
 
 Reguläre neue Einsätze benötigen einen belegten Ort und einen geeigneten Zugang, erreichbar in höchstens 900 Sekunden tatsächlicher Straßenfahrzeit mit den grundsätzlich nötigen eigenen Fahrzeugprofilen. Ausrücken wird zusätzlich ausgewiesen. Ein schneller Führungswagen oder fremder Standort erweitert die eigene Zuständigkeit nicht. Freiwillige überörtliche Hilfe darf länger fahren und zeigt ihre tatsächliche ETA vor Zusage.
 
-Ungültige neue Kandidaten werden verworfen; bei fehlendem Ergebnis folgt ein begrenzter späterer Versuch. Bestehende Orte werden am ursprünglichen Standort geprüft. Eine Zufahrtskorrektur routet laufende Kräfte von ihrer tatsächlichen Position neu. Unrettbare technische Altfälle werden ohne Vergütung, XP und Wertung im Archiv aufgehoben. Es gibt keine stille Verlegung in eine andere Stadt. [[Weltlagen-und-Katastrophenschutz]] und die ausführliche technische Anleitung erklären regionale Wetterwirkungen und Datenstand.
+Ungültige neue Kandidaten werden verworfen; bei fehlendem Ergebnis folgt ein begrenzter späterer Versuch. Bestehende Orte werden am ursprünglichen Standort geprüft. Eine Zufahrtskorrektur routet laufende Kräfte von ihrer tatsächlichen Position neu. Unrettbare technische Altfälle werden ohne Vergütung, XP und Wertung im Archiv aufgehoben. Es gibt keine stille Verlegung in eine andere Stadt. Die Wetteranzeige öffnet die simulierte Weltlage. Quellen und Datenstand stehen an der Karte und den Standortdetails.
+
+
+## Maßstab und echte Positionen
+
+Einzelne Fahrzeugmarker erscheinen nach der bestehenden 200-m-Maßstabsregel; weiter herausgezoomt hält die Karte den Überblick. Kartenzeichen oder versetzte Auswahlmarken ändern keine tatsächlichen Koordinaten. Quellenattribution bleibt unabhängig von geöffneten Menüs sichtbar. Belegte Feuerwehrprofile stehen am Standort; ein ungeklärter Typ bekommt keine erfundene FF-/BF-Eigenschaft.
