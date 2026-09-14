@@ -698,15 +698,26 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     expect((await request("/api/health")).status).toBe(200);
   }, 20000);
   it("weist ungültige Routerverträge weiterhin sichtbar zurück und rollt Game.step zurück", async () => {
-    waterGeneration();
-    const playing = presenceClient(user);
-    await vi.waitFor(() => expect(playing.socket.connected).toBe(true));
-    await new Promise<void>((done) =>
-      playing.socket.emit("play:presence", { active: true }, () => done()),
-    );
-    await routerMode("invalid");
+    // A periodic tick during the socket/router setup can consume the prepared
+    // incident before the invalid response is installed. Test the real step
+    // only after all asynchronous setup has completed, as in the retry case.
+    const pause = vi.spyOn(app!.game, "step").mockImplementation(() => {});
+    try {
+      waterGeneration();
+      const playing = presenceClient(user);
+      await vi.waitFor(() => expect(playing.socket.connected).toBe(true));
+      await new Promise<void>((done) =>
+        playing.socket.emit("play:presence", { active: true }, () => done()),
+      );
+      // Deliberately cross a server timer boundary to cover delayed setup.
+      await new Promise((done) => setTimeout(done, 1100));
+      await routerMode("invalid");
+    } finally {
+      pause.mockRestore();
+    }
     const before = app!.db.all().get(user.id)!;
-    expect(() => app!.game.step(1)).toThrow();
+    expect(before.missions).toHaveLength(0);
+    expect(() => app!.game.step(1)).toThrow(/Ungültige Antwort/);
     const after = app!.db.all().get(user.id)!;
     expect(after.seed).toBe(before.seed);
     expect(after.time).toBe(before.time);
