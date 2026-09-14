@@ -1,4 +1,5 @@
 import type { Point } from "../germany/projection";
+import type { FireProfile } from "./fire-profile";
 
 export const facilityKinds = [
   "fire",
@@ -26,6 +27,7 @@ export const facilityLabels: Record<FacilityKind, string> = {
   other: "Weitere Einrichtung",
 };
 export type Facility = {
+  fireProfile?: FireProfile;
   id: string;
   kind: FacilityKind;
   name: string;
@@ -53,15 +55,18 @@ export type FacilityQuery = {
   kind?: FacilityKind;
   ids?: string[];
   usable?: boolean;
+  fireKinds?: FireProfile["kind"][];
   offerFilter?: {
     kinds: FacilityKind[];
     owned: string[];
     available: boolean;
+    fireKinds?: FireProfile["kind"][];
   };
   limit?: number;
   offset?: number;
 };
 export type FacilityCluster = {
+  fireKind?: FireProfile["kind"];
   lon: number;
   lat: number;
   count: number;

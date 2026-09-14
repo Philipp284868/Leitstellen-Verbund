@@ -90,7 +90,10 @@ export function EnvironmentPanel({ s }: { s: Save }) {
 function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
   const form = useCommandForm();
   const editable =
-    m.phase !== "done" && p.condition !== "dead" && p.transport !== "delivered";
+    m.phase !== "done" &&
+    p.condition !== "dead" &&
+    p.transport !== "delivered" &&
+    p.transport !== "external";
   return (
     <article
       className={`patient-card condition-${p.condition}`}
@@ -113,11 +116,13 @@ function PatientCard({ s, m, p }: { s: Save; m: Mission; p: Patient }) {
           ? `Transport: ${s.vehicles.find((v) => v.id === p.vehicle)?.name || p.vehicle}`
           : p.transport === "delivered"
             ? "Im Krankenhaus übergeben"
-            : p.condition === "dead"
-              ? "Tod dokumentiert"
-              : p.health >= 55 && p.treatment >= 80
-                ? "Transportfähig"
-                : "Versorgung am Einsatzort"}
+            : p.transport === "external"
+              ? "Am Einsatzort extern übernommen"
+              : p.condition === "dead"
+                ? "Tod dokumentiert"
+                : p.health >= 55 && p.treatment >= 80
+                  ? "Transportfähig"
+                  : "Versorgung am Einsatzort"}
       </p>
       <dl className="vital-grid">
         <div>

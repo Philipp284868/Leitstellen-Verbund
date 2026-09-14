@@ -19,6 +19,7 @@ import { injuryReason } from "./responder-recovery";
 import type { Alarm } from "./schema";
 import { presentAtStation } from "./staging";
 import { volunteerArrival, volunteerAvailability } from "./volunteers";
+import { activeFireGameProfile } from "./fire-roster";
 export const absenceNames = {
   none: "Verfügbar",
   vacation: "Urlaub",
@@ -70,6 +71,15 @@ export function newStationProfile(type: string): Station | undefined {
   };
 }
 export function stationCapacity(b: Building) {
+  const game = activeFireGameProfile(b);
+  if (game)
+    return {
+      slots: Math.max(game.slots * b.level, b.fireCapacityRetained?.slots ?? 0),
+      people: Math.max(
+        game.people * b.level,
+        b.fireCapacityRetained?.people ?? 0,
+      ),
+    };
   const multiplier =
     b.type === "fire" && stationProfile(b).kind === "bf" ? 2 : 1;
   const slots = bt(b.type).slots * b.level * multiplier;
@@ -120,6 +130,10 @@ export function personAvailable(s: Save, p: Person) {
   const injury = injuryReason(s, p);
   if (injury) return injury;
   if (p.training || p.ready > s.time) return "In Ausbildung";
+  const station = s.buildings.find((b) => b.id === p.home);
+  const fire = station && activeFireGameProfile(station);
+  if (fire && fire.paid === fire.people && !p.professional)
+    return "Bestandspersonal außerhalb der begrenzten diensthabenden Spielschicht";
   // Operational cover is supplied with the building; ordinary shifts and leave
   // no longer randomly disable its promised baseline. Real injuries stay above.
   if (s.staffing?.version === 1) return "";

@@ -6,7 +6,8 @@ import type { AidAction, AidRequest } from "../simulation/organizations-schema";
 import { vt, mt, type Skills } from "../shared/catalog";
 import { effectiveSkills } from "../simulation/major-resources";
 import { assessRemoteWithdrawal } from "../simulation/withdrawal";
-import { beginTrip, readiness, recall } from "../shared/engine";
+import { beginTrip, readiness } from "../shared/engine";
+import { orderReturn } from "../simulation/return-orders";
 import { dispatchable } from "../simulation/dispatch";
 import { planTurnout } from "../simulation/staffing";
 import { record, simId, writable } from "../simulation/events";
@@ -90,9 +91,18 @@ export function aidCommand(
     (m) => m.id === r.mission && m.round === r.round,
   );
   const isOwner = owner === s;
+  if (
+    a.type === "aid-close" &&
+    (r.closing || r.state === "DONE" || r.state === "CANCELLED")
+  )
+    return;
   if (!m || ["DONE", "DECLINED", "CANCELLED"].includes(r.state))
     throw Error("Anfrage ist bereits beendet.");
   writable(m);
+  if (r.closing && a.type !== "aid-message")
+    throw Error(
+      "Rückkehr bereits angeordnet; keine weiteren Zusagen für diese Anfrage.",
+    );
   if (a.type === "aid-send") {
     if (!isOwner || r.state !== "DRAFT" || !eligible.has(r.peer))
       throw Error("Entwurf kann nicht versendet werden.");
@@ -206,8 +216,6 @@ export function aidCommand(
     const vehicles = helper.vehicles.filter((v) =>
       r.assignments.some((x) => x.assignment === v.assignment),
     );
-    if (vehicles.some((v) => v.patients))
-      throw Error("Laufenden Patiententransport zuerst abschließen.");
     if (vehicles.some((v) => v.status === "scene")) {
       const units: Vehicle[] = [];
       const skills: Skills = {};
@@ -232,13 +240,21 @@ export function aidCommand(
       );
       if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
     }
-    for (const v of vehicles) recall(helper, v);
-    r.state =
+    for (const v of vehicles) orderReturn(helper, v, actor);
+    const target =
       a.op === "decline"
         ? "DECLINED"
         : a.op === "cancel"
           ? "CANCELLED"
           : "DONE";
+    if (
+      target !== "DECLINED" &&
+      vehicles.some((v) =>
+        r.assignments.some((x) => x.assignment === v.assignment),
+      )
+    )
+      r.closing = { state: target, actor, at: owner.time };
+    else r.state = target;
   }
   r.updated = owner.time;
   record(
@@ -254,7 +270,35 @@ import {
   newOperatingBill,
   operatingCostTick,
 } from "../simulation/operating-costs";
+export function releaseDetachedSceneRoles(saves: Map<string, Save>) {
+  // A recalled helper lives in a different save. Release its scene roles only
+  // after the assignment actually detached; pending repairs/transports retain them.
+  const vehicles = new Map(
+    [...saves.values()].flatMap((save) =>
+      save.vehicles.map((v) => [v.id, { v, owner: save.player.id }] as const),
+    ),
+  );
+  for (const owner of saves.values())
+    for (const m of owner.missions) {
+      if (!m.major) continue;
+      const attached = (p: { vehicle: string; assignment: string }) => {
+        const item = vehicles.get(p.vehicle);
+        return (
+          !!item &&
+          item.v.assignment === p.assignment &&
+          item.v.mission ===
+            (item.owner === owner.player.id
+              ? m.id
+              : `remote:${owner.player.id}:${m.id}`)
+        );
+      };
+      m.major.placements = m.major.placements.filter(attached);
+      for (const section of m.major.sections)
+        if (section.leader && !attached(section.leader)) delete section.leader;
+    }
+}
 export function aidTick(saves: Map<string, Save>) {
+  releaseDetachedSceneRoles(saves);
   for (const owner of saves.values())
     for (const r of owner.aid) {
       if (aidActive(r)) r.billing ??= newOperatingBill(owner.time);
@@ -279,6 +323,23 @@ export function aidTick(saves: Map<string, Save>) {
       if (!aidActive(r)) continue;
       const helper = saves.get(r.peer);
       if (!helper) continue;
+      if (
+        r.closing &&
+        !helper.vehicles.some((v) =>
+          r.assignments.some((a) => a.assignment === v.assignment),
+        )
+      ) {
+        r.state = r.closing.state;
+        r.updated = owner.time;
+        delete r.closing;
+        record(
+          owner,
+          m,
+          "AID_RETURN_COMPLETED",
+          "Rückkehraufträge abgewickelt; Unterstützung beendet.",
+        );
+        continue;
+      }
       for (const v of helper.vehicles.filter((v) =>
         r.assignments.some((a) => a.assignment === v.assignment),
       )) {

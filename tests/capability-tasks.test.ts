@@ -285,7 +285,7 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
       const preview = createWithdrawalAssessment(s, m);
       expect(spy).toHaveBeenCalledTimes(500);
       for (const v of s.vehicles) expect(preview([v.id]).allowed).toBe(true);
-      expect(preview(s.vehicles.map((v) => v.id)).allowed).toBe(false);
+      expect(preview(s.vehicles.map((v) => v.id)).allowed).toBe(true);
       expect(spy).toHaveBeenCalledTimes(500);
       expect(JSON.stringify(s)).toBe(before);
     } finally {
@@ -312,7 +312,10 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
     const live = s.missions[0];
     const rtw = addUnit(s, "rtw");
     atScene(s, rtw, live.id);
-    expect(assessWithdrawal(s, live, [rtw.id]).allowed).toBe(false);
+    expect(assessWithdrawal(s, live, [rtw.id]).allowed).toBe(true);
+    expect(assessWithdrawal(s, live, [rtw.id]).reasons.length).toBeGreaterThan(
+      0,
+    );
     for (
       let n = 0;
       n < 600 && s.missions.some((entry) => entry.id === live.id);
@@ -324,16 +327,17 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
     expect(live.dynamics!.patients[0].transport).toBe("delivered");
   });
 
-  it("weist gemeinsamen Abzug zurück, obwohl jedes einzelne Fahrzeug redundant wäre", () => {
+  it("warnt vor unversorgten Aufgaben, erlaubt aber den bewussten gemeinsamen Abzug", () => {
     const { s, m } = setup();
     s.vehicles.forEach((v) => atScene(s, v, m.id));
     const ids = s.vehicles.map((v) => v.id);
     expect(assessWithdrawal(s, m, [ids[0]]).allowed).toBe(true);
     expect(assessWithdrawal(s, m, [ids[1]]).allowed).toBe(true);
-    const before = JSON.stringify(s);
-    expect(assessWithdrawal(s, m, ids).allowed).toBe(false);
-    expect(() => withdraw(s, m, ids, "owner")).toThrow("Löschmittel");
-    expect(JSON.stringify(s)).toBe(before);
+    expect(assessWithdrawal(s, m, ids).allowed).toBe(true);
+    expect(assessWithdrawal(s, m, ids).reasons.join()).toContain("Löschmittel");
+    withdraw(s, m, ids, "owner");
+    expect(s.vehicles.every((v) => v.status === "return")).toBe(true);
+    expect(s.missions[0].outcome).toBeUndefined();
   });
   it("gibt überschüssige Kräfte frei, protokolliert einmalig und weist Wiederholung oder Fremd-IDs zurück", () => {
     const { s, m } = setup();
@@ -349,7 +353,7 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
       ),
     ).toHaveLength(1);
     const before = JSON.stringify(s);
-    expect(() => withdraw(s, s.missions[0], [id], "owner")).toThrow();
+    expect(() => withdraw(s, s.missions[0], [id], "owner")).not.toThrow();
     expect(() => withdraw(s, s.missions[0], ["not-owned"], "owner")).toThrow();
     expect(JSON.stringify(s)).toBe(before);
   });
@@ -359,20 +363,26 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
     const v = addUnit(s, "rtw");
     atScene(s, v, m.id);
     v.patients = 1;
-    const before = JSON.stringify(s);
-    expect(() =>
-      withdraw(s, m, [v.id], "owner", { medical: 100, transport: 100 }),
-    ).toThrow("Patienten");
-    expect(JSON.stringify(s)).toBe(before);
+    withdraw(s, m, [v.id], "owner", { medical: 100, transport: 100 });
+    const actual = s.vehicles.find((unit) => unit.id === v.id)!;
+    expect(actual.patients).toBe(1);
+    expect(actual.status).toBe("scene");
+    expect(actual.returnOrder!.state).toBe("clinic");
   });
   it("zählt verifizierte Helferressourcen einmal und lässt unerkundete Lagen nicht freigeben", () => {
     const { s, m } = setup();
     const v = s.vehicles[0];
     atScene(s, v, m.id);
     expect(assessWithdrawal(s, m, [v.id], { fire: 1 }).allowed).toBe(true);
-    expect(assessWithdrawal(s, m, [v.id], {}).allowed).toBe(false);
+    expect(assessWithdrawal(s, m, [v.id], {}).allowed).toBe(true);
+    expect(assessWithdrawal(s, m, [v.id], {}).reasons.join()).toContain(
+      "Löschmittel",
+    );
     m.control!.briefed = false;
-    expect(assessWithdrawal(s, m, [v.id], { fire: 20 }).allowed).toBe(false);
+    expect(assessWithdrawal(s, m, [v.id], { fire: 20 }).allowed).toBe(true);
+    expect(
+      assessWithdrawal(s, m, [v.id], { fire: 20 }).reasons.join(),
+    ).toContain("Lagemeldung");
   });
   it("bewahrt den vollständigen Originalstand, wenn erst die zweite Rückroute fehlschlägt", () => {
     const { s, m } = setup();
@@ -442,7 +452,7 @@ describe("atomarer bedarfsgerechter Kräfteabzug", () => {
     helper.assignment = "helper-assignment";
     expect(
       assessRemoteWithdrawal(s, m, [helper.id], { fire: 2 }, [helper]).allowed,
-    ).toBe(false);
+    ).toBe(true);
     atScene(s, s.vehicles[1], m.id);
     const checked = assessRemoteWithdrawal(s, m, [helper.id], { fire: 2 }, [
       helper,

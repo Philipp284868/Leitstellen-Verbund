@@ -1,4 +1,5 @@
 import type { Save } from "../../src/shared/model";
+import { unsuccessful } from "../../src/simulation/outcomes";
 import { mt, vt } from "../../src/shared/catalog";
 import { callAction } from "../../src/simulation/calls";
 import { radioAction } from "../../src/simulation/incidents";
@@ -9,7 +10,9 @@ import { organizationCommand } from "../../src/simulation/organizations";
 /** Reproducible ideal single dispatcher, using the real call, alarm and report
  * operations. No position, journey duration or completed mission is fabricated. */
 export function operate(s: Save) {
-  const ordered = [...s.missions].sort((a, b) => a.created - b.created);
+  const ordered = s.missions
+    .filter((m) => !unsuccessful(m))
+    .sort((a, b) => a.created - b.created);
   const conversation = ordered.flatMap((m) =>
     (m.control?.calls || []).map((call) => ({ m, call })),
   );

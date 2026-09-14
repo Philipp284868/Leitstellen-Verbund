@@ -1,3 +1,5 @@
+import { fireQuote } from "../src/shared/facilities/fire-profile";
+import { fixtureFireProfile } from "./fixtures/germany/facilities";
 import { createWaterFixture } from "./fixtures/germany/water-package";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
@@ -265,7 +267,11 @@ beforeEach(async () => {
   fundTestBudget(s, 2000000);
   s.xp = f.xpForLevel(30);
   s.missionWait = 100000;
-  f.apply(s, { type: "purchase-facility", facility: "fixture:fire:0" });
+  f.apply(s, {
+    type: "purchase-facility",
+    facility: "fixture:fire:0",
+    quote: fireQuote(fixtureFireProfile),
+  });
   f.tick(s, s.time + 30, {}, false, false);
   app!.db.save(owner, s);
   const home = s.buildings[0].id;
@@ -426,7 +432,7 @@ describe("Deutschland HTTP und Socket.IO (kleine synthetische Geodatenfixtures)"
     const response = await request("/api/me", user);
     expect(response.status).toBe(200);
     const view = (await response.json()).save as Save;
-    expect(view.people).toHaveLength(9);
+    expect(view.people).toHaveLength(s.people.length);
     for (const p of view.people) {
       expect(p.duty?.shift).toBe("24h");
       expect(p.duty!.homeNode).toBeGreaterThanOrEqual(15000000000);

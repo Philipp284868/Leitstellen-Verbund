@@ -1,3 +1,5 @@
+import { fireQuote } from "../src/shared/facilities/fire-profile";
+import { fixtureFireProfile } from "./fixtures/germany/facilities";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { project } from "../src/shared/germany/projection";
@@ -116,8 +118,13 @@ const command = (
 };
 const current = (): Save => db!.all().get(owner)!;
 function setupFleet(game: InstanceType<typeof Fixture.Game>) {
-  command(game, { type: "purchase-facility", facility: "fixture:fire:0" });
+  command(game, {
+    type: "purchase-facility",
+    facility: "fixture:fire:0",
+    quote: fireQuote(fixtureFireProfile),
+  });
   let save = current();
+  delete save.buildings[0].fireProfile; // Established legacy fleet; real profiles have dedicated comparisons.
   save.buildings[0].organization = {
     kind: "bf",
     turnout: 30,
@@ -384,10 +391,13 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     expect(
       completed.archive.filter((mission) => mission.id === m.id),
     ).toHaveLength(1);
-    expect(completed.vehicles[0].status).toBe("return");
-    expect(completed.vehicles[0].mission).toBeNull();
-    expect(completed.vehicles[0].journey!.blockedUntil).toBe(
-      completed.time + 60,
+    expect(completed.vehicles[0].status).toBe("scene");
+    expect(completed.vehicles[0].returnOrder).toMatchObject({
+      state: "pending",
+      mission: m.id,
+    });
+    expect(completed.vehicles[0].returnOrder!.retryAt).toBeGreaterThan(
+      completed.time,
     );
     const reward = completed.money;
     game.step(20);
@@ -463,8 +473,9 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
       returning = delivered.vehicles.find((v) => v.id === id)!;
     expect(delivered.beds).toHaveLength(1);
     expect(returning.patients).toBe(0);
-    expect(returning.status).toBe("return");
-    expect(returning.journey!.blockedUntil).toBeGreaterThan(delivered.time);
+    expect(returning.status).toBe("scene");
+    expect(returning.returnOrder).toMatchObject({ state: "pending" });
+    expect(returning.returnOrder!.retryAt).toBeGreaterThan(delivered.time);
     game.step(10);
     expect(current().beds).toHaveLength(1);
   }, 20000);
@@ -539,10 +550,10 @@ describe("Deutschland-Simulation mit echter SQLite und synthetischem Routingvert
     await setRouter("unavailable");
     expect(() => game.step(1)).not.toThrow();
     const returning = current().vehicles[0];
-    expect(returning.status).toBe("return");
-    expect(returning.mission).toBeNull();
+    expect(returning.status).toBe("scene");
+    expect(returning.mission).toBe(v.mission);
     expect(returning.path).toEqual(v.path);
-    expect(returning.journey!.blockedUntil).toBeGreaterThan(current().time);
+    expect(returning.returnOrder!.retryAt).toBeGreaterThan(current().time);
   }, 20000);
   it("opens one circuit per provider instead of sending 100 routing requests during an outage", async () => {
     await setRouter("unavailable");

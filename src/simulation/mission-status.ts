@@ -1,3 +1,4 @@
+import { unsuccessful, outcomeLabels } from "./outcomes";
 import { configuredSkills } from "./vehicle-equipment";
 import type { Save, Mission, Vehicle } from "../shared/model";
 import { mt, type Skills } from "../shared/catalog";
@@ -15,6 +16,8 @@ export const missionStatusLabels = {
   stable: "Lage stabilisiert",
   transport: "Patiententransport",
   completed: "Abgeschlossen",
+  failed: "Fehlgeschlagen",
+  abandoned: "Aufgegeben",
 } as const;
 type Code = keyof typeof missionStatusLabels;
 type Support = { mission: string; round: string; vehicle: Vehicle };
@@ -34,6 +37,12 @@ export function missionStatus(
     detail,
     attention,
   });
+  if (unsuccessful(m))
+    return status(
+      m.outcome!.result === "failed" ? "failed" : "abandoned",
+      `${outcomeLabels[m.outcome!.result]}: ${m.outcome!.reason} ${m.phase === "done" ? "Abwicklung beendet; Verlauf im Archiv." : "Abwicklung und laufende Transporte bleiben einsatzgebunden."}`,
+      m.phase !== "done",
+    );
   if (m.phase === "done" || c?.stage === "closed")
     return status(
       "completed",

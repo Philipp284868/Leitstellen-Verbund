@@ -63,7 +63,7 @@ it("weist entfernte Modi ab und erhält das inaktive Archiv bytegleich nach Neus
     game.command(a, cmd);
     game.command(a, cmd);
     expect(db.all().get(a)!.buildings).toHaveLength(1);
-    expect(db.all().get(a)!.money).toBe(euro(750000));
+    expect(db.all().get(a)!.money).toBe(euro(950000));
     expect(game.view(b, new Set()).network.friends).toEqual([]);
     game.step(10);
     expect(

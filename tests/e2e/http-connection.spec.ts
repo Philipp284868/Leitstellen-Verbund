@@ -3,7 +3,7 @@ import { networkInterfaces, tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { startServer } from "../../src/server/index";
-import { bt } from "../../src/shared/catalog";
+import { FIRE_GAME_PROFILES } from "../../src/shared/facilities/fire-profile";
 import { ECONOMY_PRICES } from "../../src/shared/economy/prices";
 import { formatMoney } from "../../src/shared/money";
 import { joinDesk } from "./desk-helpers";
@@ -145,7 +145,7 @@ test("Echter HTTP-Ursprung: Registrierung, WebSocket, Kauf, Chat und manueller R
       ),
     ).toHaveCount(1);
     await expect(a.locator(".money-tile strong")).toHaveText(
-      formatMoney(ECONOMY_PRICES.start - bt("fire").price),
+      formatMoney(ECONOMY_PRICES.start - FIRE_GAME_PROFILES.ff.price),
     );
     await expect(
       b.locator(

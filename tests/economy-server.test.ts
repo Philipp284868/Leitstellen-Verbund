@@ -1,3 +1,4 @@
+import { FIRE_GAME_PROFILES } from "../src/shared/facilities/fire-profile";
 import { fixturePurchase } from "./fixtures/germany/facilities";
 import { describe, expect, it } from "vitest";
 import { Database } from "../src/server/database";
@@ -5,7 +6,7 @@ import { Game } from "../src/server/game";
 import { fresh } from "../src/shared/model";
 import { sites as nodes } from "./fixtures/germany/locations";
 
-import { bt, vt } from "../src/shared/catalog";
+import { vt } from "../src/shared/catalog";
 import { bookMoney, ledgerBalance } from "../src/shared/economy/ledger";
 import { euro } from "../src/shared/money";
 
@@ -40,8 +41,10 @@ describe("Serverautoritatives Euro-Budget", () => {
       run("build-once", action);
       run("build-once", action);
       expect(read().buildings).toHaveLength(1);
-      expect(read().money).toBe(start - bt("fire").price);
-      expect(read().buildings[0].purchasePriceCents).toBe(bt("fire").price);
+      expect(read().money).toBe(start - FIRE_GAME_PROFILES.ff.price);
+      expect(read().buildings[0].purchasePriceCents).toBe(
+        FIRE_GAME_PROFILES.ff.price,
+      );
       game.step(30);
       const s = read(),
         home = s.buildings[0].id;

@@ -15,6 +15,9 @@ export const readinessCoreSchema = z
  * This never creates people, clears assignments or changes an existing journey.
  */
 export function reconcileReadinessCore(s: Save, b: Building) {
+  // This compatibility path must never override a source-bound roster, including
+  // when older SQL/domain migrations are replayed before the current migration.
+  if (b.fireProfile) return 0;
   if (b.organization?.kind !== "ff" || b.ready > s.time) return 0;
   b.readinessCore ??= {
     version: 1,

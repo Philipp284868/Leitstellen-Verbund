@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "checked": "2026-09-14",
+  "entries": [
+    {
+      "sources": ["way:1188260526"],
+      "kind": "ff",
+      "employment": "volunteer",
+      "units": [{"name":"Freiwillige Feuerwehr Heiligensee","kind":"ff"}],
+      "evidence": ["https://www.berliner-feuerwehr.de/ueber-uns/standorte/freiwillige-feuerwehr-heiligensee/"],
+      "reason": "Offizielles Standortverzeichnis nennt die FF Heiligensee an Alt-Heiligensee 68. Spielpersonal und Kapazität sind abstrahiert."
+    },
+    {
+      "sources": ["way:29978455", "node:6621423513"],
+      "kind": "shared",
+      "employment": "mixed",
+      "units": [{"name":"Feuerwache Wittenau","kind":"bf"},{"name":"Freiwillige Feuerwehr Wittenau","kind":"ff"}],
+      "evidence": ["https://www.berliner-feuerwehr.de/ueber-uns/standorte/feuerwache-wittenau/", "https://www.berliner-feuerwehr.de/ueber-uns/standorte/freiwillige-feuerwehr-wittenau/"],
+      "reason": "Beide offiziellen Standortseiten nennen Roedernallee 55. Die FF-Seite bestätigt ausdrücklich die Unterbringung auf der Berufsfeuerwache. Gemeinsames Wachobjekt; getrennte Einheiten."
+    },
+    {
+      "sources": ["way:704988973"],
+      "kind": "bf",
+      "employment": "paid",
+      "units": [{"name":"Feuerwache Wedding","kind":"bf"}],
+      "evidence": ["https://www.berliner-feuerwehr.de/ueber-uns/standorte/feuerwache-wedding/"],
+      "reason": "Offizielles Wachverzeichnis, Wachnummer 2500, Reinickendorfer Straße 15a; diensthabende Tages-/Nachtbesetzung angegeben. Die separat betreute FF wird nicht allein wegen ihrer Betreuungswache mitverkauft."
+    },
+    {
+      "sources": ["way:1034270397"],
+      "kind": "ff-paid",
+      "employment": "mixed",
+      "units": [{"name":"Feuerwehr Kerpen – Hauptfeuer- und Rettungswache","kind":"ff"}],
+      "evidence": ["https://www.feuerwehr-kerpen.de/feuerwehr-kerpen/", "https://www.feuerwehr-kerpen.de/einheiten/", "https://www.feuerwehr-kerpen.de/weibliche-verstaerkung-im-team-gesucht/"],
+      "reason": "Kommunale Feuerwehr mit hauptamtlichem Abmarsch und Freiwilliger Feuerwehr; keine BF. Hauptwache Sindorfer Straße 26 aus offizieller Stellenausschreibung 2023, Funktion im aktuellen Organisationsverzeichnis bestätigt. Die kleine Bereitschaftskomponente und freiwillige Verstärkung sind Spielwerte; keine Übernahme realer Schichtstärken oder anderer Kerpener Gerätehäuser."
+    },
+    {
+      "sources": ["node:1615537177"],
+      "kind": "works",
+      "employment": "paid",
+      "units": [{"name":"BASF Werkfeuerwehr – Feuerwache Ost","kind":"works"}],
+      "evidence": ["https://www.basf.com/global/de/who-we-are/organization/locations/europe/german-sites/ludwigshafen/the-site/environment-and-safety/fire-department", "https://www.basf.com/global/de/who-we-are/organization/locations/europe/german-sites/ludwigshafen/news-and-media/news-releases/2025/05/p-25-107"],
+      "reason": "BASF beschreibt die hauptberufliche Werkfeuerwehr und nennt Feuerwache Ost auf der Friesenheimer Insel. OSM-Objekt und Name stimmen überein. Geplantes neues Gefahrenabwehrzentrum wird nicht als bestehende Wache importiert. Kapazität und Kosten sind Spielwerte; Zufahrt bleibt separat geprüft."
+    },
+    {
+      "sources": ["relation:2110194"],
+      "kind": "airport",
+      "employment": "paid",
+      "units": [{"name":"Flughafenfeuerwehr BER – Feuerwache West","kind":"airport"}],
+      "evidence": ["https://corporate.berlin-airport.de/de/jobs-karriere/arbeiten-am-ber/was-macht-eigentlich.html", "https://corporate.berlin-airport.de/de/unternehmen-presse/historie/flughafen-berlin-brandenburg-willy-brandt.html"],
+      "reason": "Flughafenbetreiber belegt hauptberufliche Flughafenfeuerwehr und West-/Ostwache. OSM-Relation ist als Feuerwache West mit Flughafenfunktion verzeichnet. Historische Inbetriebnahme und heutige Organisationsbeschreibung getrennt abgeglichen; keine realen Dienstplandaten. Zufahrtsprüfung bleibt verbindlich."
+    }
+  ]
+}

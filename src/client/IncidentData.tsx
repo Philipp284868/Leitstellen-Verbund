@@ -1,3 +1,4 @@
+import { ConfirmAction } from "./ui";
 import type { Save, Mission } from "../shared/model";
 import { useGame, command } from "./store";
 import { useNetwork } from "./network";
@@ -29,6 +30,26 @@ export function IncidentData({
       aria-label="Bekannte Einsatzdaten"
     >
       <h3>{presentation.name}</h3>
+      {s.missions.some((own) => own.id === m.id) &&
+        !m.outcome &&
+        m.phase !== "done" && (
+          <ConfirmAction
+            disabled={readonly}
+            message={`Einsatz ausdrücklich aufgeben? ${s.vehicles.filter((v) => v.mission === m.id).length} eigene Fahrzeuge erhalten einen Rückkehrauftrag. ${m.dynamics?.patients.filter((p) => p.transport === "scene" || p.transport === "aboard").length ?? 0} offene Personen bleiben dokumentiert; laufende Transporte werden zuerst übergeben. ${net.support.filter((f) => f.mission === m.id).length} Helferfahrzeuge werden kontrolliert zurückgeführt. Keine Erfolgsbelohnung; Abwicklung belegt weiterhin einen Einsatzplatz.`}
+            onConfirm={async () => {
+              await command({ type: "abandon-incident", mission: m.id });
+            }}
+          >
+            Einsatz aufgeben
+          </ConfirmAction>
+        )}
+      {m.outcome && (
+        <p role="status">
+          {m.outcome.reason}
+          {m.outcome.settlement &&
+            ` Externe Abwicklung: ${m.outcome.settlement.state === "mobilizing" ? "mobilisiert" : m.outcome.settlement.state === "on-scene" ? "Übernahme vor Ort läuft" : "Übernahme dokumentiert"}.`}
+        </p>
+      )}
       <p>
         {c.briefed
           ? "Durch Erkundung bestätigt"

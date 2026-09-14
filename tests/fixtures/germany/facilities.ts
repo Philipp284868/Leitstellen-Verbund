@@ -10,6 +10,21 @@ import {
   type Point,
 } from "../../../src/shared/germany/projection";
 import { sites } from "./locations";
+import {
+  fireQuote,
+  type FireProfile,
+} from "../../../src/shared/facilities/fire-profile";
+export const fixtureFireProfile: FireProfile = {
+  version: 1,
+  revision: "synthetic-test-1",
+  kind: "ff",
+  employment: "volunteer",
+  units: [{ name: "Synthetische Test-FF", kind: "ff" }],
+  evidence: ["https://example.invalid/test-fixture"],
+  checked: "2026-09-14",
+  confidence: "osm",
+  reason: "Ausdrücklich synthetische Testdaten, keine reale Behauptung.",
+};
 
 /** Fixed, explicitly synthetic catalog. Test purchases still use IDs and the production purchase action. */
 export const facilitiesAt = (positions: Point[]): Facility[] =>
@@ -17,6 +32,9 @@ export const facilitiesAt = (positions: Point[]): Facility[] =>
     .filter((k) => k !== "other")
     .flatMap((kind) =>
       positions.map((pos, i) => ({
+        ...(kind === "fire"
+          ? { fireProfile: structuredClone(fixtureFireProfile) }
+          : {}),
         id: `fixture:${kind}:${i}`,
         kind,
         name: `Teststandort ${kind} ${i}`,
@@ -50,6 +68,7 @@ export function fixturePurchase(
   return {
     type: "purchase-facility" as const,
     facility: `fixture:${kind}:${positions.indexOf(nearest)}`,
+    ...(kind === "fire" ? { quote: fireQuote(fixtureFireProfile) } : {}),
   };
 }
 export const logicFacilityCatalog: FacilityCatalog = {

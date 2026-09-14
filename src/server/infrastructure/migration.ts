@@ -38,6 +38,7 @@ export function infrastructureMigrated(sql: DatabaseSync) {
 export function planInfrastructureMigration(
   sql: DatabaseSync,
   resolutions: InfrastructureResolution[] = [],
+  refreshAliases = false,
 ) {
   const saves = sql
     .prepare("SELECT user_id,data FROM saves ORDER BY user_id")
@@ -50,7 +51,8 @@ export function planInfrastructureMigration(
     conflicts: { owner: string; building: string; reason: string }[] = [];
   const removed = new Set<string>();
   const catalog = germanyProvider().facilities;
-  if (infrastructureMigrated(sql))
+  const priorMigration = infrastructureMigrated(sql);
+  if (priorMigration && !refreshAliases)
     return {
       version: 1,
       ready: true,
@@ -112,7 +114,9 @@ export function planInfrastructureMigration(
         b.level -
         1 +
         b.extensions.length +
-        (b.organization?.kind === "bf" && f.subtype !== "BF" ? 1 : 0);
+        (!b.fireProfile && b.organization?.kind === "bf" && f.subtype !== "BF"
+          ? 1
+          : 0);
       const upgradesKnown = investments.length >= investmentCount;
       const entry: Candidate = {
         owner,
@@ -204,12 +208,14 @@ export function planInfrastructureMigration(
         reason:
           "Tatsächlich gezahlter Kauf-/Ausbaubetrag nicht vollständig belegt. Keine pauschale Erstattung.",
       });
-  const clinics = prepareLegacyClinics(saves.map((row) => row.s));
+  const clinics = priorMigration
+    ? { conflicts: [], places: [] }
+    : prepareLegacyClinics(saves.map((row) => row.s));
   conflicts.push(...clinics.conflicts);
   return {
     version: 1,
     ready: !conflicts.length,
-    applied: false,
+    applied: priorMigration && !removals.length && !conflicts.length,
     entries,
     removals,
     conflicts,
@@ -223,10 +229,11 @@ export function planInfrastructureMigration(
 export function applyInfrastructureMigration(
   sql: DatabaseSync,
   resolutions: InfrastructureResolution[] = [],
+  refreshAliases = false,
 ) {
   if (!sql.isTransaction)
     throw Error("Infrastrukturmigration benötigt eine gesicherte Transaktion.");
-  const plan = planInfrastructureMigration(sql, resolutions);
+  const plan = planInfrastructureMigration(sql, resolutions, refreshAliases);
   if (plan.applied) return plan;
   if (!plan.ready)
     throw Error("INFRASTRUCTURE_MIGRATION_REQUIRED: " + JSON.stringify(plan));
@@ -237,13 +244,21 @@ export function applyInfrastructureMigration(
   const originals = new Map(
     rows.map((row) => [String(row.user_id), String(row.data)]),
   );
-  const clinics = prepareLegacyClinics(
-    rows.map((row) => JSON.parse(String(row.data)) as Save),
-  );
+  const saves = rows.map((row) => JSON.parse(String(row.data)) as Save);
+  const priorMigration = infrastructureMigrated(sql);
+  const clinics = priorMigration
+    ? { saves, conflicts: [], places: [] }
+    : prepareLegacyClinics(saves);
   if (clinics.conflicts.length)
     throw Error(
       "INFRASTRUCTURE_MIGRATION_REQUIRED: " + JSON.stringify(clinics.conflicts),
     );
+  // Remove only proven superseded rights inside this transaction before writing
+  // canonical aliases for the surviving owner, regardless of row ordering.
+  for (const change of plan.removals)
+    sql
+      .prepare("DELETE FROM station_ownership WHERE owner=? AND building=?")
+      .run(change.owner, change.building);
   for (const s of clinics.saves) {
     for (const change of plan.removals.filter((e) => e.owner === s.player.id)) {
       const b = s.buildings.find((b) => b.id === change.building)!;
@@ -295,7 +310,9 @@ export function applyInfrastructureMigration(
       p.discharge,
     );
   sql
-    .prepare("INSERT INTO meta(key,value) VALUES(?,?)")
+    .prepare(
+      "INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    )
     .run(marker, JSON.stringify(plan));
   return plan;
 }

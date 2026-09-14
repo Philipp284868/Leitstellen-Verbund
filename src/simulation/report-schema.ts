@@ -1,3 +1,4 @@
+import { outcomeSchema } from "./outcome-schema";
 import { centsSchema } from "../shared/economy/schema";
 import { z } from "zod";
 const n = z.number().finite().nonnegative().max(1e12);
@@ -41,6 +42,7 @@ export const telemetrySchema = z
 export const reportSchema = z
   .object({
     version: z.literal(1),
+    outcome: outcomeSchema.optional(),
     at: n,
     partial: z.boolean(),
     timings: z.record(z.enum(timingKeys), n.nullable()),
@@ -76,6 +78,8 @@ export const statisticsSchema = z
   .object({
     since: n,
     completed: n,
+    failed: n.default(0),
+    abandoned: n.default(0),
     calls: n,
     callSeconds: n,
     requests: n,
@@ -99,6 +103,8 @@ export const statisticsSchema = z
   .default(() => ({
     since: 0,
     completed: 0,
+    failed: 0,
+    abandoned: 0,
     calls: 0,
     callSeconds: 0,
     requests: 0,

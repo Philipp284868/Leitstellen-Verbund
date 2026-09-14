@@ -1,5 +1,6 @@
 import { createIncident } from "../simulation/workload";
 import { germanyProvider } from "../shared/germany/world";
+import { fireQuote } from "../shared/facilities/fire-profile";
 import { xpForLevel } from "../shared/progression";
 // Offline developer sandbox. Never imported by the HTTP server or client.
 import { createHash } from "node:crypto";
@@ -132,6 +133,7 @@ export function createLab(seed: number, occupied: string[] = []): Lab {
     .facilities?.query({
       kind: "fire",
       usable: true,
+      fireKinds: ["ff"],
       limit: 80,
     })
     .find((f) => !occupied.includes(f.id));
@@ -139,7 +141,11 @@ export function createLab(seed: number, occupied: string[] = []): Lab {
     throw Error(
       "Keine nutzbare reale Feuerwache für die Laborübung vorhanden.",
     );
-  apply(s, { type: "purchase-facility", facility: facility.id });
+  apply(s, {
+    type: "purchase-facility",
+    facility: facility.id,
+    quote: fireQuote(facility.fireProfile),
+  });
   tick(s, s.time + 30, {}, false, false);
   for (const kind of ["tsf", "tlf"] as const) {
     apply(s, { type: "buy", kind, home: s.buildings[0].id });

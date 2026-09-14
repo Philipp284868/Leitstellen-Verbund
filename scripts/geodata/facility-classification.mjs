@@ -1,3 +1,4 @@
+import { classifyFireProfile } from "./fire-profile-classification.mjs";
 /** Source tags are evidence; a name alone never determines an organisation or subtype. */
 export function classifyFacility(tags) {
   const emergency = tags.emergency || "",
@@ -10,18 +11,17 @@ export function classifyFacility(tags) {
     subtype = "unknown";
   if (amenity === "fire_station") {
     kind = "fire";
-    const team = tags["fire_station:team"] || tags["fire_station:type"];
-    subtype = ["airport", "aerodrome"].includes(team)
-      ? "airport"
-      : ["industrial", "works"].includes(team)
-        ? "works"
-        : ["company", "concern"].includes(team)
-          ? "company"
-          : ["professional", "occupation"].includes(team)
-            ? "BF"
-            : ["voluntary", "volunteer"].includes(team)
-              ? "FF"
-              : "unknown";
+    const profile = classifyFireProfile(tags);
+    subtype =
+      {
+        ff: "FF",
+        "ff-paid": "FF",
+        bf: "BF",
+        shared: "shared",
+        works: "works",
+        company: "company",
+        airport: "airport",
+      }[profile.kind] ?? "unknown";
   } else if (amenity === "hospital" || tags.healthcare === "hospital")
     kind = "hospital";
   else if (emergency === "ambulance_station") kind = "ems";

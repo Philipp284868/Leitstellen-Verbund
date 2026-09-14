@@ -66,7 +66,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     const s = setup();
     apply(s, { type: "buy", kind: "tsf", home: s.buildings[0].id });
 
-    expect(s.money).toBe(euro(390000));
+    expect(s.money).toBe(euro(590000));
     expect(s.journal.reduce((n, j) => n + j.amount, BALANCE.start)).toBe(
       s.money,
     );
@@ -111,7 +111,7 @@ describe("Wirtschaft, Besatzung und Fahrzeuge", () => {
     const s = setup();
     expect(() => apply(s, { type: "sell", id: s.buildings[0].id })).toThrow();
     apply(s, { type: "sell", id: s.vehicles[0].id });
-    expect(s.people).toHaveLength(6);
+    expect(s.people).toHaveLength(36);
     expect(s.people.every((p) => p.vehicle === null)).toBe(true);
   });
   it("bearbeitet einen Solo-Einsatz, bucht genau einmal und kehrt zurück", () => {

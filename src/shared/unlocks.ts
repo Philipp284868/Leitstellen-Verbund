@@ -8,8 +8,6 @@ import {
 import { formatMoney } from "./money";
 import type { Save } from "./model";
 import { unlocked, upgradeLevel, upgradeUnlocked } from "./progression-state";
-import { PROFESSIONAL_FIRE } from "../simulation/staffing";
-import { progress } from "./progression";
 
 /** The display is derived from the actual catalogue and the purchase gates. */
 export function unlockMatrix(s: Save) {
@@ -68,13 +66,6 @@ export function unlockMatrix(s: Save) {
           };
         }),
       ),
-    {
-      id: "professional-fire",
-      name: "Berufsfeuerwehr-Umstellung",
-      level: PROFESSIONAL_FIRE.level,
-      available: progress(s.xp).level >= PROFESSIONAL_FIRE.level,
-      detail: `${formatMoney(PROFESSIONAL_FIRE.price)} · bestehende kommunale Freiwillige Feuerwehr · verfügbarer Betrieb`,
-    },
   ];
   return items.sort(
     (a, b) => a.level - b.level || a.name.localeCompare(b.name, "de"),

@@ -54,6 +54,101 @@ async function enter(page: Page, username = "north") {
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await page.getByRole("button", { name: "Spielen", exact: true }).click();
 }
+test("Helferrückruf und ausdrückliche Einsatzaufgabe brauchen eine bestätigte Handlung und bleiben nach Reload getrennt", async ({
+  page,
+  browser,
+}) => {
+  const mission = app.db.all().get(owner)!.missions[0];
+  app.game.command(owner, {
+    id: crypto.randomUUID(),
+    action: {
+      type: "aid-draft",
+      peer: helper,
+      mission: mission.id,
+      types: ["hlf"],
+      message: "Löschunterstützung",
+      priority: "NORMAL",
+    },
+  });
+  const request = app.db.all().get(owner)!.aid[0];
+  app.game.command(owner, {
+    id: crypto.randomUUID(),
+    action: { type: "aid-send", id: request.id },
+  });
+  app.game.command(helper, {
+    id: crypto.randomUUID(),
+    action: {
+      type: "aid-accept",
+      owner,
+      id: request.id,
+      vehicles: [app.db.all().get(helper)!.vehicles[0].id],
+    },
+  });
+  const context = await browser.newContext(),
+    south = await context.newPage();
+  try {
+    await enter(south, "south");
+    await openPanel(south, "Freunde");
+    const card = south.locator(".aid-card");
+    await card
+      .getByRole("button", { name: "Unterstützung beenden", exact: true })
+      .click();
+    await expect(card.getByRole("alert")).toContainText(
+      "Erste Lagemeldung fehlt",
+    );
+    await expect(card.getByRole("alert")).toContainText(
+      "Der Einsatz selbst wird nicht aufgegeben",
+    );
+    await card.getByRole("button", { name: "Abbrechen", exact: true }).click();
+    expect(app.db.all().get(owner)!.aid[0].state).toBe("ACCEPTED");
+    await card
+      .getByRole("button", { name: "Unterstützung beenden", exact: true })
+      .click();
+    await card.getByRole("button", { name: "Bestätigen", exact: true }).click();
+    await expect
+      .poll(() => app.db.all().get(helper)!.vehicles[0].mission)
+      .toBeNull();
+    expect(app.db.all().get(owner)!.missions[0].outcome).toBeUndefined();
+    await expect(
+      south.getByRole("button", { name: "Einsatz aufgeben", exact: true }),
+    ).toHaveCount(0);
+    await enter(page);
+    await showIncidents(page);
+    await page.locator(".mission-card").first().click();
+    await page
+      .getByRole("button", { name: "Einsatz aufgeben", exact: true })
+      .click();
+    const confirmation = page.locator(".known-facts .inline-confirm");
+    await expect(confirmation).toContainText("Keine Erfolgsbelohnung");
+    await confirmation
+      .getByRole("button", { name: "Abbrechen", exact: true })
+      .click();
+    expect(app.db.all().get(owner)!.missions[0].outcome).toBeUndefined();
+    await page
+      .getByRole("button", { name: "Einsatz aufgeben", exact: true })
+      .click();
+    await confirmation
+      .getByRole("button", { name: "Bestätigen", exact: true })
+      .click();
+    await expect
+      .poll(() => app.db.all().get(owner)!.missions[0].outcome?.result)
+      .toBe("abandoned");
+    await expect(page.locator(".known-facts")).toContainText(
+      "Externe Abwicklung",
+    );
+    await page.reload();
+    await page.getByRole("button", { name: "Spielen", exact: true }).click();
+    await showIncidents(page);
+    await page.locator(".mission-card").first().click();
+    await expect(page.locator(".known-facts")).toContainText("Aufgegeben");
+    await expect(
+      page.getByRole("button", { name: "Einsatz aufgeben", exact: true }),
+    ).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("FF-Notruf mit privater NPC-Simulation, Kartenanreise, Nachforderung, Neustart und Rückkehr", async ({
   page,
 }, info) => {

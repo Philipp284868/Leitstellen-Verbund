@@ -1,4 +1,10 @@
 import { bt } from "../../shared/catalog";
+import {
+  FIRE_GAME_PROFILES,
+  fireProfileKinds,
+  fireProfileLabels,
+} from "../../shared/facilities/fire-profile";
+import { FireProfileDetails } from "./FireProfileDetails";
 import { progress } from "../../shared/progression";
 import { FacilityReader } from "./reader";
 import { useRef } from "react";
@@ -18,7 +24,9 @@ import {
 import "./Facilities.css";
 // Offer validity changes at affordability/unlock boundaries, not at every cent or XP tick.
 function purchaseRevision(s: Save) {
-  return `${progress(s.xp).level}:${facilityKinds
+  return `${Object.values(FIRE_GAME_PROFILES)
+    .map((p) => (s.money >= p.price ? "1" : "0"))
+    .join("")}:${progress(s.xp).level}:${facilityKinds
     .filter((k) => k !== "other")
     .map((k) => (s.money >= bt(k).price ? "1" : "0"))
     .join(
@@ -29,7 +37,7 @@ type Offer = ReturnType<typeof facilityOffer>;
 type ListOffer = Omit<Offer, "facility"> & {
   facility: Pick<
     Offer["facility"],
-    "id" | "kind" | "name" | "address" | "state" | "pos"
+    "id" | "kind" | "name" | "address" | "state" | "pos" | "fireProfile"
   >;
 };
 export function useFacilities<T>(
@@ -139,6 +147,7 @@ export function FacilityDetails({
             <BuildingIcon type={f.kind} /> {facilityLabels[f.kind]}
           </span>
           <h2>{f.name || `${facilityLabels[f.kind]} · Name nicht erfasst`}</h2>
+          {f.fireProfile && <FireProfileDetails profile={f.fireProfile} />}
           <p>
             {f.address || "Postadresse in der Quelle nicht erfasst"} · {f.state}
           </p>
@@ -175,7 +184,13 @@ export function FacilityDetails({
                   : (ownership?.name ?? "Noch nicht erworben")}
             </dd>
             <dt>Untertyp laut Quelle</dt>
-            <dd>{f.subtype === "unknown" ? "Nicht belegt" : f.subtype}</dd>
+            <dd>
+              {f.fireProfile
+                ? fireProfileLabels[f.fireProfile.kind]
+                : f.subtype === "unknown"
+                  ? "Nicht belegt"
+                  : f.subtype}
+            </dd>
             <dt>Zufahrt</dt>
             <dd>
               {f.access
@@ -293,7 +308,11 @@ export function FacilityDetails({
                   if (busy) return;
                   setBusy(true);
                   setError("");
-                  void command({ type: "purchase-facility", facility: f.id })
+                  void command({
+                    type: "purchase-facility",
+                    facility: f.id,
+                    quote: offer.quote,
+                  })
                     .then(() => setConfirm(false))
                     .catch((e) => setError(String(e.message || e)))
                     .finally(() => setBusy(false));
@@ -332,10 +351,11 @@ export function FacilityBrowser({
 }) {
   const [query, setQuery] = useState(""),
     [kind, setKind] = useState<FacilityKind | "">("fire"),
+    [fireKind, setFireKind] = useState(""),
     [status, setStatus] = useState("all"),
     [selected, setSelected] = useState(""),
     [offset, setOffset] = useState(0);
-  useEffect(() => setOffset(0), [query, kind, status]);
+  useEffect(() => setOffset(0), [query, kind, status, fireKind]);
   const { data, error, loading } = useFacilities<{
     offers: ListOffer[];
     snapshot: string;
@@ -344,6 +364,7 @@ export function FacilityBrowser({
     new URLSearchParams({
       q: query,
       kind,
+      fireKind: kind === "fire" ? fireKind : "",
       status: kind === "hospital" ? "all" : status,
       offset: String(offset),
     }).toString(),
@@ -359,6 +380,24 @@ export function FacilityBrowser({
         Zufahrt stehen fest. Einsteiger können mit einer nutzbaren Feuerwache
         und einem TSF-W beginnen.
       </p>
+      {!s.buildings.some((b) => b.type === "fire" && !b.migrationReserve) && (
+        <p>
+          Kein freies, belegtes Gerätehaus in deinem Ort? Suche nach anderen
+          realen Einstiegsstandorten in Deutschland.
+          <button
+            onClick={() => {
+              setQuery("");
+              setKind("fire");
+              setFireKind("ff");
+              setStatus("available");
+              setOffset(0);
+              setSelected("");
+            }}
+          >
+            Freie FF für den Einstieg finden
+          </button>
+        </p>
+      )}
       <div className="facility-filters">
         <label>
           Ort, Adresse oder Standortname
@@ -395,6 +434,22 @@ export function FacilityBrowser({
             <option value="locked">Noch gesperrt</option>
           </select>
         </label>
+        {kind === "fire" && (
+          <label>
+            Wachtyp
+            <select
+              value={fireKind}
+              onChange={(e) => setFireKind(e.target.value)}
+            >
+              <option value="">Alle Wachtypen</option>
+              {fireProfileKinds.map((k) => (
+                <option key={k} value={k}>
+                  {fireProfileLabels[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {loading && <p role="status">Standorte werden gesucht …</p>}
       {error && <p role="alert">{error}</p>}
@@ -417,6 +472,11 @@ export function FacilityBrowser({
               <BuildingIcon type={o.facility.kind} />
               <span>
                 <b>{o.facility.name || facilityLabels[o.facility.kind]}</b>
+                {o.facility.fireProfile && (
+                  <small>
+                    {fireProfileLabels[o.facility.fireProfile.kind]}
+                  </small>
+                )}
                 <small>{o.facility.address || o.facility.state}</small>
                 <small>
                   {o.facility.kind === "hospital"

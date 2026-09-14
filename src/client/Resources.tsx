@@ -31,6 +31,7 @@ import { type Building, type Save } from "../shared/model";
 import { StationSettings, VehicleStaffing } from "./Organizations";
 import { purchaseReason } from "../shared/purchase";
 import { buildingStaffingStatus } from "../simulation/building-staffing";
+import { fireProfileLabels } from "../shared/facilities/fire-profile";
 import { operativeCode } from "../simulation/fms";
 import { stationCapacity } from "../simulation/staffing";
 import { StationGarage } from "./StationGarage";
@@ -139,7 +140,10 @@ export function BuildingPanel({
           {form.error}
         </p>
       )}
-      <span className="eyebrow">{bt(b.type).org} · Eigener Standort</span>
+      <span className="eyebrow">
+        {b.fireProfile ? fireProfileLabels[b.fireProfile.kind] : bt(b.type).org}{" "}
+        · Eigener Standort
+      </span>
       <h2>
         <BuildingIcon type={b.type} /> {b.name}
       </h2>
@@ -677,13 +681,12 @@ export function Fleet({
                   onSave={(name) => command({ type: "rename", id: v.id, name })}
                 />
                 {v.status !== "ready" ? (
-                  <button
-                    onClick={() =>
-                      void form.run(() => command({ type: "recall", id: v.id }))
-                    }
+                  <ConfirmAction
+                    message={`${v.name} abrücken lassen? Offene Aufgaben bleiben bestehen. Patienten werden zuerst übergeben; bei einem Defekt oder fehlender Route bleibt der Rückkehrauftrag bestehen.`}
+                    onConfirm={() => command({ type: "recall", id: v.id })}
                   >
-                    Rückruf
-                  </button>
+                    Abrücken
+                  </ConfirmAction>
                 ) : (
                   <>
                     <select

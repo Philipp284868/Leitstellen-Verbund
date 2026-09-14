@@ -1,3 +1,4 @@
+import { unsuccessful, outcomeLabels } from "./outcomes";
 import { request, resolveRadioTopic } from "./radio-requests";
 export { request } from "./radio-requests";
 import { updateIncidentRadio } from "./incident-radio";
@@ -79,6 +80,7 @@ export function beforeStep(s: Save) {
 export function afterVehicles(s: Save, remote: Record<string, Skills> = {}) {
   syncFms(s);
   for (const m of s.missions) {
+    if (unsuccessful(m)) continue;
     const c = m.control;
     if (!c || c.legacy) continue;
     const atScene = s.vehicles.filter(
@@ -286,8 +288,10 @@ export function afterStep(s: Save) {
       record(
         s,
         m,
-        "MISSION_COMPLETED",
-        `Einsatz abgeschlossen: ${mt(m.template).name}. Belohnung serverseitig gebucht.`,
+        unsuccessful(m) ? "MISSION_SETTLEMENT_COMPLETED" : "MISSION_COMPLETED",
+        unsuccessful(m)
+          ? `${outcomeLabels[m.outcome!.result]}: ${m.outcome!.reason} Abwicklung beendet; keine Erfolgsbelohnung.`
+          : `Einsatz abgeschlossen: ${mt(m.template).name}. Belohnung serverseitig gebucht.`,
       );
     }
   for (const m of s.archive) finalizeReport(s, m);

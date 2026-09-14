@@ -17,10 +17,12 @@ function station(seed = 101) {
   s.seed = seed;
   s.money = 1e9;
   apply(s, fixturePurchase("fire", nodes[0]));
+  // Historical core migration remains supported until a real profile is resolved.
+  delete s.buildings[0].fireProfile;
   return s;
 }
 
-describe("hauptamtlicher FFW-Bereitschaftskern", () => {
+describe("historischer FFW-Bereitschaftskern vor belegter Profilmigration", () => {
   it("bestimmt vier bis sechs Personen erst bei Inbetriebnahme und würfelt nach Reload nicht neu", () => {
     const counts = new Set<number>();
     for (let seed = 1; seed <= 30; seed++) {

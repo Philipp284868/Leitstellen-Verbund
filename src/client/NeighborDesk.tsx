@@ -11,7 +11,7 @@ import { ApproachText } from "./germany/GeoQueries";
 import { duration } from "../shared/travel";
 import "./Organizations.css";
 import { aidHalfHour } from "../simulation/operating-costs";
-import { credits } from "./ui";
+import { ConfirmAction, credits } from "./ui";
 export function RequestCard({ r }: { r: AidView }) {
   const { save: s, readonly } = useGame(),
     [selected, setSelected] = useState<string[]>([]),
@@ -37,6 +37,33 @@ export function RequestCard({ r }: { r: AidView }) {
     ...s.vehicles,
     ...net.friends.flatMap((f) => f.vehicles),
   ].filter((v) => r.assignments.some((a) => a.assignment === v.assignment));
+  const incident = owner
+    ? s.missions.find((m) => m.id === r.mission)
+    : sharedMission;
+  const departureMessage = [
+    `${assigned.length} zugesagte Fahrzeuge erhalten einen verbindlichen Rückkehrauftrag: ${assigned.map((v) => v.name).join(", ") || "keine"}.`,
+    incident?.control && !incident.control.briefed
+      ? "Erste Lagemeldung fehlt; der vollständige Kräftebedarf ist noch unbekannt."
+      : "",
+    incident?.organization?.tasks.some((t) => !t.done)
+      ? `Offene Aufgaben bleiben bestehen: ${incident.organization.tasks
+          .filter((t) => !t.done)
+          .map((t) => taskNames[t.kind])
+          .join(", ")}.`
+      : "",
+    incident?.major?.sections.some((section) =>
+      assigned.some(
+        (v) =>
+          section.leader?.vehicle === v.id &&
+          section.leader.assignment === v.assignment,
+      ),
+    )
+      ? "Eine gebundene Abschnittsleitung rückt mit ab; Ersatzführung wird benötigt."
+      : "",
+    `${assigned.reduce((n, v) => n + v.patients, 0)} Personen an Bord: tatsächliche Klinikübergabe vor der Rückfahrt. Defekte oder blockierte Fahrzeuge warten mit gespeichertem Folgeauftrag. Der Einsatz selbst wird nicht aufgegeben; abgezogene Kräfte fehlen dort.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <article className="aid-card">
       {form.error && (
@@ -53,7 +80,11 @@ export function RequestCard({ r }: { r: AidView }) {
             </span>
             <h4>{r.incident?.name || "Einsatz beendet"}</h4>
           </div>
-          <b>{requestStates[r.state]}</b>
+          <b>
+            {r.closing
+              ? "Rückkehr angeordnet · Abwicklung läuft"
+              : requestStates[r.state]}
+          </b>
         </header>
         <p>{r.message}</p>
         {!!r.vehicleWishes?.length && (
@@ -109,13 +140,15 @@ export function RequestCard({ r }: { r: AidView }) {
         {assigned.map((v) => (
           <p key={v.id}>
             {v.name} ·{" "}
-            {v.status === "alarmed"
-              ? "Sammelt Besatzung"
-              : v.status === "scene"
-                ? "Vor Ort"
-                : v.status === "transport"
-                  ? "Patiententransport"
-                  : "Anfahrt"}{" "}
+            {v.returnOrder
+              ? v.returnOrder.reason
+              : v.status === "alarmed"
+                ? "Sammelt Besatzung"
+                : v.status === "scene"
+                  ? "Vor Ort"
+                  : v.status === "transport"
+                    ? "Patiententransport"
+                    : "Anfahrt"}{" "}
             · FMS{" "}
             {(("fms" in v ? v.fms : s.desk.fleet[v.id]?.code) as number) ?? "–"}{" "}
             · {duration("eta" in v ? (v.eta as number) : v.arrive - s.time)}
@@ -130,7 +163,7 @@ export function RequestCard({ r }: { r: AidView }) {
             Anfrage verbindlich senden
           </button>
         )}
-        {!owner && active && remaining.length > 0 && (
+        {!owner && active && !r.closing && remaining.length > 0 && (
           <div className="aid-vehicles">
             <h5>Eigene Kräfte zusagen · Teilannahme möglich</h5>
             {s.vehicles
@@ -253,7 +286,7 @@ export function RequestCard({ r }: { r: AidView }) {
             </button>
           </form>
         )}
-        {!closed && (
+        {!closed && !r.closing && (
           <footer>
             {!owner && r.state === "SENT" && (
               <button
@@ -272,36 +305,34 @@ export function RequestCard({ r }: { r: AidView }) {
               </button>
             )}
             {owner && (
-              <button
-                onClick={() =>
-                  void form.run(() =>
-                    command({
-                      type: "aid-close",
-                      owner: r.owner,
-                      id: r.id,
-                      op: "cancel",
-                    }),
-                  )
-                }
+              <ConfirmAction
+                message={departureMessage}
+                onConfirm={async () => {
+                  await command({
+                    type: "aid-close",
+                    owner: r.owner,
+                    id: r.id,
+                    op: "cancel",
+                  });
+                }}
               >
                 Anfrage zurückziehen
-              </button>
+              </ConfirmAction>
             )}
             {["ACCEPTED", "IN_PROGRESS"].includes(r.state) && (
-              <button
-                onClick={() =>
-                  void form.run(() =>
-                    command({
-                      type: "aid-close",
-                      owner: r.owner,
-                      id: r.id,
-                      op: "done",
-                    }),
-                  )
-                }
+              <ConfirmAction
+                message={departureMessage}
+                onConfirm={async () => {
+                  await command({
+                    type: "aid-close",
+                    owner: r.owner,
+                    id: r.id,
+                    op: "done",
+                  });
+                }}
               >
                 Unterstützung beenden
-              </button>
+              </ConfirmAction>
             )}
           </footer>
         )}

@@ -1,6 +1,6 @@
 import type { Mission, Save, Vehicle } from "../shared/model";
 import type { Skills } from "../shared/catalog";
-import { recall } from "../shared/engine";
+import { orderReturn } from "./return-orders";
 import { requirements } from "./hazards";
 import { effectiveSkills, placement } from "./major-resources";
 import { sectionNames } from "./major-schema";
@@ -46,17 +46,25 @@ function prepareAssessment(
     ...m.transports.filter((t) => t.status === "ordered").map((t) => t.vehicle),
   ]);
   const reasonsByVehicle = new Map<string, string[]>();
+  const eligible = new Set<string>();
   for (const v of remoteScope ? remoteUnits : s.vehicles) {
     const reasons: string[] = [];
+    const returningFromMission =
+      v.status === "return" &&
+      v.returnOrder?.state === "returning" &&
+      v.returnOrder.mission === expectedMission;
     if (
-      v.mission !== expectedMission ||
-      !["scene", "travel", "alarmed"].includes(v.status)
+      (v.mission !== expectedMission && !returningFromMission) ||
+      !["scene", "travel", "alarmed", "transport", "return", "ready"].includes(
+        v.status,
+      )
     ) {
       reasonsByVehicle.set(v.id, [
         `${v.name}: nicht für diesen Einsatz zurückschickbar.`,
       ]);
       continue;
     }
+    eligible.add(v.id);
     if ((v.fault && v.fault.state !== "repaired") || v.postIncident)
       reasons.push(
         `${v.name}: Defekt oder Nachbereitung noch nicht abgeschlossen.`,
@@ -152,7 +160,8 @@ function prepareAssessment(
         );
     }
     return {
-      allowed: reasons.length === 0,
+      allowed:
+        selection.size > 0 && [...selection].every((id) => eligible.has(id)),
       reasons: [...new Set(reasons)],
       required: { ...required },
       remaining,
@@ -204,13 +213,25 @@ export function withdraw(
   const m = staged.missions.find((entry) => entry.id === mission.id)!;
   if (m.dynamics?.active) ensureMissionTasks(staged, m);
   const selection = new Set(ids);
+  const changed = [...selection].some((id) => {
+    const v = staged.vehicles.find((entry) => entry.id === id)!;
+    return (
+      v.status !== "return" &&
+      v.status !== "ready" &&
+      !(
+        v.returnOrder?.assignment === v.assignment &&
+        v.returnOrder.mission === v.mission
+      )
+    );
+  });
+  if (!changed) return assessment;
   for (const id of selection)
-    recall(staged, staged.vehicles.find((v) => v.id === id)!);
+    orderReturn(staged, staged.vehicles.find((v) => v.id === id)!, actor);
   record(
     staged,
     m,
     "FORCES_WITHDRAWN",
-    `${selection.size} Fahrzeug(e) zurückgeschickt; verbleibende offene Aufgaben berücksichtigt.`,
+    `${selection.size} Rückkehrauftrag/-aufträge angenommen; offene Aufgaben und Patienten bleiben dokumentiert.`,
     actor,
   );
   Object.assign(s, staged);

@@ -1,3 +1,4 @@
+import { outcomeLabels, unsuccessful } from "../simulation/outcomes";
 import { ledgerBalance } from "../shared/economy/ledger";
 import { useState, useEffect } from "react";
 import { api } from "./store";
@@ -166,9 +167,17 @@ export function ReportPanel({ m }: { m: Mission }) {
           ? `${issues.length} dokumentierte Engpass- oder Betriebshinweise stehen in der Dispositionsauswertung.`
           : "Im erfassten Verlauf sind keine Engpasshinweise verzeichnet."}
       </p>
-      {r.quality && m.location?.state !== "technical-closure" && (
-        <QualityReport quality={r.quality} />
+      {m.outcome && (
+        <p className="report-note">
+          <strong>{outcomeLabels[m.outcome.result]}</strong> ·{" "}
+          {m.outcome.reason}
+        </p>
       )}
+      {r.quality &&
+        !unsuccessful(m) &&
+        m.location?.state !== "technical-closure" && (
+          <QualityReport quality={r.quality} />
+        )}
       {r.partial && (
         <p className="report-note">
           Teilweise historische Erfassung. Nicht aufgezeichnete Zeiten und
@@ -363,15 +372,21 @@ export function ArchivePanel({
         <>
           <h2>Deine Leitstelle in Zahlen</h2>
           <p>
-            {s.completed} Einsätze insgesamt · {t.completed} Einsätze mit
-            auswertbaren Berichten. Vollständige Einsatzberichte werden
-            dauerhaft auf dem Server archiviert und seitenweise geladen.
+            {s.completed} erfolgreich abgeschlossene Einsätze · {t.completed}{" "}
+            Einsätze mit auswertbaren Berichten. Vollständige Einsatzberichte
+            werden dauerhaft auf dem Server archiviert und seitenweise geladen.
           </p>
           <dl className="report-grid">
             {[
               ["Notrufe", t.calls],
               ["Nachforderungen", t.requests],
               ["Fehlalarme", t.falseAlarms],
+              [
+                "Erfolgreich",
+                Math.max(0, t.completed - t.failed - t.abandoned),
+              ],
+              ["Fehlgeschlagen", t.failed],
+              ["Aufgegeben", t.abandoned],
               ["Großlagen", t.major],
               ["Patienten übergeben", t.delivered],
               ["Patienten verstorben", t.dead],

@@ -93,7 +93,7 @@ it("supplies staff through real build/buy sessions, serializes shared crews and 
     expect(bought.map((r) => r.status)).toEqual([200, 200, 200]);
     save = app.db.all().get(owner)!;
     expect(save.vehicles).toHaveLength(2);
-    expect(save.people).toHaveLength(12);
+    expect(save.people).toHaveLength(36);
     expect(
       save.vehicles.every((v) => vehicleAvailability(save, v).alarmable),
     ).toBe(true);

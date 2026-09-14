@@ -138,7 +138,11 @@ try {
     let backupPath = "";
     try {
       assertWorldMetadata(source, true);
-      const plan = planInfrastructureMigration(source, resolutions);
+      const plan = planInfrastructureMigration(
+        source,
+        resolutions,
+        process.argv.includes("--aliases"),
+      );
       console.log(JSON.stringify({ readOnly: true, ...plan }, null, 2));
       if (command === "infrastructure-migrate" && !plan.applied) {
         if (!process.argv.includes("--confirm"))
@@ -175,7 +179,11 @@ try {
           "PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; BEGIN IMMEDIATE",
         );
         try {
-          const plan = applyInfrastructureMigration(target, resolutions);
+          const plan = applyInfrastructureMigration(
+            target,
+            resolutions,
+            process.argv.includes("--aliases"),
+          );
           target.exec("COMMIT");
           console.log(JSON.stringify({ backup: backupPath, ...plan }, null, 2));
         } catch (error) {

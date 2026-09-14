@@ -1,3 +1,4 @@
+import { unsuccessful } from "./outcomes";
 import {
   planTurnout,
   turnoutEstimate,
@@ -18,6 +19,7 @@ import { record, simId } from "./events";
 import { setFms, alarmNames } from "./fms";
 import type { AAO, Alarm, Priority } from "./schema";
 export function dispatchable(m: Mission) {
+  if (unsuccessful(m)) throw Error("Einsatz befindet sich in der Abwicklung.");
   if (m.location && m.location.state !== "verified")
     throw Error(
       "Einsatzort wird technisch geprüft; noch keine sichere Zufahrt verfügbar.",
@@ -191,6 +193,7 @@ export function alarm(
     const fallback =
       selected === "station" ? 30 : selected === "siren" ? 45 : 60;
     v.mission = m.id;
+    delete v.returnOrder;
     v.assignment = simId(s);
     const delay = continuing ? 0 : planTurnout(s, v, fallback);
     beginTrip(s, v, m.pos, "travel", mode);

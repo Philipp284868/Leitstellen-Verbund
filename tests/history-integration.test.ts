@@ -491,7 +491,7 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
     expect(injection.status).toBe(400);
   }, 15000);
 
-  it("migriert v12 mit unverändertem Vorher-Backup, BF-Bestand und allen alten Archiven", async () => {
+  it("migriert v12 mit unverändertem Vorher-Backup, geschütztem Bestand und allen alten Archiven", async () => {
     const f = await setup(),
       old = historyFixture(f.owner, 500);
     delete old.buildings[0].organization;
@@ -504,7 +504,9 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
     expect(
       f.app.db.sql.prepare("PRAGMA user_version").get()!.user_version,
     ).toBe(DATABASE_VERSION);
-    const migrated = f.app.db.all().get(f.owner)!;
+    const actual = f.app.db.all().get(f.owner)!;
+    expect(actual.buildings[0].fireProfile?.kind).toBe("ff");
+    const migrated = withoutFireMigration(actual, old);
     expect(migrated.buildings[0].organization).toBeUndefined();
     expect(stationProfile(migrated.buildings[0]).kind).toBe("bf");
     expect({
@@ -512,14 +514,25 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
       xp: migrated.xp,
       world: migrated.world,
       vehicles: migrated.vehicles,
-      people: migrated.people,
     }).toEqual({
       money: old.money,
       xp: old.xp,
       world: old.world,
       vehicles: old.vehicles,
-      people: old.people,
     });
+    // This quiet legacy station is now a proved FF. Its existing identities and
+    // qualifications survive; the regular startup tick fills its finite roster
+    // and may reassign idle people according to actual availability.
+    expect(actual.people).toHaveLength(36);
+    expect(new Set(actual.people.map((p) => p.id)).size).toBe(36);
+    for (const original of old.people) {
+      const person = actual.people.find((p) => p.id === original.id)!;
+      expect({
+        ...person,
+        vehicle: original.vehicle,
+        professional: original.professional,
+      }).toEqual(original);
+    }
     expect((await f.page()).total).toBe(500);
     const backups = (await readdir(f.c.dataDir)).filter((name) =>
       name.startsWith("pre-migration-v2-"),
@@ -555,3 +568,4 @@ describe("Persistentes Archiv über authentifizierte HTTP-Sitzungen", () => {
     ).toHaveLength(1);
   }, 20000);
 });
+import { withoutFireMigration } from "./helpers/fire-migration-check";

@@ -1,5 +1,6 @@
 import { germanyProvider } from "../../src/shared/germany/world";
 import { apply } from "../../src/shared/engine";
+import { fireQuote } from "../../src/shared/facilities/fire-profile";
 import type { Save } from "../../src/shared/model";
 import type { FacilityKind } from "../../src/shared/facilities/types";
 import {
@@ -25,7 +26,11 @@ export function buyRealFacility(s: Save, kind: string, origin: Point) {
   const errors = [];
   for (const f of candidates) {
     try {
-      apply(s, { type: "purchase-facility", facility: f.id });
+      apply(s, {
+        type: "purchase-facility",
+        facility: f.id,
+        quote: fireQuote(f.fireProfile),
+      });
       return;
     } catch (e) {
       errors.push(String(e));

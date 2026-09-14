@@ -208,7 +208,7 @@ export const patientSchema = z
     care: z.enum(["standard", "oxygen", "bleeding", "cpr", "temperature"]),
     cprCycles: z.number().int().min(0).max(6),
     nextCpr: time,
-    transport: z.enum(["scene", "aboard", "delivered", "none"]),
+    transport: z.enum(["scene", "aboard", "delivered", "none", "external"]),
     vehicle: z.string().max(100),
     transportOrder: id.optional(),
     deliveredAt: time.optional(),

@@ -1,6 +1,7 @@
 import { vehiclePosition } from "../shared/vehicle-position";
 import type { Save, Vehicle } from "../shared/model";
-import { beginTrip, recall } from "../shared/engine";
+import { beginTrip } from "../shared/engine";
+import { orderReturn } from "./return-orders";
 import { setFms, operativeCode } from "./fms";
 import { request } from "./incidents";
 import { resolveRadioTopic } from "./radio-requests";
@@ -180,7 +181,7 @@ export function faultsTick(s: Save, v: Vehicle, remoteDynamic = false) {
       !v.mission?.startsWith("remote:") &&
       !v.patients
     )
-      recall(s, v);
+      orderReturn(s, v, "server");
     const crew = crewSummary(s, v);
     setFms(
       s,

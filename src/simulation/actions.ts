@@ -2,6 +2,7 @@ import { z } from "zod";
 import { aaoSchema, alarmSchema, prioritySchema, orgSchema } from "./schema";
 const id = z.string().min(1).max(100);
 export const deskActions = [
+  z.object({ type: z.literal("abandon-incident"), mission: id }).strict(),
   z
     .object({ type: z.literal("mission-location-review"), mission: id })
     .strict(),

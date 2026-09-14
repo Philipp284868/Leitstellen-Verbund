@@ -1,5 +1,6 @@
 import { mt } from "../shared/catalog";
-import { beginTrip, recall } from "../shared/engine";
+import { beginTrip } from "../shared/engine";
+import { orderReturn } from "./return-orders";
 import { GermanyRoutingError } from "../shared/germany/errors";
 import { queryIncidentSites } from "../shared/germany/world";
 import type { Mission, Save } from "../shared/model";
@@ -19,7 +20,8 @@ function technicalClose(s: Save, m: Mission, reason: string) {
     m.transports.some((t) => t.status === "ordered")
   )
     return false;
-  for (const v of s.vehicles.filter((v) => v.mission === m.id)) recall(s, v);
+  for (const v of s.vehicles.filter((v) => v.mission === m.id))
+    orderReturn(s, v, "server");
   m.phase = "done";
   m.completed = s.time;
   if (m.location) {

@@ -553,7 +553,13 @@ it.each([false, true])(
           id: r.id,
           op: "cancel",
         }),
-      ).toThrow("Patiententransport");
+      ).not.toThrow();
+      expect(
+        w.db
+          .all()
+          .get(w.owner)!
+          .aid.find((x) => x.id === r.id)!.closing,
+      ).toBeDefined();
       for (
         let n = 0;
         n < 400 &&
@@ -653,7 +659,7 @@ it("Migration 7→8 erhält beide Welten samt laufender Alarmierung byteinhaltli
         expect(m.location?.state).toBe("repair-pending");
         delete m.location;
       }
-      expect(JSON.stringify(migrated)).toBe(raw);
+      expect(withoutFireMigration(migrated, s)).toEqual(JSON.parse(raw));
     }
     const file = (await readdir(w.dir)).find((f) =>
       f.startsWith("pre-migration-v2-"),
@@ -835,7 +841,7 @@ it("historischer Schema-7-Stand ohne Phase-3-Felder erhält keine nachträgliche
         expect(m.location?.state).toBe("repair-pending");
         delete m.location;
       }
-      expect(migrated).toEqual({ ...old, aid: [] });
+      expect(withoutFireMigration(migrated, old)).toEqual({ ...old, aid: [] });
       expect(migrated.missions[0].organization).toBeUndefined();
       expect(migrated.vehicles[0].turnout).toBeUndefined();
     }
@@ -971,3 +977,4 @@ it("mehrere FMS-Meldungen zwischen zwei Ticks bleiben im fremden Einsatzverlauf 
     w.db.close();
   }
 });
+import { withoutFireMigration } from "./helpers/fire-migration-check";

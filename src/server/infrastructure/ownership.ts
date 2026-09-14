@@ -17,9 +17,11 @@ export function ownershipOf(
     )
     .all(f.id, f.kind, ...identities);
   if (rows.length > 1)
-    throw Error(
-      "STATION_IDENTITY_CONFLICT: Mehrdeutige Standortidentität. Betreiberprüfung erforderlich.",
-    );
+    return {
+      facility: f.id,
+      owner: "catalog-conflict",
+      name: "ungeklärtem Altbesitz – Betreiberprüfung erforderlich",
+    };
   const r = rows[0];
   return r
     ? {
@@ -50,6 +52,17 @@ export function persistExclusiveOwnership(sql: DatabaseSync, s: Save) {
       ...f,
       sources: [...f.sources, ...b.facility!.sources],
     });
+    if (current?.owner === "catalog-conflict") {
+      // Preserve an existing paid holding during targeted evidence review. This
+      // grants no new ownership and cannot be reached by a new catalog purchase.
+      const historic = sql
+        .prepare("SELECT 1 FROM station_ownership WHERE owner=? AND building=?")
+        .get(s.player.id, b.id);
+      if (historic) continue;
+      throw Error(
+        "STATION_IDENTITY_CONFLICT: Standort bis zur belegten Klärung nicht erneut kaufbar.",
+      );
+    }
     if (current && current.owner !== s.player.id)
       throw Error(`Standort bereits von ${current.name} erworben.`);
     const prior = sql
@@ -104,9 +117,10 @@ export function publicOwnership(sql: DatabaseSync, ids: string[]) {
   return sql
     .prepare(
       `WITH requests AS(SELECT json_extract(value,'$.id') id,json_extract(value,'$.kind') kind,json_extract(value,'$.sources') sources FROM json_each(?))
-       SELECT DISTINCT r.id facility,o.owner,u.username name FROM requests r
+       SELECT r.id facility,CASE WHEN COUNT(DISTINCT o.facility)>1 THEN 'catalog-conflict' ELSE MIN(o.owner) END owner,
+       CASE WHEN COUNT(DISTINCT o.facility)>1 THEN 'ungeklärtem Altbesitz – Betreiberprüfung erforderlich' ELSE MIN(u.username) END name FROM requests r
        JOIN station_aliases a ON a.kind=r.kind AND a.source IN(SELECT value FROM json_each(r.sources))
-       JOIN station_ownership o ON o.facility=a.facility JOIN users u ON u.id=o.owner`,
+       JOIN station_ownership o ON o.facility=a.facility JOIN users u ON u.id=o.owner GROUP BY r.id`,
     )
     .all(JSON.stringify(requests))
     .map((r) => ({

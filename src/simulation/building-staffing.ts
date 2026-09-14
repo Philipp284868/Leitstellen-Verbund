@@ -12,6 +12,7 @@ import {
 import { simId } from "./events";
 import { injuryReason } from "./responder-recovery";
 import { reconcileReadinessCore } from "./readiness-core";
+import { activeFireGameProfile, reconcileFireRoster } from "./fire-roster";
 
 export const staffingModelSchema = z
   .object({
@@ -124,6 +125,7 @@ export function reconcileBuildingStaffing(s: Save): StaffingChange {
   for (const b of s.buildings) {
     if (b.migrationReserve || b.owner !== s.player.id || b.ready > s.time)
       continue;
+    if (b.fireProfilePending) reconcileFireRoster(s, b);
     const plan = buildingStaffingPlan(s, b),
       fleet = fleets.get(b.id) ?? [],
       pool = homes.get(b.id) ?? [];
@@ -136,15 +138,21 @@ export function reconcileBuildingStaffing(s: Save): StaffingChange {
           change.qualifications++;
         }
     }
-    const desired = Math.max(
-      plan.basicCrew,
-      fleet.reduce((sum, v) => sum + vt(v.type).crew, 0),
-    );
+    const fire = activeFireGameProfile(b);
+    const desired = fire
+      ? fire.people * b.level
+      : Math.max(
+          plan.basicCrew,
+          fleet.reduce((sum, v) => sum + vt(v.type).crew, 0),
+        );
     const usable = (p: Person) => bound.has(p.id) || !personAvailable(s, p);
     let usableCount = pool.filter(usable).length;
     // A bounded extra crew per station can cover real absence at the station.
     // Injured/bound identities are retained and never healed to make the count fit.
-    while (usableCount < desired && pool.length < plan.capacity.people) {
+    while (
+      (fire ? pool.length < desired : usableCount < desired) &&
+      pool.length < plan.capacity.people
+    ) {
       if (s.people.length >= 12000) break;
       let id = simId(s);
       while (ids.has(id)) id = simId(s);
@@ -162,7 +170,8 @@ export function reconcileBuildingStaffing(s: Save): StaffingChange {
       usableCount++;
       change.added++;
     }
-    reconcileReadinessCore(s, b);
+    if (b.fireProfile) reconcileFireRoster(s, b);
+    else reconcileReadinessCore(s, b);
     const volunteer = isVolunteerStation(b);
     // FF crews are called from their station pool by planTurnout; professional
     // crews receive a stable standby assignment, avoiding a manual assign action.

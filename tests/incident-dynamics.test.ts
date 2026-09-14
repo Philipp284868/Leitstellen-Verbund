@@ -392,7 +392,7 @@ it("Migration 8→9 bewahrt beide Spielstände und laufende Alarmierungen mit Or
     );
     for (const mode of ["multi", "single"] as const) {
       const actual = db.all(mode).get(w.owner)!;
-      const preserved = structuredClone(actual);
+      const preserved = withoutFireMigration(actual, s);
       for (const m of preserved.missions) {
         expect(m.location!.original).toEqual(m.pos);
         delete m.location;
@@ -688,7 +688,20 @@ it("Nachbar-RTW baut den Behandlungsabschnitt auf und beginnt einen freigegebene
     ).toBe("transport");
     expect(() =>
       command(w.owner, { type: "aid-close", owner: w.owner, id, op: "cancel" }),
-    ).toThrow("Patient");
+    ).not.toThrow();
+    const returning = w.db
+      .all()
+      .get(w.peer)!
+      .vehicles.find((x) => x.id === v.id)!;
+    expect(returning.status).toBe("transport");
+    expect(returning.patients).toBe(1);
+    expect(returning.returnOrder?.state).toBe("clinic");
+    expect(
+      w.db
+        .all()
+        .get(w.owner)!
+        .aid.find((x) => x.id === id)!.closing?.state,
+    ).toBe("CANCELLED");
   } finally {
     w.db.close();
   }
@@ -791,3 +804,4 @@ it("aktive Großlage übersteht echte CLI-Sicherung und Wiederherstellung mit id
     db.close();
   }
 }, 30000);
+import { withoutFireMigration } from "./helpers/fire-migration-check";

@@ -25,7 +25,13 @@ export const actionSchema = z.discriminatedUnion("type", [
     })
     .strict(),
   z.object({ type: z.literal("build"), kind: id, pos: point }).strict(),
-  z.object({ type: z.literal("purchase-facility"), facility: id }).strict(),
+  z
+    .object({
+      type: z.literal("purchase-facility"),
+      facility: id,
+      quote: z.string().max(180).optional(),
+    })
+    .strict(),
   z
     .object({
       type: z.literal("buy"),

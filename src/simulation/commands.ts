@@ -1,3 +1,4 @@
+import { endIncident, unsuccessful } from "./outcomes";
 import type { Save, Vehicle } from "../shared/model";
 import { withdraw } from "./withdrawal";
 import { vt, capabilities } from "../shared/catalog";
@@ -20,6 +21,18 @@ export function deskCommand(
   if ("mission" in a) {
     const m = s.missions.find((m) => m.id === a.mission);
     if (!m?.control) throw Error("Eigener laufender Einsatz fehlt.");
+    if (a.type === "abandon-incident") {
+      endIncident(
+        s,
+        m,
+        "abandoned",
+        actor,
+        "Durch berechtigten Disponenten ausdrücklich aufgegeben.",
+      );
+      return;
+    }
+    if (unsuccessful(m) && a.type !== "withdraw")
+      throw Error("Einsatz befindet sich in der Abwicklung.");
     writable(m);
     if (a.type === "mission-location-review") {
       queueLocationReview(s, m);

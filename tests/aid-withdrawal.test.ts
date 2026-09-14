@@ -7,10 +7,9 @@ import type { ServerAction } from "../src/server/actions";
 import { Auth } from "../src/server/auth";
 import { Database } from "../src/server/database";
 import { Game } from "../src/server/game";
-import { atScene } from "./incident-dynamics-fixture";
 import { organizationFixture } from "./mutual-aid-fixture";
 
-it("verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatzkräfte die Besitzerlage decken", async () => {
+it("nimmt den Helferabzug trotz fehlender Restabdeckung an und gibt den fremden Einsatz nicht auf", async () => {
   const dir = await mkdtemp(resolve(tmpdir(), "lv-aid-withdraw-"));
   const db = new Database(dir);
   try {
@@ -59,27 +58,42 @@ it("verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatz
       v.path = [owned.missions[0].pos];
     }
     db.save(helper, arrived);
-    const before = [...db.all()].map(([id, save]) => [
-      id,
-      JSON.stringify(save),
-    ]);
-    expect(() =>
-      command(helper, { type: "aid-close", owner, id: request.id, op: "done" }),
-    ).toThrow(/Löschmittel/);
-    expect(() =>
-      command(owner, {
-        type: "aid-close",
-        owner,
-        id: request.id,
-        op: "cancel",
-      }),
-    ).toThrow(/Löschmittel/);
-    expect(
-      [...db.all()].map(([id, save]) => [id, JSON.stringify(save)]),
-    ).toEqual(before);
-    const replacement = db.all().get(owner)!;
-    atScene(replacement, replacement.vehicles[1], replacement.missions[0].id);
-    db.save(owner, replacement);
+    const scene = db.all().get(owner)!;
+    const commandVehicle = arrived.vehicles[0];
+    scene.missions[0].major = {
+      kind: "fire",
+      declared: scene.time,
+      level: 1,
+      sections: [
+        {
+          kind: "command",
+          ordered: true,
+          priority: 1,
+          progress: 0,
+          seconds: 30,
+          done: false,
+          leader: {
+            vehicle: commandVehicle.id,
+            assignment: commandVehicle.assignment!,
+          },
+        },
+      ],
+      placements: [
+        {
+          vehicle: commandVehicle.id,
+          assignment: commandVehicle.assignment!,
+          section: "command",
+        },
+      ],
+      transports: false,
+      evacuated: 0,
+      evacuees: 0,
+      water: 0,
+      demand: 0,
+      shortage: "",
+      campaign: "",
+    };
+    db.save(owner, scene);
     command(helper, { type: "aid-close", owner, id: request.id, op: "done" });
     expect(db.all().get(owner)!.aid[0].state).toBe("DONE");
     expect(
@@ -88,7 +102,14 @@ it("verhindert den gesamten Helferabzug über Anfrageende und Abbruch bis Ersatz
         .get(helper)!
         .vehicles.every((v) => v.status === "return" && !v.mission),
     ).toBe(true);
-    expect(db.all().get(owner)!.vehicles[1].status).toBe("scene");
+    expect(db.all().get(owner)!.missions[0].outcome).toBeUndefined();
+    expect(db.all().get(owner)!.missions[0].major!.placements).toEqual([]);
+    expect(
+      db.all().get(owner)!.missions[0].major!.sections[0].leader,
+    ).toBeUndefined();
+    const after = structuredClone(db.all().get(helper)!.vehicles);
+    command(helper, { type: "aid-close", owner, id: request.id, op: "done" });
+    expect(db.all().get(helper)!.vehicles).toEqual(after);
   } finally {
     db.close();
   }

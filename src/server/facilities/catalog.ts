@@ -7,6 +7,12 @@ import type {
   FacilityQuery,
 } from "../../shared/facilities/types";
 import { project } from "../../shared/germany/projection";
+import {
+  catalogFireProfile,
+  preparedFireSources,
+  sharedFireBuildings,
+} from "./fire-profiles";
+import { fireProfileSchema } from "../../shared/facilities/fire-profile";
 
 /** Static read-only catalog; indexed geography is independent of every dispatch-center save. */
 export class SqliteFacilityCatalog implements FacilityCatalog {
@@ -14,6 +20,11 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
   private readonly db: DatabaseSync;
   private statements = new Map<string, StatementSync>();
   private clusterCache = new Map<string, FacilityCluster[]>();
+  private sharedBuildings = new Map<
+    string,
+    { primary: string; sources: string[] }
+  >();
+  private secondaryIds: string[] = [];
   private statement(sql: string) {
     let prepared = this.statements.get(sql);
     if (!prepared) {
@@ -40,6 +51,49 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       if (meta.schema !== "1" || meta.dataset !== dataset || !meta.snapshot)
         throw Error("Standortkatalog passt nicht zum Deutschland-Datenpaket.");
       this.snapshot = meta.snapshot;
+      // Small versioned correction pack joined through the existing alias index. No full OSM import.
+      this.db.exec(
+        "CREATE TEMP TABLE fire_profiles(id TEXT PRIMARY KEY,kind TEXT NOT NULL,data TEXT NOT NULL)",
+      );
+      const rows = this.db
+        .prepare(
+          "SELECT DISTINCT f.id,f.data FROM facilities f JOIN aliases a ON a.facility_id=f.id WHERE a.source IN (SELECT value FROM json_each(?)) AND f.kind='fire'",
+        )
+        .all(JSON.stringify(preparedFireSources));
+      const insert = this.db.prepare(
+        "INSERT INTO temp.fire_profiles VALUES(?,?,?)",
+      );
+      for (const row of rows) {
+        const value = JSON.parse(String(row.data));
+        const profile = catalogFireProfile(value.sources);
+        insert.run(row.id, profile.kind, JSON.stringify(profile));
+      }
+      for (const sources of sharedFireBuildings) {
+        const members = sources.flatMap((source) => {
+          const member = this.db
+            .prepare(
+              "SELECT f.id,f.data FROM facilities f JOIN aliases a ON a.facility_id=f.id WHERE a.source=? AND f.kind='fire'",
+            )
+            .get(source);
+          return member ? [member] : [];
+        });
+        if (!members.length) continue;
+        const primary = String(members[0].id),
+          ids = [...new Set(members.map((m) => String(m.id)))];
+        const identity = {
+          primary,
+          sources: [
+            ...new Set([
+              ...members.flatMap(
+                (m) => JSON.parse(String(m.data)).sources as string[],
+              ),
+              ...ids,
+            ]),
+          ],
+        };
+        for (const id of ids) this.sharedBuildings.set(id, identity);
+        this.secondaryIds.push(...ids.filter((id) => id !== primary));
+      }
     } catch (error) {
       this.db.close();
       throw error;
@@ -47,14 +101,26 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
   }
   private read(row: Record<string, unknown>): Facility {
     const data = JSON.parse(String(row.data));
+    const corrected =
+      data.kind === "fire" ? catalogFireProfile(data.sources) : undefined;
     return {
+      ...(data.kind === "fire"
+        ? {
+            fireProfile:
+              corrected?.confidence !== "unknown"
+                ? corrected
+                : data.fireProfile
+                  ? fireProfileSchema.parse(data.fireProfile)
+                  : corrected,
+          }
+        : {}),
       id: data.id,
       kind: data.kind,
       name: data.name,
       address: data.address,
       state: data.state,
       snapshot: data.snapshot,
-      sources: data.sources,
+      sources: this.sharedBuildings.get(data.id)?.sources ?? data.sources,
       subtype: data.subtype,
       emergency: data.emergency,
       status: data.status,
@@ -88,17 +154,32 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
     };
   }
   get(id: string) {
-    const row = this.db
+    let row = this.db
       .prepare(
         "SELECT data FROM facilities WHERE id=? OR id=(SELECT facility_id FROM aliases WHERE source=?) LIMIT 1",
       )
       .get(id, id);
+    if (row) {
+      const primary = this.sharedBuildings.get(
+        JSON.parse(String(row.data)).id,
+      )?.primary;
+      if (primary)
+        row = this.db
+          .prepare("SELECT data FROM facilities WHERE id=?")
+          .get(primary);
+    }
     return row ? this.read(row) : undefined;
   }
   query(query: FacilityQuery) {
     const where: string[] = [],
       args: (string | number)[] = [];
-    let joins = "";
+    let joins = " LEFT JOIN temp.fire_profiles fp ON fp.id=f.id";
+    const fireKind =
+      "COALESCE(fp.kind,json_extract(f.data,'$.fireProfile.kind'),'unknown')";
+    if (this.secondaryIds.length) {
+      where.push("f.id NOT IN (SELECT value FROM json_each(?))");
+      args.push(JSON.stringify(this.secondaryIds));
+    }
     if (query.bbox) {
       joins += " JOIN facilities_rtree r ON r.rowid=f.rowid";
       where.push(
@@ -119,13 +200,28 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
       args.push(query.kind);
     }
     if (query.usable) where.push("f.usable=1");
+    if (query.fireKinds) {
+      if (!query.fireKinds.length) return [];
+      where.push(
+        `f.kind='fire' AND ${fireKind} IN (${query.fireKinds.map(() => "?").join(",")})`,
+      );
+      args.push(...query.fireKinds);
+    }
     if (query.offerFilter) {
-      const { kinds, owned, available } = query.offerFilter;
+      const { kinds, available, fireKinds } = query.offerFilter;
+      const owned = [
+        ...new Set(
+          query.offerFilter.owned.map(
+            (id) => this.sharedBuildings.get(id)?.primary ?? id,
+          ),
+        ),
+      ];
       const canBuy = kinds.length
-        ? `(f.usable=1 AND f.kind IN (${kinds.map(() => "?").join(",")}))`
+        ? `(f.usable=1 AND f.kind IN (${kinds.map(() => "?").join(",")})${fireKinds ? ` AND (f.kind!='fire' OR ${fireKinds.length ? `${fireKind} IN (${fireKinds.map(() => "?").join(",")})` : "0"})` : ""})`
         : "0";
       where.push(available ? canBuy : `NOT ${canBuy}`);
       args.push(...kinds);
+      if (kinds.length && fireKinds) args.push(...fireKinds);
       if (owned.length) {
         where.push(`f.id NOT IN (${owned.map(() => "?").join(",")})`);
         args.push(...owned);
@@ -133,7 +229,13 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
     }
     if (query.ids) {
       if (!query.ids.length) return [];
-      const ids = query.ids.slice(0, 150);
+      const ids = [
+        ...new Set(
+          query.ids
+            .slice(0, 150)
+            .map((id) => this.sharedBuildings.get(id)?.primary ?? id),
+        ),
+      ];
       where.push(`f.id IN (${ids.map(() => "?").join(",")})`);
       args.push(...ids);
     }
@@ -163,12 +265,13 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
     let rows: Record<string, unknown>[];
     do {
       rows = this.statement(
-        `SELECT AVG(f.lon) lon,AVG(f.lat) lat,COUNT(*) count,MIN(f.id) id,MIN(f.kind) kind,MIN(f.name) name,MIN(f.usable) usable FROM facilities f JOIN facilities_rtree r ON r.rowid=f.rowid WHERE r.min_lon<=? AND r.max_lon>=? AND r.min_lat<=? AND r.max_lat>=? ${kind ? "AND f.kind=?" : ""} GROUP BY ${individual ? "f.id" : "CAST((f.lon+180)/? AS INTEGER),CAST((f.lat+90)/? AS INTEGER)"} LIMIT 2001`,
+        `SELECT AVG(f.lon) lon,AVG(f.lat) lat,COUNT(*) count,MIN(f.id) id,MIN(f.kind) kind,MIN(f.name) name,MIN(f.usable) usable,MIN(COALESCE(fp.kind,json_extract(f.data,'$.fireProfile.kind'),'unknown')) fire_kind FROM facilities f LEFT JOIN temp.fire_profiles fp ON fp.id=f.id JOIN facilities_rtree r ON r.rowid=f.rowid WHERE r.min_lon<=? AND r.max_lon>=? AND r.min_lat<=? AND r.max_lat>=? AND f.id NOT IN (SELECT value FROM json_each(?)) ${kind ? "AND f.kind=?" : ""} GROUP BY ${individual ? "f.id" : "CAST((f.lon+180)/? AS INTEGER),CAST((f.lat+90)/? AS INTEGER)"} LIMIT 2001`,
       ).all(
         e,
         w,
         n,
         s,
+        JSON.stringify(this.secondaryIds),
         ...(kind ? [kind] : []),
         ...(individual ? [] : [cell, cell]),
       );
@@ -185,7 +288,16 @@ export class SqliteFacilityCatalog implements FacilityCatalog {
             id: String(row.id),
             kind: row.kind as FacilityKind,
             name: String(row.name),
-            usable: !!row.usable,
+            usable:
+              !!row.usable &&
+              (row.kind !== "fire" || row.fire_kind !== "unknown"),
+            ...(row.kind === "fire"
+              ? {
+                  fireKind: row.fire_kind as NonNullable<
+                    Facility["fireProfile"]
+                  >["kind"],
+                }
+              : {}),
           }
         : {}),
     }));

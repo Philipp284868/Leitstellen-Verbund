@@ -1,3 +1,5 @@
+import { outcomeSchema } from "../simulation/outcome-schema";
+import { fireProfileSchema } from "./facilities/fire-profile";
 import { z } from "zod";
 import {
   equipmentSchema,
@@ -83,6 +85,13 @@ export const point = z
   .strict();
 export const buildingSchema = z
   .object({
+    fireProfile: fireProfileSchema.optional(),
+    fireProfilePending: z.boolean().optional(),
+    fireRosterRevision: z.string().max(120).optional(),
+    fireCapacityRetained: z
+      .object({ slots: integer, people: integer })
+      .strict()
+      .optional(),
     facility: facilityBindingSchema.optional(),
     purchasePriceCents: centsSchema.optional(),
     purchaseReceipt: z
@@ -135,6 +144,18 @@ export const personSchema = z
   .strict();
 export const vehicleSchema = z
   .object({
+    returnOrder: z
+      .object({
+        assignment: id.nullable(),
+        mission: id.nullable(),
+        actor: id,
+        requested: num,
+        retryAt: num,
+        reason: z.string().max(300),
+        state: z.enum(["pending", "clinic", "returning"]),
+      })
+      .strict()
+      .optional(),
     equipment: equipmentSchema.optional(),
     waterTrip: waterTripSchema.optional(),
     supplies: z.object({ water: num, refilledAt: num }).strict().optional(),
@@ -172,6 +193,7 @@ export const vehicleSchema = z
   .strict();
 export const missionSchema = z
   .object({
+    outcome: outcomeSchema.optional(),
     waterSupply: waterSupplySchema.optional(),
     location: incidentLocationSchema.optional(),
     paymentCents: centsSchema.optional(),

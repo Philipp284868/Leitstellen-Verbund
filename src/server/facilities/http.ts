@@ -9,6 +9,11 @@ import type { FacilityOwner } from "../../shared/facilities/purchase";
 import type { Facility } from "../../shared/facilities/types";
 import type { HospitalOption } from "../../simulation/hospital-profiles";
 import type { ClinicSnapshot } from "../../simulation/clinic-capacity";
+import {
+  FIRE_GAME_PROFILES,
+  fireProfileKinds,
+} from "../../shared/facilities/fire-profile";
+import { progress } from "../../shared/progression";
 
 const bboxSchema = z
   .tuple([
@@ -78,11 +83,15 @@ export function facilityResponse(
     .min(0)
     .max(1000000)
     .parse(p.get("offset") || 0);
+  const fireKind = p.get("fireKind")
+    ? z.enum(fireProfileKinds).parse(p.get("fireKind"))
+    : undefined;
   const facilities = catalog.query({
     offset,
     bbox,
     search,
     kind,
+    ...(fireKind ? { fireKinds: [fireKind] } : {}),
     limit: 81,
     ...(status === "owned"
       ? { ids: s.buildings.flatMap((b) => (b.facility ? [b.facility.id] : [])) }
@@ -91,6 +100,12 @@ export function facilityResponse(
       ? {
           offerFilter: {
             available: status === "available",
+            fireKinds: fireProfileKinds.filter(
+              (k) =>
+                k !== "unknown" &&
+                FIRE_GAME_PROFILES[k].level <= progress(s.xp).level &&
+                FIRE_GAME_PROFILES[k].price <= s.money,
+            ),
             owned: s.buildings.flatMap((b) =>
               b.facility ? [b.facility.id] : [],
             ),
@@ -100,7 +115,9 @@ export function facilityResponse(
                 kind !== "hospital" &&
                 s.buildings.length < 150 &&
                 unlocked(s, "building", kind) &&
-                s.money >= bt(kind).price,
+                (kind === "fire"
+                  ? s.money >= FIRE_GAME_PROFILES.ff.price
+                  : s.money >= bt(kind).price),
             ),
           },
         }
@@ -138,6 +155,7 @@ export function facilityResponse(
         address: o.facility.address,
         state: o.facility.state,
         pos: o.facility.pos,
+        fireProfile: o.facility.fireProfile,
       },
     })),
     limit: 80,

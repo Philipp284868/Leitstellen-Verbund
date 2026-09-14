@@ -66,9 +66,14 @@ export function volunteerAvailability(s: Save, p: Person, duty: Duty) {
   if (p.training || p.ready > s.time) return false;
   if (p.professional) return true;
   if (stagedArrival(s, p)) return true;
+  if (duty.standby) return true;
   if (duty.simulationOverride && duty.simulationOverride.until > s.time)
     return duty.simulationOverride.available;
-  if (s.staffing?.version === 1) return true;
+  if (
+    s.staffing?.version === 1 &&
+    !s.buildings.find((b) => b.id === p.home)?.fireProfile
+  )
+    return true;
   const seed = volunteerSeed(s),
     calendar = volunteerCalendar(s.time),
     bucket = Math.floor(s.time / 1800);
@@ -126,12 +131,14 @@ export function volunteerArrival(
           ? "Katastrophenbereitschaft: bereits auf der Wache"
           : "Katastrophenbereitschaft: Anreise läuft",
     };
-  if (p.professional)
+  if (p.professional || duty.standby)
     return {
       person: p.id,
       at: s.time,
       available: true,
-      reason: "Hauptamtlicher Bereitschaftskern auf der Wache",
+      reason: p.professional
+        ? "Diensthabende Besatzung auf der Wache"
+        : "Ehrenamtliche Bereitschaft bereits auf der Wache",
     };
   const calendar = volunteerCalendar(s.time);
   const origin = nodes[calendar.work ? duty.workNode : duty.homeNode];

@@ -1,4 +1,9 @@
 import {
+  planFireProfileMigration,
+  applyFireProfileMigration,
+} from "./fire-profile-migration";
+import { FIRE_PROFILE_REVISION } from "./facilities/fire-profiles";
+import {
   applyBalancingMigration,
   XP_REWARDS_SCHEMA,
 } from "./balancing-migration";
@@ -35,7 +40,7 @@ import { EVENTS_SCHEMA, persistGameEvents } from "./game-events";
 import { LEADERBOARD_SCHEMA, persistMetrics } from "./leaderboard";
 // Historical migration storage only. The runtime never opens the single-player archive.
 type StoredWorld = "multi" | "single";
-export const DATABASE_VERSION = 28;
+export const DATABASE_VERSION = 29;
 /** Validate identity while the source is still read-only, including before a CLI restore replaces a file. */
 export function assertWorldMetadata(sql: DatabaseSync, requireDataset = false) {
   const hasMeta = sql
@@ -162,7 +167,12 @@ export class Database {
         (version < DATABASE_VERSION ||
           !this.sql
             .prepare("SELECT 1 FROM meta WHERE key='shared-infrastructure-v1'")
-            .get())
+            .get() ||
+          this.sql
+            .prepare(
+              "SELECT value FROM meta WHERE key='fire-profiles-revision'",
+            )
+            .get()?.value !== FIRE_PROFILE_REVISION)
       ) {
         this.sql
           .prepare("VACUUM INTO ?")
@@ -539,8 +549,44 @@ export class Database {
             "server-migration",
             "shared-infrastructure-v1: " + JSON.stringify(result),
           );
-        this.sql.exec("PRAGMA user_version=28");
+        if (version < 28) this.sql.exec("PRAGMA user_version=28");
       });
+      if (
+        version < 29 ||
+        this.sql
+          .prepare("SELECT value FROM meta WHERE key='fire-profiles-revision'")
+          .get()?.value !== FIRE_PROFILE_REVISION
+      ) {
+        const aliases = planInfrastructureMigration(this.sql, [], true);
+        if (!options.memory)
+          atomicPrivate(
+            resolve(dir, "fire-alias-migration-preview.json"),
+            JSON.stringify(aliases, null, 2) + "\n",
+          );
+        if (aliases.ready && !aliases.applied)
+          this.transaction(() =>
+            applyInfrastructureMigration(this.sql, [], true),
+          );
+        const plan = planFireProfileMigration(this.sql);
+        if (!options.memory)
+          atomicPrivate(
+            resolve(dir, "fire-profile-migration-preview.json"),
+            JSON.stringify(plan.summary, null, 2) + "\n",
+          );
+        this.transaction(() => {
+          applyFireProfileMigration(this.sql, plan);
+          this.sql
+            .prepare(
+              "INSERT INTO meta(key,value) VALUES('fire-profiles-revision',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            )
+            .run(FIRE_PROFILE_REVISION);
+          this.sql.exec("PRAGMA user_version=29");
+          this.audit(
+            "server-migration",
+            "fire-profiles-and-outcomes-v29: " + FIRE_PROFILE_REVISION,
+          );
+        });
+      }
     } catch (e) {
       this.sql.close();
       throw e;

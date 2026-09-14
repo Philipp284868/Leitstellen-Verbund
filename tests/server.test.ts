@@ -188,7 +188,7 @@ describe("Autoritativer Server", () => {
         (await request("action", { id, action }, a.cookie, a.csrf)).status,
       ).toBe(200);
     const current = await (await request("me", undefined, a.cookie)).json();
-    expect(current.save.money).toBe(euro(750000));
+    expect(current.save.money).toBe(euro(950000));
     expect(current.save.buildings).toHaveLength(1);
     expect(
       (
@@ -272,7 +272,7 @@ describe("Autoritativer Server", () => {
     };
     game.command(id, command);
     game.step(900);
-    expect(db.all().get(id)!.money).toBe(euro(750000));
+    expect(db.all().get(id)!.money).toBe(euro(950000));
     const file = await db.backup();
     expect((await readFile(file)).subarray(0, 15).toString()).toBe(
       "SQLite format 3",
@@ -281,7 +281,7 @@ describe("Autoritativer Server", () => {
     db = new Database(dir);
     new Game(db).command(id, command);
     new Game(db).step(125);
-    expect(db.all().get(id)!.money).toBe(euro(750000));
+    expect(db.all().get(id)!.money).toBe(euro(950000));
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );

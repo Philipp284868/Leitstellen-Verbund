@@ -1,3 +1,5 @@
+import { orderReturn } from "../simulation/return-orders";
+import { unsuccessful } from "../simulation/outcomes";
 import { syncAssistanceRadio } from "../simulation/incident-radio";
 import { withClinicAuthority } from "../simulation/clinic-capacity";
 import { SharedClinics } from "./infrastructure/clinics";
@@ -48,7 +50,13 @@ import {
   organizationCommand,
   attachOrganizations,
 } from "../simulation/organizations";
-import { aidCommand, aidTick, aidView, authorizedHelper } from "./aid";
+import {
+  aidCommand,
+  aidTick,
+  aidView,
+  authorizedHelper,
+  releaseDetachedSceneRoles,
+} from "./aid";
 import { patientTransportReason } from "../simulation/patients";
 import {
   migratePatientTransports,
@@ -62,7 +70,7 @@ import { deskOwner, workspace, membership } from "./workspaces";
 import { attachIncident } from "../simulation/calls";
 import { legacyIncident, publicSave } from "../simulation/incidents";
 import { alarm } from "../simulation/dispatch";
-import { withdraw, assessRemoteWithdrawal } from "../simulation/withdrawal";
+import { assessRemoteWithdrawal } from "../simulation/withdrawal";
 import { deskCommand } from "../simulation/commands";
 import { writable, simId } from "../simulation/events";
 import { deskActions, type DeskAction } from "../simulation/actions";
@@ -76,7 +84,6 @@ import {
   readiness,
   tick,
   money,
-  recall,
   endCooperation,
   type Action,
 } from "../shared/engine";
@@ -209,65 +216,10 @@ export class Game {
           deskActions.some((schema) => schema.shape.type.value === action.type)
         )
           deskCommand(s, action as DeskAction, user, external, externalUnits);
-        else if (
-          action.type === "recall" &&
-          s.vehicles.some(
-            (v) =>
-              v.id === action.id &&
-              v.status === "scene" &&
-              s.missions.some((m) => m.id === v.mission),
-          )
-        ) {
-          const v = s.vehicles.find((v) => v.id === action.id)!;
-          const m = s.missions.find((m) => m.id === v.mission)!;
-          writable(m);
-          withdraw(s, m, [v.id], user, external, externalUnits);
-        } else if (
-          action.type === "recall" &&
-          s.vehicles.some(
-            (v) =>
-              v.id === action.id &&
-              v.status === "scene" &&
-              v.mission?.startsWith("remote:"),
-          )
-        ) {
-          const v = s.vehicles.find((v) => v.id === action.id)!;
-          const targetOwner = [...saves.values()].find((other) =>
-            other.missions.some(
-              (m) => v.mission === `remote:${other.player.id}:${m.id}`,
-            ),
-          );
-          const m = targetOwner?.missions.find(
-            (m) => v.mission === `remote:${targetOwner.player.id}:${m.id}`,
-          );
-          if (targetOwner && m && m.phase !== "done") {
-            writable(m);
-            if (!authorizedHelper(targetOwner, m, s, v))
-              throw Error("Keine gültige Unterstützungszuordnung.");
-            const units: Vehicle[] = [],
-              skills: Skills = {};
-            for (const helper of saves.values())
-              for (const unit of helper.vehicles) {
-                if (
-                  unit.mission !== v.mission ||
-                  unit.status !== "scene" ||
-                  !authorizedHelper(targetOwner, m, helper, unit)
-                )
-                  continue;
-                units.push(unit);
-                for (const [key, n] of Object.entries(effectiveSkills(m, unit)))
-                  skills[key] = (skills[key] || 0) + n;
-              }
-            const assessment = assessRemoteWithdrawal(
-              targetOwner,
-              m,
-              [v.id],
-              skills,
-              units,
-            );
-            if (!assessment.allowed) throw Error(assessment.reasons.join(" "));
-          }
-          recall(s, v);
+        else if (action.type === "recall") {
+          const vehicle = s.vehicles.find((v) => v.id === action.id);
+          if (!vehicle) throw Error("Eigenes Fahrzeug fehlt.");
+          orderReturn(s, vehicle, user);
         } else if (action.type === "share" || action.type === "unshare") {
           const m = s.missions.find((m) => m.id === action.id);
           if (!m) throw Error("Eigener Einsatz fehlt.");
@@ -314,7 +266,7 @@ export class Game {
               for (const v of helper.vehicles.filter(
                 (v) => v.mission === `remote:${owner}:${m.id}` && !v.patients,
               ))
-                recall(helper, v);
+                orderReturn(helper, v, user);
             endCooperation(s, m.id);
           }
         } else if (action.type === "support") {
@@ -375,6 +327,7 @@ export class Game {
             ))
               p.duty = personDuty(s, p);
         }
+        releaseDetachedSceneRoles(saves);
         recordActivity(this.db.sql, s, user, action, id);
         for (const [id, value] of saves) {
           value.revision++;
@@ -527,6 +480,11 @@ export class Game {
             remoteDynamic.add(`remote:${ownerId}:${m.id}`);
           for (const [helperId, helper] of saves) {
             if (helperId === ownerId) continue;
+            if (unsuccessful(m))
+              for (const vehicle of helper.vehicles.filter(
+                (v) => v.mission === `remote:${ownerId}:${m.id}`,
+              ))
+                orderReturn(helper, vehicle, "server");
             for (const v of helper.vehicles.filter(
               (v) =>
                 !locationPending &&
@@ -542,6 +500,8 @@ export class Game {
               for (const [key, value] of Object.entries(effectiveSkills(m, v)))
                 current[key] = (current[key] || 0) + value;
               if (
+                !unsuccessful(m) &&
+                !v.returnOrder &&
                 canTransport(m, v) &&
                 !patientTransportReason(m, v) &&
                 !m.transports.some(
@@ -627,7 +587,8 @@ export class Game {
                     authorizedHelper(s, m, helper, v),
                 ),
               );
-          if (m.location?.state === "technical-closure") continue;
+          if (m.location?.state === "technical-closure" || unsuccessful(m))
+            continue;
           this.db.sql
             .prepare("INSERT OR IGNORE INTO rewards VALUES (?,?,?)")
             .run(`owner:${m.round}:${id}`, id, m.telemetry?.credits ?? 0);
@@ -673,7 +634,7 @@ export class Game {
                   authorizedHelper(saves.get(ownerId)!, m, helper, v),
               )
           )
-            recall(helper, v);
+            orderReturn(helper, v, "server");
         }
         helper.transfers = helper.transfers.filter(
           (t) =>

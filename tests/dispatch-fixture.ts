@@ -24,6 +24,7 @@ export function phaseFixture(
 
   apply(s, fixturePurchase("fire", nodes[stationIndex]));
   // Existing phase suites model an established professional station. Volunteer starts have their own suite.
+  delete s.buildings[0].fireProfile;
   s.buildings[0].organization = {
     kind: "bf",
     turnout: 30,

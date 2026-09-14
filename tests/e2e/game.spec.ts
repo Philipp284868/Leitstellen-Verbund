@@ -86,9 +86,10 @@ function ownerOf(username: string) {
   );
 }
 async function expectAlarmableFF(page: Page, owner: string) {
-  const core = app.db.all().get(owner)!.buildings[0].readinessCore!.count;
-  expect(core).toBeGreaterThanOrEqual(4);
-  expect(core).toBeLessThanOrEqual(6);
+  const save = app.db.all().get(owner)!;
+  expect(save.buildings[0].fireProfile?.kind).toBe("ff");
+  expect(save.buildings[0].readinessCore).toBeUndefined();
+  expect(save.people.filter((p) => p.professional)).toHaveLength(0);
   await expect
     .poll(() =>
       app.game
@@ -96,8 +97,9 @@ async function expectAlarmableFF(page: Page, owner: string) {
         .save.vehicles.every(
           (v) =>
             v.availability?.alarmable === true &&
-            v.availability.crewPresent === core &&
-            v.availability.dispatchable === core >= v.availability.crewRequired,
+            v.availability.crewPresent >= 0 &&
+            v.availability.dispatchable ===
+              v.availability.crewPresent >= v.availability.crewRequired,
         ),
     )
     .toBe(true);
@@ -171,7 +173,7 @@ async function resources(page: Page, username: string, site = 0) {
   expect(s.buildings[0].organization?.kind).toBe("ff");
   expect(s.staffing?.version).toBe(1);
   expect(s.people.length).toBeGreaterThanOrEqual(6);
-  // The real 4–6 person core is already at the station; additional crew must commute.
+  // The source-bound FF has a finite volunteer roster, without an invented paid core.
   await expect(
     page.getByRole("button", { name: "Besetzen", exact: true }),
   ).toHaveCount(0);

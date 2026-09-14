@@ -9,7 +9,6 @@ import {
   crewSummary,
   stationCapacity,
   reserveWarning,
-  PROFESSIONAL_FIRE,
 } from "../simulation/staffing";
 import { buildingStaffingStatus } from "../simulation/building-staffing";
 import { vehicleAvailability } from "../simulation/availability";
@@ -21,8 +20,7 @@ import {
 } from "../simulation/organizations-schema";
 import { useHospitalOptions } from "./germany/GeoQueries";
 import { duration } from "../shared/travel";
-import { level } from "../shared/model";
-import { formatMoney } from "../shared/money";
+import { FireProfileDetails } from "./facilities/FireProfileDetails";
 import "./Organizations.css";
 
 export function StationSettings({ s, b }: { s: Save; b: Building }) {
@@ -33,20 +31,19 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
       JSON.stringify(draft) !== JSON.stringify(stationProfile(b)),
     () => setProfile(null),
   );
-  const [confirmBF, setConfirmBF] = useState(false);
   if (!bt(b.type).slots) return null;
-  const ff = stationProfile(b).kind === "ff",
-    volunteer = isVolunteerStation(b),
+  const volunteer = isVolunteerStation(b),
     capacity = stationCapacity(b),
     status = buildingStaffingStatus(s, b);
-  const unavailable =
-    level(s) < PROFESSIONAL_FIRE.level ||
-    s.money < PROFESSIONAL_FIRE.price ||
-    b.ready > s.time ||
-    s.vehicles.some((v) => v.home === b.id && v.status !== "ready");
   return (
     <details className="org-settings">
       <summary>Betriebsprofil · {status.label}</summary>
+      {b.fireProfile && (
+        <FireProfileDetails
+          profile={b.fireProfile}
+          pending={b.fireProfilePending}
+        />
+      )}
       {form.error && (
         <p className="error" role="alert">
           {form.error}
@@ -63,7 +60,7 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
           Ergänzungen und Vertretung organisiert die Wache automatisch.
         </small>
         <div className="org-form">
-          {!volunteer && (
+          {!volunteer && !b.fireProfile && (
             <label>
               Ausrück-Grundzeit in Sekunden
               <input
@@ -110,7 +107,7 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
         </div>
         <p>
           {volunteer
-            ? "Die zugesagte Grundbesetzung reagiert zuverlässig auf Alarm. Freiwillige Kräfte fahren zur Wache; das Fahrzeug wartet auf die tatsächliche Ankunft."
+            ? "Verfügbare freiwillige Kräfte fahren nach Alarm zur Wache; das Fahrzeug wartet auf die tatsächliche Ankunft der Mindestbesatzung. Bereits anwesende Kräfte werden direkt berücksichtigt."
             : "Die Wachbesatzung übernimmt bereitstehende Fahrzeuge automatisch."}
         </p>
         <small>
@@ -129,44 +126,6 @@ export function StationSettings({ s, b }: { s: Save; b: Building }) {
         <button disabled={draft === null} onClick={() => setProfile(null)}>
           Änderungen verwerfen
         </button>
-        {ff && (
-          <div className="bf-expansion">
-            <h3>Berufsfeuerwehr</h3>
-            <p>
-              Doppelte Stellplätze, Besatzung vor Ort und 20 Sekunden
-              Grundausrückzeit.
-            </p>
-            <p>
-              Ab Stufe {PROFESSIONAL_FIRE.level} ·{" "}
-              {formatMoney(PROFESSIONAL_FIRE.price)}
-            </p>
-            {!confirmBF ? (
-              <button disabled={unavailable} onClick={() => setConfirmBF(true)}>
-                BF-Ausbau prüfen
-              </button>
-            ) : (
-              <div role="group" aria-label="BF-Ausbau bestätigen">
-                <p>
-                  Kosten: {formatMoney(PROFESSIONAL_FIRE.price)} · Budget
-                  danach: {formatMoney(s.money - PROFESSIONAL_FIRE.price)}
-                </p>
-                <button
-                  disabled={unavailable}
-                  onClick={() => {
-                    void form.run(async () => {
-                      await command({ type: "station-upgrade-bf", home: b.id });
-                      setConfirmBF(false);
-                      setProfile(null);
-                    });
-                  }}
-                >
-                  Kostenpflichtig ausbauen
-                </button>
-                <button onClick={() => setConfirmBF(false)}>Abbrechen</button>
-              </div>
-            )}
-          </div>
-        )}
       </fieldset>
     </details>
   );

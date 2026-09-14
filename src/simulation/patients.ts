@@ -116,7 +116,12 @@ export function patientTick(
       a.id.localeCompare(b.id),
   );
   for (const p of order) {
-    if (p.transport === "delivered" || p.condition === "dead") continue;
+    if (
+      p.transport === "delivered" ||
+      p.transport === "external" ||
+      p.condition === "dead"
+    )
+      continue;
     const previous = p.condition;
     const previousHealth = p.health;
     const carrier =

@@ -14,6 +14,69 @@ import {
 } from "../src/shared/germany/world";
 import { createFacilityFixture } from "./fixtures/germany/facility-package";
 import { sites, fixtureDataset } from "./fixtures/germany/locations";
+import { fireQuote } from "../src/shared/facilities/fire-profile";
+
+it("fasst belegte BF-/FF-Quellobjekte im echten SQLite-Katalog zusammen und erhält selbständige Nachbarwachen", () => {
+  const dir = mkdtempSync(resolve(tmpdir(), "lv-facility-canonical-"));
+  let catalog: SqliteFacilityCatalog | undefined;
+  try {
+    createFacilityFixture(dir, { positions: [sites[0], sites[0], sites[0]] });
+    const file = resolve(dir, "facilities.sqlite"),
+      db = new DatabaseSync(file);
+    try {
+      // Synthetic geometry deliberately shares an address/position. Only the
+      // source-bound Wittenau correction proves one physical BF/FF property.
+      const sources = ["way:29978455", "node:6621423513", "node:9527816352"];
+      sources.forEach((source, i) => {
+        const id = `fixture:fire:${i}`;
+        db.prepare(
+          "UPDATE facilities SET address=?,data=json_set(data,'$.sources',json(?),'$.address',?) WHERE id=?",
+        ).run(
+          "Gleiche Testadresse",
+          JSON.stringify([source]),
+          "Gleiche Testadresse",
+          id,
+        );
+        db.prepare("DELETE FROM aliases WHERE facility_id=?").run(id);
+        db.prepare("INSERT INTO aliases VALUES(?,?)").run(source, id);
+      });
+    } finally {
+      db.close();
+    }
+    catalog = new SqliteFacilityCatalog(file, fixtureDataset);
+    const primary = catalog.get("way:29978455")!;
+    expect(primary.id).toBe("fixture:fire:0");
+    expect(primary.fireProfile?.kind).toBe("shared");
+    expect(catalog.get("node:6621423513")).toEqual(primary);
+    expect(catalog.get("fixture:fire:1")).toEqual(primary);
+    expect(primary.sources).toEqual(
+      expect.arrayContaining([
+        "way:29978455",
+        "node:6621423513",
+        "fixture:fire:0",
+        "fixture:fire:1",
+      ]),
+    );
+    expect(catalog.get("node:9527816352")!.id).toBe("fixture:fire:2");
+    expect(catalog.query({ kind: "fire" }).map((f) => f.id)).toEqual([
+      "fixture:fire:0",
+      "fixture:fire:2",
+    ]);
+    expect(catalog.query({ ids: ["fixture:fire:1"] })).toEqual([primary]);
+    expect(catalog.query({ kind: "fire", fireKinds: ["shared"] })).toEqual([
+      primary,
+    ]);
+    const markers = catalog.clusters([5, 47, 16, 56], 18, "fire");
+    expect(markers.map((m) => m.id).sort()).toEqual([
+      "fixture:fire:0",
+      "fixture:fire:2",
+    ]);
+    expect(markers.reduce((n, m) => n + m.count, 0)).toBe(2);
+  } finally {
+    catalog?.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 it("filtert Kaufstatus, Guthaben und Besitz vor der Ergebnisgrenze des großen Standortkatalogs", () => {
   const dir = mkdtempSync(resolve(tmpdir(), "lv-facility-query-"));
@@ -50,7 +113,11 @@ it("filtert Kaufstatus, Guthaben und Besitz vor der Ergebnisgrenze des großen S
       query("kind=fire&status=locked").offers.map((o) => o.facility.id),
     ).toEqual(["fixture:fire:239"]);
     const id = available.offers[0].facility.id;
-    apply(s, { type: "purchase-facility", facility: id });
+    apply(s, {
+      type: "purchase-facility",
+      facility: id,
+      quote: fireQuote(catalog.get(id)?.fireProfile),
+    });
     expect(query("status=owned").offers.map((o) => o.facility.id)).toEqual([
       id,
     ]);

@@ -7,7 +7,7 @@ import { createWithdrawalAssessment } from "../simulation/withdrawal";
 import { effectiveSkills } from "../simulation/major-resources";
 import { operativeCode } from "../simulation/fms";
 import { duration, tripLabel } from "../shared/travel";
-import { statuses } from "./ui";
+import { ConfirmAction, statuses } from "./ui";
 import { act } from "./store";
 import "./IncidentFeedback.css";
 
@@ -38,6 +38,21 @@ export function IncidentUnits({
   const currentPage = Math.min(page, pages - 1);
   return (
     <div className="incident-units" data-testid="incident-units">
+      {vehicles.length > 0 && (
+        <ConfirmAction
+          message={`Alle ${vehicles.length} eigenen Kräfte abrücken lassen? ${assess(vehicles.map((v) => v.id)).reasons.join(" ")} Der Einsatz bleibt offen. Laufende Patiententransporte werden zuerst beendet.`}
+          onConfirm={async () => {
+            await act({
+              type: "withdraw",
+              mission: m.id,
+              vehicles: vehicles.map((v) => v.id),
+            });
+            setSelection([]);
+          }}
+        >
+          Eigene Kräfte abrücken lassen
+        </ConfirmAction>
+      )}
       {vehicles.slice(currentPage * 25, currentPage * 25 + 25).map((v) => {
         const result = assess([v.id]);
         return (
@@ -47,7 +62,7 @@ export function IncidentUnits({
                 type="checkbox"
                 aria-label={`${v.name} zum Abziehen auswählen`}
                 checked={selected.includes(v.id)}
-                disabled={v.status !== "scene"}
+                disabled={!result.allowed}
                 onChange={(e) =>
                   setSelection(
                     e.target.checked
@@ -68,25 +83,23 @@ export function IncidentUnits({
                 ? `Ausrücken in ${duration(v.depart - s.time)}`
                 : tripLabel(v, s.time)}
             </small>
-            {v.status === "scene" && (
+            {result.allowed && (
               <>
-                <button
+                <ConfirmAction
                   disabled={!result.allowed}
-                  title={result.reasons.join(" ")}
-                  onClick={() =>
-                    void act({
+                  message={`${v.name} abrücken lassen? ${result.reasons.join(" ")} Patienten an Bord werden zuerst übergeben; technische Hindernisse bleiben als Rückkehrauftrag sichtbar.`}
+                  onConfirm={async () => {
+                    await act({
                       type: "withdraw",
                       mission: m.id,
                       vehicles: [v.id],
-                    })
-                  }
+                    });
+                  }}
                 >
-                  Zurückschicken
-                </button>
-                {!result.allowed && (
-                  <small className="unit-reason">
-                    {result.reasons.join(" ")}
-                  </small>
+                  Abrücken
+                </ConfirmAction>
+                {v.returnOrder && (
+                  <small role="status">{v.returnOrder.reason}</small>
                 )}
               </>
             )}
@@ -114,15 +127,20 @@ export function IncidentUnits({
       )}
       {!!selected.length && (
         <div className="withdraw-selection">
-          <button
+          <ConfirmAction
             disabled={!assessment.allowed}
-            onClick={() => {
-              void act({ type: "withdraw", mission: m.id, vehicles: selected });
+            message={`${selected.length} eigene Kräfte abrücken lassen? ${assessment.reasons.join(" ")} Rückkehr wird je Fahrzeug geplant; Patienten bleiben gebunden bis zur Übergabe.`}
+            onConfirm={async () => {
+              await act({
+                type: "withdraw",
+                mission: m.id,
+                vehicles: selected,
+              });
               setSelection([]);
             }}
           >
-            Ausgewählte zurückschicken ({selected.length})
-          </button>
+            Ausgewählte abrücken lassen ({selected.length})
+          </ConfirmAction>
           {!assessment.allowed && (
             <p role="status">{assessment.reasons.join(" ")}</p>
           )}

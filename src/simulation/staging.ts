@@ -14,5 +14,5 @@ export function stagedArrival(s: Save, p: Save["people"][number]) {
 }
 export function presentAtStation(s: Save, p: Save["people"][number]) {
   const staged = stagedArrival(s, p);
-  return staged ? staged.at <= s.time : !!p.professional;
+  return staged ? staged.at <= s.time : !!p.professional || !!p.duty?.standby;
 }

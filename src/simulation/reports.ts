@@ -76,6 +76,7 @@ export function buildReport(m: Mission): Report {
   const t = m.telemetry;
   return {
     version: 1,
+    outcome: m.outcome,
     at: end ?? m.created,
     partial: !t || t.partial || !!m.control?.legacy,
     timings: {
@@ -246,6 +247,8 @@ export function finalizeReport(s: Save, m: Mission) {
     t = s.statistics;
   if (!t.since) t.since = s.time;
   t.completed++;
+  t.failed += Number(m.outcome?.result === "failed");
+  t.abandoned += Number(m.outcome?.result === "abandoned");
   t.calls += r.calls;
   t.callSeconds += r.callSeconds;
   t.requests += r.requests;

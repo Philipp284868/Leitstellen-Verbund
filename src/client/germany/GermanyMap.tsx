@@ -36,6 +36,7 @@ import type { PublicPlayer } from "../../shared/presence";
 import { emit, useGame } from "../store";
 import { tripLabel } from "../../shared/travel";
 import { FacilityDetails } from "../facilities/FacilityBrowser";
+import { fireProfileLabels } from "../../shared/facilities/fire-profile";
 import { attachFacilityLayer } from "../facilities/map-layer";
 import {
   facilityLabels,
@@ -1398,7 +1399,11 @@ export const GermanyMap = memo(function GermanyMap(props: GermanyMapProps) {
                     }}
                   >
                     {f.name || "Name nicht erfasst"} ·{" "}
-                    {f.kind ? facilityLabels[f.kind] : "Einrichtung"}
+                    {f.fireKind
+                      ? fireProfileLabels[f.fireKind]
+                      : f.kind
+                        ? facilityLabels[f.kind]
+                        : "Einrichtung"}
                   </button>
                 ))}
               </div>

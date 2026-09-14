@@ -1,8 +1,6 @@
 import { mt, vt, type Skills } from "../shared/catalog";
-import { money } from "../shared/engine";
 import { isLandSite } from "../shared/germany/world";
 import type { Mission, Save } from "../shared/model";
-import { level } from "../shared/model";
 import { nodes } from "../shared/world";
 import { record, writable } from "./events";
 import { hospitalOptions } from "./hospitals";
@@ -12,7 +10,6 @@ import {
   crewRequired,
   isVolunteerStation,
   personAvailable,
-  PROFESSIONAL_FIRE,
   stationProfile,
 } from "./staffing";
 export function attachOrganizations(m: Mission) {
@@ -87,33 +84,9 @@ export function organizationCommand(
   )
     throw Error("Migrationsreserve besitzt keine betriebsfähige Wache.");
   if (a.type === "station-upgrade-bf") {
-    const b = s.buildings.find((b) => b.id === a.home);
-    if (!b || b.type !== "fire" || stationProfile(b).kind !== "ff")
-      throw Error(
-        "Eine eigene Freiwillige Feuerwehr ist Voraussetzung für den BF-Ausbau.",
-      );
-    if (level(s) < PROFESSIONAL_FIRE.level)
-      throw Error(`Berufsfeuerwehr ab Stufe ${PROFESSIONAL_FIRE.level}.`);
-    if (
-      b.ready > s.time ||
-      s.vehicles.some((v) => v.home === b.id && v.status !== "ready")
-    )
-      throw Error(
-        "BF-Ausbau erst nach Rückkehr aller Fahrzeuge und Abschluss bestehender Bauarbeiten.",
-      );
-    money(s, -PROFESSIONAL_FIRE.price, `Ausbau zur Berufsfeuerwehr: ${b.name}`);
-    (b.investmentReceipts ??= []).push({
-      id: s.journal[0].id,
-      at: s.time,
-      amount: PROFESSIONAL_FIRE.price,
-    });
-    b.organization = {
-      ...stationProfile(b),
-      kind: "bf",
-      turnout: 20,
-      crew: "normal",
-    };
-    b.ready = s.time + PROFESSIONAL_FIRE.seconds;
+    throw Error(
+      "Die reale Feuerwehrart ist an ihren belegten Standort gebunden. Eine FF kann nicht zur BF umgewandelt werden.",
+    );
   } else if (a.type === "station-profile" || a.type === "hospital-profile") {
     const b = s.buildings.find((b) => b.id === a.home);
     if (!b) throw Error("Eigene Wache fehlt.");
@@ -133,9 +106,12 @@ export function organizationCommand(
       const previous = stationProfile(b);
       if (a.profile.kind !== previous.kind)
         throw Error(
-          "Die Organisationsart ist festgelegt. Für Berufsfeuerwehr den freigeschalteten BF-Ausbau verwenden.",
+          "Die reale Organisationsart ist am Standort festgelegt und kann nicht durch Spieler geändert werden.",
         );
-      if (isVolunteerStation(b) && a.profile.turnout !== previous.turnout)
+      if (
+        (b.fireProfile || isVolunteerStation(b)) &&
+        a.profile.turnout !== previous.turnout
+      )
         throw Error(
           "Die Anreise freiwilliger Kräfte wird durch die Simulation bestimmt.",
         );

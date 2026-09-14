@@ -1,9 +1,9 @@
+import { FIRE_GAME_PROFILES } from "../src/shared/facilities/fire-profile";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Database } from "../src/server/database";
 import { Game } from "../src/server/game";
 import { apply, tick } from "../src/shared/engine";
 import { fresh, validate } from "../src/shared/model";
-import { bt } from "../src/shared/catalog";
 import { GermanyRoutingError } from "../src/shared/germany/errors";
 import { assertFacilityAccess } from "../src/shared/facilities/purchase";
 import { xpForLevel } from "../src/shared/progression";
@@ -216,7 +216,7 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
       db.all().get("owner")!,
     );
     expect(offer).toMatchObject({
-      price: bt("fire").price,
+      price: FIRE_GAME_PROFILES.ff.price,
       owned: undefined,
       reason: "",
     });
@@ -227,7 +227,7 @@ describe("reale Standortkäufe und unveränderliche Identität", () => {
     run("member", action);
     run("owner", action);
     const s = db.all().get("owner")!;
-    expect(s.money).toBe(before - bt("fire").price);
+    expect(s.money).toBe(before - FIRE_GAME_PROFILES.ff.price);
     expect(s.buildings).toHaveLength(1);
     expect(s.buildings[0].facility!.id).toBe(action.facility);
     expect(s.buildings[0].pos).toEqual(sites[0]);

@@ -1,3 +1,6 @@
+import { outcomeTick, unsuccessful } from "../simulation/outcomes";
+import { patientTick } from "../simulation/patients";
+import { advanceReturn, orderReturn } from "../simulation/return-orders";
 import { GermanyRoutingError } from "./germany/errors";
 import { beginTrip } from "../simulation/trip-start";
 export { beginTrip } from "../simulation/trip-start";
@@ -54,7 +57,7 @@ import {
 } from "../simulation/patients";
 import { updateWeather } from "../simulation/weather";
 import { chooseIncidentTemplate } from "../simulation/incident-selection";
-import { withdraw } from "../simulation/withdrawal";
+
 import { trafficTick } from "../simulation/traffic";
 import { withAutomaticRouting } from "../simulation/routing-context";
 import { faultsTick } from "../simulation/faults";
@@ -79,7 +82,7 @@ export type Action =
       mission: string;
       source: "tank" | "hydrant" | "open-water" | "shuttle";
     }
-  | { type: "purchase-facility"; facility: string }
+  | { type: "purchase-facility"; facility: string; quote?: string }
   | { type: "build"; kind: string; pos: Point }
   | { type: "buy"; kind: string; home: string; equipment?: Equipment }
   | {
@@ -236,7 +239,7 @@ export function apply(s: Save, a: Action) {
         "BUILDING_PURCHASE_ONLY: Bitte einen bestehenden Standort erwerben.",
       );
     case "purchase-facility":
-      purchaseFacility(s, a.facility);
+      purchaseFacility(s, a.facility, a.quote);
       break;
     case "vehicle-service":
       serviceVehicle(s, a.vehicle);
@@ -471,15 +474,8 @@ export function apply(s: Save, a: Action) {
     }
     case "recall": {
       const v = s.vehicles.find((v) => v.id === a.id);
-      if (!v || v.status === "ready" || v.status === "return")
-        throw Error("Kein laufender Auftrag.");
-      if (v.fault && v.fault.state !== "repaired")
-        throw Error("Automatische Behebung der Fahrzeugstörung abwarten.");
-      if (v.patients)
-        throw Error("Patiententransport muss zuerst abgeschlossen werden.");
-      const m = s.missions.find((m) => m.id === v.mission);
-      if (m && v.status === "scene") withdraw(s, m, [v.id], s.player.id);
-      else recall(s, v);
+      if (!v) throw Error("Eigenes Fahrzeug fehlt.");
+      orderReturn(s, v, s.player.id);
       break;
     }
     case "favorite": {
@@ -607,6 +603,7 @@ function tickState(
     clinicAuthority()?.advance(s.time);
     reconcileBuildingStaffing(s);
     updateWeather(s);
+    for (const mission of s.missions) outcomeTick(s, mission);
     beforeStep(s);
     if (s.reliefActive && s.reliefReady <= s.time) {
       money(
@@ -629,6 +626,7 @@ function tickState(
       return true;
     });
     for (const v of s.vehicles) {
+      advanceReturn(s, v);
       maintenanceTick(s, v);
       postIncidentTick(s, v);
       measureTravel(s, v, s.time - dt);
@@ -640,6 +638,7 @@ function tickState(
       if (v.status === "travel") v.status = "scene";
       else if (v.status === "return") {
         v.status = "ready";
+        delete v.returnOrder;
         if (!s.buildings.find((b) => b.id === v.home)?.migrationReserve)
           v.supplies = { water: equipmentProfile(v).water, refilledAt: s.time };
         v.path = [s.buildings.find((b) => b.id === v.home)!.pos];
@@ -682,7 +681,9 @@ function tickState(
         ))
           t.delivered = true;
         const repeat =
+          !v.returnOrder &&
           !!m &&
+          !unsuccessful(m) &&
           transportCandidates(m).length > 0 &&
           !patientTransportReason(m, v);
         if (!repeat) queuePostIncident(s, v);
@@ -693,16 +694,26 @@ function tickState(
           setFms(s, v, 3, "server", "Erneute Anfahrt für weitere Patienten");
         } else {
           queuePostIncident(s, v);
-          recall(s, v);
+          // The admission is complete even if the subsequent road is unavailable.
+          // Never run the transport-arrival branch twice while waiting for a return route.
+          v.status = "scene";
+          v.path = [v.path.at(-1)!];
+          if (!v.returnOrder) orderReturn(s, v, "server");
+          else advanceReturn(s, v);
         }
       }
     }
     for (const m of s.missions)
-      if (m.location?.state !== "repair-pending")
+      if (!unsuccessful(m) && m.location?.state !== "repair-pending")
         dynamicsTick(s, m, remote[m.id], carriers, remoteUnits[m.id]);
+    for (const mission of s.missions) {
+      if (unsuccessful(mission) && mission.dynamics)
+        patientTick(s, mission, capacity(s, mission.id), dt, carriers);
+      outcomeTick(s, mission);
+    }
     afterVehicles(s, remote);
     for (const m of s.missions) {
-      if (m.location?.state === "repair-pending") continue;
+      if (unsuccessful(m) || m.location?.state === "repair-pending") continue;
       if (m.control && !m.control.briefed) continue;
       if (m.shared && offline) continue;
       const t = mt(m.template),
@@ -729,6 +740,7 @@ function tickState(
           (v) =>
             v.mission === m.id &&
             v.status === "scene" &&
+            !v.returnOrder &&
             (!v.fault || v.fault.state === "repaired") &&
             canTransport(m, v) &&
             !patientTransportReason(m, v) &&
@@ -746,6 +758,13 @@ function tickState(
         if (!dynamicsComplete(m, s.time)) continue;
         if (!patientTransportsComplete(m)) continue;
         if (m.dynamics) m.dynamics.state = "resolved";
+        m.outcome ??= {
+          result: "success",
+          reason: "Pflichtaufgaben und erforderliche Übergaben abgeschlossen.",
+          at: s.time,
+          actor: "server",
+          trigger: "completion",
+        };
         m.phase = "done";
         m.completed = s.time;
         if (s.callPacing)
@@ -773,7 +792,7 @@ function tickState(
           s.completed++;
         }
         for (const v of s.vehicles.filter((v) => v.mission === m.id))
-          recall(s, v);
+          orderReturn(s, v, "server");
       }
     }
     s.archive.unshift(...s.missions.filter((m) => m.phase === "done"));

@@ -39,8 +39,10 @@ function emptyDesk() {
 function station(type = "fire", professional = false) {
   const s = emptyDesk();
   apply(s, fixturePurchase(type, nodes[0]));
-  if (professional && type === "fire")
+  if (professional && type === "fire") {
+    delete s.buildings[0].fireProfile; // Explicit pre-profile historical BF fixture.
     s.buildings[0].organization = { ...newStationProfile("fire")!, kind: "bf" };
+  }
   tick(s, s.time + BALANCE.buildSeconds, {}, false, false);
   return s;
 }

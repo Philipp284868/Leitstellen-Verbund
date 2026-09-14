@@ -1,3 +1,7 @@
+import {
+  fireQuote,
+  FIRE_GAME_PROFILES,
+} from "../src/shared/facilities/fire-profile";
 import { afterEach, describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -73,6 +77,108 @@ const clinic: HospitalOption = {
   departmentCapacity: { general: 1, trauma: 1 },
 };
 describe("gemeinsame Einrichtungen in einer Serverwelt", () => {
+  it.each([false, true])(
+    "belegte physische Aliaszusammenführung schützt laufenden Bestand und klärt Konflikte gezielt (mehrdeutig=%s)",
+    (ambiguous) => {
+      const { db } = fixture(),
+        game = new Game(db),
+        original = germanyProvider();
+      const first = logicFacilityCatalog.get(
+        fixturePurchase("fire", sites[0]).facility,
+      )!;
+      const second = logicFacilityCatalog.get(
+        fixturePurchase("fire", sites[1]).facility,
+      )!;
+      for (const [id, f, time] of [
+        ["alice", first, 1000],
+        ["bob", second, ambiguous ? 1000 : 900],
+      ] as const) {
+        const save = db.all().get(id)!;
+        save.time = time;
+        db.save(id, save);
+        game.command(id, {
+          id: crypto.randomUUID(),
+          action: {
+            type: "purchase-facility",
+            facility: f.id,
+            quote: fireQuote(f.fireProfile),
+          },
+        });
+      }
+      const travelling = db.all().get("alice")!;
+      travelling.time = travelling.buildings[0].ready;
+      apply(travelling, {
+        type: "buy",
+        home: travelling.buildings[0].id,
+        kind: "tsf",
+      });
+      const unit = travelling.vehicles[0];
+      unit.status = "return";
+      unit.path = [sites[1], sites[0]];
+      unit.depart = travelling.time;
+      unit.arrive = travelling.time + 600;
+      db.save("alice", travelling);
+      const before = db.all();
+      const shared = {
+        ...first,
+        sources: [first.id, second.id, ...first.sources, ...second.sources],
+      };
+      installGermanyProvider({
+        ...original,
+        facilities: {
+          ...logicFacilityCatalog,
+          get: (id) =>
+            [first.id, second.id].includes(id)
+              ? shared
+              : logicFacilityCatalog.get(id),
+        },
+      });
+      cleanups.push(() => installGermanyProvider(original));
+      const unchanged = JSON.stringify([...db.all()]);
+      const plan = planInfrastructureMigration(db.sql, [], true);
+      expect(JSON.stringify([...db.all()])).toBe(unchanged);
+      expect(plan.ready).toBe(!ambiguous);
+      expect(publicOwnership(db.sql, [first.id, second.id])).toEqual([
+        {
+          facility: first.id,
+          owner: "catalog-conflict",
+          name: "ungeklärtem Altbesitz – Betreiberprüfung erforderlich",
+        },
+      ]);
+      if (ambiguous) {
+        // Existing paid holdings remain writable; only a new purchase is refused.
+        for (const [id, save] of db.all())
+          expect(() => db.save(id, save)).not.toThrow();
+        expect(() =>
+          db.transaction(() => applyInfrastructureMigration(db.sql, [], true)),
+        ).toThrow("INFRASTRUCTURE_MIGRATION_REQUIRED");
+        expect(JSON.stringify([...db.all()])).toBe(unchanged);
+        return;
+      }
+      expect(plan.removals.map((e) => e.owner)).toEqual(["alice"]);
+      db.transaction(() => applyInfrastructureMigration(db.sql, [], true));
+      const after = db.all();
+      expect(after.get("alice")!.money).toBe(
+        before.get("alice")!.money +
+          before.get("alice")!.buildings[0].purchaseReceipt!.amount,
+      );
+      expect(after.get("alice")!.vehicles).toEqual(
+        before.get("alice")!.vehicles,
+      );
+      expect(after.get("alice")!.people).toEqual(before.get("alice")!.people);
+      expect(after.get("alice")!.buildings[0].migrationReserve).toBeDefined();
+      expect(publicOwnership(db.sql, [first.id])).toMatchObject([
+        { owner: "bob" },
+      ]);
+      const once = JSON.stringify([...after]);
+      db.transaction(() => applyInfrastructureMigration(db.sql, [], true));
+      expect(JSON.stringify([...db.all()])).toBe(once);
+      expect(
+        db.sql.prepare("SELECT count(*) n FROM infrastructure_refunds").get()!
+          .n,
+      ).toBe(1);
+    },
+  );
   it("erkennt Katalogaliaswechsel als denselben exklusiven Standort und lässt verschiedene Organisationen auf demselben Gelände getrennt", () => {
     const { db } = fixture(),
       game = new Game(db),
@@ -84,7 +190,11 @@ describe("gemeinsame Einrichtungen in einer Serverwelt", () => {
       )!;
     game.command("alice", {
       id: crypto.randomUUID(),
-      action: { type: "purchase-facility", facility: fire.id },
+      action: {
+        type: "purchase-facility",
+        facility: fire.id,
+        quote: fireQuote(fire.fireProfile),
+      },
     });
     const provider = germanyProvider(),
       renamed = {
@@ -117,7 +227,11 @@ describe("gemeinsame Einrichtungen in einer Serverwelt", () => {
     expect(() =>
       game.command("bob", {
         id: crypto.randomUUID(),
-        action: { type: "purchase-facility", facility: renamed.id },
+        action: {
+          type: "purchase-facility",
+          facility: renamed.id,
+          quote: fireQuote(renamed.fireProfile),
+        },
       }),
     ).toThrow(/bereits von alice public/);
     expect(db.all().get("bob")!.money).toBe(before);
@@ -317,7 +431,7 @@ describe("gemeinsame Einrichtungen in einer Serverwelt", () => {
       name: winner + " public",
     });
     expect(f.db.all().get(winner)!.money).toBe(
-      balances.get(winner)! - bt("fire").price,
+      balances.get(winner)! - FIRE_GAME_PROFILES.ff.price,
     );
     expect(f.db.all().get(loser)!.money).toBe(balances.get(loser));
     const b = f.db.all().get(winner)!.buildings[0];
@@ -329,7 +443,7 @@ describe("gemeinsame Einrichtungen in einer Serverwelt", () => {
     ).toThrow();
     game.command(winner, { id: crypto.randomUUID(), action });
     expect(f.db.all().get(winner)!.money).toBe(
-      balances.get(winner)! - bt("fire").price,
+      balances.get(winner)! - FIRE_GAME_PROFILES.ff.price,
     );
     f.restart();
     expect(publicOwnership(f.db.sql, [action.facility])).toEqual(claims);
@@ -602,7 +716,7 @@ describe("belegte, einmalige Bestandsmigration", () => {
     const after = db.all();
     expect(after.get("alice")!.money).toBe(before.get("alice")!.money);
     expect(after.get("bob")!.money).toBe(
-      before.get("bob")!.money + bt("fire").price,
+      before.get("bob")!.money + FIRE_GAME_PROFILES.ff.price,
     );
     expect(after.get("bob")!.buildings[0].migrationReserve).toBeDefined();
     expect(

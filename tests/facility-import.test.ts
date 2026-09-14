@@ -124,14 +124,18 @@ describe("nachvollziehbarer Einrichtungskatalog", () => {
     },
   );
   it("erkennt ausdrücklich gekennzeichnete Flughafen- und Betriebsfeuerwehren ohne Namensraten", () => {
-    for (const [tag, subtype] of [
-      ["airport", "airport"],
-      ["concern", "company"],
-      ["works", "works"],
+    for (const [tag, subtype, name] of [
+      ["airport", "airport", "Flughafenfeuerwehr Test"],
+      ["concern", "company", "Betriebsfeuerwehr Test"],
+      ["works", "works", "Werkfeuerwehr Test"],
     ])
       expect(
-        classifyFacility({ amenity: "fire_station", "fire_station:type": tag })
-          ?.subtype,
+        classifyFacility({
+          amenity: "fire_station",
+          "fire_station:type": tag,
+          name,
+          "fire_station:team": "professional",
+        })?.subtype,
       ).toBe(subtype);
   });
   it("vereinigt Krankenhauskennzeichnungen sowie Punkte, Flächen und Relationsmitglieder derselben Einrichtung", () => {

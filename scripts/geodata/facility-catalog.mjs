@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync, existsSync, renameSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { osmFireProfile } from "./fire-profile-classification.mjs";
 import {
   classifyFacility,
   covers,
@@ -137,6 +138,8 @@ export function normalizeFacilities(
     if (found.length === 1) {
       const old = found[0];
       old.sources.push(row.source);
+      if (old.kind === "fire")
+        old.fireEvidence.push({ source: row.source, tags: row.tags });
       old.entrances.push(...row.entrances);
       if (old.status !== row.status || old.emergency !== row.emergency) {
         old.status = "review";
@@ -165,6 +168,9 @@ export function normalizeFacilities(
       id: `osm:${row.source}`,
       snapshot,
       sources: [row.source],
+      ...(row.kind === "fire"
+        ? { fireEvidence: [{ source: row.source, tags: row.tags }] }
+        : {}),
       quality,
       entrances: row.entrances || [],
     };
@@ -263,6 +269,11 @@ export function normalizeFacilities(
       row.quality.push(review.reason);
     }
   }
+  for (const row of result)
+    if (row.kind === "fire" && row.fireEvidence) {
+      row.fireProfile = osmFireProfile(row.fireEvidence, snapshot);
+      delete row.fireEvidence;
+    }
   return result.sort((a, b) => a.id.localeCompare(b.id));
 }
 export function writeFacilityCatalog(

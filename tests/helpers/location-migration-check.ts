@@ -1,5 +1,6 @@
 import { expect } from "vitest";
 import type { Save } from "../../src/shared/model";
+import { withoutFireMigration } from "./fire-migration-check";
 /** Assert the added migration metadata, then compare the protected payload
  * separately. No field of the original mission/player/fleet is ignored. */
 export function withoutLocationMigration(actual: Save, before: Save) {
@@ -17,5 +18,5 @@ export function withoutLocationMigration(actual: Save, before: Save) {
     delete m.location;
   }
   delete copy.locationReview;
-  return copy;
+  return withoutFireMigration(copy, before);
 }

@@ -164,6 +164,10 @@ export const aidSchema = z
     peer: id,
     mission: id,
     round: id,
+    closing: z
+      .object({ state: z.enum(["DONE", "CANCELLED"]), actor: id, at: seconds })
+      .strict()
+      .optional(),
     state: z.enum([
       "DRAFT",
       "SENT",

@@ -21,7 +21,7 @@ export function persistHistory(db: DatabaseSync, s: Save, mode: string) {
       m.completed,
       t.org,
       m.major ? 1 : 0,
-      `${m.id} ${t.name} ${m.telemetry?.units.map((u) => u.name).join(" ") ?? ""}`.toLocaleLowerCase(
+      `${m.id} ${t.name} ${m.outcome?.result ?? "success"} ${m.outcome?.reason ?? ""} ${m.telemetry?.units.map((u) => u.name).join(" ") ?? ""}`.toLocaleLowerCase(
         "de",
       ),
       JSON.stringify(m),

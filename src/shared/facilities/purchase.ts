@@ -7,6 +7,8 @@ import { simId } from "../../simulation/events";
 import { newStationProfile } from "../../simulation/staffing";
 import { reconcileBuildingStaffing } from "../../simulation/building-staffing";
 import type { Facility } from "./types";
+import { fireGameProfile, fireQuote } from "./fire-profile";
+import { progress } from "../progression";
 import { GermanyRoutingError } from "../germany/errors";
 import type { ClinicSnapshot } from "../../simulation/clinic-capacity";
 import type { HospitalOption } from "../../simulation/hospital-profiles";
@@ -37,6 +39,11 @@ export function facilityOffer(
           ))),
   );
   const type = facility.kind === "other" ? undefined : bt(facility.kind);
+  const fire =
+    facility.kind === "fire"
+      ? fireGameProfile(facility.fireProfile)
+      : undefined;
+  const price = fire?.price ?? type?.price ?? 0;
   const reason =
     facility.kind === "hospital"
       ? "Serverkrankenhaus · gemeinsame Aufnahme, nicht käuflich."
@@ -48,21 +55,26 @@ export function facilityOffer(
             ? "Standort benötigt eine Datenprüfung oder ist nicht aktiv."
             : !type
               ? "Einrichtungstyp ist nicht als operative Wache belegt."
-              : !facility.access
-                ? "Zufahrt nicht hinreichend belegt. Dieser Standort kann noch nicht erworben werden."
-                : s.buildings.length >= 150
-                  ? "Höchstens 150 verwaltete Einrichtungen pro Leitstelle."
-                  : !unlocked(s, "building", type.id)
-                    ? `Freischaltung ab Stufe ${type.level}.`
-                    : s.money < type.price
-                      ? "Budget reicht für diesen Kauf nicht aus."
-                      : "";
+              : facility.kind === "fire" && !fire
+                ? "Feuerwehr – Wachtyp ungeklärt. Neues Kaufangebot erst nach belegter Zuordnung."
+                : !facility.access
+                  ? "Zufahrt nicht hinreichend belegt. Dieser Standort kann noch nicht erworben werden."
+                  : s.buildings.length >= 150
+                    ? "Höchstens 150 verwaltete Einrichtungen pro Leitstelle."
+                    : !unlocked(s, "building", type.id)
+                      ? `Freischaltung ab Stufe ${type.level}.`
+                      : fire && progress(s.xp).level < fire.level
+                        ? `Wachprofil ab Stufe ${fire.level}.`
+                        : s.money < price
+                          ? "Budget reicht für diesen Kauf nicht aus."
+                          : "";
   return {
     facility,
-    price: type?.price ?? 0,
-    level: type?.level ?? 1,
-    slots: type?.slots ?? 0,
-    people: type?.people ?? 0,
+    price,
+    quote: fireQuote(facility.fireProfile),
+    level: fire?.level ?? type?.level ?? 1,
+    slots: fire?.slots ?? type?.slots ?? 0,
+    people: fire?.people ?? type?.people ?? 0,
     owned: owned?.id,
     ownership,
     clinic,
@@ -139,7 +151,7 @@ export function assertFacilityAccess(facility: Facility) {
   }
   throw Error(`Keine erreichbare Zufahrt: ${failure}`);
 }
-export function purchaseFacility(s: Save, id: string) {
+export function purchaseFacility(s: Save, id: string, quote?: string) {
   const provider = germanyProvider();
   const facility = provider.facilities?.get(id);
   if (!facility)
@@ -148,6 +160,10 @@ export function purchaseFacility(s: Save, id: string) {
   const offer = facilityOffer(s, facility);
   if (offer.owned) return;
   if (offer.reason) throw Error(offer.reason);
+  if (offer.quote && quote !== offer.quote)
+    throw Error(
+      "Wachprofil oder Preisstand nicht bestätigt. Standort erneut öffnen und den aktuellen Preis prüfen.",
+    );
   const access = assertFacilityAccess(facility);
   const buildingId = simId(s);
   bookMoney(
@@ -182,6 +198,8 @@ export function purchaseFacility(s: Save, id: string) {
     },
   });
   const building = s.buildings.at(-1)!;
+  if (facility.fireProfile)
+    building.fireProfile = structuredClone(facility.fireProfile);
   if (facility.subtype === "BF" && building.organization)
     building.organization.kind = "bf";
   if (

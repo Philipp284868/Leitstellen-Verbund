@@ -212,7 +212,9 @@ it("migriert Weltmetadaten einmalig mit Sicherung und erhält den übrigen Spiel
     expect(m.location.state).toBe("repair-pending");
     delete m.location;
   }
-  expect(migrated).toEqual(JSON.parse(String(data)));
+  expect(withoutFireMigration(migrated, JSON.parse(String(data)))).toEqual(
+    JSON.parse(String(data)),
+  );
   expect(readdirSync(dir).some((n) => n.startsWith("pre-migration"))).toBe(
     true,
   );
@@ -221,3 +223,4 @@ it("migriert Weltmetadaten einmalig mit Sicherung und erhält den übrigen Spiel
   expect(readWorldSituation(db.sql)).toEqual(state);
   db.close();
 });
+import { withoutFireMigration } from "./helpers/fire-migration-check";

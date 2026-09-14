@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apply, readiness, recall, tick } from "../src/shared/engine";
+import { readiness, recall, tick } from "../src/shared/engine";
 import { validate } from "../src/shared/model";
 import { xpForLevel } from "../src/shared/progression";
 import { alarm } from "../src/simulation/dispatch";
@@ -11,8 +11,6 @@ import {
   crewSummary,
   newStationProfile,
   personDuty,
-  planTurnout,
-  PROFESSIONAL_FIRE,
   reserveWarning,
   stationCapacity,
   stationProfile,
@@ -255,51 +253,32 @@ describe("Freiwillige Wachen, NPC-Anreise und BF-Fortschritt", () => {
     expect(s.people.some((p) => p.vehicle === v.id)).toBe(false);
     expect(readiness(s, v)).toBe("");
   });
-  it("BF ist ein kostenpflichtiger späterer Ausbau ohne Umgehung über Profiländerungen", () => {
+  it("ein Spieler kann weder per Ausbau noch per Profil eine FF zur BF ändern", () => {
     const s = ffFixture(),
       b = s.buildings[0];
-    const startingMoney = PROFESSIONAL_FIRE.price + 100000;
-    s.money = startingMoney;
-    s.xp = 0;
-    expect(() =>
-      organizationCommand(
-        s,
-        { type: "station-upgrade-bf", home: b.id },
-        s.player.id,
-      ),
-    ).toThrow("Stufe");
-    expect(() =>
-      organizationCommand(
-        s,
-        {
-          type: "station-profile",
-          home: b.id,
-          profile: { ...b.organization!, kind: "bf" },
-        },
-        s.player.id,
-      ),
-    ).toThrow("BF-Ausbau");
-    s.xp = xpForLevel(PROFESSIONAL_FIRE.level);
-    organizationCommand(
-      s,
-      { type: "station-upgrade-bf", home: b.id },
-      s.player.id,
-    );
-    expect(s.money).toBe(startingMoney - PROFESSIONAL_FIRE.price);
-    expect(stationCapacity(b)).toEqual({ slots: 8, people: 81 });
-    expect(b.ready).toBe(s.time + PROFESSIONAL_FIRE.seconds);
-    expect(() =>
-      organizationCommand(
-        s,
-        { type: "station-upgrade-bf", home: b.id },
-        s.player.id,
-      ),
-    ).toThrow("Voraussetzung");
-    s.time = b.ready;
-    const v = s.vehicles[0];
-    apply(s, { type: "assign", vehicle: v.id });
-    expect(crewSummary(s, v).present).toBe(9);
-    expect(planTurnout(s, v, 60)).toBe(20);
+    for (const xp of [0, xpForLevel(30)]) {
+      s.xp = xp;
+      const before = structuredClone(s);
+      expect(() =>
+        organizationCommand(
+          s,
+          { type: "station-upgrade-bf", home: b.id },
+          s.player.id,
+        ),
+      ).toThrow("Standort");
+      expect(() =>
+        organizationCommand(
+          s,
+          {
+            type: "station-profile",
+            home: b.id,
+            profile: { ...b.organization!, kind: "bf" },
+          },
+          s.player.id,
+        ),
+      ).toThrow("Standort");
+      expect(s).toEqual(before);
+    }
   });
   it("Reservewarnungen verbieten keine Alarmierung", () => {
     const s = ffFixture(),

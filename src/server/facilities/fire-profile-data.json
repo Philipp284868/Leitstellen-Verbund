@@ -1,0 +1,3983 @@
+{
+  "version": 1,
+  "snapshot": "2026-09-07",
+  "sha256": "c0fd971d9e6b75116e2ecb7fe70bc74da9a8cf6ee461b73d3a89d47c89914529",
+  "total": 29099,
+  "counts": {
+    "unknown": 28761,
+    "ff": 334,
+    "bf": 4
+  },
+  "byState": {
+    "DE-NW": {
+      "unknown": 2672,
+      "ff": 28
+    },
+    "DE-HE": {
+      "unknown": 2312,
+      "ff": 4
+    },
+    "DE-MV": {
+      "unknown": 878,
+      "ff": 1
+    },
+    "DE-BB": {
+      "unknown": 1498,
+      "ff": 40
+    },
+    "DE-BY": {
+      "unknown": 6606,
+      "ff": 37
+    },
+    "DE-NI": {
+      "unknown": 3351,
+      "ff": 99
+    },
+    "DE-TH": {
+      "unknown": 1570,
+      "ff": 1
+    },
+    "DE-RP": {
+      "unknown": 2169,
+      "ff": 3
+    },
+    "DE-BW": {
+      "unknown": 2777,
+      "ff": 36,
+      "bf": 1
+    },
+    "DE-SH": {
+      "unknown": 1392,
+      "ff": 7
+    },
+    "DE-BE": {
+      "unknown": 93,
+      "bf": 3,
+      "ff": 3
+    },
+    "DE-SL": {
+      "ff": 72,
+      "unknown": 240
+    },
+    "DE-SN": {
+      "unknown": 1740,
+      "ff": 1
+    },
+    "DE-HH": {
+      "unknown": 116
+    },
+    "DE-HB": {
+      "unknown": 34,
+      "ff": 2
+    },
+    "DE-ST": {
+      "unknown": 1313
+    }
+  },
+  "records": {
+    "relation:18706619": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wehrden (LB 4)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wehrden (LB 4)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:25492717": {
+      "kind": "bf",
+      "employment": "paid",
+      "reason": "OSM-Typtag und ausdrückliche Berufsfeuerwehr-Bezeichnung stimmen überein; keine amtliche Einzelprüfung.",
+      "name": "Berufsfeuerwache Marienfelde",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Berufsfeuerwache Marienfelde",
+        "operator": "Berliner Feuerwehr",
+        "fire_station:type": "occupation"
+      }
+    },
+    "way:27090492": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwilligen Feuerwehr Pfinztal / Abt. Berghausen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwilligen Feuerwehr Pfinztal / Abt. Berghausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:30214646": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Puchheim-Bahnhof",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Puchheim-Bahnhof",
+        "operator": "Stadt Puchheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:32053211": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neuhausen/Spree Ortsfeuerwehr Kathlow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neuhausen/Spree Ortsfeuerwehr Kathlow",
+        "operator": "Gemeinde Neuhausen/Spree",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:32863809": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Karlsfeld",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Karlsfeld",
+        "operator": "Gemeinde Karlsfeld",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:35020324": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Allach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Allach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:38302299": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neubiberg",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neubiberg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:40507688": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rimpar",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rimpar",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:41711344": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eckernförde",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eckernförde",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:41990003": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Hau",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Hau",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:50250586": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bildstock",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bildstock",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:50260027": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Friedrichthal",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Friedrichthal",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:51137864": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Maidbronn",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Maidbronn",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:59696405": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Sendling",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Sendling",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:71221451": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Ludwigsfeld",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Ludwigsfeld",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:71404165": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Peitz Ortsfeuerwehr Peitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Peitz Ortsfeuerwehr Peitz",
+        "operator": "Amt Peitz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:79564307": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gersweiler (LB 15)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gersweiler (LB 15)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:84656889": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Brieskow-Finkenheerd OF Vogelsang",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Brieskow-Finkenheerd OF Vogelsang",
+        "operator": "Amt Brieskow-Finkenheerd",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:87255799": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rheinhausen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rheinhausen",
+        "operator": "Gemeinde Oberhausen-Rheinhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:88558836": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eschringen (LB 26)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eschringen (LB 26)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:89181381": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ensheim (LB 27)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ensheim (LB 27)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:89181382": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fechingen (LB 25)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fechingen (LB 25)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:92700660": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kleinblittersdorf Löschbezirk Bliesransbach (LB 2)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kleinblittersdorf Löschbezirk Bliesransbach (LB 2)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:92869112": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Brebach (LB22)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Brebach (LB22)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:95197664": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bliesmengen-Bolchen",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bliesmengen-Bolchen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:97095749": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Harthof",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Harthof",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:97096253": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Feldmoching",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Feldmoching",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:97099429": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Langwied-Lochhausen",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Langwied-Lochhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:98006579": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lamstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lamstedt",
+        "operator": "Samtgemeinde Börde Lamstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:98872658": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ensdorf",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ensdorf",
+        "operator": "Gemeinde Ensdorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:99614487": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kloster Lehnin, Ortsfeuerwehr Nahmitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kloster Lehnin, Ortsfeuerwehr Nahmitz",
+        "operator": "Gemeinde Kloster Lehnin",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:104496563": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bischmisheim (LB 21)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bischmisheim (LB 21)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:106222826": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwehrhaus Wahlrod",
+      "state": "DE-RP",
+      "tags": {
+        "name": "Feuerwehrhaus Wahlrod",
+        "operator": "Freiwillige Feuerwehr VG Hachenburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:108220899": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Münster – Löschzug Altstadt",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Münster – Löschzug Altstadt",
+        "operator": "Stadt Münster",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:108260111": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kleinlüder",
+      "state": "DE-HE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kleinlüder",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109085437": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Schneppenbaum",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Schneppenbaum",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109085438": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Qualburg",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Qualburg",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109085439": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Hasselt",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Hasselt",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109597284": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr St. Ingbert Mitte",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr St. Ingbert Mitte",
+        "operator": "Stadt St. Ingbert",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109862133": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Altlußheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Altlußheim",
+        "operator": "Gemeinde Altlußheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:109862233": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ahnsbeck",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ahnsbeck",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:111514760": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hitdorf",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hitdorf",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:114454058": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Radolfzell Abt. Güttingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Radolfzell Abt. Güttingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:114464551": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Abt. Solln",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Abt. Solln",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:115193939": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bous",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bous",
+        "operator": "Gemeinde Bous",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:116700043": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Versbach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Versbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:117372248": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Obermenzing",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Obermenzing",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:118484412": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl.",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl.",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:118530967": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Merzig",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Merzig",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:119790929": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stadtmitte (LB 1)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stadtmitte (LB 1)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:119893668": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Kernstadt",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Kernstadt",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:121294954": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Harsefeld",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Harsefeld",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:121619846": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Kernstadt",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Kernstadt",
+        "operator": "Stadt Singen / Htwl.",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:122443623": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Friedingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Friedingen",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:122599775": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Estorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Estorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:126611757": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Güdingen (LB 23)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Güdingen (LB 23)",
+        "operator": "Feuerwehr Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:129031176": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwehrgerätehaus Freiwillige Feuerwehr Dudweiler Jägersfreude (LB 18)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Feuerwehrgerätehaus Freiwillige Feuerwehr Dudweiler Jägersfreude (LB 18)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:129118184": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sinsheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sinsheim",
+        "operator": "Stadt Sinsheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:134933361": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Triftlfing",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Triftlfing",
+        "operator": "Gemeinde Aufhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:134938109": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Hellkofen",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Hellkofen",
+        "operator": "Gemeinde Aufhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:135155522": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Petzkofen",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Petzkofen",
+        "operator": "Gemeinde Aufhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:135282272": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Aufhausen",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Aufhausen",
+        "operator": "Gemeinde Aufhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:146178247": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Gitter",
+      "state": "DE-NI",
+      "tags": {
+        "name": "FF Gitter",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:153205054": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dudweiler Herrensohr (LB 18)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dudweiler Herrensohr (LB 18)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:155116582": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Oberbexbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Oberbexbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:159550958": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wennigsen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wennigsen",
+        "operator": "Gemeinde Wennigsen (Deister)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:162249516": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Forstenried",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Forstenried",
+        "operator": "Freiwillige Feuerwehr München",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:167772946": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stadt Püttlingen, Löschbezirk Püttlingen",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stadt Püttlingen, Löschbezirk Püttlingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:176622560": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stennweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stennweiler",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:185844760": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Alt Madlitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Alt Madlitz",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:195354089": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Ortsfeuerwehr Gnarrenburg",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Ortsfeuerwehr Gnarrenburg",
+        "operator": "Gemeinde Gnarrenburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:198852439": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Beuerbach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Beuerbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:200300581": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Syke",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Syke",
+        "operator": "Stadt Syke",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:201372346": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Ahlem",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Ahlem",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:201555580": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rappweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rappweiler",
+        "operator": "Gemeinde Weiskirchen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:202882341": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Warendorf",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Warendorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:203244253": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Drebkau, Ortsfeuerwehr Jehserig",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Drebkau, Ortsfeuerwehr Jehserig",
+        "operator": "Stadt Drebkau",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:203339754": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neulußheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neulußheim",
+        "operator": "Gemeinde Neulußheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:209920766": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehren Bemerode / Kirchrode",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehren Bemerode / Kirchrode",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:217704758": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hoppenrade / Buchow-Karpzow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hoppenrade / Buchow-Karpzow",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:217932626": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bübingen (LB 24)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bübingen (LB 24)",
+        "operator": "Feuerwehr Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:224921467": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bürstadt",
+      "state": "DE-HE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bürstadt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:226394841": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Odervorland, Ortsteilfeuerwehr Wilmersdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Odervorland, Ortsteilfeuerwehr Wilmersdorf",
+        "operator": "Amt Odervorland",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:230152503": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Linden",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Linden",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:233597364": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hangard",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hangard",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:236533215": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sittensen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sittensen",
+        "operator": "Gemeinde Sittensen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:236863571": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ludweiler (LBZ 7)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ludweiler (LBZ 7)",
+        "operator": "Stadt Völklingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:237821205": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Haupersweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Haupersweiler",
+        "operator": "Gemeinde Freisen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:237893279": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Homburg-Mitte (LB 1)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Homburg-Mitte (LB 1)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:239282782": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Merchweiler Lbz. Wemmetsweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Merchweiler Lbz. Wemmetsweiler",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:242790661": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dannenberg",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dannenberg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:243036200": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Pfinztal / Abt. Wöschbach",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Pfinztal / Abt. Wöschbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:247871939": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Pfinztal / Abt. Kleinsteinbach",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Pfinztal / Abt. Kleinsteinbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:248701952": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Meiste",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Meiste",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:249448831": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kröhstorf",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kröhstorf",
+        "operator": "Markt Eichendorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:249884781": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hermersdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hermersdorf",
+        "operator": "Stadt Müncheberg",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:250156229": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hambrücken",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hambrücken",
+        "operator": "Gemeinde Hambrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:250285969": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Louisendorf",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Louisendorf",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:251916822": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Evestorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Evestorf",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:254416541": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Grüneberg",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Grüneberg",
+        "operator": "Gemeinde Löwenberger Land",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:258394133": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hockenheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hockenheim",
+        "operator": "Stadt Hockenheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:263499892": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Oestereiden",
+      "state": "DE-NW",
+      "tags": {
+        "name": "FF Oestereiden",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:263529310": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Noswendel",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Noswendel",
+        "operator": "Stadt Wadern",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:270443017": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Reimsbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Reimsbach",
+        "operator": "Gemeinde Beckingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:271634524": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Menzel",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Menzel",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:272796837": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bexbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bexbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:278934445": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Barnim-Oderbruch OF Bliesdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Barnim-Oderbruch OF Bliesdorf",
+        "operator": "Amt Barnim-Oderbruch",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:279064314": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Thalexweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Thalexweiler",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:289323303": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fehrbellin, Gerätehaus Langen (Feuerwehreinheit Wustrau-Altfriesack-Langen)",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fehrbellin, Gerätehaus Langen (Feuerwehreinheit Wustrau-Altfriesack-Langen)",
+        "operator": "Gemeinde Fehrbellin",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:290145072": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Burgberg",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Burgberg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:299859599": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Schlepzig",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Schlepzig",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:300237202": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Großrosseln",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Großrosseln",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:301858159": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Bohlingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Bohlingen",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:302515288": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Überlingen a. R.",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Überlingen a. R.",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:304517563": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Märkische Schweiz OF Bollersdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Märkische Schweiz OF Bollersdorf",
+        "operator": "Amt Märkische Schweiz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:306229102": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Altenwald (LB 3)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Altenwald (LB 3)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:308562898": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Basdahl",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Basdahl",
+        "operator": "Samtgemeinde Geestequelle",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:309556130": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ballern",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ballern",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:315480474": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Differten",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Differten",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:316292146": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Himmelpfort",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Himmelpfort",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:316732667": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Werbeln",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Werbeln",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:318344215": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neuendorf am See",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neuendorf am See",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:328541061": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bremen-Mahndorf",
+      "state": "DE-HB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bremen-Mahndorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:331070687": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Tauche OW Briescht",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Tauche OW Briescht",
+        "operator": "Gemeinde Tauche",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:331837831": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Besch",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Besch",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:333922814": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Linkenheim-Hochstetten",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Linkenheim-Hochstetten",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:334572258": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Reinbek",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Reinbek",
+        "operator": "Stadt Reinbek",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:335656300": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF",
+        "operator": "Dietfurt a. d. Altmühl",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:348377418": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Quierschied",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Quierschied",
+        "operator": "Gemeinde Quierschied",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:349901132": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen / Ausrückestandort Nord",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen / Ausrückestandort Nord",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:355518847": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Mimbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Mimbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:358959364": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kirrberg",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kirrberg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:363766286": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Langewahl",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Langewahl",
+        "operator": "Gemeinde Langewahl",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:364224232": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Blieskastel",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Blieskastel",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:373179733": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Amt Märkische Schweiz, Waldsieversdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Amt Märkische Schweiz, Waldsieversdorf",
+        "operator": "Amt Märkische Schweiz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:386516188": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Unterhaching",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Unterhaching",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:401273311": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sulzbach Stadtmitte (LB 1)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sulzbach Stadtmitte (LB 1)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:414861775": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wetzlar-Garbenheim",
+      "state": "DE-HE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wetzlar-Garbenheim",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:426280531": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Reckenzin",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Reckenzin",
+        "operator": "Gemeinde Karstädt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:432392300": {
+      "kind": "bf",
+      "employment": "paid",
+      "reason": "OSM-Typtag und ausdrückliche Berufsfeuerwehr-Bezeichnung stimmen überein; keine amtliche Einzelprüfung.",
+      "name": "Berufsfeuerwache Neukölln",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Berufsfeuerwache Neukölln",
+        "operator": "Berliner Feuerwehr",
+        "fire_station:type": "occupation"
+      }
+    },
+    "way:434893444": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neuhardenberg",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neuhardenberg",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:435350046": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Landsweiler-Reden",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Landsweiler-Reden",
+        "operator": "Gemeinde Schiffweiler",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:454723187": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Umkirch",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Umkirch",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:463530745": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wittersheim",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wittersheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:496222300": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Unterstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Unterstedt",
+        "operator": "Stadt Rotenburg Wümme",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:520498587": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kleinblitterdorf Löschbezirk Rilchingen-Hanweiler (LB 4)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kleinblitterdorf Löschbezirk Rilchingen-Hanweiler (LB 4)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:520608637": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kleinblitterdorf Löschbezirk Mitte (LB 1)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kleinblitterdorf Löschbezirk Mitte (LB 1)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:536562120": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Irnkofen-Niederhinkofen",
+      "state": "DE-BY",
+      "tags": {
+        "name": "FF Irnkofen-Niederhinkofen",
+        "operator": "Gemeinde Aufhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:539974645": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ellbach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ellbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:604671405": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Beuren a. d. A.",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Singen/Htwl. Abt. Beuren a. d. A.",
+        "operator": "Stadt Singen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:664222751": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rheinsheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rheinsheim",
+        "operator": "Stadt Philippsburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:668589520": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hülzweiler",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hülzweiler",
+        "operator": "Gemeinde Schwalbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:691974117": {
+      "kind": "bf",
+      "employment": "paid",
+      "reason": "OSM-Typtag und ausdrückliche Berufsfeuerwehr-Bezeichnung stimmen überein; keine amtliche Einzelprüfung.",
+      "name": "Berufsfeuerwehr Karlsruhe Westwache",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Berufsfeuerwehr Karlsruhe Westwache",
+        "operator": "Stadt Karlsruhe",
+        "fire_station:type": "occupation"
+      }
+    },
+    "way:701341298": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Möhnsen",
+      "state": "DE-SH",
+      "tags": {
+        "name": "FF Möhnsen",
+        "operator": "Gemeinde Möhnsen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:705717940": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Jägersburg",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Jägersburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:729112385": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gottow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gottow",
+        "operator": "Gemeinde Nuthe-Urstromtal",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:733390351": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Vorderweidenthal",
+      "state": "DE-RP",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Vorderweidenthal",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:802581874": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kolkwitz Ortswehr Wiesendorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kolkwitz Ortswehr Wiesendorf",
+        "operator": "Gemeinde Kolkwitz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:808710731": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Beelitz OF Wittbrietzen",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Beelitz OF Wittbrietzen",
+        "operator": "Stadt Beelitz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:817775278": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kloster Lehnin OW Rietz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kloster Lehnin OW Rietz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:817828212": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hemmingen/Wilkenburg",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hemmingen/Wilkenburg",
+        "operator": "Stadt Hemmingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:824373120": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr St. Arnual (LB 14)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr St. Arnual (LB 14)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:825806589": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Janneby",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Janneby",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:831977164": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hohenlobbese/Wutzow, Gerätehaus Hohenlobbese",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hohenlobbese/Wutzow, Gerätehaus Hohenlobbese",
+        "operator": "Gemeinde Görzke",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:832675149": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bernitt",
+      "state": "DE-MV",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bernitt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:839255865": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwehr Holtorf-Lunsen-Werder",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Feuerwehr Holtorf-Lunsen-Werder",
+        "operator": "Freiwillige Feuerwehr der Samtgemeinde Thedinghausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:841495406": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Beelitz, Ortsfeuerwehr Elsholz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Beelitz, Ortsfeuerwehr Elsholz",
+        "operator": "Stadt Beelitz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:847585897": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stadt Rüthen",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stadt Rüthen",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:864239283": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Treuenbrietzen OF Brachwitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Treuenbrietzen OF Brachwitz",
+        "operator": "Stadt Treuenbrietzen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:883905549": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fitten",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fitten",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:891326887": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Steinfeld",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Steinfeld",
+        "operator": "Gemeinde Steinfeld",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:891326890": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dinklage",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dinklage",
+        "operator": "Stadt Dinklage",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:907150858": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Schönfließ",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Schönfließ",
+        "operator": "Stadt Lebus",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:976283839": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwehr Harpstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Feuerwehr Harpstedt",
+        "operator": "Freiwilligen Feuerwehr der Samtgemeinde Harpstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:979640482": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sahlenburg",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sahlenburg",
+        "operator": "Stadt Cuxhaven",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:988830801": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwache Schwetzingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Feuerwache Schwetzingen",
+        "operator": "Freiwillige Feuerwehr Schwetzingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1053037341": {
+      "kind": "bf",
+      "employment": "paid",
+      "reason": "OSM-Typtag und ausdrückliche Berufsfeuerwehr-Bezeichnung stimmen überein; keine amtliche Einzelprüfung.",
+      "name": "Berufsfeuerwache Tempelhof",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Berufsfeuerwache Tempelhof",
+        "operator": "Berliner Feuerwehr",
+        "fire_station:type": "occupation"
+      }
+    },
+    "way:1071268381": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Oberhausen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Oberhausen",
+        "operator": "Gemeinde Oberhausen-Rheinhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1085850357": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wittmannsdorf",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wittmannsdorf",
+        "operator": "Gemeinde Märkische Heide",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1085880723": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr St. Johann (LB 13)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr St. Johann (LB 13)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1130705240": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Stöcken",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Stöcken",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1147316081": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ihme-Roloven",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ihme-Roloven",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1171975582": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Cuxhaven-Groden",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Cuxhaven-Groden",
+        "operator": "Stadt Cuxhaven",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1178510520": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eldagsen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eldagsen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1178762348": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wyk",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wyk",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1193727913": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Backleben",
+      "state": "DE-TH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Backleben",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1201836396": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lauterbach (Erzgebirge)",
+      "state": "DE-SN",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lauterbach (Erzgebirge)",
+        "operator": "Stadt Marienberg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1207688584": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Planegg",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Planegg",
+        "operator": "Gemeinde Planegg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1210512269": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Einen",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Einen",
+        "operator": "Feuerwehr Warendorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1241872094": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ramsau bei Berchtesgaden",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ramsau bei Berchtesgaden",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1250803380": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Vorwohle",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Vorwohle",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1252107213": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eimen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eimen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1255793550": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rheindorf",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rheindorf",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1257159510": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lützenkirchen",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lützenkirchen",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1257165312": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Schlebusch",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Schlebusch",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1257167528": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bergisch Neukirchen",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bergisch Neukirchen",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1265788044": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Anderten",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Anderten",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1272732705": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wolbeck",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wolbeck",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1275537623": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Cadenberge",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Cadenberge",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1281131732": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Meiste-Kneblinghausen",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Meiste-Kneblinghausen",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1284122935": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Geiselbullach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Geiselbullach",
+        "operator": "Stadt Olching",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1294742268": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ascheberg - Löschzug Herbern",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ascheberg - Löschzug Herbern",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1297340224": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dernbach",
+      "state": "DE-RP",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dernbach",
+        "operator": "Verbandsgemeinde Wirges",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1317709123": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Philippsburg",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Philippsburg",
+        "operator": "Stadt Philippsburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1338283172": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Abt. Moosach",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Abt. Moosach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1360404360": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Geislautern (LB 6)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Geislautern (LB 6)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1374361074": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gräfelfing",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gräfelfing",
+        "operator": "Gemeinde Gräfelfing",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1377753695": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Drewer",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rüthen Löschgruppe Drewer",
+        "operator": "Stadt Rüthen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1378664657": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr – Löschzug Geist",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr – Löschzug Geist",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1394012933": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Aubing",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Aubing",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1409872318": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Cuxhaven-Altenwalde",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Cuxhaven-Altenwalde",
+        "operator": "Stadt Cuxhaven",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1415962950": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Buchholz",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Buchholz",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1424474713": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Laichingen, Abt. Feldstetten",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Laichingen, Abt. Feldstetten",
+        "operator": "Stadt Laichingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1431983508": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ahrensfelde",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ahrensfelde",
+        "operator": "Gemeinde Ahrensfelde",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1433333012": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Freckenhorst",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Freckenhorst",
+        "operator": "Feuerwehr Warendorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1464144615": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Karsee/Leupolz",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Karsee/Leupolz",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1464564280": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Leopoldshöhe",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Leopoldshöhe",
+        "operator": "Gemeinde Leopoldshöhe",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1468571506": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Langreder",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Langreder",
+        "operator": "Feuerwehr Stadt Barsinghausen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1468572032": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eckerde",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eckerde",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1468577781": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Göxe",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Göxe",
+        "operator": "Feuerwehr Stadt Barsinghausen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1469902851": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Redderse",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Redderse",
+        "operator": "Stadt Gehrden",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1470252724": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lemmie",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lemmie",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1473318194": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wehdel",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wehdel",
+        "operator": "Gemeinde Schiffdorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1490341621": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gestorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gestorf",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1490751935": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Vardegötzen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Vardegötzen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1491633086": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kirrlach",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kirrlach",
+        "operator": "Stadt Waghäusel",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1493214698": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Mittelrode",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Mittelrode",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1493704878": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Alvesrode",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Alvesrode",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1494705325": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eimsen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eimsen",
+        "operator": "Freiwillige Feuerwehr der Stadt Alfeld - Ortsfeuerwehr Eimsen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1496712023": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sellstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sellstedt",
+        "operator": "Gemeinde Schiffdorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1497037186": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Ortsfeuerwehr Stinstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Ortsfeuerwehr Stinstedt",
+        "operator": "Gemeinde Loxstedt (Freiwillige Feuerwehr Loxstedt)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1497054170": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stubben",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stubben",
+        "operator": "Gemeinde Beverstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1497713484": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dorum",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dorum",
+        "operator": "Gemeinde Wurster Nordseeküste",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1498373307": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sudweyhe",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sudweyhe",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1498382684": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kirchweyhe",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kirchweyhe",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1498913157": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lemwerder",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lemwerder",
+        "operator": "Gemeinde Lemwerder",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499085165": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neuenwalde",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neuenwalde",
+        "operator": "Stadt Geestland",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499096540": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Moorausmoor-Neubachenbruch",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Moorausmoor-Neubachenbruch",
+        "operator": "Samtgemeinde Börde",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499148619": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Mulsum",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Mulsum",
+        "operator": "Gemeinde Wurster Nordseeküste",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499154135": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Cappel-Neufeld",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Cappel-Neufeld",
+        "operator": "Gemeinde Wurster Nordseeküste",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499174599": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Erichshof",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Erichshof",
+        "operator": "Gemeinde Weyhe",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499382601": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Delmenhorst Süd",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Delmenhorst Süd",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499438374": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Seedorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Seedorf",
+        "operator": "Samtgemeinde Selsingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499498805": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Otterndorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Otterndorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499612330": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Altenbruch",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Altenbruch",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1499790730": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wildeshausen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wildeshausen",
+        "operator": "Stadt Wildeshausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1500051351": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bassum",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bassum",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1500629261": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Ebersdorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Ebersdorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1500781274": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Seckenhausen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Seckenhausen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1500923833": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Beckeln",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Beckeln",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1501796946": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Warstade",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Warstade",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1501804324": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wingst-Westerhamm",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wingst-Westerhamm",
+        "operator": "Samtgemeinde Land Hadeln",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1502544959": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Heerstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Heerstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1502730049": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Weddewarden",
+      "state": "DE-HB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Weddewarden",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1503139518": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hesedorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hesedorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1503361147": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kirchseelte",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kirchseelte",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1504594087": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Elsfleth",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Elsfleth",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1504647860": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rodenkirchen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rodenkirchen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1506410354": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lütjenburg",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lütjenburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1506728259": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Lahausen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Lahausen",
+        "operator": "Gemeinde Weyhe",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1507573201": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Himmelpforten",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Himmelpforten",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1509688485": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hepstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hepstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1510283833": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Uchte",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Uchte",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1510407003": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sulingen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sulingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1510433014": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Eystrup",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Eystrup",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1511616303": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Vörie",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Vörie",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1511777158": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Selsingen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Selsingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1512082881": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fredenbeck",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fredenbeck",
+        "operator": "Samtgemeinde Fredenbeck",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1512219910": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Argestorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Argestorf",
+        "operator": "operator=Q621469",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1512301475": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Horneburg",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Horneburg",
+        "operator": "Samtgemeinde Horneburg",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1515595369": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Linderte",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Linderte",
+        "operator": "Stadt Ronnenberg",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1517052411": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Haßbergen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Haßbergen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1518800291": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Sorsum",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Sorsum",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1524936695": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Großgoltern - Ortswehren Groß- und Nordgoltern",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Großgoltern - Ortswehren Groß- und Nordgoltern",
+        "operator": "Feuerwehr Stadt Barsinghausen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1527809173": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Engelnstedt",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Engelnstedt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1527946526": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hiddestorf-Ohlendorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hiddestorf-Ohlendorf",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1530900711": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Harkenbleck",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Harkenbleck",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1531253814": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Devese",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Devese",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1532028709": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Degersen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Degersen",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "way:1540974606": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hohenleipisch",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hohenleipisch",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1549608370": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wusterwitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wusterwitz",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "way:1551062601": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Till-Moyland",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bedburg-Hau - Löschgruppe Till-Moyland",
+        "operator": "Gemeinde Bedburg-Hau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:252138556": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Klarenthal (LB 16)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Klarenthal (LB 16)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:257104190": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Dudweiler Mitte (LB 18)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Dudweiler Mitte (LB 18)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:258774064": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gauting",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gauting",
+        "operator": "Gemeinde Gauting",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:270136600": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Pfinztal / Abt. Söllingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Pfinztal / Abt. Söllingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:270362472": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Luisenthal (LB 3)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Luisenthal (LB 3)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:299481247": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kronau",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kronau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:308798611": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "FF Rielasingen-Worblingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "FF Rielasingen-Worblingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:331309149": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wiernsheim",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wiernsheim",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:332653508": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Notzingen",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Notzingen",
+        "operator": "Gemeinde Notzingen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:376079012": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Graßlfing",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Graßlfing",
+        "operator": "Stadt Olching",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:384650533": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Scheidt (LB 19)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Scheidt (LB 19)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:401559270": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr  Glienecke",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr  Glienecke",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:418955836": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Großhadern",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Großhadern",
+        "operator": "Freiwillige Feuerwehr Großhadern",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:427493501": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kleinblittersdorf (LB 3)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kleinblittersdorf (LB 3)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:442903173": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Weiskirchen",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Weiskirchen",
+        "operator": "Gemeinde Weiskirchen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:447856922": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Kolkwitz Ortswehr Krieschow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Kolkwitz Ortswehr Krieschow",
+        "operator": "Gemeinde Kolkwitz",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:485676667": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Pohlitz",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Pohlitz",
+        "operator": "Amt Schlaubetal",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:487100728": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr OF Ziltendorf – Ernst-Thälmann-Siedlung",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr OF Ziltendorf – Ernst-Thälmann-Siedlung",
+        "operator": "Amt Brieskow-Finkenheerd",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:497219032": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Alt-Saarbrücken (LB 11)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Alt-Saarbrücken (LB 11)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:517367455": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Jahnsfelde",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Jahnsfelde",
+        "operator": "Stadt Müncheberg",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:529409973": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wickers",
+      "state": "DE-HE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wickers",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:534164925": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Altenkessel (LB 17)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Altenkessel (LB 17)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:563812144": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Mühbrook",
+      "state": "DE-SH",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Mühbrook",
+        "operator": "Gemeinde Mühbrook",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:842994731": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Waghäusel",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Waghäusel",
+        "operator": "Stadt Waghäusel",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:844792020": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Unterföhring",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Unterföhring",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:854761793": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fischbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fischbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:976778188": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Heiligenwald",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Heiligenwald",
+        "operator": "Gemeinde Schiffweiler",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1039906597": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Gemeinde Hille",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Gemeinde Hille",
+        "operator": "Gemeinde Hille",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1243714900": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Orscholz",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Orscholz",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1271238900": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Besseringen",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Besseringen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1362546319": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München",
+        "operator": "Freiwillige Feuerwehr München gegr. 1866 e.V.",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1505648981": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Groß Warnow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Groß Warnow",
+        "operator": "Gemeinde Karstädt",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:1904809859": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Oerie",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Oerie",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:2269477849": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neuglobsow",
+      "state": "DE-BB",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neuglobsow",
+        "operator": "Amt Gransee",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:2643505066": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wiesental",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wiesental",
+        "operator": "Stadt Waghäusel",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:2947685081": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Stederdorf",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Stederdorf",
+        "operator": "Freiwillige Feuerwehr Stadt Peine",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:4189329989": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr München - Abteilung Stadtmitte",
+      "state": "DE-BY",
+      "tags": {
+        "name": "Freiwillige Feuerwehr München - Abteilung Stadtmitte",
+        "operator": "Freiwillige Feuerwehr München gegr. 1866 e.V.",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:4286627171": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Saarhölzbach",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Saarhölzbach",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:4314579068": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Neukölln",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Neukölln",
+        "operator": "Berliner Feuerwehr",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:5239488228": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Brotdorf",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Brotdorf",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:5371177343": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Höchen",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Höchen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:5696637927": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Gerätehaus Freiwillige Feuerwehr Rentrisch (LB 4)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Gerätehaus Freiwillige Feuerwehr Rentrisch (LB 4)",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:6621423514": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Marienfelde",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Marienfelde",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:6939634045": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Schafbrücke (LB 20)",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Schafbrücke (LB 20)",
+        "operator": "Landeshauptstadt Saarbrücken",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:7902982058": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Düngstrup",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Düngstrup",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:9107443795": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bürrig",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bürrig",
+        "operator": "Stadt Leverkusen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:11623975144": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Bornum",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Bornum",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:11623975145": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Ricklingen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Hannover Ortsfeuerwehr Ricklingen",
+        "operator": "Landeshauptstadt Hannover",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:12368023860": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Rheinau",
+      "state": "DE-BW",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Rheinau",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:12643808080": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Zehlendorf",
+      "state": "DE-BE",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Zehlendorf",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:13196873838": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Feuerwehr Eslohe-Bremke",
+      "state": "DE-NW",
+      "tags": {
+        "name": "Feuerwehr Eslohe-Bremke",
+        "operator": "Freiwillige Feuerwehr Eslohe-Bremke",
+        "fire_station:type": "volunteer"
+      }
+    },
+    "node:13799173644": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Fahrenhorst",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Fahrenhorst",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:13809183793": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Blexen",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Blexen",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:13908956642": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Wache  West",
+      "state": "DE-SL",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Wache  West",
+        "operator": "Stadt Saarlouis",
+        "fire_station:type": "voluntary"
+      }
+    },
+    "node:13991085726": {
+      "kind": "ff",
+      "employment": "volunteer",
+      "reason": "Expliziter OSM-Typtag freiwillig und passende Einheits-/Betreiberangabe; keine amtliche Einzelprüfung.",
+      "name": "Freiwillige Feuerwehr Bevern",
+      "state": "DE-NI",
+      "tags": {
+        "name": "Freiwillige Feuerwehr Bevern",
+        "operator": "Stadt Bremervörde",
+        "fire_station:type": "voluntary"
+      }
+    }
+  }
+}

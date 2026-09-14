@@ -28,8 +28,15 @@ it("sichert DB19 vor der additiven Speichergrenze und erhält Eigentum, Geld, Re
     expect(db.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(
       DATABASE_VERSION,
     );
-    expect(db.sql.prepare("SELECT data FROM saves").get()!.data).toBe(json);
-    expect(db.all().get(s.player.id)).toEqual(s);
+    expect(
+      withoutFireMigration(
+        JSON.parse(
+          String(db.sql.prepare("SELECT data FROM saves").get()!.data),
+        ),
+        s,
+      ),
+    ).toEqual(s);
+    expect(withoutFireMigration(db.all().get(s.player.id)!, s)).toEqual(s);
     const backups = readdirSync(dir).filter((n) =>
       n.startsWith("pre-migration-"),
     );
@@ -63,3 +70,4 @@ it("sichert DB19 vor der additiven Speichergrenze und erhält Eigentum, Geld, Re
     rmSync(dir, { recursive: true, force: true });
   }
 });
+import { withoutFireMigration } from "./helpers/fire-migration-check";

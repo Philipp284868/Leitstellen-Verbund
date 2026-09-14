@@ -7,7 +7,7 @@ import { test, expect, type Page } from "./test";
 import { listenBrowserServer } from "./server-helper";
 import type { Config } from "../../src/server/config";
 import { fixtureFacilities } from "../fixtures/germany/facilities";
-import { bt } from "../../src/shared/catalog";
+import { fireGameProfile } from "../../src/shared/facilities/fire-profile";
 
 const compiled = (await import(
   pathToFileURL(resolve("dist/server/index.js")).href
@@ -77,7 +77,7 @@ test("zwei Leitstellen konkurrieren um einen Standort; genau eine Abbuchung, Off
     ).toBeVisible();
     await pages[0]
       .getByRole("button", {
-        name: `${facility.name} · Feuerwache`,
+        name: `${facility.name} · Freiwillige Feuerwehr`,
         exact: true,
       })
       .click();
@@ -137,7 +137,9 @@ test("zwei Leitstellen konkurrieren um einen Standort; genau eine Abbuchung, Off
         name: /^Kaufen ·|Kauf verbindlich bestätigen|^Verwalten$/,
       }),
     ).toHaveCount(0);
-    expect(app.db.all().get(winnerId)!.money).toBe(original - bt("fire").price);
+    expect(app.db.all().get(winnerId)!.money).toBe(
+      original - fireGameProfile(facility.fireProfile)!.price,
+    );
     expect(app.db.all().get(loserId)!.money).toBe(original);
     expect(app.db.all().get(loserId)!.buildings).toHaveLength(0);
     const first = app.db.all().get(winnerId)!.buildings[0];

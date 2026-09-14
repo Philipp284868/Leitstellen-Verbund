@@ -125,6 +125,24 @@ export function attachFacilityLayer(
           8,
           17,
         );
+        if (point.fireKind) {
+          const label = {
+            ff: "FF",
+            "ff-paid": "FF+",
+            bf: "BF",
+            shared: "BF/FF",
+            works: "WF",
+            company: "BtF",
+            airport: "FlF",
+            unknown: "?",
+          }[point.fireKind];
+          ctx.fillStyle = "#0c2029";
+          ctx.fillRect(-18, -26, 36, 13);
+          ctx.fillStyle = point.fireKind === "unknown" ? "#e5be8c" : "#e0edf4";
+          ctx.font = "bold 10px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(label, 0, -16);
+        }
       }
       ctx.restore();
     }
