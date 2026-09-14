@@ -223,11 +223,10 @@ test("real facility 429 waits, keeps the session and recovers the latest viewpor
     await loginAndEnter(page, "cooldown", "Map-measure-password-123!");
     const canvas = page.locator(".facility-map-canvas");
     await expect(canvas).toHaveAttribute("data-loading", "false");
-    const requests: { at: number; url: string }[] = [];
+    const requests: string[] = [];
     let logins = 0;
     page.on("request", (r) => {
-      if (r.url().includes("/api/facilities"))
-        requests.push({ at: Date.now(), url: r.url() });
+      if (r.url().includes("/api/facilities")) requests.push(r.url());
       if (r.url().includes("/api/login")) logins++;
     });
     app.db.sql
@@ -245,15 +244,20 @@ test("real facility 429 waits, keeps the session and recovers the latest viewpor
     );
     const response = await limited;
     const wait = Number(response.headers()["retry-after"]) * 1000;
-    const until = Date.now() + wait;
+    // Both timestamps come from the browser network timeline. Date.now()
+    // here starts after the automation event's delivery delay on busy CI.
+    const timing = response.request().timing();
+    expect(timing.responseStart).toBeGreaterThanOrEqual(0);
+    expect(wait).toBeGreaterThanOrEqual(1000);
+    const until = timing.startTime + timing.responseStart + wait;
     await expect(
       page.getByText(/Standorte werden zu häufig abgefragt/),
     ).toBeVisible();
     const recovered = page.waitForResponse(
       (r) => r.url().includes("/api/facilities") && r.status() === 200,
     );
-    await recovered;
-    expect(requests.at(-1)!.at).toBeGreaterThanOrEqual(until - 100);
+    const retry = await recovered;
+    expect(retry.request().timing().startTime).toBeGreaterThanOrEqual(until);
     expect(requests.length).toBeLessThanOrEqual(3);
     await expect(
       page.getByText(/Standorte werden zu häufig abgefragt/),
