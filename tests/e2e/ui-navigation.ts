@@ -124,6 +124,9 @@ export async function showIncidents(page: Page) {
 }
 export async function showMapTools(page: Page) {
   await openPanel(page, "Suche");
+  // Search receives focus on the next animation frame. Wait for that handoff
+  // before another test action moves focus back to the map canvas.
+  await expect(page.getByLabel("Karte durchsuchen")).toBeFocused();
 }
 
 export async function toggleMapTools(page: Page) {
