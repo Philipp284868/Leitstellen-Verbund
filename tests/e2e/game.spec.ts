@@ -308,6 +308,10 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   await showIncidents(a);
   await a.locator(".mission-card").first().click();
   await interviewUI(a, app);
+  // CI runs Firefox with real windows for WebGL. Activate the second
+  // dispatcher's window before clicking; an inactive window can consume
+  // its first mouse click as focus without opening the incident.
+  await b.bringToFront();
   await showIncidents(b);
   await b.locator(".mission-card").first().click();
   await b.locator(".dispatch-list input").first().check();
@@ -325,6 +329,7 @@ test("Gemeinsame Leitstelle läuft ohne zweiten Disponentenbrowser weiter; Neust
   const missionId = app.db.all().get(ownerId)!.missions[0].id;
   const advance = (finished: () => boolean) => advanceSimulation(finished);
   await cb.close();
+  await a.bringToFront();
   // Verify the recorded departure, not a transient status after an arbitrary
   // 61-second jump: a nearby incident can already have been reached by then.
   const departed = () =>

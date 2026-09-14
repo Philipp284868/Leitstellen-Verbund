@@ -135,11 +135,16 @@ try {
   assert.equal(locations.status, 200);
   const offers = await locations.json();
   assert.ok(offers.offers.length);
+  assert.ok(
+    offers.offers[0].quote,
+    "Paket liefert einen verbindlichen Wachpreis",
+  );
   const action = {
     id: crypto.randomUUID(),
     action: {
       type: "purchase-facility",
       facility: offers.offers[0].facility.id,
+      quote: offers.offers[0].quote,
     },
   };
   for (let i = 0; i < 2; i++) {
