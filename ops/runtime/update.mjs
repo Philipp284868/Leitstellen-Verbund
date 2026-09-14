@@ -24,6 +24,19 @@ import {
   restoreBeforeAdmission,
 } from "./database.mjs";
 
+export function assertCompatibility(manifest, candidate) {
+  if (
+    manifest.commit !== candidate.commit ||
+    manifest.version !== candidate.version ||
+    manifest.compatibility?.geodata !== 1 ||
+    !Number.isSafeInteger(manifest.compatibility?.database) ||
+    !Number.isSafeInteger(manifest.compatibility?.minimumDatabase) ||
+    manifest.compatibility.minimumDatabase < 25 ||
+    manifest.compatibility.database < manifest.compatibility.minimumDatabase
+  )
+    throw Error("Paket-/Datenkompatibilität nicht bestätigt.");
+}
+
 export async function update(
   root,
   { resolveCandidate = candidate, download = fetchBytes } = {},
@@ -43,7 +56,7 @@ export async function update(
     for (const entry of readdirSync(resolve(i.root, "staging")))
       if (/^[a-f0-9-]{36}$/.test(entry))
         removeManaged(i.root, resolve(i.root, "staging", entry));
-    const c = await resolveCandidate();
+    const c = await resolveCandidate({ root });
     if (i.current?.sha256 === c.sha256) {
       console.log("Bereits aktuell. Keine Datenänderung.");
       return { unchanged: true };
@@ -62,21 +75,12 @@ export async function update(
       work,
     };
     atomic(journalFile, journal);
-    const bytes = await download(c.url);
+    const bytes = await download(c.url, 256 * 1024 * 1024, root);
     if (hash(bytes) !== c.sha256)
       throw Error("Paketprüfsumme falsch. Bisherige Version erhalten.");
     const folder = resolve(work, "app"),
       manifest = unpack(bytes, folder);
-    if (
-      manifest.commit !== c.commit ||
-      manifest.version !== c.version ||
-      manifest.compatibility?.geodata !== 1 ||
-      !Number.isSafeInteger(manifest.compatibility?.database) ||
-      !Number.isSafeInteger(manifest.compatibility?.minimumDatabase) ||
-      manifest.compatibility.minimumDatabase < 25 ||
-      manifest.compatibility.database < manifest.compatibility.minimumDatabase
-    )
-      throw Error("Paket-/Datenkompatibilität nicht bestätigt.");
+    assertCompatibility(manifest, c);
     const pointer = {
       release: manifest.version + "-" + manifest.commit,
       sha256: c.sha256,
@@ -126,7 +130,11 @@ export async function update(
         pathToFileURL(resolve(target, "scripts/geodata/download-package.mjs"))
           .href
       );
-      await installGeodata({ target: i.geo, programRoot: target });
+      await installGeodata({
+        target: i.geo,
+        programRoot: target,
+        instanceRoot: i.root,
+      });
     }
     if (!i.env.GRAPHHOPPER_URL)
       await execute(

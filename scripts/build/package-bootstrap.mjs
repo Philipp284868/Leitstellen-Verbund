@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { writePrivateTemplate } from "../../ops/private-template.mjs";
 if (process.platform !== "linux" || process.arch !== "x64")
   throw Error("Linux x64 erforderlich.");
 const root = await mkdtemp(join(tmpdir(), "lv-bootstrap-"));
@@ -18,6 +19,12 @@ const sum = (b) => createHash("sha256").update(b).digest("hex");
 try {
   const stage = join(root, "bootstrap");
   await mkdir(join(stage, "launcher"), { recursive: true });
+  await writePrivateTemplate(process.cwd(), join(stage, "templates"));
+  await mkdir(join(stage, "provision"), { recursive: true });
+  await copyFile(
+    "ops/configure-private-access.py",
+    join(stage, "provision/configure-private-access.py"),
+  );
   await build({
     entryPoints: ["ops/runtime/cli.mjs"],
     outfile: join(stage, "launcher/runtime.mjs"),

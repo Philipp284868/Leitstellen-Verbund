@@ -64,6 +64,7 @@ try {
     "scripts/diagnose.mjs",
     "scripts/geodata/pipeline.mjs",
     "scripts/geodata/download-package.mjs",
+    "scripts/geodata/private-assets.mjs",
     "scripts/geodata/download-manifest.json",
     "scripts/geodata/router-arguments.mjs",
   ])
@@ -143,7 +144,7 @@ try {
     JSON.stringify(
       {
         format: 2,
-        compatibility: { database: 28, minimumDatabase: 25, geodata: 1 },
+        compatibility: { database: 29, minimumDatabase: 25, geodata: 1 },
         version: pkg.version,
         commit,
         product: "germany-1",

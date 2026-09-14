@@ -25,6 +25,7 @@ import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { createGunzip } from "node:zlib";
 import { resolveConfiguration } from "../configuration.mjs";
+import { privateGeodataAssets } from "./private-assets.mjs";
 
 const defaultManifest = fileURLToPath(
   new URL("./download-manifest.json", import.meta.url),
@@ -207,13 +208,15 @@ export async function acquireLock(path) {
     if ((await readFile(path, "utf8")) === value) await unlink(path);
   };
 }
-async function download(part, path, catalog, fetchImpl) {
+async function download(part, path, catalog, fetchImpl, privateAsset) {
   if (await matches(path, part)) return;
   const partial = path + ".part";
   await removeFile(partial);
-  const response = await fetchImpl(`${catalog.baseUrl}/${part.asset}`, {
-    signal: AbortSignal.timeout(15 * 60 * 1000),
-  });
+  const response = privateAsset
+    ? await privateAsset(part)
+    : await fetchImpl(`${catalog.baseUrl}/${part.asset}`, {
+        signal: AbortSignal.timeout(15 * 60 * 1000),
+      });
   if (!response.ok || !response.body)
     throw Error(
       `GitHub-Download fehlgeschlagen: ${part.asset} (HTTP ${response.status}). Setup erneut starten, um fortzusetzen.`,
@@ -224,6 +227,7 @@ async function download(part, path, catalog, fetchImpl) {
       url.protocol !== "https:" ||
       ![
         "github.com",
+        ...(privateAsset ? ["api.github.com"] : []),
         "release-assets.githubusercontent.com",
         "objects.githubusercontent.com",
       ].includes(url.hostname)
@@ -267,6 +271,7 @@ export async function installGeodata({
   manifestPath = defaultManifest,
   onProgress = console.log,
   fetchImpl = globalThis.fetch,
+  instanceRoot = process.env.LV_INSTANCE_ROOT,
 } = {}) {
   if (!target || typeof target !== "string")
     throw Error("Geodaten-Zielverzeichnis fehlt.");
@@ -327,6 +332,11 @@ export async function installGeodata({
   }
   const unlock = await acquireLock(resolve(stage, "lock.json"));
   try {
+    const privateAsset = privateGeodataAssets(
+      instanceRoot,
+      catalog.releaseTag,
+      fetchImpl,
+    );
     const content = resolve(stage, "content"),
       chunks = resolve(stage, "chunks");
     await directory(content);
@@ -351,7 +361,7 @@ export async function installGeodata({
         onProgress(
           `  Downloadteil ${partIndex + 1}/${file.parts.length}: ${part.asset}`,
         );
-        await download(part, cached, catalog, fetchImpl);
+        await download(part, cached, catalog, fetchImpl, privateAsset);
         let rawBytes = 0;
         await pipeline(
           createReadStream(cached),

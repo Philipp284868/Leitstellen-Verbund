@@ -1,5 +1,7 @@
 # AMP-Betrieb ab 2.26
 
+Für die bestehende Generic-Installation und den privaten GitHub-Zugang gilt der [einmalige Übergang ohne Reset](PRIVATER-AMP-UPDATEWEG.md). Die folgenden Übernahme-/Resetabschnitte sind separate, ausdrücklich zu beauftragende Wartungsabläufe.
+
 ## Infrastruktur-Update 2.29
 
 Die bestehende Instanz über **Update** aktualisieren und anschließend starten. Das freigegebene Paket enthält den Wasserquellenzusatz; der vorhandene lokale Geodatenordner und alle Konfigurationswerte bleiben bestehen. Beim ersten Start wird dieser kleine Zusatz einmal indexiert, spätere Starts verwenden den geprüften Cache. Kein neuer Deutschlandvollimport.
@@ -21,7 +23,7 @@ Programmupdate, einmaliger Reset und AMP-Verwaltung sind getrennte Vorgänge. Da
 5. Unter **Einmalige Übernahme → Bisheriger Programmordner** den bestätigten alten absoluten Programmordner eintragen. Leer bedeutet eine andere, neue Instanz, keine Übernahme. Bei getrennten Containern müssen alte Konfigurations-/Datenpfade in der neuen Instanz erreichbar eingebunden sein.
 6. **Nach Update starten** zunächst ausschalten, **Update** ausführen. Der Starter übernimmt ausschließlich eine belegte Installation, sperrt den alten Einstieg, kopiert konsistent den Spielbestand und bindet gültige Geodaten weiter ein. Noch kein Fullreset. Anschließend Diagnose prüfen.
 
-Der Erststarter kommt als versioniertes `amp-bootstrap.tar.gz` aus Release `v2.26.0`, einschließlich geprüftem Node 24.19.0 Linux x64 und Lizenz. Ein fehlendes Release ist ein Fehler, kein Anlass für einen lokalen Quellcodebuild. Normale Updates beziehen danach das neueste vollständig freigegebene Release ohne Betreiber-GitHub-Token. pnpm und Entwicklungsabhängigkeiten werden nicht installiert.
+Der Erststarter kommt als versioniertes `amp-bootstrap.tar.gz` aus Release `v2.26.0`, einschließlich geprüftem Node 24.19.0 Linux x64 und Lizenz. Ein fehlendes Release ist ein Fehler, kein Anlass für einen lokalen Quellcodebuild. Der bisherige öffentliche Übergangsweg benötigt keinen Betreiber-GitHub-Token. Vor der Privatumschaltung werden Starter und lokale Vorlage einmalig durch den oben beschriebenen authentifizierten Updateweg ersetzt. pnpm und Entwicklungsabhängigkeiten werden nicht installiert.
 
 ## Separater bestätigter Fullreset
 

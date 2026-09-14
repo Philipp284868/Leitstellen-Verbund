@@ -38,6 +38,37 @@ import {
 } from "../ops/runtime/update.mjs";
 import { unpack } from "../ops/runtime/archive.mjs";
 import { gzipSync } from "node:zlib";
+import { managedUpdate } from "../ops/runtime/preflight.mjs";
+import {
+  githubBytes,
+  readGithubCredential,
+} from "../ops/runtime/github-auth.mjs";
+import { privateGeodataAssets } from "../scripts/geodata/private-assets.mjs";
+import { writePrivateTemplate } from "../ops/private-template.mjs";
+
+test("Local AMP template keeps installed-start settings and has no anonymous own bootstrap download", async (t) => {
+  const root = fixture(t).root;
+  const path = await writePrivateTemplate(
+    resolve("."),
+    resolve(root, "templates"),
+  );
+  assert.ok(path.endsWith("LOCAL-LeitstellenPrivate-main"));
+  const stages = JSON.parse(
+    readFileSync(resolve(path, "leitstellen-verbundupdates.json"), "utf8"),
+  );
+  assert.deepEqual(
+    stages.map((s) => s.UpdateSource),
+    [
+      "SetExecutableFlag",
+      "Executable",
+      "StartApplication",
+      "WaitForStartupComplete",
+    ],
+  );
+  assert.equal(stages[1].UpdateSourceData, "{{$FullRootDir}}node/bin/node");
+  assert.ok(stages.every((s) => s.SkipOnFailure === false));
+  assert.ok(!JSON.stringify(stages).match(/https:|token|Authorization/));
+});
 
 function fixture(t) {
   const root = mkdtempSync(resolve(tmpdir(), "lv-ops-"));
@@ -67,6 +98,217 @@ function fixture(t) {
   i = instance(root);
   return { root, i, app };
 }
+
+test("GitHub credentials remain on the exact API repository; redirects, error bodies and signed URLs never leak them", async () => {
+  const repository = "Philipp284868/Leitstellen-Verbund",
+    token = "test_only_not_a_real_token_12345";
+  const api = `https://api.github.com/repos/${repository}/releases/assets/123`;
+  const requests = [];
+  const result = await githubBytes(api, {
+    repository,
+    token,
+    fetchImpl: async (url, request) => {
+      requests.push({ url, request });
+      return requests.length === 1
+        ? new Response(null, {
+            status: 302,
+            headers: {
+              location:
+                "https://release-assets.githubusercontent.com/test?sig=shortlived",
+            },
+          })
+        : new Response("package");
+    },
+  });
+  assert.equal(result.toString(), "package");
+  assert.equal(requests[0].request.headers.Authorization, `Bearer ${token}`);
+  assert.equal(requests[1].request.headers.Authorization, undefined);
+  for (const location of [
+    "https://evil.invalid/steal",
+    "https://api.github.com/repos/evil/repo/releases/1",
+    "http://release-assets.githubusercontent.com/no-tls",
+    "https://user:secret@release-assets.githubusercontent.com/x",
+  ]) {
+    let calls = 0;
+    await assert.rejects(
+      githubBytes(api, {
+        repository,
+        token,
+        fetchImpl: async () => {
+          calls++;
+          return new Response(null, { status: 302, headers: { location } });
+        },
+      }),
+      /Unzulässige/,
+    );
+    assert.equal(calls, 1);
+  }
+  await assert.rejects(
+    githubBytes(api, {
+      repository,
+      token,
+      fetchImpl: async () => new Response(token, { status: 401 }),
+    }),
+    (error) => {
+      assert.match(error.message, /HTTP 401/);
+      assert.ok(!error.message.includes(token));
+      return true;
+    },
+  );
+  await assert.rejects(
+    githubBytes(api, {
+      repository,
+      token,
+      limit: 2,
+      fetchImpl: async () => new Response("too much"),
+    }),
+    /Größenlimit/,
+  );
+  await assert.rejects(
+    githubBytes(api, {
+      repository,
+      token,
+      fetchImpl: async () => {
+        throw Error(token);
+      },
+    }),
+    (error) => !error.message.includes(token),
+  );
+});
+
+test("Credential file stays outside config recovery; symlinked secret directories are rejected", (t) => {
+  const { root, i } = fixture(t);
+  assert.equal(readGithubCredential(root), undefined);
+  mkdirSync(resolve(root, "shared/secrets"), { mode: 0o700 });
+  const token = "test_only_not_a_real_token_67890";
+  writeFileSync(resolve(root, "shared/secrets/github-read-token"), token, {
+    mode: 0o600,
+  });
+  assert.equal(readGithubCredential(root), token);
+  instance(root);
+  assert.ok(
+    !readFileSync(resolve(i.state, "config-recovery.json"), "utf8").includes(
+      token,
+    ),
+  );
+  const bad = resolve(root, "linked-root");
+  symlinkSync(root, bad, "junction");
+  assert.throws(() => readGithubCredential(bad), /nicht geschützt/);
+});
+
+test("Private geodata metadata is resolved once and streamed assets preserve the pinned hashes", async (t) => {
+  const { root } = fixture(t),
+    repository = "Philipp284868/Leitstellen-Verbund";
+  mkdirSync(resolve(root, "shared/secrets"), { mode: 0o700 });
+  writeFileSync(
+    resolve(root, "shared/secrets/github-read-token"),
+    "test_only_not_a_real_token_98765",
+    { mode: 0o600 },
+  );
+  const part = {
+    asset: "first.gz",
+    bytes: 7,
+    sha256: hash(Buffer.from("content")),
+  };
+  let metadata = 0,
+    downloads = 0;
+  const get = privateGeodataAssets(
+    root,
+    "germany-data-2026-09-07-v1",
+    async (url, request) => {
+      assert.ok(request.headers.Authorization);
+      if (url.includes("/tags/")) {
+        metadata++;
+        return Response.json({
+          tag_name: "germany-data-2026-09-07-v1",
+          draft: false,
+          assets: [
+            {
+              name: part.asset,
+              state: "uploaded",
+              size: 7,
+              digest: "sha256:" + part.sha256,
+              url: `https://api.github.com/repos/${repository}/releases/assets/1`,
+            },
+          ],
+        });
+      }
+      downloads++;
+      return new Response("content");
+    },
+  );
+  assert.equal(await (await get(part)).text(), "content");
+  assert.equal(await (await get(part)).text(), "content");
+  assert.equal(metadata, 1);
+  assert.equal(downloads, 2);
+  await assert.rejects(
+    get({ ...part, sha256: "a".repeat(64) }),
+    /widerspricht/,
+  );
+  assert.equal(downloads, 2);
+});
+
+test("Expired access, corrupt bytes, unsafe archives and repeated updates never stop the installed process", async (t) => {
+  const { root, i } = fixture(t),
+    saved = readFileSync(resolve(i.data, "game.sqlite"));
+  let stopped = 0,
+    activated = 0;
+  const controls = {
+    stop: async () => {
+      stopped++;
+    },
+    activate: async () => {
+      activated++;
+    },
+  };
+  await assert.rejects(
+    managedUpdate(root, {
+      ...controls,
+      resolveCandidate: async () => {
+        throw Error("HTTP 401");
+      },
+    }),
+    /401/,
+  );
+  const malformed = archive([
+    { path: "../escape", bytes: Buffer.from("danger") },
+  ]);
+  const c = {
+    sequence: 11,
+    size: malformed.length,
+    url: "fixture",
+    sha256: hash(malformed),
+  };
+  await assert.rejects(
+    managedUpdate(root, {
+      ...controls,
+      resolveCandidate: async () => c,
+      download: async () => Buffer.from("bad"),
+    }),
+    /Prüfsumme/,
+  );
+  await assert.rejects(
+    managedUpdate(root, {
+      ...controls,
+      resolveCandidate: async () => c,
+      download: async () => malformed,
+    }),
+    /Archivpfad/,
+  );
+  assert.equal(
+    (
+      await managedUpdate(root, {
+        ...controls,
+        resolveCandidate: async () => i.current,
+      })
+    ).unchanged,
+    true,
+  );
+  assert.equal(stopped, 0);
+  assert.equal(activated, 0);
+  assert.deepEqual(readFileSync(resolve(i.data, "game.sqlite")), saved);
+  assert.deepEqual(instance(root).current, i.current);
+});
 test("Reset requires instance-bound confirmation, preserves configuration and geodata, consumes ID once", async (t) => {
   const { root, i } = fixture(t);
   const db = new DatabaseSync(resolve(i.data, "game.sqlite"));
@@ -446,7 +688,14 @@ test("Verified complete update keeps new-world accounts and receipts, isolates f
       resolveCandidate: async () => descriptor,
       download: async () => bytes,
     };
-    await update(root, options);
+    let stops = 0;
+    await managedUpdate(root, {
+      ...options,
+      stop: () => {
+        stops++;
+      },
+    });
+    assert.equal(stops, 1);
     const next = instance(root);
     assert.equal(next.record.generation, i.record.generation);
     assert.equal(next.current.commit, manifest.commit);
@@ -461,7 +710,18 @@ test("Verified complete update keeps new-world accounts and receipts, isolates f
     check.close();
     acceptReady(next);
     assert.equal(rollbackBeforeReady(next), false);
-    assert.equal((await update(root, options)).unchanged, true);
+    assert.equal(
+      (
+        await managedUpdate(root, {
+          ...options,
+          stop: () => {
+            stops++;
+          },
+        })
+      ).unchanged,
+      true,
+    );
+    assert.equal(stops, 1);
     assert.equal(inspect(resolve(next.data, "game.sqlite")).accounts, 1);
   } finally {
     if (oldRouter === undefined) delete process.env.GRAPHHOPPER_URL;

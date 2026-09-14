@@ -1,50 +1,32 @@
+import {
+  githubBytes,
+  readGithubCredential,
+  githubSource,
+} from "./github-auth.mjs";
 const repository = "Philipp284868/Leitstellen-Verbund";
 const base = `https://api.github.com/repos/${repository}`;
-export async function fetchBytes(url, limit = 256 * 1024 * 1024) {
-  const parsed = new URL(url);
-  if (
-    parsed.protocol !== "https:" ||
-    ![
-      "api.github.com",
-      "github.com",
-      "release-assets.githubusercontent.com",
-      "objects.githubusercontent.com",
-    ].includes(parsed.hostname) ||
-    parsed.username ||
-    parsed.password
-  )
-    throw Error("Unzulässige Paketquelle.");
-  const response = await fetch(url, {
-    signal: AbortSignal.timeout(120000),
-    headers: { Accept: "application/octet-stream" },
+export async function fetchBytes(
+  url,
+  limit = 256 * 1024 * 1024,
+  root = process.cwd(),
+) {
+  return githubBytes(url, {
+    repository,
+    limit,
+    token: readGithubCredential(root),
   });
-  if (!response.ok)
-    throw Error(
-      "Download fehlgeschlagen (HTTP " +
-        response.status +
-        "). Bisherige Version erhalten.",
-    );
-  const chunks = [];
-  let total = 0;
-  for await (const c of response.body) {
-    total += c.length;
-    if (total > limit) {
-      throw Error("Download überschreitet Größenlimit.");
-    }
-    chunks.push(c);
-  }
-  return Buffer.concat(chunks);
 }
-export async function candidate() {
-  const r = await fetch(base + "/releases/latest", {
-    signal: AbortSignal.timeout(20000),
-    headers: { Accept: "application/vnd.github+json" },
-  });
-  if (!r.ok)
-    throw Error(
-      "Kein freigegebenes Release verfügbar. Bisherige Version erhalten.",
-    );
-  const release = await r.json();
+export async function candidate({ root = process.cwd() } = {}) {
+  const release = JSON.parse(
+    (
+      await githubBytes(base + "/releases/latest", {
+        repository,
+        token: readGithubCredential(root),
+        limit: 2 * 1024 * 1024,
+        json: true,
+      })
+    ).toString(),
+  );
   if (release.draft || release.prerelease)
     throw Error("Release ist nicht freigegeben.");
   const asset = (n) => {
@@ -54,9 +36,7 @@ export async function candidate() {
     return a[0];
   };
   const descriptor = JSON.parse(
-    (
-      await fetchBytes(asset("channel.json").browser_download_url, 16384)
-    ).toString(),
+    (await fetchBytes(asset("channel.json").url, 16384, root)).toString(),
   );
   if (
     descriptor.format !== 1 ||
@@ -67,7 +47,16 @@ export async function candidate() {
   )
     throw Error("Freigabenachweis ungültig.");
   const a = asset(descriptor.archive);
+  githubSource(a.url, repository);
+  if (
+    !Number.isSafeInteger(a.size) ||
+    a.size <= 0 ||
+    a.size > 256 * 1024 * 1024 ||
+    !/^\d+\.\d+\.\d+$/.test(descriptor.version) ||
+    descriptor.sequence < 1
+  )
+    throw Error("Ungültige Paketgröße oder Versionskennung.");
   if (a.digest && a.digest !== "sha256:" + descriptor.sha256)
     throw Error("GitHub-Prüfsumme widerspricht Freigabe.");
-  return { ...descriptor, url: a.browser_download_url, size: a.size };
+  return { ...descriptor, url: a.url, size: a.size };
 }

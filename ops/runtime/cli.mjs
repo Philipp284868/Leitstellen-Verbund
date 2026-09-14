@@ -1,9 +1,9 @@
+import { managedUpdate } from "./preflight.mjs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
 import { instance, initialize } from "./instance.mjs";
 import { start, stopManaged, recoverLock } from "./launcher.mjs";
-import { update } from "./update.mjs";
 import { adopt } from "./adopt.mjs";
 import { preview, reset } from "./reset.mjs";
 import { grantOperator } from "./operator.mjs";
@@ -32,8 +32,7 @@ export async function main(args = process.argv.slice(2)) {
           HOST: process.env.HOST || "127.0.0.1",
         });
     }
-    await stopManaged(instance(root));
-    await update(root);
+    await managedUpdate(root);
     return 0;
   }
   if (action === "adopt") {
@@ -91,8 +90,7 @@ export async function main(args = process.argv.slice(2)) {
     return 0;
   }
   if (action === "update") {
-    await stopManaged(i);
-    await update(root);
+    await managedUpdate(root);
     return 0;
   }
   throw Error(
